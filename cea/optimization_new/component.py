@@ -45,28 +45,23 @@ class Component(object):
     :type model_code: str
     :param capacity: thermal capacity of the component
     :type capacity: float
-    :param place_in_supply_system: conceptual placement of the component within the supply system
-                                   ('primary': direct heating or cooling generation,
-                                    'secondary': energy supply for primary components,
-                                    'tertiary': components for waste heat rejection,
-                                    'storage': thermal storage components)
-    :type place_in_supply_system: str
     """
     _components_database = None
     _model_complexity = None
+    _database_tab = None
+    possible_main_ecs = {}
 
-    def __init__(self, data_base_tab,  model_code, capacity, place_in_supply_system):
+    def __init__(self, data_base_tab,  model_code, capacity):
         self._model_data = self._extract_model_data(data_base_tab, model_code, capacity)
         self._cost_params = self._extract_model_cost_parameters(self._model_data)
 
         self.code = model_code
         self.technology = ' '.join([part.capitalize() for part in data_base_tab.split('_')])
         self.type = self._model_data['type'].values[0]  # given by working principle (only 1 code is installed for each type per component)
-        self.placement = place_in_supply_system  # primary (main cooling or heating), secondary (supply of primary) or tertiary (waste heat rejection)
         self.capacity = capacity
         self.main_energy_carrier = EnergyCarrier()
-        self.input_energy_carriers = []
-        self.output_energy_carriers = []
+        self.input_energy_carriers = {}
+        self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
 
     @staticmethod
@@ -81,21 +76,32 @@ class Component(object):
         CogenPlant.initialize_subclass_variables(Component._components_database)
         HeatPump.initialize_subclass_variables(Component._components_database)
         CoolingTower.initialize_subclass_variables(Component._components_database)
+        PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
-    def _extract_model_data(data_base_tab, model_code, capacity):
+    def _extract_model_data(data_base_tab, model_code, capacity_kW):
         """ Extract component code from database that matches the type and capacity requirements. """
         component_database = Component._components_database[data_base_tab]
-        vcc_type_data = component_database[component_database['code'] == model_code]
-        adequate_component_models = vcc_type_data[vcc_type_data['cap_min'] <= capacity]
-        selected_component_model = adequate_component_models[adequate_component_models['cap_max'] > capacity]
+        component_model_data = component_database[component_database['code'] == model_code]
+        capacity_W = capacity_kW * 1000
+        adequate_component_models = component_model_data[component_model_data['cap_min'] <= capacity_W]
+        selected_component_model = adequate_component_models[adequate_component_models['cap_max'] > capacity_W]
         if not len(selected_component_model.index) > 0:
             raise ValueError(f'The selected component specs: \n'
                              f' - code: {model_code} \n'
-                             f' - capacity: {capacity} \n'
+                             f' - capacity: {capacity_W}W \n'
                              f'could not be found in the {data_base_tab} tab of the conversion systems database.')
         return selected_component_model
+
+    @staticmethod
+    def get_smallest_capacity(component_class, model_code):
+        """ Get the smallest possible capacity of a given component from the database. """
+        component_database = Component._components_database[component_class._database_tab]
+        model_data = component_database[component_database['code'] == model_code]
+        smallest_model_capacity_W = min(model_data['cap_min'])
+        smallest_model_capacity_kW = smallest_model_capacity_W / 1000
+        return smallest_model_capacity_kW
 
     @staticmethod
     def _extract_model_cost_parameters(model_data):
@@ -106,9 +112,26 @@ class Component(object):
                            'd': model_data['d'].values[0],
                            'e': model_data['e'].values[0],
                            'lifetime': model_data['LT_yr'].values[0],
-                           'om_share': model_data['O&M_%'].values[0],
+                           'om_share': model_data['O&M_%'].values[0] / 100,
                            'int_rate': model_data['IR_%'].values[0]}
         return cost_parameters
+
+    @staticmethod
+    def _create_thermal_ecs_dict(component_database, main_temp_rating_column, thermal_energy_carrier_medium):
+        """
+        Create a dictionary, indicating which component models can provide each of the thermal energy carriers
+        the component class can generate/reject.
+        """
+        main_temperatures = component_database[main_temp_rating_column].unique()
+        main_therm_ecs = {temp: EnergyCarrier.temp_to_thermal_ec(thermal_energy_carrier_medium, temp)
+                          for temp in main_temperatures}
+        ec_code_series = pd.Series([main_therm_ecs[temp] for temp in component_database[main_temp_rating_column]],
+                                   name='ec', index=component_database.index)
+        model_and_ec_code_match = pd.merge(component_database['code'], ec_code_series, right_index=True,
+                                           left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        return possible_main_ecs_dict
 
     def _check_operational_requirements(self, main_energy_flow):
         """ check if the component can output the main energy flow as requested """
@@ -127,9 +150,10 @@ class Component(object):
 
     def calculate_cost(self):
         """ placeholder for subclass investment cost functions """
+        capacity_W = self.capacity * 1000
         capex_USD = self._cost_params['a'] + \
-                         self._cost_params['b'] * self.capacity ** self._cost_params['c'] + \
-                         (self._cost_params['d'] + self._cost_params['e'] * self.capacity) * log(self.capacity)
+                         self._cost_params['b'] * capacity_W ** self._cost_params['c'] + \
+                         (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * log(capacity_W)
 
         capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
         opex_a_fix_USD = capex_USD * self._cost_params['om_share']
@@ -137,13 +161,44 @@ class Component(object):
         return capex_USD, capex_a_USD, opex_a_fix_USD
 
 
-class AbsorptionChiller(Component):
+class ActiveComponent(Component):
 
-    _possible_main_ecs = None
+    main_side = 'output'
+
+    def __init__(self, data_base_tab, model_code, capacity, placement_in_supply_system):
+        super().__init__(data_base_tab, model_code, capacity)
+        self.placement = placement_in_supply_system
+
+    @staticmethod
+    def get_types(component_tab):
+        component_types = list(Component._components_database[component_tab]['code'].unique())
+        return component_types
+
+    @staticmethod
+    def get_subclass(component_tab):
+        for subclass in ActiveComponent.__subclasses__():
+            if subclass._database_tab == component_tab:
+                return subclass
+        return None
+
+
+class PassiveComponent(Component):
+
+    conversion_matrix = pd.DataFrame()
+
+    def __init__(self, data_base_tab, model_code, capacity, placed_after, placed_before):
+        super().__init__(data_base_tab, model_code, capacity)
+        self.placement = {'after': placed_after,
+                          'before': placed_before}
+
+
+class AbsorptionChiller(ActiveComponent):
+
+    _database_tab = 'absorption_chillers'
 
     def __init__(self, ach_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('absorption_chillers', ach_model_code, capacity, placement)
+        super().__init__(AbsorptionChiller._database_tab, ach_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         self.aux_power_share = self._model_data['aux_power'].values[0]
@@ -152,7 +207,7 @@ class AbsorptionChiller(Component):
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
         self.input_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_gen_design'].values[0])),
-             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_supply'].values[0]))]
+             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
@@ -200,28 +255,29 @@ class AbsorptionChiller(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of absorption chillers from the database and save the list as a new
-        class variable.
+        Fetch possible main energy carriers of absorption chillers from the database and save a dictionary, indicating
+         which component models can provide each of the energy carriers, as a new class variable.
         """
-        evaporator_temperatures = components_database['absorption_chillers']['T_evap_design'].unique()
-        AbsorptionChiller._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                                in evaporator_temperatures]
+        ach_database = components_database[AbsorptionChiller._database_tab]
+        AbsorptionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(ach_database,
+                                                                                 'T_evap_design',
+                                                                                 'water')
 
 
-class VapourCompressionChiller(Component):
+class VapourCompressionChiller(ActiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'vapor_compression_chillers'
 
     def __init__(self, vcc_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('vapor_compression_chillers', vcc_model_code, capacity, placement)
+        super().__init__(VapourCompressionChiller._database_tab, vcc_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
@@ -265,28 +321,29 @@ class VapourCompressionChiller(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of vapor compression chillers from the database and save the list as a new
-        class variable.
+        Fetch possible main energy carriers of vapor compression chillers from the database and save a dictionary,
+        indicating which component models can provide each of the energy carriers, as a new class variable.
         """
-        evaporator_temperatures = components_database['vapor_compression_chillers']['T_evap_design'].unique()
-        VapourCompressionChiller._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                                       in evaporator_temperatures]
+        vcc_database = components_database[VapourCompressionChiller._database_tab]
+        VapourCompressionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(vcc_database,
+                                                                                         'T_evap_design',
+                                                                                         'water')
 
 
-class AirConditioner(Component):
+class AirConditioner(ActiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'unitary_air_conditioners'
 
     def __init__(self, ac_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('unitary_air_conditioners', ac_model_code, capacity, placement)
+        super().__init__(AirConditioner._database_tab, ac_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['rated_COP_seasonal'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_indoor_rating'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_outdoor_rating'].values[0]))]
 
@@ -330,21 +387,22 @@ class AirConditioner(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of unitary air conditioners from the database and save the list as a new
-        class variable.
+        Fetch possible main energy carriers of unitary air conditioners from the database and save a dictionary,
+        indicating which component models can provide each of the energy carriers, as a new class variable.
         """
-        indoor_air_temperatures = components_database['unitary_air_conditioners']['T_air_indoor_rating'].unique()
-        AirConditioner._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                             in indoor_air_temperatures]
+        ac_database = components_database[AirConditioner._database_tab]
+        AirConditioner.possible_main_ecs = Component._create_thermal_ecs_dict(ac_database,
+                                                                               'T_air_indoor_rating',
+                                                                               'air')
 
 
-class Boiler(Component):
+class Boiler(ActiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'boilers'
 
     def __init__(self, boiler_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('boilers', boiler_model_code, capacity, placement)
+        super().__init__(Boiler._database_tab, boiler_model_code, capacity, placement)
         # initialise subclass attributes
         self.min_thermal_eff = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -395,21 +453,22 @@ class Boiler(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of boilers from the database and save the list as a new class
-        variable.
+        Fetch possible main energy carriers of boilers from the database and save a dictionary, indicating which
+        component models can provide each of the energy carriers, as a new class variable.
         """
-        hot_water_temperatures = components_database['boilers']['T_water_out_rating'].unique()
-        Boiler._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                     in hot_water_temperatures]
+        blr_database = components_database[Boiler._database_tab]
+        Boiler.possible_main_ecs = Component._create_thermal_ecs_dict(blr_database,
+                                                                       'T_water_out_rating',
+                                                                       'water')
 
 
-class CogenPlant(Component):
+class CogenPlant(ActiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'cogeneration_plants'
 
     def __init__(self, cogen_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('cogeneration_plants', cogen_model_code, capacity, placement)
+        super().__init__(CogenPlant._database_tab, cogen_model_code, capacity, placement)
         # initialise subclass attributes
         self.thermal_eff = self._model_data['therm_eff_design'].values[0]
         self.electrical_eff = self._model_data['elec_eff_design'].values[0]
@@ -419,7 +478,7 @@ class CogenPlant(Component):
         self.input_energy_carriers = \
             [EnergyCarrier(self._model_data['fuel_code'].values[0])]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_out_design'].values[0])),
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_out_design'].values[0])),
              EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_flue_gas_design'].values[0]))]
 
     def operate(self, heating_out):
@@ -469,21 +528,22 @@ class CogenPlant(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of cogeneration plants from the database and save the list as a new class
-        variable.
+        Fetch possible main energy carriers of cogeneration plants from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
         """
-        hot_water_temperatures = components_database['cogeneration_plants']['T_water_out_design'].unique()
-        Boiler._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                     in hot_water_temperatures]
+        cp_database = components_database[CogenPlant._database_tab]
+        CogenPlant.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
+                                                                           'T_water_out_design',
+                                                                           'water')
 
 
-class HeatPump(Component):
+class HeatPump(ActiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'heat_pumps'
 
     def __init__(self, hp_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('heat_pumps', hp_model_code, capacity, placement)
+        super().__init__(HeatPump._database_tab, hp_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating_seasonal'].values[0]
         self.thermal_ec_subtype_condenser_side = self._model_data['medium_cond_side'].values[0]
@@ -495,7 +555,7 @@ class HeatPump(Component):
         self.input_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.thermal_ec_subtype_evaporator_side,
                                                             self._model_data['T_evap_design'].values[0])),
-             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_supply'].values[0]))]
+             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
 
     def operate(self, heating_load):
         """
@@ -539,32 +599,39 @@ class HeatPump(Component):
         """
         Fetch possible main energy carriers of heat pumps from the database and save the list as a new class variable.
         """
-        heat_pumps_db = components_database['heat_pumps']
-        water_heating_heat_pumps = heat_pumps_db[heat_pumps_db['medium_cond_side'] == 'water']
-        air_heating_heat_pumps = heat_pumps_db[heat_pumps_db['medium_cond_side'] == 'air']
+        hp_database = components_database[HeatPump._database_tab]
 
-        water_loop_temperatures = water_heating_heat_pumps['T_cond_design'].unique()
-        indoor_air_temperatures = air_heating_heat_pumps['T_cond_design'].unique()
+        water_heating_heat_pumps = hp_database[hp_database['medium_cond_side'] == 'water']
+        water_possible_main_ecs_dict = Component._create_thermal_ecs_dict(water_heating_heat_pumps,
+                                                                          'T_cond_design',
+                                                                          'water')
 
-        water_energy_carriers = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in water_loop_temperatures]
-        air_energy_carriers = [EnergyCarrier.temp_to_thermal_ec('air', temp) for temp in indoor_air_temperatures]
-        HeatPump._possible_main_ecs = water_energy_carriers + air_energy_carriers
+        air_heating_heat_pumps = hp_database[hp_database['medium_cond_side'] == 'air']
+        air_possible_main_ecs_dict = Component._create_thermal_ecs_dict(air_heating_heat_pumps,
+                                                                        'T_cond_design',
+                                                                        'air')
+
+        joined_main_ecs_dict = water_possible_main_ecs_dict.copy()
+        joined_main_ecs_dict.update(air_possible_main_ecs_dict)
+
+        HeatPump.possible_main_ecs = joined_main_ecs_dict
 
 
-class CoolingTower(Component):
+class CoolingTower(ActiveComponent):
 
-    _possible_main_ecs = None
+    main_side = 'input'
+    _database_tab = 'cooling_towers'
 
     def __init__(self, ct_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__('cooling_towers', ct_model_code, capacity, placement)
+        super().__init__(CoolingTower._database_tab, ct_model_code, capacity, placement)
         # initialise subclass attributes
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_in_design'].values[0]))]
 
@@ -611,23 +678,168 @@ class CoolingTower(Component):
         Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
         variable.
         """
-        water_loop_temperatures = components_database['cooling_towers']['T_water_in_design'].unique()
-        CoolingTower._possible_main_ecs = [EnergyCarrier.temp_to_thermal_ec('water', temp) for temp
-                                           in water_loop_temperatures]
+        ct_database = components_database[CoolingTower._database_tab]
+        hot_water_temperatures = ct_database['T_water_in_design'].unique()
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        CoolingTower.possible_main_ecs = possible_main_ecs_dict
 
 
-class HeatExchanger(Component):
+class PowerTransformer(PassiveComponent):
 
-    _possible_main_ecs = None
+    _database_tab = 'power_transformers'
 
-    def __init__(self, he_model_code, placement, capacity):
+    def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
         # initialise parent-class attributes
-        super().__init__('heat_exchangers', he_model_code, capacity, placement)
+        super().__init__(PowerTransformer._database_tab, pt_model_code, capacity, placed_after, placed_before)
+        # initialise subclass attributes
+        self.min_low_voltage = self._model_data['V_min_lowV_side'].values[0]
+        self.max_low_voltage = self._model_data['V_max_lowV_side'].values[0]
+        self.min_high_voltage = self._model_data['V_min_highV_side'].values[0]
+        self.max_high_voltage = self._model_data['V_max_highV_side'].values[0]
+        self.current_form_low_voltage_side = self._model_data['current_form_lowV'].values[0]
+        self.current_form_high_voltage_side = self._model_data['current_form_highV'].values[0]
+
+        self._set_energy_carriers(voltage_before, voltage_after)
+
+    def operate(self, power_transfer, new_voltage=None):
+        """
+        Operate the power transformer, so that it transfers the targeted amount of power. The operation is modeled
+        assuming there are no losses in the transfer.
+
+        :param power_transfer: Targeted power transfer through the power transformer (into or out of the transformer)
+        :type power_transfer: <cea.optimization_new.energyFlow>-EnergyFlow object
+        :param new_voltage: Voltage level to which the power should be transferred
+        :type new_voltage: int, float
+
+        :return input_energy_flows: Electrical energy flow into the power transformer
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Thermal energy flow out of the power transformer
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        self._check_operational_requirements(power_transfer)
+
+        # initialize energy flows
+        power_in = EnergyFlow()
+        power_out = EnergyFlow()
+        if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
+            power_in = EnergyFlow(self.placement['after'], self.placement['before'], self.input_energy_carriers[0].code)
+        else:
+            power_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
+
+        # run operational/efficiency code
+        if Component._model_complexity == 'constant':
+            if self.placement in ['primary', 'secondary']:
+                power_in.profile = self._constant_efficiency_operation(power_transfer)
+            elif self.placement == 'tertiary':
+                power_out.profile = self._constant_efficiency_operation(power_transfer)
+        else:
+            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
+                             f"implemented for {self.technology}")
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {}
+        if self.placement in ['primary', 'secondary']:
+            input_energy_flows = {self.input_energy_carriers[0].code: power_in}
+        elif self.placement == 'tertiary':
+            output_energy_flows = {self.output_energy_carriers[0].code: power_out}
+
+        return input_energy_flows, output_energy_flows
+
+    @staticmethod
+    def _constant_efficiency_operation(power_transfer):
+        """
+        Operate power transformer assuming constant operating conditions, i.e. power_in = power_out.
+        (Since we assume that power transformers incur negligible losses)
+        """
+
+        return power_transfer.profile
+
+    def _set_energy_carriers(self, voltage_before, voltage_after):
+        """
+        This method checks if the power transformer is used with appropriate voltage levels and allocates main,
+        input and output energy carriers according to the power transformer's placement within the supply system.
+        """
+        # check if voltage levels are valid
+        if voltage_before > voltage_after:  # step-down method
+            if not (self.min_high_voltage <= voltage_before <= self.max_high_voltage) and \
+                    (self.min_low_voltage <= voltage_after <= self.max_low_voltage):
+                raise ValueError(f"The selected transformer model {self.code} cannot operate with a high voltage side "
+                                 f"at {voltage_before}V and a low voltage side at {voltage_after}V.")
+        elif voltage_before < voltage_after:  # step-up method
+            if not (self.min_high_voltage <= voltage_before <= self.max_high_voltage) and \
+                    (self.min_low_voltage <= voltage_after <= self.max_low_voltage):
+                raise ValueError(f"The selected transformer model {self.code} cannot operate with a high voltage side "
+                                 f"at {voltage_after}V and a low voltage side at {voltage_before}V.")
+        else:
+            raise ValueError(f'The voltage levels of the power transformer are either identical or invalid. If they '
+                             f'are identical it makes no sense to install a power transformer.')
+        # assign energy carriers
+        if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
+            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))
+            self.input_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))]
+        else:
+            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))
+            self.output_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))]
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible power transformer models that can convert a given electrical input energy carrier into a
+        different electrical output energy carrier (either in step-up or step-down method) and save the result in a
+        pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
+        """
+        power_transformers_db = components_database[PowerTransformer._database_tab]
+        all_transformer_codes = list(power_transformers_db['code'])
+        all_electrical_ecs = EnergyCarrier.get_all_electrical_ecs()
+        PowerTransformer.conversion_matrix = pd.DataFrame(data=[], index=all_electrical_ecs, columns=all_electrical_ecs)
+
+        pt_low_voltage_side_ecs = {transformer['code']:
+                                       EnergyCarrier.all_elec_ecs_between_voltages(transformer['current_form_lowV'],
+                                                                                   transformer['V_max_lowV_side'],
+                                                                                   transformer['V_min_lowV_side'])
+                                   for index, transformer in power_transformers_db.iterrows()}
+        pt_high_voltage_side_ecs = {transformer['code']:
+                                        EnergyCarrier.all_elec_ecs_between_voltages(transformer['current_form_highV'],
+                                                                                    transformer['V_max_highV_side'],
+                                                                                    transformer['V_min_highV_side'])
+                                    for index, transformer in power_transformers_db.iterrows()}
+
+        for ec_in in all_electrical_ecs:
+            for ec_out in all_electrical_ecs:
+                if not ec_in == ec_out:
+                    viable_components = list(set([transformer for transformer in all_transformer_codes
+                                                  if (ec_in in pt_low_voltage_side_ecs[transformer] and
+                                                      ec_out in pt_high_voltage_side_ecs[transformer])
+                                                  or (ec_in in pt_high_voltage_side_ecs[transformer] and
+                                                      ec_out in pt_low_voltage_side_ecs[transformer])]))
+                    PowerTransformer.conversion_matrix[ec_in][ec_out] = viable_components
+                else:
+                    PowerTransformer.conversion_matrix[ec_in][ec_out] = []
+
+        PowerTransformer.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
+                                              for ec_code, component_models
+                                              in PowerTransformer.conversion_matrix.iterrows()}
+
+
+class HeatExchanger(PassiveComponent):
+
+    _database_tab = 'heat_exchangers'
+
+    def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after):
+        # initialise parent-class attributes
+        super().__init__(HeatExchanger._database_tab, he_model_code, capacity, placed_after, placed_before)
         # initialise subclass attributes
         self.max_operating_temp = self._model_data['T_max_operating'].values[0]
         self.min_operating_temp = self._model_data['T_min_operating'].values[0]
         self.medium_in = self._model_data['medium_in'].values[0]
         self.medium_out = self._model_data['medium_out'].values[0]
+
+        self._set_energy_carriers(temperature_before, temperature_after)
 
     def operate(self, heat_transfer, heat_source_temp=None, heat_sink_temp=None):
         """
@@ -649,7 +861,7 @@ class HeatExchanger(Component):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         if not self.main_energy_carrier.code:
-            self._set_energy_carriers(heat_transfer, heat_source_temp, heat_sink_temp)
+            self._reset_energy_carriers(heat_transfer, heat_source_temp, heat_sink_temp)
         self._check_operational_requirements(heat_transfer)
 
         # initialize energy flows
@@ -686,34 +898,65 @@ class HeatExchanger(Component):
     def _constant_efficiency_operation(heat_transfer):
         """
         Operate heat exchanger assuming constant operating conditions, i.e. heat_in = heat_out.
-        (Since we assume that heat exchanger incur negligible losses)
+        (Since we assume that heat exchangers incur negligible losses)
         """
 
         return heat_transfer.profile
 
-    def _set_energy_carriers(self, heat_transfer, heat_source_temp, heat_sink_temp):
+    def _set_energy_carriers(self, temperature_before, temperature_after):
+        """
+        This method checks if the heat exchanger is used with appropriate temperature levels and allocates main,
+        input and output energy carriers according to the heat exchanger's placement within the supply system.
+        """
+        # check if voltage levels are valid
+        if temperature_before > temperature_after:  # cooling method
+            if not (self.min_operating_temp <= temperature_after < temperature_before <= self.max_operating_temp):
+                raise ValueError(f"The selected heat exchanger model {self.code} cannot operate between temperatures "
+                                 f"of {temperature_after}°C and {temperature_before}°C.")
+        elif temperature_before < temperature_after:  # heating method
+            if not (self.min_operating_temp <= temperature_before < temperature_after <= self.max_operating_temp):
+                raise ValueError(f"The selected heat exchanger model {self.code} cannot operate between temperatures "
+                                 f"of {temperature_before}°C and {temperature_after}°C.")
+        else:
+            if self.medium_in == self.medium_out:
+                raise ValueError(f'The energy carrier medium and temperature levels on either side of the heat '
+                                 f'exchanger are either identical or invalid. If they are identical it makes no sense '
+                                 f'to install a heat exchanger.')
+        # assign energy carriers
+        if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
+            self.main_energy_carrier = \
+                EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))
+            self.input_energy_carriers = \
+                [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))]
+        else:
+            self.main_energy_carrier = \
+                EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))
+            self.output_energy_carriers = \
+                [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))]
+
+    def _reset_energy_carriers(self, heat_transfer, heat_source_temp=None, heat_sink_temp=None):
         """
         This method checks if the heat exchanger is used in an appropriate position in the supply system and
-        allocates main, input and output energy flows according to the heat exchangers mode of operation,
+        allocates main, input and output energy flows according to the heat exchangers method of operation,
         i.e. heat absorption or heat rejection.
         """
-        if (heat_source_temp is not None) and (heat_sink_temp is None):  # heat absorption mode
+        if (heat_source_temp is not None) and (heat_sink_temp is None):  # heat absorption method
             if not (self.placement in ['primary', 'secondary']):
                 raise ValueError('Providing a heat source for the heat exchanger would indicate that it is meant to '
                                  'draw the indicated heat transfer flow from that heat source. The heat exchanger '
                                  f"cannot sensibly be placed in the '{self.placement}' component placement under "
-                                 'this mode of operation.')
+                                 'this method of operation.')
             thermal_ec_hot_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, heat_source_temp))
             thermal_ec_cold_side = heat_transfer.energy_carrier
             self._check_he_model_requirements(thermal_ec_hot_side, thermal_ec_cold_side)
             self.main_energy_carrier = thermal_ec_cold_side
             self.input_energy_carriers = [thermal_ec_hot_side]
             self.output_energy_carriers = []
-        elif (heat_source_temp is None) and (heat_sink_temp is not None):  # heat rejection mode
+        elif (heat_source_temp is None) and (heat_sink_temp is not None):  # heat rejection method
             if not (self.placement in ['tertiary']):
                 raise ValueError('Providing a heat sink for the heat exchanger would indicate that it is meant to '
                                  'reject the indicated heat transfer flow. The heat exchanger cannot sensibly be placed '
-                                 f"in the '{self.placement}' component placement under this mode of operation.")
+                                 f"in the '{self.placement}' component placement under this method of operation.")
             thermal_ec_hot_side = heat_transfer.energy_carrier
             thermal_ec_cold_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, heat_sink_temp))
             self.main_energy_carrier = thermal_ec_hot_side
@@ -741,39 +984,37 @@ class HeatExchanger(Component):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
-        variable.
+        Fetch possible heat exchanger models that can convert a given thermal input energy carrier into a different
+        thermal output energy carrier (either for heat absorption or heat rejection) and save the result in a
+        pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
         """
-        heat_exchangers_db = components_database['heat_exchangers']
-        max_operating_temperatures = heat_exchangers_db['T_max_operating']
-        min_operating_temperatures = heat_exchangers_db['T_min_operating']
+        heat_exchangers_db = components_database[HeatExchanger._database_tab]
+        all_heat_exchanger_codes = list(heat_exchangers_db['code'])
+        all_thermal_ecs = EnergyCarrier.get_all_thermal_ecs()
+        HeatExchanger.conversion_matrix = pd.DataFrame(data=[], index=all_thermal_ecs, columns=all_thermal_ecs)
 
-        # when operating the heat exchanger for heat absorption
-        max_cold_side_water_temperature = max_operating_temperatures[heat_exchangers_db['medium_out'] == 'water'].max()
-        min_cold_side_water_temperature = min_operating_temperatures[heat_exchangers_db['medium_out'] == 'water'].min()
-        cold_side_water_ecs = EnergyCarrier.all_thermal_ecs_between_temps('water',
-                                                                          max_cold_side_water_temperature,
-                                                                          min_cold_side_water_temperature)
-        max_cold_side_air_temperature = max_operating_temperatures[heat_exchangers_db['medium_out'] == 'air'].max()
-        min_cold_side_air_temperature = min_operating_temperatures[heat_exchangers_db['medium_out'] == 'air'].min()
-        cold_side_air_ecs = EnergyCarrier.all_thermal_ecs_between_temps('air',
-                                                                        max_cold_side_air_temperature,
-                                                                        min_cold_side_air_temperature)
-        absorption_mode_main_ecs = cold_side_water_ecs + cold_side_air_ecs
+        he_primary_side_ecs = {heat_exchanger['code']:
+                                   EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['medium_in'],
+                                                                               heat_exchanger['T_max_operating'],
+                                                                               heat_exchanger['T_min_operating'])
+                                   for index, heat_exchanger in heat_exchangers_db.iterrows()}
+        he_secondary_side_ecs = {heat_exchanger['code']:
+                                     EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['medium_out'],
+                                                                                 heat_exchanger['T_max_operating'],
+                                                                                 heat_exchanger['T_min_operating'])
+                                    for index, heat_exchanger in heat_exchangers_db.iterrows()}
 
-        # when operating the heat exchanger for heat rejection
-        max_hot_side_water_temperatures = max_operating_temperatures[heat_exchangers_db['medium_in'] == 'water'].max()
-        min_hot_side_water_temperatures = min_operating_temperatures[heat_exchangers_db['medium_in'] == 'water'].min()
-        hot_side_water_ecs = EnergyCarrier.all_thermal_ecs_between_temps('water',
-                                                                         max_hot_side_water_temperatures,
-                                                                         min_hot_side_water_temperatures)
-        max_hot_side_air_temperatures = max_operating_temperatures[heat_exchangers_db['medium_in'] == 'air'].max()
-        min_hot_side_air_temperatures = min_operating_temperatures[heat_exchangers_db['medium_in'] == 'air'].min()
-        hot_side_air_ecs = EnergyCarrier.all_thermal_ecs_between_temps('air',
-                                                                       max_hot_side_air_temperatures,
-                                                                       min_hot_side_air_temperatures)
-        rejection_mode_main_ecs = hot_side_water_ecs + hot_side_air_ecs
+        for ec_in in all_thermal_ecs:
+            for ec_out in all_thermal_ecs:
+                if not ec_in == ec_out:
+                    viable_components = list(set([heat_exchanger for heat_exchanger in all_heat_exchanger_codes
+                                                  if (ec_in in he_primary_side_ecs[heat_exchanger] and
+                                                      ec_out in he_secondary_side_ecs[heat_exchanger])
+                                                  or (ec_in in he_secondary_side_ecs[heat_exchanger] and
+                                                      ec_out in he_primary_side_ecs[heat_exchanger])]))
+                    HeatExchanger.conversion_matrix[ec_in][ec_out] = viable_components
+                else:
+                    HeatExchanger.conversion_matrix[ec_in][ec_out] = []
 
-        # Create a dict of possible main energy carriers for the different modes of operation
-        HeatExchanger._possible_main_ecs = {'absorption': absorption_mode_main_ecs,
-                                            'rejection': rejection_mode_main_ecs}
+        HeatExchanger.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
+                                           for ec_code, component_models in HeatExchanger.conversion_matrix.iterrows()}

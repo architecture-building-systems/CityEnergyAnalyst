@@ -25,7 +25,8 @@ from cea.optimization_new.energyCarrier import EnergyCarrier
 
 
 class EnergyFlow(object):
-    time_frame = 8760  # placeholder, this will be made variable in the future
+    time_frame = 8760  # TODO: turn this into a variable (i.e. replace by timeframe given by typical days approach)
+    allow_negative_flows = False
 
     def __init__(self, input_category=None, output_category=None,
                  energy_carrier_code=None, energy_flow_profile=pd.Series(0.0, index=np.arange(time_frame))):
@@ -35,9 +36,9 @@ class EnergyFlow(object):
             self._energy_carrier = energy_carrier_code
             self._profile = energy_flow_profile
             self._identifier = None
-            # self._is_cyclic = bool
-            # self._qualifier_supply = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
-            # self._qualifier_return = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
+            # self._is_cyclic = bool  # TODO: introduce these variables when more complex component models are added
+            # self._supply_profile = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
+            # self._return_profile = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
         elif not all([input_category is None, output_category is None, energy_carrier_code is None]):
             self.input_category = input_category
             self.output_category = output_category
@@ -53,7 +54,7 @@ class EnergyFlow(object):
 
     @input_category.setter
     def input_category(self, new_input_category):
-        allowed_input_categories = ['source', 'primary', 'secondary', 'tertiary', 'storage']
+        allowed_input_categories = ['source', 'primary', 'secondary', 'tertiary', 'storage', 'primary or secondary']
         if not (new_input_category in allowed_input_categories):
             raise ValueError('An invalid component-placement was specified as the origin of energy flow.')
         else:
@@ -94,6 +95,8 @@ class EnergyFlow(object):
     @profile.setter
     def profile(self, new_profile):
         if isinstance(new_profile, pd.Series) and (len(new_profile) in [1, self.time_frame]):
+            if new_profile.min() < 0 and not EnergyFlow.allow_negative_flows:
+                new_profile[new_profile < 0] = 0.0
             self._profile = new_profile
         else:
             raise ValueError(f'The energy flow profile does not have the correct format, '
@@ -113,21 +116,56 @@ class EnergyFlow(object):
         self._identifier = "_".join([input_category[0:2], output_category[0:2], energy_carrier_code])
         return self
 
-    def add(self, energy_flow_profile, subsystem_id=None):
+    def __add__(self, energy_flow):
         """
         Add the given energy flow profile to an existing energy flow.
         """
-        if isinstance(energy_flow_profile, list) and (subsystem_id is not None):
-            profile_df = pd.DataFrame(energy_flow_profile, columns=subsystem_id)
-            self.profile = profile_df
+        if isinstance(energy_flow, (float, int)):
+            new_profile = self.profile + energy_flow
+        elif isinstance(energy_flow, list):
+            new_profile = self.profile.add(energy_flow)
+        elif isinstance(energy_flow, pd.Series):
+            new_profile = sum([self.profile, energy_flow])
+        elif isinstance(energy_flow, EnergyFlow):
+            if not (self.input_category == energy_flow.input_category) or \
+                    not (self.output_category == energy_flow.output_category):
+                print('Warning! Make sure that the input and output categories of the two energy flows '
+                      'that you are trying to combine match.')
+            new_profile = sum([self.profile, energy_flow.profile])
         else:
-            self.profile = energy_flow_profile
+            raise TypeError('Make sure the energy flow you indicated is either in a list, pd.Series or EnergyFlow '
+                            f'format. Your indicated variable has is of type {type(energy_flow)}.')
 
-        if (self.input_category != energy_flow_profile.input_category) or (
-                self.output_category != energy_flow_profile.output_category):
-            print('Nothing')
+        sum_of_energy_flows = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
+                                         new_profile)
 
-        return self
+        return sum_of_energy_flows
+
+    def __sub__(self, energy_flow):
+        """
+        Subtract the given energy flow profile from an existing energy flow.
+        """
+        if isinstance(energy_flow, (float, int)):
+            new_profile = self.profile - energy_flow
+        elif isinstance(energy_flow, list):
+            energy_flow = [-flow for flow in energy_flow]
+            new_profile = self.profile.add(energy_flow)
+        elif isinstance(energy_flow, pd.Series):
+            new_profile = sum([self.profile, -energy_flow])
+        elif isinstance(energy_flow, EnergyFlow):
+            if not (self.input_category == energy_flow.input_category) or \
+                    not (self.output_category == energy_flow.output_category):
+                print('Warning! Make sure that the input and output categories of the two energy flows '
+                      'that you are trying to combine match.')
+            new_profile = sum([self.profile, -energy_flow.profile])
+        else:
+            raise TypeError('Make sure the energy flow you indicated is either in a list, pd.Series or EnergyFlow '
+                            f'format. Your indicated variable has is of type {type(energy_flow)}.')
+
+        sum_of_energy_flows = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
+                                         new_profile)
+
+        return sum_of_energy_flows
 
     @staticmethod
     def aggregate(energy_flow_list):
@@ -152,6 +190,16 @@ class EnergyFlow(object):
         for energy_carrier in unique_energy_carriers:
             profiles_for_ec = [flow.profile for flow in energy_flow_list if flow.energy_carrier.code == energy_carrier]
             aggregated_profile = pd.concat(profiles_for_ec, axis=1).sum(axis=1)
-            aggregated_flows.append(EnergyFlow(input_categories[0], output_categories[0], energy_carrier, aggregated_profile))
+            aggregated_flows.append(
+                EnergyFlow(input_categories[0], output_categories[0], energy_carrier, aggregated_profile))
 
         return aggregated_flows
+
+    def cap_at(self, profile_threshold):
+        """
+        Create a copy of the given energy flow only with the profile capped at a given threshold.
+        """
+        new_energy_flow = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
+                                     self.profile.clip(upper=profile_threshold))
+
+        return new_energy_flow

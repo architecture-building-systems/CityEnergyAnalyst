@@ -31,6 +31,8 @@ class EnergyPotential(object):
         self._scale = 'Building, Network or Domain'
         self.main_potential = EnergyFlow()
         self.auxiliary_potential = EnergyFlow()
+        self.main_building_profiles = pd.DataFrame()
+        self.auxiliary_building_profiles = pd.DataFrame()
 
     @property
     def type(self):
@@ -66,6 +68,7 @@ class EnergyPotential(object):
         if potentials:
             main_energy_carrier = 'E230AC'
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
+            self.main_building_profiles = potentials['main_building_profiles']
             return self
         else:
             return None
@@ -80,7 +83,9 @@ class EnergyPotential(object):
             main_energy_carrier = 'E230AC'
             auxiliary_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
+            self.main_building_profiles = potentials['main_building_profiles']
             self.auxiliary_potential.generate('source', 'secondary', auxiliary_energy_carrier, potentials['auxiliary_profile'])
+            self.auxiliary_building_profiles = potentials['auxiliary_building_profiles']
             return self
         else:
             return None
@@ -94,6 +99,7 @@ class EnergyPotential(object):
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
+            self.main_building_profiles = potentials['main_building_profiles']
             return self
         else:
             return None
@@ -107,6 +113,7 @@ class EnergyPotential(object):
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
+            self.main_building_profiles = potentials['main_building_profiles']
             return self
         else:
             return None
@@ -171,7 +178,7 @@ class EnergyPotential(object):
             auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         else:
-            auxiliary_potential = pd.DataFrame(columns=['domain_potential'])
+            auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
         for (file, i) in zip(energy_potential_files, np.arange(nbr_of_files)):
             if exists(file):
@@ -192,7 +199,9 @@ class EnergyPotential(object):
             average_temperature = None
         # return potentials and average temperature
         return {'main_profile': main_potential['domain_potential'],
+                'main_building_profiles': main_potential[building_codes],
                 'auxiliary_profile': auxiliary_potential['domain_potential'],
+                'auxiliary_building_profiles': auxiliary_potential[building_codes],
                 'average_temp': average_temperature}
 
     def _get_average_temp(self, temperature_series, building_code=None):

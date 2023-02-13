@@ -63,8 +63,6 @@ class Network(object):
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
 
-        :param connected_buildings: list of connected buildings
-        :type connected_buildings: str list
         :param allow_looped_networks: indicator for whether looped networks can be built
         :type allow_looped_networks: bool
         :param plant_terminal: building name where plant should be built, plant is built next to the largest consumer otherwise

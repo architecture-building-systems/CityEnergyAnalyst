@@ -27,7 +27,10 @@ import numpy as np
 class EnergyCarrier(object):
     _available_energy_carriers = pd.DataFrame
     _thermal_energy_carriers = {}
-    _electrical_energy_carriers = pd.DataFrame
+    _electrical_energy_carriers = {}
+    _combustible_energy_carriers = {}
+    _unit_ghg_dict = {}
+    _unit_cost_dict = {}
 
     def __init__(self, code=None):
         self._code = None
@@ -49,9 +52,8 @@ class EnergyCarrier(object):
     @code.setter
     def code(self, new_code):
         if not (new_code in EnergyCarrier._available_energy_carriers['code'].to_list()):
-            raise ValueError('Please make sure that the energy carriers in the data base match the energy system '
-                             'components inputs and outputs. Make sure they also include the basic energy carriers '
-                             'generated using renewable energy potentials.')
+            raise ValueError(f'Tried to assign a new energy energy carrier using the code "{new_code}". This code '
+                             f'could not be found in the energy carriers database.')
         else:
             self._code = new_code
 
@@ -83,7 +85,8 @@ class EnergyCarrier(object):
                              f"for energy carriers of type '{self.type}' are {allowed_subtypes[self.type]} for the "
                              "moment. \n Including further subtypes would require changes to be made to the code of "
                              "the supply system components that should take the new type into account.")
-        return
+        else:
+            self._subtype = new_subtype
 
     @property
     def qualifier(self):
@@ -164,6 +167,8 @@ class EnergyCarrier(object):
         """
         EnergyCarrier._load_energy_carriers(domain.locator)
         EnergyCarrier._extract_thermal_energy_carriers()
+        EnergyCarrier._extract_electrical_energy_carriers()
+        EnergyCarrier._extract_combustible_energy_carriers()
 
     @staticmethod
     def _load_energy_carriers(locator):
@@ -186,10 +191,83 @@ class EnergyCarrier(object):
     def _extract_electrical_energy_carriers():
         if EnergyCarrier._available_energy_carriers.empty:
             raise AttributeError('The energy carrier database has not been loaded or was not found.')
-        EnergyCarrier._electrical_energy_carriers = \
+        all_electrical_energy_carriers = \
             EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['type'] == 'electrical']
+        electrical_ec_subtypes = all_electrical_energy_carriers['subtype'].unique()
+        for subtype in electrical_ec_subtypes:
+            EnergyCarrier._electrical_energy_carriers[subtype] = \
+                all_electrical_energy_carriers[all_electrical_energy_carriers['subtype'] == subtype]
         if len(EnergyCarrier._electrical_energy_carriers) == 0:
             raise ValueError('No electrical energy carriers could be found in the energy carriers data base.')
+
+    @staticmethod
+    def _extract_combustible_energy_carriers():
+        if EnergyCarrier._available_energy_carriers.empty:
+            raise AttributeError('The energy carrier database has not been loaded or was not found.')
+        all_combustible_energy_carriers = \
+            EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['type'] == 'combustible']
+        combustible_ec_subtypes = all_combustible_energy_carriers['subtype'].unique()
+        for subtype in combustible_ec_subtypes:
+            EnergyCarrier._combustible_energy_carriers[subtype] = \
+                all_combustible_energy_carriers[all_combustible_energy_carriers['subtype'] == subtype]
+        if len(EnergyCarrier._electrical_energy_carriers) == 0:
+            raise ValueError('No electrical energy carriers could be found in the energy carriers data base.')
+
+    @staticmethod
+    def get_thermal_ecs_of_subtype(subtype):
+        """
+        Return a list of all thermal energy carrier codes for the indicated subtype.
+        """
+        thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[subtype]
+        energy_carrier_codes = list(thermal_ecs_of_subtype['code'])
+        return energy_carrier_codes
+
+    @staticmethod
+    def get_all_thermal_ecs():
+        """
+        Return a list of all thermal energy carrier codes.
+        """
+        if not EnergyCarrier._thermal_energy_carriers:
+            EnergyCarrier._extract_thermal_energy_carriers()
+
+        thermal_ec_subtypes = list(EnergyCarrier._thermal_energy_carriers.keys())
+        energy_carrier_codes = [ec_code for subtype in thermal_ec_subtypes
+                                for ec_code in EnergyCarrier.get_thermal_ecs_of_subtype(subtype)]
+        return energy_carrier_codes
+
+    @staticmethod
+    def get_hotter_thermal_ecs(thermal_energy_carrier, subtype=None):
+        """
+        Get all thermal energy carriers with a higher mean temperature level than the indicated thermal energy carrier.
+        """
+        if isinstance(thermal_energy_carrier, EnergyCarrier):
+            thermal_energy_carrier = thermal_energy_carrier.code
+
+        if subtype:
+            all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
+        else:
+            all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                       if EnergyCarrier(ec_code).mean_qual > EnergyCarrier(thermal_energy_carrier).mean_qual]
+
+        return hotter_energy_carrier_codes
+
+    @staticmethod
+    def get_colder_thermal_ecs(thermal_energy_carrier, subtype=None):
+        """
+        Get all thermal energy carriers with a lower mean temperature level than the indicated thermal energy carrier.
+        """
+        if isinstance(thermal_energy_carrier, EnergyCarrier):
+            thermal_energy_carrier = thermal_energy_carrier.code
+
+        if subtype:
+            all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
+        else:
+            all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                       if EnergyCarrier(ec_code).mean_qual < EnergyCarrier(thermal_energy_carrier).mean_qual]
+
+        return colder_energy_carrier_codes
 
     @staticmethod
     def temp_to_thermal_ec(energy_carrier_subtype, temperature):
@@ -249,25 +327,134 @@ class EnergyCarrier(object):
         return thermal_ecs_between_temps
 
     @staticmethod
-    def volt_to_electrical_ec(voltage):
+    def get_electrical_ecs_of_subtype(subtype):
+        """
+        Return a list of all electrical energy carrier codes for the indicated subtype.
+        """
+        electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[subtype]
+        energy_carrier_codes = list(electrical_ecs_of_subtype['code'])
+        return energy_carrier_codes
+
+    @staticmethod
+    def get_all_electrical_ecs():
+        """
+        Return a list of all electrical energy carrier codes.
+        """
+        if not EnergyCarrier._electrical_energy_carriers:
+            EnergyCarrier._extract_electrical_energy_carriers()
+
+        electrical_ec_subtypes = list(EnergyCarrier._electrical_energy_carriers.keys())
+        energy_carrier_codes = [ec_code for subtype in electrical_ec_subtypes
+                                for ec_code in EnergyCarrier.get_electrical_ecs_of_subtype(subtype)]
+        return energy_carrier_codes
+
+    @staticmethod
+    def get_all_other_electrical_ecs(electrical_energy_carrier):
+        if isinstance(electrical_energy_carrier, EnergyCarrier):
+            electrical_energy_carrier = electrical_energy_carrier.code
+
+        all_electrical_ecs = EnergyCarrier.get_all_electrical_ecs()
+        all_other_electrical_ecs = [ec_code for ec_code in all_electrical_ecs if ec_code != electrical_energy_carrier]
+        return all_other_electrical_ecs
+
+    @staticmethod
+    def volt_to_electrical_ec(energy_carrier_subtype, voltage):
         """
         Determine which electrical energy carrier corresponds to a given voltage.
 
+        :param energy_carrier_subtype: type of electrical energy carrier (distinguished by form of the current, e.g. AC)
+        :type energy_carrier_subtype: str
         :param voltage: voltage in V
         :type voltage: float
         :return energy_carrier_code: code of the corresponding electrical energy carrier
         :rtype energy_carrier_code: str
         """
-        if EnergyCarrier._electrical_energy_carriers.empty:
+        if not EnergyCarrier._electrical_energy_carriers:
             EnergyCarrier._extract_electrical_energy_carriers()
 
-        electrical_ec_mean_quals = pd.to_numeric(EnergyCarrier._electrical_energy_carriers['mean_qual'])
+        electrical_ec_mean_quals = pd.to_numeric(EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]['mean_qual'])
         if not np.isnan(voltage):
             index_closest_mean_voltage = (electrical_ec_mean_quals - voltage).abs().nsmallest(n=1).index[0]
-            energy_carrier_code = EnergyCarrier._electrical_energy_carriers['code'].loc[index_closest_mean_voltage]
+            energy_carrier_code = \
+                EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]['code'].loc[index_closest_mean_voltage]
         else:
-            energy_carrier_code = EnergyCarrier._electrical_energy_carriers['code'][0]
+            energy_carrier_code = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]['code'][0]
             print(f'The voltage of a renewable energy potential was not available. '
                   f'We assume that the following energy carrier is output: '
                   f'{EnergyCarrier._electrical_energy_carriers["description"][0]}')
         return energy_carrier_code
+
+    @staticmethod
+    def all_elec_ecs_between_voltages(energy_carrier_subtype, high_voltage, low_voltage):
+        """
+        Get all electrical energy carriers that either fall in the range of or between two predetermined voltages
+        for a given electrical energy carrier type.
+
+        :param energy_carrier_subtype: type of electrical energy carrier (distinguished by form of the current, e.g. AC)
+        :type energy_carrier_subtype: str
+        :param high_voltage: higher one of the two voltages defining the range, in V
+        :type high_voltage: float
+        :param low_voltage: lower one of the two voltages defining the range, in V
+        :type low_voltage: float
+        :return electrical_ecs_between_voltages: list of codes of the corresponding electrical energy carriers that
+                                                 correspond to the prescribed range.
+        :rtype electrical_ecs_between_voltages: list of str
+        """
+        if np.isnan(high_voltage) and np.isnan(low_voltage):
+            electrical_ecs_between_voltages = []
+        elif not np.isnan(high_voltage) and not np.isnan(low_voltage):
+            top_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
+            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
+            electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
+            electrical_ecs_between_voltages = [energy_carrier['code']
+                                               for row, energy_carrier in electrical_ecs_of_subtype.iterrows()
+                                               if (top_of_range_ec.mean_qual >= energy_carrier['mean_qual'] >= bottom_of_range_ec.mean_qual)]
+        else:
+            raise ValueError('Please make sure the boundaries of the indicated temperature range are valid.')
+
+        return electrical_ecs_between_voltages
+
+    @staticmethod
+    def get_combustible_ecs_of_subtype(subtype):
+        """
+        Return a list of all combustible energy carrier codes for the indicated subtype.
+        """
+        if not EnergyCarrier._combustible_energy_carriers:
+            EnergyCarrier._extract_combustible_energy_carriers()
+        combustible_ecs_of_subtype = EnergyCarrier._combustible_energy_carriers[subtype]
+        energy_carrier_codes = list(combustible_ecs_of_subtype['code'])
+        return energy_carrier_codes
+
+    @staticmethod
+    def get_unit_ghg(energy_carrier_code):
+        """
+        Return the unit greenhouse gas emissions of a specific energy carrier from the database.
+        """
+        if not EnergyCarrier._unit_ghg_dict:
+            available_energy_carrier_codes = list(EnergyCarrier._available_energy_carriers['code'])
+            EnergyCarrier._unit_ghg_dict = {ec_code:
+                                                EnergyCarrier._available_energy_carriers[
+                                                    EnergyCarrier._available_energy_carriers['code'] == ec_code]
+                                                ['unit_ghg_kgCO2.kWh'].values[0]
+                                            for ec_code in available_energy_carrier_codes}
+
+        unit_ghg = EnergyCarrier._unit_ghg_dict[energy_carrier_code]
+
+        return unit_ghg
+
+    @staticmethod
+    def get_unit_cost(energy_carrier_code):
+        """
+        Return the unit greenhouse gas emissions of a specific energy carrier from the database.
+        """
+        if not EnergyCarrier._unit_cost_dict:
+            available_energy_carrier_codes = list(EnergyCarrier._available_energy_carriers['code'])
+            EnergyCarrier._unit_cost_dict = {ec_code:
+                                                 EnergyCarrier._available_energy_carriers[
+                                                     EnergyCarrier._available_energy_carriers['code'] == ec_code]
+                                                 ['unit_cost_USD.kWh'].values[0]
+                                             for ec_code in available_energy_carrier_codes}
+
+        unit_cost = EnergyCarrier._unit_ghg_dict[energy_carrier_code]
+
+        return unit_cost
