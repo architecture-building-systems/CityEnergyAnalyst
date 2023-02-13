@@ -6253,6 +6253,146 @@ get_database_conversion_systems_new:
           type: string
           unit: 'NA'
           values: '{"W"}'
+    power_transformers:
+      columns:
+        Description:
+          description: Describes the type of power transformer
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        LT_yr:
+          description: lifetime of this technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        V_max_highV_side:
+          description: maximum voltage that can be applied to the high voltage side
+          type: float
+          unit: '[V]'
+          values: '{0.0...n}'
+        V_max_lowV_side:
+          description: maximum voltage that can be applied to the low voltage side
+          type: float
+          unit: '[V]'
+          values: '{0.0...n}'
+        V_min_highV_side:
+          description: minimum voltage that can be applied to the high voltage side
+          type: float
+          unit: '[V]'
+          values: '{0.0...n}'
+        V_min_lowV_side:
+          description: minimum voltage that can be applied to the low voltage side
+          type: float
+          unit: '[V]'
+          values: '{0.0...n}'
+        a:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+                + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{n...n}'
+        assumption:
+          description: items made by assumptions in this technology
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: depends on the data availability
+        b:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+                + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        c:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+                + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: 'maximum capacity '
+          type: float
+          unit: NA  # [W] or [m2]
+          values: '{0.0...n}'
+          min: 0.0
+        cap_min:
+          description: minimum capacity
+          type: float
+          unit: NA  # [W] or [m2]
+          values: '{0.0...n}'
+          min: 0.0
+        code:
+          description: identifier of each unique equipment
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
+        current_form_highV:
+          description: "form of the current on the high voltage side, i.e. 'AC' or 'DC'."
+          type: string
+          unit: 'NA'
+          values: '{AC, DC}'
+        current_form_lowV:
+          description: "form of the current on the low voltage side, i.e. 'AC' or 'DC'."
+          type: string
+          unit: 'NA'
+          values: '{AC, DC}'
+        d:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+                + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        e:
+          description: 'parameter in the investment cost function, f(x) = a + b*x^c
+                + d*ln(x) + e*x*ln*(x)  '
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        reference:
+          description: sources of some of the parameters in this data-table
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        type:
+          choice:
+            values:
+              - 'small interconnection transformer'
+              - 'medium interconnection transformer'
+              - 'large interconnection transformer'
+          description: type of power transformer
+          type: string
+          unit: 'NA'
+          values: '{"small interconnection transformer", "medium interconnection transformer", "large interconnection transformer"}'
+        unit:
+          description: unit of the min/max capacity
+          type: string
+          unit: 'NA'
+          values: '{"VA"}'
     solar_thermal_panels:
       columns:
         C_eff:
