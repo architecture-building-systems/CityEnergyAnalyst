@@ -130,6 +130,11 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         else:
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
+        # make sure each floor is at least 1m
+        # we assume floors_ag is accurate and adjust height_ag accordingly
+        less_than_1m = shapefile['height_ag'] < shapefile['floors_ag']
+        shapefile.loc[less_than_1m, ['height_ag']] = shapefile[less_than_1m]['floors_ag']
+
         # add fields for floors and height below ground
         shapefile["height_bg"] = pd.Series(np.nan)
         shapefile["floors_bg"] = pd.Series(np.nan)
