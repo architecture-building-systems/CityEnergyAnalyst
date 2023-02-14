@@ -57,8 +57,22 @@ def generate_sample_data(locator, sample_buildings):
     return sample_data
 
 
+def fetch_simulation_buildings(sample_buildings, zone_df, buffer_m):
+    simulation_buildings = set()
+    for building in sample_buildings:
+        buffer = zone_df[zone_df["Name"] == building].buffer(buffer_m).geometry
+        buildings_intersect = zone_df.intersects(buffer.values[0])
+
+        for building_name in zone_df[buildings_intersect]["Name"].values:
+            simulation_buildings.add(building_name)
+
+    return simulation_buildings
+
+
 def main(config):
     sample_buildings = config.radiation_simplified.sample_buildings
+    buffer_m = config.radiation_simplified.buffer
+    config.radiation.buildings = sample_buildings
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
@@ -103,6 +117,8 @@ def main(config):
                                                                                                           terrain_raster,
                                                                                                           architecture_wwr_df,
                                                                                                           geometry_staging_location)
+    # Fetch simulation buildings based on proximity to sample buildings
+    simulation_buildings = fetch_simulation_buildings(sample_buildings, zone_df, buffer_m)
 
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
@@ -111,7 +127,7 @@ def main(config):
     print("Creating radiance material file")
     cea_daysim.create_radiance_material(building_surface_properties)
     print("Creating radiance geometry file")
-    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, sample_buildings,
+    cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, simulation_buildings,
                                         surroundings_building_names, geometry_staging_location)
 
     print("Converting files for DAYSIM")
@@ -122,7 +138,7 @@ def main(config):
     cea_daysim.execute_radfiles2daysim()
 
     time1 = time.time()
-    run_daysim_simulation(cea_daysim, sample_buildings, locator, config.radiation, geometry_staging_location,
+    run_daysim_simulation(cea_daysim, simulation_buildings, locator, config.radiation, geometry_staging_location,
                           num_processes=config.get_number_of_processes())
 
     # Remove staging location after everything is successful
