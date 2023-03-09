@@ -476,7 +476,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_zone_geometry()):
             return []
         from geopandas import GeoDataFrame as gdf
-        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
+        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values.astype(str))
         return zone_building_names
 
     def get_building_typology(self):
