@@ -652,7 +652,7 @@ class RealParameter(Parameter):
                 return ''
             else:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
-        return format(value, ".%i" % self._decimal_places)
+        return format(float(value), ".%i" % self._decimal_places)
 
     def decode(self, value):
         try:
