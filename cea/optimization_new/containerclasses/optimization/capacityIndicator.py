@@ -12,7 +12,7 @@ values = [0.3, 0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.2, 0.3]
 categories = ['primary', 'primary', 'primary', 'secondary', 'secondary', 'secondary', 'secondary', 'tertiary', 'tertiary']
 codes = ['VCC1', 'VCC2', 'ACH1', 'BO1', 'BO2', 'OEHR1', 'FORC1', 'CT1', 'CT2']
 
-The Capacity Indicator Vector class behaves like a sequence (which is relevant for some methods of the deap-library)
+The <CapacityIndicatorVector>-class behaves like a sequence (which is relevant for some methods of the deap-library)
 """
 
 __author__ = "Mathias Niffeler"
