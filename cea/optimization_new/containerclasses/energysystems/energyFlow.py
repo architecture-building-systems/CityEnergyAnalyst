@@ -21,7 +21,7 @@ __status__ = "Production"
 import numpy as np
 import pandas as pd
 
-from cea.optimization_new.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
 
 
 class EnergyFlow(object):
@@ -127,10 +127,6 @@ class EnergyFlow(object):
         elif isinstance(energy_flow, pd.Series):
             new_profile = sum([self.profile, energy_flow])
         elif isinstance(energy_flow, EnergyFlow):
-            if not (self.input_category == energy_flow.input_category) or \
-                    not (self.output_category == energy_flow.output_category):
-                print('Warning! Make sure that the input and output categories of the two energy flows '
-                      'that you are trying to combine match.')
             new_profile = sum([self.profile, energy_flow.profile])
         else:
             raise TypeError('Make sure the energy flow you indicated is either in a list, pd.Series or EnergyFlow '
@@ -153,10 +149,6 @@ class EnergyFlow(object):
         elif isinstance(energy_flow, pd.Series):
             new_profile = sum([self.profile, -energy_flow])
         elif isinstance(energy_flow, EnergyFlow):
-            if not (self.input_category == energy_flow.input_category) or \
-                    not (self.output_category == energy_flow.output_category):
-                print('Warning! Make sure that the input and output categories of the two energy flows '
-                      'that you are trying to combine match.')
             new_profile = sum([self.profile, -energy_flow.profile])
         else:
             raise TypeError('Make sure the energy flow you indicated is either in a list, pd.Series or EnergyFlow '
