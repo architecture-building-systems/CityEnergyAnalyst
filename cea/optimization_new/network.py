@@ -43,12 +43,13 @@ class Network(object):
     _domain_buildings_supply_temp_K = pd.DataFrame()
     _domain_buildings_return_temp_K = pd.DataFrame()
     _domain_locator = None
+    _pipe_catalog = pd.DataFrame()
     _configuration_defaults = {'network_type': None,
-                               'thermal_transfer_unit_design_head_m': None,
-                               'hazen_williams_friction_coefficient': None,
-                               'peak_load_velocity_ms': None,
-                               'equivalent_length_factor': None,
-                               'peak_load_percentage': None}
+                               'thermal_transfer_unit_design_head_m': 0.0,
+                               'hazen_williams_friction_coefficient': 0.0,
+                               'peak_load_velocity_ms': 0.0,
+                               'equivalent_length_factor': 0.0,
+                               'peak_load_percentage': 0.0}
 
     def __init__(self, network_id, connected_buildings):
         self.identifier = network_id
@@ -57,6 +58,7 @@ class Network(object):
         self.network_nodes = Gdf()
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
+        self.piping_cost = 0.0
 
     def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
         """
@@ -200,7 +202,6 @@ class Network(object):
 
         # calculate total network losses (2 x thermal losses of supply to account for return pipes)
         self.network_losses = thermal_losses_supply_kWh.sum(axis=1) * 2 - accumulated_head_loss_total_kW.values
-        # @lguilhermers, @shanshanhsieh --- please review the line above ---
 
         # aggregate network piping information
         self.network_piping = self.network_edges[['Type_mat', 'Pipe_DN']].drop_duplicates()
@@ -210,6 +211,7 @@ class Network(object):
             using_type = self.network_edges.apply(lambda row: row['Type_mat'] == pipe_type['Type_mat'] and
                                                               row['Pipe_DN'] == pipe_type['Pipe_DN'], axis=1)
             self.network_piping['length_m'][index] = self.network_edges['length_m'][using_type].sum()
+        self._calculate_piping_cost()
 
         return self.network_losses, self.network_piping
 
@@ -219,6 +221,8 @@ class Network(object):
         Network._load_pot_network(domain)
         Network._set_potential_network_terminals(domain)
         Network._set_building_operation_parameters(domain)
+        Network._pipe_catalog = pd.read_excel(Network._domain_locator.get_database_distribution_systems(),
+                                              sheet_name='THERMAL_GRID')
 
     @staticmethod
     def _load_pot_network(domain):
@@ -481,34 +485,33 @@ class Network(object):
 
             # add nodes
             consumer_nodes = []
-            for node in self.network_nodes.iterrows():
-                if node[1]["Type"] == "CONSUMER":
-                    demand_pattern = node[1]['Building']
+            for node_name, node in self.network_nodes.iterrows():
+                if node["Type"] == "CONSUMER":
+                    demand_pattern = node['Building']
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
-                    consumer_nodes.append(node[0])
-                    wn.add_junction(node[0],
+                    consumer_nodes.append(node_name)
+                    wn.add_junction(str(node_name),
                                     base_demand=base_demand_m3s,
                                     demand_pattern=demand_pattern,
                                     elevation=self._configuration_defaults['thermal_transfer_unit_design_head_m'],
-                                    coordinates=node[1]["coordinates"])
-                elif node[1]["Type"] == "PLANT":
+                                    coordinates=node["coordinates"])
+                elif node["Type"] == "PLANT":
                     base_head = int(self._configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
-                    start_node = node[0]
+                    start_node = str(node_name)
                     name_node_plant = start_node
                     wn.add_reservoir(start_node,
                                      base_head=base_head,
-                                     coordinates=node[1]["coordinates"])
+                                     coordinates=node["coordinates"])
                 else:
-                    wn.add_junction(node[0],
+                    wn.add_junction(str(node_name),
                                     elevation=0,
-                                    coordinates=node[1]["coordinates"])
+                                    coordinates=node["coordinates"])
 
             # add pipes
-            for edge in self.network_edges.iterrows():
-                length_m = edge[1]["length_m"]
-                edge_name = edge[0]
-                wn.add_pipe(edge_name, edge[1]["start node"],
-                            edge[1]["end node"],
+            for edge_name, edge in self.network_edges.iterrows():
+                length_m = edge["length_m"]
+                wn.add_pipe(str(edge_name), edge["start node"],
+                            edge["end node"],
                             length=length_m * (1 + self._configuration_defaults['equivalent_length_factor']),
                             roughness=self._configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
@@ -528,9 +531,7 @@ class Network(object):
             wnm_results = sim.run_sim()
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
-            pipe_catalog = pd.read_excel(self._domain_locator.get_database_distribution_systems(),
-                                         sheet_name='THERMAL_GRID')
-            Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, pipe_catalog,
+            Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
                                                                          velocity_ms=self._configuration_defaults[
                                                                              'peak_load_velocity_ms'],
                                                                          peak_load_percentage=
@@ -545,9 +546,8 @@ class Network(object):
             # modify diameter and run simulations
             self.network_edges['Pipe_DN'] = pipe_dn
             self.network_edges['D_int_m'] = D_int_m
-            for edge in self.network_edges.iterrows():
-                edge_name = edge[0]
-                pipe = wn.get_link(edge_name)
+            for edge_name, edge in self.network_edges.iterrows():
+                pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
             wnm_results = sim.run_sim()
@@ -576,3 +576,13 @@ class Network(object):
             wnm_results = sim.run_sim()
 
         return wnm_results, wnm_pipe_diameters
+
+    def _calculate_piping_cost(self):
+        """
+        Calculate piping cost for a fully built network.
+        """
+        piping_unit_cost_dict = {pipe_type['Pipe_DN']: pipe_type['Inv_USD2015perm']
+                                 for ind, pipe_type in Network._pipe_catalog.iterrows()}
+        piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['Pipe_DN']] * pipe_segment['length_m']
+                                      for ind, pipe_segment in self.network_piping.iterrows()])
+        self.piping_cost = piping_cost_aggregated
