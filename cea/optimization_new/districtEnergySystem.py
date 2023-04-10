@@ -28,27 +28,34 @@ __status__ = "Production"
 import numpy as np
 import pandas as pd
 
+from deap import algorithms, base, creator, tools
+
 from cea.optimization_new.network import Network
-from cea.optimization_new.energyFlow import EnergyFlow
 from cea.optimization_new.supplySystem import SupplySystem
+from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
+from cea.optimization_new.containerclasses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.optimization.algorithm import GeneticAlgorithm
 
 
 class DistrictEnergySystem(object):
-    max_nbr_networks = 0
-    building_ids = []
+    _max_nbr_networks = 0
+    optimisation_algorithm = GeneticAlgorithm()
 
-    def __init__(self, connectivity):
+    def __init__(self, connectivity, buildings, energy_potentials):
         self._identifier = 'xxx'
         self.connectivity = connectivity
+
+        self.consumers = buildings
         self.stand_alone_buildings = []
         self.networks = []
-        self.subsystem_demands = {}
+
+        self.energy_potentials = energy_potentials
         self.distributed_potentials = {}
+
+        self.subsystem_demands = {}
         self.supply_systems = {}
-        self.total_annualised_cost = 'xxx'
-        self.total_annualised_heat_release = 'xxx'
-        self.total_annualised_system_energy = 'xxx'
-        self.total_annualised_GHG = 'xxx'
+        self.best_supsys_combinations = []
 
     @property
     def identifier(self):
@@ -62,6 +69,65 @@ class DistrictEnergySystem(object):
         else:
             print("Please set a valid identifier.")
 
+    @staticmethod
+    def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials):
+        """
+        Identify optimal district energy systems. The selected district energy systems represent an optimal combination
+        of the most favourable supply systems for each of the networks in the district (i.e. best combinations of
+        pareto-optimal solutions for the subsystems' supply systems).
+
+        :param connectivity_vector: connectivity vector specifying which buildings are connected by a thermal network.
+        :type connectivity_vector: <cea.optimization_new.containerclasses.optimization.connectivityVector>-
+                                   ConnectivityVector class object
+        :param district_buildings: all buildings in the selected district
+        :type district_buildings: list of <cea.optimization_new.building>-Building class objects
+        :param energy_potentials: renewable energy potentials in the district
+        :type energy_potentials: list of <cea.optimization_new.containerclasses.energysystems.energyPotential>-
+                                 EnergyPotential class objects
+        """
+        # build a new district cooling system including its networks
+        new_district_cooling_system = DistrictEnergySystem(connectivity_vector,
+                                                           district_buildings,
+                                                           energy_potentials)
+
+        non_dominated_systems = new_district_cooling_system.evaluate()
+
+        return non_dominated_systems
+
+    def evaluate(self):
+        """
+        Evaluate the possible district energy system configurations (based on buildings, potentials and connectivity) by:
+
+        1. Generating networks between buildings corresponding to the selected connectivity vector.
+        2. Determine demand and potentials for each subsystem's supply system.
+        3. Generate as list of pareto-optimal supply systems for each subsystem.
+        4. Find the best combinations of the subsystem's supply systems (with respect to selected objectives).
+
+        :return self.best_supsys_combinations: the best district energy system configurations
+                                               (i.e. combinations of subsystems' supply systems)
+        :rtype self.best_supsyst_combinations: list of lists of the following structure
+                    [['connectivty', 'subsys_1-supsys_x', 'subsys_id_2-supsys_y', ...],
+                     ['connectivty', 'subsys_1-supsys_z', 'subsys_id_2-supsys_m', ...],
+                     ...
+                    ]
+        """
+        print(f"Starting evaluation of connectivity vector: {self.connectivity.values}")
+
+        # build networks to fit the district energy system's connectivity
+        self.generate_networks()
+
+        # aggregate demands and distribute potentials for each network
+        self.aggregate_demand()
+        self.distribute_potentials()
+
+        # optimise supply systems for each network
+        self.generate_optimal_supply_systems()
+
+        # aggregate objective functions for all subsystems across the entire district energy system
+        self.combine_supply_systems()
+
+        return self.best_supsys_combinations
+
     def generate_networks(self):
         """
         Generate networks according to the connectivity-vector. Generate list of stand-alone buildings and a list
@@ -70,17 +136,18 @@ class DistrictEnergySystem(object):
         :return self.networks: thermal networks placed in the domain
         :rtype self.networks: list of <cea.optimization_new.network>-Network objects
         """
-        network_ids = np.unique(np.array(self.connectivity))
+        network_ids = np.unique(np.array(self.connectivity.values))
+        building_ids = [building.identifier for building in self.consumers]
         for network_id in network_ids:
             if network_id == 0:
-                buildings_are_disconnected = list(self.connectivity == network_id)
+                buildings_are_disconnected = [connection == network_id for connection in self.connectivity]
                 self.stand_alone_buildings = [building_id for [building_id, is_disconnected]
-                                              in zip(DistrictEnergySystem.building_ids, buildings_are_disconnected)
+                                              in zip(building_ids, buildings_are_disconnected)
                                               if is_disconnected]
             else:
-                buildings_are_connected_to_network = list(self.connectivity == network_id)
+                buildings_are_connected_to_network = [connection == network_id for connection in self.connectivity]
                 connected_buildings = [building_id for [building_id, is_connected]
-                                       in zip(DistrictEnergySystem.building_ids, buildings_are_connected_to_network)
+                                       in zip(building_ids, buildings_are_connected_to_network)
                                        if is_connected]
                 full_network_identifier = 'N' + str(1000 + network_id)
                 network = Network(full_network_identifier, connected_buildings)
@@ -89,17 +156,15 @@ class DistrictEnergySystem(object):
                 self.networks.append(network)
         return self.networks
 
-    def aggregate_demand(self, domain_buildings):
+    def aggregate_demand(self):
         """
         Calculate aggregated thermal energy demand profiles of the district energy system's subsystems, i.e. thermal
         networks. This includes the connected building's thermal energy demand and network losses.
 
-        :param domain_buildings: all buildings in domain
-        :type domain_buildings: list of <cea.optimization_new.building>-Building objects
         :return self.subsystem_demands: aggregated demand profiles of subsystems
         :rtype self.subsystem_demands: dict of pd.Series (keys are network.identifiers)
         """
-        building_energy_carriers = np.array([building.demand_flow.energy_carrier.code for building in domain_buildings])
+        building_energy_carriers = np.array([building.demand_flow.energy_carrier.code for building in self.consumers])
         required_energy_carriers = np.unique(building_energy_carriers)
         if len(required_energy_carriers) != 1:
             raise ValueError(f"The building energy demands require {len(required_energy_carriers)} different energy "
@@ -116,7 +181,7 @@ class DistrictEnergySystem(object):
                                        for network_id in network_ids])
 
         for network in self.networks:
-            building_demand_flows = [building.demand_flow for building in domain_buildings
+            building_demand_flows = [building.demand_flow for building in self.consumers
                                      if building.identifier in network.connected_buildings]
             aggregated_demand = EnergyFlow.aggregate(building_demand_flows)[0]
             aggregated_demand.profile += network.network_losses
@@ -124,7 +189,7 @@ class DistrictEnergySystem(object):
 
         return self.subsystem_demands
 
-    def distribute_potentials(self, domain_energy_potentials):
+    def distribute_potentials(self):
         """
         Distribute the total domain's energy potentials depending on the buildings within each of networks (for
         building-scale potentials) or on the share of the domain's total demand each network makes out (for domain-scale
@@ -134,7 +199,7 @@ class DistrictEnergySystem(object):
         network_identifiers = [network.identifier for network in self.networks]
         self.distributed_potentials = {network_id: {} for network_id in network_identifiers}
 
-        for energy_potential in domain_energy_potentials:
+        for energy_potential in self.energy_potentials:
             main_energy_carrier = energy_potential.main_potential.energy_carrier.code
             # distribute building-scale energy potentials
             if energy_potential.scale == 'Building':
@@ -191,7 +256,7 @@ class DistrictEnergySystem(object):
 
         return self.distributed_potentials
 
-    def generate_supply_systems(self):
+    def generate_optimal_supply_systems(self):
         """
         Build and calculate operation for supply systems of each of the subsystems of the district energy system:
 
@@ -199,15 +264,142 @@ class DistrictEnergySystem(object):
         :rtype self.supply_systems: list of <cea.optimization_new.supplySystem>-SupplySystem objects
         """
         for network in self.networks:
-            supply_system = SupplySystem(demand_energy_flow=self.subsystem_demands[network.identifier],
-                                         available_potentials=self.distributed_potentials[network.identifier])
-            supply_system.build_system_structure()
-            supply_system.optimize_subsystem()
-            self.supply_systems[network.identifier] = supply_system
+            system_structure = SupplySystemStructure(max_supply_flow=self.subsystem_demands[network.identifier],
+                                                     available_potentials=self.distributed_potentials[network.identifier])
+            system_structure.build()
+
+            pareto_optimal_systems = self.optimise_supply_system(system_structure, network)
+            self.supply_systems[network.identifier] = pareto_optimal_systems
+
         return self.supply_systems
+
+    def optimise_supply_system(self, system_structure, subsystem):
+        """
+        Find 'near pareto-optimal' (i.e. non-dominated) supply systems that match the given supply system structure and
+        supply the energy demand required by the indicated subsystem.
+
+        :param system_structure: structure which the generated supply systems need to satisfy
+        :type system_structure: <cea.optimization_new.supplySystem>-SupplySystem object
+        :param subsystem: generated supply systems need to meet this subsystem's demand
+        :type subsystem: <cea.optimization_new.network>-Network object OR <cea.optimization_new.building>-Building object
+
+        :return optimal_supply_systems: result of the optimization algorithm, i.e. a set of supply systems minimising
+                                        the chosen objective functions
+        :rtype optimal_supply_systems:
+
+        """
+        print(f"Starting optimisation of supply system {subsystem.identifier}.")
+
+        structure_civ = system_structure.capacity_indicators
+        algorithm = SupplySystem.optimisation_algorithm
+
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,)*algorithm.nbr_objectives)
+        creator.create("Individual", CapacityIndicatorVector, fitness=creator.FitnessMin)
+        ref_points = tools.uniform_reference_points(algorithm.nbr_objectives, 12)
+
+        toolbox = base.Toolbox()
+        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ)
+        toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+        subsystem_demand = self.subsystem_demands[subsystem.identifier]
+        toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
+                         system_structure=system_structure, demand_energy_flow=subsystem_demand,
+                         objectives=algorithm.objectives)
+        toolbox.register("mate", CapacityIndicatorVector.mate, algorithm=algorithm)
+        toolbox.register("mutate", CapacityIndicatorVector.mutate, algorithm=algorithm)
+        toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
+
+        population = toolbox.population(n=algorithm.population)
+        fitnesses = toolbox.map(toolbox.evaluate, population)
+        for ind, fit in zip(population, fitnesses):
+            ind.fitness.values = fit
+
+        for generation in range(1, algorithm.generations):
+            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+
+            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
+
+            population = toolbox.select(population + offspring, algorithm.population)
+            print(f"{subsystem.identifier}: gen {generation}")
+
+        optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
+        [supply_system.evaluate() for supply_system in optimal_supply_systems]
+        print(f"Supply system {subsystem.identifier} optimised.")
+
+        return optimal_supply_systems
+
+    def combine_supply_systems(self):
+        """
+        Combine optimal supply systems of the different subsystems (networks or buildings) TODO: add latter option to config
+        of the district energy system and identify the non-dominated system combinations (i.e. combinations that
+        perform the best with respect to the selected optimisation objectives).
+
+        :return self.best_subsys_combinations: A list of identifiers specifying which supply system configuration has
+                                               been selected for each subsystems as part of the best system
+                                               combinations.
+        :rtype self.best_subsystem_combinations: list of list of str
+        """
+        # create a system combination container with an associated fitness value (required by the sorting function of deap)
+        algorithm = SupplySystem.optimisation_algorithm
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * algorithm.nbr_objectives)
+        creator.create("SystemsCombination", list, fitness=creator.FitnessMin)
+
+        # initialise a list of supply system combinations by adding the supply systems of the first network to them
+        first_network = list(self.supply_systems.keys())[0]
+        connectivity_str = self.connectivity.as_str()
+        supply_system_combinations = [creator.SystemsCombination([connectivity_str,  first_network + "-" + str(i)])
+                                      for i, supply_system in enumerate(self.supply_systems[first_network])]
+        for i, system_combination in enumerate(supply_system_combinations):
+            system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
+        supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
+                                                                   first_front_only=True)
+
+        # combining non-dominated supply-system solutions for all networks
+        for network, supply_system in self.supply_systems.items():
+            if network == first_network:
+                continue
+
+            new_supply_system_combinations = []
+            new_combinations = []
+            for combination in supply_system_combinations:
+                new_combinations = [creator.SystemsCombination(combination + [network + '-' + str(i)])
+                                    for i, supply_system in enumerate(self.supply_systems[network])]
+                for i, system_combination in enumerate(new_combinations):
+                    system_combination.fitness.values = \
+                        tuple([fit_1 + fit_2 for fit_1, fit_2 in
+                               zip(list(combination.fitness.values),
+                                   self.supply_systems[network][i].overall_fitness.values())])
+
+            new_supply_system_combinations += new_combinations
+            supply_system_combinations = tools.emo.sortLogNondominated(new_supply_system_combinations, 100,
+                                                                       first_front_only=True)
+
+        self.best_supsys_combinations = supply_system_combinations
+
+        return self.best_supsys_combinations
 
     @staticmethod
     def initialize_class_variables(domain):
-        """ Define a maximum number of networks and store domain building identifiers in class variables. """
-        DistrictEnergySystem.max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
-        DistrictEnergySystem.building_ids = [building.identifier for building in domain.buildings]
+        """ Store maximum number of networks and optimisation algorithm parameters in class variables. """
+        DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
+
+        # set district energy system optimisation parameters
+        selection_algorithm = domain.config.optimization_new.networks_algorithm
+        mutation_method = domain.config.optimization_new.networks_mutation_method
+        crossover_method = domain.config.optimization_new.networks_crossover_method
+        population_size = domain.config.optimization_new.ga_population_size
+        number_of_generations = domain.config.optimization_new.ga_number_of_generations
+        mut_prob = domain.config.optimization_new.ga_mutation_prob
+        cx_prob = domain.config.optimization_new.ga_crossover_prob
+        mut_eta = domain.config.optimization_new.ga_mutation_eta
+        DistrictEnergySystem.optimisation_algorithm = GeneticAlgorithm(selection=selection_algorithm,
+                                                                       mutation=mutation_method,
+                                                                       crossover=crossover_method,
+                                                                       population_size=population_size,
+                                                                       number_of_generations=number_of_generations,
+                                                                       mut_probability=mut_prob, cx_probability=cx_prob,
+                                                                       mut_eta=mut_eta)
