@@ -17,7 +17,7 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
-from cea.optimization_new.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
 
 
 class Building(object):
