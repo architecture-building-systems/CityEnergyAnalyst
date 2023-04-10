@@ -23,8 +23,8 @@ import pandas as pd
 from math import log
 # third party libraries
 # other files (modules) of this project
-from cea.optimization_new.energyCarrier import EnergyCarrier
-from cea.optimization_new.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.technologies.chiller_vapor_compression import calc_VCC_const
 from cea.technologies.chiller_absorption import calc_ACH_const
@@ -151,9 +151,12 @@ class Component(object):
     def calculate_cost(self):
         """ placeholder for subclass investment cost functions """
         capacity_W = self.capacity * 1000
-        capex_USD = self._cost_params['a'] + \
-                         self._cost_params['b'] * capacity_W ** self._cost_params['c'] + \
-                         (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * log(capacity_W)
+        if capacity_W <= 0:
+            capex_USD = 0
+        else:
+            capex_USD = self._cost_params['a'] + \
+                        self._cost_params['b'] * capacity_W ** self._cost_params['c'] + \
+                        (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * log(capacity_W)
 
         capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
         opex_a_fix_USD = capex_USD * self._cost_params['om_share']
