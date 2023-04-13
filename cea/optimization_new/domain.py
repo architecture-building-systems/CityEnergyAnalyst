@@ -136,7 +136,7 @@ class Domain(object):
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-        toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, domain_buildings=self.buildings,
+        toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
                          energy_potentials=self.energy_potentials)
         toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
         toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
