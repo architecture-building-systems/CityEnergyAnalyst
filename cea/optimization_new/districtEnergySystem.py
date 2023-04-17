@@ -28,6 +28,7 @@ __status__ = "Production"
 import numpy as np
 import pandas as pd
 
+from copy import deepcopy
 from deap import algorithms, base, creator, tools
 
 from cea.optimization_new.network import Network
@@ -40,6 +41,7 @@ from cea.optimization_new.containerclasses.optimization.algorithm import Genetic
 
 class DistrictEnergySystem(object):
     _max_nbr_networks = 0
+    _number_of_selected_DES = 0
     optimisation_algorithm = GeneticAlgorithm()
 
     def __init__(self, connectivity, buildings, energy_potentials):
@@ -94,7 +96,7 @@ class DistrictEnergySystem(object):
 
         return non_dominated_systems
 
-    def evaluate(self):
+    def evaluate(self, return_full_des=False):
         """
         Evaluate the possible district energy system configurations (based on buildings, potentials and connectivity) by:
 
@@ -125,6 +127,10 @@ class DistrictEnergySystem(object):
 
         # aggregate objective functions for all subsystems across the entire district energy system
         self.combine_supply_systems()
+
+        # return the entire district-energy-system object
+        if return_full_des:
+            return self
 
         return self.best_supsys_combinations
 
@@ -256,7 +262,7 @@ class DistrictEnergySystem(object):
 
         return self.distributed_potentials
 
-    def generate_optimal_supply_systems(self):
+    def generate_optimal_supply_systems(self, print_results=False):
         """
         Build and calculate operation for supply systems of each of the subsystems of the district energy system:
 
@@ -381,6 +387,28 @@ class DistrictEnergySystem(object):
         self.best_supsys_combinations = supply_system_combinations
 
         return self.best_supsys_combinations
+
+    def select_supply_system_combination(self, supply_system_combination):
+        """
+        Select definitive supply systems for each of the district energy system's subsystems
+        """
+        # reformat the supply system combination vector
+        supply_system_selection = {system_selection.split('-')[0]: int(system_selection.split('-')[1])
+                                   for system_selection in supply_system_combination}
+
+        # create a copy of the general district energy solution (one connectivity + many non-dominated supply systems)
+        definitive_des = deepcopy(self)
+
+        # specify the selected SupplySystem for each of the subsystems
+        for subsystem_id, supsys_index in supply_system_selection.items():
+            definitive_des.supply_systems[subsystem_id] = self.supply_systems[subsystem_id][supsys_index]
+
+        # update some object attributes
+        definitive_des.best_supsys_combinations = None
+        DistrictEnergySystem._number_of_selected_DES += 1
+        definitive_des.identifier = 'DES' + str(1000 + DistrictEnergySystem._number_of_selected_DES)
+
+        return definitive_des
 
     @staticmethod
     def initialize_class_variables(domain):

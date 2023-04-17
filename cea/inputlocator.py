@@ -344,6 +344,38 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_substations_folder(),
                             "Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
 
+    # OPTIMIZATION *NEW*
+    def get_new_optimization_results_folder(self):
+        """Returns the folder containing the scenario's results for the new optimization script"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization_new')
+
+    def get_new_optimization_base_case_folder(self, system_type):
+        """Returns the folder containing the base-case energy systems against which optimal systems are compared"""
+        return self._ensure_folder(self.get_new_optimization_results_folder(), f'base_{system_type}S')
+
+    def get_new_optimization_optimal_district_energy_system_folder(self, system_type, district_energy_system_id):
+        """Returns the results-folder for the n-th near pareto-optimal district energy system"""
+        return self._ensure_folder(self.get_new_optimization_results_folder(),
+                                   f'{system_type}S_{district_energy_system_id}')
+
+    def get_new_optimization_optimal_networks_folder(self, system_type, district_energy_system_id):
+        """Returns the results-folder for the i-th network of the n-th near-pareto-optimal DES"""
+        des_folder = self.get_new_optimization_optimal_district_energy_system_folder(system_type,
+                                                                                     district_energy_system_id)
+        return self._ensure_folder(des_folder, 'networks')
+
+    def get_new_optimization_optimal_network_layout_file(self, system_type, district_energy_system_id, network_id):
+        """Returns the result-path for the layout of the i-th network of the n-th near-pareto-optimal DES"""
+        network_folder = self.get_new_optimization_optimal_networks_folder(system_type,
+                                                                           district_energy_system_id)
+        return os.path.join(network_folder, f'{network_id}_layout.geojson')
+
+    def get_new_optimization_optimal_supply_systems_file(self, system_type, district_energy_system_id):
+        """Returns the results-file for the supply systems summary of the n-th near-pareto-optimal DES"""
+        des_folder = self.get_new_optimization_optimal_district_energy_system_folder(system_type,
+                                                                                     district_energy_system_id)
+        return os.path.join(des_folder, 'Supply_systems_summary.xlsx')
+
     # POTENTIAL
     def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
