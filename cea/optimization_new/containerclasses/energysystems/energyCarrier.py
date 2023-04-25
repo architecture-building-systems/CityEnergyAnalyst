@@ -236,7 +236,7 @@ class EnergyCarrier(object):
         return energy_carrier_codes
 
     @staticmethod
-    def get_hotter_thermal_ecs(thermal_energy_carrier, subtype=None):
+    def get_hotter_thermal_ecs(thermal_energy_carrier, subtype=None, include_thermal_ec=False):
         """
         Get all thermal energy carriers with a higher mean temperature level than the indicated thermal energy carrier.
         """
@@ -247,13 +247,19 @@ class EnergyCarrier(object):
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
-        hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                       if EnergyCarrier(ec_code).mean_qual > EnergyCarrier(thermal_energy_carrier).mean_qual]
+        if include_thermal_ec:
+            hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                           if EnergyCarrier(ec_code).mean_qual >=
+                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+        else:
+            hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                           if EnergyCarrier(ec_code).mean_qual >
+                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
 
         return hotter_energy_carrier_codes
 
     @staticmethod
-    def get_colder_thermal_ecs(thermal_energy_carrier, subtype=None):
+    def get_colder_thermal_ecs(thermal_energy_carrier, subtype=None, include_thermal_ec=False):
         """
         Get all thermal energy carriers with a lower mean temperature level than the indicated thermal energy carrier.
         """
@@ -264,8 +270,14 @@ class EnergyCarrier(object):
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
-        colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                       if EnergyCarrier(ec_code).mean_qual < EnergyCarrier(thermal_energy_carrier).mean_qual]
+        if include_thermal_ec:
+            colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                           if EnergyCarrier(ec_code).mean_qual <=
+                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+        else:
+            colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
+                                           if EnergyCarrier(ec_code).mean_qual <
+                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
 
         return colder_energy_carrier_codes
 

@@ -364,6 +364,17 @@ class DistrictEnergySystem(object):
         supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
                                                                    first_front_only=True)
 
+        # calculate fitness value of the stand-alone buildings
+        if not self.stand_alone_buildings:
+            total_stand_alone_building_fitness = (0,) * algorithm.nbr_objectives
+        else:
+            stand_alone_building_fitnesses = [building.stand_alone_supply_system.overall_fitness
+                                              for building in self.consumers
+                                              if building.identifier in self.stand_alone_buildings]
+            total_stand_alone_building_fitness = tuple([sum([building_fitness[objective]
+                                                             for building_fitness in stand_alone_building_fitnesses])
+                                                        for objective in stand_alone_building_fitnesses[0].keys()])
+
         # combining non-dominated supply-system solutions for all networks
         for network, supply_system in self.supply_systems.items():
             if network == first_network:
@@ -383,6 +394,12 @@ class DistrictEnergySystem(object):
             new_supply_system_combinations += new_combinations
             supply_system_combinations = tools.emo.sortLogNondominated(new_supply_system_combinations, 100,
                                                                        first_front_only=True)
+
+            # add the stand-alone building's fitness values to reflect the fitness of the whole district energy system
+            for supsys_combination in supply_system_combinations:
+                supsys_combination.fitness.values = tuple([fit_1 + fit_2 for fit_1, fit_2 in
+                                                           zip(list(supsys_combination.fitness.values),
+                                                               total_stand_alone_building_fitness)])
 
         self.best_supsys_combinations = supply_system_combinations
 

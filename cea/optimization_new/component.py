@@ -49,6 +49,7 @@ class Component(object):
     _components_database = None
     _model_complexity = None
     _database_tab = None
+    code_to_class_mapping = None
     possible_main_ecs = {}
 
     def __init__(self, data_base_tab,  model_code, capacity):
@@ -69,6 +70,7 @@ class Component(object):
         """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
         Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems_new(), None)
         Component._model_complexity = domain.config.optimization_new.component_efficiency_model_complexity
+        Component.code_to_class_mapping = Component.create_code_mapping(Component._components_database)
         AbsorptionChiller.initialize_subclass_variables(Component._components_database)
         VapourCompressionChiller.initialize_subclass_variables(Component._components_database)
         AirConditioner.initialize_subclass_variables(Component._components_database)
@@ -78,6 +80,25 @@ class Component(object):
         CoolingTower.initialize_subclass_variables(Component._components_database)
         PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
+
+    @staticmethod
+    def create_code_mapping(database):
+        """ Map component codes in the database to their corresponding database tab names. """
+        component_code_to_tab_mapping = {}
+        for database_tab in database.keys():
+            component_codes_in_tab = set(database[database_tab].code.values)
+            code_to_tab_dict = {code: Component.get_component_class(database_tab) for code in component_codes_in_tab}
+            component_code_to_tab_mapping.update(code_to_tab_dict)
+        return component_code_to_tab_mapping
+
+    @staticmethod
+    def get_component_class(component_tab):
+        """ Return the class object corresponding to a given component-database-tab. """
+        for subclass in Component.__subclasses__():
+            for component_class in subclass.__subclasses__():
+                if component_class._database_tab == component_tab:
+                    return component_class
+        return None
 
     @staticmethod
     def _extract_model_data(data_base_tab, model_code, capacity_kW):

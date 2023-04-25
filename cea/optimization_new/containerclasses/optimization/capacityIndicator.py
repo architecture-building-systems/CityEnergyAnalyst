@@ -93,7 +93,9 @@ class CapacityIndicatorVector(object):
         elif not new_capacity_indicators == [] and \
                 not all([sum([capacity_indicator.value for capacity_indicator in new_capacity_indicators
                               if capacity_indicator.category == category]) >= 1
-                         for category in ['primary', 'secondary', 'tertiary']]):
+                         for category in ['primary', 'secondary', 'tertiary']
+                         if any([capacity_indicator.category == category
+                                 for capacity_indicator in new_capacity_indicators])]):
             raise ValueError("The capacity indicator values for each supply system placement category need to "
                              "add up to at least 1 (so that the system demand can be met).")
         else:

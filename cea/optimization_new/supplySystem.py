@@ -29,6 +29,7 @@ from cea.optimization_new.containerclasses.energysystems.energyFlow import Energ
 from cea.optimization_new.component import ActiveComponent
 from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.containerclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.containerclasses.optimization.capacityIndicator import CapacityIndicatorVector
 
 
 class SupplySystem(object):
@@ -36,7 +37,8 @@ class SupplySystem(object):
     _ec_releases_to_grids = []
     _ec_releases_to_env = []
 
-    def __init__(self, system_structure, capacity_indicator_vector, demand_energy_flow):
+    def __init__(self, system_structure=SupplySystemStructure(), capacity_indicator_vector=CapacityIndicatorVector(),
+                 demand_energy_flow=EnergyFlow()):
         self.structure = system_structure
         self.capacity_indicator_vector = capacity_indicator_vector
         self.demand_energy_flow = demand_energy_flow

@@ -42,7 +42,7 @@ class SupplySystemStructure(object):
     _active_component_classes = []
     _full_component_activation_order = ()
 
-    def __init__(self, max_supply_flow, available_potentials=None):
+    def __init__(self, max_supply_flow=EnergyFlow(), available_potentials=None, user_component_selection=None):
         self.maximum_supply = max_supply_flow
 
         # set energy potential parameters
@@ -53,6 +53,10 @@ class SupplySystemStructure(object):
         self._used_potentials = {}
 
         # structure defining parameters
+        if user_component_selection:
+            self.user_component_selection = user_component_selection
+        else:
+            self.user_component_selection = {}
         self._activation_order = {'primary': (), 'secondary': (), 'tertiary': ()}
         self._component_selection_by_ec = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self._passive_component_selection = {}
@@ -108,7 +112,11 @@ class SupplySystemStructure(object):
                                               energy_carrier_code=self.main_final_energy_carrier.code,
                                               energy_flow_profile=pd.Series([new_maximum_supply]))
         elif isinstance(new_maximum_supply, EnergyFlow):
-            if not (new_maximum_supply.energy_carrier.code == self.main_final_energy_carrier.code):
+            if not new_maximum_supply.energy_carrier:
+                self._maximum_supply = EnergyFlow(input_category=None, output_category=None,
+                                                  energy_carrier_code=None,
+                                                  energy_flow_profile=pd.Series([0.0]))
+            elif not (new_maximum_supply.energy_carrier.code == self.main_final_energy_carrier.code):
                 raise TypeError("There seems to be a mismatch between the energy carrier required from the supply "
                                 "system and the energy carrier that can be provided.")
             elif not (new_maximum_supply.profile.size == 1 and
@@ -138,6 +146,27 @@ class SupplySystemStructure(object):
     @property
     def used_potentials(self):
         return self._used_potentials
+
+    @property
+    def user_component_selection(self):
+        return self._user_component_selection
+
+    @user_component_selection.setter
+    def user_component_selection(self, new_user_component_selection):
+        if not isinstance(new_user_component_selection, dict):
+            raise TypeError("The user component selection needs be of type 'dict'.")
+        elif not all([str(key) in ['primary', 'secondary', 'tertiary'] for key in new_user_component_selection.keys()]):
+            raise TypeError("The user component selection needs to be classified in the three component categories:"
+                            "'primary', 'secondary' and 'tertiary'")
+        elif not all([isinstance(selection, list) for selection in new_user_component_selection.values()]):
+            raise TypeError("The user component selection for each component category needs to be of type 'list'.")
+        elif not all([component in ActiveComponent.code_to_class_mapping.keys()
+                      for component_selection in new_user_component_selection.values()
+                      for component in component_selection]):
+            raise TypeError("Some of the user selected components (i.e. codes) cannot be found in the components "
+                            "database. ")
+        else:
+            self._user_component_selection = new_user_component_selection
 
     @property
     def activation_order(self):
@@ -182,9 +211,11 @@ class SupplySystemStructure(object):
         typical_air_ec = EnergyCarrier.temp_to_thermal_ec('air', avrg_yearly_temp)
 
         if SupplySystemStructure.system_type == 'heating':
-            releasable_environmental_ecs = EnergyCarrier.get_colder_thermal_ecs(typical_air_ec, 'air')
+            releasable_environmental_ecs = EnergyCarrier.get_colder_thermal_ecs(typical_air_ec, 'air',
+                                                                                include_thermal_ec=True)
         elif SupplySystemStructure.system_type == 'cooling':
-            releasable_environmental_ecs = EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air')
+            releasable_environmental_ecs = EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air',
+                                                                                include_thermal_ec=True)
         else:
             raise ValueError('Make sure the energy system type is set before allocating environmental energy carriers.')
 
@@ -230,11 +261,19 @@ class SupplySystemStructure(object):
         """
         # BUILD PRIMARY COMPONENTS
         # get components that can produce the given system demand
-        viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
-                                                    self._fetch_viable_components(
-                                                        self.maximum_supply.energy_carrier.code,
-                                                        self.maximum_supply.profile.max(),
-                                                        'primary', 'consumer')}
+        if self.user_component_selection:
+            viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
+                                                        self._instantiate_components(
+                                                            self.user_component_selection['primary'],
+                                                            self.maximum_supply.energy_carrier.code,
+                                                            self.maximum_supply.profile.max(),
+                                                            'primary', 'consumer')}
+        else:
+            viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
+                                                        self._fetch_viable_components(
+                                                            self.maximum_supply.energy_carrier.code,
+                                                            self.maximum_supply.profile.max(),
+                                                            'primary', 'consumer')}
 
         # operate said components and get the required input energy flows and corresponding output energy flows
         viable_primary_components = viable_primary_and_passive_components[self.main_final_energy_carrier.code][0]
@@ -253,11 +292,19 @@ class SupplySystemStructure(object):
 
         # BUILD SECONDARY COMPONENTS
         # get the components that can supply the input energy flows to the primary components
-        viable_secondary_and_passive_components = {ec_code: SupplySystemStructure._fetch_viable_components(ec_code,
-                                                                                                           max_flow,
-                                                                                                           'secondary',
-                                                                                                           'primary')
-                                                   for ec_code, max_flow in max_secondary_components_demand.items()}
+        if self.user_component_selection:
+            viable_secondary_and_passive_components = {ec_code: self._instantiate_components(
+                                                                    self.user_component_selection['secondary'],
+                                                                    ec_code, max_flow, 'secondary', 'primary')
+                                                       for ec_code, max_flow
+                                                       in max_secondary_components_demand.items()}
+        else:
+            viable_secondary_and_passive_components = {ec_code:
+                                                           SupplySystemStructure._fetch_viable_components(ec_code,
+                                                                                                          max_flow,
+                                                                                                          'secondary',
+                                                                                                          'primary')
+                                                       for ec_code, max_flow in max_secondary_components_demand.items()}
 
         # operate all secondary components and get the required input energy flows and corresponding output energy flows
         max_secondary_energy_flows = \
@@ -295,11 +342,18 @@ class SupplySystemStructure(object):
         # BUILD TERTIARY COMPONENTS
         # sum up output energy flows of primary and secondary components and find components that can reject them
         #   (i.e. tertiary components)
-        viable_tertiary_and_passive_cmpts = {ec_code: SupplySystemStructure._fetch_viable_components(ec_code,
-                                                                                                     max_flow,
-                                                                                                     'tertiary',
-                                                                                                     'primary or secondary')
-                                             for ec_code, max_flow in max_tertiary_components_demand.items()}
+        if self.user_component_selection:
+            viable_tertiary_and_passive_cmpts = {ec_code: self._instantiate_components(
+                                                            self.user_component_selection['tertiary'],
+                                                            ec_code, max_flow, 'tertiary', 'primary')
+                                                 for ec_code, max_flow
+                                                 in max_tertiary_components_demand.items()}
+        else:
+            viable_tertiary_and_passive_cmpts = {ec_code: SupplySystemStructure._fetch_viable_components(ec_code,
+                                                                                                         max_flow,
+                                                                                                         'tertiary',
+                                                                                                         'primary or secondary')
+                                                 for ec_code, max_flow in max_tertiary_components_demand.items()}
 
         # operate said components and get the required input energy flows and corresponding output energy flows
         max_tertiary_energy_flows = \
@@ -346,6 +400,46 @@ class SupplySystemStructure(object):
         return self.capacity_indicators
 
     @staticmethod
+    def _instantiate_components(component_codes, demand_energy_carrier, component_capacity, component_placement,
+                                demand_origin):
+        """
+        Instantiate components taken from list of component codes, that meet a given set of positional requirements,
+        i.e. the components:
+            a. need to be able to produce a given demand energy carrier
+            b. neet to fit in the given supply system placement
+            c. need to match a given maximum capacity
+        """
+        fitting_components = []
+        components_fitting_after_passive_conversion = []
+        passive_components_dict = {}
+        for component_code in component_codes:
+            component = ActiveComponent.code_to_class_mapping[component_code](component_code,
+                                                                              component_placement,
+                                                                              component_capacity)
+            if component.main_energy_carrier.code == demand_energy_carrier:
+                fitting_components += [component]
+            else:
+                viable_ecs = SupplySystemStructure._find_convertible_energy_carriers(demand_energy_carrier,
+                                                                                     component_placement)
+                if component.main_energy_carrier.code in viable_ecs:
+                    components_fitting_after_passive_conversion += [component]
+
+        if fitting_components:
+            return fitting_components, passive_components_dict
+        elif components_fitting_after_passive_conversion:
+            passive_components_dict = \
+                SupplySystemStructure._fetch_viable_passive_components(components_fitting_after_passive_conversion,
+                                                                       component_placement,
+                                                                       component_capacity,
+                                                                       demand_energy_carrier,
+                                                                       demand_origin)
+            return fitting_components, passive_components_dict
+        else:
+            raise ValueError(f"None of the components chosen for the {component_placement} category of the supply "
+                             f"system, can generate/absorb the required energy carrier {demand_energy_carrier}. "
+                             f"Please change the component selection for your supply system.")
+
+    @staticmethod
     def _fetch_viable_components(main_energy_carrier, maximum_demand_energy_flow, component_placement, demand_origin):
         """
         Get a list of all 'active' components that can generate or absorb a given maximum demand of a given
@@ -364,7 +458,7 @@ class SupplySystemStructure(object):
         necessary_passive_components = {}
         if not viable_active_components_list:
             viable_active_components_list, \
-                necessary_passive_components = \
+            necessary_passive_components = \
                 SupplySystemStructure._find_alternatives(main_energy_carrier, maximum_demand, component_placement,
                                                          demand_origin)
             if not viable_active_components_list:
@@ -415,20 +509,8 @@ class SupplySystemStructure(object):
         Check if there are components that can provide the requested energy carrier after passive transformation,
         i.e. temperature change using a heat exchanger or change in voltage using an electrical transformer.
         """
-        # find out which alternative energy carriers could potentially be converted into the required energy carrier
-        #   using passive components
-        required_ec_type = EnergyCarrier(required_energy_carrier_code).type
-        if required_ec_type == 'thermal':
-            if component_placement == 'tertiary' \
-                    or (SupplySystemStructure._system_type == 'cooling' and component_placement == 'primary'):
-                alternative_ecs = EnergyCarrier.get_colder_thermal_ecs(required_energy_carrier_code)
-            else:
-                alternative_ecs = EnergyCarrier.get_hotter_thermal_ecs(required_energy_carrier_code)
-        elif required_ec_type == 'electrical':
-            alternative_ecs = EnergyCarrier.get_all_other_electrical_ecs(required_energy_carrier_code)
-        else:
-            raise ValueError(f'There are no ways to convert {required_ec_type} energy carriers using passive '
-                             f'components.')
+        alternative_ecs = SupplySystemStructure._find_convertible_energy_carriers(required_energy_carrier_code,
+                                                                                  component_placement)
 
         # find out if there are active components that can provide any of the alternative energy carriers
         ecs_with_possible_active_components = list(set([ec_code
@@ -459,6 +541,26 @@ class SupplySystemStructure(object):
                                          if active_component.code in required_passive_components.keys()]
 
         return alternative_active_components, required_passive_components
+
+    @staticmethod
+    def _find_convertible_energy_carriers(required_energy_carrier_code, component_placement):
+        """
+        Find out which alternative energy carriers could potentially be converted into the required energy carrier
+        using passive components.
+        """
+        required_ec_type = EnergyCarrier(required_energy_carrier_code).type
+        if required_ec_type == 'thermal':
+            if component_placement == 'tertiary' \
+                    or (SupplySystemStructure._system_type == 'cooling' and component_placement == 'primary'):
+                convertible_ecs = EnergyCarrier.get_colder_thermal_ecs(required_energy_carrier_code)
+            else:
+                convertible_ecs = EnergyCarrier.get_hotter_thermal_ecs(required_energy_carrier_code)
+        elif required_ec_type == 'electrical':
+            convertible_ecs = EnergyCarrier.get_all_other_electrical_ecs(required_energy_carrier_code)
+        else:
+            raise ValueError(f'There are no ways to convert {required_ec_type} energy carriers using passive '
+                             f'components.')
+        return convertible_ecs
 
     @staticmethod
     def _fetch_viable_passive_components(active_components_to_feed, active_component_placement, maximum_demand,
@@ -674,5 +776,3 @@ class SupplySystemStructure(object):
         SupplySystemStructure._active_component_classes, \
         SupplySystemStructure._full_component_activation_order \
             = SupplySystemStructure._get_component_priorities(config.optimization_new)
-
-

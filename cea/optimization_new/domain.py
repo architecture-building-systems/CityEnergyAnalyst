@@ -22,11 +22,11 @@ import pandas as pd
 import geopandas as gpd
 
 from deap import base, creator, tools, algorithms
-import openpyxl
 
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
@@ -59,7 +59,7 @@ class Domain(object):
 
     def load_buildings(self, buildings_in_domain=None):
         """
-        Import demand and geometric properties of buildings from the current scenario.
+        Import demand, geometric properties and base supply systems of buildings from the current scenario.
 
         :param buildings_in_domain: Codes of buildings that should be loaded (e.g. 'B1000', 'B1008' etc.)
         :type buildings_in_domain: pandas.Series or list of strings
@@ -71,11 +71,13 @@ class Domain(object):
             buildings_in_domain = shp_file.Name
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
+        network_type = self.config.optimization_new.network_type
         for (building_code, demand_file) in zip(buildings_in_domain.values, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
-                building.load_demand_profile('DC')
+                building.load_demand_profile(network_type)
                 building.load_building_location(shp_file)
+                building.load_base_supply_system(self.locator, network_type)
                 self.buildings.append(building)
 
         return self.buildings
@@ -123,6 +125,11 @@ class Domain(object):
                 supply system configurations that are near-pareto optimal for the respective networks.
         """
         self._initialize_energy_system_descriptor_classes()
+
+        # Calculate base-case supply systems for all buildings
+        building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
+        [building.calculate_supply_system(building_energy_potentials[building.identifier])
+            for building in self.buildings]
 
         print(f"Starting optimisation of district energy systems (i.e. networks + supply systems).")
 
@@ -213,6 +220,7 @@ class Domain(object):
                                                                                                     des_ind + 1,
                                                                                                     network.identifier)
                 network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
+                network_layout = network_layout.to_crs(get_geographic_coordinate_system())
                 network_layout.to_file(network_layout_file, driver='GeoJSON')
 
             # then save all information about the selected supply systems

@@ -37,6 +37,7 @@ from cea.optimization.constants import PUMP_ETA
 
 
 class Network(object):
+    _coordinate_reference_system = None
     _domain_potential_network_graph = nx.Graph()
     _domain_potential_network_terminals_df = pd.DataFrame()
     _domain_buildings_flow_rate_m3pers = pd.DataFrame()
@@ -79,9 +80,9 @@ class Network(object):
             network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
             self.network_edges = Gdf([[LineString([edge_start, edge_end]), data.get('weight')]
                                       for edge_start, edge_end, data in network_graph.edges(data=True)],
-                                     columns=['geometry', 'length_m'])
+                                     columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
             self.network_nodes = Gdf([Point(node) for node in network_graph.nodes()],
-                                     columns=['geometry'])
+                                     columns=['geometry'], crs=Network._coordinate_reference_system)
         except:
             raise ValueError('There was an error while creating the Steiner tree. '
                              'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
@@ -245,6 +246,7 @@ class Network(object):
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
                                                      buildings_df,
                                                      optimisation_flag=True)
+        Network._coordinate_reference_system = network_grid_shp.crs
 
         # convert the GeoDataFrame network grid to a Graph
         for (line_string, length) in network_grid_shp.itertuples(index=False):
@@ -447,10 +449,11 @@ class Network(object):
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
         point2 = (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
         line = LineString((point1, point2))
-        plant_to_network = pd.DataFrame({'geometry': line, 'length_m': line.length, 'Type_mat': TYPE_MAT_DEFAULT,
-                                         'Pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
-                                         'end node': plant_terminal_node},
-                                        index=['PIPE' + str(len(self.network_edges.index))])
+        plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'Type_mat': TYPE_MAT_DEFAULT,
+                                'Pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
+                                'end node': plant_terminal_node},
+                               index=['PIPE' + str(len(self.network_edges.index))],
+                               crs=Network._coordinate_reference_system)
         self.network_edges = self.network_edges.append(plant_to_network)
 
     def _run_water_network_model(self):
