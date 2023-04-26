@@ -89,6 +89,5 @@ def main(config: cea.config.Configuration) -> None:
 
 if __name__ == "__main__":
     cea_config = cea.config.Configuration()
-    version = cea_config.development.release_version
 
-    main(version)
+    main(cea_config)
