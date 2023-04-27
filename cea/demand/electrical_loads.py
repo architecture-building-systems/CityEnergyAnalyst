@@ -83,46 +83,74 @@ def calc_Ef(bpr, tsd):
 
     """
     # GET SYSTEMS EFFICIENCIES
-    energy_source = bpr.supply['source_el']
-    scale_technology = bpr.supply['scale_el']
+    solar_radiation = bpr.solar.I_sol
+    energy_source1 = bpr.supply['source1_el']
+    energy_source2 = bpr.supply['source2_el']
+    areapv = bpr.supply['area_pv_el']
+    eff2 = bpr.supply['eff2_el']
     total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
                                     tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
 
-    if scale_technology == "CITY":
-        if energy_source == "GRID":
-            tsd['GRID'] = total_el_demand
-            tsd['GRID_a'] = tsd['Ea']
-            tsd['GRID_l'] = tsd['El']
-            tsd['GRID_v'] = tsd['Ev']
-            tsd['GRID_ve'] = tsd['Eve']
-            tsd['GRID_data'] = tsd['Edata']
-            tsd['GRID_pro'] = tsd['Epro']
-            tsd['GRID_aux'] = tsd['Eaux']
-            tsd['GRID_ww'] = tsd['E_ww']
-            tsd['GRID_cs'] = tsd['E_cs']
-            tsd['GRID_hs'] = tsd['E_hs']
-            tsd['GRID_cdata'] = tsd['E_cdata']
-            tsd['GRID_cre'] = tsd['E_cre']
-            tsd['PV'] = np.zeros(HOURS_IN_YEAR)
-        else:
-            raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
-    elif scale_technology == "NONE":
-        tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_ve'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_ww'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
-        tsd['PV'] = np.zeros(HOURS_IN_YEAR)
-    else:
-        raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
+
+    # initialize vectors:
+    tsd['PV'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_ve'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_ww'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_cs'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
+    tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
+
+    if energy_source1 == "GRID" and energy_source2 == "SOLAR":
+        def calc_exports(demand, supply):
+            delta = (demand - supply)
+            if delta >= 0.0:
+                pv = supply
+                grid = delta
+                pv_export = 0.0
+            else:
+                pv = demand
+                grid = 0.0
+                pv_export = -delta
+
+            return pv, pv_export, grid
+
+        PV_generation = areapv * eff2 * solar_radiation
+        tsd['PV'], tsd['PV_export'], tsd['GRID'] = np.vecorize(calc_exports)(total_el_demand, PV_generation)
+        ratio_grid = tsd['GRID'] / total_el_demand
+        tsd['GRID_a'] = tsd['Ea'] * ratio_grid
+        tsd['GRID_l'] = tsd['El'] * ratio_grid
+        tsd['GRID_v'] = tsd['Ev'] * ratio_grid
+        tsd['GRID_ve'] = tsd['Eve'] * ratio_grid
+        tsd['GRID_data'] = tsd['Edata'] * ratio_grid
+        tsd['GRID_pro'] = tsd['Epro'] * ratio_grid
+        tsd['GRID_aux'] = tsd['Eaux'] * ratio_grid
+        tsd['GRID_ww'] = tsd['E_ww'] * ratio_grid
+        tsd['GRID_cs'] = tsd['E_cs'] * ratio_grid
+        tsd['GRID_hs'] = tsd['E_hs'] * ratio_grid
+        tsd['GRID_cdata'] = tsd['E_cdata'] * ratio_grid
+        tsd['GRID_cre'] = tsd['E_cre'] * ratio_grid
+    elif energy_source2 == "NONE" and energy_source1 == "GRID":
+        tsd['GRID'] = total_el_demand
+        tsd['GRID_a'] = tsd['Ea']
+        tsd['GRID_l'] = tsd['El']
+        tsd['GRID_v'] = tsd['Ev']
+        tsd['GRID_ve'] = tsd['Eve']
+        tsd['GRID_data'] = tsd['Edata']
+        tsd['GRID_pro'] = tsd['Epro']
+        tsd['GRID_aux'] = tsd['Eaux']
+        tsd['GRID_ww'] = tsd['E_ww']
+        tsd['GRID_cs'] = tsd['E_cs']
+        tsd['GRID_hs'] = tsd['E_hs']
+        tsd['GRID_cdata'] = tsd['E_cdata']
+        tsd['GRID_cre'] = tsd['E_cre']
 
     return tsd
 
