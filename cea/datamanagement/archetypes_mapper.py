@@ -158,7 +158,8 @@ def supply_mapper(locator, building_typology_df):
               'type_cs',
               'type_hs',
               'type_dhw',
-              'type_el']
+              'type_el',
+              ]
     dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
 
 def aircon_mapper(locator, typology_df):
@@ -188,8 +189,6 @@ def architecture_mapper(locator, typology_df):
               'Ns',
               'Es',
               'void_deck',
-              'area_pv',
-              'area_sc',
               'area_balcon',
               'wwr_north',
               'wwr_west',
@@ -200,6 +199,7 @@ def architecture_mapper(locator, typology_df):
               'type_floor',
               'type_part',
               'type_base',
+              'type_col',
               'type_roof',
               'type_wall',
               'type_wall_b',
