@@ -645,14 +645,15 @@ def get_properties_supply_sytems(locator, properties_supply):
                                inplace=True)
     df_emission_dhw.rename(columns={"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"},
                            inplace=True)
-    df_emission_electricity.rename(columns={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
+    df_emission_electricity.rename(columns={"feedstock1": "source1_el", "scale1": "scale1_el", "efficiency1": "eff1_el", "feedstock2": "source2_el", "scale2": "scale2_el", "efficiency2": "eff2_el",
+                                            "area_pv": "area_pv_el"},
                                    inplace=True)
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
                                'source_hs', 'scale_hs', 'eff_hs']
     fields_emission_cooling = ['Name', 'source_cs', 'scale_cs', 'eff_cs']
     fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw', 'eff_dhw']
-    fields_emission_el = ['Name', 'source_el', 'scale_el', 'eff_el']
+    fields_emission_el = ['Name', 'source1_el', 'scale1_el', 'source2_el', 'scale2_el','eff1_el','eff2_el', "area_pv_el"]
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(
