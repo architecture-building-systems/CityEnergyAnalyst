@@ -17,9 +17,10 @@ def get_build():
     url = "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v3.32.0-browser/build.zip"
     output = os.path.dirname(os.path.abspath(__file__))
 
-    if os.path.exists(os.path.join(output, "build")):
+    if os.path.exists(os.path.join(output, "build", "index.html")):
         return
 
+    print("Fetching GUI build...")
     with urlopen(url) as r:
         with ZipFile(BytesIO(r.read())) as f:
             f.extractall(output)
