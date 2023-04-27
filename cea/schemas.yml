@@ -5009,6 +5009,12 @@ get_database_envelope_systems:
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
           min: 0.0
+        GHG_FLOOR_STRUCTURE_RATIO:
+          description: how much of the floors makes up as a structural element.
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
+          min: 0.0
         U_base:
           description: Thermal transmittance of floor including linear losses (+10%).
             Defined according to ISO 13790.
@@ -5018,6 +5024,31 @@ get_database_envelope_systems:
           min: 0.1
         code:
           description: Type of roof
+          primary: true
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+    COLUMN:
+      columns:
+        Description:
+          description: Describes the Type of structural columns
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        GHG_COLUMN_kgCO2m2:
+          description: Embodied emissions per m2 of structural columns(entire building life cycle)
+          type: float
+          unit: '[kg CO2-eq/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        GHG_COLUMN_STRUCTURE_RATIO:
+          description: how much of the structural columns makes up as a structural element.
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
+          min: 0.0
+        code:
+          description: Type of structural columns
           primary: true
           type: string
           unit: 'NA'
@@ -5034,6 +5065,12 @@ get_database_envelope_systems:
           type: float
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
+          min: 0.0
+        GHG_ROOF_STRUCTURE_RATIO:
+          description: how much of the roof makes up as a structural element.
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
           min: 0.0
         U_roof:
           description: Thermal transmittance of windows including linear losses (+10%).
