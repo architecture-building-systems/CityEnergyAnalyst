@@ -13,7 +13,7 @@ from geopandas.tools import sjoin as spatial_join
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.zone_helper import parse_building_floors
+from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
 from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -184,6 +184,7 @@ def geometry_extractor_osm(locator, config):
     # clean attributes of height, name and number of floors
     result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    result = clean_geometries(result)
 
     # save to shapefile
     result.to_file(shapefile_out_path)

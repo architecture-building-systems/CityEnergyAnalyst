@@ -39,7 +39,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
 
     Check the RAYPATH environment variable. Return that.
 
-    Check for ``C:\Daysim\bin`` - it might be there?
+    Check for ``C:\\Daysim\\bin`` - it might be there?
 
     If the binaries can't be found anywhere, raise an exception.
 
