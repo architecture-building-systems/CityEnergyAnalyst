@@ -41,7 +41,7 @@ def sort_dict(_dict):
     """
     return {key: _dict[key] for key in sorted(_dict.keys(),
                                               key=lambda v: (
-                                              isinstance(v, str), v.lower() if isinstance(v, str) else v))}
+                                                  isinstance(v, str), v.lower() if isinstance(v, str) else v))}
 
 
 def main(_=None):
@@ -52,13 +52,24 @@ def main(_=None):
     template_path = os.path.join(documentation_dir, 'templates', 'glossary.rst')
     template = Template(open(template_path, 'r').read())
 
+    # write input_methods
     input_locators = {lm: schemas[lm] for lm in schemas if not schemas[lm]['created_by']}
     with open(os.path.join(documentation_dir, "input_methods.rst"), "w") as input_methods_fp:
         input_methods_fp.write(template.render(schemas=input_locators))
-
-    output_locators = {lm: schemas[lm] for lm in schemas if schemas[lm]['created_by']}
+    # write intermediate_input_methods
+    intermediate_input_locators = {lm: schemas[lm] for lm in schemas if
+                                   'data_initializer' in schemas[lm]['created_by'] or 'archetypes_mapper' in
+                                   schemas[lm]['created_by']}
+    with open(os.path.join(documentation_dir, "intermediate_input_methods.rst"), "w") as intermediate_input_methods_fp:
+        intermediate_input_methods_fp.write(template.render(schemas=intermediate_input_locators))
+    # write output_methods
+    output_locators = {lm: schemas[lm] for lm in schemas if
+                       not lm in input_locators and not lm in intermediate_input_locators}
     with open(os.path.join(documentation_dir, "output_methods.rst"), "w") as output_methods_fp:
         output_methods_fp.write(template.render(schemas=output_locators))
+    # error check
+    if len(schemas) - (len(input_locators) + len(intermediate_input_locators) + len(output_locators)) > 0:
+        raise ('Number of locators not matched! Please review lines before this error message in doc_glossray.py.')
 
 
 if __name__ == "__main__":

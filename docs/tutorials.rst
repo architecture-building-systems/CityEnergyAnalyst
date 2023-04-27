@@ -6,7 +6,7 @@ Users
 
 General tutorials are constantly updated through blogs or videos.
 
-- `Blog posts <https://cityenergyanalyst.com/blog-1>`__
+- `Blog posts <https://cityenergyanalyst.com/blog>`__
 - `Video tutorials <https://youtube.com/playlist?list=PL4fIcvT_PXL0XYU_jPDKj50MSUc8GggFz>`__
 
 Developers
@@ -22,13 +22,11 @@ These are a collection of tutorials we consider essential for any new developer 
 #. :doc:`how-to-add-a-new-script-to-the-cea`
 #. :doc:`how-to-test-the-cea`
 #. :doc:`how-to-set-up-nsis`
-#. :doc:`how-to-create-a-new-release`
 #. :doc:`how-to-publish-cea`
 #. :doc:`how-trace-inputlocator-works`
 #. :doc:`how-to-document-cea`
-#. :doc:`run-the-cea-in-docker`
 
-LEGACY
+Legacy
 ------
 
 Collection of outdated information about past functionality of CEA (use at your own risk)

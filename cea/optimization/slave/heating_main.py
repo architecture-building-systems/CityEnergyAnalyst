@@ -12,14 +12,14 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.master import cost_model
+from cea.optimization.master import objective_function_calculator
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
 from cea.technologies.boiler import cond_boiler_op_cost
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen", "Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -32,8 +32,8 @@ __status__ = "Production"
 # ==============================
 
 def district_heating_network(locator,
-                             master_to_slave_variables,
                              config,
+                             master_to_slave_variables,
                              network_features):
     """
     Computes the parameters for the heating of the complete DHN
@@ -55,11 +55,10 @@ def district_heating_network(locator,
 
     """
     if master_to_slave_variables.DHN_exists:
+        print("DISTRICT HEATING OPERATION")
         # THERMAL STORAGE + NETWORK
-        print("CALCULATING ECOLOGICAL COSTS OF SEASONAL STORAGE - DUE TO OPERATION (IF ANY)")
         storage_dispatch = storage_main.storage_optimization(locator,
-                                                             master_to_slave_variables,
-                                                             config)
+                                                             master_to_slave_variables)
         # Import data from storage optimization
         Q_DH_networkload_W = np.array(storage_dispatch['Q_DH_networkload_W'])
         Q_thermal_req_W = np.array(storage_dispatch['Q_req_after_storage_W'])
@@ -190,23 +189,26 @@ def district_heating_network(locator,
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) GENERATION UNITS
         mdotnMax_kgpers = np.amax(mdot_DH_kgpers)
         performance_costs_generation, \
-        district_heating_capacity_installed = cost_model.calc_generation_costs_capacity_installed_heating(locator,
-                                                                                                          master_to_slave_variables,
-                                                                                                          config,
-                                                                                                          storage_dispatch,
-                                                                                                          mdotnMax_kgpers
-                                                                                                          )
+        district_heating_capacity_installed = \
+            objective_function_calculator.calc_generation_costs_capacity_installed_heating(locator,
+                                                                                           master_to_slave_variables,
+                                                                                           config,
+                                                                                           storage_dispatch,
+                                                                                           mdotnMax_kgpers
+                                                                                           )
 
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) SEASONAL STORAGE
-        performance_costs_storage = cost_model.calc_seasonal_storage_costs(config, locator, storage_dispatch)
+        performance_costs_storage = objective_function_calculator.calc_seasonal_storage_costs(locator,
+                                                                                              storage_dispatch)
 
         # CAPEX (ANNUAL, TOTAL) AND OPEX (FIXED, VAR) NETWORK
         performance_costs_network, \
-        E_used_district_heating_network_W = cost_model.calc_network_costs_heating(locator,
-                                                                                  master_to_slave_variables,
-                                                                                  network_features,
-                                                                                  "DH"
-                                                                                  )
+        E_used_district_heating_network_W = \
+            objective_function_calculator.calc_network_costs_heating(locator,
+                                                                     master_to_slave_variables,
+                                                                     network_features,
+                                                                     "DH"
+                                                                     )
 
         # MERGE COSTS AND EMISSIONS IN ONE FILE
         performance_costs_gen = dict(performance_costs_generation, **performance_costs_network)

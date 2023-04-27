@@ -11,7 +11,6 @@ import yaml
 import cea
 import cea.inputlocator
 from cea.schemas import schemas
-from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 from cea.plugin import CeaPlugin
 from typing import List
 
@@ -77,7 +76,7 @@ class CeaScript(object):
             method_name, args = locator_spec[0], locator_spec[1:]
             method = getattr(locator, method_name)
             path = method(*self._lookup_args(config, locator, args))
-            if not os.path.exists(path):
+            if not os.path.exists(os.path.abspath(os.path.normpath(os.path.expanduser(path)))):
                 yield [method_name, path]
 
     def _lookup_args(self, config, locator, args):
@@ -97,7 +96,7 @@ def list_scripts(plugins):
     :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for scripts.
     """
     with open(SCRIPTS_YML, "r") as fp:
-        scripts_by_category = yaml.load(fp, OrderedDictYAMLLoader)
+        scripts_by_category = yaml.load(fp, Loader=yaml.CLoader)
     for plugin in plugins:
         scripts_by_category.update(plugin.scripts)
 

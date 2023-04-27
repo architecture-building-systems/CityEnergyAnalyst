@@ -152,7 +152,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     :returns q_therm: thermal energy supplied to DHN
 
     :rtype wdot: float
-    :returns wdot: electricty required for sewage water HP operation
+    :returns wdot: electricity required for sewage water HP operation
 
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
@@ -188,7 +188,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
     :type tground_K : float
     :param tground_K: ground temperature
     :type nProbes: float
-    :param nProbes: bumber of probes
+    :param nProbes: number of probes
     :rtype qhotdot: float
     :returns qhotdot: heating energy provided from GHSP
     :rtype COP: float
@@ -217,7 +217,7 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     :returns C_HPL_el: electricity cost of Lake HP operation
 
     :rtype wdot: float
-    :returns wdot: electricty required for Lake HP operation
+    :returns wdot: electricity required for Lake HP operation
 
     :rtype Q_cold_primary: float
     :returns Q_cold_primary: cold power requirement
@@ -306,7 +306,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
     :returns q_therm: thermal energy supplied to DHN
 
     :rtype wdot: float
-    :returns wdot: electricty required for sewage water HP operation
+    :returns wdot: electricity required for sewage water HP operation
 
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,

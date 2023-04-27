@@ -10,6 +10,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.surroundings_helper import get_zone_and_surr_in_projected_crs
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -22,12 +23,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_bounding_box(shapefile_surroundings, shapefile_zone):
+def calc_bounding_box(locator):
     # connect both files and avoid repetition
-    data_zone = Gdf.from_file(shapefile_zone)
-    data_dis = Gdf.from_file(shapefile_surroundings)
+    data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = data_dis.append(data_zone, ignore_index=True, sort=True)
+    data = data_zone.append(data_dis, ignore_index=True, sort=True)
     data = data.to_crs(get_geographic_coordinate_system())
     result = data.total_bounds  # in float
     return result
@@ -35,7 +35,7 @@ def calc_bounding_box(shapefile_surroundings, shapefile_zone):
 
 def geometry_extractor_osm(locator, config):
     """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
 
@@ -51,8 +51,7 @@ def geometry_extractor_osm(locator, config):
         assert os.path.exists(
             locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
         print("generating streets from Surroundings Geometry")
-        bounding_box_surroundings_file = calc_bounding_box(locator.get_surroundings_geometry(),
-                                                           locator.get_zone_geometry())
+        bounding_box_surroundings_file = calc_bounding_box(locator)
         lon_min = bounding_box_surroundings_file[0] - extra_border
         lat_min = bounding_box_surroundings_file[1] - extra_border
         lon_max = bounding_box_surroundings_file[2] + extra_border
@@ -75,12 +74,7 @@ def geometry_extractor_osm(locator, config):
 
     # project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))
-
-    # clean data and save to shapefile
-    data.loc[:, "highway"] = [x[0] if type(x) == list else x for x in data["highway"].values]
-    data.loc[:, "name"] = [x[0] if type(x) == list else x for x in data["name"].values]
-    data.fillna(value={"name": "Unknown", "highway": "Unknown", "geometry": None}, inplace=True)
-    data[['geometry', "name", "highway"]].to_file(shapefile_out_path)
+    data[['geometry']].to_file(shapefile_out_path)
 
 
 def main(config):

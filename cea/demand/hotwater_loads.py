@@ -242,7 +242,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws):
         # Circulation circuit losses
         circ_ls = (twws - tamb) * Y * Lcww_dis * (Qww / Qww_0)
 
-        # Distribtution circuit losses
+        # Distribution circuit losses
         dis_ls = calc_disls(tamb, Qww, V, twws, Lsww_dis, Y)
 
         Qww_d_ls_r = circ_ls + dis_ls
@@ -374,4 +374,4 @@ def has_hot_water_technical_system(bpr):
     elif bpr.hvac['type_dhw'] in {'HVAC_HOTWATER_AS0'}:
         return False
     else:
-        raise ValueError('Invalid value for type_dhw: %s. CEA suppors only teh next systems %s' %(bpr.hvac['type_dhw'], supported))
+        raise ValueError('Invalid value for type_dhw: %s. CEA supports only the next systems %s' %(bpr.hvac['type_dhw'], supported))

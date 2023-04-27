@@ -51,9 +51,8 @@ class DemandWriter(object):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
-        # save total for the year
+        # save annual values to a temp file for YearlyDemandWriter
         columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd)
-        # save to disc
         pd.DataFrame(data, index=[0]).to_csv(
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
             index=False, columns=columns, float_format='%.3f', na_rep='nan')
@@ -154,7 +153,7 @@ class MonthlyDemandWriter(DemandWriter):
 
 
 class YearlyDemandWriter(DemandWriter):
-    """Write out the hourly demand results"""
+    """Write out the yearly demand results"""
 
     def __init__(self, loads, massflows, temperatures):
         super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
@@ -167,7 +166,7 @@ class YearlyDemandWriter(DemandWriter):
             if df is None:
                 df = pd.read_csv(temporary_file)
             else:
-                df = df.append(pd.read_csv(temporary_file), ignore_index=True)
+                df = pd.concat([df, pd.read_csv(temporary_file)], ignore_index=True)
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
         # """read saved data of monthly values and return as totals"""

@@ -1,13 +1,15 @@
-|pic1| |pic2| |pic3|
+|license| |repo_size| |lines_of_code| |zenodo|
 
-.. |pic1| image:: https://img.shields.io/github/license/architecture-building-systems/CityEnergyAnalyst
+.. |license| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :alt: GitHub license
-.. |pic2| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
+.. |repo_size| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
-.. |pic3| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
+.. |lines_of_code| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
     :alt: Lines of code
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7317134.svg
+   :target: https://doi.org/10.5281/zenodo.7317134
 
-.. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
+.. image:: cea_logo.png
     :height: 420 px
     :width: 1500 px
     :scale: 25 %
@@ -16,6 +18,7 @@
 
 City Energy Analyst (CEA)
 --------------------------
+
 
 The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban energy simulation platform and one
 of the first open-source computational tools for the design of low-carbon and highly efficient neighborhoods and districts
@@ -37,8 +40,4 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V3.10.0 (stable):    |V3.10.0|
-
-.. |V3.10.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4032169.svg
-   :target: https://doi.org/10.5281/zenodo.4032169
-
+For V3.32.0 (stable): https://doi.org/10.5281/zenodo.7317134

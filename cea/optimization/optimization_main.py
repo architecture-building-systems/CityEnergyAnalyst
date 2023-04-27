@@ -2,10 +2,6 @@
 multi-objective optimization of supply systems for the CEA
 """
 
-
-
-
-
 import os
 import time
 import warnings
@@ -17,9 +13,10 @@ import cea.inputlocator
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from .constants import DH_ACRONYM, DC_ACRONYM
+from cea.optimization.constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
+master_main.create_individual_class(cea.config.Configuration())
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -84,12 +81,12 @@ def moo_optimization(locator, weather_file, config):
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print("PRE-PROCESSING")
     weather_features, network_features, prices, lca = preproccessing(locator,
-                                                        total_demand,
-                                                        buildings_heating_demand,
-                                                        buildings_cooling_demand,
-                                                        weather_file,
-                                                        district_heating_network,
-                                                        district_cooling_network)
+                                                                     total_demand,
+                                                                     buildings_heating_demand,
+                                                                     buildings_cooling_demand,
+                                                                     weather_file,
+                                                                     district_heating_network,
+                                                                     district_cooling_network)
 
     # optimize conversion systems
     print("SUPPLY SYSTEMS OPTIMIZATION")

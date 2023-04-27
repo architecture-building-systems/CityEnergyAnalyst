@@ -8,17 +8,16 @@ https://www2.jpl.nasa.gov/srtm/
 
 import os
 
-import gdal
 import numpy as np
 import pandas as pd
 import requests
 from geopandas import GeoDataFrame as Gdf
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 from shapely.geometry import Polygon
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.surroundings_helper import get_zone_and_surr_in_projected_crs
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -41,13 +40,12 @@ def request_elevation(lon, lat):
     return elevation
 
 
-def calc_bounding_box_projected_coordinates(shapefile_zone, shapefile_surroundings):
+def calc_bounding_box_projected_coordinates(locator):
 
     # connect both files and avoid repetition
-    data_zone = Gdf.from_file(shapefile_zone)
-    data_dis = Gdf.from_file(shapefile_surroundings)
+    data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = data_dis.append(data_zone, ignore_index = True, sort=True)
+    data = data_zone.append(data_dis, ignore_index = True, sort=True)
     data = data.to_crs(get_geographic_coordinate_system())
     lon = data.geometry[0].centroid.coords.xy[0][0]
     lat = data.geometry[0].centroid.coords.xy[1][0]
@@ -60,7 +58,7 @@ def calc_bounding_box_projected_coordinates(shapefile_zone, shapefile_surroundin
 
 def terrain_elevation_extractor(locator, config):
     """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
 
@@ -76,7 +74,7 @@ def terrain_elevation_extractor(locator, config):
         locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where' \
                                           ' to extract the terrain from in the next format: lon_min, lat_min, lon_max, lat_max'
     print("generating terrain from Surroundings area")
-    bounding_box_surroundings_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator.get_surroundings_geometry(), locator.get_zone_geometry())
+    bounding_box_surroundings_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator)
     x_min = bounding_box_surroundings_file[0] - extra_border
     y_min = bounding_box_surroundings_file[1] - extra_border
     x_max = bounding_box_surroundings_file[2] + extra_border

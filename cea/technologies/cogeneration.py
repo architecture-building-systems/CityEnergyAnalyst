@@ -2,13 +2,8 @@
 cogeneration (combined heat and power)
 """
 
-
-
-
 import numpy as np
 from scipy import interpolate
-import scipy
-import pandas as pd
 from math import log
 from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_SIZE, CC_AIRRATIO, CC_EXIT_T_BG, \
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
@@ -34,7 +29,7 @@ __status__ = "Production"
 
 def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     """
-    This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
+    This function calculates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
     This function iterates the combined cycle operation between its nominal capacity and minimum load and generate
     linear functions of the GT operation.
@@ -49,16 +44,20 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     :param T_sup_K: CHP plant supply temperature to DHN or to absorption chillers
     :type fuel_type : string
     :param fuel_type: type of fuel, either "NG" or "BG"
-    :rtype wdot_interpol : function
-    :returns wdot_interpol: interpolation function for part load electricity requirement for given Q_therm_requested
-    :rtype Q_used_prim_interpol: function
-    :returns Q_used_prim_interpol: interpolation function, primary energy used for given Q_therm_requested
-    :rtype fuel_cost_per_Wh_th_interpol_with_q_output : function
-    :returns fuel_cost_per_Wh_th_interpol_with_q_output: interpolation function, operation cost per thermal energy generated at Q_therm_requested
-    :rtype Q_therm_min : float
-    :returns Q_therm_min: minimum thermal energy output
-    :rtype Q_therm_max : float
-    :returns Q_therm_max: maximum thermal energy output
+
+    :rtype : dict
+    :return: {'el_output_fn_q_output_W': el_output_interpol_with_q_output_W,
+             'q_input_fn_q_output_W': q_input_interpol_with_q_output_W,
+             'q_output_min_W': q_output_min_W, 'q_output_max_W': q_output_max_W,
+             'eta_el_fn_q_input': eta_el_interpol_with_q_input}
+    :rtype el_output_interpol_with_q_output_W: scipy.interpolate.interpolate.interp1d class object
+    :returns el_output_interpol_with_q_output_W: interpolation function, electrical energy output of CCGT for given Q_therm_requested
+    :rtype q_input_interpol_with_q_output_W: scipy.interpolate.interpolate.interp1d class object
+    :returns q_input_interpol_with_q_output_W: interpolation function, heat content of fuel input for given Q_therm_requested
+    :rtype q_output_min_W: float
+    :returns q_output_min_W: minimum thermal energy output
+    :rtype q_output_max_W: float
+    :returns q_output_max_W: maximum thermal energy output
     :rtype eta_el_interpol_with_q_input: function
     :returns eta_el_interpol_with_q_input: interpolation function, electrical efficiency at Q_therm_requested
 
@@ -103,7 +102,7 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     q_output_min_W = min(range_q_output_CC_W)
     q_output_max_W = max(range_q_output_CC_W)
 
-    return {'el_output_fn_q_input_W': el_output_interpol_with_q_output_W,
+    return {'el_output_fn_q_output_W': el_output_interpol_with_q_output_W,
             'q_input_fn_q_output_W': q_input_interpol_with_q_output_W,
             'q_output_min_W': q_output_min_W, 'q_output_max_W': q_output_max_W,
             'eta_el_fn_q_input': eta_el_interpol_with_q_input}
@@ -111,20 +110,24 @@ def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
 
 def calc_CC_operation(el_output_from_GT_W, GT_size_W, fuel_type, T_sup_K):
     """
-    Operation Function of Combined Cycle at given electricity input to run the gas turbine (el_input_W).
+    Operation Function of Combined Cycle at given electricity output from the gas turbine (el_output_from_GT_W).
     The gas turbine (GT) exhaust gas is used by the steam turbine (ST).
     :type el_output_from_GT_W : float
-    :param el_output_from_GT_W: Electricity input to run the gas turbine (only GT output, not CC output!)
+    :param el_output_from_GT_W: Electricity output from the gas turbine (only GT output, not CC output!)
     :type GT_size_W : float
     :param GT_size_W: size of the gas turbine and (not CC)(P_el_max)
     :type fuel_type : string
     :param fuel_type: fuel used, either 'NG' (natural gas) or 'BG' (biogas)
     :type T_sup_K : float
     :param T_sup_K: plant supply temperature to district heating network (hot) or absorption chiller
-    :rtype wtot : float
-    :returns wtot: total electric power output from the combined cycle (both GT + ST !)
-    :rtype qdot : float
-    :returns qdot: thermal output from teh combined cycle
+
+    :rtype : dict
+    :return: {'el_output_W': el_output_W, 'q_output_ST_W': q_output_ST_W, 'eta_el': eta_el, 'eta_thermal': eta_thermal,
+             'eta_total': eta_total}
+    :rtype el_output_W : float
+    :returns el_output_W: total electric power output from the combined cycle (both GT + ST !)
+    :rtype q_output_ST_W : float
+    :returns q_output_ST_W: thermal output from the combined cycle (only heat from ST is utilized outside of system!)
     :rtype eta_el : float
     :returns eta_el: total electric efficiency
     :rtype eta_thermal : float
@@ -162,8 +165,8 @@ def calc_GT_operation_fullload(gt_size_W, fuel_type):
     :param fuel_type: fuel used, either NG (Natural Gas) or BG (Biogas)
     :rtype eta0 : float
     :returns eta0: efficiency at full load
-    :rtype mdot0 : float
-    :returns mdot0: exhaust gas mass flow rate at full load
+    :rtype mdot0_exhaust_kgpers : float
+    :returns mdot0_exhaust_kgpers: exhaust gas mass flow rate at full load
 
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
@@ -172,7 +175,7 @@ def calc_GT_operation_fullload(gt_size_W, fuel_type):
         if gt_size_W == 0:
             eta0 = 0.01
         else:
-            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # (4.4) [C. Weber, 2008]_
+            eta0 = 0.0196 * np.lib.scimath.log(gt_size_W * 1E-3) + 0.1317  # (4.4) [C. Weber, 2008]_
 
         LHV = LHV_NG if fuel_type == 'NG' else LHV_BG  # read LHV of NG or BG
         mdot_fuel_kgpers = gt_size_W / (eta0 * LHV)
@@ -190,7 +193,7 @@ def calc_GT_operation_fullload(gt_size_W, fuel_type):
         if gt_size_W == 0:
             eta0 = 0.01
         else:
-            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
+            eta0 = 0.0196 * np.lib.scimath.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
 
         LHV = LHV_NG if fuel_type == 'NG' else LHV_BG  # read LHV of NG or BG
         mdot_fuel_kgpers = gt_size_W / (eta0 * LHV)
@@ -223,12 +226,12 @@ def calc_GT_operation_partload(wdot_W, gt_size_W, eta0, m0_exhaust_from_GT_kgper
     :param fuel_type: fuel used, either 'NG' (natural gas) or 'BG' (biogas)
     :rtype eta : float
     :returns eta: GT part-load electric efficiency
-    :rtype mdot : float
-    :returns mdot: GT part-load exhaust gas mass flow rate
+    :rtype m_exhaust_GT_kgpers : float
+    :returns m_exhaust_GT_kgpers: GT part-load exhaust gas mass flow rate
     :rtype T_exhaust_GT_K : float
     :returns T_exhaust_GT_K: exhaust gas temperature
-    :rtype mdotfuel : float
-    :returns mdotfuel: mass flow rate of fuel(gas) requirement
+    :rtype m_fuel_kgpers : float
+    :returns m_fuel_kgpers: mass flow rate of fuel(gas) requirement
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
@@ -272,10 +275,10 @@ def calc_ST_operation(m_exhaust_GT_kgpers, T_exhaust_GT_K, T_sup_K, fuel_type):
     :type T_sup_K : float
     :param T_sup_K: plant supply temperature to district heating network (hot)
     :param fuel_type: fuel used, either 'NG' (natural gas) or 'BG' (biogas)
-    :rtype qdot : float
-    :returns qdot: heat power supplied to the DHN
-    :rtype wdotfin : float
-    :returns wdotfin: electric power generated from the steam cycle
+    :rtype q_output_ST_W : float
+    :returns q_output_ST_W: heat power supplied to the DHN
+    :rtype el_output_ST_W : float
+    :returns el_output_ST_W: electric power generated from the steam cycle
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """

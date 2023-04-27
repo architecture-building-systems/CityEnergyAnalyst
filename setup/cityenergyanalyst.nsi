@@ -94,7 +94,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     # install the CEA-GUI
-    File /r "win-unpacked"
+    File /r "CityEnergyAnalyst-GUI-win32-x64"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
@@ -102,7 +102,7 @@ Section "Base Installation" Base_Installation_Section
         CONTROL|SHIFT|F10 "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -110,7 +110,7 @@ Section "Base Installation" Base_Installation_Section
     
     # make sure qt.conf has the correct paths
     DetailPrint "Updating qt.conf..."
-    ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now constains the $INSTDIR with forward slashes instead of backward slashes
+    ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now contains the $INSTDIR with forward slashes instead of backward slashes
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
     WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
@@ -154,7 +154,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -181,7 +181,7 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
     CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\win-unpacked\CityEnergyAnalyst.exe" "" \
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \

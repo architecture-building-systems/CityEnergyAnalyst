@@ -3,7 +3,7 @@
 Variable Naming in CEA
 ======================
 
-This is a guide on how to name variables in CEA. Please do read / print before adding new varaibles to the code.
+This is a guide on how to name variables in CEA. Please do read / print before adding new variables to the code.
 
 Demand Side Load Nomenclature
 -----------------------------

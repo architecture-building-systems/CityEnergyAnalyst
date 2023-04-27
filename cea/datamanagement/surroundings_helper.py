@@ -6,14 +6,14 @@ import math
 import os
 
 import numpy as np
-import osmnx.footprints
+import osmnx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from geopandas.tools import sjoin as spatial_join
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.zone_helper import parse_building_floors
+from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
 from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -39,6 +39,25 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     return surrounding_area
 
 
+def get_zone_and_surr_in_projected_crs(locator):
+    # generate GeoDataFrames from files
+    zone_gdf = gdf.from_file(locator.get_zone_geometry())
+    surroundings_gdf = gdf.from_file(locator.get_surroundings_geometry())
+    # get longitude and latitude of zone centroid
+    zone_gdf_in_geographic_crs = zone_gdf.to_crs(get_geographic_coordinate_system())
+    lon = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
+    lat = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+    # check if the coordinate reference systems (crs) of the zone and its surroundings match
+    if zone_gdf.crs != surroundings_gdf.crs or zone_gdf.crs != get_projected_coordinate_system(lat=lat, lon=lon):
+        # if they don't match project the zone and its surroundings to the global crs...
+        zone_gdf = zone_gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
+        surroundings_gdf = surroundings_gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
+        # and save the projected GDFs to their corresponding shapefiles
+        zone_gdf.to_file(locator.get_zone_geometry())
+        surroundings_gdf.to_file(locator.get_surroundings_geometry())
+    return zone_gdf, surroundings_gdf
+
+
 def clean_attributes(shapefile, buildings_height, buildings_floors, key):
     # local variables
     no_buildings = shapefile.shape[0]
@@ -59,7 +78,7 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
             shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
                                       shapefile['building:levels']]
         if 'roof:levels' not in list_of_columns:
-            shapefile['roof:levels'] = [1] * no_buildings
+            shapefile['roof:levels'] = 0
 
         # get the median from the area:
         data_osm_floors1 = shapefile['building:levels'].fillna(0)
@@ -128,7 +147,7 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
 
 def geometry_extractor_osm(locator, config):
     """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
 
@@ -152,7 +171,8 @@ def geometry_extractor_osm(locator, config):
     # get footprints of all the surroundings
     print("Getting building footprints")
     area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
-    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer_polygon)
+    all_surroundings = osmnx.geometries.geometries_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
     all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area
@@ -164,6 +184,7 @@ def geometry_extractor_osm(locator, config):
     # clean attributes of height, name and number of floors
     result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    result = clean_geometries(result)
 
     # save to shapefile
     result.to_file(shapefile_out_path)

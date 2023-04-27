@@ -15,7 +15,7 @@ def get_date_range_hours_from_year(year):
     :rtype: pandas.data_range
     """
 
-    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', closed='left')
+    date_range = pd.date_range(start=str(year), end=str(year + 1), freq='H', inclusive='left')
 
     # Check if leap year and remove extra day
     if isleap(year):

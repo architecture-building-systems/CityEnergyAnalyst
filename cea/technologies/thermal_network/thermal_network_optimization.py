@@ -612,7 +612,7 @@ def disconnect_buildings(network_info):
     :param new_plants: list of plants.
     :return: list of plant locations
     """
-    # initialize storage of plants and disconneted buildings
+    # initialize storage of plants and disconnected buildings
     new_buildings = [INDIVIDUAL_PLANT] * network_info.number_of_buildings_in_district
     # choose random amount, choose random locations, start disconnecting buildings
     random_amount = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
@@ -653,7 +653,7 @@ def generate_initial_population(network_info, network_layout):
     population = []
     while len(population) < network_info.number_of_individuals:
         # assure we have the correct amount of individuals by creating a (random) new individual and appending it to the
-        # population if it's not already present - we stop when we have created the required amout of (unique)
+        # population if it's not already present - we stop when we have created the required amount of (unique)
         # individuals
 
         # list of where our plants are
@@ -708,7 +708,7 @@ def mutate_connections(individual, network_info):
     """
     # make sure we have a list type
     individual = list(individual)
-    # do we connect or discconect a building
+    # do we connect or disconnect a building
     disconnect_building = np.random.choice((True, False))
     # split individual into building information and other information storage
     individual_buildings = individual[LEN_INDIVIDUAL_HEADER:]

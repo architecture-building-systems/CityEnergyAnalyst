@@ -3,14 +3,11 @@
 direct expansion units
 """
 
-
-
-
-
 import numpy as np
 
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.optimization.constants import DX_COP, PRICE_DX_PER_W
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,13 +19,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # FIXME: this model is simplified, and required update
-PRICE_DX_PER_W = 1.6  # USD FIXME: to be moved to database
 
-
-# operation costs
 
 def calc_cop_DX(Q_load_W):
-    cop = 2.3
+    cop = DX_COP
 
     return cop
 

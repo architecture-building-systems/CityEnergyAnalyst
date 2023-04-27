@@ -146,7 +146,10 @@ def calc_steiner_spanning_tree(crs_projected,
             mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                              type_mat_default, pipe_diameter_default)
     elif os.path.exists(total_demand_location):
-        building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
+        if len(plant_building_names) > 0:
+            building_anchor = mst_nodes[mst_nodes['Building'].isin(plant_building_names)]
+        else:
+            building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                          type_mat_default, pipe_diameter_default)
 
@@ -155,7 +158,8 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']
-    mst_edges[['geometry','length_m', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp, driver='ESRI Shapefile')
+    mst_edges[['geometry', 'length_m', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp,
+                                                                               driver='ESRI Shapefile')
     mst_nodes[['geometry', 'Building', 'Name', 'Type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
@@ -295,7 +299,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
     selected_node.loc[:, "Name"] = "NODE" + str(new_mst_nodes.Name.count())
     selected_node.loc[:, "Type"] = "PLANT"
-    new_mst_nodes = new_mst_nodes.append(selected_node)
+    new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
     new_mst_nodes.reset_index(inplace=True, drop=True)
 
     # create new edge
@@ -303,9 +307,9 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
               new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
     line = LineString((point1, point2))
-    mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                  "Name": "PIPE" + str(mst_edges.Name.count())
-                                  }, ignore_index=True)
+    mst_edges = pd.concat([mst_edges,
+                           pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                         "Name": "PIPE" + str(mst_edges.Name.count())}])], ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
 

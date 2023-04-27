@@ -2,8 +2,6 @@
 Vapor-compressor chiller
 """
 
-
-
 import pandas as pd
 from math import log, ceil
 import numpy as np
@@ -27,19 +25,26 @@ __status__ = "Production"
 
 
 # technical model
-def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VCC_chiller):
+def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
-    For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
+    For the operation of a vapor compression chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
     The physically based fundamental thermodynamic model(LR4) is implemented in this function.
-    :type mdot_kgpers : float
-    :param mdot_kgpers: plant supply mass flow rate to the district cooling network
+    :type peak_cooling_load : float
+    :param peak_cooling_load: peak cooling load provided by the VCC (which is set equal to its max. capacity in the
+                              centralised optimization script)
+    :type q_chw_load_Wh : float
+    :param q_chw_load_Wh: current cooling demand of building or DCN (i.e. chilled water load)
     :type T_chw_sup_K : float
-    :param T_chw_sup_K: plant supply temperature to DCN
+    :param T_chw_sup_K: plant supply temperature to DCN (i.e. chilled water supply temperature)
     :type T_chw_re_K : float
-    :param T_chw_re_K: plant return temperature from DCN
-    :rtype Q_VCC_unit_size_W : float
-    :returns Q_VCC_unit_size_W: chiller installed capacity
+    :param T_chw_re_K: plant return temperature from DCN (i.e. chilled water return temperature)
+    :type T_cw_in_K : float
+    :param T_cw_in_K: temperature of water coming into the condenser (from cooling tower or water body)
+    :type VC_chiller : cea.technologies.chiller_vapor_compression.VaporCompressionChiller class object
+    :param VC_chiller: object containing properties of eligible vapor compression chillers
+    :rtype chiller_operation : dict (3 x float)
+    :return chiller_operation: electrical energy input, cooling energy input and cooling energy output of VCC
     ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
     vapor-compression liquid chillers. Applied Thermal Engineering.
     """
@@ -47,12 +52,10 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
     if q_chw_load_Wh == 0.0:
         wdot_W = 0.0
         q_cw_W = 0.0
-
     elif q_chw_load_Wh > 0.0:
-        COP = calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)
+        COP = calc_COP_g(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
-            print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {q_chw_load_Wh}', )
-
+            print(f'Negative COP: {COP} {T_chw_sup_K} {T_chw_re_K} {T_cw_in_K}, {q_chw_load_Wh}', )
         # calculate chiller outputs
         # print('COP is: ', COP)
         wdot_W = q_chw_load_Wh / COP
@@ -65,18 +68,33 @@ def calc_VCC(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_
     return chiller_operation
 
 
-def calc_COP(T_cw_in_K, T_chw_re_K, q_chw_load_Wh):
-    A = 0.0201E-3 * q_chw_load_Wh / T_cw_in_K
-    B = T_chw_re_K / T_cw_in_K
-    C = 0.1980E3 * T_chw_re_K / q_chw_load_Wh + 168.1846E3 * (T_cw_in_K - T_chw_re_K) / (T_cw_in_K * q_chw_load_Wh)
-    COP = 1 / ((1 + C) / (B - A) - 1)
-    return COP
+def calc_COP_g(T_evap_K, T_cond_K, VC_chiller):
+    """
+    Calculate the approximate COP at rated operating conditions using the g-value (sometimes also called
+    the second-law efficiency [Bejan, 2016]).
+    Assuming a rated COP for all calculations is a strong simplification, but accurate enough for most cases in CEA.
 
-
-def calc_COP_with_carnot_efficiency(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
-    PLF = calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller)  # calculates the weighted average Part load factor across all chillers based on load distribution
-    cop_chiller = VCC_chiller.g_value * T_chw_sup_K / (T_cw_in_K - T_chw_sup_K) * PLF
+    [Bejan, 2016] Adrian Bejan, 2016, Andvanced engineering thermodynamics (p. 106)
+    """
+    cop_chiller = VC_chiller.g_value * T_evap_K / (T_cond_K - T_evap_K)
     return cop_chiller
+
+
+def eta_th_vcc_g(T_evap_K, T_cond_K, VC_chiller):
+    """
+    Calculate vapour compression chiller's thermal efficiency (= Qc_evap / Qc_cond,
+    i.e. heat_from_DC / heat_to_waterORair ) in accordance with the g-value VCC model.
+    This calculation also assumes that all heat from the VCC is directed to the heat sink
+    (i.e. Qc_evap + P_el = Qc_cond).
+
+    eta_th = Qc_evap / Qc_cond
+           = Qc_evap / (Qc_evap + P_el)
+           = 1 / (1 + P_el/Qc_evap)
+           = 1 / (1 + 1/COP)
+    """
+    thermal_efficiency = 1 / (1 + 1 / calc_COP_g(T_evap_K, T_cond_K, VC_chiller))
+
+    return thermal_efficiency
 
 
 # Investment costs
@@ -181,110 +199,6 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
 
     return cop_system, cop_chiller
-
-def get_max_VCC_unit_size(locator, VCC_code='CH3'):
-    VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
-    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == VCC_code]
-    max_VCC_unit_size_W = max(VCC_cost_data['cap_max'].values)
-    return max_VCC_unit_size_W
-
-
-def calc_averaged_PLF(peak_cooling_load, q_chw_load_Wh, T_chw_sup_K, T_cw_in_K, VCC_chiller):
-    """
-    Calculates the part load factor of installed Vapor compression chillers for a given cooling load.
-    Includes the design of the chillers based on peak load and chiller plant scale to define the part load ratio.
-    :param float peak_cooling_load: in W
-    :param float q_chw_load_Wh: in W
-    :param float T_chw_sup_K: in Kelvin
-    :param float T_cw_in_K: in Kelvin
-    :param VaporCompressionChiller VCC_chiller: VCC_chiller object containing scale, capacity and config properties
-    :param str scale: either "BUILDING" or "DISTRICT"
-    :return float averaged_PLF: averaged part load factor over all chillers [0..1]
-    """
-    design_capacity = peak_cooling_load  # * 1.15 # for future implementation, a safety factor could be introduced. As of now this would be in conflict with the master_to_slave_variables.WS_BaseVCC_size_W
-    if VCC_chiller.scale == 'BUILDING':
-        if design_capacity <= COMPRESSOR_TYPE_LIMIT_LOW:  # according to ASHRAE 90.1 Appendix G: if design cooling load smaller than lower limit, implement one screw chiller
-            source_type = 'WATER'
-            compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-            n_units = 1
-        elif COMPRESSOR_TYPE_LIMIT_LOW < design_capacity < COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load between limits, implement two screw chillers
-            source_type = 'WATER'
-            compressor_type = 'SCREW'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-            n_units = 2
-        elif design_capacity >= COMPRESSOR_TYPE_LIMIT_HIGH:  # according to ASHRAE 90.1 Appendix G: if design cooling load larger than upper limit, implement centrifugal chillers
-            source_type = 'WATER'
-            compressor_type = 'CENTRIFUGAL'
-            ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-            n_units = ceil(design_capacity / ASHRAE_CAPACITY_LIMIT)  # according to ASHRAE 90.1 Appendix G, chiller shall not be large then 800 tons (2813 kW)
-        else:
-            raise ValueError('Unable to assign chiller type based on design capacity')
-        cooling_capacity_per_unit = design_capacity / n_units  # calculate the capacity per chiller installed
-
-    elif VCC_chiller.scale == 'DISTRICT':
-        source_type = 'WATER'
-        compressor_type = 'CENTRIFUGAL'
-        ch_configuration_values = VCC_chiller.configuration_values(source_type, compressor_type)
-        if design_capacity <= (2*VCC_chiller.min_VCC_capacity):  # design one chiller for small scale DCS
-            n_units = 1
-            cooling_capacity_per_unit = max(design_capacity, VCC_chiller.min_VCC_capacity)
-        elif (2*VCC_chiller.min_VCC_capacity) <= design_capacity <= VCC_chiller.max_VCC_capacity:  # design two chillers above the twice the minimum chiller size
-            n_units = 2
-            cooling_capacity_per_unit = design_capacity / n_units
-        elif design_capacity >= VCC_chiller.max_VCC_capacity:  # design a minimum of 2 chillers if above the maximum chiller size
-            n_units = max(2, ceil(design_capacity / VCC_chiller.max_VCC_capacity))  # have minimum size of capacity to quailfy as DCS, have minimum of 2 chillers
-            cooling_capacity_per_unit = design_capacity / n_units
-        else:
-            raise ValueError('Unable to assign chiller type based on design capacity')
-    else:
-        raise ValueError('VCC_chiller scale can only be "BUILDING" or "DISTRICT" got: {scale}'.format(
-            scale=VCC_chiller.scale))
-
-    available_capacity_per_unit = calc_available_capacity(cooling_capacity_per_unit, ch_configuration_values['Qs'], T_chw_sup_K, T_cw_in_K) # calculate the available capacity(dependent on conditions)
-
-    # calculate the load distribution across the chillers heuristically,
-    # assuming the PLF factor is monotonously increasing with increasing PLR. Filling one chiller after the other.
-    n_chillers_filled = int(q_chw_load_Wh // available_capacity_per_unit)
-    part_load_chiller = float(divmod(q_chw_load_Wh, available_capacity_per_unit)[1])/float(available_capacity_per_unit)
-
-    load_distribution_list = []
-    for i in range(n_chillers_filled):
-        load_distribution_list.append(1)
-    load_distribution_list.append(part_load_chiller)
-    for i in range(int(n_units)-n_chillers_filled-1):
-        load_distribution_list.append(0)
-    load_distribution = np.array(load_distribution_list)
-
-    averaged_PLF = np.sum(calc_PLF(load_distribution, ch_configuration_values['PLFs']) * load_distribution * available_capacity_per_unit) / q_chw_load_Wh # calculates the weighted average PLF value
-    return averaged_PLF
-
-
-def calc_PLF(PLR, PLFs):
-    """
-    takes the part load ratio as an input and outputs the part load factor
-    coefficients taken from https://comnet.org/index.php/382-chillers and only includes water source electrical chillers
-    :param np.array PLR: part load ratio for each chiller
-    :return np.array PLF: part load factor for each chiller
-    """
-    PLF = PLFs['plf_a'] + PLFs['plf_b'] * PLR + PLFs['plf_c'] * PLR ** 2
-    return PLF
-
-
-def calc_available_capacity(rated_capacity, Qs, T_chw_sup_K, T_cw_in_K):
-    """
-    calculates the available Chiller capacity based on the rated capacity
-    coefficients taken from https://comnet.org/index.php/382-chillers
-    :param float rated_capacity: rated capacity of chiller
-    :param float T_chw_sup_K: supplied chilled water temperature in Kelvin
-    :param float T_cw_in_K: condenser water supply temperature in Kelvin
-    :return np.array PLF: part load factor for each chiller
-    """
-    t_chws_F = kelvin_to_fahrenheit(T_chw_sup_K)
-    t_cws_F = kelvin_to_fahrenheit(T_cw_in_K)
-
-    available_capacity = rated_capacity * (Qs['q_a'] + Qs['q_b']*t_chws_F + Qs['q_c']*t_chws_F**2 + Qs['q_d']*t_cws_F + Qs['q_e'] * t_cws_F**2 + Qs['q_f']*t_chws_F*t_cws_F)
-    return available_capacity
 
 
 class VaporCompressionChiller(object):

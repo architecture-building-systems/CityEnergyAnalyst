@@ -1,0 +1,25 @@
+.git
+.github
+
+*.egg-info
+*.egg
+*.pyc
+*.swp
+
+__pycache__
+
+# Virtual environment
+.env
+.venv
+venv
+
+# PyCharm
+.idea
+
+bin
+docs
+logo
+notebooks
+setup
+
+*.md

@@ -90,7 +90,7 @@ PVT_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -704,7 +704,7 @@ PV_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -1121,7 +1121,7 @@ SC_metadata_results:
         min: -1.0
         max: 1.0
       area_installed_module_m2:
-        description: The area of the building suface covered by one solar panel
+        description: The area of the building surface covered by one solar panel
         type: float
         unit: '[m2]'
         values: '{0.0...n}'
@@ -1588,24 +1588,29 @@ get_building_air_conditioning:
       heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         type: string
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       heat_ends:
         description: End of the heating season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
       cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         type: string
-        regex: ^\d{2}|\d{2}$
+        regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
+        example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
   used_by:
@@ -1842,13 +1847,11 @@ get_building_comfort:
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Tcs_setb_C:
         description: Setback point of temperature for cooling system
         type: float
         unit: '[C]'
         values: '{0.0...n}'
-        min: 0.0
       Ths_set_C:
         description: Setpoint temperature for heating system
         type: float
@@ -2036,7 +2039,7 @@ get_building_supply:
   - system_costs
 get_building_typology:
   created_by:
-  - database_migrator
+  - data_migrator
   file_path: inputs/building-properties/typology.dbf
   file_type: dbf
   schema:
@@ -2138,10 +2141,10 @@ get_building_weekly_schedules:
         unit: TODO
         values: TODO
       MONTHLY_MULTIPLIER:
-        description: TODO
+        description: Monthly probabilities of occupancy throughout the year
         type: float
-        unit: TODO
-        values: TODO
+        unit: '[-]'
+        values: '{0.0...n}'
   used_by:
   - demand
   - schedule_maker
@@ -2412,7 +2415,7 @@ get_costs_operation_file:
 get_database_air_conditioning_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/HVAC.xls
+  file_path: inputs/technology/assemblies/HVAC.xlsx
   file_type: xls
   schema:
     CONTROLLER:
@@ -2434,7 +2437,6 @@ get_database_air_conditioning_systems:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         dT_Qhs:
           description: correction temperature of emission losses due to control system
             of heating
@@ -3108,7 +3110,7 @@ get_database_construction_standards:
 get_database_conversion_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/CONVERSION.xls
+  file_path: inputs/technology/components/CONVERSION.xlsx
   file_type: xls
   schema:
     Absorption_chiller:
@@ -3131,7 +3133,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3301,7 +3303,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3396,7 +3398,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3491,7 +3493,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3587,7 +3589,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3683,7 +3685,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3779,7 +3781,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3875,7 +3877,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -3971,7 +3973,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4100,7 +4102,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4195,7 +4197,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4337,7 +4339,7 @@ get_database_conversion_systems:
           min: 0.0
           max: 1.0
         module_length_m:
-          description: lengh of the PV module
+          description: length of the PV module
           min: 0.0
           type: float
           unit: '[m]'
@@ -4375,7 +4377,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4471,7 +4473,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4585,7 +4587,7 @@ get_database_conversion_systems:
           unit: "[yr]"
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -4724,7 +4726,7 @@ get_database_conversion_systems:
           values: '{0.0...n}'
           min: 0.0
         module_length_m:
-          description: lengh of a solar collector module
+          description: length of a solar collector module
           type: float
           unit: '[m]'
           values: '{0.0...n}'
@@ -4758,29 +4760,44 @@ get_database_conversion_systems:
     TES:
       columns:
         Description:
-          description: Describes the source of the benchmark standards.
+          description: Describes the thermal energy storage technology
           type: string
-          unit: 'NA'
+          unit: '[-]'
+          values: 'any'
+        code:
+          description: Unique code that identifies the thermal energy storage technology
+          type: string
+          unit: '[-]'
           values: 'NA'
-        IR_%:
-          description: interest rate charged on the loan for the capital cost
-          min: 0.0
-          type: float
+        type:
+          description: code that identifies whether the storage is used for heating or cooling (different properties of the transport media)
+          type: string
           unit: '[-]'
-          values: '{0.0...n}'
-        LT_yr:
-          description: lifetime of this technology
-          min: 0
-          type: int
-          unit: "[yr]"
-          values: '{0...n}'
-        O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
-            cost)
-          min: 0.0
+          values: '{COOLING,HEATING}'
+        cap_min:
+          description: minimum capacity
           type: float
-          unit: '[-]'
+          unit: '[m3 or kWh]'
           values: '{0.0...n}'
+          min: 0.0
+        cap_max:
+          description: maximum capacity
+          type: float
+          unit: '[m3 or kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        unit:
+          description: unit which describes the minimum and maximum capacity
+          type: string
+          unit: NA
+          values: '{m3, kWh}'
+        currency:
+          description: currency-year information of the investment cost function,
+            should be unified to USD
+          regex: ^[A-Z]{3}-\d{4}$
+          type: string
+          unit: NA
+          values: '{"USD-2015"}'
         a:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4788,12 +4805,6 @@ get_database_conversion_systems:
           unit: '[-]'
           values: '{0.0...n}'
           min: 0.0
-        assumption:
-          description: items made by assumptions in this technology
-          nullable: true
-          type: string
-          unit: 'NA'
-          values: depends on the data availability
         b:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4808,30 +4819,6 @@ get_database_conversion_systems:
           unit: '[-]'
           values: '{0.0...n}'
           min: 0.0
-        cap_max:
-          description: 'maximum capacity '
-          type: float
-          unit: '[m3]'
-          values: '{0.0...n}'
-          min: 0.0
-        cap_min:
-          description: minimum capacity
-          type: float
-          unit: '[m3]'
-          values: '{0.0...n}'
-          min: 0.0
-        code:
-          description: identifier of each unique equipment
-          type: string
-          unit: 'NA'
-          values: alphanumeric
-        currency:
-          description: currency-year information of the investment cost function,
-            should be unified to USD
-          regex: ^[A-Z]{3}-\d{4}$
-          type: string
-          unit: NA
-          values: '{"USD-2015"}'
         d:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4845,11 +4832,79 @@ get_database_conversion_systems:
           type: float
           unit: '[-]'
           values: '{n...n}'
-        unit:
-          description: unit of the min/max capacity
+        LT_yr:
+          description: lifetime of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        LT_mat_yr:
+          description: lifetime of the working fluid of this storage technology
+          min: 0
+          type: int
+          unit: "[yr]"
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintnance cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        C_mat_%:
+          description: Working fluid replacement cost factor (fraction of the investment cost)
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_PHCH_C:
+          description: Phase change temperature of working fluid
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        T_min_C:
+          description: Minimum temperature of working fluid at full charge
+          min: -10.0
+          max: 90.0
+          type: float
+          unit: '[-]'
+          values: '{-10.0...n}'
+        T_max_C:
+          description: Maximum temperature of working fluid at full discharge
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        HL_kJkg:
+          description: Lantent heat of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Rho_T_PHCH_kgm3:
+          description: Density of working fluid at phase change temperature
+          min: 0.0
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+        Cp_kJkgK:
+          description: heat capacity of working fluid
+          min: 0.0
+          type: float
+          unit: '[kJ/kg.K]'
+          values: '{0.0...n}'
+        assumption:
+          description: items made by assumptions in this storage technology
+          nullable: true
           type: string
           unit: 'NA'
-          values: '{"m3"}'
+          values: depends on the data availability
   used_by:
   - decentralized
   - optimization
@@ -4859,13 +4914,13 @@ get_database_conversion_systems:
 get_database_distribution_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/DISTRIBUTION.xls
+  file_path: inputs/technology/components/DISTRIBUTION.xlsx
   file_type: xls
   schema:
     THERMAL_GRID:
       columns:
         Code:
-          description: pipe ID from the manufacterer
+          description: pipe ID from the manufacturer
           primary: true
           type: string
           unit: 'NA'
@@ -4918,7 +4973,7 @@ get_database_distribution_systems:
 get_database_envelope_systems:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/ENVELOPE.xls
+  file_path: inputs/technology/assemblies/ENVELOPE.xlsx
   file_type: xls
   schema:
     CONSTRUCTION:
@@ -5160,7 +5215,7 @@ get_database_envelope_systems:
 get_database_feedstocks:
   created_by:
   - data_initializer
-  file_path: inputs/technology/components/FEEDSTOCKS.xls
+  file_path: inputs/technology/components/FEEDSTOCKS.xlsx
   file_type: xls
   schema:
     BIOGAS:
@@ -6670,7 +6725,7 @@ get_database_standard_schedules_use:
 get_database_supply_assemblies:
   created_by:
   - data_initializer
-  file_path: inputs/technology/assemblies/SUPPLY.xls
+  file_path: inputs/technology/assemblies/SUPPLY.xlsx
   file_type: xls
   schema:
     COOLING:
@@ -6700,7 +6755,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6782,7 +6837,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6864,7 +6919,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -6946,7 +7001,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintanence cost factor (fraction of the investment
+          description: operation and maintenance cost factor (fraction of the investment
             cost)
           min: 0.0
           type: float
@@ -7030,13 +7085,11 @@ get_database_use_types_properties:
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Tcs_setb_C:
           description: Setback point of temperature for cooling system
           type: float
           unit: '[C]'
           values: '{0.0...n}'
-          min: 0.0
         Ths_set_C:
           description: Setpoint temperature for heating system
           type: float
@@ -8032,13 +8085,13 @@ get_lca_embodied:
         min: 0.0
       GHG_sys_embodied_kgCO2m2:
         description: Embodied emissions per conditioned floor area due to building
-          construction and decomissioning
+          construction and decommissioning
         type: float
         unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
         min: 0.0
       GHG_sys_embodied_tonCO2:
-        description: Embodied emissions due to building construction and decomissioning
+        description: Embodied emissions due to building construction and decommissioning
         type: float
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
@@ -8725,7 +8778,7 @@ get_multi_criteria_analysis:
         values: '{0.0...n}'
         min: 0.0
       user_MCDA:
-        description: Best system accoridng to user mult-criteria weights
+        description: Best system according to user mult-criteria weights
         type: float
         unit: '[-]'
         values: '{0...n}'
@@ -8801,7 +8854,7 @@ get_network_layout_edges_shapefile:
         unit: 'NA'
         values: 'NA'
       length_m:
-        description: lenth of this edge
+        description: length of this edge
         type: float
         unit: '[m]'
         values: '{0.0...n}'
@@ -8859,7 +8912,7 @@ get_network_linear_thermal_loss_edges_file:
   schema:
     columns:
       PIPE0:
-        description: linear thermal losses in thie pipe section
+        description: linear thermal losses in this pipe section
         type: float
         unit: '[Wh/m]'
         values: '{0.0...n}'
@@ -10653,7 +10706,7 @@ get_optimization_network_results_summary:
         values: '{0.0...n}'
         min: 0.0
       mcpdata_netw_total_kWperC:
-        description: Capacity mass flow reate for server cooling of this network
+        description: Capacity mass flow rate for server cooling of this network
         type: float
         unit: '[kW/C]'
         values: '{0.0...n}'
@@ -11106,12 +11159,43 @@ get_optimization_slave_cooling_activation_pattern:
   file_type: csv
   schema:
     columns:
-      DATE:
-        description: TODO
-        type: date
-        unit: TODO
-        values: TODO
-  used_by: []
+      Q_DailyStorage_gen_directload_W:
+        description: Thermal energy supplied from the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Q_DailyStorage_content_W:
+        description: Thermal energy content of the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capacity_DailyStorage_WS_cool_district_scale_W:
+        description: Installed capacity of the short-term thermal storage
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capex_total_DailyStorage_WS_cool_district_scale_USD:
+        description: Total capital costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capex_a_DailyStorage_WS_cool_district_scale_USD:
+        description: Annualized capital costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015/yr]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_fixed_DailyStorage_WS_cool_district_scale_USD:
+        description: Fixed operational costs of the short-term thermal storage
+        type: float
+        unit: '[USD-2015]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: [optimization]
 get_optimization_slave_building_scale_performance:
   created_by:
   - optimization
@@ -12540,13 +12624,13 @@ get_optimization_substations_total_file:
         values: '{0.0...n}'
         min: 0.0
       Qhs0_kW:
-        description: Nominal Total heating demand.
+        description: Nominal space heating demand.
         type: float
         unit: '[kW]'
         values: '{0.0...n}'
         min: 0.0
       Qhs_MWhyr:
-        description: Total heating demand
+        description: Total space heating demand.
         type: float
         unit: '[MWh/yr]'
         values: '{0.0...n}'

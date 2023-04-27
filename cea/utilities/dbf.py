@@ -10,8 +10,8 @@ import cea.config
 # import PySAL without the warning
 import warnings
 
-warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
-import pysal
+warnings.filterwarnings("ignore", category=UserWarning)
+import pysal.lib
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

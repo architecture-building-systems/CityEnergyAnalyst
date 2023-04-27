@@ -1,12 +1,13 @@
 import json
 import os
+import shutil
 import traceback
 from collections import OrderedDict
 
 import geopandas
 import pandas
 from flask import current_app, request
-from flask_restplus import Namespace, Resource, abort
+from flask_restx import Namespace, Resource, abort
 
 import cea.inputlocator
 import cea.utilities.dbf
@@ -247,6 +248,10 @@ def get_building_properties():
                     columns[column_name]['choices'] = get_choices(column['choice'], path)
                 if 'constraints' in column:
                     columns[column_name]['constraints'] = column['constraints']
+                if 'regex' in column:
+                    columns[column_name]['regex'] = column['regex']
+                    if 'example' in column:
+                        columns[column_name]['example'] = column['example']
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
@@ -349,7 +354,7 @@ class InputDatabaseData(Resource):
             return read_all_databases(locator.get_databases_folder())
         except IOError as e:
             print(e)
-            abort(500, e.message)
+            abort(500, str(e))
 
     def put(self):
         config = current_app.cea_config
@@ -376,6 +381,24 @@ class InputDatabaseData(Resource):
         return payload
 
 
+@api.route('/databases/copy')
+class InputDatabaseCopy(Resource):
+    def put(self):
+        config = current_app.cea_config
+        payload = api.payload
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        if payload and 'path' in payload and 'name' in payload:
+            copy_path = os.path.join(payload['path'], payload['name'])
+            if os.path.exists(copy_path):
+                abort(500, 'Copy path {} already exists. Choose a different path/name.'.format(copy_path))
+            locator.ensure_parent_folder_exists(copy_path)
+            shutil.copytree(locator.get_databases_folder(), copy_path)
+            return {'message': 'Database copied to {}'.format(copy_path)}
+        else:
+            abort(500, "'path' and 'name' required")
+
+
 @api.route('/databases/check')
 class InputDatabaseCheck(Resource):
     def get(self):
@@ -385,7 +408,7 @@ class InputDatabaseCheck(Resource):
             locator.verify_database_template()
         except IOError as e:
             print(e)
-            abort(500, e.message)
+            abort(500, str(e))
         return {'message': 'Database in path seems to be valid.'}
 
 

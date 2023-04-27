@@ -66,6 +66,6 @@ In order to access and work on the source code of CEA from pycharm do:
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
 
-.. attention:: We ended Support of Grashopper on 20.03.20. The legacy code can be found in our github repositry/legacy
+.. attention:: We ended Support of Grashopper on 20.03.20. The legacy code can be found in our github repository/legacy
 .. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
 

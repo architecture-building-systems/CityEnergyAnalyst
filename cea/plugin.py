@@ -16,7 +16,6 @@ import cea.config
 import cea.plots.categories
 import cea.inputlocator
 import warnings
-from cea.utilities.yaml_ordered_dict import OrderedDictYAMLLoader
 from cea.utilities import identifier
 
 __author__ = "Daren Thomas"
@@ -58,7 +57,7 @@ class CeaPlugin(object):
         if not os.path.exists(plots_yml):
             return {}
         with open(plots_yml, "r") as plots_yml_fp:
-            categories = yaml.load(plots_yml_fp, OrderedDictYAMLLoader)
+            categories = yaml.load(plots_yml_fp, Loader=yaml.CLoader)
         return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in categories.keys()]
 
     @property
@@ -187,7 +186,7 @@ class PluginPlotBase(cea.plots.PlotBase):
             scenario = os.path.join(self.project, self.parameters['scenario-name'])
             return cea.inputlocator.InputLocator(scenario=scenario, plugins=[self.plugin])
         except KeyError as error:
-            raise KeyError("{key} not found in {parameters}".format(key=error.message, parameters=self.parameters))
+            raise KeyError("{key} not found in {parameters}".format(key=str(error), parameters=self.parameters))
 
     @property
     def layout(self):

@@ -10,6 +10,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
+import pvlib
 from geopandas import GeoDataFrame as gdf
 from scipy import interpolate
 
@@ -41,16 +42,10 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_path: solar insulation data on all surfaces of each building (path
-    :type radiation_path: String
-    :param metadata_csv: data of sensor points measuring solar insulation of each building
-    :type metadata_csv: .csv
     :param latitude: latitude of the case study location
     :type latitude: float
     :param longitude: longitude of the case study location
     :type longitude: float
-    :param weather_path: path to the weather data file of the case study location
-    :type weather_path: .epw
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
@@ -77,10 +72,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('filtering low potential sensor points done')
 
     # set the maximum roof coverage
-    if config.solar.custom_roof_coverage:
-        max_roof_coverage = config.solar.max_roof_coverage
-    else:
-        max_roof_coverage = 1.0
+    max_roof_coverage = config.solar.max_roof_coverage
 
     if not sensors_metadata_clean.empty:
         if not config.solar.custom_tilt_angle:
@@ -138,26 +130,6 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
-
-    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
-    :type hourly_radiation: dataframe
-    :param number_groups: number of groups of sensor points
-    :type number_groups: float
-    :param number_points: number of sensor points in each group
-    :type number_points: float
-    :param prop_observers: mean values of sensor properties of each group of sensors
-    :type prop_observers: dataframe
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
-    :param g: declination
-    :type g: float
-    :param Sz: zenith angle
-    :type Sz: float
-    :param Az: solar azimuth
-    :param ha: hour angle
-    :param latitude: latitude of the case study location
-    :return:
-
     """
 
     # local variables
@@ -188,7 +160,6 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     Bref = panel_properties_PV['PV_Bref']
 
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
-
     for group in prop_observers.index.values:
         # calculate radiation types (direct/diffuse) in group
         radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
@@ -201,8 +172,9 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_deg = radians(teta_z_deg)  # surface azimuth
 
-        # calculate effective indicent angles necessary
-        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
+        # calculate effective incident angles necessary
+        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, solar_properties.Az)
+        teta_rad = teta_rad = [radians(x) for x in teta_deg]
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
@@ -228,7 +200,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         total_el_output_PV_kWh[group] = el_output_PV_kW
         total_radiation_kWh[group] = (radiation_Wperm2['I_sol'] * tot_module_area_m2 / 1000)  # kWh
 
-    # check for missing groups and asign 0 as el_output_PV_kW
+    # check for missing groups and assign 0 as el_output_PV_kW
     # panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     # for panel_orientation in panel_orientations:
     #     if panel_orientation not in prop_observers['type_orientation'].values:
@@ -254,7 +226,7 @@ def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_propert
     :type T_external_C: series
     :param panel_properties_PV: panel property from the supply system database
     :type panel_properties_PV: dataframe
-    :return T_cell_C: cell temprature of PV panels
+    :return T_cell_C: cell temperature of PV panels
     :rtype T_cell_C: series
     """
 
@@ -270,7 +242,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     To calculate angle of incidence from solar vector and surface normal vector.
     (Validated with Sandia pvlib.irrandiance.aoi)
 
-    :param lat: latitude of the loacation of case study [radians]
+    :param lat: latitude of the location of case study [radians]
     :param g: declination of the solar position [radians]
     :param ha: hour angle [radians]
     :param tilt: panel surface tilt angle [radians]
@@ -349,7 +321,6 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
                  doi: 10.1002/9781118671603.ch5
 
     """
-
     # read variables
     n = constants.n  # refractive index of glass
     Pg = constants.Pg  # ground reflectance
@@ -362,7 +333,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']
 
-    # calcualte ratio of beam radiation on a tilted plane
+    # calculate ratio of beam radiation on a tilted plane
     # to avoid inconvergence when I_sol = 0
     lim1 = radians(0)
     lim2 = radians(90)
@@ -387,9 +358,10 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     # calculate air mass modifier
     m = 1 / cos(Sz)  # air mass
     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
+    M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
     # incidence angle modifier for direct (beam) radiation
-    teta_r = asin(sin(teta) / n)  # refraction angle in radians(aproximation accrding to Soteris A.) (5.1.4)
+    teta_r = asin(sin(teta) / n)  # refraction angle in radians(approximation according to Soteris A.) (5.1.4)
     Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
     if teta < radians(90):  # 90 degrees in radians
         part1 = teta_r + teta
@@ -775,11 +747,11 @@ def aggregate_results(locator, building_names):
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:
-            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_per_building
+            aggregated_hourly_results_df += hourly_results_per_building
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     return aggregated_hourly_results_df, aggregated_annual_results
@@ -827,11 +799,7 @@ def main(config):
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    if config.solar.custom_roof_coverage:
-        print('Running photovoltaic with custom-roof-coverage = %s and max-roof-coverage = %s' %
-              (config.solar.custom_roof_coverage, config.solar.max_roof_coverage))
-    else:
-        print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
+    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = locator.get_zone_building_names()
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())

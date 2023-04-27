@@ -18,7 +18,7 @@ from typing import List, Tuple
 import cea.config
 import cea.inputlocator
 from cea import InvalidOccupancyNameException
-from cea.datamanagement.schedule_helper import calc_mixed_schedule
+from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, get_lists_of_var_names_and_var_values
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 
@@ -208,29 +208,6 @@ def architecture_mapper(locator, typology_df):
     dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
 
 
-def get_list_of_uses_in_case_study(building_typology_df):
-    """
-    validates lists of uses in case study.
-    refactored from archetypes_mapper function
-
-    :param building_typology_df: dataframe of occupancy.dbf input (can be read in archetypes-mapper or in building-properties)
-    :type building_typology_df: pandas.DataFrame
-    :return: list of uses in case study
-    :rtype: pandas.DataFrame.Index
-    """
-    list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
-    # validate list of uses
-    list_uses = []
-    n_records = building_typology_df.shape[0]
-    for row in range(n_records):
-        for var_name, var_value in zip(list_var_names,list_var_values):
-            if building_typology_df.loc[row, var_value] > 0.0:
-                list_uses.append(building_typology_df.loc[row, var_name])  # append valid uses
-    unique_uses = list(set(list_uses))
-    return unique_uses
-
-
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
@@ -373,7 +350,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
         on the corresponding archetypes
     :type properties_DB: DataFrame
-    :param list_var_names: List of column names in properties_df that contain the names of use-types being caculated
+    :param list_var_names: List of column names in properties_df that contain the names of use-types being calculated
     :type: list_var_names: list[str]
     :param list_var_values: List of column names in properties_df that contain values of use-type ratio in respect to list_var_names
     :type: list_var_values: list[str]
@@ -382,10 +359,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
         buildings
     """
 
-    if list_var_names is None:
-        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
-    if list_var_values is None:
-        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+    list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names, list_var_values, properties_df)
 
     properties_DB = properties_DB.set_index('code')
     for column in fields:

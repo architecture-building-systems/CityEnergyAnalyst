@@ -34,7 +34,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, config):
+def storage_optimization(locator, master_to_slave_vars):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -45,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
     :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
     :rtype: Nonetype
     """
-    print("Storage Optimization Ready")
+    print("SEASONAL STORAGE OPTIMIZATION")
     T_storage_old_K = master_to_slave_vars.T_storage_zero
     Q_in_storage_old = master_to_slave_vars.Q_in_storage_zero
 
@@ -69,7 +69,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
 
     # FIXME: constant 1e12 is used as maximum discharging rate, to confirm
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # --> Oral Recommendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0  # W? TODO: CONFIRM
 
     ## Start optimizing the storage size
@@ -90,7 +90,7 @@ def storage_optimization(locator, master_to_slave_vars, config):
     Q_storage_content_fin_op_W, T_storage_fin_op_K, Q_loss1_W, mdot_DH_fin1_kgpers, Q_uncontrollable_final_W = Optimized_Data
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
-    # --> Oral Recommandation of Antonio (former Leibundgut Group)
+    # --> Oral Recommendation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_final_W) / 2000.0
 
     # Calculate if the initial and final storage levels are converged

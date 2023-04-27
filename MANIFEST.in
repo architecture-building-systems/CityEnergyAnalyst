@@ -6,11 +6,8 @@ recursive-include cea/databases *.xlsx *.xls *.txt *.csv
 
 include cea/default.config
 
-include cea/tests/test_calc_thermal_loads.config
-include cea/tests/test_schedules.config
-include cea/tests/test_technologies.config
-include cea/tests/workflow_quick.yml
-include cea/tests/workflow_slow.yml
+recursive-include cea/tests *.config
+recursive-include cea/tests *.yml
 
 include cea/examples/*.zip
 
@@ -22,3 +19,5 @@ recursive-include cea/plots *.html
 include cea/workflows/*.yml
 
 include cea/dev/conda.bat
+
+graft cea/resources/radiation/bin

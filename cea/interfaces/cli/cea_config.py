@@ -2,15 +2,13 @@
 Update the user configuration file and show the current settings.
 """
 
-
-
-
-
 import sys
+from typing import List
+
 import cea.config
 import cea.inputlocator
 import cea.scripts
-from typing import List
+from cea.plugin import instantiate_plugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +44,21 @@ def main(args=None):
             parameter = config.get_parameter(fqname)
             print("- {fqname} = {parameter_value}".format(fqname=fqname, parameter_value = parameter.get()))
             print("  (default: {default})".format(default=parameter.default))
+    elif script_name == "add-plugins":
+        plugins_fqname = "general:plugins"
+        parameter = config.get_parameter(plugins_fqname)
+        plugins = cea.config.parse_string_to_list(parameter.encode(parameter.get()))
+
+        new_plugins = [p for p in args if p not in plugins]  # filter existing plugins
+        valid_plugins = [p for p in new_plugins if instantiate_plugin(p) is not None]
+
+        if valid_plugins:
+            print(f"Adding valid plugins {','.join(valid_plugins)}")
+            plugins.extend(valid_plugins)
+            parameter.set(plugins)
+        else:
+            print('No plugins to add')
+
     else:
         cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
         config.restrict_to(cea_script.parameters)

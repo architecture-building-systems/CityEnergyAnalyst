@@ -119,7 +119,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
                               schedules)  # calculate the setpoints for every hour
         tsd = calc_Qhs_Qcs(bpr, tsd,
-                           use_dynamic_infiltration_calculation)  # end-use demand latent and sensible + ventilation
+                           use_dynamic_infiltration_calculation, config)  # end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd)  # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd)  # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd)  # calculate temperatures
@@ -187,8 +187,8 @@ def write_results(bpr, building_name, date, loads_output, locator, massflows_out
         print('Writing detailed demand results of {} to .xls file.'.format(building_name))
         reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
         reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
-    else:
-        writer.results_to_csv(tsd, bpr, locator, date, building_name)
+
+    writer.results_to_csv(tsd, bpr, locator, date, building_name)
 
 
 def calc_Qcs_sys(bpr, tsd):
@@ -317,7 +317,7 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
+def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
@@ -345,7 +345,7 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation):
         latent_loads.calc_moisture_content_airflows(tsd, t)
 
         # heating / cooling demand of building
-        hourly_procedure_heating_cooling_system_load.calc_heating_cooling_loads(bpr, tsd, t)
+        hourly_procedure_heating_cooling_system_load.calc_heating_cooling_loads(bpr, tsd, t, config)
 
         # END OF FOR LOOP
     return tsd

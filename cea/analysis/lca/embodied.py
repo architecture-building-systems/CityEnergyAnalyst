@@ -116,7 +116,7 @@ def lca_embodied(locator, config):
     surface_database_hvac_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
     surface_database_hvac_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
 
-    # querry data
+    # query data
     df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architecture_df.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')

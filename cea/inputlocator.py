@@ -2,9 +2,6 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 
-
-
-
 import os
 import cea.schemas
 import shutil
@@ -37,13 +34,16 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
+        self._temp_directory = tempfile.TemporaryDirectory()
+
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
         return {
             "scenario": self.scenario,
             "db_path": self.db_path,
             "weather_path": self.weather_path,
-            "plugins": [str(p) for p in self.plugins]
+            "plugins": [str(p) for p in self.plugins],
+            "_temp_directory": self._temp_directory
         }
 
     def __setstate__(self, state):
@@ -54,6 +54,8 @@ class InputLocator(object):
         self.weather_path = state["weather_path"]
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
+
+        self._temp_directory = state["_temp_directory"]
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -66,7 +68,7 @@ class InputLocator(object):
                 # allow cea.inputlocator.InputLocator to define locator methods
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm], getattr(self.__class__, lm)))
             else:
-                # create locator methods based on schemas if not overriden in InputLocator
+                # create locator methods based on schemas if not overridden in InputLocator
                 setattr(self, lm, cea.schemas.create_schema_io(self, lm, schemas[lm]))
 
     @staticmethod
@@ -116,7 +118,8 @@ class InputLocator(object):
                 # check inside folders
                 for file in os.listdir(os.path.join(default_template, folder)):
                     default_file_path = os.path.join(default_template, folder, file)
-                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls',
+                                                                                                        '.xlsx'}:
                         # we're only interested in the excel files
                         template_file_path = os.path.join(self.get_databases_folder(), folder, file)
                         if not os.path.exists(template_file_path):
@@ -148,117 +151,123 @@ class InputLocator(object):
 
     def get_optimization_slave_generation_results_folder(self, gen_num):
         """Returns the folder containing the scenario's optimization Slave results (storage + operation pattern)"""
-        return self._ensure_folder(os.path.join(self.get_optimization_slave_results_folder(), "gen_%(gen_num)s" % locals()))
+        return self._ensure_folder(
+            os.path.join(self.get_optimization_slave_results_folder(), "gen_%(gen_num)s" % locals()))
 
     def get_optimization_individuals_in_generation(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'generation_%(gen_num)s_individuals.csv' % locals())
 
     def get_optimization_slave_heating_activation_pattern(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Heating_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_cooling_activation_pattern(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_electricity_requirements_data(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Electricity_Requirements_Pattern.csv' % locals())
 
     def get_optimization_slave_electricity_activation_pattern(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_Electricity_Activation_Pattern.csv' % locals())
 
     def get_optimization_district_scale_heating_capacity(self, ind_num, gen_num):
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_district_scale_heating_capacity.csv' % locals())
 
     def get_optimization_district_scale_cooling_capacity(self, ind_num, gen_num):
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_district_scale_cooling_capacity.csv' % locals())
 
     def get_optimization_district_scale_electricity_capacity(self, ind_num, gen_num):
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_district_scale_electrical_capacity.csv' % locals())
 
     def get_optimization_building_scale_heating_capacity(self, ind_num, gen_num):
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_building_scale_heating_capacity.csv' % locals())
 
     def get_optimization_building_scale_cooling_capacity(self, ind_num, gen_num):
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_building_scale_cooling_capacity.csv' % locals())
 
     def get_optimization_slave_district_scale_performance(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_buildings_district_scale_performance.csv' % locals())
 
     def get_optimization_slave_building_scale_performance(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_buildings_building_scale_performance.csv' % locals())
 
     def get_optimization_slave_building_connectivity(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_building_connectivity.csv' % locals())
 
     def get_optimization_slave_total_performance(self, ind_num, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'ind_%(ind_num)s_total_performance.csv' % locals())
 
     def get_optimization_generation_district_scale_performance(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'gen_%(gen_num)s_district_scale_performance.csv' % locals())
 
     def get_optimization_generation_building_scale_performance(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'gen_%(gen_num)s_building_scale_performance.csv' % locals())
 
     def get_optimization_generation_total_performance(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance.csv' % locals())
 
     def get_optimization_generation_total_performance_pareto(self, gen_num):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/slave/gen_[gen_num]/..."""
         return os.path.join(self.get_optimization_slave_generation_results_folder(gen_num),
                             'gen_%(gen_num)s_total_performance_pareto.csv' % locals())
 
     def get_optimization_decentralized_folder_building_result_cooling(self, building, configuration='AHU_ARU_SCU'):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/decentralized/..."""
         return os.path.join(self.get_optimization_decentralized_folder(),
                             building + '_' + configuration + '_result_cooling.csv')
 
     def get_optimization_decentralized_folder_building_result_cooling_activation(self, building,
                                                                                  configuration='AHU_ARU_SCU'):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/decentralized/..."""
 
         return os.path.join(self.get_optimization_decentralized_folder(),
                             building + '_' + configuration + '_cooling_activation.csv')
 
     def get_optimization_decentralized_folder_building_result_heating(self, building):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/decentralized/..."""
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + building + '_result_heating.csv')
 
     def get_optimization_decentralized_folder_building_result_heating_activation(self, building):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/decentralized/..."""
         return os.path.join(self.get_optimization_decentralized_folder(),
                             'DiscOp_' + building + '_result_heating_activation.csv')
 
     def get_optimization_network_results_summary(self, network_type, district_network_barcode):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        """scenario/outputs/data/optimization/network/..."""
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
         path = os.path.join(self.get_optimization_network_results_folder(),
                             network_type + '_' + 'Network_summary_result_' + district_network_barcode_hex + '.csv')
@@ -312,7 +321,7 @@ class InputLocator(object):
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/optimization/master/..."""
         return os.path.join(self.get_optimization_master_results_folder(),
-                            'CheckPoint_' + str(generation)+".json")
+                            'CheckPoint_' + str(generation) + ".json")
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
@@ -332,7 +341,8 @@ class InputLocator(object):
         if district_network_barcode == "":
             district_network_barcode = "0"
         district_network_barcode_hex = hex(int(str(district_network_barcode), 2))
-        return os.path.join(self.get_optimization_substations_folder(),"Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
+        return os.path.join(self.get_optimization_substations_folder(),
+                            "Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
 
     # POTENTIAL
     def get_potentials_folder(self):
@@ -397,29 +407,39 @@ class InputLocator(object):
     def get_database_supply_assemblies(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xlsx')
 
     def get_database_air_conditioning_systems(self):
-        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xlsx')
 
     def get_database_envelope_systems(self):
         """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xls')
+        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xlsx')
 
     def get_database_conversion_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xlsx')
+
+    def get_database_conversion_systems_cold_thermal_storage_names(self):
+        """Return the list of thermal storage tanks"""
+        if not os.path.exists(self.get_database_conversion_systems()):
+            return []
+        import pandas as pd
+        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="TES")
+        data = data[data["type"] == "COOLING"]
+        names = sorted(data["code"])
+        return names
 
     def get_database_distribution_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xlsx')
 
     def get_database_feedstocks(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xls')
+        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xlsx')
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
@@ -446,7 +466,7 @@ class InputLocator(object):
 
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
-        # NOTE: we renamed district.shp to surroundings.shp - this code will automaticaly upgrade old scenarios
+        # NOTE: we renamed district.shp to surroundings.shp - this code will automatically upgrade old scenarios
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'surroundings.shp')
         check_cpg(shapefile_path)
         return shapefile_path
@@ -695,9 +715,8 @@ class InputLocator(object):
             file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
         return os.path.join(folder, file_name)
 
-
     def get_network_temperature_plant(self, network_type, network_name,
-                                                           representative_week=False):
+                                      representative_week=False):
 
         if representative_week == True:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -735,7 +754,6 @@ class InputLocator(object):
         else:
             file_name = network_type + "_" + network_name + "_thermal_demand_per_building_W.csv"
         return os.path.join(folder, file_name)
-
 
     def get_network_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
@@ -1011,7 +1029,7 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return tempfile.gettempdir()
+        return self._temp_directory.name
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""

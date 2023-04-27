@@ -34,7 +34,7 @@ class PvtMonthlyPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsPl
 
     @property
     def data_frame(self):
-        """This get's used a couple of times in the calculations, avoid hitting the PlotCache each time"""
+        """This gets used a couple of times in the calculations, avoid hitting the PlotCache each time"""
         if self.__data_frame is None:
             self.__data_frame = self.PVT_hourly_aggregated_kW
         return self.__data_frame

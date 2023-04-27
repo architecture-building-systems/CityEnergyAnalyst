@@ -1,0 +1,22 @@
+# Deleted files
+setup/Requirements/Miniconda2-latest-Windows-x86.exe
+setup/Dependencies/cityenergyanalyst.tar.gz
+sandbox
+legacy
+cea/concept_project
+cea/tests/radiation_data
+examples
+validation
+test/reference-case
+cea/examples/reference-case-WTP.zip
+cea/technologies/thermal_network/temp.bin
+cea/dashboard
+urban_design
+cea/interfaces/dashboard/base
+contributions
+
+glob:*.pstat
+
+# Existing files
+cea/examples/reference-case-open
+scenarios

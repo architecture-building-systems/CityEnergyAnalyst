@@ -24,7 +24,7 @@ __status__ = "Production"
 
 
 def run(config, script, **kwargs):
-    print('Running {script} with args {args}'.format(script=script, args=kwargs))
+    # print('Running {script} with args {args}'.format(script=script, args=kwargs))
     f = getattr(cea.api, script)
     f(config=config, **kwargs)
     config.restricted_to = None
@@ -163,8 +163,10 @@ def do_script_step(config, i, step, trace_input):
     print("=" * 80)
     print("Workflow step {i}: script={script}".format(i=i, script=script.name))
     print("=" * 80)
-    with config.ignore_restrictions():
-        parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
+    # with config.ignore_restrictions():
+    #     parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
+
+    parameters = {}
     if "parameters" in step:
         parameters.update(step["parameters"])
     py_script = script.name.replace("-", "_")

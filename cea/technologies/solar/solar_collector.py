@@ -83,10 +83,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
     # set the maximum roof coverage
-    if config.solar.custom_roof_coverage:
-        max_roof_coverage = config.solar.max_roof_coverage
-    else:
-        max_roof_coverage = 1.0
+    max_roof_coverage = config.solar.max_roof_coverage
 
     if not sensors_metadata_clean.empty:
         if not config.solar.custom_tilt_angle:
@@ -596,7 +593,7 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
     :param auxiliary_electricity_kW: electricity required to pump hot water in the transmission pipelines
     :param flow: index for the iteration number
     :param mcp_kWperK:
-    :param pipe_lengths: lengthes of transmission pipes
+    :param pipe_lengths: lengths of transmission pipes
     :param specific_flows_kgpers: specific mass flow of hot water in panels
     :param specific_pressure_losses_Pa: specific pressure drop per panel
     :param supply_losses_kW: heat loss through transmission pipelines
@@ -985,11 +982,7 @@ def main(config):
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    if config.solar.custom_roof_coverage:
-        print('Running photovoltaic with custom-roof-coverage = %s and max-roof-coverage = %s' %
-              (config.solar.custom_roof_coverage, config.solar.max_roof_coverage))
-    else:
-        print('Running photovoltaic with custom-roof-coverage = %s' % config.solar.custom_roof_coverage)
+    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
@@ -1025,7 +1018,7 @@ def main(config):
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results

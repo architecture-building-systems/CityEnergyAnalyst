@@ -24,7 +24,7 @@ SHAPEFILE_TOLERANCE = 6  # this is precision in millimeters
 SNAP_TOLERANCE = 0.1  # this is precision in meters increase if having problems.
 
 HEAT_CAPACITY_OF_WATER_VAPOR_JPERKGK = 1859  # specific heat capacity of water vapor in KJ/kgK
-ASPECT_RATIO = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
+ASPECT_RATIO = 3.3  # tank height aspect ratio h/D -> H=(4*V*AR^2/pi)^(1/3); taken from com. tank geometry (jenni.ch)
 LATENT_HEAT_OF_AIR_KJPERKG = 2257  # latent heat of air kJ/kg
 
 # grey emissions
@@ -66,7 +66,7 @@ CT_MAX_SIZE_W = 10000000
 VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
 MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
-H0_KWPERM2K = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
+H0_KWPERM2K = 1.5  # kW/m2K # heat transfer coefficient/ got from Rabtherm technology
 
 #ground temperature values
 SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]

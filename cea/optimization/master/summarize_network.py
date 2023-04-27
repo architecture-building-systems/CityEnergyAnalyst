@@ -253,7 +253,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
 
     results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False, float_format='%.3f')
 
-    print(time.perf_counter() - t0, "seconds process time for Network summary for configuration", key)
+    print(round(time.perf_counter() - t0), "seconds process time for Network summary for configuration", key)
 
     return results
 
@@ -354,7 +354,7 @@ def calc_piping_thermal_losses_heating(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     if m_min_kgpers != 1E6:  # control variable see function fn.calc_min_flow
@@ -383,7 +383,7 @@ def calc_piping_thermal_losses_cooling(Total_load_per_hour_W):
     :type Tg: float
     :type K: float
     :type cp: float
-    :return: Qloss: thermal lossess in the pipe.
+    :return: Qloss: thermal losses in the pipe.
     :rtype: float
     """
     Qloss = 0.05 * Total_load_per_hour_W  # FixMe: Link the value directly to the thermal network matrix
