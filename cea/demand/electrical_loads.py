@@ -84,8 +84,7 @@ def calc_Ef(bpr, tsd):
     """
     # GET SYSTEMS EFFICIENCIES
     solar_radiation = bpr.solar.I_sol
-    energy_source1 = bpr.supply['source1_el']
-    energy_source2 = bpr.supply['source2_el']
+    energy_source1 = bpr.supply['source_el']
     areapv = bpr.supply['area_pv_el']
     eff2 = bpr.supply['eff2_el']
     total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
@@ -93,7 +92,8 @@ def calc_Ef(bpr, tsd):
 
 
     # initialize vectors:
-    tsd['PV'] = np.zeros(HOURS_IN_YEAR)
+    tsd['PV_directload'] = np.zeros(HOURS_IN_YEAR)
+    tsd['PV_export'] = np.zeros(HOURS_IN_YEAR)
     tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
     tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
     tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
@@ -108,7 +108,7 @@ def calc_Ef(bpr, tsd):
     tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
     tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
 
-    if energy_source1 == "GRID" and energy_source2 == "SOLAR":
+    if energy_source1 == "GRID" and areapv >=0.0:
         def calc_exports(demand, supply):
             delta = (demand - supply)
             if delta >= 0.0:
@@ -122,8 +122,8 @@ def calc_Ef(bpr, tsd):
 
             return pv, pv_export, grid
 
-        PV_generation = areapv * eff2 * solar_radiation
-        tsd['PV'], tsd['PV_export'], tsd['GRID'] = np.vecorize(calc_exports)(total_el_demand, PV_generation)
+        tsd['PV'] = areapv * eff2 * solar_radiation
+        tsd['PV_directload'], tsd['PV_export'], tsd['GRID'] = np.vectorize(calc_exports)(total_el_demand, tsd['PV'])
         ratio_grid = tsd['GRID'] / total_el_demand
         tsd['GRID_a'] = tsd['Ea'] * ratio_grid
         tsd['GRID_l'] = tsd['El'] * ratio_grid
@@ -137,7 +137,7 @@ def calc_Ef(bpr, tsd):
         tsd['GRID_hs'] = tsd['E_hs'] * ratio_grid
         tsd['GRID_cdata'] = tsd['E_cdata'] * ratio_grid
         tsd['GRID_cre'] = tsd['E_cre'] * ratio_grid
-    elif energy_source2 == "NONE" and energy_source1 == "GRID":
+    elif areapv == 0.0 and energy_source1 == "GRID":
         tsd['GRID'] = total_el_demand
         tsd['GRID_a'] = tsd['Ea']
         tsd['GRID_l'] = tsd['El']

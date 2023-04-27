@@ -29,7 +29,7 @@ def costs_main(locator, config):
     demand = pd.read_csv(locator.get_total_demand())
 
     # get the databases for each main system
-    cooling_db, hot_water_db, electricity_db, heating_db = get_databases(demand, locator)
+    cooling_db, hot_water_db, heating_db, electricity1_db, electricity2_db  = get_databases(demand, locator)
 
     # COSTS DUE TO HEATING SERIVICES (EXCEPT HOTWATER)
     heating_final_services = ['OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'GRID_hs', 'DH_hs']
@@ -45,11 +45,15 @@ def costs_main(locator, config):
 
     # COSTS DUE TO ELECTRICITY SERVICES
     electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve']
-    costs_electricity_services_dict = calc_costs_per_energy_service(electricity_db, electricity_final_services)
+    costs_electricity_services_dict = calc_costs_per_energy_service(electricity1_db, electricity_final_services)
+
+    # COSTS DUE TO ELECTRICITY2 SERVICES
+    costs_pv_services2_dict = calc_costs_per_energy_service_pv(electricity2_db)
 
     # COMBINE INTO ONE DICT
     result = dict(itertools.chain(costs_heating_services_dict.items(), costs_hot_water_services_dict.items(),
-                                  costs_cooling_services_dict.items(), costs_electricity_services_dict.items()))
+                                  costs_cooling_services_dict.items(), costs_electricity_services_dict.items(),
+                                  costs_pv_services2_dict.items()))
 
     # sum up for all fields
     # create a dict to map from the convention of fields to the final variables
@@ -97,19 +101,62 @@ def costs_main(locator, config):
     # save dataframe
     result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
 
-
-def calc_costs_per_energy_service(database, heating_services):
+def calc_costs_per_energy_service_pv(database):
     result = {}
-    for service in heating_services:
+    # TOTALS
+    service = "PV"
+    result["PV" + '_capex_total_USD'] = (database[service + '0_kW'].values *
+                                           database['efficiency'].values *  # because it is based on the end use
+                                           database['CAPEX_PV_USD2015kW'].values)
+    result[service + '_opex_var_USD'] = database["PV_export" + '_MWhyr'].values * - database['Opex_var_sell_USD2015kWh'].values * 1000
+
+    result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
+
+    result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
+
+    # ANNUALIZED
+    result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'],
+                                                                           database['IR_%'],
+                                                                           database['LT_yr'])
+
+    result[service + '_opex_a_fixed_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_fixed_USD'],
+                                                                               database['IR_%'],
+                                                                               database['LT_yr'])
+
+    result[service + '_opex_a_var_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_var_USD'],
+                                                                             database['IR_%'],
+                                                                             database['LT_yr'])
+
+    result[service + '_opex_a_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_USD'],
+                                                                         database['IR_%'],
+                                                                         database['LT_yr'])
+
+    result[service + '_TAC_USD'] = result[service + '_opex_a_USD'] + result[service + '_capex_a_USD']
+
+    # GET CONNECTED AND DISCONNECTED
+    for field in ['_capex_total_USD', '_capex_a_USD', '_opex_USD', '_opex_a_USD']:
+        field_district = field.split("_USD")[0] + "_district_scale_USD"
+        field_building_scale = field.split("_USD")[0] + "_building_scale_USD"
+        field_city_scale = field.split("_USD")[0] + "_city_scale_USD"
+        result[service + field_district], \
+        result[service + field_building_scale], \
+        result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field],
+                                                                                    database['scale'])
+    return result
+
+def calc_costs_per_energy_service(database, services):
+    result = {}
+    for service in services:
         # TOTALS
         result[service + '_capex_total_USD'] = (database[service + '0_kW'].values *
                                                 database['efficiency'].values *  # because it is based on the end use
                                                 database['CAPEX_USD2015kW'].values)
+        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
+            'Opex_var_buy_USD2015kWh'].values * 1000
 
         result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
 
-        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
-            'Opex_var_buy_USD2015kWh'].values * 1000
+
 
         result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
 
@@ -186,48 +233,44 @@ def get_databases(demand, locator):
                                                        columns=['code', 'Opex_var_buy_USD2015kWh']),
                                           pd.DataFrame([{'code': 'NONE'}])],  # append NONE choice with zero values
                                          ignore_index=True).fillna(0)
+
+    # get the mean of all values for this
+    factors_resources_sell = [(name, values['Opex_var_sell_USD2015kWh'].mean()) for name, values in
+                                factors_resources.items()]
+    factors_resources_sell = pd.concat([pd.DataFrame(factors_resources_sell,
+                                                       columns=['code', 'Opex_var_sell_USD2015kWh']),
+                                          pd.DataFrame([{'code': 'NONE'}])],  # append NONE choice with zero values
+                                         ignore_index=True).fillna(0)
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
 
     # for feedstock 1
-    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
-        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
-        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
-        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
-        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    heating1 = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
-    dhw1 = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
-    cooling1 = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
     electricity1 = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
 
-    # for feedstock 2
-    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
-        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
-         'IR_%']]
-    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
-        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
-         'IR_%']]
-    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
-        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
-         'IR_%']]
-    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
-        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
-         'IR_%']]
-    heating2 = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
-    dhw2 = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
-    cooling2 = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
-    electricity2 = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    # for pv in the case
+    sell_price = factors_resources_sell[factors_resources_sell["code"]=="SOLAR"]["Opex_var_sell_USD2015kWh"].values[0]
+    factors_electricity['Opex_var_sell_USD2015kWh'] = 0.0
+    factors_electricity.loc[(factors_electricity["area_pv"]>0.0),'Opex_var_sell_USD2015kWh'] = sell_price #integrate hier in buy price so it is easier to run
 
-    return cooling1, dhw1, electricity1, heating1, cooling2, dhw2, electricity2, heating2
+    electricity2 = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
+    return cooling, dhw,  heating, electricity1, electricity2
 
 
 def main(config):

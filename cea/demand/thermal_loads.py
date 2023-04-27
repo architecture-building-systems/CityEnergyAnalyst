@@ -457,7 +457,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'GRID_cs'
                               'GRID_cdata',
                               'GRID_cre',
-                              'PV', 'Eal', 'Edata', 'Epro', 'E_sys',
+                              'PV_directload', "PV", "PV_export", 'Eal', 'Edata', 'Epro', 'E_sys',
                               'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata']
     nan_fields = ['mcpww_sys', 'mcptw',
                   'mcpcre_sys',
