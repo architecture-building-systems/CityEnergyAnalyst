@@ -26,7 +26,7 @@ dependencies:
 - numpy<1.24
 - numpy-financial
 - osmnx
-- pandas
+- pandas<2
 - pip
 - psutil
 - libpysal
