@@ -2,12 +2,8 @@
 The /server api blueprint is used by cea-worker processes to manage jobs and files.
 """
 
-# bugfix for importing flask_restplus
-import werkzeug.utils
-werkzeug.cached_property = werkzeug.utils.cached_property
-
 from flask import Blueprint, current_app
-from flask_restplus import Api, Resource
+from flask_restx import Api, Resource
 from .jobs import api as jobs, worker_processes, kill_job
 from .streams import api as streams
 

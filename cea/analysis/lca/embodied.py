@@ -112,7 +112,7 @@ def lca_embodied(year_to_calculate, locator):
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
     surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
 
-    # querry data
+    # query data
     df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architecture_df.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')

@@ -256,8 +256,8 @@ The following file is used by these scripts:
     :header: "Variable", "Description"
 
     ``GFA_m2``, "Gross floor area"
-    ``GHG_sys_embodied_kgCO2m2``, "Embodied emissions per conditioned floor area due to building construction and decomissioning"
-    ``GHG_sys_embodied_tonCO2``, "Embodied emissions due to building construction and decomissioning"
+    ``GHG_sys_embodied_kgCO2m2``, "Embodied emissions per conditioned floor area due to building construction and decommissioning"
+    ``GHG_sys_embodied_tonCO2``, "Embodied emissions due to building construction and decommissioning"
     ``Name``, "Unique building ID. It must start with a letter."
     
 
@@ -401,7 +401,7 @@ The following file is used by these scripts:
     ``TAC_sys_building_scale_USD``, "Equivalent annual costs of building-scale systems"
     ``TAC_sys_district_scale_USD``, "Equivalent annual of district-scale systems"
     ``TAC_sys_USD``, "Equivalent annual costs of all systems"
-    ``user_MCDA``, "Best system accoridng to user mult-criteria weights"
+    ``user_MCDA``, "Best system according to user multi-criteria weights"
     ``user_MCDA_rank``, "Rank of Best system according to user mult-criteria weights"
     
 
@@ -436,7 +436,7 @@ The following file is used by these scripts: ``thermal_network``
     :header: "Variable", "Description"
 
     ``geometry``, "Geometry"
-    ``length_m``, "lenth of this edge"
+    ``length_m``, "length of this edge"
     ``Name``, "Unique network pipe ID."
     ``Pipe_DN``, "Classifies nominal pipe diameters (DN) into typical bins."
     ``Type_mat``, "Material type"
@@ -487,7 +487,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``PIPE0``, "linear thermal losses in thie pipe section"
+    ``PIPE0``, "linear thermal losses in this pipe section"
     
 
 
@@ -1093,7 +1093,7 @@ The following file is used by these scripts: ``optimization``
     :header: "Variable", "Description"
 
     ``DATE``, "Time stamp (hourly) for one year"
-    ``mcpdata_netw_total_kWperC``, "Capacity mass flow reate for server cooling of this network"
+    ``mcpdata_netw_total_kWperC``, "Capacity mass flow rate for server cooling of this network"
     ``mdot_DH_netw_total_kgpers``, "Total mass flow rate in this district heating network"
     ``Q_DH_losses_W``, "Thermal losses of this district heating network"
     ``Q_DHNf_W``, "Total thermal demand of district heating network"
@@ -2146,7 +2146,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``area_installed_module_m2``, "The area of the building suface covered by one solar panel"
+    ``area_installed_module_m2``, "The area of the building surface covered by one solar panel"
     ``AREA_m2``, "Surface area."
     ``array_spacing_m``, "Spacing between solar arrays."
     ``B_deg``, "Tilt angle of the installed solar panels"
@@ -2267,7 +2267,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``area_installed_module_m2``, "The area of the building suface covered by one solar panel"
+    ``area_installed_module_m2``, "The area of the building surface covered by one solar panel"
     ``AREA_m2``, "Surface area."
     ``array_spacing_m``, "Spacing between solar arrays."
     ``B_deg``, "Tilt angle of the installed solar panels"
@@ -2418,7 +2418,7 @@ The following file is used by these scripts:
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``area_installed_module_m2``, "The area of the building suface covered by one solar panel"
+    ``area_installed_module_m2``, "The area of the building surface covered by one solar panel"
     ``AREA_m2``, "Surface area."
     ``array_spacing_m``, "Spacing between solar arrays."
     ``B_deg``, "Tilt angle of the installed solar panels"

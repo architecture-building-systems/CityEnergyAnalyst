@@ -318,7 +318,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step.
-    :param building: list of building informations
+    :param building: list of building information
     :param T_DH_supply_K: matrix of the substation supply temperatures in K
     :param substation_HEX_specs: substation heat exchanger properties
 
@@ -405,7 +405,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step.
-    :param building: list of building informations
+    :param building: list of building information
     :param T_DC_supply_K: matrix of the substation supply temperatures in K
     :param substation_HEX_specs: substation heat exchanger properties
 

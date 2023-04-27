@@ -5,13 +5,12 @@ channels:
 dependencies:
 - deap
 - ephem
-- flask=1.1.4
-- jinja2=2.11.3
-- itsdangerous=1.1.0
+- flask
 - flask-cors
 - flask-restplus
 - Werkzeug=2.0.1
 - flask-socketio=4.3.2
+- flask-restx
 - gevent
 - gevent-websocket
 - ipykernel
@@ -27,12 +26,12 @@ dependencies:
 - gdal=3.3.*
 - geopandas
 - matplotlib
-- networkx
+- networkx<3
 - numba
-- numpy
+- numpy<1.24
 - numpy-financial
-- osmnx=0.15.1
-- pandas
+- osmnx
+- pandas<2
 - pip
 - psutil
 - pysal=2.1.0

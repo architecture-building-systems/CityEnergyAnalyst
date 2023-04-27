@@ -2,17 +2,20 @@
 Manage configuration information for the CEA. The Configuration class is built dynamically based on the type information
 in ``default.config``.
 """
+from __future__ import annotations
 
-import collections
 import configparser
 import datetime
 import glob
+import io
 import json
 import os
 import re
 import tempfile
+from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 
 import cea.inputlocator
+import cea.plugin
 from cea.utilities import unique
 
 __author__ = "Daren Thomas"
@@ -28,15 +31,16 @@ DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default.config')
 CEA_CONFIG = os.path.expanduser('~/cea.config')
 
 
-class Configuration(object):
-    def __init__(self, config_file=CEA_CONFIG):
+class Configuration:
+    def __init__(self, config_file: str = CEA_CONFIG):
         self.restricted_to = None
+
         self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
+
         self.user_config = configparser.ConfigParser()
         self.user_config.read([DEFAULT_CONFIG, config_file])
 
-        import cea.plugin
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
         self.sections = self._init_sections()
@@ -45,57 +49,58 @@ class Configuration(object):
         if not os.path.exists(CEA_CONFIG):
             self.save(config_file)
 
-    def __getattr__(self, item):
-        """Return either a Section object or the value of a Parameter"""
+    def __getattr__(self, item: str) -> Union[Section, Parameter]:
+        """Return either a Section object or the value of a Parameter from `general`"""
         cid = config_identifier(item)
         if cid in self.sections:
             return self.sections[cid]
         elif cid in self.sections['general'].parameters:
             return getattr(self.sections['general'], cid)
         else:
-            raise AttributeError("Section or Parameter not found: %s" % item)
+            raise AttributeError(f"Section or Parameter not found: {item}")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter in the general section"""
         if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
             # make sure the __init__ method doesn't trigger this
-            return super(Configuration, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
 
         cid = config_identifier(key)
         general_section = self.sections['general']
         if cid in general_section.parameters:
             return general_section.parameters[cid].set(value)
         else:
-            return super(Configuration, self).__setattr__(key, value)
+            raise AttributeError(f"Parameter not found in general section: {cid}")
 
-    def __getstate__(self):
+    def __getstate__(self) -> str:
         """when we pickle, we only really need to pickle the user_config"""
-        import io
         config_data = io.StringIO()
         self.user_config.write(config_data)
         return config_data.getvalue()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: str):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
-        import io
-        import cea.plugin
-
         self.restricted_to = None
+
         self.default_config = configparser.ConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
+
         self.user_config = configparser.ConfigParser()
         self.user_config.read_file(io.StringIO(state))
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
-        self.sections = {section_name: Section(section_name, config=self)
-                         for section_name in self.default_config.sections()}
+        self.sections = self._init_sections()
 
-    def _init_sections(self):
-        return collections.OrderedDict([(section_name, Section(section_name, self))
-                                        for section_name in self.default_config.sections()])
+    def _init_sections(self) -> Dict[str, Section]:
+        def construct_section(name: str, config: Configuration):
+            if name != name.lower():
+                raise ValueError('Section names must be lowercase')
+            return Section(name, config)
 
-    def restrict_to(self, option_list):
+        return {name: construct_section(name, self) for name in self.default_config.sections()}
+
+    def restrict_to(self, option_list: List[str]) -> None:
         """
         Restrict the config object to only allowing parameters as defined in the ``option_list`` parameter.
         `option_list` is a list of strings of the form `section` or `section:parameter` as used in the ``scripts.yml``
@@ -105,6 +110,10 @@ class Configuration(object):
         scripts. This only solves half of the possible issues with :py:class:`cea.config.Configuration`: the other is
         that a script creates it's own config file somewhere down the line. This is hard to check anyway.
         """
+        if option_list is None:
+            self.restricted_to = None
+            return
+
         self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
         self.restricted_to.append("general:plugins")
         if 'general:scenario' in self.restricted_to:
@@ -113,61 +122,46 @@ class Configuration(object):
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
 
-    def temp_restrictions(self, parameters):
+    class RestrictionContextManager:
+        def __init__(self, config, parameters: Optional[List[str]]):
+            self.config = config
+            self.parameters = parameters
+            self.old_restrictions = None
+
+        def apply(self):
+            self.old_restrictions = self.config.restricted_to
+            self.config.restrict_to(self.parameters)
+
+        def clear(self):
+            self.config.restricted_to = self.old_restrictions
+
+        def __enter__(self):
+            self.apply()
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.clear()
+
+    def temp_restrictions(self, parameters: List[str]) -> RestrictionContextManager:
         """
         Apply temporary restricts to script using context manager
         """
+        return self.RestrictionContextManager(self, parameters)
 
-        class TempRestrictions:
-            def __init__(self, _config, _parameters):
-                self.config = _config
-                self.parameters = _parameters
-                self.old_restrictions = None
-
-            def apply(self):
-                self.old_restrictions = self.config.restricted_to
-                self.config.restrict_to(self.parameters)
-
-            def clear(self):
-                self.config.restricted_to = self.old_restrictions
-
-            def __enter__(self):
-                self.apply()
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.clear()
-
-        return TempRestrictions(self, parameters)
-
-    def ignore_restrictions(self):
-        """Create a ``with`` block where the config file restrictions are not kept. Usage::
-
-
+    def ignore_restrictions(self) -> RestrictionContextManager:
+        """
+        Create a ``with`` block where the config file restrictions are not kept.
+        Usage::
             with config.ignore_restrictions():
                 config.my_section.my_property = value
-
-        .. note: this will produce a warning in the output.
         """
+        return self.RestrictionContextManager(self, None)
 
-        class RestrictionsIgnorer(object):
-            def __init__(self, config):
-                self.config = config
-                self.old_restrictions = None
-
-            def __enter__(self):
-                # print("WARNING: Ignoring config file restrictions. Consider refactoring the code.")
-                self.old_restrictions = self.config.restricted_to
-                self.config.restricted_to = None
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.config.restricted_to = self.old_restrictions
-
-        return RestrictionsIgnorer(self)
-
-    def apply_command_line_args(self, args, option_list):
-        """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
+    def apply_command_line_args(self, args: List[str], option_list: List[str]) -> None:
+        """
+        Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
-        in the config file and ``VALUE`` being the value to override that option with."""
+        in the config file and ``VALUE`` being the value to override that option with.
+        """
         if not len(args):
             # no arguments to apply
             return
@@ -183,16 +177,18 @@ class Configuration(object):
                         parameter.decode(
                             parameter.replace_references(
                                 command_line_args[parameter.name])))
-                except:
-                    import traceback;
-                    traceback.print_exc()
-                    raise ValueError('ERROR setting %s:%s to %s' % (
-                        section.name, parameter.name, command_line_args[parameter.name]))
-                del command_line_args[parameter.name]
-        assert len(command_line_args) == 0, 'Unexpected parameters: %s' % command_line_args
+                except Exception as e:
+                    raise ValueError(
+                        f"ERROR setting {section.name}:{parameter.name} to {command_line_args[parameter.name]}") from e
 
-    def matching_parameters(self, option_list):
-        """Return a tuple (Section, Parameter) for all parameters that match the parameters in the ``option_list``.
+                del command_line_args[parameter.name]
+
+        if len(command_line_args) != 0:
+            raise ValueError(f"Unexpected parameters: {command_line_args}")
+
+    def matching_parameters(self, option_list: List[str]) -> Generator[Tuple[Section, Parameter]]:
+        """
+        Return a tuple (Section, Parameter) for all parameters that match the parameters in the ``option_list``.
         ``option_list`` is a sequence of parameter names in the form ``section[:parameter]``
         if only a section is mentioned, all the parameters of that section are added. Otherwise, only the specified
         parameter is added to the resulting list.
@@ -204,18 +200,20 @@ class Configuration(object):
                 try:
                     parameter = section.parameters[parameter_name]
                 except KeyError:
-                    raise KeyError('Invalid option in option_list: %s' % option)
-                yield (section, parameter)
+                    raise KeyError(f"Invalid option in option_list: {option}")
+                yield section, parameter
             else:
                 section = self.sections[option]
                 for parameter in section.parameters.values():
-                    yield (section, parameter)
+                    yield section, parameter
 
-    def save(self, config_file=CEA_CONFIG):
-        """Save the current configuration to a file. By default, the configuration is saved to the user configuration
+    def save(self, config_file: str = CEA_CONFIG) -> None:
+        """
+        Save the current configuration to a file. By default, the configuration is saved to the user configuration
         file (``~/cea.config``). If ``config_file`` is set to the default configuration file
         :py:data:`cea.config.DEFAULT_CONFIG`, then nothing is saved - this is to prevent overwriting the default
-        configuration file."""
+        configuration file.
+        """
         config_file = os.path.normcase(os.path.normpath(os.path.abspath(config_file)))
         default_config = os.path.normcase(os.path.normpath(os.path.abspath(DEFAULT_CONFIG)))
         if config_file == default_config:
@@ -230,10 +228,10 @@ class Configuration(object):
         with open(config_file, 'w') as f:
             parser.write(f)
 
-    def get_number_of_processes(self):
+    def get_number_of_processes(self) -> int:
         """
         Returns the number of processes to use for multiprocessing.
-        :param config: Configuration file.
+
         :return number_of_processes: Number of processes to use.
         """
         if self.multiprocessing:
@@ -243,12 +241,13 @@ class Configuration(object):
         else:
             return 1
 
-    def get(self, fqname):
+    def get(self, fqname: str) -> Parameter:
         """Given a string of the form "section:parameter", return the value of that parameter"""
         return self.get_parameter(fqname).get()
 
-    def get_parameter(self, fqname):
-        """Given a string of the form "section:parameter", return the parameter object
+    def get_parameter(self, fqname: str) -> Parameter:
+        """
+        Given a string of the form "section:parameter", return the parameter object
 
         :rtype: cea.config.Parameter
         """
@@ -258,16 +257,17 @@ class Configuration(object):
         except KeyError:
             raise KeyError(fqname)
 
-    def refresh_plugins(self):
-        import cea.plugin
+    def refresh_plugins(self) -> None:
         cea.plugin.add_plugins(self.default_config, self.user_config)
         self.sections = self._init_sections()
+
 
 def parse_command_line_args(args):
     """Group the arguments into a dictionary: parameter-name -> value"""
     parameters = {}
     values = []
     argument_stack = list(args)
+
     while len(argument_stack):
         token = argument_stack.pop()
         if token.startswith('--'):
@@ -276,89 +276,97 @@ def parse_command_line_args(args):
             values = []
         else:
             values.append(token)
-    assert len(values) == 0, 'Bad arguments: %s' % args
+
+    if len(values) != 0:
+        raise ValueError(f"Bad arguments: {args}")
+
     return parameters
 
 
-def config_identifier(python_identifier):
-    """For vanity, keep keys and section names in the config file with dashes instead of underscores and
-    all-lowercase"""
+def config_identifier(python_identifier: str) -> str:
+    """
+    For vanity, keep keys and section names in the config file with dashes instead of underscores and
+    all-lowercase
+    """
     return python_identifier.lower().replace('_', '-')
 
 
-class Section(object):
+class Section:
     """Instances of ``Section`` describe a section in the configuration file."""
 
-    def __init__(self, name, config):
+    def __init__(self, name: str, config: Configuration) -> None:
         """
         :param name: The name of the section (as it appears in the configuration file, all lowercase)
         :type name: str
         :param config: The Configuration instance this section belongs to
         :type config: Configuration
         """
-        assert name == name.lower(), 'Section names must be lowercase'
+
         self.name = name
         self.config = config
-        self.parameters = collections.OrderedDict([(pn.lower(), construct_parameter(pn.lower(), self, config))
-                                                   for pn in config.default_config.options(self.name)
-                                                   if not '.' in pn])
+        self.parameters = self._init_parameters()
 
     def __getattr__(self, item):
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
-            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
+            if self.config.restricted_to is not None and not self.parameters[cid].fqname in self.config.restricted_to:
                 raise AttributeError(
-                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
+                    f"Parameter not configured to work with this script: {self.parameters[cid].fqname}")
             return self.parameters[cid].get()
         else:
-            raise AttributeError("Parameter not found: %s" % item)
+            raise AttributeError(f"Parameter not found: {item}")
 
     def __setattr__(self, key, value):
         """Set the value on a parameter"""
         if key in {'name', 'config', 'parameters'}:
             # make sure the __init__ method doesn't trigger this
-            return super(Section, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
 
         cid = config_identifier(key)
         if cid in self.parameters:
-            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
+            if self.config.restricted_to is not None and not self.parameters[cid].fqname in self.config.restricted_to:
                 raise AttributeError(
-                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
+                    f"Parameter not configured to work with this script: {self.parameters[cid].fqname}")
             return self.parameters[cid].set(value)
         else:
-            return super(Section, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
 
     def __repr__(self):
-        return "[%s](%s)" % (self.name, ", ".join(self.parameters.keys()))
+        return f"[{self.name}]({', '.join(self.parameters.keys())})"
+
+    def _init_parameters(self) -> Dict[str, Parameter]:
+        def construct_parameter(name: str, section: Section, config: Configuration):
+            """Create the appropriate subtype of ``Parameter`` based on the .type option in the default.config file.
+            :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
+            :type name: str
+            :param section: The section this parameter is to be defined for
+            :type section: Section
+            :param config: The Configuration instance this parameter belongs to
+            :type config: Configuration
+            """
+
+            if name != name.lower():
+                raise ValueError("Parameter names must be lowercase")
+
+            try:
+                parameter_type = config.default_config.get(section.name, f"{name}.type")
+            except configparser.NoOptionError:
+                parameter_type = 'StringParameter'
+
+            if parameter_type not in globals():
+                raise ValueError(
+                    f"Bad parameter type in default.config: {section.name}/{name}={parameter_type}"
+                )
+
+            return globals()[parameter_type](name, section, config)
+
+        return {parameter_name.lower(): construct_parameter(parameter_name.lower(), self, self.config)
+                for parameter_name in self.config.default_config.options(self.name)
+                if '.' not in parameter_name}
 
 
-def construct_parameter(parameter_name, section, config):
-    """Create the approriate subtype of ``Parameter`` based on the .type option in the default.config file.
-    :param parameter_name: The name of the parameter (as it appears in the configuration file, all lowercase)
-    :type parameter_name: str
-    :param section: The section this parameter is to be defined for
-    :type section: Section
-    :param config: The Configuration instance this parameter belongs to
-    :type config: Configuration
-    """
-    assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase: {}:{}'.format(parameter_name,
-                                                                                                       section.name)
-    try:
-        parameter_type = config.default_config.get(section.name, parameter_name + '.type')
-    except configparser.NoOptionError:
-        parameter_type = 'StringParameter'
-
-    if not parameter_type in globals():
-        section_name = section.name
-        raise ValueError('Bad parameter type in default.config: %(section_name)s/%(parameter_name)s=%(parameter_type)s'
-                         % locals())
-    return globals()[parameter_type](parameter_name, section, config)
-
-
-class Parameter(object):
-    typename = 'Parameter'
-
+class Parameter:
     def __init__(self, name, section, config):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
@@ -370,17 +378,20 @@ class Parameter(object):
         """
         self.name = name
         self.section = section
-        self.fqname = '%s:%s' % (section.name, self.name)
+        self.fqname = f"{section.name}:{self.name}"
         self.config = config
+
         try:
-            self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
+            self.help = config.default_config.get(section.name, f"{self.name}.help", raw=True)
         except configparser.NoOptionError:
-            self.help = "FIXME: Add help to %s:%s" % (section.name, self.name)
+            self.help = f"FIXME: Add help to {section, name}:{self.name}"
+
         try:
-            self.category = config.default_config.get(section.name, self.name + ".category", raw=True)
+            self.category = config.default_config.get(section.name, f"{self.name}.category", raw=True)
         except configparser.NoOptionError:
             self.category = None
 
+        # FIXME: REMOVE THIS
         # give subclasses a chance to specialize their behavior
         self.initialize(config.default_config)
 
@@ -389,7 +400,7 @@ class Parameter(object):
         return self.decode(self.config.default_config.get(self.section.name, self.name))
 
     def __repr__(self):
-        return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
+        return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
 
     @property
     def py_name(self):
@@ -428,7 +439,7 @@ class Parameter(object):
         def lookup_config(matchobj):
             return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
 
-        encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
+        encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
     def set(self, value):
@@ -438,12 +449,11 @@ class Parameter(object):
 
 class PathParameter(Parameter):
     """Describes a folder in the system"""
-    typename = 'PathParameter'
 
     def initialize(self, parser):
         try:
-            self._direction = parser.get(self.section.name, self.name + '.direction')
-            if not self._direction in {'input', 'output'}:
+            self._direction = parser.get(self.section.name, f"{self.name}.direction")
+            if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
             self._direction = 'input'
@@ -455,19 +465,18 @@ class PathParameter(Parameter):
 
 class FileParameter(Parameter):
     """Describes a file in the system."""
-    typename = 'FileParameter'
 
     def initialize(self, parser):
-        self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
+        self._extensions = parser.get(self.section.name, f"{self.name}.extensions").split()
         try:
-            self._direction = parser.get(self.section.name, self.name + '.direction')
+            self._direction = parser.get(self.section.name, f"{self.name}.direction")
             if not self._direction in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
             self._direction = 'input'
 
         try:
-            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
         except configparser.NoOptionError:
             self.nullable = False
 
@@ -476,13 +485,13 @@ class FileParameter(Parameter):
             if self.nullable:
                 return ''
             else:
-                raise ValueError("Can't encode None for non-nullable FileParameter %s." % self.name)
+                raise ValueError(f"Can't encode None for non-nullable FileParameter {self.name}.")
         return str(value)
 
     def decode(self, value):
         _KEYCRE = re.compile(r"\{([^}]+)\}")
         if not value and not self.nullable:
-            raise ValueError("Can't decode value for non-nullable FileParameter %s." % self.name)
+            raise ValueError(f"Can't decode value for non-nullable FileParameter {self.name}.")
         elif _KEYCRE.match(value):
             return _KEYCRE.sub(lambda match: self.config.get(match.group(1)), value)
         else:
@@ -491,12 +500,12 @@ class FileParameter(Parameter):
 
 class ResumeFileParameter(FileParameter):
     """Path to the workflow:resume-file - this is generally ${TEMP}/resume-workflow.yml. Makes sure it is writeable"""
-    typename = "ResumeFileParameter"
 
     def encode(self, value):
-        return self.check_path(str(value))
+        return self._check_path(str(value))
 
-    def check_path(self, path):
+    @staticmethod
+    def _check_path(path):
         """Make sure I can read/write that file"""
         if not path:
             path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
@@ -517,12 +526,11 @@ class ResumeFileParameter(FileParameter):
         return path
 
     def decode(self, value):
-        return self.check_path(str(value))
+        return self._check_path(str(value))
 
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
-    typename = 'JsonParameter'
 
     def encode(self, value):
         return json.dumps(value)
@@ -534,8 +542,6 @@ class JsonParameter(Parameter):
 
 
 class WeatherPathParameter(Parameter):
-    typename = 'WeatherPathParameter'
-
     def initialize(self, parser):
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
@@ -558,7 +564,7 @@ class WeatherPathParameter(Parameter):
             weather_path = self.locator.get_weather(
                 [w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
         else:
-            raise cea.ConfigError("Invalid weather path: {}".format(value))
+            raise cea.ConfigError(f"Invalid weather path: {value}")
         return weather_path
 
     @property
@@ -568,7 +574,6 @@ class WeatherPathParameter(Parameter):
 
 
 class WorkflowParameter(Parameter):
-    typename = "WorkflowParameter"
     workflows_path = os.path.join(os.path.dirname(__file__), "workflows")
     examples = {}
     for w in os.listdir(workflows_path):
@@ -582,14 +587,13 @@ class WorkflowParameter(Parameter):
         elif os.path.exists(value) and value.endswith(".yml"):
             return value
         else:
-            print("ERROR: Workflow not found: {workflow} - using {default}".format(
-                workflow=value, default=self.examples[next(iter(self.examples.keys()))]))
+            print(f"ERROR: Workflow not found: {value} - using {self.examples[next(iter(self.examples.keys()))]}")
             return self.examples[next(iter(self.examples.keys()))]
 
 
 class BooleanParameter(Parameter):
     """Read / write boolean parameters to the config file."""
-    typename = 'BooleanParameter'
+
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
 
@@ -602,11 +606,10 @@ class BooleanParameter(Parameter):
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
-    typename = 'IntegerParameter'
 
     def initialize(self, parser):
         try:
-            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
         except configparser.NoOptionError:
             self.nullable = False
 
@@ -630,17 +633,16 @@ class IntegerParameter(Parameter):
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
-    typename = 'RealParameter'
 
     def initialize(self, parser):
         # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
+            self._decimal_places = int(parser.get(self.section.name, f"{self.name}.decimal-places"))
         except configparser.NoOptionError:
             self._decimal_places = 4
 
         try:
-            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
         except configparser.NoOptionError:
             self.nullable = False
 
@@ -650,7 +652,7 @@ class RealParameter(Parameter):
                 return ''
             else:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
-        return format(value, ".%i" % self._decimal_places)
+        return format(float(value), ".%i" % self._decimal_places)
 
     def decode(self, value):
         try:
@@ -665,7 +667,6 @@ class RealParameter(Parameter):
 class ListParameter(Parameter):
     """A parameter that is a list of comma-separated strings. An error is raised when writing
     strings that contain commas themselves."""
-    typename = 'ListParameter'
 
     def encode(self, value):
         if isinstance(value, str):
@@ -673,8 +674,9 @@ class ListParameter(Parameter):
             value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
         for s in strings:
-            assert ',' not in s, 'No commas allowed in values of ListParameter %s (value to encode: %s)' % (
-                self.fqname, repr(value))
+            if ',' in s:
+                raise ValueError(
+                    f"No commas allowed in values of ListParameter {self.fqname} (value to encode: {repr(value)})")
         return ', '.join(strings)
 
     def decode(self, value):
@@ -683,31 +685,28 @@ class ListParameter(Parameter):
 
 class PluginListParameter(ListParameter):
     """A list of cea.plugin.Plugin instances"""
-    typename = "PluginListParameter"
 
     def set(self, value):
-        super(PluginListParameter, self).set(value)
+        super().set(value)
         self.config.refresh_plugins()
 
     def encode(self, list_of_plugins):
         """Make sure we don't duplicate any of the plugins"""
         unique_plugins = unique(list_of_plugins)
-        return super(PluginListParameter, self).encode(unique_plugins)
+        return super().encode(unique_plugins)
 
     def decode(self, value):
-        from cea.plugin import instantiate_plugin
         plugin_fqnames = unique(parse_string_to_list(value))
-        plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
+        plugins = [cea.plugin.instantiate_plugin(plugin_fqname) for plugin_fqname in plugin_fqnames]
         return [plugin for plugin in plugins if plugin is not None]
 
 
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
-    typename = 'SubfoldersParameter'
 
     def initialize(self, parser):
         # allow the parent option to be set
-        self._parent = parser.get(self.section.name, self.name + '.parent')
+        self._parent = parser.get(self.section.name, f"{self.name}.parent")
 
     def decode(self, value):
         """Only return the folders that exist"""
@@ -718,35 +717,31 @@ class SubfoldersParameter(ListParameter):
         parent = self.replace_references(self._parent)
         try:
             return [folder for folder in os.listdir(parent) if os.path.isdir(os.path.join(parent, folder))]
-        except:
+        except OSError:
             # parent doesn't exist?
             return []
 
 
 class StringParameter(Parameter):
-    typename = 'StringParameter'
+    """Default Parameter type"""""
 
 
 class OptimizationIndividualListParameter(ListParameter):
-    typename = 'OptimizationIndividualListParameter'
-
     def initialize(self, parser):
         # allow the parent option to be set
-        self._project = parser.get(self.section.name, self.name + '.project')
+        self._project = parser.get(self.section.name, f"{self.name}.project")
 
     def get_folders(self, project=None):
         if not project:
             project = self.replace_references(self._project)
         try:
             return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
-        except:
+        except OSError:
             # project doesn't exist?
             return []
 
 
 class DateParameter(Parameter):
-    typename = 'DateParameter'
-
     def encode(self, value):
         return datetime.datetime.strftime(value, '%Y-%m-%d')
 
@@ -760,38 +755,34 @@ class DateParameter(Parameter):
 
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
-    typename = 'ChoiceParameter'
 
     def initialize(self, parser):
         # when called for the first time, make sure there is a `._choices` parameter
-        self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
+        self._choices = parse_string_to_list(parser.get(self.section.name, f"{self.name}.choices"))
 
     def encode(self, value):
-        assert str(
-            value) in self._choices, 'Invalid parameter value {value} for {fqname}, choose from: {choices}'.format(
-            value=value,
-            fqname=self.fqname,
-            choices=', '.join(self._choices)
-        )
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
         return str(value)
 
     def decode(self, value):
         if str(value) in self._choices:
             return str(value)
         else:
-            assert self._choices, 'No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value)
+            if not self._choices:
+                raise ValueError(f"No choices for {self.fqname} to decode {value}")
             return self._choices[0]
 
 
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
-    typename = "DatabasePathParameter"
 
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
-                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p != 'weather'}
+                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
 
     def encode(self, value):
         return str(value)
@@ -806,7 +797,7 @@ class DatabasePathParameter(Parameter):
         elif os.path.exists(value) and os.path.isdir(value) and self.is_valid_template(value):
             database_path = value
         else:
-            raise cea.ConfigError("Invalid database path: {}".format(value))
+            raise cea.ConfigError(f"Invalid database path: {value}")
         return database_path
 
     @property
@@ -829,19 +820,17 @@ class DatabasePathParameter(Parameter):
                     continue
                 template_file_path = os.path.join(path, folder, file)
                 if not os.path.exists(template_file_path):
-                    print("Invalid user-specified region template - file not found: {template_file_path}".format(
-                        template_file_path=template_file_path))
+                    print(f"Invalid user-specified region template - file not found: {template_file_path}")
                     return False
         return True
 
 
 class PlantNodeParameter(ChoiceParameter):
     """A parameter that refers to valid PLANT nodes of a thermal-network"""
-    typename = 'PlantNodeParameter'
 
     def initialize(self, parser):
-        self.network_name_fqn = parser.get(self.section.name, self.name + '.network-name')
-        self.network_type_fqn = parser.get(self.section.name, self.name + '.network-type')
+        self.network_name_fqn = parser.get(self.section.name, f"{self.name}.network-name")
+        self.network_type_fqn = parser.get(self.section.name, f"{self.name}.network-type")
 
     @property
     def _choices(self):
@@ -855,14 +844,14 @@ class PlantNodeParameter(ChoiceParameter):
         if value is None:
             return ""
         elif not self._choices:
-            print('No plant nodes can be found, ignoring `{value}`'.format(value=value))
+            print(f"No plant nodes can be found, ignoring `{value}`")
             return ""
         elif value not in self._choices:
             first_choice = self._choices[0]
-            print('Plant node `{value}` not found. Using {first_choice}'.format(value=value, first_choice=first_choice))
+            print(f"Plant node `{value}` not found. Using {first_choice}")
             return str(first_choice)
         else:
-            return super(PlantNodeParameter, self).encode(value)
+            return super().encode(value)
 
     def decode(self, value):
         if str(value) in self._choices:
@@ -875,7 +864,6 @@ class PlantNodeParameter(ChoiceParameter):
 
 class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
-    typename = 'ScenarioNameParameter'
 
     def initialize(self, parser):
         pass
@@ -885,8 +873,7 @@ class ScenarioNameParameter(ChoiceParameter):
         if value == '':
             raise ValueError('scenario-name cannot be empty')
         elif self._choices and value not in self._choices:
-            print('WARNING: Scenario "{value}" does not exist. Valid choices: {choices}'
-                  .format(value=value, choices=','.join(self._choices)))
+            print(f'WARNING: Scenario "{value}" does not exist. Valid choices: {", ".join(self._choices)}')
         return str(value)
 
     def decode(self, value):
@@ -900,8 +887,6 @@ class ScenarioNameParameter(ChoiceParameter):
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
-
-    typename = 'ScenarioParameter'
 
     def get_raw(self):
         return "{general:project}/{general:scenario-name}"
@@ -919,7 +904,6 @@ class ScenarioParameter(Parameter):
 
 class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
-    typename = 'MultiChoiceParameter'
 
     def initialize(self, parser):
         super().initialize(parser)
@@ -930,14 +914,6 @@ class MultiChoiceParameter(ChoiceParameter):
         if _default == '':
             return []
         return self.decode(_default)
-
-    # Does not make sense for MultiChoiceParameter to be null, there should be at least one choice
-    # @property
-    # def nullable(self):
-    #     try:
-    #         return self.config.default_config.getboolean(self.section.name, self.name + '.nullable')
-    #     except configparser.NoOptionError:
-    #         return False
 
     def get(self):
         """Return the value from the config file"""
@@ -954,10 +930,11 @@ class MultiChoiceParameter(ChoiceParameter):
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value):
-        assert not isinstance(value, str), "Bad value for encode of parameter {pname}".format(pname=self.name)
+        if isinstance(value, str):
+            raise ValueError(f"Bad value for encode of parameter {self.name}")
         for choice in value:
-            assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
-                value, self.name, self._choices)
+            if str(choice) not in self._choices:
+                raise ValueError(f"Invalid parameter value {value} for {self.name}, choose from: {self._choices}")
         return ', '.join(map(str, value))
 
     def decode(self, value):
@@ -969,7 +946,6 @@ class MultiChoiceParameter(ChoiceParameter):
 
 class SingleBuildingParameter(ChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'SingleBuildingParameter'
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
@@ -992,7 +968,6 @@ class SingleBuildingParameter(ChoiceParameter):
 
 class SingleThermalStorageParameter(ChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'SingleThermalStorageParameter'
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
@@ -1015,12 +990,10 @@ class SingleThermalStorageParameter(ChoiceParameter):
 
 class UseTypeRatioParameter(ListParameter):
     """A list of use-type names and ratios"""
-    typename = 'UseTypeRatioParameter'
 
 
 class GenerationParameter(ChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'GenerationParameter'
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
@@ -1032,12 +1005,12 @@ class GenerationParameter(ChoiceParameter):
         # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         checkpoints = glob.glob(os.path.join(locator.get_optimization_master_results_folder(), "*.json"))
-        interations = []
+        iterations = []
         for checkpoint in checkpoints:
             with open(checkpoint, 'rb') as f:
                 data_checkpoint = json.load(f)
-                interations.extend(data_checkpoint['generation_to_show'])
-        unique_iterations = list(set(interations))
+                iterations.extend(data_checkpoint['generation_to_show'])
+        unique_iterations = list(set(iterations))
         unique_iterations = [str(x) for x in unique_iterations]
         return unique_iterations
 
@@ -1046,7 +1019,7 @@ class GenerationParameter(ChoiceParameter):
             return str(value)
         else:
             if not self._choices or len(self._choices) < 1:
-                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                print(f"No choices for {self.fqname} to decode {value}")
                 return ''
             else:
                 return self._choices[0]
@@ -1056,7 +1029,7 @@ class GenerationParameter(ChoiceParameter):
             return str(value)
         else:
             if not self._choices or len(self._choices) < 1:
-                print('No choices for {fqname} to decode {value}'.format(fqname=self.fqname, value=value))
+                print(f"No choices for {self.fqname} to decode {value}")
                 return None
             else:
                 return self._choices[0]
@@ -1064,7 +1037,6 @@ class GenerationParameter(ChoiceParameter):
 
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'SystemParameter'
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
@@ -1087,7 +1059,6 @@ class SystemParameter(ChoiceParameter):
 
 class MultiSystemParameter(MultiChoiceParameter):
     """A (single) building in the zone"""
-    typename = 'MultiSystemParameter'
 
     def initialize(self, parser):
         # skip the default MultiChoiceParameter initialization of _choices
@@ -1101,8 +1072,8 @@ class MultiSystemParameter(MultiChoiceParameter):
         for scenario_name in scenarios_names_list:
             scenario_path = os.path.join(project_path, scenario_name)
             systems_scenario = get_systems_list(scenario_path)
-            unique_systems_scenarios_list.extend([scenario_name + "_sys_today_"])
-            unique_systems_scenarios_list.extend([scenario_name + "_" + x for x in systems_scenario])
+            unique_systems_scenarios_list.extend([f"{scenario_name}_sys_today_"])
+            unique_systems_scenarios_list.extend([f"{scenario_name}_{x}" for x in systems_scenario])
         return unique_systems_scenarios_list
 
     def decode(self, value):
@@ -1116,7 +1087,6 @@ class MultiSystemParameter(MultiChoiceParameter):
 
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
-    typename = 'BuildingsParameter'
 
     def initialize(self, parser):
         # skip the default MultiChoiceParameter initialization of _choices
@@ -1130,8 +1100,6 @@ class BuildingsParameter(MultiChoiceParameter):
 
 
 class CoordinateListParameter(ListParameter):
-    typename = 'CoordinateListParameter'
-
     def encode(self, value):
         if isinstance(value, str):
             value = self.decode(value)
@@ -1141,23 +1109,27 @@ class CoordinateListParameter(ListParameter):
     def decode(self, value):
         coord_list = parse_string_coordinate_list(value)
         if len(set(coord_list)) < 3:
-            raise ValueError('Requires 3 distinct coordinate points to create a polygon. Got: {}'.format(coord_list))
+            raise ValueError(f"Requires 3 distinct coordinate points to create a polygon. Got: {coord_list}")
         return coord_list
 
 
-def get_scenarios_list(project_path):
+def get_scenarios_list(project_path: str) -> List[str]:
     # return empty list if project path does not exist
     if not os.path.exists(project_path):
         return []
 
-    def is_valid_scenario(project_path, folder_name):
+    def is_valid_scenario(folder_name):
+        """
+        A scenario must be a valid path
+        A scenario can't start with a `.` like `.config`
+        """
         folder_path = os.path.join(project_path, folder_name)
-        # a scenario must be a valid path
-        # a scenario can't start with a . like `.config`
-        return all([os.path.isdir(folder_path), not folder_name.startswith('.')])
 
-    return [folder_name for folder_name in os.listdir(project_path)
-            if is_valid_scenario(project_path, folder_name)]
+        return all([os.path.isdir(folder_path),
+                    not folder_name.startswith('.'),
+                    folder_name != "__pycache__"])
+
+    return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
 
 
 def get_systems_list(scenario_path):
@@ -1208,11 +1180,7 @@ def validate_coord_tuple(coord_tuple):
 
     lon, lat = coord_tuple
     if lat < -90 or lat > 90:
-        raise ValueError('Latitude must be between -90 and 90. Got {}'.format(lat))
+        raise ValueError(f"Latitude must be between -90 and 90. Got {lat}")
     if lon < -180 or lon > 180:
-        raise ValueError('Longitude must be between -180 and 180. Got {}'.format(lon))
+        raise ValueError(f"Longitude must be between -180 and 180. Got {lon}")
     return coord_tuple
-
-
-if __name__ == "__main__":
-    config = Configuration()

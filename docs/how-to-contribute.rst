@@ -28,7 +28,7 @@ Step 3. Branch out and code
 ----------------------------
 Branch out from out main 'Master branch" of our github repository and start coding. This can be done with the CEA
 development version. For this make sure to use one of our template scripts and follow the documentation guide. This
-could help to maintain an homogenous structure, and help us to acknowledge you.
+could help to maintain an homogeneous structure, and help us to acknowledge you.
 
 Check these guides for more details: :doc:`how-to-use-github`, :doc:`how-to-add-a-new-script-to-the-cea`.
 

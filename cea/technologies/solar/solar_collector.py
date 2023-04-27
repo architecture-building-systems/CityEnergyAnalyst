@@ -593,7 +593,7 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
     :param auxiliary_electricity_kW: electricity required to pump hot water in the transmission pipelines
     :param flow: index for the iteration number
     :param mcp_kWperK:
-    :param pipe_lengths: lengthes of transmission pipes
+    :param pipe_lengths: lengths of transmission pipes
     :param specific_flows_kgpers: specific mass flow of hot water in panels
     :param specific_pressure_losses_Pa: specific pressure drop per panel
     :param supply_losses_kW: heat loss through transmission pipelines
@@ -1018,7 +1018,7 @@ def main(config):
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results
