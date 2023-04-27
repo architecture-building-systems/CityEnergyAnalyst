@@ -190,23 +190,44 @@ def get_databases(demand, locator):
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+
+    # for feedstock 1
+    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
+        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
+        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
+        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
-        ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock1', right_on='code')[
+        ['code_x', 'feedstock1', 'scale1', 'efficiency1', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
-    dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
-    cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
-    return cooling, dhw, electricity, heating
+    heating1 = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw1 = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling1 = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    electricity1 = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+
+    # for feedstock 2
+    heating_costs = factors_heating.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
+        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
+    cooling_costs = factors_cooling.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
+        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
+    dhw_costs = factors_dhw.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
+        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
+    electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock2', right_on='code')[
+        ['code_x', 'feedstock2', 'scale2', 'efficiency2', 'ratio_feedstocks','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
+    heating2 = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw2 = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling2 = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    electricity2 = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+
+    return cooling1, dhw1, electricity1, heating1, cooling2, dhw2, electricity2, heating2
 
 
 def main(config):
