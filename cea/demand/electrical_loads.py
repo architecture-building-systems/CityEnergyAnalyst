@@ -83,10 +83,10 @@ def calc_Ef(bpr, tsd):
 
     """
     # GET SYSTEMS EFFICIENCIES
-    solar_radiation = bpr.solar.I_sol
+    solar_radiation = bpr.solar.I_sol_roof_density
     energy_source1 = bpr.supply['source_el']
     area_pv = bpr.supply['area_pv']
-    eff2 = bpr.supply['PV_n']
+    eff2 = bpr.supply['eff_el_pv']
     total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
                                     tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
 

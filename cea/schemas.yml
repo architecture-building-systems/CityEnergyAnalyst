@@ -6849,12 +6849,6 @@ get_database_supply_assemblies:
           type: float
           unit: '[USD2015/kW]'
           values: '{0.0...n}'
-        CAPEX_PV_USD2015kW:
-          description: Capital costs per kW
-          min: 0.0
-          type: float
-          unit: '[USD2015/kW]'
-          values: '{0.0...n}'
         Description:
           description: Description of Type of all in one system
           type: string
@@ -6887,20 +6881,8 @@ get_database_supply_assemblies:
           type: string
           unit: 'NA'
           values: alphanumeric
-        area_pv:
-          description: Area of PV of the system (only when feedstock2 is SOLAR)
-          type: float
-          unit: '[m2]'
-          values: '{0.0...n}'
-          min: 0.0
         efficiency:
           description: For the 1st Feedstock, what is the conversion efficiency?
-          type: float
-          unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
-        efficiency_pv:
-          description: Cconversion efficiency of pv panels
           type: float
           unit: '[-]'
           values: '{0.0...n}'
@@ -6939,16 +6921,38 @@ get_database_supply_assemblies:
           values: alphanumeric
     ELECTRICITY_PV:
       columns:
-        component:
-          description: Type of PV system (see database Conversion systems)
+        CAPEX_USD2015kW:
+          description: Capital costs per kW
+          min: 0.0
+          type: float
+          unit: '[USD2015/kW]'
+          values: '{0.0...n}'
+        Description:
+          description: Description of Type of all in one system
           type: string
           unit: 'NA'
           values: alphanumeric
-          choice:
-            lookup:
-              path: get_database_conversion_systems
-              sheet: PV
-              column: code
+        IR_%:
+          description: interest rate charged on the loan for the capital cost
+          min: 0.0
+          type: float
+          unit: '[%]'
+          values: '{0.0...100}'
+          max: 100.0
+        LT_yr:
+          description: lifetime of assembly
+          min: 0
+          type: int
+          unit: '[yr]'
+          values: '{0...n}'
+        O&M_%:
+          description: operation and maintenance cost factor (fraction of the investment
+            cost)
+          min: 0.0
+          type: float
+          unit: '[%]'
+          values: '{0.0...100}'
+          max: 100.0
         code:
           description: Type of all in one system
           primary: true
@@ -6961,12 +6965,31 @@ get_database_supply_assemblies:
           unit: '[m2]'
           values: '{0.0...n}'
           min: 0.0
+        efficiency:
+          description: Cconversion efficiency of pv panels
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        feedstock:
+          choice:
+            values:
+            - SOLAR
         reference:
           description: reference
           nullable: true
           type: string
           unit: 'NA'
           values: 'NA'
+        scale:
+          choice:
+            values:
+            - NONE
+            - BUILDING
+          description: scale of the PV installation
+          type: string
+          unit: 'NA'
+          values: alphanumeric
     HEATING:
       columns:
         CAPEX_USD2015kW:

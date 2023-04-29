@@ -621,15 +621,15 @@ class EnvelopeProperties(object):
 class SolarProperties(object):
     """Encapsulates the solar properties of a building"""
 
-    __slots__ = ['I_sol']
+    __slots__ = ['I_sol', 'I_sol_roof_density']
 
     def __init__(self, solar):
         self.I_sol = solar['I_sol']
+        self.I_sol_roof_density = solar['I_sol_roof_density']
 
 
 def get_properties_supply_sytems(locator, properties_supply):
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
-    data_pv_components = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
     supply_heating = data_all_in_one_systems['HEATING']
     supply_dhw = data_all_in_one_systems['HOT_WATER']
     supply_cooling = data_all_in_one_systems['COOLING']
@@ -641,7 +641,6 @@ def get_properties_supply_sytems(locator, properties_supply):
     df_emission_dhw = properties_supply.merge(supply_dhw, left_on='type_dhw', right_on='code')
     df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
     df_emission_electricity_pv = properties_supply.merge(supply_electricity_pv, left_on='type_el_pv', right_on='code')
-    df_emission_electricity_pv = df_emission_electricity_pv.merge(data_pv_components, left_on='component', right_on='code')
 
     df_emission_heating.rename(columns={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
                                inplace=True)
@@ -651,13 +650,15 @@ def get_properties_supply_sytems(locator, properties_supply):
                            inplace=True)
     df_emission_electricity.rename(columns={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
                                    inplace=True)
+    df_emission_electricity_pv.rename(columns={"feedstock": "source_el2", "scale": "scale_el2", "efficiency": "eff_el_pv"},
+                                   inplace=True)
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
                                'source_hs', 'scale_hs', 'eff_hs']
     fields_emission_cooling = ['Name', 'source_cs', 'scale_cs', 'eff_cs']
     fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw', 'eff_dhw']
     fields_emission_el = ['Name', 'source_el', 'scale_el', 'eff_el']
-    fields_emission_el_pv = ['Name', 'PV_n', "area_pv"]
+    fields_emission_el_pv = ['Name', "area_pv", "eff_el_pv"]
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(
@@ -928,6 +929,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
 
     # create result data frame
     list_Isol = []
+    list_Isol_density = []
 
     # for every building
     for building_name in building_names:
@@ -937,10 +939,38 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
-    result = pd.DataFrame({'Name': list(building_names), 'I_sol': list_Isol})
+        I_sol_density = calc_Isol_daysim_density(building_name, locator)
+        list_Isol_density.append(I_sol_density)
+
+
+    result = pd.DataFrame({'Name': list(building_names), 'I_sol': list_Isol, 'I_sol_roof_density': list_Isol_density})
 
     return result
 
+def calc_Isol_daysim_density(building_name, locator):
+    """
+    Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
+    and building envelope properties.
+
+    :param building_name: Name of the building (e.g. B154862)
+    :param locator: an InputLocator for locating the input files
+    :param prop_envelope: contains the building envelope properties.
+    :param prop_rc_model: RC model properties of a building by name.
+    :param thermal_resistance_surface: Thermal resistance of building element.
+
+    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
+    :rtype: np.array
+
+    """
+
+    # read daysim radiation
+    radiation_data = pd.read_csv(locator.get_radiation_building(building_name))
+
+    # sum wall
+    # solar incident on all walls [W]
+    I_sol_density= (radiation_data['roofs_top_kW']/radiation_data['roofs_top_m2']).values * 1000  # in W/m2
+
+    return I_sol_density
 
 def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface):
     """
