@@ -225,6 +225,7 @@ def get_databases(demand, locator):
     factors_dhw = data_all_in_one_systems['HOT_WATER']
     factors_cooling = data_all_in_one_systems['COOLING']
     factors_electricity = data_all_in_one_systems['ELECTRICITY']
+    factors_electricity_pv = data_all_in_one_systems['ELECTRICITY_PV']
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
     # get the mean of all values for this
     factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
@@ -259,18 +260,17 @@ def get_databases(demand, locator):
     electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
+    electricity_costs_pv = factors_electricity_pv.merge(factors_resources_sell, left_on='feedstock', right_on='code')[
+        ['code_x', 'feedstock', 'scale', 'efficiency','Opex_var_sell_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
+         'IR_%']]
+
     heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
     dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
     cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
-    electricity1 = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    electricity_pv = supply_systems.merge(demand, on='Name').merge(electricity_costs_pv, left_on='type_el_pv', right_on='code_x')
 
-    # for pv in the case
-    sell_price = factors_resources_sell[factors_resources_sell["code"]=="SOLAR"]["Opex_var_sell_USD2015kWh"].values[0]
-    factors_electricity['Opex_var_sell_USD2015kWh'] = 0.0
-    factors_electricity.loc[(factors_electricity["area_pv"]>0.0),'Opex_var_sell_USD2015kWh'] = sell_price #integrate hier in buy price so it is easier to run
-
-    electricity2 = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
-    return cooling, dhw,  heating, electricity1, electricity2
+    return cooling, dhw,  heating, electricity, electricity_pv
 
 
 def main(config):

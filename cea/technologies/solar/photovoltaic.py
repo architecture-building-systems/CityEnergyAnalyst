@@ -655,9 +655,6 @@ def calc_surface_azimuth(xdir, ydir, B):
 # ============================
 # properties of module
 # ============================
-# TODO: Delete when done
-
-
 def calc_properties_PV_db(database_path, config):
     """
     To assign PV module properties according to panel types.
@@ -674,7 +671,6 @@ def calc_properties_PV_db(database_path, config):
 
 
 # investment and maintenance costs
-# FIXME: it looks like this function is never used!!! (REMOVE)
 def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.

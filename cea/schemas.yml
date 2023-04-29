@@ -6966,7 +6966,7 @@ get_database_supply_assemblies:
           values: '{0.0...n}'
           min: 0.0
         efficiency:
-          description: Cconversion efficiency of pv panels
+          description: Conversion efficiency of pv panels
           type: float
           unit: '[-]'
           values: '{0.0...n}'

@@ -31,3 +31,5 @@ class LcaCalculations(object):
                                             365)  # in kgCo2/MJ for every hour of a year
         self.EL_TO_CO2_EQ = np.tile(feedstocks['GRID']['GHG_kgCO2MJ'].values,
                                     365)  # in kgCo2/MJ for every hour of a year
+        self.SOLAR_TO_CO2_EQ = np.tile(feedstocks['SOLAR']['GHG_kgCO2MJ'].values,
+                                    365)  # in kgCo2/MJ for every hour of a year

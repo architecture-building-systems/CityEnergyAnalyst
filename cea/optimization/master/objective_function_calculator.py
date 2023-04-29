@@ -234,15 +234,20 @@ def calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
                                                  sum_wet_biomass_imports_W,
                                                  sum_dry_biomass_imports_W,
                                                  sum_electricity_imports_W,
-                                                 sum_electricity_exports_W,
+                                                 sum_electricity_exports_noPV_W,
+                                                 sum_electricity_exports_PV_W,
                                                  prices,
                                                  ):
+
+
+
     # COSTS
     Opex_var_NG_sys_district_scale_USD = sum(sum_natural_gas_imports_W * prices.NG_PRICE)
     Opex_var_WB_sys_district_scale_USD = sum(sum_wet_biomass_imports_W * prices.WB_PRICE)
     Opex_var_DB_sys_district_scale_USD = sum(sum_dry_biomass_imports_W * prices.DB_PRICE)
     Opex_var_GRID_buy_sys_district_scale_USD = sum(sum_electricity_imports_W * prices.ELEC_PRICE)
-    Opex_var_GRID_sell_sys_district_scale_USD = -sum(sum_electricity_exports_W * prices.ELEC_PRICE_EXPORT)
+    Opex_var_GRID_sell_sys_district_scale_USD = -sum(sum_electricity_exports_noPV_W * prices.ELEC_PRICE_EXPORT) -sum(sum_electricity_exports_PV_W * prices.SOLAR_PRICE_EXPORT)
+
 
     district_variable_costs = {
         "Opex_var_NG_district_scale_USD": Opex_var_NG_sys_district_scale_USD,
@@ -259,14 +264,15 @@ def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
                                             sum_wet_biomass_imports_W,
                                             sum_dry_biomass_imports_W,
                                             sum_electricity_imports_W,
-                                            sum_electricity_exports_W,
+                                            sum_electricity_exports_noPV_W,
+                                            sum_electricity_exports_PV_W,
                                             lca):
     # SUMMARIZE
     GHG_NG_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
     GHG_WB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
     GHG_DB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_dry_biomass_imports_W, lca.DRYBIOMASS_TO_CO2_EQ))
     GHG_GRID_imports_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_imports_W, lca.EL_TO_CO2_EQ))
-    GHG_GRID_exports_district_scale_tonCO2yr = - sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_W, lca.EL_TO_CO2_EQ))
+    GHG_GRID_exports_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_noPV_W, lca.EL_TO_CO2_EQ)) +sum(calc_emissions_Whyr_to_tonCO2yr(sum_electricity_exports_PV_W, lca.EL_TO_CO2_EQ))
 
     buildings_district_scale_emissions_primary_energy = {
         "GHG_NG_district_scale_tonCO2yr": GHG_NG_district_scale_tonCO2yr,
@@ -300,13 +306,14 @@ def calc_system_energy_demand_district_scale_buildings(sum_natural_gas_imports_W
                                                        sum_wet_biomass_imports_W,
                                                        sum_dry_biomass_imports_W,
                                                        sum_electricity_imports_W,
-                                                       sum_electricity_exports_W):
+                                                       sum_electricity_exports_noPV_W,
+                                                       sum_electricity_exports_PV_W,):
 
     # SUMMARIZE
     SED_natural_gas_W = sum(sum_natural_gas_imports_W)
     SED_wet_biomass_W = sum(sum_wet_biomass_imports_W)
     SED_dry_biomass_W = sum(sum_dry_biomass_imports_W)
-    SED_electricity_W = sum(sum_electricity_imports_W) - sum(sum_electricity_exports_W)
+    SED_electricity_W = sum(sum_electricity_imports_W) - sum(sum_electricity_exports_noPV_W) - sum(sum_electricity_exports_PV_W)
 
     district_system_energy_demand = {"SED_natural_gas_district_scale_Wh": SED_natural_gas_W,
                                      "SED_wet_biomass_district_scale_Wh": SED_wet_biomass_W,
@@ -341,18 +348,20 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
                                  district_electricity_demands['E_hs_ww_req_building_scale_W'] -
                                  district_electricity_demands['E_cs_cre_cdata_req_building_scale_W'])
 
-    sum_electricity_exports_W = (data['E_CHP_gen_export_W'] +
+    sum_electricity_exports_noPV_W = (data['E_CHP_gen_export_W'] +
                                  data['E_Furnace_dry_gen_export_W'] +
                                  data['E_Furnace_wet_gen_export_W'] +
-                                 data['E_PV_gen_export_W'] +
-                                 data['E_PVT_gen_export_W'] +
                                  data['E_Trigen_gen_export_W'])
+    sum_electricity_exports_PV_W = (
+                                 data['E_PV_gen_export_W'] +
+                                 data['E_PVT_gen_export_W'])
 
     return sum_natural_gas_imports_W, \
            sum_wet_biomass_imports_W, \
            sum_dry_biomass_imports_W, \
            sum_electricity_imports_W, \
-           sum_electricity_exports_W
+           sum_electricity_exports_noPV_W,\
+           sum_electricity_exports_PV_W
 
 
 def buildings_district_scale_objective_functions(district_heating_costs,
@@ -390,7 +399,8 @@ def buildings_district_scale_objective_functions(district_heating_costs,
     sum_wet_biomass_imports_W, \
     sum_dry_biomass_imports_W, \
     sum_electricity_imports_W, \
-    sum_electricity_exports_W = summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
+    sum_electricity_exports_noPV_W,\
+    sum_electricity_exports_PV_W = summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
                                                                      district_heating_fuel_requirements_dispatch,
                                                                      district_microgrid_requirements_dispatch,
                                                                      district_electricity_demands)
@@ -400,7 +410,8 @@ def buildings_district_scale_objective_functions(district_heating_costs,
                                                                            sum_wet_biomass_imports_W,
                                                                            sum_dry_biomass_imports_W,
                                                                            sum_electricity_imports_W,
-                                                                           sum_electricity_exports_W,
+                                                                           sum_electricity_exports_noPV_W,
+                                                                           sum_electricity_exports_PV_W,
                                                                            prices,
                                                                            )
     # join all the costs
@@ -413,7 +424,8 @@ def buildings_district_scale_objective_functions(district_heating_costs,
                                                                   sum_wet_biomass_imports_W,
                                                                   sum_dry_biomass_imports_W,
                                                                   sum_electricity_imports_W,
-                                                                  sum_electricity_exports_W,
+                                                                  sum_electricity_exports_noPV_W,
+                                                                  sum_electricity_exports_PV_W,
                                                                   lca)
 
     # CALCULATE (ANTHROPOGENIC) HEAT RELEASE
@@ -424,7 +436,8 @@ def buildings_district_scale_objective_functions(district_heating_costs,
                                                                                         sum_wet_biomass_imports_W,
                                                                                         sum_dry_biomass_imports_W,
                                                                                         sum_electricity_imports_W,
-                                                                                        sum_electricity_exports_W)
+                                                                                        sum_electricity_exports_noPV_W,
+                                                                                        sum_electricity_exports_PV_W)
 
     return connected_costs, connected_emissions, connected_heat_release, connected_system_energy_demand
 
