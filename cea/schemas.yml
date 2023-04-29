@@ -1634,18 +1634,6 @@ get_building_architecture:
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      area_pv:
-        description: Area with solar pv (for embodied emissions)
-        type: float
-        unit: '[m2]'
-        values: '{0...n}'
-        min: 0.0
-      area_sc:
-        description: Area with solar collectors (for embodied emissions)
-        type: float
-        unit: '[m2]'
-        values: '{0...n}'
-        min: 0.0
       area_balcon:
         description: Area of balconies (for embodied emissions)
         type: float
@@ -1945,7 +1933,7 @@ get_building_internal:
         values: '{0.0...n}'
         min: 0.0
       Ev_kWveh:
-        description: Peak capacity of electric battery per vehicle
+        description: Peak capacity of electrical charger per vehicle
         type: string
         unit: '[kW/veh]'
         values: '{0.0...n}'
@@ -2735,18 +2723,6 @@ get_database_construction_standards:
   schema:
     ENVELOPE_ASSEMBLIES:
       columns:
-        area_pv:
-          description: Area with solar pv (for embodied emissions)
-          type: float
-          unit: '[m2]'
-          values: '{0...n}'
-          min: 0.0
-        area_sc:
-          description: Area with solar collectors (for embodied emissions)
-          type: float
-          unit: '[m2]'
-          values: '{0...n}'
-          min: 0.0
         area_balcon:
           description: Area of balconies (for embodied emissions)
           type: float
@@ -6763,7 +6739,7 @@ get_database_supply_assemblies:
   created_by:
   - data_initializer
   file_path: inputs/technology/assemblies/SUPPLY.xlsx
-  file_type: xls
+  file_type: xlsx
   schema:
     COOLING:
       columns:
@@ -6806,7 +6782,7 @@ get_database_supply_assemblies:
           unit: 'NA'
           values: alphanumeric
         efficiency:
-          description: efficiency of the all in one system
+          description: For the 1st Feedstock, what is the conversion efficiency?
           type: float
           unit: '[-]'
           values: '{0.0...n}'
@@ -6818,14 +6794,12 @@ get_database_supply_assemblies:
             - NATURALGAS
             - BIOGAS
             - GRID
-            - SOLAR
             - OIL
             - COAL
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
-          description: feedstock used by the the all in one system (refers to the
-            FEEDSTOCK database)
+          description: For the 1st Feedstock, what is it (see FEEDSTOCK database)?
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -6842,14 +6816,19 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building or the
-            district scale
+          description: For the 1st Feedstock, where does it come from?
           type: string
           unit: 'NA'
           values: alphanumeric
     ELECTRICITY:
       columns:
         CAPEX_USD2015kW:
+          description: Capital costs per kW
+          min: 0.0
+          type: float
+          unit: '[USD2015/kW]'
+          values: '{0.0...n}'
+        CAPEX_PV_USD2015kW:
           description: Capital costs per kW
           min: 0.0
           type: float
@@ -6887,8 +6866,20 @@ get_database_supply_assemblies:
           type: string
           unit: 'NA'
           values: alphanumeric
+        area_pv:
+          description: Area of PV of the system (only when feedstock2 is SOLAR)
+          type: float
+          unit: '[m2]'
+          values: '{0.0...n}'
+          min: 0.0
         efficiency:
-          description: efficiency of the all in one system
+          description: For the 1st Feedstock, what is the conversion efficiency?
+          type: float
+          unit: '[-]'
+          values: '{0.0...n}'
+          min: 0.0
+        efficiency_pv:
+          description: Cconversion efficiency of pv panels
           type: float
           unit: '[-]'
           values: '{0.0...n}'
@@ -6900,32 +6891,28 @@ get_database_supply_assemblies:
             - NATURALGAS
             - BIOGAS
             - GRID
-            - SOLAR
             - OIL
             - COAL
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
-          description: feedstock used by the the all in one system (refers to the
-            FEEDSTOCK database)
+          description: For the 1st Feedstock, what is it (see FEEDSTOCK database)?
           type: string
           unit: 'NA'
           values: alphanumeric
         reference:
-          description: Reference of the data
+          description: reference
           nullable: true
           type: string
           unit: 'NA'
-          values: alphanumeric
+          values: 'NA'
         scale:
           choice:
             values:
             - NONE
-            - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building or the
-            district scale
+          description: For the 1st Feedstock, where does it come from?
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -6969,8 +6956,15 @@ get_database_supply_assemblies:
           type: string
           unit: 'NA'
           values: alphanumeric
+        ratio_feedstocks:
+          description: Ratio of Feedstock1 vs Feedstock2
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
+          min: 0.0
+          max: 1.0
         efficiency:
-          description: efficiency of the all in one system
+          description: For the 1st Feedstock, what is the conversion efficiency?
           type: float
           unit: '[-]'
           values: '{0.0...n}'
@@ -6982,32 +6976,28 @@ get_database_supply_assemblies:
             - NATURALGAS
             - BIOGAS
             - GRID
-            - SOLAR
             - OIL
             - COAL
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
-          description: feedstock used by the the all in one system (refers to the
-            FEEDSTOCK database)
+          description: For the 1st Feedstock, what is it (see FEEDSTOCK database)?
           type: string
           unit: 'NA'
           values: alphanumeric
         reference:
-          description: Reference of the data
+          description: reference
           nullable: true
           type: string
           unit: 'NA'
-          values: alphanumeric
+          values: 'NA'
         scale:
           choice:
             values:
             - NONE
             - BUILDING
             - DISTRICT
-            - CITY
-          description: whether the all in one system is used at the building or the
-            district scale
+          description: For the 1st Feedstock, where does it come from?
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -7052,7 +7042,7 @@ get_database_supply_assemblies:
           unit: 'NA'
           values: alphanumeric
         efficiency:
-          description: efficiency of the all in one system
+          description: For the 1st Feedstock, what is the conversion efficiency?
           type: float
           unit: '[-]'
           values: '{0.0...n}'
@@ -7064,23 +7054,21 @@ get_database_supply_assemblies:
             - NATURALGAS
             - BIOGAS
             - GRID
-            - SOLAR
             - OIL
             - COAL
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
-          description: feedstock used by the the all in one system (refers to the
-            FEEDSTOCK database)
+          description: For the 1st Feedstock, what is it (see FEEDSTOCK database)?
           type: string
           unit: 'NA'
           values: alphanumeric
         reference:
-          description: Reference of the data
+          description: reference
           nullable: true
           type: string
           unit: 'NA'
-          values: alphanumeric
+          values: 'NA'
         scale:
           choice:
             values:
@@ -7088,8 +7076,7 @@ get_database_supply_assemblies:
             - BUILDING
             - DISTRICT
             - CITY
-          description: whether the all in one system is used at the building or the
-            district scale
+          description: For the 1st Feedstock, where does it come from?
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -7101,7 +7088,7 @@ get_database_use_types_properties:
   created_by:
   - data_initializer
   file_path: inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx
-  file_type: xls
+  file_type: xlsx
   schema:
     INDOOR_COMFORT:
       columns:
@@ -7177,7 +7164,7 @@ get_database_use_types_properties:
           values: '{0.0...n}'
           min: 0.0
         Ev_kWveh:
-          description: Peak capacity of electrical battery per vehicle
+          description: Peak capacity of electrical charger per vehicle
           type: float
           unit: '[kW/veh]'
           values: '{0.0...n}'
