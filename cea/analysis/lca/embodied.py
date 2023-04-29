@@ -102,35 +102,38 @@ def lca_embodied(locator, config):
     age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
     air_conditioning_df = dbf_to_dataframe(locator.get_building_air_conditioning())
+    supply_df = dbf_to_dataframe(locator.get_building_supply())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
 
     # local variables
-    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
-    surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
-    surface_database_columns = pd.read_excel(locator.get_database_envelope_systems(), "COLUMN")
-    surface_database_hvac_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
-    surface_database_hvac_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
+    technology_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
+    technology_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
+    technology_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
+    technology_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
+    technology_database_columns = pd.read_excel(locator.get_database_envelope_systems(), "COLUMN")
+    technology_database_hvac_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
+    technology_database_hvac_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
+    technology_database_conversion_electricity = pd.read_excel(locator.get_database_supply_assemblies(), "ELECTRICITY")
 
     # query data
-    df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
-    df2 = architecture_df.merge(surface_database_roof, left_on='type_roof', right_on='code')
-    df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    df4 = architecture_df.merge(surface_database_floors, left_on='type_floor', right_on='code')
-    df5 = architecture_df.merge(surface_database_floors, left_on='type_base', right_on='code')
+    df = architecture_df.merge(technology_database_windows, left_on='type_win', right_on='code')
+    df2 = architecture_df.merge(technology_database_roof, left_on='type_roof', right_on='code')
+    df3 = architecture_df.merge(technology_database_walls, left_on='type_wall', right_on='code')
+    df4 = architecture_df.merge(technology_database_floors, left_on='type_floor', right_on='code')
+    df5 = architecture_df.merge(technology_database_floors, left_on='type_base', right_on='code')
     df5.rename({'GHG_FLOOR_kgCO2m2': 'GHG_BASE_kgCO2m2'}, inplace=True, axis=1)
     df5.rename({'GHG_FLOOR_STRUCTURE_RATIO': 'GHG_BASE_STRUCTURE_RATIO'}, inplace=True, axis=1)
-    df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
+    df6 = architecture_df.merge(technology_database_walls, left_on='type_part', right_on='code')
     df6.rename({'GHG_WALL_kgCO2m2': 'GHG_PART_kgCO2m2'}, inplace=True, axis=1)
     df6.rename({'GHG_WALL_STRUCTURE_RATIO': 'GHG_PART_STRUCTURE_RATIO'}, inplace=True, axis=1)
 
-    df7 = air_conditioning_df.merge(surface_database_hvac_heating, left_on='type_hs', right_on='code')
-    df8 = air_conditioning_df.merge(surface_database_hvac_cooling, left_on='type_cs', right_on='code')
-    df9 = architecture_df.merge(surface_database_columns, left_on='type_col', right_on='code')
+    df7 = air_conditioning_df.merge(technology_database_hvac_heating, left_on='type_hs', right_on='code')
+    df8 = air_conditioning_df.merge(technology_database_hvac_cooling, left_on='type_cs', right_on='code')
+    df9 = architecture_df.merge(technology_database_columns, left_on='type_col', right_on='code')
+    df10 = supply_df.merge(technology_database_conversion_electricity, left_on='type_el', right_on='code')
 
     fields = ['Name', "GHG_WIN_kgCO2m2"]
     fields2 = ['Name', "GHG_ROOF_kgCO2m2", "GHG_ROOF_STRUCTURE_RATIO"]
@@ -141,6 +144,7 @@ def lca_embodied(locator, config):
     fields7 = ['Name', "class_hs"]
     fields8 = ['Name', "class_cs"]
     fields9 = ['Name', "GHG_COLUMN_kgCO2m2", "GHG_COLUMN_STRUCTURE_RATIO"]
+    fields10 = ['Name', "area_pv"]
 
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
@@ -150,6 +154,7 @@ def lca_embodied(locator, config):
                                           on='Name').merge(df7[fields7],
                                           on='Name').merge(df8[fields8],
                                          on='Name').merge(df9[fields9],
+                                         on='Name').merge(df10[fields10],
                                          on='Name')
 
     # DataFrame with joined data for all categories
@@ -278,7 +283,7 @@ def calculate_contributions(df, config):
     df['C1_fundations'] = (df['fundation_area'] * df['GHG_BASE_kgCO2m2']) / excavation_fundations_amortization_time
 
     # Building systems
-    df['D_building_systems'] = (df['GFA_m2'] * df['GHG_BUILDING_SYSTEMS_kgCO2m2']) / building_systems_amortization_time + (df['area_pv'] * EMISSIONS_EMBODIED_PV_GHG_kgm2) / building_systems_amortization_time + (df['area_sc'] * EMISSIONS_EMBODIED_SC_GHG_kgm2) / building_systems_amortization_time
+    df['D_building_systems'] = (df['GFA_m2'] * df['GHG_BUILDING_SYSTEMS_kgCO2m2']) / building_systems_amortization_time + (df['area_pv'] * EMISSIONS_EMBODIED_PV_GHG_kgm2) / building_systems_amortization_time
 
     # balconies
     df['C4_3_balcony'] = (df['GHG_ROOF_kgCO2m2'] * df['area_balcon'] ) / balconies_lifetime
@@ -335,7 +340,6 @@ def calc_factor_technical_systems(system_heating, system_cooling):
 
     if system_cooling != "NONE":
         factor_kgm2 += EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS_COOLING_GHG_kgm2
-    print(factor_kgm2)
     return factor_kgm2
 
 def calc_if_existing(x, y):
