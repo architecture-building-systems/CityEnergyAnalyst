@@ -629,6 +629,7 @@ class SolarProperties(object):
 
 def get_properties_supply_sytems(locator, properties_supply):
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
+    data_pv_components = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
     supply_heating = data_all_in_one_systems['HEATING']
     supply_dhw = data_all_in_one_systems['HOT_WATER']
     supply_cooling = data_all_in_one_systems['COOLING']
@@ -640,6 +641,7 @@ def get_properties_supply_sytems(locator, properties_supply):
     df_emission_dhw = properties_supply.merge(supply_dhw, left_on='type_dhw', right_on='code')
     df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
     df_emission_electricity_pv = properties_supply.merge(supply_electricity_pv, left_on='type_el_pv', right_on='code')
+    df_emission_electricity_pv = df_emission_electricity_pv.merge(data_pv_components, left_on='component', right_on='code')
 
     df_emission_heating.rename(columns={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
                                inplace=True)
@@ -654,8 +656,8 @@ def get_properties_supply_sytems(locator, properties_supply):
                                'source_hs', 'scale_hs', 'eff_hs']
     fields_emission_cooling = ['Name', 'source_cs', 'scale_cs', 'eff_cs']
     fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw', 'eff_dhw']
-    fields_emission_el = ['Name', 'source_el', 'scale_el', 'eff_el', "area_pv"]
-    fields_emission_el_pv = ['Name', 'type_el_pv', "area_pv"]
+    fields_emission_el = ['Name', 'source_el', 'scale_el', 'eff_el']
+    fields_emission_el_pv = ['Name', 'PV_n', "area_pv"]
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(
