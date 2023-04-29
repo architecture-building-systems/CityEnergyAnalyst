@@ -2020,6 +2020,16 @@ get_building_supply:
             path: get_database_supply_assemblies
             sheet: HEATING
             column: code
+      type_el_pvc:
+        description: Type of PV supply assembly (refers to "code" in SUPPLY assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_supply_assemblies
+            sheet: ELECTRICITY_PV
+            column: code
   used_by:
   - decentralized
   - demand
@@ -3077,6 +3087,17 @@ get_database_construction_standards:
               path: get_database_supply_assemblies
               sheet: HEATING
           description: Type of heating supply assembly (refers to "code" in SUPPLY
+            assemblies)
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        type_el_pv:
+          choice:
+            lookup:
+              column: code
+              path: get_database_supply_assemblies
+              sheet: ELECTRICIY_PV
+          description: Type of PV supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
           unit: 'NA'
@@ -6916,6 +6937,37 @@ get_database_supply_assemblies:
           type: string
           unit: 'NA'
           values: alphanumeric
+    ELECTRICITY_PV:
+      columns:
+        component:
+          description: Type of PV system (see database Conversion systems)
+          primary: true
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+          choice:
+            lookup:
+              path: get_database_conversion_systems
+              sheet: PV
+              column: code
+        code:
+          description: Type of all in one system
+          primary: true
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        area:
+          description: Area of PV panels
+          type: float
+          unit: '[m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        reference:
+          description: reference
+          nullable: true
+          type: string
+          unit: 'NA'
+          values: 'NA'
     HEATING:
       columns:
         CAPEX_USD2015kW:
