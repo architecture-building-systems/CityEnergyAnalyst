@@ -2020,7 +2020,7 @@ get_building_supply:
             path: get_database_supply_assemblies
             sheet: HEATING
             column: code
-      type_el_pvc:
+      type_el_pv:
         description: Type of PV supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
@@ -3096,7 +3096,7 @@ get_database_construction_standards:
             lookup:
               column: code
               path: get_database_supply_assemblies
-              sheet: ELECTRICIY_PV
+              sheet: ELECTRICITY_PV
           description: Type of PV supply assembly (refers to "code" in SUPPLY
             assemblies)
           type: string
@@ -6941,7 +6941,6 @@ get_database_supply_assemblies:
       columns:
         component:
           description: Type of PV system (see database Conversion systems)
-          primary: true
           type: string
           unit: 'NA'
           values: alphanumeric
@@ -6956,7 +6955,7 @@ get_database_supply_assemblies:
           type: string
           unit: 'NA'
           values: alphanumeric
-        area:
+        area_pv:
           description: Area of PV panels
           type: float
           unit: '[m2]'
