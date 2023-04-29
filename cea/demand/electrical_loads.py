@@ -85,8 +85,8 @@ def calc_Ef(bpr, tsd):
     # GET SYSTEMS EFFICIENCIES
     solar_radiation = bpr.solar.I_sol
     energy_source1 = bpr.supply['source_el']
-    areapv = bpr.supply['area_pv_el']
-    eff2 = bpr.supply['eff2_el']
+    area_pv = bpr.supply['area_pv']
+    supply_system_pv = bpr.supply['type_el_pv']
     total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
                                     tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
 
@@ -108,7 +108,7 @@ def calc_Ef(bpr, tsd):
     tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
     tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
 
-    if energy_source1 == "GRID" and areapv >=0.0:
+    if energy_source1 == "GRID" and area_pv >=0.0:
         def calc_exports(demand, supply):
             delta = (demand - supply)
             if delta >= 0.0:
@@ -122,7 +122,9 @@ def calc_Ef(bpr, tsd):
 
             return pv, pv_export, grid
 
-        tsd['PV'] = areapv * eff2 * solar_radiation
+        eff2 = bpr.supply['eff2_el']
+
+        tsd['PV'] = area_pv * eff2 * solar_radiation
         tsd['PV_directload'], tsd['PV_export'], tsd['GRID'] = np.vectorize(calc_exports)(total_el_demand, tsd['PV'])
         ratio_grid = tsd['GRID'] / total_el_demand
         tsd['GRID_a'] = tsd['Ea'] * ratio_grid
@@ -137,7 +139,7 @@ def calc_Ef(bpr, tsd):
         tsd['GRID_hs'] = tsd['E_hs'] * ratio_grid
         tsd['GRID_cdata'] = tsd['E_cdata'] * ratio_grid
         tsd['GRID_cre'] = tsd['E_cre'] * ratio_grid
-    elif areapv == 0.0 and energy_source1 == "GRID":
+    elif area_pv == 0.0 and energy_source1 == "GRID":
         tsd['GRID'] = total_el_demand
         tsd['GRID_a'] = tsd['Ea']
         tsd['GRID_l'] = tsd['El']
@@ -151,6 +153,8 @@ def calc_Ef(bpr, tsd):
         tsd['GRID_hs'] = tsd['E_hs']
         tsd['GRID_cdata'] = tsd['E_cdata']
         tsd['GRID_cre'] = tsd['E_cre']
+    else:
+        raise Exception('check potential error, buildings with PV should be asigned to a system connected to the GRID, check Assemblies/supply for potential errors')
 
     return tsd
 
