@@ -116,7 +116,7 @@ def lca_embodied(locator, config):
     technology_database_columns = pd.read_excel(locator.get_database_envelope_systems(), "COLUMN")
     technology_database_hvac_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
     technology_database_hvac_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
-    technology_database_conversion_electricity = pd.read_excel(locator.get_database_supply_assemblies(), "ELECTRICITY")
+    technology_database_conversion_electricity = pd.read_excel(locator.get_database_supply_assemblies(), "ELECTRICITY_PV")
 
     # query data
     df = architecture_df.merge(technology_database_windows, left_on='type_win', right_on='code')
@@ -133,7 +133,7 @@ def lca_embodied(locator, config):
     df7 = air_conditioning_df.merge(technology_database_hvac_heating, left_on='type_hs', right_on='code')
     df8 = air_conditioning_df.merge(technology_database_hvac_cooling, left_on='type_cs', right_on='code')
     df9 = architecture_df.merge(technology_database_columns, left_on='type_col', right_on='code')
-    df10 = supply_df.merge(technology_database_conversion_electricity, left_on='type_el', right_on='code')
+    df10 = supply_df.merge(technology_database_conversion_electricity, left_on='type_el_pv', right_on='code')
 
     fields = ['Name', "GHG_WIN_kgCO2m2"]
     fields2 = ['Name', "GHG_ROOF_kgCO2m2", "GHG_ROOF_STRUCTURE_RATIO"]
