@@ -159,6 +159,7 @@ def supply_mapper(locator, building_typology_df):
               'type_hs',
               'type_dhw',
               'type_el',
+              'type_el_pv'
               ]
     dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
 
