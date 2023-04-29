@@ -3097,8 +3097,7 @@ get_database_construction_standards:
               column: code
               path: get_database_supply_assemblies
               sheet: ELECTRICITY_PV
-          description: Type of PV supply assembly (refers to "code" in SUPPLY
-            assemblies)
+          description: Type of PV supply assembly (refers to "code" in SUPPLY assemblies)
           type: string
           unit: 'NA'
           values: alphanumeric
