@@ -6946,8 +6946,7 @@ get_database_supply_assemblies:
           unit: '[yr]'
           values: '{0...n}'
         O&M_%:
-          description: operation and maintenance cost factor (fraction of the investment
-            cost)
+          description: operation and maintenance cost factor (fraction of the investment cost)
           min: 0.0
           type: float
           unit: '[%]'
@@ -6974,7 +6973,12 @@ get_database_supply_assemblies:
         feedstock:
           choice:
             values:
+            - NONE
             - SOLAR
+          description: For the 1st Feedstock, what is it (see FEEDSTOCK database)?
+          type: string
+          unit: 'NA'
+          values: alphanumeric
         reference:
           description: reference
           nullable: true
@@ -6984,8 +6988,8 @@ get_database_supply_assemblies:
         scale:
           choice:
             values:
-            - NONE
-            - BUILDING
+              - NONE
+              - BUILDING
           description: scale of the PV installation
           type: string
           unit: 'NA'
