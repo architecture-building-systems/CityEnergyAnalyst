@@ -106,9 +106,9 @@ def calc_costs_per_energy_service_pv(database):
     # TOTALS
     service = "PV"
     result["PV" + '_capex_total_USD'] = (database[service + '0_kW'].values *
-                                           database['efficiency'].values *  # because it is based on the end use
-                                           database['CAPEX_PV_USD2015kW'].values)
-    result[service + '_opex_var_USD'] = database["PV_export" + '_MWhyr'].values * - database['Opex_var_sell_USD2015kWh'].values * 1000
+                                           database['CAPEX_USD2015kW'].values)
+
+    result[service + '_opex_var_USD'] = database["PV_export" + '_MWhyr'].values * -database['Opex_var_sell_USD2015kWh'].values * 1000
 
     result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
 
