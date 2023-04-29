@@ -86,7 +86,7 @@ def calc_Ef(bpr, tsd):
     solar_radiation = bpr.solar.I_sol
     energy_source1 = bpr.supply['source_el']
     area_pv = bpr.supply['area_pv']
-    supply_system_pv = bpr.supply['type_el_pv']
+    eff2 = bpr.supply['PV_n']
     total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
                                     tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
 
@@ -121,8 +121,6 @@ def calc_Ef(bpr, tsd):
                 pv_export = -delta
 
             return pv, pv_export, grid
-
-        eff2 = bpr.supply['eff2_el']
 
         tsd['PV'] = area_pv * eff2 * solar_radiation
         tsd['PV_directload'], tsd['PV_export'], tsd['GRID'] = np.vectorize(calc_exports)(total_el_demand, tsd['PV'])
