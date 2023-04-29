@@ -26,7 +26,6 @@
 - script: network-layout
   parameters:
     network-type: DH
-    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DH
@@ -35,9 +34,6 @@
 - script: optimization
   parameters:
     network-type: DH
-    number-of-generations: 2
-    population-size: 5
+    number-of-generations: 100
+    population-size: 100
     random-seed: 100
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
