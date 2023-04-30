@@ -1022,7 +1022,7 @@ def main(config):
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
+    aggregated_hourly_results_df['Date'] = hourly_results_per_building.Date
     aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
         aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels
@@ -1033,7 +1033,7 @@ def main(config):
                                                          aggregated_hourly_results_df['Q_SC_gen_kWh'] /
                                                          aggregated_hourly_results_df['mcp_SC_kWperC'],
                                                          np.nan)
-    aggregated_hourly_results_df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
+    aggregated_hourly_results_df.to_csv(locator.SC_totals(panel_type), index=False, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
     aggregated_annual_results_df.to_csv(locator.SC_total_buildings(panel_type), index=True, index_label="Name",

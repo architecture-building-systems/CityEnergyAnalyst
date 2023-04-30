@@ -777,7 +777,8 @@ def write_aggregate_results(locator, building_names, num_process=1):
             aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
 
     # save hourly results
-    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=True, float_format='%.2f', na_rep='nan')
+    aggregated_hourly_results_df["Date"] = aggregated_hourly_results_df.index
+    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=False, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
     aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, index_label="Name",
