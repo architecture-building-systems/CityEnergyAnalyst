@@ -52,12 +52,8 @@ DH_ACRONYM = "DH"
 DC_ACRONYM = "DC"
 
 # Losses and margins
-DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
-DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
-Q_MIN_SHARE = 0.1  # Minimum percentage for the installed capacity
-STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
@@ -170,9 +166,6 @@ T_GENERATOR_FROM_FP_C = 75  # fixme: this number is set corresponding to the fla
 T_GENERATOR_FROM_ET_C = 100  # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 ## Thermal Energy Storage
-# Fully mixed cold water tank
-T_TANK_FULLY_CHARGED_K = 4 + 273.0
-T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
 
 # Seasonal Storage
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
