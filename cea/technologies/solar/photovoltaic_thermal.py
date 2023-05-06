@@ -653,11 +653,6 @@ def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
             PVT_peak_W = PVT_cost_data['cap_min'].values[0]
         PVT_cost_data = PVT_cost_data[
             (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
-        try:
-            Inv_a = PVT_cost_data.iloc[0]['a']
-        except Exception as error:
-            print('Caught this error: ' + repr(error))
-            print(PVT_cost_data, PVT_peak_W)
         Inv_b = PVT_cost_data.iloc[0]['b']
         Inv_c = PVT_cost_data.iloc[0]['c']
         Inv_d = PVT_cost_data.iloc[0]['d']
