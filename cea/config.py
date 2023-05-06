@@ -618,7 +618,7 @@ class IntegerParameter(Parameter):
             if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
             return ""
-        return str(value)
+        return str(int(value))
 
     def decode(self, value):
         try:
