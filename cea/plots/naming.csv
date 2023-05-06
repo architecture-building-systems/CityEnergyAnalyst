@@ -1,22 +1,19 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 
-occupancy,people_p,C,Indoor temperature,grey
-occupancy,Ve_lps,lph,Indoor temperature,grey
+schedules,people_p,C,Occupancy in building,grey
+schedules,Ve_lps,lph,Internal ventilation load,grey
+schedules,Vww_lph,lph,Hot water consumption,red
+schedules,Vw_lph,lph,Total water consumption,blue
 
-
-occupancy,Vww_lph,lph,Indoor temperature,grey
-occupancy,Vw_lph,lph,Indoor temperature,grey
-
-occupancy,Ql_W,W,Indoor temperature,grey
-occupancy,Qs_W,W,Indoor temperature,grey
-occupancy,Ea_W,W,Indoor temperature,grey
-occupancy,El_W,W,Indoor temperature,grey
-occupancy,Ed_W,W,Indoor temperature,grey
-occupancy,Ev_W,W,Indoor temperature,grey
-occupancy,Qcpro_W,W,Indoor temperature,grey
-occupancy,Epro_W,W,Indoor temperature,grey
-occupancy,Qcre_W,W,Indoor temperature,grey
-occupancy,Qhpro_W,W,Indoor temperature,grey
+schedules,Ql_W,W,Internal Latent Load of occupants,blue
+schedules,Qs_W,W,Internal Sensible Load of occupants,red
+schedules,Ea_W,W,Internal electrical load (appliances),green_light
+schedules,El_W,W,Internal electrical load (lighting),yellow
+schedules,Ed_W,W,Internal electrical load (datacenter),yellow_light
+schedules,Qcpro_W,W,Internal cooling load (processes),blue
+schedules,Epro_W,W,Internal electrical load (processes),grey
+schedules,Qcre_W,W,Internal cooling load (refrigeration),blue_light
+schedules,Qhpro_W,W,Internal heating load (processes),orange
 
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey

@@ -24,34 +24,38 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # identifies this package as a plots category and sets the label name for the category
-label = 'Occupancy'
+label = 'Schedules'
 
-class OccupancyPlotBase(cea.plots.PlotBase):
+class SchedulesPlotBase(cea.plots.PlotBase):
     """Implements properties / methods used by all plots in this category"""
-    category_name = "occupancy"
+    category_name = "schedules"
 
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
         'timeframe': 'plots:timeframe',
-        'normalization': 'plots:normalization',
+        'normalization': 'plots-schedules:normalization',
     }
 
     def __init__(self, project, parameters, cache):
-        super(OccupancyPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', 'solar-potential')
+        super(SchedulesPlotBase, self).__init__(project, parameters, cache)
+        self.category_path = os.path.join('new_basic', 'schedules')
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_schedule_model_file, [building]) for building in self.buildings]
         self.weather = self.locator.get_weather_file()
-        self.schedule_analysis_fields = ['windows_east_kW',
-                                      'windows_west_kW',
-                                      'windows_south_kW',
-                                      'windows_north_kW',
-                                      'walls_east_kW',
-                                      'walls_west_kW',
-                                      'walls_south_kW',
-                                      'walls_north_kW',
-                                      'roofs_top_kW']
+        self.schedule_analysis_fields = ['people_p',
+                                      'Vww_lph',
+                                      'Vw_lph',
+                                      'Ql_W',
+                                      'Qs_W',
+                                      'Ea_W',
+                                      'El_W',
+                                      'Ed_W',
+                                      'Qcpro_W',
+                                      'Epro_W',
+                                      'Qcre_W',
+                                      'Qhpro_W',
+                                         ]
 
 
     def normalize_data(self, data_processed, buildings, analysis_fields):
@@ -75,21 +79,20 @@ class OccupancyPlotBase(cea.plots.PlotBase):
             normalizatioon_factor = data.loc[buildings]['people0'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+
         return data_processed
 
     def add_fields(self, df1, df2):
-        """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
-        fields = self.schedule_analysis_fields
-        df1[fields] = df2[fields]
+        """Add the analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
+        df1[self.schedule_analysis_fields] = df2[self.schedule_analysis_fields] + df1[self.schedule_analysis_fields]
         return df1
 
-    def resample_data(self):
+    def schedule_data_aggregated(self):
         data = self._calculate_input_data_aggregated()
         data_normalized = self.normalize_data(data,
                                               self.buildings,
                                               self.schedule_analysis_fields)
         resampeled_data = self.resample_time_data(data_normalized)
-
         return resampeled_data
 
     def _calculate_input_data_aggregated(self):
@@ -97,6 +100,6 @@ class OccupancyPlotBase(cea.plots.PlotBase):
         # get extra data of weather and date
         result = functools.reduce(self.add_fields,
                                   (pd.read_csv(self.locator.get_schedule_model_file(building))
-                                                     for building in self.buildings)).set_index('Date')
+                                                     for building in self.buildings)).set_index('DATE')
 
         return result
