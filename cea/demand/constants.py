@@ -62,6 +62,16 @@ TWW_SETPOINT = 60  # dhw tank set point temperature in C
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
 GR = 9.81  # m/s2 gravity
+KG_PER_GRAM = 0.001
+# constants in standards
+P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
+RHO_A = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
+
+# constants
+DELTA_T = 3600  # (s/h)
+
+# Time
+HOURS_PER_SEC = 1 / 3600
 
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1

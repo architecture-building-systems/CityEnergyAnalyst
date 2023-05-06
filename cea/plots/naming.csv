@@ -1,4 +1,23 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
+
+occupancy,people_p,C,Indoor temperature,grey
+occupancy,Ve_lps,lph,Indoor temperature,grey
+
+
+occupancy,Vww_lph,lph,Indoor temperature,grey
+occupancy,Vw_lph,lph,Indoor temperature,grey
+
+occupancy,Ql_W,W,Indoor temperature,grey
+occupancy,Qs_W,W,Indoor temperature,grey
+occupancy,Ea_W,W,Indoor temperature,grey
+occupancy,El_W,W,Indoor temperature,grey
+occupancy,Ed_W,W,Indoor temperature,grey
+occupancy,Ev_W,W,Indoor temperature,grey
+occupancy,Qcpro_W,W,Indoor temperature,grey
+occupancy,Epro_W,W,Indoor temperature,grey
+occupancy,Qcre_W,W,Indoor temperature,grey
+occupancy,Qhpro_W,W,Indoor temperature,grey
+
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey
 

@@ -13358,10 +13358,10 @@ get_schedule_model_file:
         unit: '[L]'
         values: '{0.0...n}'
         min: 0.0
-      X_gh:
-        description: Moisture released by occupants
+      Ql_W:
+        description: Latent load of People
         type: float
-        unit: '[g]'
+        unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
       people_p:

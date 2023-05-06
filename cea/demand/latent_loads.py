@@ -5,7 +5,7 @@
 
 import numpy as np
 import math
-from cea.demand import constants
+from cea.demand.constants import *
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -15,14 +15,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-# constants in standards
-P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
-RHO_A = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
-H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2017]
-
-# constants
-DELTA_T = 3600  # (s/h)
 
 
 def calc_humidification_moisture_load(bpr, tsd, t):
@@ -395,15 +387,11 @@ def calc_Qgain_lat(tsd, schedules):
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: list[ndarray[float]]
 
-    :return w_int: yearly schedule
+    :return Q_gain_lat_peop: yearly schedule
 
     """
-    # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
-    KG_PER_GRAM = 0.001
-    HOURS_PER_SEC = 1 / 3600
 
-
-    tsd['w_int'] = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
-    tsd['Q_gain_lat_peop'] = tsd['w_int'] * H_WE # (J/s = W)
+    tsd['w_int'] = schedules['Ql_W'] / H_WE # kg/s
+    tsd['Q_gain_lat_peop'] = schedules['Ql_W']
 
     return tsd
