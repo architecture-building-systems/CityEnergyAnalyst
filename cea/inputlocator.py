@@ -887,12 +887,12 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'solar-radiation')
 
     def get_radiation_building(self, building):
-        """scenario/outputs/data/solar-radiation/${building}_insolation.json"""
+        """scenario/outputs/data/solar-radiation/${building}_radiation.csv"""
         return os.path.join(self.get_solar_radiation_folder(), '%s_radiation.csv' % building)
 
     def get_radiation_building_sensors(self, building):
-        """scenario/outputs/data/solar-radiation/${building}_insolation_Whm2.json"""
-        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' % building)
+        """scenario/outputs/data/solar-radiation/${building}_insolation_Whm2.feather"""
+        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.feather' % building)
 
     def get_radiation_metadata(self, building):
         """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
