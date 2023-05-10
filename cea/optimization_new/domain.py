@@ -26,6 +26,7 @@ from deap import base, creator, tools, algorithms
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
+from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 from cea.optimization_new.building import Building
@@ -212,75 +213,171 @@ class Domain(object):
         and their corresponding supply systems.
         """
         # save the results for near-pareto-optimal district energy systems one-by-one
-        system_type = self.config.optimization_new.network_type
-        for des_ind, district_energy_system in enumerate(self.optimal_energy_systems):
+        for des in self.optimal_energy_systems:
             # first save network layouts
-            for ntw_ind, network in enumerate(district_energy_system.networks):
-                network_layout_file = self.locator.get_new_optimization_optimal_network_layout_file(system_type,
-                                                                                                    des_ind + 1,
+            for ntw_ind, network in enumerate(des.networks):
+                network_layout_file = self.locator.get_new_optimization_optimal_network_layout_file(des.identifier,
                                                                                                     network.identifier)
                 network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
                 network_layout = network_layout.to_crs(get_geographic_coordinate_system())
                 network_layout.to_file(network_layout_file, driver='GeoJSON')
 
             # then save all information about the selected supply systems
-            supsys_results_file = self.locator.get_new_optimization_optimal_supply_systems_file(system_type,
-                                                                                                des_ind + 1)
-            Domain.write_supsys_to_xlsx(supsys_results_file, district_energy_system.supply_systems)
+            self._write_supply_systems_to_csv(des)
+
+            # if prompted, generate detailed outputs
+            if self.config.optimization_new.generate_detailed_outputs:
+                self._write_detailed_results_to_csv(des)
+
+        return
+
+    def _write_supply_systems_to_csv(self, district_energy_system):
+        """
+        Writes information on supply systems of subsystems of a near-pareto-optimal district energy system into
+        csv files. Information on each of the supply systems is written in a separate file.
+        """
+        # Create general values
+        des_id = district_energy_system.identifier
+        supply_system_summary = {'Supply_System': [],
+                                 'Heat_Emissions_kWh': [],
+                                 'System_Energy_Demand_kWh': [],
+                                 'GHG_Emissions_kgCO2': [],
+                                 'Cost_USD': []}
+
+        # FOR STAND-ALONE BUILDINGS
+        stand_alone_buildings = Domain._get_building_from_consumers(district_energy_system.consumers,
+                                                                    district_energy_system.stand_alone_buildings)
+        for building in stand_alone_buildings:
+            supply_system_id = building.identifier
+            supply_system = building.stand_alone_supply_system
+
+            # Summarise structure of the supply system & print to file
+            building_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, supply_system_id)
+            Domain._write_system_structure(building_file, supply_system)
+
+            # Calculate supply system fitness-values and add them to the summary of all supply systems
+            supply_system_summary = Domain._add_to_systems_summary(supply_system_id, supply_system,
+                                                                   supply_system_summary)
+
+        # FOR NETWORKS
+        for network_id, supply_system in district_energy_system.supply_systems.items():
+            # Summarise structure of the supply system & print to file
+            network_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, network_id)
+            Domain._write_system_structure(network_file, supply_system)
+
+            # Calculate supply system fitness-values and add them to the summary of all supply systems
+            supply_system_summary = Domain._add_to_systems_summary(network_id, supply_system,
+                                                                   supply_system_summary)
+
+        # WRITE SUMMARY
+        supply_system_summary['Supply_System'] += ['Total']
+        supply_system_summary['Heat_Emissions_kWh'] += [sum(supply_system_summary['Heat_Emissions_kWh'])]
+        supply_system_summary['System_Energy_Demand_kWh'] += [sum(supply_system_summary['System_Energy_Demand_kWh'])]
+        supply_system_summary['GHG_Emissions_kgCO2'] += [sum(supply_system_summary['GHG_Emissions_kgCO2'])]
+        supply_system_summary['Cost_USD'] += [sum(supply_system_summary['Cost_USD'])]
+
+        summary_file = self.locator.get_new_optimization_optimal_supply_systems_summary_file(des_id)
+        pd.DataFrame(supply_system_summary).to_csv(summary_file, index=False)
 
         return
 
     @staticmethod
-    def write_supsys_to_xlsx(filename, supply_systems):
+    def _write_system_structure(results_file, supply_system):
+        """Summarise supply system structure and write it to the indicated results file"""
+        supply_system_info = [{'Component_category': component_category,
+                               'Component_type': component.technology,
+                               'Component_code': component_code,
+                               'Capacity_kW': round(component.capacity, 3)}
+                              for component_category, components in supply_system.installed_components.items()
+                              for component_code, component in components.items()]
+
+        # Write supply system structure to file
+        pd.DataFrame(supply_system_info).to_csv(results_file, index=False)
+
+        return
+
+    @staticmethod
+    def _add_to_systems_summary(supply_system_id, supply_system, supply_system_fitness_summary):
+        """Add a given supply system to the summary of fitness values of all supply systems in the DES"""
+        # Calculate overall system fitness values
+        annual_heat_rejection = sum([sum(heat) for heat in supply_system.heat_rejection.values()])
+        annual_energy_demand = sum([sum(demand) for demand in supply_system.system_energy_demand.values()])
+        annual_ghg_emissions = sum([sum(emission) for emission in supply_system.greenhouse_gas_emissions.values()])
+        annualised_cost = sum([cost for cost in supply_system.annual_cost.values()])
+
+        # Save system fitness values in common dictionary
+        supply_system_fitness_summary['Supply_System'] += [supply_system_id]
+        supply_system_fitness_summary['Heat_Emissions_kWh'] += [annual_heat_rejection]
+        supply_system_fitness_summary['System_Energy_Demand_kWh'] += [annual_energy_demand]
+        supply_system_fitness_summary['GHG_Emissions_kgCO2'] += [annual_ghg_emissions]
+        supply_system_fitness_summary['Cost_USD'] += [annualised_cost]
+
+        return supply_system_fitness_summary
+
+    def _write_detailed_results_to_csv(self, district_energy_system):
         """
-        Writes information on supply systems of subsystems of a near-pareto-optimal district energy system into
-        and xlsx file. The supply systems of each of the subsystems are summarised in a different tab of the file.
-
+        Writes csv-files with full time series of the key objective functions for each supply system.
         """
-        writer = pd.ExcelWriter(filename, engine='xlsxwriter')
-        workbook = writer.book
+        # Set general variables
+        des_id = district_energy_system.identifier
+        year = self.weather['year'][0]
+        date_range = get_date_range_hours_from_year(year)
 
-        for supsys_id, supply_system in supply_systems.items():
-            row = 0
-            worksheet = workbook.add_worksheet(str(supsys_id))
+        # FOR STAND-ALONE BUILDINGS
+        stand_alone_buildings = Domain._get_building_from_consumers(district_energy_system.consumers,
+                                                                    district_energy_system.stand_alone_buildings)
+        for building in stand_alone_buildings:
+            supply_system_id = building.identifier
+            supply_system = building.stand_alone_supply_system
 
-            # Write the header for the section summarising objective functions
-            header_format = workbook.add_format({'bold': True, 'font_size': 14})
-            worksheet.write(row, 0, 'Objective function evaluation', header_format)
-            row += 1
+            # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
+            building_file = self.locator.get_new_optimization_supply_systems_operation_file(des_id, supply_system_id)
+            Domain._write_combined_objective_function_profiles(date_range, supply_system, building_file)
 
-            # Summarise objective function evaluation
-            total_cost = sum(supply_system.annual_cost.values())
-            total_ghg_emission = sum(supply_system.greenhouse_gas_emissions.values())
-            total_sed = sum(supply_system.system_energy_demand.values())
-            total_ah = sum(supply_system.heat_rejection.values())
+        # FOR NETWORKS
+        for network_id, supply_system in district_energy_system.supply_systems.items():
+            # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
+            network_file = self.locator.get_new_optimization_supply_systems_operation_file(des_id, network_id)
+            Domain._write_combined_objective_function_profiles(date_range, supply_system, network_file)
 
+        return
 
-            worksheet.write_row(row, 0, ['Cost', 'GHG Emissions', 'System Energy Demand', 'Anthropogenic Heat'])
-            worksheet.write_row(row + 1, 0, [total_cost, total_ghg_emission, total_sed, total_ah])
+    @staticmethod
+    def _get_building_from_consumers(consumers, building_codes):
+        """ Get full building object based of list of consumers in domain and building code """
+        buildings = []
+        for consumer in consumers:
+            if consumer.identifier in building_codes:
+                buildings += [consumer]
+        return buildings
 
-            # Insert a blank row between sections
-            row += 3
+    @staticmethod
+    def _write_combined_objective_function_profiles(date_time, supply_system, results_file):
+        """Write the central objective function profiles of a supply system to the indicated csv file."""
+        combined_heat_rejection_profile = pd.concat([heat_rejection_profile
+                                                     for heat_rejection_profile
+                                                     in supply_system.heat_rejection.values()],
+                                                    axis=1).sum(1)
+        combined_ghg_emission_profile = pd.concat([ghg_emission_profile
+                                                   for ghg_emission_profile
+                                                   in supply_system.greenhouse_gas_emissions.values()],
+                                                  axis=1).sum(1)
+        combined_system_energy_demand_profile = pd.concat([system_demand_profile
+                                                           for system_demand_profile
+                                                           in supply_system.system_energy_demand.values()],
+                                                          axis=1).sum(1)
 
-            # Summarise components installed in the supply system
-            worksheet.write(row, 0, 'Component capacities', header_format)
-            row += 1
+        # combine the profiles into one data frame and write to file
+        combined_objective_function_timelines = pd.concat([date_time.to_series(index=range(len(date_time))),
+                                                           combined_system_energy_demand_profile,
+                                                           combined_heat_rejection_profile,
+                                                           combined_ghg_emission_profile],
+                                                          axis=1)
+        combined_objective_function_timelines.to_csv(results_file, index=False,
+                                                     header=['Date', 'System_energy_demand_kWh', 'Heat_rejection_kWh',
+                                                             'GHG_emissions_kgCO2'])
 
-            for category, components in supply_system.installed_components.items():
-                # Summarise the supply system one category at a time
-                worksheet.write(row, 0, str(category), header_format)
-                row += 1
-
-                # Write down supply system component capacities
-                component_codes = [str(component_code) for component_code in components.keys()]
-                component_capacities = [component.capacity for code, component in components.items()]
-                worksheet.write_row(row, 0, component_codes)
-                worksheet.write_row(row + 1, 0, component_capacities)
-
-                # Insert a blank row between sections
-                row += 3
-
-        writer.save()
+        return
 
     def _initialise_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)

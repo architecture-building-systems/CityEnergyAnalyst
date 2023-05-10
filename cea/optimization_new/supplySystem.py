@@ -121,13 +121,13 @@ class SupplySystem(object):
         objectives = SupplySystem.optimisation_algorithm.objectives
 
         if 'system_energy_demand' in objectives:
-            total_sed = sum([energy for key, energy in self.system_energy_demand.items()])
+            total_sed = sum([sum(energy) for key, energy in self.system_energy_demand.items()])
             self.overall_fitness['system_energy_demand'] = total_sed
         if 'anthropogenic_heat' in objectives:
-            total_heat_rejection = sum([heat for key, heat in self.heat_rejection.items()])
+            total_heat_rejection = sum([sum(heat) for key, heat in self.heat_rejection.items()])
             self.overall_fitness['anthropogenic_heat'] = total_heat_rejection
         if 'GHG_emissions' in objectives:
-            total_ghg_emissions = sum([emissions for key, emissions in self.greenhouse_gas_emissions.items()])
+            total_ghg_emissions = sum([sum(emissions) for key, emissions in self.greenhouse_gas_emissions.items()])
             self.overall_fitness['GHG_emissions'] = total_ghg_emissions
         if 'cost' in objectives:
             total_cost = sum([cost for key, cost in self.annual_cost.items()])
@@ -365,9 +365,9 @@ class SupplySystem(object):
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
                 if ec_code in self.system_energy_demand.keys():
-                    self.system_energy_demand[ec_code] += energy_flow.profile.sum()
+                    self.system_energy_demand[ec_code] += energy_flow.profile
                 else:
-                    self.system_energy_demand[ec_code] = energy_flow.profile.sum()
+                    self.system_energy_demand[ec_code] = energy_flow.profile
 
         return self.system_energy_demand
 
@@ -379,9 +379,9 @@ class SupplySystem(object):
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
                 if ec_code in self.system_energy_demand.keys():
-                    self.system_energy_demand[ec_code] -= energy_flow.profile.sum()
+                    self.system_energy_demand[ec_code] -= energy_flow.profile
                 else:
-                    self.system_energy_demand[ec_code] = -energy_flow.profile.sum()
+                    self.system_energy_demand[ec_code] = -energy_flow.profile
 
         return self.system_energy_demand
 
@@ -392,9 +392,9 @@ class SupplySystem(object):
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in releasable_energy_carriers:
                 if ec_code in self.heat_rejection.keys():
-                    self.heat_rejection[ec_code] += energy_flow.profile.sum()
+                    self.heat_rejection[ec_code] += energy_flow.profile
                 else:
-                    self.heat_rejection[ec_code] = energy_flow.profile.sum()
+                    self.heat_rejection[ec_code] = energy_flow.profile
 
         return self.heat_rejection
 
@@ -422,7 +422,7 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = {ec_code: energy_flow * EnergyCarrier.get_unit_cost(ec_code)
+        annual_energy_supply_cost = {ec_code: sum(energy_flow) * EnergyCarrier.get_unit_cost(ec_code)
                                      for ec_code, energy_flow in self.system_energy_demand.items()}
 
         self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}

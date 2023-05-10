@@ -42,6 +42,7 @@ from cea.optimization_new.containerclasses.optimization.algorithm import Genetic
 class DistrictEnergySystem(object):
     _max_nbr_networks = 0
     _number_of_selected_DES = 0
+    _network_type = ""
     optimisation_algorithm = GeneticAlgorithm()
 
     def __init__(self, connectivity, buildings, energy_potentials):
@@ -423,7 +424,8 @@ class DistrictEnergySystem(object):
         # update some object attributes
         definitive_des.best_supsys_combinations = None
         DistrictEnergySystem._number_of_selected_DES += 1
-        definitive_des.identifier = 'DES' + str(1000 + DistrictEnergySystem._number_of_selected_DES)
+        definitive_des.identifier = f'{DistrictEnergySystem._network_type}S_' \
+                                    + str(100 + DistrictEnergySystem._number_of_selected_DES)
 
         return definitive_des
 
@@ -431,6 +433,7 @@ class DistrictEnergySystem(object):
     def initialize_class_variables(domain):
         """ Store maximum number of networks and optimisation algorithm parameters in class variables. """
         DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
+        DistrictEnergySystem._network_type = domain.config.optimization_new.network_type
 
         # set district energy system optimisation parameters
         selection_algorithm = domain.config.optimization_new.networks_algorithm

@@ -15425,7 +15425,7 @@ get_optimization_substations_total_file:
 get_new_optimization_optimal_network_layout_file:
   created_by:
   - optimization_new
-  file_path: outputs/data/optimization_new/DHS_000/networks/N0000__layout.geojson
+  file_path: outputs/data/optimization_new/DHS_000/networks/N0000_layout.geojson
   file_type: geojson
   schema:
     columns:
@@ -15478,30 +15478,104 @@ get_new_optimization_optimal_network_layout_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-  used_by:
-  -  optimization_new
-get_new_optimization_optimal_supply_systems_file:
+  used_by: []
+get_new_optimization_optimal_supply_systems_summary_file:
     created_by:
     - optimization_new
-    file_path: outputs/data/optimization_new/DHS_000/Supply_systems_summary.xlsx
-    file_type: xls
+    file_path: outputs/data/optimization_new/DHS_000/Supply_systems/Supply_systems_summary.csv
+    file_type: csv
     schema:
-      N0000:
-        columns:
-          Cost:
-            description: Cost of subsystem (network or building) of the district energy system
-            type: float
-            unit: '[$USD(2015)]'
-            values: '{0.0...n}'
-            min: 0.0
-          Emissions:
-            description: GHG-emissions of subsystem (network or building) of the district energy system
-            type: float
-            unit: '[kg]'
-            values: '{0.0...n}'
-            min: 0.0
-    used_by:
+      columns:
+        Supply_System:
+          description: Identifier of the supply system's consumer, i.e. the subsystem (network or building)
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        Heat_Emissions_kWh:
+          description: heat emissions of the subsystem (network or building)
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        System_Energy_Demand_kWh:
+          description: system energy demand of the subsystem, i.e. the sum of all incoming energy flows of the system
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        GHG_Emissions_kgCO2:
+          description: GHG-emissions of the subsystem
+          type: float
+          unit: '[kg CO2-eq]'
+          values: '{0.0...n}'
+          min: 0.0
+        Cost_USD:
+          description: cost of the subsystem, i.e. cost of incoming energy flows + annualised investment cost of components
+          type: float
+          unit: '[USD]'
+          values: '{0.0...n}'
+          min: 0.0
+    used_by: []
+get_new_optimization_optimal_supply_system_file:
+    created_by:
     - optimization_new
+    file_path: outputs/data/optimization_new/DHS_000/Supply_systems/N0000_supply_system_structure.csv
+    file_type: csv
+    schema:
+      columns:
+        Component_category:
+          description: Supply system placement category of the component (primary i.e. cooling/heating-, secondary i.e. supply- or tertiary i.e. heat rejection-components)
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        Component_type:
+          description: Technical name of the supply system component
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        Component_code:
+          description: Code for the exact component-subtype as described in the 'CONVERSION'-database
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        Capacity_kW:
+          description: Maximum capacity of the component
+          type: float
+          unit: '[kW]'
+          values: '{0.0...n}'
+          min: 0.0
+    used_by: []
+get_new_optimization_supply_systems_operation_file:
+    created_by:
+    - optimization_new
+    file_path: outputs/data/optimization_new/DHS_000/Supply_systems_operation_details/N0000_operation.csv
+    file_type: csv
+    schema:
+      columns:
+        Date:
+          description: Time stamp for each day of the year ascending in hour intervals.
+          type: date
+          unit: '[datetime]'
+          values: '{yyyy-mm-dd hh:mm:ss-Z}'
+        System_energy_demand_kWh:
+          description: Time series of system energy demand of the subsystem, i.e. incoming energy flows of the system
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        Heat_rejection_kWh:
+          description: Time series of heat emissions of the subsystem (network or building)
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+        GHG_emissions_kgCO2:
+          description: Time series of GHG-emissions of the subsystem
+          type: float
+          unit: '[kg CO2-eq]'
+          values: '{0.0...n}'
+          min: 0.0
+    used_by: []
 get_radiation_building:
   created_by:
   - radiation
