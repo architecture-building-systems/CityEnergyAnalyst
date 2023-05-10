@@ -76,13 +76,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
         selected_columns = list(set(list_of_columns).intersection(set(OSM_COLUMNS)))
         shapefile[selected_columns] = shapefile[selected_columns] \
-            .fillna(1).apply(lambda x: pd.to_numeric(x, errors='coerce'))
-
-        # Make sure relevant OSM parameters (if available) are passed as floats, not strings
-        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
-        shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
-            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
-                .apply(lambda x: pd.to_numeric(x, errors='coerce'))
+            .apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
         if 'building:levels' not in list_of_columns:
