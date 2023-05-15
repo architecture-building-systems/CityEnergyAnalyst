@@ -97,7 +97,20 @@ class ConnectivityVector(object):
                 all([isinstance(connection, Connection) for connection in new_connections])):
             raise ValueError("The initialisation of a new connectivity vector requires a list of 'Connection'-objects.")
         else:
+            # Check if any of the network connection values appear only once...
+            new_values = [new_connection.network_connection for new_connection in new_connections]
+            values_appearing_once = [i for i in Connection.possible_connections if new_values.count(i) == 1]
+
+            # ... if so set them to 0 (network with only one building = stand-alone building)
+            if values_appearing_once:
+                changed_values = {i: 0 for i, connection in enumerate(new_connections)
+                                  if connection.network_connection in values_appearing_once}
+                for index, corrected_value in changed_values.items():
+                    new_connections[index].network_connection = corrected_value
+
+            # Set the connectivity vector
             self._connections = new_connections
+
 
     @property
     def values(self):
@@ -110,6 +123,14 @@ class ConnectivityVector(object):
             raise ValueError("To assign new network connection indicator values they need to be given as a list of "
                              "the same length as the connectivity vector.")
         else:
+            # Check if any of the network connection values appear only once...
+            values_appearing_once = [i for i in Connection.possible_connections if new_values.count(i) == 1]
+
+            # ... if so set them to 0 (network with only one building = stand-alone building)
+            if values_appearing_once:
+                new_values = [0 if i in values_appearing_once else i for i in new_values]
+
+            # Set the new values
             for i in range(len(self)):
                 self[i] = new_values[i]
 
@@ -143,6 +164,16 @@ class ConnectivityVector(object):
                 self.connections[index].network_connection = round(value[index-ind_start], 2)
         elif isinstance(key, int):
             self.connections[key].network_connection = round(value, 2)
+
+    def reset(self):
+        """
+        Reset the entire connectivity vector at once in order to correct connectivity values (checked in the setter)
+        after mutation or recombination.
+        e.g. if only one building is connected to any given network, i.e. it is really a stand-alone building)
+        """
+        self.connections = self.connections
+
+        return self
 
     def as_str(self):
         """
@@ -179,6 +210,9 @@ class ConnectivityVector(object):
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
                              f"connectivity vectors.")
 
+        # reset to correct potential format of the connectivity vector
+        mutated_cv[0].reset()
+
         return mutated_cv
 
     @staticmethod
@@ -195,6 +229,10 @@ class ConnectivityVector(object):
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "
                              f"connectivity vectors.")
+
+        # reset to correct potential error in format of the connectivity vectors
+        recombined_cvs[0].reset()
+        recombined_cvs[1].reset()
 
         return recombined_cvs
 

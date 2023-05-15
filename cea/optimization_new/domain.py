@@ -15,7 +15,7 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-from os.path import exists, join
+from os.path import exists
 import time
 import numpy as np
 import pandas as pd
@@ -125,14 +125,17 @@ class Domain(object):
             ii. Aggregate demands of the buildings connected to each network and use a second genetic algorithm to find
                 supply system configurations that are near-pareto optimal for the respective networks.
         """
+        print("Initializing domain (this may take a while)...")
         self._initialize_energy_system_descriptor_classes()
 
         # Calculate base-case supply systems for all buildings
+        print("Calculating operation of buildings' base-supply systems...")
         building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in self.buildings]
 
-        print(f"Starting optimisation of district energy systems (i.e. networks + supply systems).")
+        # Optimise district energy systems
+        print(f"Starting optimisation of district energy systems (i.e. networks + supply systems)...")
 
         algorithm = DistrictEnergySystem.optimisation_algorithm
 
@@ -148,9 +151,9 @@ class Domain(object):
                          energy_potentials=self.energy_potentials)
         toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
         toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
-        toolbox.register("select", ConnectivityVector.select, population_size=2)  # population_size=algorithm.population
+        toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population)
 
-        population = toolbox.population(n=2)  # n=algorithm.population
+        population = toolbox.population(n=algorithm.population)
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
@@ -384,11 +387,15 @@ class Domain(object):
         Algorithm.initialize_class_variables(self)
 
     def _initialize_energy_system_descriptor_classes(self):
+        print("1. Creating available supply system components...")
         Component.initialize_class_variables(self)
+        print("2. Finding possible network paths (this may take a while)...")
         Network.initialize_class_variables(self)
+        print("3. Establishing district energy system structure...")
         DistrictEnergySystem.initialize_class_variables(self)
         SupplySystemStructure.initialize_class_variables(self)
         SupplySystem.initialize_class_variables(self)
+        print("4. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
 
