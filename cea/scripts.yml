@@ -284,10 +284,6 @@ Optimization:
     input-files:
       - [get_street_network]
       - [get_total_demand]
-      - [get_water_body_potential]
-      - [get_sewage_heat_potential]
-      - [get_geothermal_potential]
-      - [PV_totals]
 
 Utilities:
   - name: data-migrator
