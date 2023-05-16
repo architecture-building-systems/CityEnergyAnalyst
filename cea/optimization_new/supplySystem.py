@@ -24,12 +24,12 @@ __status__ = "Production"
 
 import pandas as pd
 from math import ceil
-from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
-from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.component import ActiveComponent
-from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.containerclasses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.containerclasses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
 
 
 class SupplySystem(object):

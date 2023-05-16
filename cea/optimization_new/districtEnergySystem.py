@@ -33,10 +33,10 @@ from deap import algorithms, base, creator, tools
 
 from cea.optimization_new.network import Network
 from cea.optimization_new.supplySystem import SupplySystem
-from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.containerclasses.optimization.capacityIndicator import CapacityIndicatorVector
-from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
-from cea.optimization_new.containerclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
 
 
 class DistrictEnergySystem(object):

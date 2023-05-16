@@ -19,8 +19,8 @@ __status__ = "Production"
 import pandas as pd
 from cea.utilities import dbf
 from cea.optimization_new.supplySystem import SupplySystem
-from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
-from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 
 
 class Building(object):

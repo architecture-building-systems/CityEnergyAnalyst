@@ -19,8 +19,8 @@ import pandas as pd
 import numpy as np
 from os.path import exists
 
-from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
-from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 
 
 class EnergyPotential(object):

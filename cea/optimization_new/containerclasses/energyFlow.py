@@ -21,7 +21,7 @@ __status__ = "Production"
 import numpy as np
 import pandas as pd
 
-from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 
 
 class EnergyFlow(object):

@@ -34,11 +34,11 @@ from cea.optimization_new.network import Network
 from cea.optimization_new.component import Component
 from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
-from cea.optimization_new.containerclasses.energysystems.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.containerclasses.energysystems.energyPotential import EnergyPotential
-from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
-from cea.optimization_new.containerclasses.optimization.connectivityVector import Connection, ConnectivityVector
-from cea.optimization_new.containerclasses.optimization.algorithm import Algorithm
+from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
+from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
+from cea.optimization_new.helpercalsses.optimization.connectivityVector import Connection, ConnectivityVector
+from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
 
 
 class Domain(object):

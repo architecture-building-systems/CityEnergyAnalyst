@@ -23,8 +23,8 @@ import pandas as pd
 from math import log
 # third party libraries
 # other files (modules) of this project
-from cea.optimization_new.containerclasses.energysystems.energyCarrier import EnergyCarrier
-from cea.optimization_new.containerclasses.energysystems.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.technologies.chiller_vapor_compression import calc_VCC_const
 from cea.technologies.chiller_absorption import calc_ACH_const
