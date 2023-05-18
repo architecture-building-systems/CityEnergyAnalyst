@@ -391,6 +391,22 @@ class InputLocator(object):
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, f'{supply_system_id}_operation.csv')
 
+    def get_new_optimization_debugging_folder(self):
+        """Returns the debugging-folder, used to store information gathered by the optimisation tracker"""
+        return self._ensure_folder(self.get_new_optimization_results_folder(), f'debugging')
+
+    def get_new_optimization_debugging_network_tracker_file(self):
+        """Returns the debugging-file, used to store information gathered by the optimisation tracker"""
+        return os.path.join(self.get_new_optimization_debugging_folder(), f'network_tracker.csv')
+
+    def get_new_optimization_debugging_supply_system_tracker_file(self):
+        """Returns the debugging-file, used to store information gathered by the optimisation tracker"""
+        return os.path.join(self.get_new_optimization_debugging_folder(), f'supply_system_tracker.csv')
+
+    def get_new_optimization_debugging_fitness_tracker_file(self):
+        """Returns the debugging-file, used to store information gathered by the optimisation tracker"""
+        return os.path.join(self.get_new_optimization_debugging_folder(), f'fitness_tracker.csv')
+
     # POTENTIAL
     def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""

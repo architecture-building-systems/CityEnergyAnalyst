@@ -73,10 +73,10 @@ class DistrictEnergySystem(object):
             print("Please set a valid identifier.")
 
     @staticmethod
-    def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials):
+    def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None):
         """
         Identify optimal district energy systems. The selected district energy systems represent an optimal combination
-        of the most favourable supply systems for each of the networks in the district (i.e. best combinations of
+        of the most favourable supply systems for each of the networks in the district (i.e. the best combinations of
         pareto-optimal solutions for the subsystems' supply systems).
 
         :param connectivity_vector: connectivity vector specifying which buildings are connected by a thermal network.
@@ -87,17 +87,23 @@ class DistrictEnergySystem(object):
         :param energy_potentials: renewable energy potentials in the district
         :type energy_potentials: list of <cea.optimization_new.containerclasses.energysystems.energyPotential>-
                                  EnergyPotential class objects
+        :param optimization_tracker: object tracking the progress of the optimization
+        :type optimization_tracker: <cea.optimization_new.helperclasses.optimization.tracker>-OptimizationTracker class
+                                    object
         """
+        if optimization_tracker:
+            optimization_tracker.set_current_individual(connectivity_vector)
+
         # build a new district cooling system including its networks
         new_district_cooling_system = DistrictEnergySystem(connectivity_vector,
                                                            district_buildings,
                                                            energy_potentials)
 
-        non_dominated_systems = new_district_cooling_system.evaluate()
+        non_dominated_systems = new_district_cooling_system.evaluate(optimization_tracker)
 
         return non_dominated_systems
 
-    def evaluate(self, return_full_des=False):
+    def evaluate(self, optimization_tracker=None, return_full_des=False):
         """
         Evaluate the possible district energy system configurations (based on buildings, potentials and connectivity) by:
 
@@ -128,6 +134,10 @@ class DistrictEnergySystem(object):
 
         # aggregate objective functions for all subsystems across the entire district energy system
         self.combine_supply_systems()
+
+        # if prompted, track certain core characteristics of the district energy system
+        if optimization_tracker:
+            optimization_tracker.add_candidate_individual(self)
 
         # return the entire district-energy-system object
         if return_full_des:
@@ -356,14 +366,20 @@ class DistrictEnergySystem(object):
         creator.create("SystemsCombination", list, fitness=creator.FitnessMin)
 
         # initialise a list of supply system combinations by adding the supply systems of the first network to them
-        first_network = list(self.supply_systems.keys())[0]
-        connectivity_str = self.connectivity.as_str()
-        supply_system_combinations = [creator.SystemsCombination([connectivity_str,  first_network + "-" + str(i)])
-                                      for i, supply_system in enumerate(self.supply_systems[first_network])]
-        for i, system_combination in enumerate(supply_system_combinations):
-            system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
-        supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
-                                                                   first_front_only=True)
+        if not self.supply_systems: # for a district without networks
+            first_network = None
+            connectivity_str = self.connectivity.as_str()
+            supply_system_combinations = [creator.SystemsCombination([connectivity_str])]
+            supply_system_combinations[0].fitness.values = tuple([0] * algorithm.nbr_objectives)
+        else:
+            first_network = list(self.supply_systems.keys())[0]
+            connectivity_str = self.connectivity.as_str()
+            supply_system_combinations = [creator.SystemsCombination([connectivity_str,  first_network + "-" + str(i)])
+                                          for i, supply_system in enumerate(self.supply_systems[first_network])]
+            for i, system_combination in enumerate(supply_system_combinations):
+                system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
+            supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
+                                                                       first_front_only=True)
 
         # calculate fitness value of the stand-alone buildings
         if not self.stand_alone_buildings:

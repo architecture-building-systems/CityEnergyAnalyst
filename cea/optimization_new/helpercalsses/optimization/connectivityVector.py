@@ -237,7 +237,7 @@ class ConnectivityVector(object):
         return recombined_cvs
 
     @staticmethod
-    def select(individuals_list, energy_system_solutions_dict, population_size):
+    def select(individuals_list, energy_system_solutions_dict, population_size, optimization_tracker=None):
         """
         Select the 'best' connectivity vectors by performing 'non-dominated sorting' (NSGA) on their respective energy
         system solutions; where the energy system solutions are given by the 'best' combinations of the supply systems
@@ -253,6 +253,9 @@ class ConnectivityVector(object):
                                             (defined in cea.optimization_new.districtEnergySystem.py)
         :param population_size: number of individuals to be selected as the population of the next interation
         :type population_size: int
+        :param optimization_tracker: object tracking the progress of the optimization
+        :type optimization_tracker: <cea.optimization_new.helperclasses.optimization.tracker>-OptimizationTracker class
+                                    object
         """
         # create a dictionary associating the connectivity 'str'-expression to the corresponding objects
         individual_dict = {ind.as_str(): ind for ind in individuals_list}
@@ -281,5 +284,8 @@ class ConnectivityVector(object):
                 if connectivity_vector in individual_dict.keys():
                     new_population += [individual_dict[connectivity_vector]]
                     del individual_dict[connectivity_vector]
+
+        if optimization_tracker:
+            optimization_tracker.update_current_non_dominated_fronts(new_population, supsys_combination_solution_fronts)
 
         return new_population

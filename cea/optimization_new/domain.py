@@ -39,6 +39,7 @@ from cea.optimization_new.containerclasses.energyPotential import EnergyPotentia
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.helpercalsses.optimization.connectivityVector import Connection, ConnectivityVector
 from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
+from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
 
 
 class Domain(object):
@@ -125,11 +126,11 @@ class Domain(object):
             ii. Aggregate demands of the buildings connected to each network and use a second genetic algorithm to find
                 supply system configurations that are near-pareto optimal for the respective networks.
         """
-        print("Initializing domain (this may take a while)...")
+        print("\nInitializing domain:")
         self._initialize_energy_system_descriptor_classes()
 
         # Calculate base-case supply systems for all buildings
-        print("Calculating operation of buildings' base-supply systems...")
+        print("\nCalculating operation of buildings' base-supply systems...")
         building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in self.buildings]
@@ -138,6 +139,12 @@ class Domain(object):
         print(f"Starting optimisation of district energy systems (i.e. networks + supply systems)...")
 
         algorithm = DistrictEnergySystem.optimisation_algorithm
+        if self.config.general.debug:
+            nbr_networks = self.config.optimization_new.maximum_number_of_networks
+            building_ids = [building.identifier for building in self.buildings]
+            tracker = optimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
+        else:
+            tracker = None
 
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,)*algorithm.nbr_objectives)
         creator.create("Individual", ConnectivityVector, fitness=creator.FitnessMin)
@@ -148,10 +155,11 @@ class Domain(object):
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
-                         energy_potentials=self.energy_potentials)
+                         energy_potentials=self.energy_potentials, optimization_tracker=tracker)
         toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
         toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
-        toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population)
+        toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
+                         optimization_tracker=tracker)
 
         population = toolbox.population(n=algorithm.population)
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
@@ -167,10 +175,12 @@ class Domain(object):
                                                        in zip(new_ind, non_dominated_fronts)})
 
             population = toolbox.select(population + offspring, optimal_supply_system_combinations)
-            print(f"DES: gen {generation}")
+            print(f"\n\nDES: gen {generation}")
 
         self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
-        print(f"District energy system optimisation complete!")
+        if tracker:
+            tracker.print_evolutions()
+        print(f"\nDistrict energy system optimisation complete!")
 
         return self.optimal_energy_systems
 
