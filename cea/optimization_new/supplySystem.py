@@ -403,7 +403,8 @@ class SupplySystem(object):
         Calculate green house gas emissions of all system energy demand flows.
         """
 
-        self.greenhouse_gas_emissions = {ec_code: energy_flow * EnergyCarrier.get_unit_ghg(ec_code)
+        self.greenhouse_gas_emissions = {ec_code: energy_flow.replace(list(energy_flow[energy_flow<0]), 0)
+                                                  * EnergyCarrier.get_unit_ghg(ec_code)
                                          for ec_code, energy_flow in self.system_energy_demand.items()}
 
         return self.greenhouse_gas_emissions
