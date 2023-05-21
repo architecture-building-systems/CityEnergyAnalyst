@@ -614,12 +614,11 @@ class IntegerParameter(Parameter):
             self.nullable = False
 
     def encode(self, value):
-        if value is None:
-            if self.nullable:
-                return ''
-            else:
+        if value is None or value == "":
+            if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
-        return str(value)
+            return ""
+        return str(int(value))
 
     def decode(self, value):
         try:
@@ -647,11 +646,10 @@ class RealParameter(Parameter):
             self.nullable = False
 
     def encode(self, value):
-        if value is None:
-            if self.nullable:
-                return ''
-            else:
+        if value is None or value == "":
+            if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
+            return ''
         return format(float(value), ".%i" % self._decimal_places)
 
     def decode(self, value):
