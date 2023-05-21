@@ -1,6 +1,6 @@
 :orphan:
 
-Installation guide for Windows for developers
+Installation guide on Windows for developers
 ==============================================
 
 Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows system (tested with Windows 10) for developers
@@ -9,18 +9,20 @@ Prerequisites
 ~~~~~~~~~~~~~
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
+* Download and Install `Git <https://mamba.readthedocs.io/en/latest/installation.html>`__.
+* Download and Install `Node <https://nodejs.org/en/download>`__.
 * Download and Install `Yarn <https://github.com/yarnpkg/yarn/releases/download/v1.22.4/yarn-1.22.4.msi>`__.
 
 Installation
 ~~~~~~~~~~~~
 
 #. Open GitHub Desktop from the start menu.
-#. Clone the CEA repository: https://github.com/architecture-building-systems/CityEnergyAnalyst
-#. Clone the CEA GUI repository: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
+#. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
+#. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
 #. Install CEA backend:
-    #. Open a Terminal console
+    #. Open a Miniforge Prompt console (you find it in your start menu)
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``CONDA_SUBDIR=osx-64 mamba env create -f environment.yml`` and press ENTER.
+    #. Type ``mamba env create -f environment.yml`` and press ENTER.
     #. Type ``mamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
@@ -29,13 +31,25 @@ Installation
     #. Type ``yarn package`` and press ENTER.
     #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
 
+Interfaces
+~~~~~~~~~~
+
+There are different ways in which you can interact with the code of CEA.
+
+#. The Miniforge Prompt console interface: This is the command line to all the commands of CEA from your computer terminal
+#. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
+#. The pycharm interface: this interface provides access to all the source code of CEA.
+
+The command line interface and dashboard interface are included during the installation of CEA.
+Other interfaces require a few additional steps to get them up and running.
+
 Running the CEA dashboard
 _________________________
 
 In order to launch the CEA dashboard, you will need to do the following **each time**:
 
-#. Open the Terminal
-#. Type ``conda activate cea`` and press ENTER.
+#. Open the Miniforge Prompt console (you find it in your start menu)
+#. Type ``mamba activate cea`` and press ENTER.
 #. Type ``cea dashboard`` and press ENTER.
 #. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
 #. Run the CEA dashboard located in (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
@@ -60,4 +74,7 @@ In order to access and work on the source code of CEA from pycharm do:
 
 .. attention:: We ended Support of Grashopper on 20.03.20. The legacy code can be found in our github repository/legacy
 .. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
+
+Updating dependencies
+~~~~~~~~~~~~
 
