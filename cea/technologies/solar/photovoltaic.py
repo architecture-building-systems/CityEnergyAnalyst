@@ -671,37 +671,40 @@ def calc_properties_PV_db(database_path, config):
 
 
 # investment and maintenance costs
-def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
+def calc_Cinv_pv(total_module_area_m2, locator, technology_code="PV1"):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
-    technology_code = list(set(PV_cost_data['code']))
-    PV_cost_data = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
-    nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
-    P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if P_nominal_W < PV_cost_data['cap_min'].values[0]:
-        P_nominal_W = PV_cost_data['cap_min'].values[0]
-    PV_cost_data = PV_cost_data[
-        (PV_cost_data['cap_min'] <= P_nominal_W) & (PV_cost_data['cap_max'] > P_nominal_W)]
-    Inv_a = PV_cost_data.iloc[0]['a']
-    Inv_b = PV_cost_data.iloc[0]['b']
-    Inv_c = PV_cost_data.iloc[0]['c']
-    Inv_d = PV_cost_data.iloc[0]['d']
-    Inv_e = PV_cost_data.iloc[0]['e']
-    Inv_IR = PV_cost_data.iloc[0]['IR_%']
-    Inv_LT = PV_cost_data.iloc[0]['LT_yr']
-    Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
+    if total_module_area_m2 > 0.0:
+        PV_cost_data1 = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
+        PV_cost_data2 = PV_cost_data1[PV_cost_data1['code'] == technology_code]
+        nominal_efficiency = PV_cost_data2['PV_n'].max()
+        P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if P_nominal_W < PV_cost_data2['cap_min'].values[0]:
+            P_nominal_W = PV_cost_data2['cap_min'].values[0]
+        PV_cost_data = PV_cost_data2[
+            (PV_cost_data2['cap_min'] <= P_nominal_W) & (PV_cost_data2['cap_max'] > P_nominal_W)]
 
-    InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
+        Inv_a = PV_cost_data.iloc[0]['a']
+        Inv_b = PV_cost_data.iloc[0]['b']
+        Inv_c = PV_cost_data.iloc[0]['c']
+        Inv_d = PV_cost_data.iloc[0]['d']
+        Inv_e = PV_cost_data.iloc[0]['e']
+        Inv_IR = PV_cost_data.iloc[0]['IR_%']
+        Inv_LT = PV_cost_data.iloc[0]['LT_yr']
+        Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
-    Capex_a_PV_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
-    Opex_fixed_PV_USD = InvC * Inv_OM
-    Capex_PV_USD = InvC
+        InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
+
+        Capex_a_PV_USD = calc_capex_annualized(InvC, Inv_IR, Inv_LT)
+        Opex_fixed_PV_USD = InvC * Inv_OM
+        Capex_PV_USD = InvC
+    else:
+        Capex_a_PV_USD= Opex_fixed_PV_USD= Capex_PV_USD= P_nominal_W = 0.0
 
     return Capex_a_PV_USD, Opex_fixed_PV_USD, Capex_PV_USD, P_nominal_W
 

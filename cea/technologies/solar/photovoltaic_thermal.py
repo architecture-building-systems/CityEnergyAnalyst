@@ -636,23 +636,24 @@ def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, tim
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
+def calc_Cinv_PVT(PVT_peak_W, locator, technology_code="PVT1"):
     """
     P_peak in kW
     result in CHF
     technology = 0 represents the first technology when there are multiple technologies.
     FIXME: handle multiple technologies when cost calculations are done
     """
+
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
     if PVT_peak_W > 0.0:
-        PVT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PV")
-        technology_code = list(set(PVT_cost_data['code']))
-        PVT_cost_data = PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
+        PVT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PVT")
+        PVT_cost_data = PVT_cost_data[PVT_cost_data['code'] == technology_code]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
         if PVT_peak_W < PVT_cost_data['cap_min'].values[0]:
             PVT_peak_W = PVT_cost_data['cap_min'].values[0]
-        PVT_cost_data = PVT_cost_data[
-            (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
+        PVT_cost_data = PVT_cost_data[(PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
         Inv_a = PVT_cost_data.iloc[0]['a']
         Inv_b = PVT_cost_data.iloc[0]['b']
         Inv_c = PVT_cost_data.iloc[0]['c']
