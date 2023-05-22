@@ -2,7 +2,7 @@
   "general:project": "/Users/fonseca/Documents/reference-case-open"
   "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - config: .
-  "general:scenario-name": baseline
+  "general:scenario-name": "future a"
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
