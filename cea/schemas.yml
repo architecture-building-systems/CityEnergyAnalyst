@@ -15576,6 +15576,183 @@ get_new_optimization_supply_systems_operation_file:
           values: '{0.0...n}'
           min: 0.0
     used_by: []
+get_new_optimization_debugging_fitness_tracker_file:
+  created_by:
+    - optimization_new
+  file_path: outputs/data/optimization_new/debugging/fitness_tracker.csv
+  file_type: csv
+  schema:
+    columns:
+      Generation:
+        description: Index of the generation, i.e. iteration of the genetic algorithm
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Front:
+        description: Order of the non-dominated front that the solution is a part of
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Ind_Code:
+        description: Unique code for the tested individual (combination of connectivity- and capacity-indicator-vectors)
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Connectivity:
+        description: String codifying the connectivity vector associated to the tested individual
+        type: string
+        unit: '[-]'
+        values: 'NA'
+      SupSys_Combination:
+        description: Index specifying the supply system associated with the tested individual
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      cost:
+        description: Annualised cost of the supply systems and networks associated to the tested individual.
+        type: float
+        unit: '[$USD(2015)]'
+        values: '{0.0...n}'
+        min: 0.0
+      GHG_emissions:
+          description: Annual green house gas emissions for the operation of the district energy system.
+          type: float
+          unit: '[kg CO2-eq]'
+          values: '{0.0...n}'
+          min: 0.0
+      system_energy_demand:
+          description: Annual energy demand of the district energy system (all energy carriers combined).
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+      anthropogenic_heat:
+          description: Annual anthropogenic heat emissions from the district energy system
+          type: float
+          unit: '[kWh]'
+          values: '{0.0...n}'
+          min: 0.0
+  used_by: [ ]
+get_new_optimization_debugging_network_tracker_file:
+  created_by:
+    - optimization_new
+  file_path: outputs/data/optimization_new/debugging/network_tracker.csv
+  file_type: csv
+  schema:
+    columns:
+      Generation:
+        description: Index of the generation, i.e. iteration of the genetic algorithm
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Front:
+        description: Order of the non-dominated front that the solution is a part of
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Ind_Code:
+        description: Unique code for the tested individual (combination of connectivity- and capacity-indicator-vectors)
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Connectivity:
+        description: String codifying the connectivity vector associated to the tested individual
+        type: string
+        unit: '[-]'
+        values: 'NA'
+      Network:
+        description: Identifier of the network in the tested district energy system
+        type: string
+        unit: '[-]'
+        values: 'NA'
+      BXXXX:
+        description: Marker denoting if building 'BXXXX' is connected to the given network.
+        type: string
+        unit: '[-]'
+        values: '{X,-}'
+      p_XXX:
+        description: Maximum capacity of the primary (i.e. heating/cooling) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      s_XXX:
+        description: Maximum capacity of the secondary (i.e. supply) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+      t_XXX:
+        description: Maximum capacity of the tertiary (i.e. heat rejection) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[kW]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: [ ]
+get_new_optimization_debugging_supply_system_tracker_file:
+  created_by:
+    - optimization_new
+  file_path: outputs/data/optimization_new/debugging/supply_system_tracker.csv
+  file_type: csv
+  schema:
+    columns:
+      Generation:
+        description: Index of the generation, i.e. iteration of the genetic algorithm
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Ind_Code:
+        description: Unique code for the tested individual (combination of connectivity- and capacity-indicator-vectors)
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Connectivity:
+        description: String codifying the connectivity vector associated to the tested individual
+        type: string
+        unit: '[-]'
+        values: 'NA'
+      SupSys_Combination:
+        description: Index specifying the supply system associated with the tested individual
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      Network:
+        description: Identifier of the network in the tested district energy system
+        type: string
+        unit: '[-]'
+        values: 'NA'
+      p_XXX:
+        description: Capacity indicator of the primary (i.e. heating/cooling) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      s_XXX:
+        description: Capacity indicator of the secondary (i.e. supply) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      t_XXX:
+        description: Capacity indicator of the tertiary (i.e. heat rejection) component 'XXX' in the given network's supply system.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+  used_by: [ ]
 get_radiation_building:
   created_by:
   - radiation
