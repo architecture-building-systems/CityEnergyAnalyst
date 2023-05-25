@@ -74,7 +74,6 @@ Demand forecasting:
                  schedule-maker]
     input-files:
       - [get_database_envelope_systems]
-      - [get_surroundings_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
