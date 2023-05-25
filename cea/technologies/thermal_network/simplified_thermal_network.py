@@ -533,7 +533,6 @@ def thermal_network_simplified(locator, config, network_name=''):
     dataframe_to_dbf(network_edges_df,
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 
-    return network_edges_df, thermal_losses_total_kWh['thermal_losses_total_kW'],
 
 def main(config):
     """
