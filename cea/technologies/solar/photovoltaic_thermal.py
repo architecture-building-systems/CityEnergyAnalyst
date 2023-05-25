@@ -714,7 +714,7 @@ def main(config):
     # aggregate results from all buildings
     aggregated_annual_results = {}
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.PVT_results(building))
+        hourly_results_per_building = pd.read_csv(locator.PVT_results(building)).set_index("Date")
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
             temperature_sup = []
@@ -736,7 +736,6 @@ def main(config):
     aggregated_hourly_results_df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
     aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
         aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
     aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
