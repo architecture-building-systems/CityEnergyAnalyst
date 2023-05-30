@@ -1009,7 +1009,7 @@ def main(config):
     # aggregate results from all buildings
     aggregated_annual_results = {}
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type))
+        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type)).set_index('Date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
             temperature_sup = hourly_results_per_building['T_SC_sup_C'].mean()
@@ -1022,7 +1022,6 @@ def main(config):
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
     aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
         aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels
