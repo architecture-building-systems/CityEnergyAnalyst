@@ -24,7 +24,7 @@ from cea.optimization.master.normalization import scaler_for_normalization, norm
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Jimeno Fonseca", "Matthias Nifler"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -32,7 +32,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-
 
 def create_individual_class(ceaConfig):
     objective_function_selection = []
@@ -45,6 +44,8 @@ def create_individual_class(ceaConfig):
     creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
     return NOBJ, objective_function_selection
 
+#need to keep it here otherwise it breaks on a MAc. one needs to declare creator.create variables global at the beginning of the script
+create_individual_class(cea.config.Configuration())
 
 def objective_function(individual,
                        individual_number,
