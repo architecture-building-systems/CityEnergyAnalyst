@@ -27,6 +27,7 @@ __status__ = "Production"
 import copy
 import random
 import numpy as np
+from math import floor
 from deap import tools
 
 
@@ -71,7 +72,16 @@ class CapacityIndicator(object):
         if new_value and not 0 <= new_value <= 1:
             raise ValueError("The capacity indicator values each need to be between 0 and 1.")
         else:
-            self._value = new_value
+            self._value = round(new_value, 2)
+
+    def change_value(self, new_value, inplace=True):
+        if inplace:
+            self.value = new_value
+            return self
+        else:
+            new_capacity_indicator = copy.deepcopy(self)
+            new_capacity_indicator.value = new_value
+            return new_capacity_indicator
 
 
 class CapacityIndicatorVector(object):
@@ -91,13 +101,8 @@ class CapacityIndicatorVector(object):
         if not all([isinstance(capacity_indicator, CapacityIndicator) for capacity_indicator in new_capacity_indicators]):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         elif not new_capacity_indicators == [] and \
-                not all([sum([capacity_indicator.value for capacity_indicator in new_capacity_indicators
-                              if capacity_indicator.category == category]) >= 1
-                         for category in ['primary', 'secondary', 'tertiary']
-                         if any([capacity_indicator.category == category
-                                 for capacity_indicator in new_capacity_indicators])]):
-            raise ValueError("The capacity indicator values for each supply system placement category need to "
-                             "add up to at least 1 (so that the system demand can be met).")
+                not all(CapacityIndicatorVector._categories_cover_demand(new_capacity_indicators)):
+            self._capacity_indicators = CapacityIndicatorVector._correct_values(new_capacity_indicators)
         else:
             self._capacity_indicators = new_capacity_indicators
 
@@ -160,6 +165,16 @@ class CapacityIndicatorVector(object):
         elif isinstance(key, int):
             self.capacity_indicators[key].value = round(value, 2)
 
+    def reset(self):
+        """
+        Reset the entire capacity indicator vector at once in order to correct capacity indicator values if necessary
+        (checked in the setter) after mutation or recombination.
+        e.g. if the capacity indicators of a given category are <1, i.e. cannot supply the required demand
+        """
+        self.capacity_indicators = self.capacity_indicators
+
+        return self
+
     def get_cat(self, category):
         """
         Get values of all capacity indicators corresponding to the chosen supply system category.
@@ -185,6 +200,46 @@ class CapacityIndicatorVector(object):
                 else:
                     new_val_vector += self.get_cat(cat)
             self.values = new_val_vector
+
+    @staticmethod
+    def _categories_cover_demand(new_capacity_indicators):
+        """
+        check if the component categories in a list of new capacity indicators cover the maximum required demand
+        (i.e. add up to >= 1)
+        """
+        categories_cover_demand = [sum([capacity_indicator.value for capacity_indicator in new_capacity_indicators
+                                        if capacity_indicator.category == category]) >= 1
+                                   for category in ['primary', 'secondary', 'tertiary']
+                                   if any([capacity_indicator.category == category
+                                           for capacity_indicator in new_capacity_indicators])]
+        return categories_cover_demand
+
+    @staticmethod
+    def _correct_values(new_capacity_indicators):
+        """
+        Correct a tentative capacity indicator vector's values by following these steps:
+            1. Find out which category's capacity indicators do not add up to 1 (i.e. potentially can not meet demand)
+            2. For the relevant categories identify the component with the highest tentative capacity indicator
+            3. Change that components capacity indicator so that the category's CIs add up to 1.
+        """
+        # Step 1
+        component_categories = ['primary', 'secondary', 'tertiary']
+        categories_cover_demand = CapacityIndicatorVector._categories_cover_demand(new_capacity_indicators)
+        understocked_categories = [category for i, category in enumerate(component_categories)
+                                   if not categories_cover_demand[i]]
+
+        for category in understocked_categories:
+            # Step 2
+            ci_values_in_cat = {ci.code: ci.value for ci in new_capacity_indicators if ci.category == category}
+            highest_ci_component = [component for component, value in ci_values_in_cat.items()
+                                    if value == max(ci_values_in_cat.values())][0]
+            # Step 3
+            corrected_ci_value = 1 - (sum(ci_values_in_cat.values()) - max(ci_values_in_cat.values()))
+            new_capacity_indicators = [ci if not ci.code == highest_ci_component
+                                       else ci.change_value(corrected_ci_value)
+                                       for ci in new_capacity_indicators]
+
+        return new_capacity_indicators
 
     @staticmethod
     def generate(civ_structure, method='random'):
@@ -230,6 +285,9 @@ class CapacityIndicatorVector(object):
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
                              f"capacity indicator vectors.")
 
+        # reset to correct potential format of the capacity indicator vector
+        mutated_civ[0].reset()
+
         return mutated_civ
 
     @staticmethod
@@ -246,5 +304,9 @@ class CapacityIndicatorVector(object):
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "
                              f"capacity indicator vectors.")
+
+        # reset to correct potential error in format of the capacity indicator vectors
+        recombined_civs[0].reset()
+        recombined_civs[1].reset()
 
         return recombined_civs

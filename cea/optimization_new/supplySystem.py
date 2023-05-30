@@ -23,7 +23,7 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
-from math import ceil
+from math import ceil, isclose
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.component import ActiveComponent
@@ -271,6 +271,13 @@ class SupplySystem(object):
 
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
+
+            if not isclose(max(demand.profile), 0, abs_tol=1e-09):
+                raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '
+                                 f'An additional {max(demand.profile)} kW of capacity to produce '
+                                 f'{demand.energy_carrier.mean_qual} {demand.energy_carrier.qual_unit} '
+                                 f'{demand.energy_carrier.type} energy ({demand.energy_carrier.subtype}) is required.'
+                                 f'\nPlease correct the generation/mutation/mating of your capacity indicator vectors.')
 
         return self.component_energy_inputs, self.component_energy_outputs
 
