@@ -433,7 +433,7 @@ class SupplySystemStructure(object):
                                                                        component_capacity,
                                                                        demand_energy_carrier,
                                                                        demand_origin)
-            return fitting_components, passive_components_dict
+            return components_fitting_after_passive_conversion, passive_components_dict
         else:
             raise ValueError(f"None of the components chosen for the {component_placement} category of the supply "
                              f"system, can generate/absorb the required energy carrier {demand_energy_carrier}. "
@@ -619,7 +619,7 @@ class SupplySystemStructure(object):
                                                         mean_qual_before,
                                                         active_component.main_energy_carrier.mean_qual))
                         except ValueError:
-                            pass
+                            continue
                 required_passive_components[active_component.code] = passive_component_list
 
         return required_passive_components
