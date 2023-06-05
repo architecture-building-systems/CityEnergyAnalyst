@@ -211,8 +211,7 @@ class SupplySystemStructure(object):
         typical_air_ec = EnergyCarrier.temp_to_thermal_ec('air', avrg_yearly_temp)
 
         if SupplySystemStructure.system_type == 'heating':
-            releasable_environmental_ecs = EnergyCarrier.get_colder_thermal_ecs(typical_air_ec, 'air',
-                                                                                include_thermal_ec=True)
+            releasable_environmental_ecs = EnergyCarrier.get_thermal_ecs_of_subtype('air')
         elif SupplySystemStructure.system_type == 'cooling':
             releasable_environmental_ecs = EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air',
                                                                                 include_thermal_ec=True)
@@ -277,10 +276,12 @@ class SupplySystemStructure(object):
 
         # operate said components and get the required input energy flows and corresponding output energy flows
         viable_primary_components = viable_primary_and_passive_components[self.main_final_energy_carrier.code][0]
+        necessary_passive_components = viable_primary_and_passive_components[self.main_final_energy_carrier.code][1]
         max_primary_energy_flows_in, \
         max_primary_energy_flows_out = \
             SupplySystemStructure._extract_max_required_energy_flows(self.maximum_supply,
-                                                                     viable_primary_components)
+                                                                     viable_primary_components,
+                                                                     necessary_passive_components)
 
         # Check if any of the input energy flows can be covered by the energy potential flows
         #   (if so, subtract them from demand)
@@ -309,7 +310,8 @@ class SupplySystemStructure(object):
         # operate all secondary components and get the required input energy flows and corresponding output energy flows
         max_secondary_energy_flows = \
             [SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow[ec_code],
-                                                                      act_and_psv_components[0])
+                                                                      act_and_psv_components[0],
+                                                                      act_and_psv_components[1])
              for ec_code, act_and_psv_components in viable_secondary_and_passive_components.items()]
         max_secondary_energy_flows_in = SupplySystemStructure._get_maximum_per_energy_carrier(
             [max_energy_flows_in for max_energy_flows_in, max_energy_flows_out in max_secondary_energy_flows])
@@ -358,7 +360,8 @@ class SupplySystemStructure(object):
         # operate said components and get the required input energy flows and corresponding output energy flows
         max_tertiary_energy_flows = \
             [SupplySystemStructure._extract_max_required_energy_flows(max_tertiary_demand_flow[ec_code],
-                                                                      act_and_psv_components[0])
+                                                                      act_and_psv_components[0],
+                                                                      act_and_psv_components[1])
              for ec_code, act_and_psv_components in viable_tertiary_and_passive_cmpts.items()]
         max_tertiary_energy_flows_in = SupplySystemStructure._get_maximum_per_energy_carrier(
             [max_energy_flows_in for max_energy_flows_in, max_energy_flows_out in max_tertiary_energy_flows])
@@ -588,24 +591,6 @@ class SupplySystemStructure(object):
         if active_component_placement == 'tertiary':  # i.e. active components are used for absorption/rejection
             placed_before = active_component_placement
             placed_after = demand_origin
-            mean_qual_after = EnergyCarrier(required_energy_carrier_code).mean_qual
-            for active_component in active_components_to_feed:
-                passive_component_list = []
-                for passive_component_class, component_models \
-                        in passive_components_for_ec[active_component.main_energy_carrier.code].items():
-                    for component_model in component_models:
-                        try:
-                            passive_component_list.append(
-                                passive_component_class(component_model, placed_before, placed_after, maximum_demand,
-                                                        active_component.main_energy_carrier.mean_qual,
-                                                        mean_qual_after))
-                        except ValueError:
-                            pass
-                required_passive_components[active_component.code] = passive_component_list
-
-        else:  # i.e. active components are used for generation
-            placed_before = demand_origin
-            placed_after = active_component_placement
             mean_qual_before = EnergyCarrier(required_energy_carrier_code).mean_qual
 
             for active_component in active_components_to_feed:
@@ -619,19 +604,46 @@ class SupplySystemStructure(object):
                                                         mean_qual_before,
                                                         active_component.main_energy_carrier.mean_qual))
                         except ValueError:
+                            pass
+                required_passive_components[active_component.code] = passive_component_list
+
+        else:  # i.e. active components are used for generation
+            placed_before = demand_origin
+            placed_after = active_component_placement
+            mean_qual_after = EnergyCarrier(required_energy_carrier_code).mean_qual
+
+            for active_component in active_components_to_feed:
+                passive_component_list = []
+                for passive_component_class, component_models \
+                        in passive_components_for_ec[active_component.main_energy_carrier.code].items():
+                    for component_model in component_models:
+                        try:
+                            passive_component_list.append(
+                                passive_component_class(component_model, placed_before, placed_after, maximum_demand,
+                                                        active_component.main_energy_carrier.mean_qual,
+                                                        mean_qual_after))
+                        except ValueError:
                             continue
                 required_passive_components[active_component.code] = passive_component_list
 
         return required_passive_components
 
     @staticmethod
-    def _extract_max_required_energy_flows(main_flow, viable_components):
+    def _extract_max_required_energy_flows(main_flow, viable_active_components, necessary_passive_components=None):
         """
         Operate each component in the list of viable component-objects to output (or absorb) the given main energy flow
         and return the maximum necessary input energy flows and maximum resulting output energy flows.
         (example of component-object - <cea.optimization_new.component.AbsorptionChiller>)
         """
-        input_and_output_energy_flows = [component.operate(main_flow) for component in viable_components]
+        if necessary_passive_components:
+            passive_component_demand_flows = {active_component_code: passive_component[0].operate(main_flow)
+                                              for active_component_code, passive_component in
+                                              necessary_passive_components.items()}
+            input_and_output_energy_flows = [component.operate(passive_component_demand_flows[component.code])
+                                             for component in viable_active_components]
+        else:
+            input_and_output_energy_flows = [component.operate(main_flow) for component in viable_active_components]
+
         input_energy_flow_dicts = [input_ef for input_ef, output_ef in input_and_output_energy_flows]
         output_energy_flow_dicts = [output_ef for input_ef, output_ef in input_and_output_energy_flows]
 
@@ -732,10 +744,12 @@ class SupplySystemStructure(object):
             self._max_cap_active_components[component_category].update({active_component.code: active_component
                                                                         for active_component in ter_and_psv_cmpts[0]})
             self._passive_component_selection.update(ter_and_psv_cmpts[1])
-            self._max_cap_passive_components[component_category].update({passive_component.code: passive_component
+            self._max_cap_passive_components[component_category].update({active_component:
+                                                                             {passive_component.code: passive_component
+                                                                              for passive_component
+                                                                              in passive_components}
                                                                          for active_component, passive_components
-                                                                         in ter_and_psv_cmpts[1].items()
-                                                                         for passive_component in passive_components})
+                                                                         in ter_and_psv_cmpts[1].items()})
         self._activation_order[component_category] = [code
                                                       for component_type in
                                                       SupplySystemStructure._full_component_activation_order

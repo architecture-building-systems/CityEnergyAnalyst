@@ -747,32 +747,27 @@ class PowerTransformer(PassiveComponent):
         self._check_operational_requirements(power_transfer)
 
         # initialize energy flows
-        power_in = EnergyFlow()
-        power_out = EnergyFlow()
-        if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
-            power_in = EnergyFlow(self.placement['after'], self.placement['before'], self.input_energy_carriers[0].code)
-        else:
-            power_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
+        converted_energy_flow = EnergyFlow()
+        if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+            converted_energy_flow = EnergyFlow(self.placement['after'], 'passive_conversion', self.input_energy_carriers[0].code)
+        elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+            converted_energy_flow = EnergyFlow('passive_conversion', self.placement['before'], self.output_energy_carriers[0].code)
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
-            if self.placement in ['primary', 'secondary']:
-                power_in.profile = self._constant_efficiency_operation(power_transfer)
-            elif self.placement == 'tertiary':
-                power_out.profile = self._constant_efficiency_operation(power_transfer)
+            if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(power_transfer)
+            elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(power_transfer)
         else:
             raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
                              f"implemented for {self.technology}")
 
-        # reformat outputs to dicts
-        input_energy_flows = {}
-        output_energy_flows = {}
-        if self.placement in ['primary', 'secondary']:
-            input_energy_flows = {self.input_energy_carriers[0].code: power_in}
-        elif self.placement == 'tertiary':
-            output_energy_flows = {self.output_energy_carriers[0].code: power_out}
-
-        return input_energy_flows, output_energy_flows
+        return converted_energy_flow
 
     @staticmethod
     def _constant_efficiency_operation(power_transfer):
@@ -889,34 +884,27 @@ class HeatExchanger(PassiveComponent):
         self._check_operational_requirements(heat_transfer)
 
         # initialize energy flows
-        heat_in = EnergyFlow()
-        heat_out = EnergyFlow()
-        if self.placement == 'primary':
-            heat_in = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
-        elif self.placement == 'secondary':
-            heat_in = EnergyFlow('source', self.placement, self.input_energy_carriers[0].code)
-        elif self.placement == 'tertiary':
-            heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
+        converted_energy_flow = EnergyFlow()
+        if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+            converted_energy_flow = EnergyFlow(self.placement['after'], 'passive_conversion', self.input_energy_carriers[0].code)
+        elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+            converted_energy_flow = EnergyFlow('passive_conversion', self.placement['before'], self.output_energy_carriers[0].code)
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
-            if self.placement in ['primary', 'secondary']:
-                heat_in.profile = self._constant_efficiency_operation(heat_transfer)
-            elif self.placement == 'tertiary':
-                heat_out.profile = self._constant_efficiency_operation(heat_transfer)
+            if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(heat_transfer)
+            elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(heat_transfer)
         else:
             raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
                              f"implemented for {self.technology}")
 
-        # reformat outputs to dicts
-        input_energy_flows = {}
-        output_energy_flows = {}
-        if self.placement in ['primary', 'secondary']:
-            input_energy_flows = {self.input_energy_carriers[0].code: heat_in}
-        elif self.placement == 'tertiary':
-            output_energy_flows = {self.output_energy_carriers[0].code: heat_out}
-
-        return input_energy_flows, output_energy_flows
+        return converted_energy_flow
 
     @staticmethod
     def _constant_efficiency_operation(heat_transfer):
@@ -965,11 +953,13 @@ class HeatExchanger(PassiveComponent):
         i.e. heat absorption or heat rejection.
         """
         if (heat_source_temp is not None) and (heat_sink_temp is None):  # heat absorption method
-            if not (self.placement in ['primary', 'secondary']):
+            if not ([self.placement['after'], self.placement['before']]
+                    in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]):
                 raise ValueError('Providing a heat source for the heat exchanger would indicate that it is meant to '
                                  'draw the indicated heat transfer flow from that heat source. The heat exchanger '
-                                 f"cannot sensibly be placed in the '{self.placement}' component placement under "
-                                 'this method of operation.')
+                                 f"cannot sensibly be placed between the '{self.placement['before']}' and "
+                                 f"the '{self.placement['after']}' component placement categories under "
+                                 'this mode of operation.')
             thermal_ec_hot_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, heat_source_temp))
             thermal_ec_cold_side = heat_transfer.energy_carrier
             self._check_he_model_requirements(thermal_ec_hot_side, thermal_ec_cold_side)
@@ -977,10 +967,12 @@ class HeatExchanger(PassiveComponent):
             self.input_energy_carriers = [thermal_ec_hot_side]
             self.output_energy_carriers = []
         elif (heat_source_temp is None) and (heat_sink_temp is not None):  # heat rejection method
-            if not (self.placement in ['tertiary']):
+            if not ([self.placement['after'], self.placement['before']]
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]):
                 raise ValueError('Providing a heat sink for the heat exchanger would indicate that it is meant to '
-                                 'reject the indicated heat transfer flow. The heat exchanger cannot sensibly be placed '
-                                 f"in the '{self.placement}' component placement under this method of operation.")
+                                 'reject the indicated heat transfer flow. The heat exchanger cannot sensibly be '
+                                 f"placed between the '{self.placement['before']}' and the '{self.placement['after']}' "
+                                 'component placement categories under this mode of operation.')
             thermal_ec_hot_side = heat_transfer.energy_carrier
             thermal_ec_cold_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, heat_sink_temp))
             self.main_energy_carrier = thermal_ec_hot_side

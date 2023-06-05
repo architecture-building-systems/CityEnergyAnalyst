@@ -253,21 +253,9 @@ class SupplySystem(object):
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
                 else:
-                    auxiliary_component = self.structure.max_cap_passive_components[placement][component_model][0]  # TODO: change this to allow all passive components to be activated
-                    self.component_energy_inputs[placement][auxiliary_component.code], \
-                    self.component_energy_outputs[placement][auxiliary_component.code] \
-                        = auxiliary_component.operate(main_energy_flow)
-
-                    if (max(self.component_energy_inputs[placement][auxiliary_component.code]) > 0) and \
-                            (max(self.component_energy_inputs[placement][auxiliary_component.code]) == 0):
-                        converted_energy_flow = self.component_energy_inputs[placement][auxiliary_component.code]
-                    elif (max(self.component_energy_inputs[placement][auxiliary_component.code]) == 0) and \
-                            (max(self.component_energy_inputs[placement][auxiliary_component.code]) > 0):
-                        converted_energy_flow = self.component_energy_inputs[placement][auxiliary_component.code]
-                    else:
-                        raise ValueError(f'The conversion of the energy carrier {main_energy_flow.energy_carrier}, '
-                                         f'for the use in a component of type {component.code} in the primary category '
-                                         f'of a supply system failed. The supply system can therefore not be created.')
+                    auxiliary_component = list(self.structure.max_cap_passive_components[placement]
+                                               [component_model].values())[0]  # TODO: change this to allow all passive components to be activated
+                    converted_energy_flow = auxiliary_component.operate(main_energy_flow)
 
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
