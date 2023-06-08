@@ -1,5 +1,5 @@
 """
-Extract the reference case (``cea/examples/reference-case-open.zip``).
+Extract the reference case (``cea/case_studies/reference-case-open.zip``).
 """
 
 
@@ -7,7 +7,6 @@ Extract the reference case (``cea/examples/reference-case-open.zip``).
 
 import os
 import zipfile
-import cea.examples
 import cea.config
 import cea.inputlocator
 

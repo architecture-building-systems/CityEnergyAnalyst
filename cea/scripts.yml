@@ -394,7 +394,7 @@ default:
     label: extract-reference-case
     description: extract-reference-case
     interfaces: [cli]
-    module: cea.examples.extract_reference_case
+    module: cea.case_studies.extract_reference_case
     parameters: [extract-reference-case]
 
   - name: list-demand-graphs-fields
@@ -458,20 +458,20 @@ Development:
   - name: build
     label: build
     description: build a new installer for the current version
-    interfaces: [dev]
-    module: cea.dev.build
+    interfaces: [installer]
+    module: cea.installer.build
     parameters: [development]
 
   - name: release
     label: release
     description: build a new installer for the current version
-    interfaces: [ dev ]
-    module: cea.dev.release
+    interfaces: [ installer ]
+    module: cea.installer.release
     parameters: [ "development:release-version" ]
 
   - name: update-zenodo
     label: update-zenodo
     description: Updates relevant Zenodo references to the latest available online
-    interfaces: [ dev ]
-    module: cea.dev.update_zenodo
+    interfaces: [ installer ]
+    module: cea.installer.update_zenodo
     parameters: []

@@ -15,7 +15,7 @@ CREDITS_CITE_PATTERN = re.compile(r'(The CEA team, "City Energy Analyst v)\d+\.\
 
 
 def update_readme(version: str, doi: str) -> None:
-    readme_path = os.path.join(os.path.dirname(__file__), "..", "..", "README.rst")
+    readme_path = os.path.join(os.path.dirname(__file__), "../../cea", "..", "README.rst")
     with open(readme_path) as f:
         readme = f.read()
 
@@ -40,7 +40,7 @@ def update_readme(version: str, doi: str) -> None:
 
 
 def update_credits(version: str, doi: str) -> None:
-    credits_path = os.path.join(os.path.dirname(__file__), "..", "..", "CREDITS.md")
+    credits_path = os.path.join(os.path.dirname(__file__), "../../cea", "..", "CREDITS.md")
     with open(credits_path) as f:
         _credits = f.read()
 

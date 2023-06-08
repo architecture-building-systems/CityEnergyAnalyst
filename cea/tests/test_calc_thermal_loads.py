@@ -8,8 +8,6 @@ import unittest
 
 import pandas as pd
 
-import cea.config
-import cea.inputlocator
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
@@ -28,7 +26,6 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import cea.examples
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
         cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         cls.config.scenario = cls.locator.scenario

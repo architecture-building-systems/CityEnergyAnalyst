@@ -24,8 +24,8 @@ RUN apt update && DEBIAN_FRONTEND="noninteractive" apt install -y \
 git \
 cmake \
 build-essential \
-libgl1-mesa-dev \
-libglu1-mesa-dev
+libgl1-mesa-installer \
+libglu1-mesa-installer
 
 RUN git clone https://github.com/MITSustainableDesignLab/Daysim.git /Daysim 
 

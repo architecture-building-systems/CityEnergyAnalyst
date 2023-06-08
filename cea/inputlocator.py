@@ -1040,14 +1040,13 @@ def check_cpg(shapefile_path):
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
-    (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
+    (``cea/case_studies/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
     def __init__(self):
         temp_folder = tempfile.gettempdir()
         project_folder = os.path.join(temp_folder, 'reference-case-open')
         reference_case = os.path.join(project_folder, 'baseline')
 
-        import cea.examples
         import zipfile
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
 

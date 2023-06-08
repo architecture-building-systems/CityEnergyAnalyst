@@ -3,15 +3,15 @@ Some scripts to run for development
 
 (will eventually replace ``cea-doc`` as well)
 
-- cea-dev build: This is the one-stop command for creating a new cea release
+- cea-installer build: This is the one-stop command for creating a new cea release
   - cea/__init__.py:__version__ is the name of the release being created
     - NOTE: maybe add a ``--version`` argument?
-    - NOTE: ``cea-dev version 3.10.0a0``
+    - NOTE: ``cea-installer version 3.10.0a0``
   - update ``CHANGELOG.md`` (prepend new text?)
-    - NOTE: ``cea-dev changelog``
+    - NOTE: ``cea-installer changelog``
   - update ``CREDITS.md`` (I wonder if this should be automated?)
-    - NOTE: ``cea-dev credits``
-  - build the documentation (``cea-dev rtd``)
+    - NOTE: ``cea-installer credits``
+  - build the documentation (``cea-installer rtd``)
   - create a conda environment for the release (named ``cea-{version}``)
   - pip install to that environment, also pip install a list of standard plugins
   - conda-pack the environment
@@ -61,8 +61,8 @@ def main(config=None):
         sys.exit(1)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
-    if 'dev' not in cea_script.interfaces:
-        print('Invalid script for cea-dev')
+    if 'installer' not in cea_script.interfaces:
+        print('Invalid script for cea-installer')
         print_valid_script_names(config.plugins)
         sys.exit(ScriptNotFoundException.rc)
     config.restrict_to(cea_script.parameters)
@@ -103,9 +103,9 @@ def print_help(config, remaining_args):
             print("    %s" % parameter.help)
             print("    (default: %s)" % parameter.default)
     else:
-        print("usage: cea-dev SCRIPT [OPTIONS]")
+        print("usage: cea-installer SCRIPT [OPTIONS]")
         print("       to run a specific script")
-        print("usage: cea-dev --help SCRIPT")
+        print("usage: cea-installer --help SCRIPT")
         print("       to get additional help specific to a script")
         print_valid_script_names(plugins=config.plugins)
 
@@ -116,7 +116,7 @@ def print_valid_script_names(plugins):
     import itertools
     print("")
     print("SCRIPT can be one of:")
-    scripts = sorted(cea.scripts.for_interface('dev', plugins=plugins), key=lambda s: s.category)
+    scripts = sorted(cea.scripts.for_interface('installer', plugins=plugins), key=lambda s: s.category)
     for category, group in itertools.groupby(scripts, lambda s: s.category):
         print(textwrap.fill("[%s]:  %s" % (category, ', '.join(s.name for s in sorted(group, key=lambda s: s.name))),
                             subsequent_indent='    ', break_on_hyphens=False))

@@ -10,7 +10,6 @@ import json
 import itertools
 import os
 import cea.inputlocator
-import cea.examples
 import cea.config
 from cea.technologies.cooling_tower import calc_CT_partload_factor, calc_CT
 from cea.technologies.storage_tank_pcm import Storage_tank_PCM

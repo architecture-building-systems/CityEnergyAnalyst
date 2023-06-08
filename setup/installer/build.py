@@ -33,7 +33,7 @@ def main(config):
     Create a new conda environment based on the current cea version. install cea into it, conda-pack it
     and place it in the setup/Dependencies/Python folder ready for the installer to compress.
     """
-    repo_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    repo_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../cea", ".."))
 
     env_name = "cea-{version}".format(version=cea.__version__)
     if not conda_env_exists(config, env_name):

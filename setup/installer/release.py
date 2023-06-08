@@ -5,9 +5,9 @@ import subprocess
 
 import cea.config
 
-init_path = os.path.join(os.path.dirname(__file__), "..", "__init__.py")
-credits_path = os.path.join(os.path.dirname(__file__), "..", "..", "CREDITS.md")
-changelog_path = os.path.join(os.path.dirname(__file__), "..", "..", "CHANGELOG.md")
+init_path = os.path.join(os.path.dirname(__file__), "../../cea", "__init__.py")
+credits_path = os.path.join(os.path.dirname(__file__), "../../cea", "..", "CREDITS.md")
+changelog_path = os.path.join(os.path.dirname(__file__), "../../cea", "..", "CHANGELOG.md")
 version_pattern = re.compile(r'__version__ = "(\d+\.\d+\.\d+)"')
 
 
@@ -51,7 +51,7 @@ def update_credits(current_version: str, new_version: str):
 
 
 def update_changelog() -> None:
-    changelog_script_path = os.path.join(os.path.dirname(__file__), "..", "..", "bin", "create-changelog.py")
+    changelog_script_path = os.path.join(os.path.dirname(__file__), "../../cea", "..", "bin", "create-changelog.py")
     result = subprocess.run(["python", changelog_script_path], check=True, capture_output=True)
     changelog = result.stdout.decode()
 
