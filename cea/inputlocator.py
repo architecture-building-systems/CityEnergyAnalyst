@@ -4,6 +4,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 
 import os
 import cea.schemas
+import cea.examples
 import shutil
 import tempfile
 import time
@@ -1048,7 +1049,7 @@ class ReferenceCaseOpenLocator(InputLocator):
         reference_case = os.path.join(project_folder, 'baseline')
 
         import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.case_studies.__file__), 'reference-case-open.zip'))
 
         if os.path.exists(project_folder):
             shutil.rmtree(project_folder)

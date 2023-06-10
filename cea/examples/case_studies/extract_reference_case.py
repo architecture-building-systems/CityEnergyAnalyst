@@ -9,6 +9,7 @@ import os
 import zipfile
 import cea.config
 import cea.inputlocator
+import cea.examples
 
 # list the sections in the configuration file that are used by this script
 # this value is used to generate the help menu for the command-line interface
@@ -24,7 +25,7 @@ def main(config):
     :return:
     """
     reference_case = 'reference-case-{case}.zip'.format(case=config.extract_reference_case.case)
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), reference_case))
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.case_studies.__file__), reference_case))
     archive.extractall(config.extract_reference_case.destination)
 
 

@@ -9,7 +9,9 @@ include cea/default.config
 recursive-include cea/tests *.config
 recursive-include cea/tests *.yml
 
-include cea/examples/*.zip
+include cea/examples/case_studies/*.zip
+include cea/examples/code_recipes/*.ipynb
+include cea/examples/workflows/*.yml
 
 recursive-include cea/interfaces/dashboard *.html *.js *.css *.otf *.eot *.svg *.ttf *.woff *.woff2 *.png *.jpg *.gif *.ico
 

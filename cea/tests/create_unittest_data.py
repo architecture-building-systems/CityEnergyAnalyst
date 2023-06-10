@@ -27,7 +27,7 @@ from cea.utilities.date import get_date_range_hours_from_year
 
 
 def main(output_file):
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.case_studies.__file__), 'reference-case-open.zip'))
     archive.extractall(tempfile.gettempdir())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
