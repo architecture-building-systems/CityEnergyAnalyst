@@ -754,7 +754,7 @@ def calc_worst_hour(latitude, weather_data, solar_window_solstice):
     :type latitude: float
     :param weather_data: weather data of the site
     :type weather_data: pd.dataframe
-    :param solar_window_solstice: the desired hour of shade-free solar window on the winter solstice.
+    :param solar_window_solstice: the desired hours of shade-free solar window on the winter solstice.
     :type solar_window_solstice: floar
     :return worst_hour: the hour to calculate minimum spacing
     :rtype worst_hour: float
