@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
 import numpy as np
-from cea.technologies.constants import BOILER_P_AUX
+from cea.constants import BOILER_P_AUX
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"

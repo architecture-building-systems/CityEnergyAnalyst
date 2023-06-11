@@ -5,7 +5,7 @@
 
 
 import numpy as np
-from cea.demand import constants
+from cea.constants import T_WARNING_LOW, T_WARNING_HIGH
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -22,9 +22,6 @@ RC model calculations according to sia 2044
 Merkblatt 2044 Kilimatisierte Gebauede - Standard-Berechnungsverfahren fuer den Leistungs-und Energiebedarf
 '''
 
-# import constants
-T_WARNING_LOW = constants.T_WARNING_LOW
-T_WARNING_HIGH = constants.T_WARNING_HIGH
 
 # TODO: documentation
 

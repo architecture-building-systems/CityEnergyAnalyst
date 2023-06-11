@@ -6,8 +6,9 @@
 
 import warnings
 import numpy as np
+from cea.constants import B_F
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \
-    space_emission_systems, latent_loads, constants
+    space_emission_systems, latent_loads
 
 
 __author__ = "Gabriel Happle"
@@ -19,9 +20,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
-# this is used in 'detailed_thermal_balance_to_tsd'
-B_F = constants.B_F
 
 
 def calc_heating_cooling_loads(bpr, tsd, t, config):

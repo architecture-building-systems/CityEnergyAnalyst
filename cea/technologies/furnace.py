@@ -10,7 +10,7 @@ from math import log
 
 import pandas as pd
 from scipy import interpolate
-from cea.technologies.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY, FURNACE_MIN_LOAD, \
+from cea.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY, FURNACE_MIN_LOAD, \
     FURNACE_MIN_ELECTRIC, BOILER_P_AUX
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 

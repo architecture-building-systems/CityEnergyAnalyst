@@ -7,8 +7,8 @@ EN-13970
 
 
 import numpy as np
-from cea.demand import control_heating_cooling_systems, constants
-from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
+from cea.demand import control_heating_cooling_systems
+from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET, B_F
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -18,10 +18,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-B_F = constants.B_F
-D = constants.D
-C_A = constants.C_A
 
 
 # capacity of emission/control system
@@ -185,7 +181,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     :rtype: None
     """
 
-    from cea.technologies import radiators, heating_coils, tabs
+    from cea.technologies import radiators, heating_coils
 
     #
     # TEMPERATURES HEATING SYSTEMS

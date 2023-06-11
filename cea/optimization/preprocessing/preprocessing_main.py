@@ -3,7 +3,7 @@ Pre-processing algorithm
 
 """
 
-from cea.optimization.constants import Z0
+from cea.constants import Z0
 from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import summarize_network
 from cea.resources.geothermal import calc_ground_temperature

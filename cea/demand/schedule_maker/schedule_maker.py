@@ -11,11 +11,10 @@ from itertools import repeat
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR, KG_PER_GRAM, HOURS_PER_SEC, H_WE, VARIABLE_CEA_SCHEDULE_RELATION
 from cea.datamanagement.schedule_helper import read_cea_schedule
 from cea.datamanagement.data_migrator import is_3_22
 from cea.demand.building_properties import calc_useful_areas
-from cea.demand.constants import *
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities.dbf import dbf_to_dataframe

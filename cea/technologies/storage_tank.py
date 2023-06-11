@@ -11,10 +11,9 @@ import math
 import numpy as np
 from scipy.integrate import odeint
 
-from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
-from cea.demand.constants import TWW_SETPOINT, B_F
-from cea.technologies.constants import U_DHWTANK
-from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
+from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J, TWW_SETPOINT, B_F
+from cea.constants import U_DHWTANK
+from cea.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
 from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, calc_dTm_HEX
 
 __author__ = "Shanshan Hsieh"

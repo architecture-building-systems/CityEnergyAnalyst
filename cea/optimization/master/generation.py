@@ -8,7 +8,7 @@ Create individuals
 
 import random
 
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
+from cea.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE
 from cea.optimization.master.validation import validation_main
 
 __author__ = "Jimeno A. Fonseca"

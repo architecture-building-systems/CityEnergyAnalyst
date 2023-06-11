@@ -5,9 +5,9 @@
 
 
 import numpy as np
-from cea.demand import control_ventilation_systems, constants, control_heating_cooling_systems
+from cea.demand import control_ventilation_systems
 from cea.utilities import physics
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import DELTA_P_DIM, ETA_REC
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -21,11 +21,6 @@ __status__ = "Production"
 
 # THIS SCRIPT IS USED TO CALCULATE ALL VENTILATION PROPERTIES (AIR FLOWS AND THEIR TEMPERATURES)
 # FOR CALCULATION OF THE VENTILATION HEAT TRANSFER H_VE USED IN THE ISO 13790 CALCULATION PROCEDURE
-
-# get values of global variables
-ETA_REC = constants.ETA_REC  # constant efficiency of Heat recovery
-DELTA_P_DIM = constants.DELTA_P_DIM
-
 
 def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
     """
