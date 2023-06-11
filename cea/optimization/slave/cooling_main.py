@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
+from cea.constants import VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import objective_function_calculator
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
 from cea.technologies.storage_tank_pcm import Storage_tank_PCM

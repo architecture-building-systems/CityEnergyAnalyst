@@ -9,7 +9,7 @@ from math import log, ceil
 import pandas as pd
 import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.technologies.constants import MAX_NODE_FLOW
+from cea.constants import MAX_NODE_FLOW
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"

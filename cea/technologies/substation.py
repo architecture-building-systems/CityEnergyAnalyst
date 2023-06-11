@@ -9,7 +9,7 @@ from numba import jit
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR
-from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
+from cea.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

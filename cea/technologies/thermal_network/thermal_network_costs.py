@@ -10,11 +10,8 @@ import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
 from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 import cea.technologies.pumps as pumps
-import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cooling_tower as CTModel
-from cea.optimization.constants import PUMP_ETA
-from cea.optimization.lca_calculations import LcaCalculations
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.utilities import epwreader

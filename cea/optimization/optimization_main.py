@@ -13,7 +13,7 @@ import cea.inputlocator
 from cea.optimization.master import master_main
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
-from cea.optimization.constants import DH_ACRONYM, DC_ACRONYM
+from cea.constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 

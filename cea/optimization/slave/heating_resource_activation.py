@@ -7,7 +7,7 @@ import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.cogeneration import calc_cop_CCGT
-from cea.technologies.constants import BOILER_MIN
+from cea.constants import BOILER_MIN
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost
 from cea.technologies.pumps import calc_water_body_uptake_pumping

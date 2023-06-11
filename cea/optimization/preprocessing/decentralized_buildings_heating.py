@@ -18,8 +18,7 @@ import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 import cea.technologies.substation as substation
 import cea.utilities.parallel
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import GHP_A, GHP_HMAX_SIZE
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from cea.utilities import epwreader

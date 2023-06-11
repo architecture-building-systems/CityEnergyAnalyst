@@ -11,7 +11,7 @@ import scipy
 import cea.config
 from math import ceil
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
+from cea.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',

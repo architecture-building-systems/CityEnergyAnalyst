@@ -12,9 +12,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from cea.optimization.constants import K_DH, ZERO_DEGREES_CELSIUS_IN_KELVIN
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import K_DH, ZERO_DEGREES_CELSIUS_IN_KELVIN, HOURS_IN_YEAR, HEAT_CAPACITY_OF_WATER_JPERKGK
 import warnings
 warnings.filterwarnings("ignore")
 

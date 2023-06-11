@@ -12,7 +12,7 @@ from deap import algorithms
 from deap import tools, creator, base
 
 import cea.config
-from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
+from cea.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
 from cea.optimization.master import evaluation
 from cea.optimization.master.crossover import crossover_main

@@ -5,10 +5,10 @@ cogeneration (combined heat and power)
 import numpy as np
 from scipy import interpolate
 from math import log
-from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_SIZE, CC_AIRRATIO, CC_EXIT_T_BG, \
+from cea.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_SIZE, CC_AIRRATIO, CC_EXIT_T_BG, \
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.technologies.constants import SPEC_VOLUME_STEAM
+from cea.constants import SPEC_VOLUME_STEAM
 import cea.resources.natural_gas as ngas
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 

@@ -18,10 +18,9 @@ import numpy as np
 import pandas as pd
 
 from . import SolarPowerHandler_incl_Losses as SPH_fn
-from cea.constants import HOURS_IN_YEAR
-from cea.optimization.constants import *
+from cea.constants import HOURS_IN_YEAR, ETA_SERVER_TO_HEAT, T_FROM_SERVER, HP_ETA_EX
 from cea.resources.geothermal import calc_ground_temperature
-from cea.technologies.constants import DT_HEAT
+from cea.constants import DT_HEAT
 from cea.utilities import epwreader
 
 

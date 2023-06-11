@@ -7,7 +7,7 @@ import numpy as np
 
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import DX_COP, PRICE_DX_PER_W
+from cea.constants import DX_COP, PRICE_DX_PER_W
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

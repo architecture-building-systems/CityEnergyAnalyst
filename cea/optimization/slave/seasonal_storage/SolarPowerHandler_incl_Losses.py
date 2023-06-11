@@ -9,9 +9,7 @@ They are called by either the operation or optimization of storage.
 
 import numpy as np
 
-from cea.constants import *
-from cea.optimization.constants import *
-
+from cea.constants import STORAGE_MAX_UPTAKE_LIMIT_FLAG, HEAT_CAPACITY_OF_WATER_JPERKGK, HP_ETA_EX, WH_TO_J, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 def StorageGateway(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_network_demand_W, P_HP_max_W):
     """

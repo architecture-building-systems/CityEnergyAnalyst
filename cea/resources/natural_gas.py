@@ -7,7 +7,7 @@ natural gas
 
 
 
-from cea.technologies.constants import GAS_CONNECTION_COST
+from cea.constants import GAS_CONNECTION_COST
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -24,9 +24,8 @@ import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.direct_expansion_units as dx
 import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
-                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
+from cea.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, HEAT_CAPACITY_OF_WATER_JPERKGK)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.decentralized_buildings_heating import get_unique_keys_from_dicts
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -500,7 +499,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
 
 
 def calc_VCC_operation(T_chw_re_K, T_chw_sup_K, mdot_kgpers, VCC_chiller):
-    from cea.optimization.constants import VCC_T_COOL_IN
+    from cea.constants import VCC_T_COOL_IN
     q_chw_Wh = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_chw_re_K - T_chw_sup_K)
     VCC_operation = np.vectorize(chiller_vapor_compression.calc_VCC)(q_chw_Wh,
                                                                      T_chw_sup_K,

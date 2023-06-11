@@ -10,7 +10,7 @@ import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as ct_model
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
+from cea.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
 from cea.technologies.pumps import calc_water_body_uptake_pumping
 
 __author__ = "Sreepathi Bhargava Krishna"

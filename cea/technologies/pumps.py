@@ -14,7 +14,7 @@ from scipy.interpolate import interp1d
 
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import P_WATER_KGPERM3
-from cea.optimization.constants import PUMP_ETA
+from cea.constants import PUMP_ETA
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
 
 __author__ = "Thuy-An Nguyen"

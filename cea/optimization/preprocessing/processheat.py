@@ -11,7 +11,7 @@ It is considered that whenever the case, the most competitive alternative is to 
 
 import pandas as pd
 from cea.technologies import boiler
-from cea.technologies.constants import BOILER_ETA_HP
+from cea.constants import BOILER_ETA_HP
 from cea.constants import HOURS_IN_YEAR, WH_TO_J
 
 

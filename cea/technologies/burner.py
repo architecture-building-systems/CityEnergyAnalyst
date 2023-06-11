@@ -10,7 +10,7 @@ gas burners
 from math import log, ceil
 
 from cea.analysis.costs.equations import calc_capex_annualized
-from cea.technologies.constants import BOILER_P_AUX
+from cea.constants import BOILER_P_AUX
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
