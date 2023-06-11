@@ -14,7 +14,7 @@ from geopandas.tools import sjoin as spatial_join
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
-from cea.demand import constants
+from cea.constants import H_F
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno Fonseca"
@@ -91,15 +91,15 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
             math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+        shapefile["height_ag"] = shapefile["floors_ag"] * H_F
     else:
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+            shapefile["height_ag"] = shapefile["floors_ag"] * H_F
         elif buildings_height is not None and buildings_floors is None:
             shapefile["height_ag"] = [buildings_height] * no_buildings
-            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / H_F]
         else:  # both are not none
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings

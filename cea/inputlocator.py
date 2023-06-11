@@ -4,7 +4,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 
 import os
 import cea.schemas
-import cea.examples
+import cea.examples.case_studies
 import shutil
 import tempfile
 import time

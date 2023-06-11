@@ -22,7 +22,8 @@ Convention: all temperature inputs in (°C)
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from cea.demand import constants
+from cea.constants import DELTA_P_LEA_REF, N_LEA, N_VENT, COEFF_D_VENT, DELTA_P_VENT_REF, \
+    RHO_AIR_REF, TEMP_EXT_REF, GR,COEFF_TURB, COEFF_WIND, COEFF_STACK, COEFF_D_WINDOW, DELTA_C_P, TER_CLASS, SHIELDING_CLASS, ETA_REC, DELTA_P_DIM
 from cea.utilities.physics import calc_rho_air
 
 __author__ = "Gabriel Happle"
@@ -33,9 +34,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-SHIELDING_CLASS = constants.SHIELDING_CLASS
-
 
 # ventilation calculation
 
@@ -157,7 +155,7 @@ def calc_u_wind_site(u_wind_10):
     # 0 = open
     # 1 = rural
     # 2 = urban
-    ter_class = constants.TER_CLASS
+    ter_class = TER_CLASS
 
     # factors from Table B.11 in B.1.4.1 in [1]
     f_wnd = np.array([1.0, 0.9, 0.8])
@@ -275,9 +273,9 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     """
 
     # constants from Table 12 in [1]
-    g = constants.GR  # (m/s2)
-    rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
-    temp_ext_ref = constants.TEMP_EXT_REF  # (K)
+    g = GR  # (m/s2)
+    rho_air_ref = RHO_AIR_REF  # (kg/m3)
+    temp_ext_ref = TEMP_EXT_REF  # (K)
 
     temp_zone += 273  # conversion to (K)
     temp_ext += 273  # conversion to (K)
@@ -321,7 +319,7 @@ def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
     :returns: qv_lea_path : volume flow rate across leakage path (m3/h)
     """
     # default values in [1]
-    n_lea = constants.N_LEA  # (-), B.1.3.15 in [1]
+    n_lea = N_LEA  # (-), B.1.3.15 in [1]
 
     # Equation (64) in [1]
     qv_lea_path = coeff_lea_path * np.sign(delta_p_lea_path) * np.abs(delta_p_lea_path) ** n_lea
@@ -338,8 +336,8 @@ def calc_coeff_lea_zone(qv_delta_p_lea_ref):
     :returns: coeff_lea_zone : leakage coefficient of zone
     """
     # default values in [1]
-    delta_p_lea_ref = constants.DELTA_P_LEA_REF  # (Pa), B.1.3.14 in [1]
-    n_lea = constants.N_LEA  # (-), B.1.3.15 in [1]
+    delta_p_lea_ref = DELTA_P_LEA_REF  # (Pa), B.1.3.14 in [1]
+    n_lea = N_LEA  # (-), B.1.3.15 in [1]
 
     # Eq. (B.5) in [1] # TODO: Formula assumed to be wrong in [1], corrected to match Eq. (8) in [2]
     coeff_lea_zone = qv_delta_p_lea_ref / (delta_p_lea_ref ** n_lea)
@@ -454,7 +452,7 @@ def calc_qv_vent_path(coeff_vent_path, delta_p_vent_path):
     :returns: qv_vent_path : air volume flow rate across air path (m3/h)
     """
     # default values in [1]
-    n_vent = constants.N_VENT  # (-), B.1.2.2 in [1]
+    n_vent = N_VENT  # (-), B.1.2.2 in [1]
 
     # Equation (60) in [1]
     qv_vent_path = coeff_vent_path * np.sign(delta_p_vent_path) * np.abs(delta_p_vent_path) ** n_vent
@@ -472,11 +470,11 @@ def calc_coeff_vent_zone(area_vent_zone):
     """
 
     # default values in [1]
-    n_vent = constants.N_VENT  # (-), B.1.2.2 in [1]
-    coeff_d_vent = constants.COEFF_D_VENT  # (-), B.1.2.1 in [1]
-    delta_p_vent_ref = constants.DELTA_P_VENT_REF  # (Pa) FIXME no default value specified in standard
+    n_vent = N_VENT  # (-), B.1.2.2 in [1]
+    coeff_d_vent = COEFF_D_VENT  # (-), B.1.2.1 in [1]
+    delta_p_vent_ref = DELTA_P_VENT_REF  # (Pa) FIXME no default value specified in standard
     # constants from Table 12 in [1]
-    rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
+    rho_air_ref = RHO_AIR_REF  # (kg/m3)
 
     # Eq. (61) in [1]
     coeff_vent_zone = 3600 / 10000 * coeff_d_vent * area_vent_zone * (2 / rho_air_ref) ** 0.5 * \
@@ -692,14 +690,14 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
     if dict_windows_building:
 
         # constants from Table 12 in [1]
-        rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
-        coeff_turb = constants.COEFF_TURB  # (m/s)
-        coeff_wind = constants.COEFF_WIND  # (1/(m/s))
-        coeff_stack = constants.COEFF_STACK  # ((m/s)/(mK))
+        rho_air_ref = RHO_AIR_REF  # (kg/m3)
+        coeff_turb = COEFF_TURB  # (m/s)
+        coeff_wind = COEFF_WIND  # (1/(m/s))
+        coeff_stack = COEFF_STACK  # ((m/s)/(mK))
 
         # default values from annex B in [1]
-        coeff_d_window = constants.COEFF_D_WINDOW  # (-), B.1.2.1 in [1]
-        delta_c_p = constants.DELTA_C_P  # (-), option 2 in B.1.3.4 in [1]
+        coeff_d_window = COEFF_D_WINDOW  # (-), B.1.2.1 in [1]
+        delta_c_p = DELTA_C_P  # (-), option 2 in B.1.3.4 in [1]
 
         # get necessary inputs
         rho_air_ext = calc_rho_air(temp_ext)

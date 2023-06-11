@@ -16,8 +16,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
-from cea.demand import constants
-from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
+from cea.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M, H_F
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -119,16 +118,16 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
             shapefile["height_ag"] = shapefile["height"].fillna(
-                shapefile["floors_ag"] * constants.H_F).astype(float)
+                shapefile["floors_ag"] * H_F).astype(float)
             #  Replaces values of height = 0 with CEA assumption
             # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
             #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
             #  Also, the radiation script cannot process buildings with height 0 m at the moment.
             #  Once the radiation script can process underground buildings, this step might need to be revised.
             shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
-                                                                  shapefile["floors_ag"] * constants.H_F).astype(float)
+                                                                  shapefile["floors_ag"] * H_F).astype(float)
         else:
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+            shapefile["height_ag"] = shapefile["floors_ag"] * H_F
 
         # make sure each floor is at least 1m
         # we assume floors_ag is accurate and adjust height_ag accordingly
@@ -143,7 +142,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         if 'building:min_level' in list_of_columns:
             has_min_floor = shapefile["building:min_level"] == shapefile["building:min_level"]
             shapefile[has_min_floor].floors_bg = [- int(x) for x in shapefile[has_min_floor]["building:min_level"]]
-            shapefile[has_min_floor].height_bg = shapefile[has_min_floor].floors_bg * constants.H_F
+            shapefile[has_min_floor].height_bg = shapefile[has_min_floor].floors_bg * H_F
         if 'min_height' in list_of_columns:
             has_min_height = shapefile["min_height"] == shapefile["min_height"]
             shapefile[has_min_height].height_bg = [- int(x) for x in shapefile[has_min_height]["min_height"]]
@@ -155,11 +154,11 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile['REFERENCE'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+            shapefile["height_ag"] = shapefile["floors_ag"] * H_F
         elif buildings_height is not None and buildings_floors is None:
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [
-                int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
+                int(math.floor(x)) for x in shapefile["height_ag"] / H_F]
         else:  # both are not none
             shapefile["height_ag"] = [buildings_height] * no_buildings
             shapefile["floors_ag"] = [buildings_floors] * no_buildings

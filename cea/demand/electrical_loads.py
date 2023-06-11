@@ -8,9 +8,8 @@ Electrical loads
 
 import numpy as np
 
-from cea.constants import *
-from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
-from cea.demand import control_heating_cooling_systems, constants
+from cea.constants import HOURS_IN_YEAR, MIN_HEIGHT_THAT_REQUIRES_PUMPING, P_WATER_KGPERM3, P_FAN, DELTA_P_1, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.demand import control_heating_cooling_systems
 from cea.utilities import physics
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
@@ -21,16 +20,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-# import constants
-MIN_HEIGHT_THAT_REQUIRES_PUMPING = constants.MIN_HEIGHT_THAT_REQUIRES_PUMPING
-P_WATER = P_WATER_KGPERM3
-P_FAN = constants.P_FAN
-F_SR = constants.F_SR
-DELTA_P_1 = constants.DELTA_P_1
-EFFI = constants.EFFI
-HOURS_OP = constants.HOURS_OP
-GR = constants.GR
 
 
 def calc_Eal_Epro(tsd, schedules):

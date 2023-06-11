@@ -8,7 +8,8 @@ Air conditioning equipment component models
 
 
 import numpy as np
-from cea.demand import control_heating_cooling_systems, constants
+from cea.demand import control_heating_cooling_systems
+from cea.constants import H_WE,C_A
 from cea.demand.latent_loads import convert_rh_to_moisture_content, total_moisture_in_zone
 
 __author__ = "Gabriel Happle"
@@ -19,11 +20,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-# import constants
-H_WE = constants.H_WE
-C_A = constants.C_A
 
 
 # air conditioning component models

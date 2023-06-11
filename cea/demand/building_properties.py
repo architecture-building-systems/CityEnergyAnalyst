@@ -8,7 +8,7 @@ from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
-from cea.demand import constants
+from cea.constants import H_MS, H_IS, B_F, LAMBDA_AT
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
@@ -23,12 +23,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-# import constants
-H_MS = constants.H_MS
-H_IS = constants.H_IS
-B_F = constants.B_F
-LAMBDA_AT = constants.LAMBDA_AT
 
 
 class BuildingProperties(object):

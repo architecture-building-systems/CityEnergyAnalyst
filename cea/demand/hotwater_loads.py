@@ -2,15 +2,12 @@
 Hotwater load (it also calculates fresh water needs)
 """
 
-from cea.constants import *
+from cea.constants import D, B_F, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, FLOWTAP, HOURS_IN_YEAR,TWW_SETPOINT
 import numpy as np
 import scipy
 import math
 from math import pi
-from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
-import pandas as pd
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -22,13 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # import constants
-D = constants.D
-B_F = constants.B_F
-P_WATER = P_WATER_KGPERM3
-FLOWTAP = constants.FLOWTAP
 CP_KJPERKGK = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
-TWW_SETPOINT = constants.TWW_SETPOINT
-
 
 def calc_mww(schedule, water_lpd):
     """
@@ -41,7 +32,7 @@ def calc_mww(schedule, water_lpd):
     if schedule > 0:
 
         volume = schedule * water_lpd / 1000  # m3/h
-        massflow = volume * P_WATER / 3600  # in kg/s
+        massflow = volume * P_WATER_KGPERM3 / 3600  # in kg/s
 
     else:
         volume = 0
@@ -136,8 +127,8 @@ def calc_Qww(bpr, tsd, schedules):
 
     # calc end-use demand
     tsd['vww_m3perh'] = schedules['Vww_lph'] / 1000  # m3/h
-    tsd['mww_kgs'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
-    tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
+    tsd['mww_kgs'] = tsd['vww_m3perh'] * P_WATER_KGPERM3 / 3600  # kg/s
+    tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER_KGPERM3 / 3600  # kW_K tap water
 
     tsd['Qww'] = np.vectorize(function)(tsd['mww_kgs'], Tww_sup_0_C, tsd['Tww_re'])
 
@@ -304,14 +295,14 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y):
         if TR > 3600:
             TR = 3600
         try:
-            exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
+            exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER_KGPERM3 * CP_KJPERKGK * V * 1000))
         except ZeroDivisionError:
             print('twws: {twws:.2f}, tamb: {tamb:.2f}, p: {p:.2f}, cpw: {cpw:.2f}, V: {V:.2f}'.format(
-                twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V))
+                twws=twws, tamb=tamb, p=P_WATER_KGPERM3, cpw=CP_KJPERKGK, V=V))
             raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
-        losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER / 3.6  # in Wh
+        losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER_KGPERM3 / 3.6  # in Wh
     else:
         losses = 0
     return losses

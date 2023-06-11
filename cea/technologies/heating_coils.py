@@ -9,9 +9,8 @@ import scipy.optimize as sopt
 import scipy
 import numpy as np
 from cea.technologies import substation
-from cea.demand import constants
+from cea.constants import C_A
 
-C_A = constants.C_A
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
