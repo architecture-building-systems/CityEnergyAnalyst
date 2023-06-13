@@ -71,10 +71,14 @@ class SupplySystem(object):
             self._structure = new_structure
 
     @staticmethod
-    def evaluate_supply_system(capacity_indicators, system_structure, demand_energy_flow, objectives):
+    def evaluate_supply_system(capacity_indicators, system_structure, demand_energy_flow, objectives,
+                               process_memory=None):
         """
         Wrapper of the 'evaluate' method used in the deap toolbox's register function.
         """
+        if process_memory.multiprocessing:
+            process_memory.recall_class_variables()
+
         supply_system = SupplySystem(system_structure=system_structure,
                                      capacity_indicator_vector=capacity_indicators,
                                      demand_energy_flow=demand_energy_flow)
@@ -436,10 +440,11 @@ class SupplySystem(object):
         mut_prob = domain.config.optimization_new.ga_mutation_prob
         cx_prob = domain.config.optimization_new.ga_crossover_prob
         mut_eta = domain.config.optimization_new.ga_mutation_eta
+        parallelize_computation = domain.config.general.multiprocessing
         SupplySystem.optimisation_algorithm = GeneticAlgorithm(selection=selection_algorithm,
                                                                mutation=mutation_method,
                                                                crossover=crossover_method,
                                                                population_size=population_size,
                                                                number_of_generations=number_of_generations,
                                                                mut_probability=mut_prob, cx_probability=cx_prob,
-                                                               mut_eta=mut_eta)
+                                                               mut_eta=mut_eta, parallelize=parallelize_computation)

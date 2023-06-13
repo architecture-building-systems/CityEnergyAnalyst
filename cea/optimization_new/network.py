@@ -52,7 +52,8 @@ class Network(object):
                                'equivalent_length_factor': 0.0,
                                'peak_load_percentage': 0.0}
 
-    def __init__(self, network_id, connected_buildings):
+    def __init__(self, domain_connectivity, network_id, connected_buildings):
+        self.connectivity_id = domain_connectivity.as_str()
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
@@ -531,7 +532,7 @@ class Network(object):
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim()
+            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
@@ -553,7 +554,7 @@ class Network(object):
                 pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim()
+            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
 
             # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
             # get accumulated head loss per hour
@@ -576,7 +577,7 @@ class Network(object):
             reservoir.head_timeseries.base_value = int(base_head)
             reservoir.head_timeseries._pattern = 'reservoir'
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim()
+            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
 
         return wnm_results, wnm_pipe_diameters
 

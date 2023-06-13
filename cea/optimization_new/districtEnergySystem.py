@@ -27,16 +27,19 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
+import time, sys, multiprocessing
 
 from copy import deepcopy
-from deap import algorithms, base, creator, tools
+from deap import algorithms, base, tools
 
 from cea.optimization_new.network import Network
 from cea.optimization_new.supplySystem import SupplySystem
-from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.systemCombination import SystemCombination
+from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class DistrictEnergySystem(object):
@@ -73,7 +76,8 @@ class DistrictEnergySystem(object):
             print("Please set a valid identifier.")
 
     @staticmethod
-    def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None):
+    def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None,
+                               process_memory=None):
         """
         Identify optimal district energy systems. The selected district energy systems represent an optimal combination
         of the most favourable supply systems for each of the networks in the district (i.e. the best combinations of
@@ -90,7 +94,13 @@ class DistrictEnergySystem(object):
         :param optimization_tracker: object tracking the progress of the optimization
         :type optimization_tracker: <cea.optimization_new.helperclasses.optimization.tracker>-OptimizationTracker class
                                     object
+        :param process_memory: Memory from the parent process to be transferred to the child process in multiprocessing
+        :type process_memory: <cea.optimization_new.helperclasses.multiprocessing.memoryPreserver>-MemoryPreserver class
+                              object
         """
+        if process_memory.multiprocessing:
+            process_memory.recall_class_variables()
+
         if optimization_tracker:
             optimization_tracker.set_current_individual(connectivity_vector)
 
@@ -99,9 +109,9 @@ class DistrictEnergySystem(object):
                                                            district_buildings,
                                                            energy_potentials)
 
-        non_dominated_systems = new_district_cooling_system.evaluate(optimization_tracker)
+        non_dominated_systems, optimization_tracker = new_district_cooling_system.evaluate(optimization_tracker)
 
-        return non_dominated_systems
+        return non_dominated_systems, optimization_tracker
 
     def evaluate(self, optimization_tracker=None, return_full_des=False):
         """
@@ -143,7 +153,7 @@ class DistrictEnergySystem(object):
         if return_full_des:
             return self
 
-        return self.best_supsys_combinations
+        return self.best_supsys_combinations, optimization_tracker
 
     def generate_networks(self):
         """
@@ -167,7 +177,7 @@ class DistrictEnergySystem(object):
                                        in zip(building_ids, buildings_are_connected_to_network)
                                        if is_connected]
                 full_network_identifier = 'N' + str(1000 + network_id)
-                network = Network(full_network_identifier, connected_buildings)
+                network = Network(self.connectivity, full_network_identifier, connected_buildings)
                 network.run_steiner_tree_optimisation()
                 network.calculate_operational_conditions()
                 self.networks.append(network)
@@ -307,22 +317,22 @@ class DistrictEnergySystem(object):
         """
         print(f"Starting optimisation of supply system {subsystem.identifier}.")
 
+        start_time = time.time()
+
         structure_civ = system_structure.capacity_indicators
         algorithm = SupplySystem.optimisation_algorithm
-
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,)*algorithm.nbr_objectives)
-        creator.create("Individual", CapacityIndicatorVector, fitness=creator.FitnessMin)
         ref_points = tools.uniform_reference_points(algorithm.nbr_objectives, 12)
+        main_process_memory = MemoryPreserver()
 
         toolbox = base.Toolbox()
         toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ)
-        toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+        toolbox.register("individual", tools.initIterate, CapacityIndicatorVector, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         subsystem_demand = self.subsystem_demands[subsystem.identifier]
         toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
                          system_structure=system_structure, demand_energy_flow=subsystem_demand,
-                         objectives=algorithm.objectives)
+                         objectives=algorithm.objectives, process_memory=main_process_memory)
         toolbox.register("mate", CapacityIndicatorVector.mate, algorithm=algorithm)
         toolbox.register("mutate", CapacityIndicatorVector.mutate, algorithm=algorithm)
         toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
@@ -332,7 +342,7 @@ class DistrictEnergySystem(object):
         for ind, fit in zip(population, fitnesses):
             ind.fitness.values = fit
 
-        for generation in range(1, algorithm.generations):
+        for generation in range(1, algorithm.generations+1):
             offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
 
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -345,7 +355,9 @@ class DistrictEnergySystem(object):
 
         optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
         [supply_system.evaluate() for supply_system in optimal_supply_systems]
-        print(f"Supply system {subsystem.identifier} optimised.")
+        end_time = time.time()
+        print(f"Supply system {subsystem.identifier} optimised."
+              f"(Time elapsed {end_time-start_time} s)")
 
         return optimal_supply_systems
 
@@ -362,19 +374,17 @@ class DistrictEnergySystem(object):
         """
         # create a system combination container with an associated fitness value (required by the sorting function of deap)
         algorithm = SupplySystem.optimisation_algorithm
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * algorithm.nbr_objectives)
-        creator.create("SystemsCombination", list, fitness=creator.FitnessMin)
 
         # initialise a list of supply system combinations by adding the supply systems of the first network to them
         if not self.supply_systems: # for a district without networks
             first_network = None
             connectivity_str = self.connectivity.as_str()
-            supply_system_combinations = [creator.SystemsCombination([connectivity_str])]
+            supply_system_combinations = [SystemCombination([connectivity_str])]
             supply_system_combinations[0].fitness.values = tuple([0] * algorithm.nbr_objectives)
         else:
             first_network = list(self.supply_systems.keys())[0]
             connectivity_str = self.connectivity.as_str()
-            supply_system_combinations = [creator.SystemsCombination([connectivity_str,  first_network + "-" + str(i)])
+            supply_system_combinations = [SystemCombination([connectivity_str,  first_network + "-" + str(i)])
                                           for i, supply_system in enumerate(self.supply_systems[first_network])]
             for i, system_combination in enumerate(supply_system_combinations):
                 system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
@@ -400,7 +410,7 @@ class DistrictEnergySystem(object):
             new_supply_system_combinations = []
             new_combinations = []
             for combination in supply_system_combinations:
-                new_combinations = [creator.SystemsCombination(combination + [network + '-' + str(i)])
+                new_combinations = [SystemCombination(combination.encoding + [network + '-' + str(i)])
                                     for i, supply_system in enumerate(self.supply_systems[network])]
                 for i, system_combination in enumerate(new_combinations):
                     system_combination.fitness.values = \
@@ -460,10 +470,13 @@ class DistrictEnergySystem(object):
         mut_prob = domain.config.optimization_new.ga_mutation_prob
         cx_prob = domain.config.optimization_new.ga_crossover_prob
         mut_eta = domain.config.optimization_new.ga_mutation_eta
+        parallelize = domain.config.multiprocessing
+        cores = multiprocessing.cpu_count() - domain.config.general.number_of_cpus_to_keep_free
         DistrictEnergySystem.optimisation_algorithm = GeneticAlgorithm(selection=selection_algorithm,
                                                                        mutation=mutation_method,
                                                                        crossover=crossover_method,
                                                                        population_size=population_size,
                                                                        number_of_generations=number_of_generations,
                                                                        mut_probability=mut_prob, cx_probability=cx_prob,
-                                                                       mut_eta=mut_eta)
+                                                                       mut_eta=mut_eta, parallelize=parallelize,
+                                                                       cores=cores)

@@ -26,7 +26,8 @@ class Algorithm(object):
 class GeneticAlgorithm(Algorithm):
 
     def __init__(self, selection=None, mutation='UniformBounded', crossover='TwoPoint', population_size=None,
-                 number_of_generations=None, mut_probability=0.1, cx_probability=0.3, mut_eta=0.5):
+                 number_of_generations=None, mut_probability=0.1, cx_probability=0.3, mut_eta=0.5, parallelize=True,
+                 cores=1):
         self.nbr_objectives = len(Algorithm.objectives)
         self.selection = selection
         self.mutation = mutation
@@ -38,6 +39,9 @@ class GeneticAlgorithm(Algorithm):
         self.mut_prob = mut_probability
         self.cx_prob = cx_probability
         self.mut_eta = mut_eta
+
+        self.parallelize_computation = parallelize
+        self.parallel_cores = cores
 
     @property
     def population(self):

@@ -93,6 +93,20 @@ class optimizationTracker(object):
 
         return self
 
+    def consolidate(self, list_of_trackers):
+        """
+        Python's multiprocessing tool on Windows 'spawns' child-processes i.e. all required object-instances
+        are simply copied or recreated from scratch and are therefore separate from the instance in the parent-process.
+        This method serves to consolidate the information stored in the trackers of the child-process in the main
+        tracker instance of the parent-process.
+        """
+
+        self.candidate_individuals.update({individual_id: individual
+                                           for tracker in list_of_trackers
+                                           for individual_id, individual in tracker.candidate_individuals.items()})
+
+        return self
+
     def update_network_selection(self, selected_individuals):
         """
         Update the selection connectivity vectors and their corresponding information on network-layout and supply
@@ -122,8 +136,8 @@ class optimizationTracker(object):
                                                for category, components
                                                in properties['supsys_structure'].max_cap_active_components.items()}
                                   for network_id, properties in energy_system.items()}
-            passive_components = {network_id: {category: {component_code: component.capacity
-                                                          for component_code, component in components.items()}
+            passive_components = {network_id: {category: {act_component_code: psv_components
+                                                          for act_component_code, psv_components in components.items()}
                                                for category, components
                                                in properties['supsys_structure'].max_cap_passive_components.items()}
                                   for network_id, properties in energy_system.items()}
@@ -181,9 +195,9 @@ class optimizationTracker(object):
                     break
 
                 # identify the codes for the connectivity vector and supply system combination of the new individual
-                connectivity = cv_and_supsys_combination[0]
+                connectivity = cv_and_supsys_combination.encoding[0]
                 supsys_ind_by_network = {supply_system_ind.split('-')[0]: supply_system_ind.split('-')[1]
-                                         for supply_system_ind in cv_and_supsys_combination[1:]}
+                                         for supply_system_ind in cv_and_supsys_combination.encoding[1:]}
                 combination_id = "_".join([supsys_ind_by_network[network]
                                            if network in supsys_ind_by_network.keys() else 'x'
                                            for network in self.network_codes])
@@ -208,7 +222,7 @@ class optimizationTracker(object):
                 # otherwise proceed with summarising combination's supply systems and overall fitness
                 try:
                     combination = {'capacity_indicators': {comb[0:5]: self.summarize_civ(connectivity, comb)
-                                                           for comb in cv_and_supsys_combination[1:]},
+                                                           for comb in cv_and_supsys_combination.encoding[1:]},
                                    'fitness': self.summarize_fitness(cv_and_supsys_combination)}
                 except KeyError:
                     continue

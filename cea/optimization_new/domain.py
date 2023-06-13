@@ -20,8 +20,11 @@ import time
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import multiprocessing
+import sys, inspect
+from random import seed
 
-from deap import base, creator, tools, algorithms
+from deap import base, tools, algorithms
 
 import cea.config
 from cea.inputlocator import InputLocator
@@ -29,6 +32,7 @@ from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
+import cea.optimization_new.component as component_module
 from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
 from cea.optimization_new.component import Component
@@ -37,9 +41,11 @@ from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
-from cea.optimization_new.helpercalsses.optimization.connectivityVector import Connection, ConnectivityVector
+from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
 from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
 from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
+from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class Domain(object):
@@ -146,16 +152,25 @@ class Domain(object):
         else:
             tracker = None
 
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,)*algorithm.nbr_objectives)
-        creator.create("Individual", ConnectivityVector, fitness=creator.FitnessMin)
-
         toolbox = base.Toolbox()
+        main_process_memory = MemoryPreserver()
+        if algorithm.parallelize_computation:
+            component_classes = [cls[1] for cls in inspect.getmembers(component_module, inspect.isclass)]
+            initialised_classes = [cls[1] for cls in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+                                   if not cls[0] in ['InputLocator', 'Domain', 'EnergyPotential']] \
+                                  + component_classes
+            main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
+
+            pool = multiprocessing.Pool(algorithm.parallel_cores)
+            toolbox.register("map", pool.map)
+
         toolbox.register("generate", ConnectivityVector.generate)
-        toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+        toolbox.register("individual", tools.initIterate, ConnectivityVector, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
-                         energy_potentials=self.energy_potentials, optimization_tracker=tracker)
+                         energy_potentials=self.energy_potentials, optimization_tracker=tracker,
+                         process_memory=main_process_memory)
         toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
         toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
@@ -163,16 +178,20 @@ class Domain(object):
 
         population = toolbox.population(n=algorithm.population)
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
-        optimal_supply_system_combinations = {ind.as_str(): non_dominated_front for ind, non_dominated_front
+        optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
+        if algorithm.parallelize_computation:
+            tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
 
-        for generation in range(1, algorithm.generations):
+        for generation in range(1, algorithm.generations+1):
             offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
 
             new_ind = [ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys())]
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
-            optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front for ind, non_dominated_front
+            optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
+            if algorithm.parallelize_computation:
+                tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
 
             population = toolbox.select(population + offspring, optimal_supply_system_combinations)
             print(f"\n\nDES: gen {generation}")
@@ -211,8 +230,8 @@ class Domain(object):
         # create a list of distinct DistrictEnergySystem-objects (unequivocally defining SupplySystems and Networks)
         final_system_selection = []
         for energy_system in best_energy_systems:
-            connectivity = energy_system[0]
-            supsys_selection = energy_system[1:]
+            connectivity = energy_system.encoding[0]
+            supsys_selection = energy_system.encoding[1:]
             district_energy_system = [des for des in energy_systems_for_best_connectivity_vectors
                                       if connectivity == des.connectivity.as_str()][0]
             final_system_selection += [district_energy_system.select_supply_system_combination(supsys_selection)]
@@ -395,6 +414,7 @@ class Domain(object):
     def _initialise_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
+        Fitness.initialize_class_variables(self)
 
     def _initialize_energy_system_descriptor_classes(self):
         print("1. Creating available supply system components...")
@@ -416,6 +436,7 @@ def main(config):
     # initialise variables and define cooling demand
     locator = InputLocator(scenario=config.scenario)
     current_domain = Domain(config, locator)
+    seed(100)
 
     start_time = time.time()
     current_domain.load_buildings()

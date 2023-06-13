@@ -27,8 +27,10 @@ __status__ = "Production"
 import copy
 import random
 import numpy as np
-from math import floor
+
 from deap import tools
+
+from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 
 
 class CapacityIndicator(object):
@@ -91,6 +93,7 @@ class CapacityIndicatorVector(object):
             self._capacity_indicators = [CapacityIndicator()]
         else:
             self.capacity_indicators = capacity_indicators_list
+        self.fitness = Fitness()
 
     @property
     def capacity_indicators(self):
@@ -125,6 +128,18 @@ class CapacityIndicatorVector(object):
         else:
             for i in range(len(self)):
                 self[i] = new_values[i]
+
+    @property
+    def fitness(self):
+        return self._fitness
+
+    @fitness.setter
+    def fitness(self, new_fitness):
+        if not isinstance(new_fitness, Fitness):
+            raise ValueError("The indicated fitness value is not an object of the Fitness class. The deap library's "
+                             "selection functions need the attributes of that class to operate properly.")
+        else:
+            self._fitness = new_fitness
 
     def __len__(self):
         return len(self.capacity_indicators)

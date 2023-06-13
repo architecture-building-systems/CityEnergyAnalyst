@@ -25,6 +25,8 @@ __status__ = "Production"
 from random import randint
 from deap import tools
 
+from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+
 
 class Connection(object):
     possible_connections = range(0)
@@ -86,6 +88,7 @@ class ConnectivityVector(object):
             self.connections = [Connection()]
         else:
             self.connections = connection_list
+        self.fitness = Fitness()
 
     @property
     def connections(self):
@@ -133,6 +136,18 @@ class ConnectivityVector(object):
             # Set the new values
             for i in range(len(self)):
                 self[i] = new_values[i]
+
+    @property
+    def fitness(self):
+        return self._fitness
+
+    @fitness.setter
+    def fitness(self, new_fitness):
+        if not isinstance(new_fitness, Fitness):
+            raise ValueError("The indicated fitness value is not an object of the Fitness class. The deap library's "
+                             "selection functions need the attributes of that class to operate properly.")
+        else:
+            self._fitness = new_fitness
 
     def __len__(self):
         return len(self.connections)
@@ -267,7 +282,7 @@ class ConnectivityVector(object):
         # perform non-dominated sorting on the list of energy system solutions and identify which connectivity-vector's
         # solutions appear in which front (i.e. order of non-dominated front)
         supsys_combination_solution_fronts = tools.emo.sortLogNondominated(all_supsys_combinations, nbr_solutions)
-        connectivity_vectors_by_front = {front: list(set([supsys_combination[0]
+        connectivity_vectors_by_front = {front: list(set([supsys_combination.encoding[0]
                                                           for supsys_combination in solutions_in_front]))
                                          for front, solutions_in_front in enumerate(supsys_combination_solution_fronts)}
 
