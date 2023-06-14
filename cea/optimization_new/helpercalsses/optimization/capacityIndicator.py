@@ -122,7 +122,7 @@ class CapacityIndicatorVector(object):
         elif not new_values == [] and \
                 not all([sum([value for i, value in enumerate(new_values)
                               if self.capacity_indicators[i].category == category]) >= 1
-                         for category in ['primary', 'secondary', 'tertiary']]):
+                         for category in set([ci.category for ci in self.capacity_indicators])]):
             raise ValueError("The capacity indicator values for each supply system placement category need to "
                              "add up to at least 1 (so that the system demand can be met).")
         else:
@@ -224,7 +224,7 @@ class CapacityIndicatorVector(object):
         """
         categories_cover_demand = [sum([capacity_indicator.value for capacity_indicator in new_capacity_indicators
                                         if capacity_indicator.category == category]) >= 1
-                                   for category in ['primary', 'secondary', 'tertiary']
+                                   for category in list(set([ci.category for ci in new_capacity_indicators]))
                                    if any([capacity_indicator.category == category
                                            for capacity_indicator in new_capacity_indicators])]
         return categories_cover_demand
@@ -238,7 +238,7 @@ class CapacityIndicatorVector(object):
             3. Change that components capacity indicator so that the category's CIs add up to 1.
         """
         # Step 1
-        component_categories = ['primary', 'secondary', 'tertiary']
+        component_categories = list(set([ci.category for ci in new_capacity_indicators]))
         categories_cover_demand = CapacityIndicatorVector._categories_cover_demand(new_capacity_indicators)
         understocked_categories = [category for i, category in enumerate(component_categories)
                                    if not categories_cover_demand[i]]
