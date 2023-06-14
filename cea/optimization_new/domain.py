@@ -180,7 +180,7 @@ class Domain(object):
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
-        if algorithm.parallelize_computation:
+        if algorithm.parallelize_computation and self.config.optimization_new.generate_detailed_outputs:
             tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
 
         for generation in range(1, algorithm.generations+1):
@@ -190,7 +190,7 @@ class Domain(object):
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
             optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
-            if algorithm.parallelize_computation:
+            if algorithm.parallelize_computation and self.config.optimization_new.generate_detailed_outputs:
                 tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
 
             population = toolbox.select(population + offspring, optimal_supply_system_combinations)
