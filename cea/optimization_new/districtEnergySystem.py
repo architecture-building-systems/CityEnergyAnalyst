@@ -408,7 +408,6 @@ class DistrictEnergySystem(object):
                 continue
 
             new_supply_system_combinations = []
-            new_combinations = []
             for combination in supply_system_combinations:
                 new_combinations = [SystemCombination(combination.encoding + [network + '-' + str(i)])
                                     for i, supply_system in enumerate(self.supply_systems[network])]
@@ -418,15 +417,15 @@ class DistrictEnergySystem(object):
                                zip(list(combination.fitness.values),
                                    self.supply_systems[network][i].overall_fitness.values())])
 
-            new_supply_system_combinations += new_combinations
+                new_supply_system_combinations += new_combinations
             supply_system_combinations = tools.emo.sortLogNondominated(new_supply_system_combinations, 100,
                                                                        first_front_only=True)
 
-            # add the stand-alone building's fitness values to reflect the fitness of the whole district energy system
-            for supsys_combination in supply_system_combinations:
-                supsys_combination.fitness.values = tuple([fit_1 + fit_2 for fit_1, fit_2 in
-                                                           zip(list(supsys_combination.fitness.values),
-                                                               total_stand_alone_building_fitness)])
+        # add the stand-alone building's fitness values to reflect the fitness of the whole district energy system
+        for supsys_combination in supply_system_combinations:
+            supsys_combination.fitness.values = tuple([fit_1 + fit_2 for fit_1, fit_2 in
+                                                       zip(list(supsys_combination.fitness.values),
+                                                           total_stand_alone_building_fitness)])
 
         self.best_supsys_combinations = supply_system_combinations
 
