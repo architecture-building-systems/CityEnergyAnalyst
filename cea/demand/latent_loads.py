@@ -4,6 +4,7 @@
 
 
 import numpy as np
+from cea.constants import RHO_A, DELTA_T, P_ATM, H_WE
 import math
 
 __author__ = "Gabriel Happle"
