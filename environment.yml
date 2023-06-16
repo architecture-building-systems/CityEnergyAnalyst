@@ -19,7 +19,7 @@ dependencies:
 - sphinx
 - sympy
 - utm
-- wntr=0.2.2.1
+- wntr==0.2.2.1
 - fiona
 - gdal=3.3.*
 - geopandas
@@ -28,11 +28,11 @@ dependencies:
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx<1.2.3
+- osmnx==1.3.0
 - pandas<2
 - pip
 - psutil
-- pysal=2.1.0
+- pysal==2.1.0
 - python>=3.7
 - pythonocc-core=7.4.1
 - pytz
