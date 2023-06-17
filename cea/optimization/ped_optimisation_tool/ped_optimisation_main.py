@@ -11,7 +11,7 @@ import os
 import cea.config
 import cea.inputlocator
 from cea.constants import *
-import pandas as pd 
+import pandas as pd
 import numpy as np
 
 
