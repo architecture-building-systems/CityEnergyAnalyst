@@ -1,5 +1,7 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 
+ptc-plots,Q_ptc_kwhtotal,kWh,Thermal Output of PTC field,green
+
 schedules,people_p,C,Occupancy in building,grey
 schedules,Ve_lps,lph,Internal ventilation load,grey
 schedules,Vww_lph,lph,Hot water consumption,red
@@ -629,3 +631,5 @@ capacities,Capacity_VCCHT_AS_cool_building_scale_W,W,Capacity_VCCHT_AS_cool_buil
 capacities,Capacity_ACH_SC_FP_cool_building_scale_W,W,Capacity_ACH_SC_FP_cool_building_scale_W,orange
 capacities,Capaticy_ACH_SC_ET_cool_building_scale_W,W,Capaticy_ACH_SC_ET_cool_building_scale_W,orange_light
 capacities,Capacity_ACHHT_FP_cool_building_scale_W,W,Capacity_ACHHT_FP_cool_building_scale_W,orange_lighter
+
+

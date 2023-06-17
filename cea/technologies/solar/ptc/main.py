@@ -40,17 +40,23 @@ def ptc_calculation(config, locator):
     # Example:
     tin_ptc = config.solar_concentrating.t_in_ptc
 
+
     #Part II. Input paths
     # Example:
     path_to_my_input_file = locator.PVT_totals()
+    path_to_my_date_file = locator.PV_totals()
+
 
     #Part III. Output paths
     # Example:
     output_path = locator.get_ptc_total_file_path()
 
+
     #Part IV. Main function
     # Example:
     my_input_csv = pd.read_csv(path_to_my_input_file)
+    my_date_csv = pd.read_csv(path_to_my_date_file)
+    date = my_date_csv["Date"].values
     mcp_from_pvt = my_input_csv["mcp_PVT_kWperC"].values
     ptc_area_from_pvt = my_input_csv["PVT_roofs_top_m2"].values
     #ghi_rooftop_ptc = np.zeros(8760) #this is the dummy file to calculate solar radiation. we WILL do this.
@@ -63,7 +69,7 @@ def ptc_calculation(config, locator):
 
     #Part V. Saving to Outputs
     # Example:
-    my_result_df = pd.DataFrame({"Q_ptc_kwhtotal": Q_ptc_kwhtotal})
+    my_result_df = pd.DataFrame({"Q_ptc_kwhtotal": Q_ptc_kwhtotal, "DATE": date})
     my_result_df.to_csv(output_path, index=False)
 
     #Part VI return (if the function is meant to return something.
