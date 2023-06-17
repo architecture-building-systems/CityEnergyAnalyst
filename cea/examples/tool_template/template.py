@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config, locator):
+def main_function(config, locator):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
     parameter. The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration
@@ -47,7 +47,7 @@ def main(config, locator):
 
     #Part IV. Main function
     # Example:
-    # my_input_df = pd.read_csv(path_to_my_input_file)
+    # my_input_csv = pd.read_csv(path_to_my_input_file)
     # my_result_df = my_input_csv["A"] * my_input_csv["B"]
 
     #Part V. Saving to Outputs
@@ -58,7 +58,9 @@ def main(config, locator):
     #return my_result_df
 
 
-if __name__ == '__main__':
-    config = cea.config.Configuration()
+def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
-    main(config, locator)
+    main_function(config, locator)
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
