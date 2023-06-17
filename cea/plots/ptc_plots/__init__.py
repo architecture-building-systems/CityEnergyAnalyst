@@ -25,14 +25,14 @@ class PTC_PlotBase(cea.plots.PlotBase):
 
     #Part III. Define category name
     #Example
-    category_name = "PTC"
+    category_name = "ptc-plots"
 
     #Part IV. Define what parameters to show in the dashboard
     #Example:
     expected_parameters = {
         'scenario-name': 'general:scenario-name',
         'timeframe': 'plots:timeframe',
-        'normalization': 'plots-schedules:normalization',
+        'normalization': 'plots-ptc:normalization',   #check this with default.config
     }
 
     # Part V. Define what are the local inputs of the plots (files as well as variables)
@@ -48,28 +48,17 @@ class PTC_PlotBase(cea.plots.PlotBase):
 
 
     #Part VI. Define functions that can help to clean the data, normalize it etc. before it goes in the right format for plotting.
-    def normalize_data(self, data_processed, buildings, analysis_fields):
-        if self.normalization == "ptc_area":
+    def normalize_data(self, data_processed, analysis_fields):
+        if self.normalization == "PTC area":
             data = pd.read_csv(self.locator.PVT_totals())
             normalizatioon_factor = data ["Area_PVT_m2"].values
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-        elif self.normalization == "net floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
+        elif self.normalization == "PVT roof area":
+            data = pd.read_csv(self.locator.PVT_totals())
+            normalizatioon_factor = data["PVT_roofs_top_m2"].values
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-        elif self.normalization == "air conditioned floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-        elif self.normalization == "building occupancy":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['people0'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-
         return data_processed
 
     def add_fields(self, df1, df2):
@@ -78,18 +67,10 @@ class PTC_PlotBase(cea.plots.PlotBase):
         return df1
 
     def schedule_data_aggregated(self):
-        data = self._calculate_input_data_aggregated()
+        data = pd.read_csv(self.input_files)
+
         data_normalized = self.normalize_data(data,
-                                              self.buildings,
                                               self.schedule_analysis_fields)
         resampeled_data = self.resample_time_data(data_normalized)
         return resampeled_data
 
-    def _calculate_input_data_aggregated(self):
-        """This is the data all the solar-potential plots are based on."""
-        # get extra data of weather and date
-        result = functools.reduce(self.add_fields,
-                                  (pd.read_csv(self.locator.get_schedule_model_file(building))
-                                                     for building in self.buildings)).set_index('DATE')
-
-        return result
