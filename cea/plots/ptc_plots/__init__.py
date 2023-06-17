@@ -42,7 +42,7 @@ class PTC_PlotBase(cea.plots.PlotBase):
         super(PTC_PlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', "PTC")
         self.normalization = self.parameters['normalization']
-        self.input_files = self.locator.get_ptc_total_file_path()
+        self.input_files = [(self.locator.get_ptc_total_file_path, [])]
         self.weather = self.locator.get_weather_file() #extracting time stamp from this file
         self.schedule_analysis_fields = ["Q_ptc_kwhtotal"]
 
@@ -67,7 +67,7 @@ class PTC_PlotBase(cea.plots.PlotBase):
         return df1
 
     def schedule_data_aggregated(self):
-        data = pd.read_csv(self.input_files)
+        data = pd.read_csv(self.locator.get_ptc_total_file_path())
 
         data_normalized = self.normalize_data(data,
                                               self.schedule_analysis_fields)
