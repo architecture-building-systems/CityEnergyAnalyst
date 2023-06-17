@@ -213,6 +213,15 @@ Energy potentials:
       - [get_database_conversion_systems]
       - [get_weather_file]
 
+  - name: solar-concentrating
+    label: Parabolic Trough Collector
+    description: Calculate the Heat output for a PTC collector installed on all roofs of the Zone
+    interfaces: [cli, dashboard]
+    module: cea.technologies.solar.ptc.main
+    parameters: ['general:scenario', solar-concentrating]
+    input-files:
+      - [ PVT_totals]
+
 Networks:
 
   - name: network-layout

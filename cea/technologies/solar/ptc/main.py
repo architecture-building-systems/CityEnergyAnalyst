@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config, locator):
+def ptc_calculation(config, locator):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
     parameter. The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration
@@ -61,9 +61,6 @@ def main(config, locator):
     kwh_ptc_m2 = solar_radiation_whm2 * eff_total * 1000
     Q_ptc_kwhtotal = ptc_area_from_pvt * kwh_ptc_m2
 
-
-
-
     #Part V. Saving to Outputs
     # Example:
     my_result_df = pd.DataFrame({"Q_ptc_kwhtotal": Q_ptc_kwhtotal})
@@ -72,8 +69,9 @@ def main(config, locator):
     #Part VI return (if the function is meant to return something.
     #return my_result_df
 
+def main(config):
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    ptc_calculation(config, locator)
 
 if __name__ == '__main__':
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    main(config, locator)
+    main(cea.config.Configuration())
