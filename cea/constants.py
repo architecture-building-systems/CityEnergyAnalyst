@@ -329,7 +329,11 @@ PSL = 1600  # heat capacity of ground in kg/m3 => should be density?
 CSL = 1300  # heat capacity of ground in J/kg K
 BSL = 1.5  # thermal conductivity of ground in W/m.K
 
-
+# Concentrating solar performance constants
+OPT_EFF = 0.70  # Optical efficiency of the collector
+A1 = 0.25  # first order heat loss coefficient (convection)
+A2 = 0.0001  # second order heat loss coefficient (radiation)
+DT = 30  # temperature difference to obtain
 
 
 

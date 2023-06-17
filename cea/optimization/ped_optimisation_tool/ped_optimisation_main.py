@@ -11,7 +11,9 @@ import os
 import cea.config
 import cea.inputlocator
 from cea.constants import *
-import pandas as pd
+import pandas as pd 
+import numpy as np
+
 
 __author__ = "Juveria och Puneet"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -39,7 +41,7 @@ def main(config, locator):
 
     #Part II. Input paths
     # Example:
-    # path_to_my_input_file = locator.get_my_input_file_path()
+    path_to_my_input_file = locator.PVT_totals()
 
     #Part III. Output paths
     # Example:
@@ -47,8 +49,14 @@ def main(config, locator):
 
     #Part IV. Main function
     # Example:
-    # my_input_df = pd.read_csv(path_to_my_input_file)
-    # my_result_df = my_input_csv["A"] * my_input_csv["B"]
+    my_input_csv = pd.read_csv(path_to_my_input_file)
+    mcp_from_pvt = my_input_csv["mcp_PVT_kWperC"]
+    ptc_area_from_pvt = my_input_csv["PVT_roofs_top_m2"]
+    #ghi_rooftop_ptc = np.zeros(8760) #this is the dummy file to calculate solar radiation. we WILL do this.
+    ghi_rooftop_ptc = my_input_csv["radiation_kWh"]
+
+
+
 
     #Part V. Saving to Outputs
     # Example:
