@@ -10,8 +10,9 @@ NOTE: Hello. this is the main script for optimsiaiton of different energy system
 import os
 import cea.config
 import cea.inputlocator
-from cea.constants import *
-import pandas as pd
+
+from cea.constants import OPT_EFF, A1, A2, DT
+import pandas as pd 
 import numpy as np
 
 
@@ -37,7 +38,7 @@ def main(config, locator):
     """
     #Part I. local variables
     # Example:
-    # my_variable = config.my_tool.my_variable
+    tin_ptc = config.solar_concentrating.t_in_ptc
 
     #Part II. Input paths
     # Example:
@@ -45,22 +46,28 @@ def main(config, locator):
 
     #Part III. Output paths
     # Example:
-    # path_to_my_output_file = locator.get_my_output_file_path()
+    output_path = locator.get_ptc_total_file_path()
 
     #Part IV. Main function
     # Example:
     my_input_csv = pd.read_csv(path_to_my_input_file)
-    mcp_from_pvt = my_input_csv["mcp_PVT_kWperC"]
-    ptc_area_from_pvt = my_input_csv["PVT_roofs_top_m2"]
+    mcp_from_pvt = my_input_csv["mcp_PVT_kWperC"].values
+    ptc_area_from_pvt = my_input_csv["PVT_roofs_top_m2"].values
     #ghi_rooftop_ptc = np.zeros(8760) #this is the dummy file to calculate solar radiation. we WILL do this.
-    ghi_rooftop_ptc = my_input_csv["radiation_kWh"]
+    ghi_rooftop_ptc = my_input_csv["radiation_kWh"].values
+
+    solar_radiation_whm2 = ghi_rooftop_ptc / ( 1000 * ptc_area_from_pvt )
+    eff_total = OPT_EFF - A1 * (DT + tin_ptc ) / solar_radiation_whm2  - A2 * ((DT + tin_ptc ) / solar_radiation_whm2) ** 2
+    kwh_ptc_m2 = solar_radiation_whm2 * eff_total * 1000
+    Q_ptc_kwhtotal = ptc_area_from_pvt * kwh_ptc_m2
 
 
 
 
     #Part V. Saving to Outputs
     # Example:
-    # my_result_df.to_csv(path_to_my_output_file)
+    my_result_df = pd.DataFrame({"Q_ptc_kwhtotal": Q_ptc_kwhtotal})
+    my_result_df.to_csv(output_path, index=False)
 
     #Part VI return (if the function is meant to return something.
     #return my_result_df
