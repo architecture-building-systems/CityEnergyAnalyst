@@ -41,6 +41,7 @@ class PeoplePlot(cea.plots.schedules.SchedulesPlotBase):
 
     @property
     def layout(self):
+        """Override the version in PlotBase"""
         return go.Layout(barmode='relative', yaxis=dict(title=self.calc_titles()))
 
     @property
