@@ -942,6 +942,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
 
+    def get_ptc_total_file_path(self):
+        """scenario/outputs/data/optimization/PTC_total.csv"""
+        return os.path.join(self.get_optimization_results_folder(), 'PTC_total.csv')
+
     def PVT_total_buildings(self):
         """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
