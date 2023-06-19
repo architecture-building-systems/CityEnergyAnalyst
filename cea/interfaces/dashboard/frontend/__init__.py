@@ -14,9 +14,6 @@ def frontend():
 
 
 def get_build():
-
-    if os.path.exists(os.path.join(output, "build", "index.html")):
-        return
     url = "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v3.32.1-browser/build.zip"
     output = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build")
 
