@@ -63,8 +63,8 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: radiation-simplified
-    label: Building Solar radiation (Simplified)
-    description: Use Daysim to calculate solar radiation from a sample of buildings in a scenario
+    label: Building Solar radiation (simplified, beta version)
+    description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
     interfaces: [ cli, dashboard ]
     module: cea.resources.radiation.simplified.main
     parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
