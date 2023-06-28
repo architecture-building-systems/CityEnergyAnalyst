@@ -43,6 +43,7 @@ dependencies:
 - pyyaml
 - timezonefinder
 - python-cufflinks
+- pyarrow
 - pip:
   - xlrd
   - xlwt

@@ -68,7 +68,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     """
     t0 = time.perf_counter()
 
-    radiation_json_path = locator.get_radiation_building_sensors(building_name)
+    radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
@@ -82,7 +82,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_json_path, metadata_csv_path, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 

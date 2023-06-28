@@ -62,7 +62,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     type_panel = config.solar.type_SCpanel
 
-    radiation_csv = locator.get_radiation_building_sensors(building=building_name)
+    radiation_path = locator.get_radiation_building_sensors(building=building_name)
     metadata_csv = locator.get_radiation_metadata(building=building_name)
 
     # solar properties
@@ -75,7 +75,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_csv, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 
