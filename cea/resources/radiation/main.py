@@ -8,7 +8,8 @@ import time
 from itertools import repeat
 
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
+import geopandas as gpd
+from osgeo import gdal
 
 import cea.config
 import cea.inputlocator
@@ -39,7 +40,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
     """
 
     # local variables
-    architectural_properties = gpdf.from_file(locator.get_building_architecture())
+    architectural_properties = gpd.GeoDataFrame.from_file(locator.get_building_architecture())
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW").set_index("code")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF").set_index("code")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL").set_index("code")
@@ -132,8 +133,8 @@ def main(config):
     print(f"zone: {zone_path}")
     print(f"surroundings: {surroundings_path}")
 
-    zone_df = gpdf.from_file(zone_path)
-    surroundings_df = gpdf.from_file(surroundings_path)
+    zone_df = gpd.GeoDataFrame.from_file(zone_path)
+    surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)
 
     verify_input_geometry_zone(zone_df)
     verify_input_geometry_surroundings(surroundings_df)
@@ -148,8 +149,15 @@ def main(config):
     print("Creating 3D geometry and surfaces")
     print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
-    geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(
-        locator, config, geometry_staging_location)
+    terrain_raster = gdal.Open(locator.get_terrain())
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('Name')
+
+    geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(config,
+                                                                                                          zone_df,
+                                                                                                          surroundings_df,
+                                                                                                          terrain_raster,
+                                                                                                          architecture_wwr_df,
+                                                                                                          geometry_staging_location)
 
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)

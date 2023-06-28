@@ -16,7 +16,6 @@ from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
-master_main.create_individual_class(cea.config.Configuration())
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
