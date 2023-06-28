@@ -40,4 +40,4 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 Cite us:
 --------
 
-For V3.32.0 (stable): https://doi.org/10.5281/zenodo.7317134
+For V3.33.0 (stable): https://doi.org/10.5281/zenodo.7317134
