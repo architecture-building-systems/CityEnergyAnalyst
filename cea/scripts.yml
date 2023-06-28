@@ -273,6 +273,17 @@ Optimization:
       - [get_geothermal_potential]
       - [PV_totals]
 
+  - name: optimization-new
+    label: Supply System Part II (centralized- new script, beta version)
+    description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
+    interfaces: [cli, dashboard]
+    module: cea.optimization_new.domain
+    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
+                 optimization-new]
+    input-files:
+      - [get_street_network]
+      - [get_total_demand]
+
 Utilities:
   - name: data-migrator
     label: Data migrator
