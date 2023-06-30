@@ -4,7 +4,7 @@
     :alt: GitHub license
 .. |repo_size| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
-.. |lines_of_code| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
+.. |lines_of_code| image:: https://img.shields.io/tokei/lines/github/architecture-building-systems/CityEnergyAnalyst
     :alt: Lines of code
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7317134.svg
    :target: https://doi.org/10.5281/zenodo.7317134
