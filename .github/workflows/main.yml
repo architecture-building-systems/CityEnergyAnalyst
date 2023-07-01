@@ -10,7 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
+      # Required for daysim
       - name: Install Dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -18,9 +19,10 @@ jobs:
           sudo apt-get install -y libgl1
 
       - name: Install Conda environment with Micromamba
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@v1
         with:
-          cache-env: true
+          environment-file: environment.yml
+          cache-environment: true
 
       - name: Install CEA
         shell: bash -l {0}
