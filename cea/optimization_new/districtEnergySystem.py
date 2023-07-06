@@ -343,15 +343,19 @@ class DistrictEnergySystem(object):
             ind.fitness.values = fit
 
         for generation in range(1, algorithm.generations+1):
+            population_civs = set(tuple(pop_ind.values) for pop_ind in population)
             offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
 
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
+            novel_offspring = [offspring_ind for offspring_ind in offspring
+                               if not tuple(offspring_ind.values) in population_civs]
+            fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
+            for ind, fit in zip(novel_offspring, fitnesses):
                 ind.fitness.values = fit
 
-            population = toolbox.select(population + offspring, algorithm.population)
-            print(f"{subsystem.identifier}: gen {generation}")
+            population = toolbox.select(population + novel_offspring, algorithm.population)
+            print(f"{subsystem.identifier}: gen {generation} - "
+                  f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
+                  f"% of offspring retained")
 
         optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
         [supply_system.evaluate() for supply_system in optimal_supply_systems]
