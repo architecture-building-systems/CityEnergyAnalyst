@@ -1,5 +1,7 @@
 """
-Print the set of non-dominated solutions that
+Print the set of non-dominated solutions that were identified by the optimization algorithm. This plot integrates an
+option to choose the objective function space in which the solutions are plotted. The user must choose exactly 2  of the
+objective functions used to run the optimization.
 """
 
 __author__ = "Mathias Niffeler"
@@ -78,8 +80,9 @@ def plot_fitness_tracker(objectives, sorted_fitness_tracker):
                 )
             ))
 
-    # Create the drop-down menus to select the objective functions to be plotted against each other
-    # Each plot
+    # Create the drop-down menus to select the objective functions to be plotted against each other.
+    # Each plot displays the selected non-dominated solutions for each generation and front in that 
+    # objective function space.
     update_menus = [dict(
         buttons=list([
             dict(
@@ -123,9 +126,11 @@ def plot_fitness_tracker(objectives, sorted_fitness_tracker):
 
 def main(config=cea.config.Configuration()):
     """Test this plot"""
+    # Read the fitness tracker file
     locator = InputLocator(scenario=config.scenario)
     fitness_tracker = locator.get_new_optimization_debugging_fitness_tracker_file()
     objectives, objective_function_values = read_fitnesses_from_file(fitness_tracker)
+    # Plot the non-dominated solutions chosen at each generation of the genetic algorithm
     plot_fitness_tracker(objectives, objective_function_values)
 
 
