@@ -1,0 +1,142 @@
+"""
+Print the set of non-dominated solutions identified by the optimization algorithm. This plot integrates an option
+to chose the objective function space in which the solutions are plotted. The user must chose exactly 2  of the
+objective functions used to run the optimization.
+"""
+
+__author__ = "Mathias Niffeler"
+__copyright__ = "Copyright 2023, Cooling Singapore"
+__credits__ = ["Mathias Niffeler"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "NA"
+__email__ = "mathias.niffeler@sec.ethz.ch"
+__status__ = "Production"
+
+
+import csv
+import os
+import pandas as pd
+import plotly.graph_objects as go
+
+import cea.config
+from cea.inputlocator import InputLocator
+
+
+def read_objective_values(file_path):
+    """
+    Read the objective function and the solution's objective function values from the optimization results file.
+    """
+    with open(file_path, 'r') as file:
+        # Read the file
+        reader = csv.reader(file)
+        headers = next(reader)  # Read header row
+        objectives = headers[1:] # Get the objective function names
+
+        # Read the objective function values
+        for row in reader:
+            if row[0] == 'Total':
+                values = [float(value) for value in row[1:]]
+
+        return objectives, values
+
+def read_objective_values_from_file(file_paths):
+    """
+    Extract the selected objective functions and the non-dominated solutions' objective function values from the
+    optimization results files.
+    """
+    # Initialize objects to store the objectives and the solutions' objective function values
+    objectives = []
+    objective_function_values_df = pd.DataFrame()
+
+    # Read the objective function values from the optimization results file
+    for file_path in file_paths:
+        new_objectives, values = read_objective_values(file_path)
+
+        # Check if the objective functions are the same for all the optimization results
+        if not objectives:
+            objectives = new_objectives
+        else:
+            assert objectives == new_objectives, 'There is a mismatch in the objective functions used for the '\
+                                                 'optimization. Please check the optimization results.'
+
+        # Get the DCS-solution code from the file path and use it as a key to store the objective function values
+        objective_function_values_df = \
+            pd.concat([objective_function_values_df, pd.DataFrame([file_path.split('\\')[-3]] + values).T],
+                      axis=0, sort=False,  ignore_index=False)
+
+    objective_function_values_df.columns = ['DCS-solution'] + objectives
+
+    return objectives, objective_function_values_df
+
+def plot_pareto_front(objectives, objective_values):
+    """
+    Create a series of scatter plots to visualize the Pareto fronts of the optimization. The user can chose the
+    combination of two of the objective functions to plot, by selecting them from the drop-down menus.
+    """
+    # Initialize the list of traces to plot
+    traces = []
+
+    # Create a scatter for the first set of two objective functions
+    traces.append(go.Scatter(
+        x=objective_values[objectives[0]],
+        y=objective_values[objectives[1]],
+        mode='markers',
+        name='DCS-solution',
+        text=objective_values['DCS-solution'],
+        marker=dict(
+            size=10,
+            color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
+            colorscale='Viridis',
+            opacity=0.8
+        )
+    ))
+
+    # Create the layout of the figure with the drop-down menus to select the objective functions
+    # and update the figure when the user selects a new combination of objective functions
+    update_menus = [dict(
+        buttons=list([
+            dict(
+                args=[{'x': [objective_values[objectives[i]]],
+                       'y': [objective_values[objectives[j]]]}],
+                label=objectives[i] + ' vs ' + objectives[j],
+                method='update'
+            ) for i in range(len(objectives)) for j in range(i+1, len(objectives))
+        ]),
+        direction='down',
+        pad={'r': 10, 't': 10},
+        showactive=True,
+        x=0.1,
+        xanchor='left',
+        y=1.1,
+        yanchor='top'
+    ) ]
+
+    # Create the layout of the figure with the drop-down menus to select the objective functions
+    layout = go.Layout(
+        updatemenus= update_menus,
+        title='Pareto Front: A vs B',
+        xaxis=dict(title='Objective Function A'),
+        yaxis=dict(title='Objective Function B'),
+        width=800,
+        height=600,
+        showlegend=False
+    )
+
+    # Create the figure
+    fig = go.Figure(data=traces, layout=layout)
+    fig.show()
+
+def main(config=cea.config.Configuration()):
+    """Test this plot"""
+    locator = InputLocator(scenario=config.scenario)
+    optimisation_results = locator.get_new_optimization_results_folder()
+    individual_system_results = [locator.get_new_optimization_optimal_supply_systems_summary_file(subfolder)
+                                 for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
+    objectives, objective_function_values = read_objective_values_from_file(individual_system_results)
+
+    plot_pareto_front(objectives, objective_function_values)
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
