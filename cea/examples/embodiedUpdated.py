@@ -43,16 +43,16 @@ def embodiedUpdated(locator, config):
 
 
     # intialmain(config)
-    # # zmain(config)
+    # zmain(config)
     # surrmain(config)
     # schmain(config)
     # termain(config)
     # ge2(locator, config)
-    # # mainweather(config)
+    # mainweather(config)
     # radmain(config)
-    demandmain(config)
-    # emissionmain(config)
-    # operationmain(config)
+    # demandmain(config)
+    emissionmain(config)
+    operationmain(config)
 
     pass
 def main(config):
