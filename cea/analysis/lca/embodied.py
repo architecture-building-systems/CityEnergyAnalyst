@@ -227,13 +227,11 @@ def calculate_contributions(df, year_to_calculate):
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     ## if it was built less than 60 years before, the contribution from each building component is calculated
 
-
-
-
-
-    # New changes are essential i.e. (1) number of replacement which consider the specific service life for
-    # each component and systems separately; (2) Updating Envelop dataset.
-    # The eq. is: ni=(((SERVICE_LIFE_OF_BUILDINGS/Service_Life_Component)-1)+1).
+    # New changes are essential i.e. (1) The LCA of replacement which consider the specific Reference service life
+    # for each component.
+    # (2) Updating Envelop dataset to contain Service_Life_Component (Reference service life).
+    # Service_Life_Component are extracted from: https://doi.org/10.1016/j.dib.2021.107062 .
+    # The eq. for LCA of replacement is: ni=(((SERVICE_LIFE_OF_BUILDINGS/Service_Life_Component)-1)+1).
     # ni should be multiplied by GHG_components and component's area.
     # For Envelop dataset, GHG_component_KgCO2m2 refers to the sum of GWP layers of each component.
     # GHG_components_... returns the total GWP which is: Total GWP = GWP production + GWP end of life.
@@ -243,7 +241,6 @@ def calculate_contributions(df, year_to_calculate):
     # and others components should be assumed as 0.
     # To avoid a zero result for df[total_column] in buildings over 60 years, SERVICE_LIFE_OF_BUILDINGS must
     # change to 120 years in workflows/constants.py
-
 
     df[total_column] = ((df['GHG_WALL_kgCO2m2'] *
                           (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * (
@@ -264,7 +261,6 @@ def calculate_contributions(df, year_to_calculate):
     df[total_column] += (((df['floor_area_ag'] + df[
         'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
 
-
     # the total embodied emissions are calculated as a sum of the contributions from construction or retrofits
 
     df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
@@ -273,7 +269,6 @@ def calculate_contributions(df, year_to_calculate):
     # the total and specific embodied emissions are returned
     result = df[['Name', 'GHG_sys_embodied_tonCO2', 'GHG_sys_embodied_kgCO2m2', 'GFA_m2']]
     return result
-
 
 def calc_if_existing(x, y):
     """

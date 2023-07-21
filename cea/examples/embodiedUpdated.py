@@ -52,7 +52,7 @@ def embodiedUpdated(locator, config):
     # radmain(config)
     # demandmain(config)
     emissionmain(config)
-    operationmain(config)
+    # operationmain(config)
 
     pass
 def main(config):
