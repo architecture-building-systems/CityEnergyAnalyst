@@ -151,7 +151,8 @@ def lca_embodied(year_to_calculate, locator):
                                                      on='Name')
 
     # DataFrame with joined data for all categories
-    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df, on='Name')
+    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df,
+                                                                                                     on='Name')
 
     # calculate building geometry
     ## total window area
