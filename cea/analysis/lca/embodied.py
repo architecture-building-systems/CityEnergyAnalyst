@@ -139,16 +139,16 @@ def lca_embodied(year_to_calculate, locator):
 
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
-                                                     on='Name').merge(df4[fields4],
-                                                     on='Name').merge(df5[fields5],
-                                                     on='Name').merge(df6[fields6],
-                                                     on='Name').merge(df[fields7],
-                                                     on='Name').merge(df2[fields8],
-                                                     on='Name').merge(df3[fields9],
-                                                     on='Name').merge(df4[fields10],
-                                                     on='Name').merge(df5[fields11],
-                                                     on='Name').merge(df6[fields12],
-                                                     on='Name')
+                                          on='Name').merge(df4[fields4],
+                                          on='Name').merge(df5[fields5],
+                                          on='Name').merge(df6[fields6],
+                                          on='Name').merge(df[fields7],
+                                          on='Name').merge(df2[fields8],
+                                          on='Name').merge(df3[fields9],
+                                          on='Name').merge(df4[fields10],
+                                          on='Name').merge(df5[fields11],
+                                          on='Name').merge(df6[fields12],
+                                          on='Name')
 
     # DataFrame with joined data for all categories
     data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df,
@@ -262,7 +262,7 @@ def calculate_contributions(df, year_to_calculate):
     df[total_column] += (((df['floor_area_ag'] + df[
         'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
 
-    # the total embodied emissions are calculated as a sum of the contributions from construction or retrofits
+    # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
 
     df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
     df['GHG_sys_embodied_kgCO2m2'] = df[total_column] / df['GFA_m2']
