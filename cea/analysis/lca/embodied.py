@@ -228,20 +228,15 @@ def calculate_contributions(df, year_to_calculate):
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     ## if it was built less than 60 years before, the contribution from each building component is calculated
 
-    # New changes are essential i.e. (1) The LCA of replacement which consider the specific Reference service life
-    # for each component.
-    # (2) Updating Envelop dataset to contain Service_Life_Component (Reference service life).
-    # Service_Life_Component are extracted from: https://doi.org/10.1016/j.dib.2021.107062 .
-    # The eq. for LCA of replacement is: ni=(((SERVICE_LIFE_OF_BUILDINGS/Service_Life_Component)-1)+1).
-    # ni should be multiplied by GHG_components and component's area.
-    # For Envelop dataset, GHG_component_KgCO2m2 refers to the sum of GWP layers of each component.
-    # GHG_components_... returns the total GWP which is: Total GWP = GWP production + GWP end of life.
-    # df[total_column] is LCA of whole building and can be calculated for both existing and new buildings.
-    # To calculate the embodied emission of retrofitted building only the additional emissions
-    # should be considered. To do that, only the retrofitted components should be involved in equations
-    # and others components should be assumed as 0.
-    # To avoid a zero result for df[total_column] in buildings over 60 years, SERVICE_LIFE_OF_BUILDINGS must
-    # change to 120 years in workflows/constants.py
+    ## if it was built less than 60 years before, the contribution from each building component is calculated
+    # This includes both the emissions in building material production, end of life and replacement based on the
+    # specific reference service life for each component.
+    # For the envelope dataset, GHG_i_kgCO2m2 refers to the sum of the GWP for component i, which is
+    # equal to: Total GWP = GWP production + GWP end of life.
+    # Additionally, the replacement rate of component i is: ni = np.ceil(SERVICE_LIFE_OF_BUILDINGS / Service_Life_Component).
+    # ni should be multiplied by the GHG_components and component's area.
+    # To calculate the embodied emission of retrofitted buildings only the additional emissions should be considered.
+    # In that case, only the retrofitted components are involved in the equations, and other components are set to 0.
 
     df[total_column] = ((df['GHG_wall_kgCO2m2'] *
                           (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * (
