@@ -151,37 +151,37 @@ def lca_embodied(year_to_calculate, locator):
                                                      on='Name')
 
     # DataFrame with joined data for all categories
-    data_meged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df, on='Name')
+    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df, on='Name')
 
     # calculate building geometry
     ## total window area
     average_wwr = [np.mean([a, b, c, d]) for a, b, c, d in
-                   zip(data_meged_df['wwr_south'], data_meged_df['wwr_north'], data_meged_df['wwr_west'],
-                       data_meged_df['wwr_east'])]
+                   zip(data_merged_df['wwr_south'], data_merged_df['wwr_north'], data_merged_df['wwr_west'],
+                       data_merged_df['wwr_east'])]
 
-    data_meged_df['windows_ag'] = average_wwr * data_meged_df['perimeter'] * data_meged_df['height_ag']
+    data_merged_df['windows_ag'] = average_wwr * data_merged_df['perimeter'] * data_merged_df['height_ag']
 
     ## wall area above ground
-    data_meged_df['area_walls_ext_ag'] = data_meged_df['perimeter'] * data_meged_df['height_ag'] - data_meged_df[
+    data_merged_df['area_walls_ext_ag'] = data_merged_df['perimeter'] * data_merged_df['height_ag'] - data_merged_df[
         'windows_ag']
 
     # fix according to the void deck
-    data_meged_df['empty_envelope_ratio'] = 1 - (
-            (data_meged_df['void_deck'] * (data_meged_df['height_ag'] / data_meged_df['floors_ag'])) / (
-            data_meged_df['area_walls_ext_ag'] + data_meged_df['windows_ag']))
-    data_meged_df['windows_ag'] = data_meged_df['windows_ag'] * data_meged_df['empty_envelope_ratio']
-    data_meged_df['area_walls_ext_ag'] = data_meged_df['area_walls_ext_ag'] * data_meged_df['empty_envelope_ratio']
+    data_merged_df['empty_envelope_ratio'] = 1 - (
+            (data_merged_df['void_deck'] * (data_merged_df['height_ag'] / data_merged_df['floors_ag'])) / (
+            data_merged_df['area_walls_ext_ag'] + data_merged_df['windows_ag']))
+    data_merged_df['windows_ag'] = data_merged_df['windows_ag'] * data_merged_df['empty_envelope_ratio']
+    data_merged_df['area_walls_ext_ag'] = data_merged_df['area_walls_ext_ag'] * data_merged_df['empty_envelope_ratio']
 
     ## wall area below ground
-    data_meged_df['area_walls_ext_bg'] = data_meged_df['perimeter'] * data_meged_df['height_bg']
+    data_merged_df['area_walls_ext_bg'] = data_merged_df['perimeter'] * data_merged_df['height_bg']
     ## floor area above ground
-    data_meged_df['floor_area_ag'] = data_meged_df['footprint'] * data_meged_df['floors_ag']
+    data_merged_df['floor_area_ag'] = data_merged_df['footprint'] * data_merged_df['floors_ag']
     ## floor area below ground
-    data_meged_df['floor_area_bg'] = data_meged_df['footprint'] * data_meged_df['floors_bg']
+    data_merged_df['floor_area_bg'] = data_merged_df['footprint'] * data_merged_df['floors_bg']
     ## total floor area
-    data_meged_df['GFA_m2'] = data_meged_df['floor_area_ag'] + data_meged_df['floor_area_bg']
+    data_merged_df['GFA_m2'] = data_merged_df['floor_area_ag'] + data_merged_df['floor_area_bg']
 
-    result_emissions = calculate_contributions(data_meged_df,
+    result_emissions = calculate_contributions(data_merged_df,
                                                year_to_calculate)
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
