@@ -118,23 +118,23 @@ def lca_embodied(year_to_calculate, locator):
     df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')
     df4 = architecture_df.merge(surface_database_floors, left_on='type_floor', right_on='code')
     df5 = architecture_df.merge(surface_database_floors, left_on='type_base', right_on='code')
-    df5.rename({'GHG_FLOOR_kgCO2m2': 'GHG_BASE_kgCO2m2'}, inplace=True, axis=1)
+    df5.rename({'GHG_floor_kgCO2m2': 'GHG_base_kgCO2m2'}, inplace=True, axis=1)
     df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
-    df6.rename({'GHG_WALL_kgCO2m2': 'GHG_PART_kgCO2m2'}, inplace=True, axis=1)
-    fields = ['Name', "GHG_WIN_kgCO2m2"]
-    fields2 = ['Name', "GHG_ROOF_kgCO2m2"]
-    fields3 = ['Name', "GHG_WALL_kgCO2m2"]
-    fields4 = ['Name', "GHG_FLOOR_kgCO2m2"]
-    fields5 = ['Name', "GHG_BASE_kgCO2m2"]
-    fields6 = ['Name', "GHG_PART_kgCO2m2"]
-    fields7 = ['Name', "Service_Life_WIN"]
-    fields8 = ['Name', "Service_Life_ROOF"]
-    fields9 = ['Name', "Service_Life_WALL"]
-    fields10 = ['Name', "Service_Life_FLOOR"]
-    df5.rename({'Service_Life_FLOOR': 'Service_Life_BASE'}, inplace=True, axis=1)
-    fields11 = ['Name', "Service_Life_BASE"]
-    df6.rename({'Service_Life_WALL': 'Service_Life_PART'}, inplace=True, axis=1)
-    fields12 = ['Name', "Service_Life_PART"]
+    df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
+    fields = ['Name', "GHG_win_kgCO2m2"]
+    fields2 = ['Name', "GHG_roof_kgCO2m2"]
+    fields3 = ['Name', "GHG_wall_kgCO2m2"]
+    fields4 = ['Name', "GHG_floor_kgCO2m2"]
+    fields5 = ['Name', "GHG_base_kgCO2m2"]
+    fields6 = ['Name', "GHG_part_kgCO2m2"]
+    fields7 = ['Name', "Service_Life_win"]
+    fields8 = ['Name', "Service_Life_roof"]
+    fields9 = ['Name', "Service_Life_wall"]
+    fields10 = ['Name', "Service_Life_floor"]
+    df5.rename({'Service_Life_floor': 'Service_Life_base'}, inplace=True, axis=1)
+    fields11 = ['Name', "Service_Life_base"]
+    df6.rename({'Service_Life_wall': 'Service_Life_part'}, inplace=True, axis=1)
+    fields12 = ['Name', "Service_Life_part"]
 
 
     surface_properties = df[fields].merge(df2[fields2],
@@ -243,20 +243,20 @@ def calculate_contributions(df, year_to_calculate):
     # To avoid a zero result for df[total_column] in buildings over 60 years, SERVICE_LIFE_OF_BUILDINGS must
     # change to 120 years in workflows/constants.py
 
-    df[total_column] = ((df['GHG_WALL_kgCO2m2'] *
+    df[total_column] = ((df['GHG_wall_kgCO2m2'] *
                           (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_WALL'])) - 1) + 1) +
-                          df['GHG_WIN_kgCO2m2'] * df['windows_ag'] * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_WIN']))- 1) + 1) +
-                          df['GHG_FLOOR_kgCO2m2'] * df['floor_area_ag'] * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_FLOOR'])) - 1) + 1) +
-                          df['GHG_BASE_kgCO2m2'] * df['floor_area_bg'] * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_BASE'])) - 1) + 1) +
-                          df['GHG_PART_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg'])
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])) - 1) + 1) +
+                          df['GHG_win_kgCO2m2'] * df['windows_ag'] * (
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']))- 1) + 1) +
+                          df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] * (
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])) - 1) + 1) +
+                          df['GHG_base_kgCO2m2'] * df['floor_area_bg'] * (
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])) - 1) + 1) +
+                          df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg'])
                           * CONVERSION_AREA_TO_FLOOR_AREA_RATIO * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_PART'])) - 1) + 1) +
-                          df['GHG_ROOF_kgCO2m2'] * df['footprint'] * (
-                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_ROOF'])) - 1) + 1))
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part'])) - 1) + 1) +
+                          df['GHG_roof_kgCO2m2'] * df['footprint'] * (
+                                      ((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])) - 1) + 1))
                          / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
     df[total_column] += (((df['floor_area_ag'] + df[
