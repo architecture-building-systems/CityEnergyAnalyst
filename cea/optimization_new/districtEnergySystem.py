@@ -27,7 +27,7 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
-import time, sys, multiprocessing
+import time, multiprocessing
 
 from copy import deepcopy
 from deap import algorithms, base, tools
@@ -38,7 +38,7 @@ from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
 from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
@@ -46,6 +46,7 @@ class DistrictEnergySystem(object):
     _max_nbr_networks = 0
     _number_of_selected_DES = 0
     _network_type = ""
+    _civ_memory = CapacityIndicatorVectorMemory()
     optimisation_algorithm = GeneticAlgorithm()
 
     def __init__(self, connectivity, buildings, energy_potentials):
@@ -104,14 +105,21 @@ class DistrictEnergySystem(object):
         if optimization_tracker:
             optimization_tracker.set_current_individual(connectivity_vector)
 
+        if not DistrictEnergySystem._civ_memory.max_district_energy_demand:
+            max_district_demand = max(sum([building.demand_flow.profile for building in district_buildings]))
+            DistrictEnergySystem._civ_memory = CapacityIndicatorVectorMemory(max_district_demand)
+
         # build a new district cooling system including its networks
         new_district_cooling_system = DistrictEnergySystem(connectivity_vector,
                                                            district_buildings,
                                                            energy_potentials)
 
-        non_dominated_systems, optimization_tracker = new_district_cooling_system.evaluate(optimization_tracker)
+        non_dominated_systems, optimization_tracker \
+            = new_district_cooling_system.evaluate(optimization_tracker)
 
-        return non_dominated_systems, optimization_tracker
+        process_memory.update(['DistrictEnergySystem'])
+
+        return non_dominated_systems, process_memory, optimization_tracker
 
     def evaluate(self, optimization_tracker=None, return_full_des=False):
         """
@@ -283,7 +291,7 @@ class DistrictEnergySystem(object):
 
         return self.distributed_potentials
 
-    def generate_optimal_supply_systems(self, print_results=False):
+    def generate_optimal_supply_systems(self):
         """
         Build and calculate operation for supply systems of each of the subsystems of the district energy system:
 
@@ -319,17 +327,20 @@ class DistrictEnergySystem(object):
 
         start_time = time.time()
 
+        subsystem_demand = self.subsystem_demands[subsystem.identifier]
+        max_subsystem_demand = subsystem_demand.profile.max()
+
         structure_civ = system_structure.capacity_indicators
         algorithm = SupplySystem.optimisation_algorithm
         ref_points = tools.uniform_reference_points(algorithm.nbr_objectives, 12)
         main_process_memory = MemoryPreserver()
 
         toolbox = base.Toolbox()
-        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ)
+        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ, method='from_memory',
+                         civ_memory=self._civ_memory, max_system_demand=max_subsystem_demand)
         toolbox.register("individual", tools.initIterate, CapacityIndicatorVector, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-        subsystem_demand = self.subsystem_demands[subsystem.identifier]
         toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
                          system_structure=system_structure, demand_energy_flow=subsystem_demand,
                          objectives=algorithm.objectives, process_memory=main_process_memory)
@@ -359,6 +370,7 @@ class DistrictEnergySystem(object):
 
         optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
         [supply_system.evaluate() for supply_system in optimal_supply_systems]
+        self._civ_memory.update(optimal_supply_systems)
         end_time = time.time()
         print(f"Supply system {subsystem.identifier} optimised."
               f"(Time elapsed {end_time-start_time} s)")

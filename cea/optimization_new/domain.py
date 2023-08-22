@@ -176,27 +176,46 @@ class Domain(object):
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
                          optimization_tracker=tracker)
 
+        # Create initial population and evaluate it
         population = toolbox.population(n=algorithm.population)
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
+
+        # Consolidate certain objects in the child processes' memory and make them available to the main process
+        [main_process_memory.consolidate(non_dominated_front[1]) for non_dominated_front in non_dominated_fronts]
+        toolbox.evaluate.keywords['process_memory'] = main_process_memory
+
+        # If parallel processing and detailed outputs are both enabled
         if algorithm.parallelize_computation and tracker:
-            tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
+            # ... consolidate the tracker objects in the main process' memory
+            tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
         for generation in range(1, algorithm.generations+1):
             offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
 
+            # Evaluate the individuals in the offspring, unless they are an exact copy of one of the parents
             new_ind = [ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys())]
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
             optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
+
+            # Consolidate certain objects in the child processes' memory and make them available to the main process
+            main_process_memory.clear_variables()
+            [main_process_memory.consolidate(non_dominated_front[1]) for non_dominated_front in non_dominated_fronts]
+            toolbox.evaluate.keywords['process_memory'] = main_process_memory
+
+            # If parallel processing and detailed outputs are both enabled...
             if algorithm.parallelize_computation and tracker:
-                tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
+                # ...consolidate the tracker objects of each of the child processes
+                tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
             population = toolbox.select(population + offspring, optimal_supply_system_combinations)
             print(f"\n\nDES: gen {generation}")
 
-        self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
+
+        main_process_memory.recall_class_variables()
+        self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population,)
         if tracker:
             tracker.print_evolutions()
         print(f"\nDistrict energy system optimisation complete!")
@@ -216,7 +235,8 @@ class Domain(object):
         #   them, i.e. find optimal combinations of each of the subsystems' non-dominated SupplySystem solutions.
         energy_systems_for_best_connectivity_vectors = [DistrictEnergySystem(ind, self.buildings, self.energy_potentials)
                                                         for ind in last_population]
-        [energy_system.evaluate(return_full_des=True) for energy_system in energy_systems_for_best_connectivity_vectors]
+        [energy_system.evaluate(return_full_des=True)
+         for energy_system in energy_systems_for_best_connectivity_vectors]
 
         # determine the non-dominated solutions across all DistrictEnergySystems of the last population
         #   (with definitive SupplySystem + Connectivity)

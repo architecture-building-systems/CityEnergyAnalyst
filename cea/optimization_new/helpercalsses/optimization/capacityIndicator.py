@@ -94,6 +94,7 @@ class CapacityIndicatorVector(object):
         else:
             self.capacity_indicators = capacity_indicators_list
         self.fitness = Fitness()
+        self.dependencies = [[]]*len(self.capacity_indicators)
 
     @property
     def capacity_indicators(self):
@@ -120,8 +121,8 @@ class CapacityIndicatorVector(object):
             raise ValueError("The new capacity indicator vector values need to be a list and correspond to the "
                              "length of the supply system structure's capacity indicator vector.")
         elif not new_values == [] and \
-                not all([sum([value for i, value in enumerate(new_values)
-                              if self.capacity_indicators[i].category == category]) >= 1
+                not all([round(sum([value for i, value in enumerate(new_values)
+                                    if self.capacity_indicators[i].category == category]),2) >= 1
                          for category in set([ci.category for ci in self.capacity_indicators])]):
             raise ValueError("The capacity indicator values for each supply system placement category need to "
                              "add up to at least 1 (so that the system demand can be met).")
@@ -216,6 +217,35 @@ class CapacityIndicatorVector(object):
                     new_val_vector += self.get_cat(cat)
             self.values = new_val_vector
 
+    def matches_structure(self, other_civ):
+        """
+        Check if the capacity indicator vector matches the structure of another capacity indicator vector.
+        """
+        has_same_length = len(self.values) == len(other_civ.values)
+        if has_same_length:
+            has_same_categories = all([capacity_indicator.category == other_civ.capacity_indicators[i].category
+                                       for i, capacity_indicator in enumerate(self.capacity_indicators)])
+            has_same_codes = all([capacity_indicator.code == other_civ.capacity_indicators[i].code
+                                  for i, capacity_indicator in enumerate(self.capacity_indicators)])
+        else:
+            has_same_categories = False
+            has_same_codes = False
+
+        return has_same_length and has_same_categories and has_same_codes
+
+    def matches_fully(self, other_civ):
+        """
+        Check if the capacity indicator vector matches the structure and values of another capacity indicator vector.
+        """
+        has_same_structure = self.matches_structure(other_civ)
+        if has_same_structure:
+            has_same_values = all([self.capacity_indicators[i].value == other_civ.capacity_indicators[i].value
+                                   for i, capacity_indicator in enumerate(self.capacity_indicators)])
+        else:
+            has_same_values = False
+
+        return self.matches_structure(other_civ) and has_same_values
+
     @staticmethod
     def _categories_cover_demand(new_capacity_indicators):
         """
@@ -257,15 +287,18 @@ class CapacityIndicatorVector(object):
         return new_capacity_indicators
 
     @staticmethod
-    def generate(civ_structure, method='random'):
+    def generate(civ_structure, method='random', civ_memory=None, max_system_demand=None):
         """
         Generate a new capacity indicator vector randomly.
         :param civ_structure: structure of the capacity indicator vector (i.e. defined codes and categories attributes)
         :param method: method of generation of the capacity indicators values
+        :param civ_memory: memory of previously found optimal capacity indicator vectors
+        :param max_system_demand: maximum supply system demand
         """
         civ = copy.deepcopy(civ_structure)
 
-        if method == 'random':
+        if method == 'random' or \
+                (method == 'from_memory' and civ_memory.recall_optimal_civs(max_system_demand, civ) is None):
             i = 0
             while i <= 10:
                 try:
@@ -274,6 +307,11 @@ class CapacityIndicatorVector(object):
                     i += 1
                     continue
                 break
+        elif method == 'from_memory':
+            civ.values = civ_memory.recall_optimal_civs(max_system_demand, civ)
+        else:
+            if civ_memory not in ['random', 'from_memory']:
+                raise ValueError(f"Method {method} not implemented.")
 
         return civ.capacity_indicators
 
@@ -325,3 +363,133 @@ class CapacityIndicatorVector(object):
         recombined_civs[1].reset()
 
         return recombined_civs
+
+class CapacityIndicatorVectorMemory(object):
+
+    def __init__(self, max_district_energy_demand=None, nbr_of_brackets=20):
+
+        self.max_district_energy_demand = max_district_energy_demand
+        self.nbr_of_brackets = nbr_of_brackets
+
+        if max_district_energy_demand:
+            self.best_capacity_indicator_vectors = self._create_brackets(nbr_of_brackets)
+        else:
+            self.best_capacity_indicator_vectors = None
+
+
+    def _create_brackets(self, nbr_of_brackets, rounding_decimal=3):
+        """
+        Create brackets for the district energy demand for which the best capacity indicator vectors shall be stored.
+        """
+        bracket_edges = np.linspace(0, self.max_district_energy_demand, nbr_of_brackets + 1)
+        bracket_medians = (bracket_edges[1:] + bracket_edges[:-1]) / 2
+        bracket_medians = [round(median, rounding_decimal) for median in bracket_medians]
+
+        return {median: [] for median in bracket_medians}
+
+    def _relevant_bracket(self, district_energy_demand):
+        """
+        Find the bracket in which the district energy demand falls.
+        """
+        bracket_medians_list = list(self.best_capacity_indicator_vectors.keys())
+        diff_with_bracket_medians = [abs(district_energy_demand - bracket_median) for bracket_median in bracket_medians_list]
+        bracket_median = bracket_medians_list[diff_with_bracket_medians.index(min(diff_with_bracket_medians))]
+
+        return bracket_median
+
+    def update(self, optimal_supply_systems):
+        """
+        Store the optimal capacity indicator vectors in the bracket closest to the max supply system energy demand.
+
+        :param optimal_supply_systems: list of optimal supply systems
+        :type optimal_supply_systems: list of <cea.optimization_new.supplySystem>-SupplySystem objects
+        """
+        # Find the bracket median closest to the max district energy demand and clear the list of optimal capacity
+        # indicator vectors in that bracket
+        max_system_demand = max(optimal_supply_systems[0].demand_energy_flow.profile)
+        bracket_median = self._relevant_bracket(max_system_demand)
+        bracket_medians_list = list(self.best_capacity_indicator_vectors.keys())
+        former_optimal_civs = self.best_capacity_indicator_vectors[bracket_median]
+        self.best_capacity_indicator_vectors[bracket_median] = []
+
+        # Store the new optimal capacity indicator vectors in the bracket
+        for optimal_supply_system in optimal_supply_systems:
+            self.best_capacity_indicator_vectors[bracket_median].append(optimal_supply_system.capacity_indicator_vector)
+
+        # Fill up to two adjacent empty brackets with the same optimal capacity indicator vectors
+        lower_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)-1]
+        i = 0
+        while (not self.best_capacity_indicator_vectors[lower_bracket_median])\
+                or self.best_capacity_indicator_vectors[lower_bracket_median] == former_optimal_civs:
+            self.best_capacity_indicator_vectors[lower_bracket_median] = \
+                self.best_capacity_indicator_vectors[bracket_median]
+            lower_bracket_median = bracket_medians_list[bracket_medians_list.index(lower_bracket_median)-1]
+            i += 1
+            if lower_bracket_median > bracket_median or i >= 2:
+                break
+
+        upper_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)+1]
+        i = 0
+        while (not self.best_capacity_indicator_vectors[upper_bracket_median]) \
+                or self.best_capacity_indicator_vectors[upper_bracket_median] == former_optimal_civs:
+            self.best_capacity_indicator_vectors[upper_bracket_median] = \
+                self.best_capacity_indicator_vectors[bracket_median]
+            upper_bracket_median = bracket_medians_list[bracket_medians_list.index(upper_bracket_median)+1]
+            i += 1
+            if upper_bracket_median < bracket_median or i >= 2:
+                break
+
+    def recall_optimal_civs(self, max_system_demand, current_civ):
+        """
+        Recall the optimal capacity indicator vectors from the bracket closest to the max supply system energy demand
+        and return one of them at random.
+
+        :param max_system_demand: maximum supply system energy demand for any given time step
+        :type max_system_demand: float
+        """
+        diff_with_bracket_medians = [abs(max_system_demand - bracket_median)
+                                     for bracket_median in self.best_capacity_indicator_vectors.keys()]
+        bracket_median = list(self.best_capacity_indicator_vectors.keys())[diff_with_bracket_medians.
+                            index(min(diff_with_bracket_medians))]
+        matching_civs = self.find_matches(current_civ, bracket_median)
+
+        if matching_civs:
+            randomly_selected_civ = random.choice(matching_civs)
+            return randomly_selected_civ.values
+        else:
+            return None
+
+    def find_matches(self, current_civ, bracket_median):
+        if not self.best_capacity_indicator_vectors[bracket_median]:
+            return None
+        else:
+            matching_civs = [civ for civ in self.best_capacity_indicator_vectors[bracket_median]
+                             if civ.matches_structure(current_civ)]
+            return matching_civs
+
+    def clear(self):
+        """
+        Clear the list of best capacity indicator vectors in all brackets.
+        """
+        self.best_capacity_indicator_vectors = {median: [] for median in self.best_capacity_indicator_vectors.keys()}
+
+    def consolidate(self, more_civ_memory):
+
+        if not self.max_district_energy_demand:
+            self.max_district_energy_demand = more_civ_memory.max_district_energy_demand
+            self.nbr_of_brackets = more_civ_memory.nbr_of_brackets
+            self.best_capacity_indicator_vectors = self._create_brackets(self.nbr_of_brackets)
+
+        for bracket_median in self.best_capacity_indicator_vectors.keys():
+            self.best_capacity_indicator_vectors[bracket_median] +=\
+                more_civ_memory.best_capacity_indicator_vectors[bracket_median]
+
+        # Remove duplicates
+        for bracket_median in self.best_capacity_indicator_vectors.keys():
+            unique_civs = []
+            for i, civ in enumerate(self.best_capacity_indicator_vectors[bracket_median]):
+                found_in_remainder = [civ.matches_fully(other_civ) for other_civ
+                                      in self.best_capacity_indicator_vectors[bracket_median][i:]].count(True) > 1
+                if not found_in_remainder:
+                    unique_civs.append(civ)
+            self.best_capacity_indicator_vectors[bracket_median] = unique_civs
