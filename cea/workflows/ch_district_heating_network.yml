@@ -1,4 +1,4 @@
-# getting-started: runs everything concerning CEA data management
+# from CEA data management to solar radiation to energy demand
 
 - script: data-initializer
   parameters:
@@ -12,3 +12,12 @@
     buffer: 100
 - script: terrain-helper
 - script: streets-helper
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: network-layout
+  parameters:
+    network-type: DH
+- script: thermal-network
+  parameters:
+    network-type: DH

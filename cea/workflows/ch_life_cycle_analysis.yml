@@ -1,4 +1,4 @@
-# getting-started: runs everything concerning CEA data management
+# from CEA data management to emissions and system costs
 
 - script: data-initializer
   parameters:
@@ -12,3 +12,8 @@
     buffer: 100
 - script: terrain-helper
 - script: streets-helper
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs

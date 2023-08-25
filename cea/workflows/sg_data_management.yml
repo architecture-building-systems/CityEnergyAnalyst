@@ -2,11 +2,11 @@
 
 - script: data-initializer
   parameters:
-    databases-path: CH
+    databases-path: SG
 - script: archetypes-mapper
 - script: weather-helper
   parameters:
-    weather: Zuerich-Kloten_1990_2010_TMY
+    weather: Singapore-Changi_1990_2010_TMY
 - script: surroundings-helper
   parameters:
     buffer: 100
