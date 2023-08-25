@@ -43,6 +43,5 @@
 - script: decentralized
 - script: optimization-new
   parameters:
-    multiprocessing: false
     network-type: DC
     objective-functions: [system_energy_demand, GHG_emissions, cost]
