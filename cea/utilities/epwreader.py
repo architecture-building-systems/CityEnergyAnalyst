@@ -31,7 +31,9 @@ def epw_to_dataframe(weather_path):
                   'ceiling_hgt_m', 'presweathobs', 'presweathcodes', 'precip_wtr_mm', 'aerosol_opt_thousandths',
                   'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
-    df = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
+    df = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels, encoding="utf-8").drop('datasource',
+                                                                                                     axis=1)
+
     return df
 
 
