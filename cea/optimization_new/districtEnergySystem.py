@@ -338,7 +338,8 @@ class DistrictEnergySystem(object):
         toolbox = base.Toolbox()
         toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ, method='from_memory',
                          civ_memory=self._civ_memory, max_system_demand=max_subsystem_demand)
-        toolbox.register("individual", tools.initIterate, CapacityIndicatorVector, toolbox.generate)
+        toolbox.register("individual", CapacityIndicatorVector.initialize,
+                         capacity_indicator_generator=toolbox.generate, dependencies=structure_civ.dependencies)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
@@ -348,22 +349,56 @@ class DistrictEnergySystem(object):
         toolbox.register("mutate", CapacityIndicatorVector.mutate, algorithm=algorithm)
         toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
+        # Generate initial population
         population = toolbox.population(n=algorithm.population)
         fitnesses = toolbox.map(toolbox.evaluate, population)
-        for ind, fit in zip(population, fitnesses):
-            ind.fitness.values = fit
+        for i, fit in enumerate(fitnesses):
+            # if the supply system could not be built and/or operated properly, generate and evaluate a new capacity
+            #   indicator vector
+            while not fit:
+                population[i] = toolbox.individual()
+                fit = toolbox.evaluate(population[i])
+            population[i].fitness.values = fit
 
+        # Perform the genetic optimization
         for generation in range(1, algorithm.generations+1):
+            # initialize a few relevant variables
             population_civs = set(tuple(pop_ind.values) for pop_ind in population)
-            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+            targeted_number_of_offspring = 0
+            offspring = []
+            fit_offspring = []
+            unfit_offspring = []
+            procreation_attempts = 0
 
-            novel_offspring = [offspring_ind for offspring_ind in offspring
-                               if not tuple(offspring_ind.values) in population_civs]
-            fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
-            for ind, fit in zip(novel_offspring, fitnesses):
-                ind.fitness.values = fit
+            # generate offspring until a sufficient number of fit offspring has been generated
+            while unfit_offspring or procreation_attempts == 0:
+                # perform mutation and crossover to generate a batch of offspring
+                offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+                # filter out offspring that are identical to existing population members
+                novel_offspring = [offspring_ind for offspring_ind in offspring
+                                   if not tuple(offspring_ind.values) in population_civs]
+                # decide on the number of offspring to create in this generation
+                if procreation_attempts == 0:
+                    targeted_number_of_offspring = len(novel_offspring)
+                # reset the list of unfit offspring
+                unfit_offspring = []
+                # evaluate the fitness of the offspring
+                fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
+                for ind, fit in zip(novel_offspring, fitnesses):
+                    if fit:
+                        ind.fitness.values = fit
+                        if tuple(ind.values) not in set(tuple(fit_ind.values) for fit_ind in fit_offspring):
+                            fit_offspring += [ind]
+                    else:
+                        unfit_offspring += [ind]
+                # if the targeted number of offspring is not yet reached and there have been fewer than 10 attempts,
+                #   try again
+                procreation_attempts += 1
+                if procreation_attempts >= 10 or len(fit_offspring) >= targeted_number_of_offspring:
+                    break
 
-            population = toolbox.select(population + novel_offspring, algorithm.population)
+            # select the fittest individuals among population and offspring and replace the population with them
+            population = toolbox.select(population + fit_offspring, algorithm.population)
             print(f"{subsystem.identifier}: gen {generation} - "
                   f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
                   f"% of offspring retained")

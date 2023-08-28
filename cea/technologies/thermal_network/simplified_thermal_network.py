@@ -155,7 +155,7 @@ def calc_linear_thermal_loss_coefficient(diameter_ext_m, diameter_int_m, diamete
     r_s_m = diameter_insulation_m / 2
     k_pipe_WpermK = 58.7  # steel pipe
     k_ins_WpermK = 0.059  # calcium silicate insulation
-    resistancce_mKperW = ((math.log(r_out_m / r_in_m) / k_pipe_WpermK) + (math.log(r_s_m / r_out_m) / k_ins_WpermK))
+    resistance_mKperW = ((math.log(r_out_m / r_in_m) / k_pipe_WpermK) + (math.log(r_s_m / r_out_m) / k_ins_WpermK))
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
 
