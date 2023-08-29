@@ -302,10 +302,10 @@ class EnergyCarrier(object):
             index_closest_mean_temp = (thermal_ec_mean_quals - temperature).abs().nsmallest(n=1).index[0]
             energy_carrier_code = thermal_ecs_of_subtype['code'].loc[index_closest_mean_temp]
         else:
-            energy_carrier_code = thermal_ecs_of_subtype['code'][0]
+            energy_carrier_code = thermal_ecs_of_subtype['code'].iloc[0]
             print(f'The temperature level of a renewable energy potential was not available. '
                   f'We assume that the following energy carrier is output: '
-                  f'{thermal_ecs_of_subtype["description"][0]}')
+                  f'{thermal_ecs_of_subtype["description"].iloc[0]}')
         return energy_carrier_code
 
     @staticmethod
