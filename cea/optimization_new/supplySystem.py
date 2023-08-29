@@ -82,9 +82,11 @@ class SupplySystem(object):
         supply_system = SupplySystem(system_structure=system_structure,
                                      capacity_indicator_vector=capacity_indicators,
                                      demand_energy_flow=demand_energy_flow)
-        supply_system.evaluate()
-
-        fitness = [supply_system.overall_fitness[objective] for objective in objectives]
+        try:
+            supply_system.evaluate()
+            fitness = [supply_system.overall_fitness[objective] for objective in objectives]
+        except ValueError:
+            fitness = None
 
         return fitness
 
@@ -149,28 +151,20 @@ class SupplySystem(object):
             is sufficient, or
          2. set to the minimum available capacity of the component type otherwise.
         """
-        for index, capacity_indicator in enumerate(self.capacity_indicator_vector):
+        for capacity_indicator in self.capacity_indicator_vector.capacity_indicators:
 
-            component_model = self.capacity_indicator_vector.capacity_indicators[index].code
-            placement = self.capacity_indicator_vector.capacity_indicators[index].category
+            component_model = capacity_indicator.code
+            placement = capacity_indicator.category
 
             max_capacity_component = self.structure.max_cap_active_components[placement][component_model]
             component_class = type(max_capacity_component)
-            capacity_kW = capacity_indicator * max_capacity_component.capacity
+            capacity_kW = capacity_indicator.value * max_capacity_component.capacity
 
             try:
                 self.installed_components[placement][component_model] = \
                     component_class(component_model, placement, capacity_kW)
             except ValueError:
-                if sum(self.capacity_indicator_vector.get_cat(placement)) - capacity_indicator < 1:
-                    min_model_capacity = ActiveComponent.get_smallest_capacity(component_class, component_model)
-                    new_cap_indicator = ceil(min_model_capacity / max_capacity_component.capacity * 100) / 100
-                    self.capacity_indicator_vector[index] = new_cap_indicator
-                    capacity_kW = new_cap_indicator * max_capacity_component.capacity
-                    self.installed_components[placement][component_model] = \
-                        component_class(component_model, placement, capacity_kW)
-                else:
-                    self.capacity_indicator_vector[index] = 0
+                capacity_indicator.value = 0
 
         return self.installed_components
 

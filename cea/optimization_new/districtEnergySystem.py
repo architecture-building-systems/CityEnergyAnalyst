@@ -27,7 +27,7 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
-import time, sys, multiprocessing
+import time, multiprocessing
 
 from copy import deepcopy
 from deap import algorithms, base, tools
@@ -38,7 +38,7 @@ from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
 from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
@@ -46,6 +46,7 @@ class DistrictEnergySystem(object):
     _max_nbr_networks = 0
     _number_of_selected_DES = 0
     _network_type = ""
+    _civ_memory = CapacityIndicatorVectorMemory()
     optimisation_algorithm = GeneticAlgorithm()
 
     def __init__(self, connectivity, buildings, energy_potentials):
@@ -104,14 +105,21 @@ class DistrictEnergySystem(object):
         if optimization_tracker:
             optimization_tracker.set_current_individual(connectivity_vector)
 
+        if not DistrictEnergySystem._civ_memory.max_district_energy_demand:
+            max_district_demand = max(sum([building.demand_flow.profile for building in district_buildings]))
+            DistrictEnergySystem._civ_memory = CapacityIndicatorVectorMemory(max_district_demand)
+
         # build a new district cooling system including its networks
         new_district_cooling_system = DistrictEnergySystem(connectivity_vector,
                                                            district_buildings,
                                                            energy_potentials)
 
-        non_dominated_systems, optimization_tracker = new_district_cooling_system.evaluate(optimization_tracker)
+        non_dominated_systems, optimization_tracker \
+            = new_district_cooling_system.evaluate(optimization_tracker)
 
-        return non_dominated_systems, optimization_tracker
+        process_memory.update(['DistrictEnergySystem'])
+
+        return non_dominated_systems, process_memory, optimization_tracker
 
     def evaluate(self, optimization_tracker=None, return_full_des=False):
         """
@@ -283,7 +291,7 @@ class DistrictEnergySystem(object):
 
         return self.distributed_potentials
 
-    def generate_optimal_supply_systems(self, print_results=False):
+    def generate_optimal_supply_systems(self):
         """
         Build and calculate operation for supply systems of each of the subsystems of the district energy system:
 
@@ -319,17 +327,21 @@ class DistrictEnergySystem(object):
 
         start_time = time.time()
 
+        subsystem_demand = self.subsystem_demands[subsystem.identifier]
+        max_subsystem_demand = subsystem_demand.profile.max()
+
         structure_civ = system_structure.capacity_indicators
         algorithm = SupplySystem.optimisation_algorithm
         ref_points = tools.uniform_reference_points(algorithm.nbr_objectives, 12)
         main_process_memory = MemoryPreserver()
 
         toolbox = base.Toolbox()
-        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ)
-        toolbox.register("individual", tools.initIterate, CapacityIndicatorVector, toolbox.generate)
+        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ, method='from_memory',
+                         civ_memory=self._civ_memory, max_system_demand=max_subsystem_demand)
+        toolbox.register("individual", CapacityIndicatorVector.initialize,
+                         capacity_indicator_generator=toolbox.generate, dependencies=structure_civ.dependencies)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-        subsystem_demand = self.subsystem_demands[subsystem.identifier]
         toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
                          system_structure=system_structure, demand_energy_flow=subsystem_demand,
                          objectives=algorithm.objectives, process_memory=main_process_memory)
@@ -337,24 +349,63 @@ class DistrictEnergySystem(object):
         toolbox.register("mutate", CapacityIndicatorVector.mutate, algorithm=algorithm)
         toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
+        # Generate initial population
         population = toolbox.population(n=algorithm.population)
         fitnesses = toolbox.map(toolbox.evaluate, population)
-        for ind, fit in zip(population, fitnesses):
-            ind.fitness.values = fit
+        for i, fit in enumerate(fitnesses):
+            # if the supply system could not be built and/or operated properly, generate and evaluate a new capacity
+            #   indicator vector
+            while not fit:
+                population[i] = toolbox.individual()
+                fit = toolbox.evaluate(population[i])
+            population[i].fitness.values = fit
 
+        # Perform the genetic optimization
         for generation in range(1, algorithm.generations+1):
-            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+            # initialize a few relevant variables
+            population_civs = set(tuple(pop_ind.values) for pop_ind in population)
+            targeted_number_of_offspring = 0
+            offspring = []
+            fit_offspring = []
+            unfit_offspring = []
+            procreation_attempts = 0
 
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit
+            # generate offspring until a sufficient number of fit offspring has been generated
+            while unfit_offspring or procreation_attempts == 0:
+                # perform mutation and crossover to generate a batch of offspring
+                offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+                # filter out offspring that are identical to existing population members
+                novel_offspring = [offspring_ind for offspring_ind in offspring
+                                   if not tuple(offspring_ind.values) in population_civs]
+                # decide on the number of offspring to create in this generation
+                if procreation_attempts == 0:
+                    targeted_number_of_offspring = len(novel_offspring)
+                # reset the list of unfit offspring
+                unfit_offspring = []
+                # evaluate the fitness of the offspring
+                fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
+                for ind, fit in zip(novel_offspring, fitnesses):
+                    if fit:
+                        ind.fitness.values = fit
+                        if tuple(ind.values) not in set(tuple(fit_ind.values) for fit_ind in fit_offspring):
+                            fit_offspring += [ind]
+                    else:
+                        unfit_offspring += [ind]
+                # if the targeted number of offspring is not yet reached and there have been fewer than 10 attempts,
+                #   try again
+                procreation_attempts += 1
+                if procreation_attempts >= 10 or len(fit_offspring) >= targeted_number_of_offspring:
+                    break
 
-            population = toolbox.select(population + offspring, algorithm.population)
-            print(f"{subsystem.identifier}: gen {generation}")
+            # select the fittest individuals among population and offspring and replace the population with them
+            population = toolbox.select(population + fit_offspring, algorithm.population)
+            print(f"{subsystem.identifier}: gen {generation} - "
+                  f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
+                  f"% of offspring retained")
 
         optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
         [supply_system.evaluate() for supply_system in optimal_supply_systems]
+        self._civ_memory.update(optimal_supply_systems)
         end_time = time.time()
         print(f"Supply system {subsystem.identifier} optimised."
               f"(Time elapsed {end_time-start_time} s)")

@@ -26,6 +26,7 @@ __status__ = "Production"
 
 import copy
 import random
+import warnings
 import numpy as np
 
 from deap import tools
@@ -34,13 +35,14 @@ from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 
 
 class CapacityIndicator(object):
-    def __init__(self, component_category=None, component_code=None, value=None):
+    def __init__(self, component_category=None, component_code=None, main_energy_carrier=None, value=None):
         if value:
             self.value = value
         else:
             self.value = 1
         self.code = component_code
         self.category = component_category
+        self.main_energy_carrier = main_energy_carrier
 
     @property
     def category(self):
@@ -71,29 +73,34 @@ class CapacityIndicator(object):
 
     @value.setter
     def value(self, new_value):
-        if new_value and not 0 <= new_value <= 1:
-            raise ValueError("The capacity indicator values each need to be between 0 and 1.")
+        if new_value and new_value > 1:
+            self._value = 1
+            warnings.warn("There was an attempt to apply a value larger than 1 to a capacity indicator. "
+                          "This is not allowed. The value is set to 1.")
+        elif new_value and new_value < 0:
+            self._value = 0
+            warnings.warn("There was an attempt to apply a value smaller than 0 to a capacity indicator. "
+                          "This is not allowed. The value is set to 0.")
         else:
             self._value = round(new_value, 2)
-
-    def change_value(self, new_value, inplace=True):
-        if inplace:
-            self.value = new_value
-            return self
-        else:
-            new_capacity_indicator = copy.deepcopy(self)
-            new_capacity_indicator.value = new_value
-            return new_capacity_indicator
 
 
 class CapacityIndicatorVector(object):
 
-    def __init__(self, capacity_indicators_list=None):
+    _overdimensioning_factor = 1.2
+
+    def __init__(self, capacity_indicators_list=None, dependencies=None):
+        self.dependencies = dependencies
         if not capacity_indicators_list:
             self._capacity_indicators = [CapacityIndicator()]
         else:
             self.capacity_indicators = capacity_indicators_list
         self.fitness = Fitness()
+
+    @staticmethod
+    def initialize(capacity_indicator_generator=None, dependencies=None):
+        """ Initializes a capacity indicator vector based on a preset generator function. """
+        return CapacityIndicatorVector(capacity_indicator_generator(), dependencies)
 
     @property
     def capacity_indicators(self):
@@ -103,11 +110,10 @@ class CapacityIndicatorVector(object):
     def capacity_indicators(self, new_capacity_indicators):
         if not all([isinstance(capacity_indicator, CapacityIndicator) for capacity_indicator in new_capacity_indicators]):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
-        elif not new_capacity_indicators == [] and \
-                not all(CapacityIndicatorVector._categories_cover_demand(new_capacity_indicators)):
-            self._capacity_indicators = CapacityIndicatorVector._correct_values(new_capacity_indicators)
         else:
             self._capacity_indicators = new_capacity_indicators
+            if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
+                self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
 
     @property
     def values(self):
@@ -120,11 +126,10 @@ class CapacityIndicatorVector(object):
             raise ValueError("The new capacity indicator vector values need to be a list and correspond to the "
                              "length of the supply system structure's capacity indicator vector.")
         elif not new_values == [] and \
-                not all([sum([value for i, value in enumerate(new_values)
-                              if self.capacity_indicators[i].category == category]) >= 1
-                         for category in set([ci.category for ci in self.capacity_indicators])]):
-            raise ValueError("The capacity indicator values for each supply system placement category need to "
-                             "add up to at least 1 (so that the system demand can be met).")
+                any(self._categories_overdimensioned(new_values)):
+            corrected_values = self._correct_values(new_values)
+            for i in range(len(self)):
+                self[i] = corrected_values[i]
         else:
             for i in range(len(self)):
                 self[i] = new_values[i]
@@ -184,7 +189,7 @@ class CapacityIndicatorVector(object):
         """
         Reset the entire capacity indicator vector at once in order to correct capacity indicator values if necessary
         (checked in the setter) after mutation or recombination.
-        e.g. if the capacity indicators of a given category are <1, i.e. cannot supply the required demand
+        e.g. if the capacity indicators of a given category overdimensioned
         """
         self.capacity_indicators = self.capacity_indicators
 
@@ -216,56 +221,163 @@ class CapacityIndicatorVector(object):
                     new_val_vector += self.get_cat(cat)
             self.values = new_val_vector
 
-    @staticmethod
-    def _categories_cover_demand(new_capacity_indicators):
+    def matches_structure(self, other_civ):
         """
-        check if the component categories in a list of new capacity indicators cover the maximum required demand
-        (i.e. add up to >= 1)
+        Check if the capacity indicator vector matches the structure of another capacity indicator vector.
         """
-        categories_cover_demand = [sum([capacity_indicator.value for capacity_indicator in new_capacity_indicators
-                                        if capacity_indicator.category == category]) >= 1
-                                   for category in list(set([ci.category for ci in new_capacity_indicators]))
-                                   if any([capacity_indicator.category == category
-                                           for capacity_indicator in new_capacity_indicators])]
-        return categories_cover_demand
+        has_same_length = len(self.values) == len(other_civ.values)
+        if has_same_length:
+            has_same_categories = all([capacity_indicator.category == other_civ.capacity_indicators[i].category
+                                       for i, capacity_indicator in enumerate(self.capacity_indicators)])
+            has_same_codes = all([capacity_indicator.code == other_civ.capacity_indicators[i].code
+                                  for i, capacity_indicator in enumerate(self.capacity_indicators)])
+        else:
+            has_same_categories = False
+            has_same_codes = False
 
-    @staticmethod
-    def _correct_values(new_capacity_indicators):
+        return has_same_length and has_same_categories and has_same_codes
+
+    def matches_fully(self, other_civ):
         """
-        Correct a tentative capacity indicator vector's values by following these steps:
-            1. Find out which category's capacity indicators do not add up to 1 (i.e. potentially can not meet demand)
-            2. For the relevant categories identify the component with the highest tentative capacity indicator
-            3. Change that components capacity indicator so that the category's CIs add up to 1.
+        Check if the capacity indicator vector matches the structure and values of another capacity indicator vector.
+        """
+        has_same_structure = self.matches_structure(other_civ)
+        if has_same_structure:
+            has_same_values = all([self.capacity_indicators[i].value == other_civ.capacity_indicators[i].value
+                                   for i, capacity_indicator in enumerate(self.capacity_indicators)])
+        else:
+            has_same_values = False
+
+        return self.matches_structure(other_civ) and has_same_values
+
+    def _categories_overdimensioned(self, new_capacity_indicator_values):
+        """
+        Check if the component categories in a list of new capacity indicators are overdimensioned.
+        """
+        categories_overdimensioned  = []
+
+        for category in ['primary', 'secondary', 'tertiary']:
+            if any([capacity_indicator.category == category for capacity_indicator in self.capacity_indicators]):
+                main_ec_list = list(set(self.dependencies[category].keys()))
+                category_overdimensioned = any([self._values_breach_upper_bound(category,
+                                                                                energy_carrier,
+                                                                                new_capacity_indicator_values)
+                                                for energy_carrier in main_ec_list])
+                categories_overdimensioned.append(category_overdimensioned)
+
+        return categories_overdimensioned
+
+    def _values_breach_upper_bound(self, category, energy_carrier, new_capacity_indicator_values):
+        """
+        Check if the values of a list of capacity indicators of a given category and with a given
+        main energy carrier (MEC) are overdimensioned (i.e. cumulated capacity of the component group would exceed the
+        maximum demand required by upstream components by more than a factor of X).
+        """
+        upper_bound = self._get_upper_bound(category, energy_carrier, new_capacity_indicator_values)
+        cumulated_ci_values = sum([capacity_indicator_value
+                                   for i, capacity_indicator_value in enumerate(new_capacity_indicator_values)
+                                   if (self.capacity_indicators[i].category == category) and
+                                   (self.capacity_indicators[i].main_energy_carrier == energy_carrier)])
+
+        upper_bound_breached = round(cumulated_ci_values, 2) > \
+                               round(upper_bound * CapacityIndicatorVector._overdimensioning_factor, 2)
+
+        return upper_bound_breached
+
+    def _get_upper_bound(self, category, energy_carrier, capacity_indicator_values):
+        """
+        Calculate the upper bound of cumulated capacity indicator values for a given category and
+        main energy carrier (MEC), i.e.:
+            1. 1 for primary components, or
+            2. sum y_i * c_i for secondary/tertiary components, where:
+                - y_i is the capacity indicator value of their upstream component and
+                - c_i is the associated dependency factor
+        """
+        if category == 'primary':
+            upper_bound = 1
+        elif category in ['secondary', 'tertiary']:
+            upper_bound = sum([factor * [ci_value
+                                         for i, ci_value in enumerate(capacity_indicator_values)
+                                         if self.capacity_indicators[i].code == dependency][0]
+                               for dependency, factor
+                               in zip(self.dependencies[category][energy_carrier]['components'],
+                                      self.dependencies[category][energy_carrier]['factors'])])
+        else:
+            raise ValueError(f"The indicated supply system category ({category}) doesn't exist.")
+
+        return round(upper_bound, 2)
+
+    def _correct_values(self, new_capacity_indicator_values):
+        """
+        Correct a list of tentative CapacityIndicatorVector values by following these steps:
+            1. Find group of components that are part of the same category and have the same main energy carrier.
+            2. Determine if the cumulative capacity indicator values of these groups meet the required upper bound.
+            3. If not, while the group does not meet the upper bound:
+                a) identify the lowest non-zero capacity indicator value in that group (if multiple, chose one at random)
+                b) lower that value (minimum 0) so that the sum of all values in that group meets the upper bound.
         """
         # Step 1
-        component_categories = list(set([ci.category for ci in new_capacity_indicators]))
-        categories_cover_demand = CapacityIndicatorVector._categories_cover_demand(new_capacity_indicators)
-        understocked_categories = [category for i, category in enumerate(component_categories)
-                                   if not categories_cover_demand[i]]
+        component_categories = list(set([ci.category for ci in self.capacity_indicators]))
+        main_energy_carriers_in_cat = {category: list(set([ci.main_energy_carrier
+                                                           for ci in self.capacity_indicators
+                                                           if ci.category == category]))
+                                       for category in component_categories}
 
-        for category in understocked_categories:
-            # Step 2
-            ci_values_in_cat = {ci.code: ci.value for ci in new_capacity_indicators if ci.category == category}
-            highest_ci_component = [component for component, value in ci_values_in_cat.items()
-                                    if value == max(ci_values_in_cat.values())][0]
-            # Step 3
-            corrected_ci_value = 1 - (sum(ci_values_in_cat.values()) - max(ci_values_in_cat.values()))
-            new_capacity_indicators = [ci if not ci.code == highest_ci_component
-                                       else ci.change_value(corrected_ci_value)
-                                       for ci in new_capacity_indicators]
+        # Step 2
+        overdimensioned_groups = [{'category': category, 'main_ec': main_ec}
+                                 for category, main_ecs in main_energy_carriers_in_cat.items()
+                                 for main_ec in main_ecs
+                                 if self._values_breach_upper_bound(category, main_ec, new_capacity_indicator_values)]
 
-        return new_capacity_indicators
+        # Step 3
+        while overdimensioned_groups:
+            for group in overdimensioned_groups:
+                while self._values_breach_upper_bound(group['category'], group['main_ec'],
+                                                      new_capacity_indicator_values):
+                    # Step 3a
+                    non_zero_ci_values_in_group = {self.capacity_indicators[i].code: ci_value
+                                                   for i, ci_value in enumerate(new_capacity_indicator_values)
+                                                   if (self.capacity_indicators[i].category == group['category']) and
+                                                   (self.capacity_indicators[i].main_energy_carrier == group['main_ec'])
+                                                   and
+                                                   (ci_value > 0)}
+                    lowest_ci_components = [component for component, value in non_zero_ci_values_in_group.items()
+                                            if value == min(non_zero_ci_values_in_group.values())]
+                    component_to_resize = random.choice(lowest_ci_components)
+
+                    # Step 3b
+                    upper_bound = self._get_upper_bound(group['category'], group['main_ec'],
+                                                        new_capacity_indicator_values)
+                    odf_corrected_bound = upper_bound * CapacityIndicatorVector._overdimensioning_factor
+                    corrected_ci_value = min(non_zero_ci_values_in_group.values()) - \
+                                         (sum(non_zero_ci_values_in_group.values()) - odf_corrected_bound)
+                    new_capacity_indicator_values = [ci_value
+                                                     if not self.capacity_indicators[i].code == component_to_resize
+                                                     else max(corrected_ci_value, 0)
+                                                     for i, ci_value in enumerate(new_capacity_indicator_values)]
+
+            # check if the changing the CI-values in one category have led to overdimensioning in a downstream category
+            overdimensioned_groups = [{'category': category, 'main_ec': main_ec}
+                                      for category, main_ecs in main_energy_carriers_in_cat.items()
+                                      for main_ec in main_ecs
+                                      if self._values_breach_upper_bound(category, main_ec,
+                                                                         new_capacity_indicator_values)]
+
+        return new_capacity_indicator_values
 
     @staticmethod
-    def generate(civ_structure, method='random'):
+    def generate(civ_structure, method='random', civ_memory=None, max_system_demand=None):
         """
         Generate a new capacity indicator vector randomly.
         :param civ_structure: structure of the capacity indicator vector (i.e. defined codes and categories attributes)
         :param method: method of generation of the capacity indicators values
+        :param civ_memory: memory of previously found optimal capacity indicator vectors
+        :param max_system_demand: maximum supply system demand
         """
         civ = copy.deepcopy(civ_structure)
 
-        if method == 'random':
+        if method == 'random' or \
+                (method == 'from_memory' and civ_memory.recall_optimal_civs(max_system_demand, civ) is None):
             i = 0
             while i <= 10:
                 try:
@@ -274,6 +386,11 @@ class CapacityIndicatorVector(object):
                     i += 1
                     continue
                 break
+        elif method == 'from_memory':
+            civ.values = civ_memory.recall_optimal_civs(max_system_demand, civ)
+        else:
+            if civ_memory not in ['random', 'from_memory']:
+                raise ValueError(f"Method {method} not implemented.")
 
         return civ.capacity_indicators
 
@@ -325,3 +442,133 @@ class CapacityIndicatorVector(object):
         recombined_civs[1].reset()
 
         return recombined_civs
+
+class CapacityIndicatorVectorMemory(object):
+
+    def __init__(self, max_district_energy_demand=None, nbr_of_brackets=20):
+
+        self.max_district_energy_demand = max_district_energy_demand
+        self.nbr_of_brackets = nbr_of_brackets
+
+        if max_district_energy_demand:
+            self.best_capacity_indicator_vectors = self._create_brackets(nbr_of_brackets)
+        else:
+            self.best_capacity_indicator_vectors = None
+
+
+    def _create_brackets(self, nbr_of_brackets, rounding_decimal=3):
+        """
+        Create brackets for the district energy demand for which the best capacity indicator vectors shall be stored.
+        """
+        bracket_edges = np.linspace(0, self.max_district_energy_demand, nbr_of_brackets + 1)
+        bracket_medians = (bracket_edges[1:] + bracket_edges[:-1]) / 2
+        bracket_medians = [round(median, rounding_decimal) for median in bracket_medians]
+
+        return {median: [] for median in bracket_medians}
+
+    def _relevant_bracket(self, district_energy_demand):
+        """
+        Find the bracket in which the district energy demand falls.
+        """
+        bracket_medians_list = list(self.best_capacity_indicator_vectors.keys())
+        diff_with_bracket_medians = [abs(district_energy_demand - bracket_median) for bracket_median in bracket_medians_list]
+        bracket_median = bracket_medians_list[diff_with_bracket_medians.index(min(diff_with_bracket_medians))]
+
+        return bracket_median
+
+    def update(self, optimal_supply_systems):
+        """
+        Store the optimal capacity indicator vectors in the bracket closest to the max supply system energy demand.
+
+        :param optimal_supply_systems: list of optimal supply systems
+        :type optimal_supply_systems: list of <cea.optimization_new.supplySystem>-SupplySystem objects
+        """
+        # Find the bracket median closest to the max district energy demand and clear the list of optimal capacity
+        # indicator vectors in that bracket
+        max_system_demand = max(optimal_supply_systems[0].demand_energy_flow.profile)
+        bracket_median = self._relevant_bracket(max_system_demand)
+        bracket_medians_list = list(self.best_capacity_indicator_vectors.keys())
+        former_optimal_civs = self.best_capacity_indicator_vectors[bracket_median]
+        self.best_capacity_indicator_vectors[bracket_median] = []
+
+        # Store the new optimal capacity indicator vectors in the bracket
+        for optimal_supply_system in optimal_supply_systems:
+            self.best_capacity_indicator_vectors[bracket_median].append(optimal_supply_system.capacity_indicator_vector)
+
+        # Fill up to two adjacent empty brackets with the same optimal capacity indicator vectors
+        lower_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)-1]
+        i = 0
+        while (not self.best_capacity_indicator_vectors[lower_bracket_median])\
+                or self.best_capacity_indicator_vectors[lower_bracket_median] == former_optimal_civs:
+            self.best_capacity_indicator_vectors[lower_bracket_median] = \
+                self.best_capacity_indicator_vectors[bracket_median]
+            lower_bracket_median = bracket_medians_list[bracket_medians_list.index(lower_bracket_median)-1]
+            i += 1
+            if lower_bracket_median > bracket_median or i >= 2:
+                break
+
+        upper_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)+1]
+        i = 0
+        while (not self.best_capacity_indicator_vectors[upper_bracket_median]) \
+                or self.best_capacity_indicator_vectors[upper_bracket_median] == former_optimal_civs:
+            self.best_capacity_indicator_vectors[upper_bracket_median] = \
+                self.best_capacity_indicator_vectors[bracket_median]
+            upper_bracket_median = bracket_medians_list[bracket_medians_list.index(upper_bracket_median)+1]
+            i += 1
+            if upper_bracket_median < bracket_median or i >= 2:
+                break
+
+    def recall_optimal_civs(self, max_system_demand, current_civ):
+        """
+        Recall the optimal capacity indicator vectors from the bracket closest to the max supply system energy demand
+        and return one of them at random.
+
+        :param max_system_demand: maximum supply system energy demand for any given time step
+        :type max_system_demand: float
+        """
+        diff_with_bracket_medians = [abs(max_system_demand - bracket_median)
+                                     for bracket_median in self.best_capacity_indicator_vectors.keys()]
+        bracket_median = list(self.best_capacity_indicator_vectors.keys())[diff_with_bracket_medians.
+                            index(min(diff_with_bracket_medians))]
+        matching_civs = self.find_matches(current_civ, bracket_median)
+
+        if matching_civs:
+            randomly_selected_civ = random.choice(matching_civs)
+            return randomly_selected_civ.values
+        else:
+            return None
+
+    def find_matches(self, current_civ, bracket_median):
+        if not self.best_capacity_indicator_vectors[bracket_median]:
+            return None
+        else:
+            matching_civs = [civ for civ in self.best_capacity_indicator_vectors[bracket_median]
+                             if civ.matches_structure(current_civ)]
+            return matching_civs
+
+    def clear(self):
+        """
+        Clear the list of best capacity indicator vectors in all brackets.
+        """
+        self.best_capacity_indicator_vectors = {median: [] for median in self.best_capacity_indicator_vectors.keys()}
+
+    def consolidate(self, more_civ_memory):
+
+        if not self.max_district_energy_demand:
+            self.max_district_energy_demand = more_civ_memory.max_district_energy_demand
+            self.nbr_of_brackets = more_civ_memory.nbr_of_brackets
+            self.best_capacity_indicator_vectors = self._create_brackets(self.nbr_of_brackets)
+
+        for bracket_median in self.best_capacity_indicator_vectors.keys():
+            self.best_capacity_indicator_vectors[bracket_median] +=\
+                more_civ_memory.best_capacity_indicator_vectors[bracket_median]
+
+        # Remove duplicates
+        for bracket_median in self.best_capacity_indicator_vectors.keys():
+            unique_civs = []
+            for i, civ in enumerate(self.best_capacity_indicator_vectors[bracket_median]):
+                found_in_remainder = [civ.matches_fully(other_civ) for other_civ
+                                      in self.best_capacity_indicator_vectors[bracket_median][i:]].count(True) > 1
+                if not found_in_remainder:
+                    unique_civs.append(civ)
+            self.best_capacity_indicator_vectors[bracket_median] = unique_civs
