@@ -19,7 +19,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro", "Maryam Meshkinkiya"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -190,7 +190,7 @@ def lca_embodied(year_to_calculate, locator):
     result_emissions.to_csv(locator.get_lca_embodied(),
                             index=False,
                             float_format='%.2f', na_rep='nan')
-    print('done!')
+    print('Calculation completed.')
 
 
 def calculate_contributions(df, year_to_calculate):
@@ -226,30 +226,26 @@ def calculate_contributions(df, year_to_calculate):
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
 
-    ## if it was built less than 60 years before, the contribution from each building component is calculated
+    ## if it was built less than 60 years before, the contribution from each building component
+    # (replacements considered) is calculated
     # This includes both the emissions in building material production, end of life and replacement based on the
     # specific reference service life for each component.
-    # For the envelope dataset, GHG_i_kgCO2m2 refers to the sum of the GWP for component i, which is
-    # equal to: Total GWP = GWP production + GWP end of life.
-    # Additionally, the replacement rate of component i is: ni = np.ceil(SERVICE_LIFE_OF_BUILDINGS / Service_Life_Component).
-    # ni should be multiplied by the GHG_components and component's area.
-    # To calculate the embodied emission of retrofitted buildings only the additional emissions should be considered.
-    # In that case, only the retrofitted components are involved in the equations, and other components are set to 0.
-    df[total_column] = ((df['GHG_wall_kgCO2m2'] *
-                          (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) - 1), 1) +
-                          df['GHG_win_kgCO2m2'] * df['windows_ag'] *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']) - 1), 1) +
-                          df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) - 1), 1) +
-                          df['GHG_base_kgCO2m2'] * df['floor_area_bg'] *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) - 1), 1) +
-                          df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) *
-                                       CONVERSION_AREA_TO_FLOOR_AREA_RATIO *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part']) - 1), 1) +
-                          df['GHG_roof_kgCO2m2'] * df['footprint'] *
-                                      np.maximum((np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']) - 1), 1))
-                         / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
+
+    df[total_column] = ((df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) +
+                         df['GHG_win_kgCO2m2'] * df['windows_ag'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']) +
+                         df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) +
+                         df['GHG_base_kgCO2m2'] * df['floor_area_bg'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) +
+                         df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) *
+                         CONVERSION_AREA_TO_FLOOR_AREA_RATIO *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part']) +
+                         df['GHG_roof_kgCO2m2'] * df['footprint'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']))
+                        / SERVICE_LIFE_OF_BUILDINGS
+                        ) * df['confirm']
 
     df[total_column] += (((df['floor_area_ag'] + df[
         'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
@@ -260,7 +256,7 @@ def calculate_contributions(df, year_to_calculate):
     df['GHG_sys_embodied_kgCO2m2yr'] = df[total_column] / df['GFA_m2']
 
     # the total and specific embodied emissions are returned
-    result = df[['Name', 'GHG_sys_embodied_tonCO2', 'GHG_sys_embodied_kgCO2m2', 'GFA_m2']]
+    result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr', 'GFA_m2']]
     return result
 
 def calc_if_existing(x, y):
