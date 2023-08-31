@@ -151,7 +151,7 @@ class DistrictEnergySystem(object):
         self.generate_optimal_supply_systems()
 
         # aggregate objective functions for all subsystems across the entire district energy system
-        self.combine_supply_systems()
+        self.combine_supply_systems_and_networks()
 
         # if prompted, track certain core characteristics of the district energy system
         if optimization_tracker:
@@ -412,7 +412,7 @@ class DistrictEnergySystem(object):
 
         return optimal_supply_systems
 
-    def combine_supply_systems(self):
+    def combine_supply_systems_and_networks(self):
         """
         Combine optimal supply systems of the different subsystems (networks or buildings) TODO: add latter option to config
         of the district energy system and identify the non-dominated system combinations (i.e. combinations that
@@ -438,6 +438,7 @@ class DistrictEnergySystem(object):
             supply_system_combinations = [SystemCombination([connectivity_str,  first_network + "-" + str(i)])
                                           for i, supply_system in enumerate(self.supply_systems[first_network])]
             for i, system_combination in enumerate(supply_system_combinations):
+                self.add_network_cost(first_network, i)
                 system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
             supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
                                                                        first_front_only=True)
@@ -463,6 +464,7 @@ class DistrictEnergySystem(object):
                 new_combinations = [SystemCombination(combination.encoding + [network + '-' + str(i)])
                                     for i, supply_system in enumerate(self.supply_systems[network])]
                 for i, system_combination in enumerate(new_combinations):
+                    self.add_network_cost(network, i)
                     system_combination.fitness.values = \
                         tuple([fit_1 + fit_2 for fit_1, fit_2 in
                                zip(list(combination.fitness.values),
@@ -481,6 +483,16 @@ class DistrictEnergySystem(object):
         self.best_supsys_combinations = supply_system_combinations
 
         return self.best_supsys_combinations
+
+    def add_network_cost(self, network_id, supply_system_index):
+        """ Add the network cost to its associated supply system's overall fitness """
+        # retrieve the network cost
+        network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id][0]
+        # if cost is part of the objective functions, add the network cost
+        if 'cost' in self.supply_systems[network_id][supply_system_index].overall_fitness.keys():
+            self.supply_systems[network_id][supply_system_index].overall_fitness['cost'] += network_cost
+
+        return
 
     def select_supply_system_combination(self, supply_system_combination):
         """

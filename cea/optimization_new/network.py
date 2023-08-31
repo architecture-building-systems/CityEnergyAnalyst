@@ -45,12 +45,13 @@ class Network(object):
     _domain_buildings_return_temp_K = pd.DataFrame()
     _domain_locator = None
     _pipe_catalog = pd.DataFrame()
-    _configuration_defaults = {'network_type': None,
-                               'thermal_transfer_unit_design_head_m': 0.0,
-                               'hazen_williams_friction_coefficient': 0.0,
-                               'peak_load_velocity_ms': 0.0,
-                               'equivalent_length_factor': 0.0,
-                               'peak_load_percentage': 0.0}
+    configuration_defaults = {'network_type': None,
+                              'thermal_transfer_unit_design_head_m': 0.0,
+                              'hazen_williams_friction_coefficient': 0.0,
+                              'peak_load_velocity_ms': 0.0,
+                              'equivalent_length_factor': 0.0,
+                              'peak_load_percentage': 0.0,
+                              'network_lifetime_yrs': 20}
 
     def __init__(self, domain_connectivity, network_id, connected_buildings):
         self.connectivity_id = domain_connectivity.as_str()
@@ -60,7 +61,7 @@ class Network(object):
         self.network_nodes = Gdf()
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
-        self.piping_cost = 0.0
+        self.annual_piping_cost = 0.0
 
     def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
         """
@@ -265,7 +266,7 @@ class Network(object):
         Gets the network related configurations from the domain's configs and stores them in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (None in Network._configuration_defaults):
+        if (domain is None) & (None in Network.configuration_defaults):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
             Network._domain_locator = domain.locator
@@ -276,12 +277,14 @@ class Network(object):
             peak_load_velocity_ms = domain.config.optimization_new.peak_load_velocity
             equivalent_length_factor = domain.config.optimization_new.equivalent_length_factor
             peak_load_percentage = domain.config.optimization_new.peak_load_percentage
-            Network._configuration_defaults = {'network_type': network_type,
-                                               'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
-                                               'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
-                                               'peak_load_velocity_ms': peak_load_velocity_ms,
-                                               'equivalent_length_factor': equivalent_length_factor,
-                                               'peak_load_percentage': peak_load_percentage}
+            network_lifetime = domain.config.optimization_new.network_lifetime
+            Network.configuration_defaults = {'network_type': network_type,
+                                              'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
+                                              'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
+                                              'peak_load_velocity_ms': peak_load_velocity_ms,
+                                              'equivalent_length_factor': equivalent_length_factor,
+                                              'peak_load_percentage': peak_load_percentage,
+                                              'network_lifetime_yrs': network_lifetime}
 
     @staticmethod
     def _set_potential_network_terminals(domain):
@@ -497,10 +500,10 @@ class Network(object):
                     wn.add_junction(str(node_name),
                                     base_demand=base_demand_m3s,
                                     demand_pattern=demand_pattern,
-                                    elevation=self._configuration_defaults['thermal_transfer_unit_design_head_m'],
+                                    elevation=self.configuration_defaults['thermal_transfer_unit_design_head_m'],
                                     coordinates=node["coordinates"])
                 elif node["Type"] == "PLANT":
-                    base_head = int(self._configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
+                    base_head = int(self.configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
                     start_node = str(node_name)
                     name_node_plant = start_node
                     wn.add_reservoir(start_node,
@@ -516,8 +519,8 @@ class Network(object):
                 length_m = edge["length_m"]
                 wn.add_pipe(str(edge_name), edge["start node"],
                             edge["end node"],
-                            length=length_m * (1 + self._configuration_defaults['equivalent_length_factor']),
-                            roughness=self._configuration_defaults['hazen_williams_friction_coefficient'],
+                            length=length_m * (1 + self.configuration_defaults['equivalent_length_factor']),
+                            roughness=self.configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
                             status='OPEN')
 
@@ -536,10 +539,10 @@ class Network(object):
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
-                                                                         velocity_ms=self._configuration_defaults[
+                                                                         velocity_ms=self.configuration_defaults[
                                                                              'peak_load_velocity_ms'],
                                                                          peak_load_percentage=
-                                                                         self._configuration_defaults[
+                                                                         self.configuration_defaults[
                                                                              'peak_load_percentage'])
                                                        for flow in max_volume_flow_rates_m3s])
             pipe_dn = pd.Series(Pipe_DN, pipe_names)
@@ -565,7 +568,7 @@ class Network(object):
                 length_m = self.network_edges.loc[column]['length_m']
                 head_loss_m[column] = head_loss_m[column] * length_m
             reservoir_head_loss_m = head_loss_m.sum(axis=1) + \
-                                    self._configuration_defaults[
+                                    self.configuration_defaults[
                                         'thermal_transfer_unit_design_head_m'] * 1.2  # fixme: only one thermal_transfer_unit_design_head_m from one substation?
             # @lguilhermers, @shanshanhsieh --- please review the 3 lines above ---
 
@@ -589,4 +592,6 @@ class Network(object):
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
         piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['Pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])
-        self.piping_cost = piping_cost_aggregated
+        annualised_piping_cost = piping_cost_aggregated / self.configuration_defaults['network_lifetime_yrs']
+
+        self.annual_piping_cost = annualised_piping_cost
