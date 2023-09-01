@@ -490,7 +490,8 @@ class Domain(object):
                                  for network in district_energy_system.networks}
         network_lengths = {network.identifier: sum(network.network_piping['length_m'])
                            for network in district_energy_system.networks}
-        network_costs = {network.identifier: network.piping_cost
+        network_costs = {network.identifier: network.annual_piping_cost *
+                                             network.configuration_defaults['network_lifetime_yrs']
                          for network in district_energy_system.networks}
 
         # write to DataFrame
@@ -503,7 +504,7 @@ class Domain(object):
                                        'Std. deviation of hourly network losses [kWh]',
                                        'Yearly network losses [kWh]',
                                        'Network length [m]',
-                                       'Network cost [USD]']
+                                       'Network cost, annualised [USD]']
 
         # write to file
         network_performance.to_csv(results_file)
