@@ -166,7 +166,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def thermal_network_simplified(locator, config, network_name):
+def thermal_network_simplified(locator, config, network_name=''):
     # local variables
     network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_substation

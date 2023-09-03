@@ -51,8 +51,15 @@ def update_credits(current_version: str, new_version: str):
 
 
 def update_changelog() -> None:
+    try:
+        subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], check=True, capture_output=True,
+                       cwd=os.path.dirname(__file__))
+    except subprocess.CalledProcessError:
+        raise Exception("Current CEA directory is not a git repository.")
+
     changelog_script_path = os.path.join(os.path.dirname(__file__), "..", "..", "bin", "create-changelog.py")
-    result = subprocess.run(["python", changelog_script_path], check=True, capture_output=True)
+    result = subprocess.run(["python", changelog_script_path], check=True, capture_output=True,
+                            cwd=os.path.dirname(__file__))
     changelog = result.stdout.decode()
 
     with open(changelog_path, "w") as f:
@@ -83,6 +90,5 @@ def main(config: cea.config.Configuration) -> None:
 
 if __name__ == "__main__":
     cea_config = cea.config.Configuration()
-    version = cea_config.development.release_version
 
-    main(version)
+    main(cea_config)

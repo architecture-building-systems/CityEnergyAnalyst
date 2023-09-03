@@ -10,8 +10,7 @@ import os
 import pickle
 from itertools import repeat
 
-from osgeo import gdal, osr
-import geopandas as gpd
+from osgeo import osr
 
 import cea
 
@@ -28,7 +27,6 @@ import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
 from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
-from geopandas import GeoDataFrame as gdf
 from py4design import urbangeom
 
 import cea.config
@@ -171,15 +169,7 @@ def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_di
     return name
 
 
-def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, geometry_pickle_dir):
-    """
-    :param locator: InputLocator - provides paths to files in a scenario
-    :type locator: cea.inputlocator.InputLocator
-    :param config: the configuration object to use
-    :type config: cea.config.Configuration
-    :return:
-    """
-
+def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_map, config, geometry_pickle_dir):
     # Config variables
     num_processes = config.get_number_of_processes()
     zone_simplification = config.radiation.zone_geometry
@@ -196,8 +186,6 @@ def building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map, config, 
     surroundings_building_names = surroundings_buildings_df.index.values
     surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
                                                             elevation_map, num_processes)
-
-    architecture_wwr_df = gdf.from_file(locator.get_building_architecture()).set_index('Name')
 
     # calculate geometry for the surroundings
     print('Generating geometry for surrounding buildings')
@@ -563,11 +551,7 @@ class ElevationMap(object):
         return tin_occface_list
 
 
-def standardize_coordinate_systems(locator):
-    zone_df = gpd.read_file(locator.get_zone_geometry())
-    surroundings_df = gpd.read_file(locator.get_surroundings_geometry())
-    terrain_raster = gdal.Open(locator.get_terrain())
-
+def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
     # Get projection of terrain and apply to zone and surroundings
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
@@ -597,9 +581,9 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
         raise ValueError('Terrain provided does not cover all building geometries')
 
 
-def geometry_main(locator, config, geometry_pickle_dir):
+def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
     print("Standardizing coordinate systems")
-    zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(locator)
+    zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster)
 
     # clear in case there are repeated buildings from zone in surroundings file
     filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
@@ -615,8 +599,8 @@ def geometry_main(locator, config, geometry_pickle_dir):
     # transform buildings 2D to 3D and add windows
     print("Creating 3D building surfaces")
     os.makedirs(geometry_pickle_dir, exist_ok=True)
-    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(locator, zone_df, surroundings_df, elevation_map,
-                                                                   config, geometry_pickle_dir)
+    geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df,
+                                                                   elevation_map, config, geometry_pickle_dir)
 
     return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
 

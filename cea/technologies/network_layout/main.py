@@ -8,6 +8,7 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
+from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -51,7 +52,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     # Calculate potential network
     crs_projected = calc_connectivity_network(path_streets_shp,
                                               building_centroids_df,
-                                              temp_path_potential_network_shp)
+                                              path_potential_network=temp_path_potential_network_shp)
 
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
@@ -83,9 +84,10 @@ class NetworkLayout(object):
     def __init__(self, network_layout=None):
         self.network_type = "DC"
         self.connected_buildings = []
+        self.connected_buildings = network_layout.connected_buildings
         self.disconnected_buildings = []
-        self.pipe_diameter = 150
-        self.type_mat = "T1"
+        self.pipe_diameter = PIPE_DIAMETER_DEFAULT
+        self.type_mat = TYPE_MAT_DEFAULT
         self.create_plant = True
         self.allow_looped_networks = False
         self.consider_only_buildings_with_demand = False

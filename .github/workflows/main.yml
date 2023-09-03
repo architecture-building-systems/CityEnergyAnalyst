@@ -10,7 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
+      # Required for daysim
       - name: Install Dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -18,9 +19,10 @@ jobs:
           sudo apt-get install -y libgl1
 
       - name: Install Conda environment with Micromamba
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@v1
         with:
-          cache-env: true
+          environment-file: environment.yml
+          cache-environment: true
 
       - name: Install CEA
         shell: bash -l {0}
@@ -29,32 +31,3 @@ jobs:
       - name: Run tests
         shell: bash -l {0}
         run: cea test --workflow slow
-
-  badge:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Make Code Badge
-        uses: shadowmoose/GHA-LoC-Badge@1.0.0
-        id: badge
-        with:
-          debug: true
-          directory: ./
-          badge: ./output/badge-lines-of-code.svg
-          ignore: "node_modules/|README"
-
-      - name: Print the output
-        run: |
-          echo "Scanned: ${{ steps.badge.outputs.counted_files }}";
-          echo "Line Count: ${{ steps.badge.outputs.total_lines }}";
-
-      - name: Deploy to image-data branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          publish_dir: ./output
-          publish_branch: image-data
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          user_name: "github-actions[bot]"
-          user_email: "github-actions[bot]@users.noreply.github.com"
