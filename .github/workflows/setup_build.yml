@@ -15,7 +15,7 @@ jobs:
           environment-file: environment.yml
           cache-environment: true
           environment-name: cea
-          init-shell: powershell
+          init-shell: bash powershell
 
       - name: Install CEA to conda environment
         shell: bash -l {0}
