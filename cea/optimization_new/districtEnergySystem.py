@@ -361,7 +361,7 @@ class DistrictEnergySystem(object):
             population[i].fitness.values = fit
 
         # Perform the genetic optimization
-        for generation in range(1, algorithm.generations+1):
+        for generation in range(1, algorithm.generations_supply_systems + 1):
             # initialize a few relevant variables
             population_civs = set(tuple(pop_ind.values) for pop_ind in population)
             targeted_number_of_offspring = 0
