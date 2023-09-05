@@ -32,9 +32,8 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 * Click `here <https://www.cityenergyanalyst.com/contact>`__ to contact us
 
 
-.. attention:: We ended the support of the ArcGIS interface on 1 May 2019. This means that there will not be any more
-               tutorials nor advice on how to use this interface. You could still use this interface at your own risk.
-               We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console.
+.. attention:: We ended the support of the ArcGIS and Rhino/Grasshopper interfaces on 1 May 2019. 
+We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console.
                
 Cite us:
 --------
