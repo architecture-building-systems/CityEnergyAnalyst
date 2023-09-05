@@ -29,7 +29,7 @@ allows to study the effects, trade-offs and synergies of urban design options, b
 
 * Click `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ to report an issue
 
-* Click `here <mailto:cea@arch.ethz.ch>`__ to contact us
+* Click `here <https://www.cityenergyanalyst.com/contact>`__ to contact us
 
 
 .. attention:: We will end support of the ArcGIS interface by the 1st of May of 2019. This means that there will not be anymore
