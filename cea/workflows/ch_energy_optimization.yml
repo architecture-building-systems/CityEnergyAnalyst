@@ -1,8 +1,18 @@
-# run the whole heating system workflow (simplified thermal-networks) for the current scenario
-# starting at radiation
-- script: radiation
+# from CEA data management to optimization of energy supply system, using the new optimization script.
+
+- script: data-initializer
   parameters:
-    consider-intersections: false
+    databases-path: CH
+- script: archetypes-mapper
+- script: weather-helper
+  parameters:
+    weather: Zuerich-Kloten_1990_2010_TMY
+- script: surroundings-helper
+  parameters:
+    buffer: 100
+- script: terrain-helper
+- script: streets-helper
+- script: radiation
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -30,14 +40,8 @@
 - script: thermal-network
   parameters:
     network-type: DH
-    network-model: simplified
 - script: decentralized
-- script: optimization
+- script: optimization-new
   parameters:
     network-type: DH
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
+    objective-functions: [system_energy_demand, GHG_emissions, cost]
