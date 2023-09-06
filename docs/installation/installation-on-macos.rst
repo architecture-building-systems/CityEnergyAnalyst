@@ -19,7 +19,7 @@ Prerequisites
 
 Installation
 ~~~~~~~~~~~~
-.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/update-mac-installation/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
+.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
