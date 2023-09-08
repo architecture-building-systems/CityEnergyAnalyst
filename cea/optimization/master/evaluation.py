@@ -8,6 +8,7 @@ from cea.optimization.master import objective_function_calculator
 from cea.optimization.master import master_to_slave as master
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.performance_aggregation import summarize_results_individual
+from cea.optimization.master.optimisation_individual import FitnessMin
 from cea.optimization.slave import cooling_main
 from cea.optimization.slave import electricity_main
 from cea.optimization.slave import heating_main
@@ -88,6 +89,9 @@ def evaluation_main(individual,
     :return: Resulting values of the objective function. costs, CO2, prim
     :rtype: tuple
     """
+    # IN CASE OF MULTIPROCESSING RE-INITIALISE THE NUMBER OPTIMISATION-OBJECTIVES AS PART OF THE FITNESS-OBJECT
+    if config.multiprocessing:
+        FitnessMin.set_objective_function_selection(config)
 
     # CREATE THE INDIVIDUAL BARCODE AND INDIVIDUAL WITH HER COLUMN NAME AS A DICT
     DHN_barcode, DCN_barcode,\

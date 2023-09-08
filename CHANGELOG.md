@@ -1,3 +1,38 @@
+- 2023-09-07 - 3.34.0 - #3378 Change sensor value orientation before saving
+- 2023-09-06 - 3.34.0 - #3377 Release 3.34.0
+- 2023-09-06 - 3.33.0 - #3374 Update MacOS installation guide
+- 2023-09-05 - 3.33.0 - #3366 Adding automated batch-processing options
+- 2023-09-05 - 3.33.0 - #3370 Unified default settings
+- 2023-08-31 - 3.33.0 - #3354 Embodied update
+- 2023-08-25 - 3.33.0 - #3364 Read weather file with encoding
+- 2023-07-28 - 3.33.0 - #3356 Replace whitespaces with underscore in building name
+- 2023-07-26 - 3.33.0 - #3340 Change selection process to prevent duplicates
+- 2023-07-26 - 3.33.0 - #3342 Changed COP for DH geothermal heatpumps
+- 2023-07-26 - 3.33.0 - #3348 Fix optimization KeyError
+- 2023-07-26 - 3.33.0 - #3353 Fix typo that caused `roof_grid` parameter to be ignored
+- 2023-07-01 - 3.33.0 - #3336 Migrate github actions to `setup-micromamba`
+- 2023-06-30 - 3.33.0 - #3335 Update lines of code badge
+- 2023-06-29 - 3.33.0 - #3333 Release 3.33.0
+- 2023-06-28 - 3.32.0 - #3331 Fix EV input validation in editor
+- 2023-06-28 - 3.32.0 - #3324 Fixed deap-creator error
+- 2023-06-28 - 3.32.0 - #3306 Read and write sensor data using feather instead of json
+- 2023-06-28 - 3.32.0 - #3287 Simplified radiation script
+- 2023-06-28 - 3.32.0 - #3260 Update of the centralised optimisation algorithm
+- 2023-06-17 - 3.32.0 - #3328 Update environment.yml
+- 2023-05-25 - 3.32.0 - #3305 Fix aggregation for solar potential scripts
+- 2023-05-21 - 3.32.0 - #3313 changes
+- 2023-04-28 - 3.32.0 - #3301 Return temporary path as string instead of using temp directory object
+- 2023-04-27 - 3.32.0 - #3162 Update jenkins documentation
+- 2023-02-08 - 3.32.0 - #3284 Radiation refactoring
+- 2023-01-30 - 3.32.0 - #3278 Browser GUI
+- 2023-01-06 - 3.32.0 - #3272 Bugfix around GDF-completion
+- 2023-01-04 - 3.32.0 - #3267 Fix various typos
+- 2023-01-04 - 3.32.0 - #3268 GRID_MWhyr in total demands can't handle cases where components provide 'nan' values
+- 2023-01-03 - 3.32.0 - #3277 Add file explorer api
+- 2022-12-26 - 3.32.0 - #3276 Refactor and update config
+- 2022-11-23 - 3.32.0 - #3238 Use shapes tagged as `building:part` in OSM as well as `building` in `zone_helper`
+- 2022-11-22 - 3.32.0 - #3234 Several fixes to zone_helper to solve issues found after selecting fix_overlapping
+- 2022-11-13 - 3.32.0 - #3263 Release 3.32.0
 - 2022-11-10 - 3.31.0 - #3262 CEA installation fix
 - 2022-11-09 - 3.31.0 - #3261 Automate windows setup build
 - 2022-10-25 - 3.31.0 - #3258 Create setup_build.yml
@@ -865,3 +900,4 @@
 - 2016-04-01 - 0.1 - #115 I37 extract properties tool etc
 - 2016-03-31 - 0.1 - #106 Ii023 atot
 - 2016-03-30 - 0.1 - #103 I099 new properties - seems to be working for now...
+

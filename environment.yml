@@ -25,7 +25,7 @@ dependencies:
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx
+- osmnx==1.2.2
 - pandas<2
 - pip
 - psutil
@@ -39,6 +39,7 @@ dependencies:
 - timezonefinder
 - python-cufflinks
 - cvxopt # For wntr
+- pyarrow
 - pip:
   - xlrd
   - xlwt

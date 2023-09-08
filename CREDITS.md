@@ -1,15 +1,132 @@
 How to Cite
 ===========
 
-The CEA team, "City Energy Analyst v3.32.0", Zenodo, 2022, 10.5281/zenodo.7317134
+The CEA team, "City Energy Analyst v3.34.1", Zenodo, 2023, 10.5281/zenodo.8327389
 
 The CEA team
 ============
 
-Starting from version 2.9.1 the credits are structured alphabetically (surname) and split into the categories of developers,
-scrum master, project owner, project sponsor and collaborators.
+Starting from version 2.9.1 (updated from version 3.33.0) the credits are structured alphabetically (surname) 
+and split into the categories of developers, product owner, project sponsor and collaborators.
+
 
 <!-- credits -->
+- Version 3.34.1 - September 2023
+
+    Developers:
+    * [Amr Elesawy](https://cityenergyanalyst.com/people)
+    * [Jimeno A. Fonseca](https://cityenergyanalyst.com/people)
+    * [Gabriel Happle](https://cityenergyanalyst.com/people)
+    * [Shanshan Hsieh](https://cityenergyanalyst.com/people)
+    * [Reynold Mok](https://cityenergyanalyst.com/people)
+    * [Martín Mosteiro Romero](https://cityenergyanalyst.com/people)
+    * [Mathias Niffeler](https://cityenergyanalyst.com/people)
+    * [Anastasiya Popova](https://cityenergyanalyst.com/people)
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+    * [Luis Santos](https://cityenergyanalyst.com/people)
+    * [Bhargava Krishna Sreepathi](https://cityenergyanalyst.com/people)
+    * [Daren Thomas](https://cityenergyanalyst.com/people)
+
+    Product lead:
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+    * [Toni Piëch Foundation](https://www.tonipiechfoundation.org/)
+
+    Collaborators:
+    * Jose Bello
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Rowan Molony
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Emanuel Riegelbauer
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Sebastian Troiztsch
+    * Tim Vollrath
+
+- Version 3.34.0 - September 2023
+
+    Developers:
+    * [Amr Elesawy](https://cityenergyanalyst.com/people)
+    * [Jimeno A. Fonseca](https://cityenergyanalyst.com/people)
+    * [Gabriel Happle](https://cityenergyanalyst.com/people)
+    * [Shanshan Hsieh](https://cityenergyanalyst.com/people)
+    * [Reynold Mok](https://cityenergyanalyst.com/people)
+    * [Martín Mosteiro Romero](https://cityenergyanalyst.com/people)
+    * [Mathias Niffeler](https://cityenergyanalyst.com/people)
+    * [Anastasiya Popova](https://cityenergyanalyst.com/people)
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+    * [Luis Santos](https://cityenergyanalyst.com/people)
+    * [Bhargava Krishna Sreepathi](https://cityenergyanalyst.com/people)
+    * [Daren Thomas](https://cityenergyanalyst.com/people)
+
+    Product lead:
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+    * [Toni Piëch Foundation](https://www.tonipiechfoundation.org/)
+
+    Collaborators:
+    * Jose Bello
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Rowan Molony
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Emanuel Riegelbauer
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Sebastian Troiztsch
+    * Tim Vollrath
+
+- Version 3.33.0 - June 2023
+
+    Developers:
+    * [Amr Elesawy](https://cityenergyanalyst.com/people)
+    * [Jimeno A. Fonseca](https://cityenergyanalyst.com/people)
+    * [Gabriel Happle](https://cityenergyanalyst.com/people)
+    * [Shanshan Hsieh](https://cityenergyanalyst.com/people)
+    * [Reynold Mok](https://cityenergyanalyst.com/people)
+    * [Martín Mosteiro Romero](https://cityenergyanalyst.com/people)
+    * [Mathias Niffeler](https://cityenergyanalyst.com/people)
+    * [Anastasiya Popova](https://cityenergyanalyst.com/people)
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+    * [Luis Santos](https://cityenergyanalyst.com/people)
+    * [Bhargava Krishna Sreepathi](https://cityenergyanalyst.com/people)
+    * [Daren Thomas](https://cityenergyanalyst.com/people)
+
+    Product lead:
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+
+    Collaborators:
+    * Jose Bello
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Rowan Molony
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Emanuel Riegelbauer
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Sebastian Troiztsch
+    * Tim Vollrath
+
 - Version 3.32.0 - November 2022
 
     Developers:

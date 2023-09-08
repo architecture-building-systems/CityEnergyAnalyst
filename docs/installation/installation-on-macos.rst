@@ -1,115 +1,73 @@
 Installation guide for Mac OS
 ==============================
 
-Working with the CityEnergyAnalyst (CEA) on a Mac OS system is a little bit messier than on Windows and requires using the Terminal to launch CEA. But don't worry - it works!
+There are two installation methods on a Mac system (tested with macOS Mojave 10.14.6).
 
-There are two installation methods, you can either: `(1) use the CEA source code from GitHub`_, or `(2) use the CEA Docker image`_. The former option gives you full access to CEA but is significantly more cumbersome to install as it involves running a lot of commands on Terminal. The latter option is much easier to install but working in a virtual container on Docker takes some getting used to. Both options are perfectly suited for users, but only the full installation is suitable for developers.
+#. `(1) From the Source`_: If you would like to develop CEA, this will be your method.
+#. `(2) As a Docker image`_: If you are not interested on developing CEA, this will be your method.
 
 Choose the one that suits your needs!
 
-
-(1) Use the CEA source code from GitHub
----------------------------------------
-
-If you would like to develop CEA, this will be your method. Follow these instructions to install the CityEnergyAnalyst (CEA) on a Mac system (tested with macOS Mojave 10.14.6) from the source
-
-.. attention:: We advise to follow the guide precisely:
-
-        *   Be sure to **USE** ``conda env create`` **NOT** ``conda create`` familiar to experienced conda users.
-            This command not only creates an environment, but also reads the ``environment.yml`` file, containing a
-            list of packages (and versions) to install, as well as a definition of the channels to check.
-        *   If you need to create a conda environment for the CEA that has a specific name (the default is ``cea``) then use the
-            ``name`` parameter: ``conda env create --name your-env-name-here``
-
-        *   ``CONDA_SUBDIR=osx-64`` will be used when creating the CEA conda environment to support both Intel and Apple Silicon Macs (this will be removed once all dependencies have been ported to ARM). Instructions below will indicate where it is being used.
-        *   (Only applicable for Apple Silicon Macs) If at any point during installation or running CEA and it prompts you to install Rosetta, click install.
-        *   This guide **SHOULD** work for both Intel and Apple Silicon Macs. If you encounter any issues when installing on either, help us report it as an issue on our `GitHub <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ page.
-
+(1) From the Source
+-------------------
 
 Prerequisites
 ~~~~~~~~~~~~~
 * Download and install `Homebrew <https://brew.sh/>`__.
+* Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
+* Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
 
-* (*Optional*) Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__. Only required if you are unfamiliar with using Terminal and/or git commands.
-* (*Optional*) Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__. This will help to speed up the creation of the CEA conda environment.
-
-Installation of the code base
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Excluding the above software, CEA installation requires approximately 13 GB of storage (depending on your existing
-Python library) and  1 hour of your time.
-
-.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/update-mac-installation/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
-
-
+Installation
+~~~~~~~~~~~~
+.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
 #. Open GitHub Desktop from the start menu.
-#. Clone the CEA repository:
-	#. Press ``Cmd+Shift+O`` (clone repository) and select the URL tab.
-	#. Paste the CEA GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst
-	#. Click Clone, this will take ~ 5-10 minutes (Size 1.65 GB).
-#. Clone the CEA GUI repository:
-	#. Press ``Cmd+Shift+O`` (clone repository) and select the URL tab.
-	#. Paste the CEA GUI GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
-	#. Click Clone, this will take ~ 5 minutes (Size 600MB).
-#. Install CEA:
-    #. Open a Terminal console (you can find it in your Mac's *Applications* folder).
+#. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
+#. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
+#. Install CEA backend:
+    #. Open a Terminal console
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``CONDA_SUBDIR=osx-64 conda env create --name cea`` and press ENTER. (If ``mamba`` is installed, replace ``conda`` in command to ``mamba``. i.e. ``CONDA_SUBDIR=osx-64 mamba env create --name cea``.)
-    #. Grab a cup of tea and some toast, this will take ~45 minutes.
-    #. Type ``conda activate cea`` and press ENTER.
-    #. Type ``pip install -e .`` and press ENTER *(mind the dot '.' included in this command!)*.
-#. Build the CEA dashboard GUI:
+    #. Type ``CONDA_SUBDIR=osx-64 mamba env create -f environment.yml`` and press ENTER.
+    #. Type ``mamba activate cea`` and press ENTER.
+    #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
+#. Build the CEA dashboard:
     #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn package`` and press ENTER.
-    #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
-#. Running CEA:
-    * You can run CEA a few different ways (see `Mac Interfaces`_ below).
-    * If you are familiar with running CEA on a Windows computer, **please note that there are a few additional steps when running the dashboard on a Mac!**
+    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
 
 .. attention:: In order to run CEA on Mac, you will need to select the correct Daysim binaries:
 
         *   If you are running the *Building Solar radiation* tool using the dashboard, make sure the parameter *daysim-bin-directory* (under *Advanced*) points to the correct Daysim binary folder (by default, this should be ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst/setup/Dependencies/Daysim/mac``).
         *   If you are using the command line interface or Pycharm, you will need to modify the same parameter (i.e., ``config.radiation.daysim_bin_directory``) in the config file (usually located in ``/Users/your_name/cea.config``, where *your_name* represents your user name on your Mac).
 
-Mac Interfaces
-~~~~~~~~~~~~~~
+Interfaces
+~~~~~~~~~~
 
 There are different ways in which you can interact with the code of CEA.
 
-#. The command line interface: This is the command line to all the commands of CEA from your computer terminal
+#. The Terminal console interface: This is the command line to all the commands of CEA from your computer terminal
 #. The dashboard: This a web-based interface to CEA, open source and developed by the CEA team.
-#. The Pycharm interface: this interface provides access to all the source code of CEA.
+#. The pycharm interface: this interface provides access to all the source code of CEA.
 
+The command line interface and dashboard interface are included during the installation of CEA.
+Other interfaces require a few additional steps to get them up and running.
 
-Command line interface
-______________________
+Running the CEA dashboard
+_________________________
 
-You can run the command line interface by on the Terminal by running the command ``conda activate cea``.
+In order to launch the CEA dashboard, you will need to do the following **each time**:
 
-That's it! `You can run the CEA command interface normally`_.
-
-.. _`You can run the CEA command interface normally`: https://city-energy-analyst.readthedocs.io/en/latest/developer/interfaces.html#the-command-line-interface
-
-
-Dashboard (GUI)
-_________
-
-In order to run the dashboard, you will need to do the following **each time you want to start the dashboard**:
-
-#. Open the Terminal (you can find it in your Mac's *Applications* folder) and run the following command depending on your installation type:
-#. Type ``conda activate cea`` and press ENTER, then type ``cea dashboard`` and press ENTER.
-#. Wait for ``start socketio.run`` to appear in the Terminal before proceeding to the next step. (This might take a while if you are running this for the first time, around 3-5 min)
-#. Run the CEA dashboard application you created in the last step of the installation above (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
-
-You can now run the CEA dashboard interface normally!
+#. Open the Terminal
+#. Type ``mamba activate cea`` and press ENTER.
+#. Type ``cea dashboard`` and press ENTER.
+#. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
+#. Run the CEA dashboard located in (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
 
 Here you can find a series of `blog posts <https://cityenergyanalyst.com/blogs>`_ to help you get started!
 
-
-Pycharm
-_______
+Running CEA on Pycharm
+______________________
 
 The Pycharm interface can be helpful if you would like to contribute to CEA, but it requires a few steps
 to get it up and running. In order to access and work on the source code of CEA from pycharm do:
@@ -120,13 +78,13 @@ to get it up and running. In order to access and work on the source code of CEA 
 #. Click on the settings button (it looks like a wheel) next to the current interpreter path, and click Add.
 #. Click ``Conda Environment`` from the left hand list and select existing environment.
 #. Point to the location of your conda environment. It should look something like
-   ``/Users/your_name/Miniconda2/envs/cea/python.exe`` or
+   ``/Users/your_name/mamba/envs/cea/python.exe`` or
    ``/Users/your_name/AppData/Local/conda/conda/envs/cea/python.exe``
    where *your_name* represents your user name on your Mac.
 #. Click apply changes.
 
-(2) Use the CEA docker image
-----------------------------
+(2) As a Docker Image
+----------------------
 
 If you would like using docker containers, follow these instructions to run CEA on a Mac OS system (tested with Mac OS Catalina).
 This method is suitable for users, but not developers. For developers, please refer to the second method below.

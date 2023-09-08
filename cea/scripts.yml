@@ -62,6 +62,21 @@ Demand forecasting:
       - [get_terrain]
       - [get_weather_file]
 
+  - name: radiation-simplified
+    label: Building Solar radiation (simplified, beta version)
+    description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
+    interfaces: [ cli, dashboard ]
+    module: cea.resources.radiation.simplified.main
+    parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                  radiation, radiation-simplified ]
+    input-files:
+      - [ get_database_envelope_systems ]
+      - [ get_surroundings_geometry ]
+      - [ get_building_architecture ]
+      - [ get_zone_geometry ]
+      - [ get_terrain ]
+      - [ get_weather_file ]
+
   - name: schedule-maker
     label: Building Schedules
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
@@ -74,7 +89,6 @@ Demand forecasting:
                  schedule-maker]
     input-files:
       - [get_database_envelope_systems]
-      - [get_surroundings_geometry]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
@@ -273,6 +287,17 @@ Optimization:
       - [get_sewage_heat_potential]
       - [get_geothermal_potential]
       - [PV_totals]
+
+  - name: optimization-new
+    label: Supply System Part II (centralized- new script, beta version)
+    description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
+    interfaces: [cli, dashboard]
+    module: cea.optimization_new.domain
+    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
+                 optimization-new]
+    input-files:
+      - [get_street_network]
+      - [get_total_demand]
 
 Utilities:
   - name: data-migrator

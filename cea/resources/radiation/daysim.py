@@ -18,6 +18,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from pyarrow import feather
+
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry
 
@@ -190,7 +192,7 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
             sensor_area, \
             sensor_orientation, \
             sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roof" else grid_size.walls,
+                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
                                                            srf_type,
                                                            orientation,
                                                            normal,
@@ -325,8 +327,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
 
 
 def write_sensor_results(sensor_data_path, sensor_values):
-    with open(sensor_data_path, 'w') as outfile:
-        json.dump(sensor_values.T.to_dict(orient="list"), outfile)
+    feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
 def write_aggregated_results(building_name, sensor_values, locator, date):

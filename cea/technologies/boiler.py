@@ -23,7 +23,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# operation costs
+def calc_boiler_const(Q_load_Wh, thermal_efficiency):
+    """
+    Calculate operating conditions of a boiler assuming a constant thermal efficiency.
+    """
+    Q_fuel_Wh = Q_load_Wh / thermal_efficiency
+    Q_losses_Wh = Q_fuel_Wh - Q_load_Wh
+
+    return Q_fuel_Wh, Q_losses_Wh
 
 def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
