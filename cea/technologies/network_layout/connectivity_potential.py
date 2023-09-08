@@ -34,23 +34,23 @@ def compute_intersections(lines, crs):
     for line1, line2 in itertools.combinations(lines, 2):
         if line1.intersects(line2):
             inter = line1.intersection(line2)
-            if "Point" == inter.type:
+            if "Point" == inter.geom_type:
                 inters.append(inter)
-            elif "MultiPoint" == inter.type:
+            elif "MultiPoint" == inter.geom_type:
                 inters.extend([pt for pt in inter.geoms])
-            elif "MultiLineString" == inter.type:
+            elif "MultiLineString" == inter.geom_type:
                 multiLine = [line for line in inter]
                 first_coords = multiLine[0].coords[0]
                 last_coords = multiLine[len(multiLine) - 1].coords[1]
                 inters.append(Point(first_coords[0], first_coords[1]))
                 inters.append(Point(last_coords[0], last_coords[1]))
-            elif "GeometryCollection" == inter.type:
+            elif "GeometryCollection" == inter.geom_type:
                 for geom in inter:
-                    if "Point" == geom.type:
+                    if "Point" == geom.geom_type:
                         inters.append(geom)
-                    elif "MultiPoint" == geom.type:
+                    elif "MultiPoint" == geom.geom_type:
                         inters.extend([pt for pt in geom.geoms])
-                    elif "MultiLineString" == geom.type:
+                    elif "MultiLineString" == geom.geom_type:
                         multiLine = [line for line in geom.geoms]
                         first_coords = multiLine[0].coords[0]
                         last_coords = multiLine[len(multiLine) - 1].coords[1]
