@@ -17,6 +17,8 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import cea.lib
+
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
