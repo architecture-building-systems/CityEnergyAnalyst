@@ -9,24 +9,19 @@ dependencies:
 - flask-cors
 - flask-restx
 - flask-socketio
-- werkzeug==2.0.*
-- ipykernel
-- ipython
 - jupyter
 - openpyxl
 - plotly
 - sphinx
 - utm
 - fiona
-- gdal
 - geopandas
 - matplotlib
 - networkx<3
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx==1.2.2
-- pandas<2
+- osmnx
 - pip
 - psutil
 - libpysal
@@ -40,6 +35,7 @@ dependencies:
 - python-cufflinks
 - cvxopt # For wntr
 - pyarrow
+- python==3.8.*
 - pip:
   - xlrd
   - xlwt
@@ -47,4 +43,3 @@ dependencies:
   - wntr==0.2.*
   - git+https:///github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
   - simple-websocket
-
