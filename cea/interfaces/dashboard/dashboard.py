@@ -18,11 +18,6 @@ def main(config):
     app.config.from_mapping({'SECRET_KEY': 'secret'})
     socketio = SocketIO(app, cors_allowed_origins="*")
 
-    def shutdown(signum, frame):
-        print("Shutting Down...")
-        socketio.stop()
-    signal.signal(signal.SIGINT, shutdown)
-
     if config.server.browser:
         from cea.interfaces.dashboard.frontend import blueprint as frontend
         app.register_blueprint(frontend)
@@ -50,7 +45,7 @@ def main(config):
     print("Press Ctrl+C to stop server")
     socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
 
-    print("server exited")
+    print("\nserver exited")
 
 
 if __name__ == '__main__':
