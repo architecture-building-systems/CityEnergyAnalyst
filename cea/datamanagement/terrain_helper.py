@@ -41,12 +41,13 @@ def request_elevation(lon, lat):
 
 
 def calc_bounding_box_projected_coordinates(locator):
-
     # connect both files and avoid repetition
     data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = pd.concat([data_zone, data_dis], ignore_index=True, sort=True)
-    data = data.to_crs(get_geographic_coordinate_system())
+    data = pd.concat([
+        data_zone.to_crs(get_geographic_coordinate_system()),
+        data_dis.to_crs(get_geographic_coordinate_system())
+    ], ignore_index=True, sort=True)
     lon = data.geometry[0].centroid.coords.xy[0][0]
     lat = data.geometry[0].centroid.coords.xy[1][0]
     crs = get_projected_coordinate_system(float(lat), float(lon))
