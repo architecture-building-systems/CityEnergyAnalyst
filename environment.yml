@@ -35,7 +35,7 @@ dependencies:
 - python-cufflinks
 - cvxopt # For wntr
 - pyarrow
-- python==3.8.*
+- python==3.8.* # Held back by wntr version
 - pip:
   - xlrd
   - xlwt
