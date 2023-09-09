@@ -464,16 +464,19 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
+    shapefile = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
-        # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-        building_parts = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0],
+        try:
+            # get all footprints in the district tagged as 'building' or 'building:part' in OSM
+            building_parts = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0],
                                                                   tags={"building": ["part"]})
-        shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
-        # using building:part tags requires fixing overlapping polygons
-        if not fix_overlapping:
-            print('Building parts included, fixing overlapping geometries activated.')
-            fix_overlapping = True
+            shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
+            # using building:part tags requires fixing overlapping polygons
+            if not fix_overlapping:
+                print('Building parts included, fixing overlapping geometries activated.')
+                fix_overlapping = True
+        except osmnx._errors.InsufficientResponseError:
+            pass
 
     # clean geometries
     shapefile = clean_geometries(shapefile)
