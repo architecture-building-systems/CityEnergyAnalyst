@@ -35,8 +35,7 @@
     type-scpanel: ET
 - script: network-layout
   parameters:
-    network-type: DH
-    network-model: simplified
+    network-type: DC
 - script: thermal-network
   parameters:
     network-type: DC
