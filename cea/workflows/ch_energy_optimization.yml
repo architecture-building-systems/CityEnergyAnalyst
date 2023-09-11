@@ -36,7 +36,6 @@
 - script: network-layout
   parameters:
     network-type: DH
-    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DH
