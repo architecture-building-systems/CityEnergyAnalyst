@@ -213,10 +213,10 @@ def assign_attributes_additional(shapefile):
 
     # Assign the cea-formatted columns with attributes
     shapefile['house_no'] = shapefile['addr:housenumber']
-    shapefile['street_name'] = shapefile['addr:street']
+    shapefile['street'] = shapefile['addr:street']
     shapefile['postcode'] = shapefile['addr:postcode']
     shapefile['house_name'] = shapefile['addr:housename']
-    shapefile['residential_type'] = shapefile['residential']
+    shapefile['resi_type'] = shapefile['residential']
     shapefile['city'] = shapefile['addr:city']
     shapefile['country'] = shapefile['addr:country']
 
@@ -534,7 +534,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     # clean up attributes
     cleaned_shapefile = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "REFERENCE", 'house_no', 'street_name', 'postcode', 'house_name', 'residential_type', 'city', 'country']]
+         "REFERENCE", 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     
     # save shapefile to zone.shp
