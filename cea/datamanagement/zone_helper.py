@@ -74,12 +74,6 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
-        selected_columns = list(set(list_of_columns).intersection(set(OSM_COLUMNS)))
-        shapefile[selected_columns] = shapefile[selected_columns] \
-            .fillna(1).apply(lambda x: pd.to_numeric(x, errors='coerce'))
-
-        # Make sure relevant OSM parameters (if available) are passed as floats, not strings
-        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
         shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
             shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
@@ -190,6 +184,44 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     shapefile.reset_index(inplace=True, drop=True)
 
     return shapefile
+
+def assign_attributes_additional(shapefile):
+    """
+    This script fills the zone.shp file with additional information from OSM,
+    including house number, street name, postcode, if HDB (for Singapore), city, country
+    """
+
+    # local variables
+    no_buildings = shapefile.shape[0]
+    list_of_columns = shapefile.columns
+
+    # Check which attributes OSM has (sometimes it does not have any) and create the column if missing
+    if 'addr:city' not in list_of_columns:
+        shapefile['addr:city'] = ['unknown'] * no_buildings
+    if 'addr:country' not in list_of_columns:
+        shapefile['addr:country'] = ['unknown'] * no_buildings
+    if 'addr:postcode' not in list_of_columns:
+        shapefile['addr:postcode'] = ['unknown'] * no_buildings
+    if 'addr:street' not in list_of_columns:
+        shapefile['addr:street'] = ['unknown'] * no_buildings
+    if 'addr:housename' not in list_of_columns:
+        shapefile['addr:housename'] = ['unknown'] * no_buildings
+    if 'addr:housenumber' not in list_of_columns:
+        shapefile['addr:country'] = ['unknown'] * no_buildings
+    if 'residential' not in list_of_columns:
+        shapefile['residential'] = ['unknown'] * no_buildings     #not HDB
+
+    # Assign the cea-formatted columns with attributes
+    shapefile['house_no'] = shapefile['addr:housenumber']
+    shapefile['street_name'] = shapefile['addr:street']
+    shapefile['postcode'] = shapefile['addr:postcode']
+    shapefile['house_name'] = shapefile['addr:housename']
+    shapefile['residential_type'] = shapefile['residential']
+    shapefile['city'] = shapefile['addr:city']
+    shapefile['country'] = shapefile['addr:country']
+
+    return shapefile
+
 
 
 def fix_overlapping_geoms(buildings, zone):
@@ -482,6 +514,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     shapefile = assign_attributes(shapefile, buildings_height, buildings_floors,
                                  buildings_height_below_ground, buildings_floors_below_ground, key="B")
 
+    # adding additional information from OSM
+    # (e.g. house number, street number, postcode, if HDB for Singapore buildings)
+    shapefile = assign_attributes_additional(shapefile)
+
     # fix geometries of buildings with overlapping polygons
     if fix_overlapping is True:
         print("Fixing overlapping geometries.")
@@ -492,13 +528,13 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         shapefile = flatten_geometries(shapefile)
-        # reassign building names to account for exploded MultiPolygons
-        shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
+        # # reassign building names to account for exploded MultiPolygons
+        # shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
     # clean up attributes
     cleaned_shapefile = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "REFERENCE"]]
+         "REFERENCE", 'house_no', 'street_name', 'postcode', 'house_name', 'residential_type', 'city', 'country']]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     
     # save shapefile to zone.shp
