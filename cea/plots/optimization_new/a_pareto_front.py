@@ -40,6 +40,26 @@ def read_objective_values(file_path):
 
         return objectives, values
 
+def read_network_costs(file_path):
+    """
+    Read the network costs from the detailed optimization results file.
+    """
+    if not os.path.isfile(file_path):
+        return 0
+
+    with open(file_path, 'r') as file:
+        # Read the file
+        reader = csv.reader(file)
+        network_data_headers = next(reader)  # Read header row
+        cost_column = network_data_headers.index('Network cost [USD]')  # Read network
+
+        # Read network costs
+        total_network_cost_usd = 0
+        for row in reader:
+            total_network_cost_usd += float(row[cost_column])
+
+        return total_network_cost_usd
+
 def read_objective_values_from_file(file_paths):
     """
     Extract the selected objective functions and the non-dominated solutions' objective function values from the
@@ -65,9 +85,25 @@ def read_objective_values_from_file(file_paths):
             pd.concat([objective_function_values_df, pd.DataFrame([file_path.split('\\')[-3]] + values).T],
                       axis=0, sort=False,  ignore_index=False)
 
+    # Rename the columns of the dataframe and reset the indexes
+    objective_function_values_df.reset_index(inplace=True, drop=True)
     objective_function_values_df.columns = ['DCS-solution'] + objectives
 
     return objectives, objective_function_values_df
+
+def read_network_costs_from_file(file_paths):
+    """
+    Extract the network costs from the results files for each non-dominated solution.
+    """
+    # Read the supply system code and the network costs from the optimization results files
+    network_lifetime = 20 # Todo: properly implement the network lifetime
+    system_id = [file_path.split('\\')[-3] for file_path in file_paths]
+    network_costs = [read_network_costs(file_path)/network_lifetime for file_path in file_paths]
+
+    # Create a dataframe with the supply system code and the network costs
+    network_costs_df = pd.DataFrame({'DCS-solution': system_id, 'Network cost [USD]': network_costs})
+
+    return network_costs_df
 
 def plot_pareto_front(objectives, objective_values):
     """
@@ -127,15 +163,50 @@ def plot_pareto_front(objectives, objective_values):
     fig = go.Figure(data=traces, layout=layout)
     fig.show()
 
+def add_3D_scatter_plot(objectives, objective_values):
+        # Create 3D scatter plots if there are 3 or more objective functions, introduce corresponding elements to the
+    #   drop-down menu and add them to the list of traces
+
+    if len(objectives) >= 3:
+        data = go.Scatter3d(x=objective_values[objectives[0]],
+                            y=objective_values[objectives[1]],
+                            z=objective_values[objectives[3]],
+                            mode='markers',
+                            name='DCS-solution',
+                            text=objective_values['DCS-solution'],
+                            marker=dict(
+                                size=10,
+                                color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
+                                colorscale='Viridis',
+                                opacity=0.8
+                            )
+                            )
+
+
+        # Customize the layout
+        layout = go.Layout(scene=dict(xaxis_title=objectives[0], yaxis_title=objectives[1], zaxis_title=objectives[3]))
+
+        # Show the plot
+        fig = go.Figure(data=data, layout=layout)
+        fig.show()
+
+
 def main(config=cea.config.Configuration()):
     """Test this plot"""
     locator = InputLocator(scenario=config.scenario)
     optimisation_results = locator.get_new_optimization_results_folder()
-    individual_system_results = [locator.get_new_optimization_optimal_supply_systems_summary_file(subfolder)
+    individual_supply_system_results = [locator.get_new_optimization_optimal_supply_systems_summary_file(subfolder)
                                  for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
-    objectives, objective_function_values = read_objective_values_from_file(individual_system_results)
+    objectives, objective_function_values = read_objective_values_from_file(individual_supply_system_results)
+    if 'Cost_USD' in objectives:
+        individual_network_results = [locator.get_new_optimization_detailed_network_performance_file(subfolder)
+                                      for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
+        network_costs = read_network_costs_from_file(individual_network_results)
+        total_system_cost = network_costs['Network cost [USD]'] + objective_function_values['Cost_USD']
+        objective_function_values['Cost_USD'] = total_system_cost
 
     plot_pareto_front(objectives, objective_function_values)
+    add_3D_scatter_plot(objectives, objective_function_values)
 
 
 if __name__ == '__main__':
