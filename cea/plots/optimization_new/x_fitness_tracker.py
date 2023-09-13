@@ -72,7 +72,7 @@ def plot_fitness_tracker(objectives, sorted_fitness_tracker):
                 x=list(objective_function_values[objective_codes[0]]),
                 y=list(objective_function_values[objective_codes[1]]),
                 name='Generation ' + str(generation) + ', Front ' + str(front),
-                mode='markers',
+                mode='lines+markers',
                 marker=dict(
                     size=10,
                     color=colorscale[divmod(generation, len(colorscale))[1]],
