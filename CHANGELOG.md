@@ -1,3 +1,18 @@
+- 2023-09-07 - 3.34.0 - #3378 Change sensor value orientation before saving
+- 2023-09-06 - 3.34.0 - #3377 Release 3.34.0
+- 2023-09-06 - 3.33.0 - #3374 Update MacOS installation guide
+- 2023-09-05 - 3.33.0 - #3366 Adding automated batch-processing options
+- 2023-09-05 - 3.33.0 - #3370 Unified default settings
+- 2023-08-31 - 3.33.0 - #3354 Embodied update
+- 2023-08-25 - 3.33.0 - #3364 Read weather file with encoding
+- 2023-07-28 - 3.33.0 - #3356 Replace whitespaces with underscore in building name
+- 2023-07-26 - 3.33.0 - #3340 Change selection process to prevent duplicates
+- 2023-07-26 - 3.33.0 - #3342 Changed COP for DH geothermal heatpumps
+- 2023-07-26 - 3.33.0 - #3348 Fix optimization KeyError
+- 2023-07-26 - 3.33.0 - #3353 Fix typo that caused `roof_grid` parameter to be ignored
+- 2023-07-01 - 3.33.0 - #3336 Migrate github actions to `setup-micromamba`
+- 2023-06-30 - 3.33.0 - #3335 Update lines of code badge
+- 2023-06-29 - 3.33.0 - #3333 Release 3.33.0
 - 2023-06-28 - 3.32.0 - #3331 Fix EV input validation in editor
 - 2023-06-28 - 3.32.0 - #3324 Fixed deap-creator error
 - 2023-06-28 - 3.32.0 - #3306 Read and write sensor data using feather instead of json
@@ -885,3 +900,4 @@
 - 2016-04-01 - 0.1 - #115 I37 extract properties tool etc
 - 2016-03-31 - 0.1 - #106 Ii023 atot
 - 2016-03-30 - 0.1 - #103 I099 new properties - seems to be working for now...
+
