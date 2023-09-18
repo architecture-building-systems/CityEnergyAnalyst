@@ -197,19 +197,19 @@ def assign_attributes_additional(shapefile):
 
     # Check which attributes OSM has (sometimes it does not have any) and create the column if missing
     if 'addr:city' not in list_of_columns:
-        shapefile['addr:city'] = ['unknown'] * no_buildings
+        shapefile['addr:city'] = [''] * no_buildings
     if 'addr:country' not in list_of_columns:
-        shapefile['addr:country'] = ['unknown'] * no_buildings
+        shapefile['addr:country'] = [''] * no_buildings
     if 'addr:postcode' not in list_of_columns:
-        shapefile['addr:postcode'] = ['unknown'] * no_buildings
+        shapefile['addr:postcode'] = [''] * no_buildings
     if 'addr:street' not in list_of_columns:
-        shapefile['addr:street'] = ['unknown'] * no_buildings
+        shapefile['addr:street'] = [''] * no_buildings
     if 'addr:housename' not in list_of_columns:
-        shapefile['addr:housename'] = ['unknown'] * no_buildings
+        shapefile['addr:housename'] = [''] * no_buildings
     if 'addr:housenumber' not in list_of_columns:
-        shapefile['addr:country'] = ['unknown'] * no_buildings
+        shapefile['addr:country'] = [''] * no_buildings
     if 'residential' not in list_of_columns:
-        shapefile['residential'] = ['unknown'] * no_buildings     #not HDB
+        shapefile['residential'] = [''] * no_buildings     #not HDB
 
     # Assign the cea-formatted columns with attributes
     shapefile['house_no'] = shapefile['addr:housenumber']
@@ -528,8 +528,8 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # Pass the Gdf back to flatten_geometries to split MultiPolygons that might have been created due to one
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         shapefile = flatten_geometries(shapefile)
-        # # reassign building names to account for exploded MultiPolygons
-        # shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
+        # reassign building names to account for exploded MultiPolygons
+        shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
     # clean up attributes
     cleaned_shapefile = shapefile[
