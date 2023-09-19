@@ -13,7 +13,7 @@ dependencies:
 - gevent-websocket
 - ipykernel
 - ipython
-- jupyter
+- notebook
 - openpyxl
 - plotly
 - sphinx

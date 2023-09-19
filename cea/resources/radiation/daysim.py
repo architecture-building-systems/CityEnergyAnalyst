@@ -192,7 +192,7 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
             sensor_area, \
             sensor_orientation, \
             sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roof" else grid_size.walls,
+                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
                                                            srf_type,
                                                            orientation,
                                                            normal,
@@ -327,7 +327,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
 
 
 def write_sensor_results(sensor_data_path, sensor_values):
-    feather.write_feather(sensor_values, sensor_data_path, compression="zstd")
+    feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
 def write_aggregated_results(building_name, sensor_values, locator, date):

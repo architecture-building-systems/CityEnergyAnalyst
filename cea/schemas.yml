@@ -10635,14 +10635,14 @@ get_lca_embodied:
         unit: '[m2]'
         values: '{0.0...n}'
         min: 0.0
-      GHG_sys_embodied_kgCO2m2:
+      GHG_sys_embodied_kgCO2m2yr:
         description: Embodied emissions per conditioned floor area due to building
           construction and decommissioning
         type: float
         unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
         min: 0.0
-      GHG_sys_embodied_tonCO2:
+      GHG_sys_embodied_tonCO2yr:
         description: Embodied emissions due to building construction and decommissioning
         type: float
         unit: "[ton CO2-eq/yr]"
