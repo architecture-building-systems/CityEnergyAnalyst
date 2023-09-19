@@ -190,6 +190,8 @@ def assign_attributes_additional(shapefile):
     This script fills the zone.shp file with additional information from OSM,
     including house number, street name, postcode, if HDB (for Singapore), city, country
     """
+    # TODO: include different terms used by OSM in different countries
+    #  As of 19 Sept 2023, this function works fine in Switzerland and Singapore
 
     # local variables
     no_buildings = shapefile.shape[0]
