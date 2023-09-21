@@ -185,6 +185,42 @@ class CapacityIndicatorVector(object):
         elif isinstance(key, int):
             self.capacity_indicators[key].value = round(value, 2)
 
+
+    def __eq__(self, other):
+        """
+        Allows comparing two capacity indicator vectors (civs) easily, by comparing:
+        - the component categories (primary, secondary, tertiary)
+        - the component codes (e.g. CH2, AC1, BO3, etc.)
+        - the values
+        of each of the capacity indicators that make up the civs.
+        """
+        if isinstance(other, CapacityIndicatorVector):
+            categories = "_".join([ci.category for ci in self.capacity_indicators])
+            other_categories = "_".join([ci.category for ci in other.capacity_indicators])
+            codes = "_".join([ci.code for ci in self.capacity_indicators])
+            other_codes = "_".join([ci.code for ci in other.capacity_indicators])
+            values = "_".join([str(ci.value) for ci in self.capacity_indicators])
+            other_values = "_".join([str(ci.value) for ci in other.capacity_indicators])
+
+            categories_match = categories == other_categories
+            codes_match = codes == other_codes
+            values_match = values == other_values
+
+            return categories_match and codes_match and values_match
+        else:
+            return False
+
+    def __hash__(self):
+        """
+        Allows using capacity indicator vectors (civs) as keys in dictionaries.
+        """
+        categories_string = "_".join([ci.category for ci in self.capacity_indicators])
+        codes_sting = "_".join([ci.code for ci in self.capacity_indicators])
+        values_string = "_".join([str(ci.value) for ci in self.capacity_indicators])
+
+        return hash(("categories", categories_string, "codes", codes_sting, "values", values_string))
+
+
     def reset(self):
         """
         Reset the entire capacity indicator vector at once in order to correct capacity indicator values if necessary
@@ -225,30 +261,21 @@ class CapacityIndicatorVector(object):
         """
         Check if the capacity indicator vector matches the structure of another capacity indicator vector.
         """
-        has_same_length = len(self.values) == len(other_civ.values)
-        if has_same_length:
-            has_same_categories = all([capacity_indicator.category == other_civ.capacity_indicators[i].category
-                                       for i, capacity_indicator in enumerate(self.capacity_indicators)])
-            has_same_codes = all([capacity_indicator.code == other_civ.capacity_indicators[i].code
-                                  for i, capacity_indicator in enumerate(self.capacity_indicators)])
+        if isinstance(other_civ, CapacityIndicatorVector):
+            # transform the capacity indicator vector's categories and codes into strings
+            categories = "_".join([ci.category for ci in self.capacity_indicators])
+            other_categories = "_".join([ci.category for ci in other_civ.capacity_indicators])
+            codes = "_".join([ci.code for ci in self.capacity_indicators])
+            other_codes = "_".join([ci.code for ci in other_civ.capacity_indicators])
+
+            # check if the categories and codes match
+            categories_match = categories == other_categories
+            codes_match = codes == other_codes
+
+            return categories_match and codes_match
         else:
-            has_same_categories = False
-            has_same_codes = False
+            return False
 
-        return has_same_length and has_same_categories and has_same_codes
-
-    def matches_fully(self, other_civ):
-        """
-        Check if the capacity indicator vector matches the structure and values of another capacity indicator vector.
-        """
-        has_same_structure = self.matches_structure(other_civ)
-        if has_same_structure:
-            has_same_values = all([self.capacity_indicators[i].value == other_civ.capacity_indicators[i].value
-                                   for i, capacity_indicator in enumerate(self.capacity_indicators)])
-        else:
-            has_same_values = False
-
-        return self.matches_structure(other_civ) and has_same_values
 
     def _categories_overdimensioned(self, new_capacity_indicator_values):
         """
@@ -455,7 +482,6 @@ class CapacityIndicatorVectorMemory(object):
         else:
             self.best_capacity_indicator_vectors = None
 
-
     def _create_brackets(self, nbr_of_brackets, rounding_decimal=3):
         """
         Create brackets for the district energy demand for which the best capacity indicator vectors shall be stored.
@@ -560,15 +586,15 @@ class CapacityIndicatorVectorMemory(object):
             self.best_capacity_indicator_vectors = self._create_brackets(self.nbr_of_brackets)
 
         for bracket_median in self.best_capacity_indicator_vectors.keys():
-            self.best_capacity_indicator_vectors[bracket_median] +=\
-                more_civ_memory.best_capacity_indicator_vectors[bracket_median]
+            # combine the two lists of capacity indicator vectors...
+            combined_civs = self.best_capacity_indicator_vectors[bracket_median] + \
+                            more_civ_memory.best_capacity_indicator_vectors[bracket_median]
+            # ...and remove duplicates...
+            combined_civs = list(set(combined_civs))
+            # ...before finding the non-dominated set of capacity indicator vectors among them
+            if combined_civs:
+                self.best_capacity_indicator_vectors[bracket_median] = \
+                    tools.emo.sortLogNondominated(combined_civs, 100, first_front_only=True)
+            else:
+                self.best_capacity_indicator_vectors[bracket_median] = []
 
-        # Remove duplicates
-        for bracket_median in self.best_capacity_indicator_vectors.keys():
-            unique_civs = []
-            for i, civ in enumerate(self.best_capacity_indicator_vectors[bracket_median]):
-                found_in_remainder = [civ.matches_fully(other_civ) for other_civ
-                                      in self.best_capacity_indicator_vectors[bracket_median][i:]].count(True) > 1
-                if not found_in_remainder:
-                    unique_civs.append(civ)
-            self.best_capacity_indicator_vectors[bracket_median] = unique_civs
