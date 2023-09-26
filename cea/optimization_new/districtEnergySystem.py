@@ -354,14 +354,21 @@ class DistrictEnergySystem(object):
         fitnesses = toolbox.map(toolbox.evaluate, population)
         for i, fit in enumerate(fitnesses):
             # if the supply system could not be built and/or operated properly, generate and evaluate a new capacity
-            #   indicator vector
+            #   indicator vector until a fit supply system is found or until 10 attempts have been made
+            j = 0
             while not fit:
-                population[i] = toolbox.individual()
-                fit = toolbox.evaluate(population[i])
+                if j > 10:
+                    fit = [np.inf for _ in range(algorithm.nbr_objectives)]
+                    break
+                else:
+                    population[i] = toolbox.individual()
+                    fit = toolbox.evaluate(population[i])
+                    j += 1
+
             population[i].fitness.values = fit
 
         # Perform the genetic optimization
-        for generation in range(1, algorithm.generations+1):
+        for generation in range(1, algorithm.generations_supply_systems + 1):
             # initialize a few relevant variables
             population_civs = set(tuple(pop_ind.values) for pop_ind in population)
             targeted_number_of_offspring = 0

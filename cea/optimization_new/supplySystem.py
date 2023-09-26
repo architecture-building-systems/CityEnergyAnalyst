@@ -416,7 +416,7 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = {ec_code: sum(energy_flow) * EnergyCarrier.get_unit_cost(ec_code)
+        annual_energy_supply_cost = {ec_code: max(sum(energy_flow), 0) * EnergyCarrier.get_unit_cost(ec_code)
                                      for ec_code, energy_flow in self.system_energy_demand.items()}
 
         self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}

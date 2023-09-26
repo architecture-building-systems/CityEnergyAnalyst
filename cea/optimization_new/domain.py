@@ -191,7 +191,7 @@ class Domain(object):
             # ... consolidate the tracker objects in the main process' memory
             tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
-        for generation in range(1, algorithm.generations+1):
+        for generation in range(1, algorithm.generations_networks + 1):
             offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
 
             # Evaluate the individuals in the offspring, unless they are an exact copy of one of the parents
@@ -215,7 +215,7 @@ class Domain(object):
 
 
         main_process_memory.recall_class_variables()
-        self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population,)
+        self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
         if tracker:
             tracker.print_evolutions()
         print(f"\nDistrict energy system optimisation complete!")
@@ -504,7 +504,7 @@ class Domain(object):
                                        'Std. deviation of hourly network losses [kWh]',
                                        'Yearly network losses [kWh]',
                                        'Network length [m]',
-                                       'Network cost, annualised [USD]']
+                                       'Network cost [USD]']
 
         # write to file
         network_performance.to_csv(results_file)
