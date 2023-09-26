@@ -33,6 +33,7 @@ class InputLocator(object):
         self.weather_path = os.path.join(self.db_path, 'weather')
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
+        self._temp_directory = tempfile.TemporaryDirectory() 
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -1107,7 +1108,7 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return tempfile.gettempdir()
+        return self._temp_directory.name
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
