@@ -1,0 +1,7 @@
+# from solar radiation to emissions and system costs
+
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
