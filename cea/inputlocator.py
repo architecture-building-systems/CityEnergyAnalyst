@@ -36,6 +36,10 @@ class InputLocator(object):
 
         self._temp_directory = None
 
+    def __del__(self):
+        if self._temp_directory is not None:
+            self._temp_directory.cleanup()
+
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
         return {
