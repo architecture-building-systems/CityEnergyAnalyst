@@ -43,6 +43,7 @@ class InputLocator(object):
             "db_path": self.db_path,
             "weather_path": self.weather_path,
             "plugins": [str(p) for p in self.plugins],
+            "_temp_directory": self._temp_directory
         }
 
     def __setstate__(self, state):
@@ -53,6 +54,7 @@ class InputLocator(object):
         self.weather_path = state["weather_path"]
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
+        self._temp_directory = state["_temp_directory"]
 
     def _wrap_locator_methods(self, plugins):
         """
