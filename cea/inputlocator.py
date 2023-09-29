@@ -34,11 +34,10 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
-        self._temp_directory = None
+        self._temp_directory = tempfile.TemporaryDirectory()
 
     def __del__(self):
-        if self._temp_directory is not None:
-            self._temp_directory.cleanup()
+        self._temp_directory.cleanup()
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -1115,8 +1114,6 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        if self._temp_directory is None:
-            self._temp_directory = tempfile.TemporaryDirectory()
         return self._temp_directory.name
 
     def get_temporary_file(self, filename):
