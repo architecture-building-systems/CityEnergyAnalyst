@@ -34,7 +34,10 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
-        self._temp_directory = None
+        self._temp_directory = tempfile.TemporaryDirectory()
+
+    def __del__(self):
+        self._temp_directory.cleanup()
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -43,6 +46,7 @@ class InputLocator(object):
             "db_path": self.db_path,
             "weather_path": self.weather_path,
             "plugins": [str(p) for p in self.plugins],
+            "_temp_directory": self._temp_directory
         }
 
     def __setstate__(self, state):
@@ -53,6 +57,7 @@ class InputLocator(object):
         self.weather_path = state["weather_path"]
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
+        self._temp_directory = state["_temp_directory"]
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -1121,8 +1126,6 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        if self._temp_directory is None:
-            self._temp_directory = tempfile.TemporaryDirectory()
         return self._temp_directory.name
 
     def get_temporary_file(self, filename):
