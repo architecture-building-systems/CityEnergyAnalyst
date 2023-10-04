@@ -121,9 +121,11 @@ def plot_pareto_front(objectives, objective_values):
         name='DCS-solution',
         text=objective_values['DCS-solution'],
         marker=dict(
-            size=10,
+            size=20,
             color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
             colorscale='Viridis',
+            line=dict(width=2,
+                      color='black'),
             opacity=0.8
         )
     ))
@@ -144,7 +146,7 @@ def plot_pareto_front(objectives, objective_values):
         showactive=True,
         x=0.1,
         xanchor='left',
-        y=1.1,
+        y=1.13,
         yanchor='top'
     ) ]
 
@@ -156,11 +158,21 @@ def plot_pareto_front(objectives, objective_values):
         yaxis=dict(title='Objective Function B'),
         width=800,
         height=600,
-        showlegend=False
+        showlegend=False,
+        plot_bgcolor = 'rgb(190, 235, 243)',
     )
 
     # Create the figure
     fig = go.Figure(data=traces, layout=layout)
+
+    fig.update_xaxes(
+        ticks='outside',
+        gridcolor='grey'
+    )
+    fig.update_yaxes(
+        ticks='outside',
+        gridcolor='grey'
+    )
     fig.show()
 
 def add_3D_scatter_plot(objectives, objective_values):
@@ -175,16 +187,37 @@ def add_3D_scatter_plot(objectives, objective_values):
                             name='DCS-solution',
                             text=objective_values['DCS-solution'],
                             marker=dict(
-                                size=10,
+                                size=15,
                                 color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
                                 colorscale='Viridis',
-                                opacity=0.8
+                                opacity=0.9,
+                                line=dict(width=4,
+                                          color='black')
                             )
                             )
 
 
         # Customize the layout
-        layout = go.Layout(scene=dict(xaxis_title=objectives[0], yaxis_title=objectives[1], zaxis_title=objectives[3]))
+        layout = go.Layout(scene=dict(xaxis_title=objectives[0],
+                                      yaxis_title=objectives[1],
+                                      zaxis_title=objectives[3],
+                                      xaxis=dict(
+                                          ticks='outside',
+                                          backgroundcolor="rgb(254, 253, 224)",
+                                          gridcolor="grey",
+                                          showbackground=True),
+                                      yaxis=dict(
+                                          ticks='outside',
+                                          backgroundcolor="rgb(255, 238, 217)",
+                                          gridcolor="grey",
+                                          showbackground=True),
+                                      zaxis=dict(
+                                          ticks='outside',
+                                          backgroundcolor="rgb(190, 235, 243)",
+                                          gridcolor="grey",
+                                          showbackground=True)
+                                      )
+                           )
 
         # Show the plot
         fig = go.Figure(data=data, layout=layout)
