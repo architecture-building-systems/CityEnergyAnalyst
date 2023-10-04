@@ -113,7 +113,7 @@ The Development team is the group of individuals who build CEA. His/her main res
 Customer Team (CT)
 ------------------
 
-The Customer team is the group of individuals who use CEA. They are not part of the CEA team, but their function is extremely important for the succes of the project.
+The Customer team is the group of individuals who use CEA. They are not part of the CEA team, but their function is extremely important for the success of the project.
 
 #. Represent one or more User Personas in CEA.
 #. Validate CEA and give feedback to the Product Owner

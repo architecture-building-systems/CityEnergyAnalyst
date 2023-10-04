@@ -236,7 +236,7 @@ def calc_Ctot_cs_building_scale_loads(network_info):
         # Make sure files to read in exist
         for system in disconnected_systems:
             for building in optimal_network.building_names:
-                assert optimal_network.locator.get_optimization_building_scale_folder_building_result_heating(building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
+                assert optimal_network.locator.get_optimization_building_scale_folder_building_result_heating(building), "Missing disconnected building files. Please run disconnected_buildings_heating first."
             # Read in disconnected cost of all buildings
                 disconnected_cost = optimal_network.locator.get_optimization_building_scale_folder_building_result_heating(building)
     '''
@@ -377,7 +377,7 @@ def find_supplied_systems_annual(network_info, building_demand, full_systems, di
 
 def calc_Ctot_cs_building_scale_buildings(network_info):
     """
-    Caculates the space cooling cost of disconnected buildings.
+    Calculates the space cooling cost of disconnected buildings.
     The calculation for partially disconnected buildings is done in calc_Ctot_cs_building_scale_loads.
     :param network_info: an object storing information of the current network
     :return:

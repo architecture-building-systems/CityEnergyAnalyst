@@ -11,8 +11,12 @@ def save_results(locator,
                  generation_number,
                  buildings_district_scale_costs,
                  buildings_district_scale_emissions,
+                 buildings_district_scale_heat,
+                 buildings_district_scale_sed,
                  buildings_building_scale_costs,
                  buildings_building_scale_emissions,
+                 buildings_building_scale_heat,
+                 buildings_building_scale_sed,
                  heating_dispatch,
                  cooling_dispatch,
                  electricity_dispatch,
@@ -28,25 +32,25 @@ def save_results(locator,
     # SAVE INDIVIDUAL DISTRICT HEATING INSTALLED CAPACITIES
     pd.DataFrame(district_heating_capacity_installed_dict, index=[0]).to_csv(
         locator.get_optimization_district_scale_heating_capacity(individual_number,
-                                                            generation_number),
+                                                                 generation_number),
         index=False, float_format='%.3f')
     pd.DataFrame(district_cooling_capacity_installed_dict, index=[0]).to_csv(
         locator.get_optimization_district_scale_cooling_capacity(individual_number,
-                                                            generation_number),
+                                                                 generation_number),
         index=False, float_format='%.3f')
     pd.DataFrame(district_electricity_capacity_installed_dict, index=[0]).to_csv(
         locator.get_optimization_district_scale_electricity_capacity(individual_number,
-                                                                generation_number),
+                                                                     generation_number),
         index=False, float_format='%.3f')
 
     buildings_building_scale_heating_capacities.to_csv(
         locator.get_optimization_building_scale_heating_capacity(individual_number,
-                                                               generation_number),
+                                                                 generation_number),
         index=False, float_format='%.3f')
 
     buildings_building_scale_cooling_capacities.to_csv(
         locator.get_optimization_building_scale_cooling_capacity(individual_number,
-                                                               generation_number),
+                                                                 generation_number),
         index=False, float_format='%.3f')
 
     # SAVE BUILDING CONNECTIVITY
@@ -57,16 +61,18 @@ def save_results(locator,
 
     # SAVE PERFORMANCE RELATED FILES
     # export all including performance heating and performance cooling since we changed them
-    performance_building_scale_dict = dict(buildings_building_scale_costs, **buildings_building_scale_emissions)
+    performance_building_scale_dict = dict(buildings_building_scale_costs, **buildings_building_scale_emissions,
+                                           **buildings_building_scale_heat, **buildings_building_scale_sed)
     pd.DataFrame(performance_building_scale_dict, index=[0]).to_csv(
         locator.get_optimization_slave_building_scale_performance(individual_number,
-                                                                generation_number),
+                                                                  generation_number),
         index=False, float_format='%.3f')
 
-    performance_district_scale_dict = dict(buildings_district_scale_costs, **buildings_district_scale_emissions)
+    performance_district_scale_dict = dict(buildings_district_scale_costs, **buildings_district_scale_emissions,
+                                           **buildings_district_scale_heat, **buildings_district_scale_sed)
     pd.DataFrame(performance_district_scale_dict, index=[0]).to_csv(
         locator.get_optimization_slave_district_scale_performance(individual_number,
-                                                             generation_number),
+                                                                  generation_number),
         index=False, float_format='%.3f')
 
     pd.DataFrame(performance_totals_dict, index=[0]).to_csv(

@@ -42,8 +42,26 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
-                                               column_names_buildings_cooling, locator, master_to_slave_vars):
+def buildings_building_scale_objective_functions(column_names_buildings_heating,
+                                                 column_names_buildings_cooling, locator, master_to_slave_vars):
+    """
+    Computes costs & GHG emissions for the individual.
+    If the optimisation looks for the ideal DC network primary energy needs & anthropogenic heat release are also calculated.
+
+    :param list column_names_buildings_heating: names of buildings with a positive heating demand
+    :param list column_names_buildings_cooling: names of buildings with a positive cooling demand
+    :param locator: input locator set to scenario
+    :param master_to_slave_vars: class containing the features of a specific individual
+    :type locator: cea.inputlocator.InputLocator class object
+    :type master_to_slave_vars: cea.optimization.slave_data.SlaveData class object
+
+    :return dict disconnected_costs: costs of heating and cooling systems of disconnected buildings (acc. to individual)
+    :return dict disconnected_emissions: GHG emissions of heating and cooling systems of disconnected buildings (acc. to individual)
+    :return dict disconnected_heat_rejection: (anthropogenic) heat rejection of cooling systems of disconnected buildings (acc. to individual)
+    :return dict disconnected_system_energy_demand: system energy demand of cooling system of disconnected buildings (acc. to individual)
+    :return DataFrame capacity_installed_heating_sys_df: capacities of heating system components installed in disconnected buildings (acc. to individual)
+    :return DataFrame capacity_installed_cooling_sys_df: capacities of cooling system components installed in disconnected buildings (acc. to individual)
+    """
     DHN_barcode = master_to_slave_vars.DHN_barcode
     DCN_barcode = master_to_slave_vars.DCN_barcode
 
@@ -63,9 +81,12 @@ def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
     Capex_a_cooling_sys_building_scale_USD, \
     Opex_var_cooling_sys_disconnected, \
     Opex_fixed_cooling_sys_building_scale_USD, \
-    capacity_installed_cooling_sys_df = calc_costs_emissions_decentralized_DC(DCN_barcode,
-                                                                              column_names_buildings_cooling,
-                                                                              locator)
+    Qh_sys_release_Wh, \
+    NG_sys_req_Wh, \
+    E_sys_req_Wh, \
+    capacity_installed_cooling_sys_df = calc_objective_functions_decentralized_DC(DCN_barcode,
+                                                                                  column_names_buildings_cooling,
+                                                                                  locator)
 
     disconnected_costs = {
         # heating
@@ -86,11 +107,39 @@ def buildings_building_scale_costs_and_emissions(column_names_buildings_heating,
         "GHG_cooling_building_scale_tonCO2": GHG_cooling_sys_building_scale_tonCO2yr,
     }
 
-    return disconnected_costs, disconnected_emissions, capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
+    disconnected_heat_rejection = {
+        # rejected (anthropogenic) heat from cooling systems
+        "DC_HR_cooling_building_scale_Wh": Qh_sys_release_Wh,
+    }
+
+    disconnected_system_energy_demand = {
+        # energy demand of cooling system
+        "SED_NG_cooling_building_scale_Wh": NG_sys_req_Wh,
+        "SED_E_cooling_building_scale_Wh": E_sys_req_Wh,
+    }
+
+    return disconnected_costs, disconnected_emissions, \
+           disconnected_heat_rejection, disconnected_system_energy_demand, \
+           capacity_installed_heating_sys_df, capacity_installed_cooling_sys_df
 
 
 def calc_network_costs_heating(locator, master_to_slave_vars, network_features, network_type):
-    # Intitialize class
+    """
+    Returns the costs of the district heating network as well as the capacity of the pumps installed in the network.
+
+    :param locator: input locator set to scenario
+    :param master_to_slave_vars: class containing the features of a specific individual
+    :param network_features: description of the thermal network (pumping energy, pipeCosts, thermal losses)
+    :param string network_type: code describing which type of network is processed
+    :type locator: cea.inputlocator.InputLocator class object
+    :type master_to_slave_vars: cea.optimization.slave_data.SlaveData class object
+    :type network_features: cea.optimization.distribution.network_optimization_features.NetworkOptimizationFeatures class object
+
+    :return dict performance: Costs of district heating network
+    :return float64 P_motor_tot_W: Power of pumps installed in the network
+    """
+
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DHN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_heating
 
@@ -182,12 +231,12 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
 
 
 def calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
-                                            sum_wet_biomass_imports_W,
-                                            sum_dry_biomass_imports_W,
-                                            sum_electricity_imports_W,
-                                            sum_electricity_exports_W,
-                                            prices,
-                                            ):
+                                                 sum_wet_biomass_imports_W,
+                                                 sum_dry_biomass_imports_W,
+                                                 sum_electricity_imports_W,
+                                                 sum_electricity_exports_W,
+                                                 prices,
+                                                 ):
     # COSTS
     Opex_var_NG_sys_district_scale_USD = sum(sum_natural_gas_imports_W * prices.NG_PRICE)
     Opex_var_WB_sys_district_scale_USD = sum(sum_wet_biomass_imports_W * prices.WB_PRICE)
@@ -207,11 +256,11 @@ def calc_variable_costs_district_scale_buildings(sum_natural_gas_imports_W,
 
 
 def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
-                                       sum_wet_biomass_imports_W,
-                                       sum_dry_biomass_imports_W,
-                                       sum_electricity_imports_W,
-                                       sum_electricity_exports_W,
-                                       lca):
+                                            sum_wet_biomass_imports_W,
+                                            sum_dry_biomass_imports_W,
+                                            sum_electricity_imports_W,
+                                            sum_electricity_exports_W,
+                                            lca):
     # SUMMARIZE
     GHG_NG_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_natural_gas_imports_W, lca.NG_TO_CO2_EQ))
     GHG_WB_district_scale_tonCO2yr = sum(calc_emissions_Whyr_to_tonCO2yr(sum_wet_biomass_imports_W, lca.WETBIOMASS_TO_CO2_EQ))
@@ -228,6 +277,43 @@ def calc_emissions_district_scale_buildings(sum_natural_gas_imports_W,
     }
 
     return buildings_district_scale_emissions_primary_energy
+
+
+def calc_heat_release_district_scale_buildings(district_cooling_heat_release):
+
+    # SUMMARIZE
+    district_cooling_sensible_heat_release_W = sum(district_cooling_heat_release['Q_release_Trigen_NG_W'])
+    district_cooling_latent_heat_release_W = (sum(district_cooling_heat_release['Q_release_BaseVCC_WS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_PeakVCC_WS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_FreeCooling_W']) +
+                                              sum(district_cooling_heat_release['Q_release_BaseVCC_AS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_PeakVCC_AS_W']) +
+                                              sum(district_cooling_heat_release['Q_release_BackupVCC_AS_W']))
+
+    district_cooling_heat_release_summary = {"DC_HR_sensible_district_scale_Wh": district_cooling_sensible_heat_release_W,
+                                             "DC_HR_latent_district_scale_Wh": district_cooling_latent_heat_release_W}
+
+    return district_cooling_heat_release_summary
+
+
+def calc_system_energy_demand_district_scale_buildings(sum_natural_gas_imports_W,
+                                                       sum_wet_biomass_imports_W,
+                                                       sum_dry_biomass_imports_W,
+                                                       sum_electricity_imports_W,
+                                                       sum_electricity_exports_W):
+
+    # SUMMARIZE
+    SED_natural_gas_W = sum(sum_natural_gas_imports_W)
+    SED_wet_biomass_W = sum(sum_wet_biomass_imports_W)
+    SED_dry_biomass_W = sum(sum_dry_biomass_imports_W)
+    SED_electricity_W = sum(sum_electricity_imports_W) - sum(sum_electricity_exports_W)
+
+    district_system_energy_demand = {"SED_natural_gas_district_scale_Wh": SED_natural_gas_W,
+                                     "SED_wet_biomass_district_scale_Wh": SED_wet_biomass_W,
+                                     "SED_dry_biomass_district_scale_Wh": SED_dry_biomass_W,
+                                     "SED_electricity_district_scale_Wh": SED_electricity_W}
+
+    return district_system_energy_demand
 
 
 def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_dispatch,
@@ -269,16 +355,36 @@ def summary_fuel_electricity_consumption(district_cooling_fuel_requirements_disp
            sum_electricity_exports_W
 
 
-def buildings_district_scale_costs_and_emissions(district_heating_costs,
+def buildings_district_scale_objective_functions(district_heating_costs,
                                                  district_cooling_costs,
                                                  district_microgrid_costs,
                                                  district_microgrid_requirements_dispatch,
                                                  district_heating_fuel_requirements_dispatch,
                                                  district_cooling_fuel_requirements_dispatch,
                                                  district_electricity_demands,
+                                                 district_cooling_heat_release,
                                                  prices,
                                                  lca
                                                  ):
+    """
+    Returns the objective function values for the connected centralised thermal energy systems (DC/DH-substation + network)
+    according to the investigated individual.
+
+    :param dict district_heating_costs: cost of components and operation in district heating system
+    :param dict district_cooling_costs: cost of components and operation in district cooling system
+    :param dict district_microgrid_costs: costs of microgrid and PV of centralised thermal energy systems
+    :param dict district_microgrid_requirements_dispatch: electricity demand and generation of centralised thermal energy systems
+    :param dict district_heating_fuel_requirements_dispatch: fuel demand of district heating system
+    :param dict district_cooling_fuel_requirements_dispatch: fuel demand of district cooling system
+    :param dict district_electricity_demands: electricity demand of centralised thermal energy systems
+    :param dict district_cooling_heat_release: (anthropogenic) heat release of district cooling system
+    :param prices: prices of available energy carriers (electricity, gas, wood, dry biomass ...)
+    :param lca: emission intensities of fuels
+    :type prices: cea.optimization.prices.Prices class object
+    :type lca: cea.optimization.lca_calculations.LcaCalculations class object
+
+    :return connected_costs, connected_emissions, connected_heat_release, connected_system_energy_demand
+    """
     # SUMMARIZE IMPORTS AND EXPORTS
     sum_natural_gas_imports_W, \
     sum_wet_biomass_imports_W, \
@@ -309,11 +415,22 @@ def buildings_district_scale_costs_and_emissions(district_heating_costs,
                                                                   sum_electricity_imports_W,
                                                                   sum_electricity_exports_W,
                                                                   lca)
-    return connected_costs, connected_emissions
+
+    # CALCULATE (ANTHROPOGENIC) HEAT RELEASE
+    connected_heat_release = calc_heat_release_district_scale_buildings(district_cooling_heat_release)
+
+    # CALCULATE SYSTEM ENERGY DEMAND
+    connected_system_energy_demand = calc_system_energy_demand_district_scale_buildings(sum_natural_gas_imports_W,
+                                                                                        sum_wet_biomass_imports_W,
+                                                                                        sum_dry_biomass_imports_W,
+                                                                                        sum_electricity_imports_W,
+                                                                                        sum_electricity_exports_W)
+
+    return connected_costs, connected_emissions, connected_heat_release, connected_system_energy_demand
 
 
 def calc_network_costs_cooling(locator, master_to_slave_vars, network_features, network_type):
-    # Intitialize class
+    # Initialize class
     pipesCosts_USD = network_features.pipesCosts_DCN_USD
     num_buildings_connected = master_to_slave_vars.number_of_buildings_district_scale_cooling
 
@@ -416,6 +533,16 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
 
 def calc_generation_costs_cooling_storage(master_to_slave_variables,
                                           daily_storage):
+    """
+    Calculate operation and maintenance costs of the thermal storage unit.
+
+    :param master_to_slave_variables: class containing the features of a specific individual
+    :param daily_storage: storage characteristics and parameters
+    :type master_to_slave_variables: cea.optimization.slave_data.SlaveData class object
+    :type daily_storage: cea.technologies.storage_tank_pcm.Storage_tank_PCM class object
+
+    :return performance: costs of thermal storage unit
+    """
     # STORAGE TANK
     if master_to_slave_variables.Storage_cooling_on == 1:
         Capex_a_Tank_USD, Opex_fixed_Tank_USD, Capex_Tank_USD = daily_storage.costs_storage()
@@ -444,6 +571,20 @@ def calc_generation_costs_capacity_installed_cooling(locator,
                                                      supply_systems,
                                                      mdotnMax_kgpers,
                                                      ):
+    """
+    Calculate capacities and costs of components installed in district cooling substation.
+
+    :param locator: input locator set to scenario
+    :param master_to_slave_variables: class containing the features of a specific individual
+    :param supply_systems: database of thermal energy system components
+    :param fload64 mdotnMax_kgpers: maximum mass flow rate of water in district cooling network pipes
+    :type locator: cea.inputlocator.InputLocator class object
+    :type master_to_slave_variables: cea.optimization.slave_data.SlaveData class object
+    :type supply_systems: cea.technologies.supply_systems_database.SupplySystemsDatabase
+
+    :return performance_costs: operation and maintenance costs of components in district cooling substation
+    :return capacity_installed: capacity of components installed in district cooling substation
+    """
     # TRIGENERATION
     if master_to_slave_variables.NG_Trigen_on == 1:
         Capacity_NG_Trigen_ACH_W = master_to_slave_variables.NG_Trigen_ACH_size_W
@@ -469,7 +610,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_Trigen_NG_USD = 0.0
         Capex_Trigen_NG_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER BASE
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.WS_BaseVCC_on == 1:
         Capacity_BaseVCC_WS_W = master_to_slave_variables.WS_BaseVCC_size_W
         # VCC
@@ -500,7 +641,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_WS_USD = 0.0
         Capex_BaseVCC_WS_USD = 0.0
 
-    # WATER-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # WATER-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.WS_PeakVCC_on == 1:
         Capacity_PeakVCC_WS_W = master_to_slave_variables.WS_PeakVCC_size_W
         # VCC
@@ -532,7 +673,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_PeakVCC_WS_USD = 0.0
         Capex_PeakVCC_WS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER BASE
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER BASE
     if master_to_slave_variables.AS_BaseVCC_on == 1:
         Capacity_BaseVCC_AS_W = master_to_slave_variables.AS_BaseVCC_size_W
         # VCC
@@ -552,7 +693,7 @@ def calc_generation_costs_capacity_installed_cooling(locator,
         Opex_fixed_BaseVCC_AS_USD = 0.0
         Capex_BaseVCC_AS_USD = 0.0
 
-    # AIR-SOURCE VAPOR COMPRESION CHILLER PEAK
+    # AIR-SOURCE VAPOR COMPRESSION CHILLER PEAK
     if master_to_slave_variables.AS_PeakVCC_on == 1:
         Capacity_PeakVCC_AS_W = master_to_slave_variables.AS_PeakVCC_size_W
         # VCC
@@ -643,29 +784,19 @@ def calc_generation_costs_capacity_installed_heating(locator,
                                                      mdotnMax_kgpers
                                                      ):
     """
-    Computes costs / GHG emisions / primary energy needs
-    for the individual
-    addCosts = additional costs
-    addCO2 = GHG emissions
-    addPrm = primary energy needs
-    :param DHN_barcode: parameter indicating if the building is connected or not
-    :param buildList: list of buildings in the district
-    :param cea.inputlocator.InputLocator locator: input locator set to scenario
-    :param master_to_slave_vars: class containing the features of a specific individual
-    :param Q_uncovered_design_W: hourly max of the heating uncovered demand
-    :param Q_uncovered_annual_W: total heating uncovered
-    :param solar_features: solar features
-    :param thermal_network: network features
-    :type indCombi: string
-    :type buildList: list
-    :type master_to_slave_vars: class
-    :type Q_uncovered_design_W: float
-    :type Q_uncovered_annual_W: float
-    :type solar_features: class
-    :type thermal_network: class
+    Calculate capacities and costs of components installed in district heating substation.
 
-    :return: returns the objectives addCosts, addCO2, addPrim
-    :rtype: tuple
+    :param locator: input locator set to scenario
+    :param master_to_slave_vars: class containing the features of a specific individual
+    :param config: configurations of CEA
+    :param storage_activation_data: heat storage dispatch curve
+    :param fload64 mdotnMax_kgpers: maximum mass flow rate of water in district cooling network pipes
+    :type locator: cea.inputlocator.InputLocator class object
+    :type master_to_slave_vars: cea.optimization.slave_data.SlaveData class object
+    :type config: cea.config.Configuration class object
+
+    :return performance_costs: operation and maintenance costs of components in district heating substation
+    :return capacity_installed: capacity of components installed in district heating substation
     """
 
     thermal_network = master_to_slave_vars.DH_network_summary_individual
@@ -962,7 +1093,7 @@ def calc_generation_costs_capacity_installed_heating(locator,
     return performance_costs, capacity_installed
 
 
-def calc_seasonal_storage_costs(config, locator, storage_activation_data):
+def calc_seasonal_storage_costs(locator, storage_activation_data):
     # STORAGE
     # costs of storage are already calculated
     Capacity_seasonal_storage_m3 = storage_activation_data['Storage_Size_m3']
@@ -995,13 +1126,16 @@ def calc_seasonal_storage_costs(config, locator, storage_activation_data):
     return performance_costs
 
 
-def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
-                                          ):
+def calc_objective_functions_decentralized_DC(DCN_barcode, buildings_names_with_cooling_load, locator,
+                                              ):
     GHG_sys_building_scale_tonCO2yr = 0.0
     Capex_a_sys_building_scale_USD = 0.0
     Opex_var_sys_disconnected = 0.0
     Capex_total_sys_building_scale_USD = 0.0
     Opex_fixed_sys_building_scale_USD = 0.0
+    Qh_sys_release_Wh = 0.0
+    NG_sys_req_Wh = 0.0
+    E_sys_req_Wh = 0.0
     capacity_installed_df = pd.DataFrame()
     for (index, building_name) in zip(DCN_barcode, buildings_names_with_cooling_load):
         if index == "0":  # choose the best decentralized configuration
@@ -1013,6 +1147,9 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
             Capex_a_sys_building_scale_USD += dfBest["Capex_a_USD"].iloc[0]
             Opex_var_sys_disconnected += dfBest["Opex_var_USD"].iloc[0]
             Opex_fixed_sys_building_scale_USD += dfBest["Opex_fixed_USD"].iloc[0]
+            Qh_sys_release_Wh += dfBest["Qh_sys_release_Wh"].iloc[0]
+            NG_sys_req_Wh += dfBest["NG_sys_req_Wh"].iloc[0]
+            E_sys_req_Wh += dfBest["E_sys_req_Wh"].iloc[0]
 
             data = pd.DataFrame({'Name': building_name,
                                  'Capacity_DX_AS_cool_building_scale_W': dfBest["Capacity_DX_AS_W"].iloc[0],
@@ -1029,6 +1166,9 @@ def calc_costs_emissions_decentralized_DC(DCN_barcode, buildings_names_with_cool
            Capex_a_sys_building_scale_USD, \
            Opex_var_sys_disconnected, \
            Opex_fixed_sys_building_scale_USD, \
+           Qh_sys_release_Wh, \
+           NG_sys_req_Wh, \
+           E_sys_req_Wh, \
            capacity_installed_df
 
 

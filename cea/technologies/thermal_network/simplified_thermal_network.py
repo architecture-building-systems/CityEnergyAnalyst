@@ -166,7 +166,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def thermal_network_simplified(locator, config, network_name):
+def thermal_network_simplified(locator, config, network_name=''):
     # local variables
     network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -230,7 +230,7 @@ def thermal_network_simplified(locator, config, network_name):
             Q_demand_kWh_building[building_name] = substation_results[
                                                        "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
 
-    # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library ist loaded
+    # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library is loaded
     #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles
     #   are transformed in a way that they can be properly interpreted by epanet.
     import cea.utilities

@@ -20,4 +20,4 @@ include cea/workflows/*.yml
 
 include cea/dev/conda.bat
 
-graft cea/resources/radiation_daysim/bin
+graft cea/resources/radiation/bin

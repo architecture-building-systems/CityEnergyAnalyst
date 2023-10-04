@@ -1,13 +1,15 @@
-|pic1| |pic2| |pic3|
+|license| |repo_size| |lines_of_code| |zenodo|
 
-.. |pic1| image:: https://img.shields.io/badge/License-MIT-blue.svg
+.. |license| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :alt: GitHub license
-.. |pic2| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
+.. |repo_size| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
-.. |pic3| image:: https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/image-data/badge-lines-of-code.svg
+.. |lines_of_code| image:: https://img.shields.io/tokei/lines/github/architecture-building-systems/CityEnergyAnalyst
     :alt: Lines of code
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8327389.svg
+   :target: https://doi.org/10.5281/zenodo.8327389
 
-.. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
+.. image:: cea_logo.png
     :height: 420 px
     :width: 1500 px
     :scale: 25 %
@@ -17,27 +19,20 @@
 City Energy Analyst (CEA)
 --------------------------
 
-The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban energy simulation platform and one
-of the first open-source computational tools for the design of low-carbon and highly efficient neighborhoods and districts
-The CEA combines knowledge of urban planning and energy systems engineering in an integrated framework. This
-allows to study the effects, trade-offs and synergies of urban design options, building retrofits and energy infrastructure plans.
+The `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban building energy simulation platform and one of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This allows to study of the effects, trade-offs, and synergies of urban design scenarios and energy infrastructure plans. At CEA we are committed to empowering practitioners and researchers to plan future low-carbon cities. 
+
 
 * Click `here <https://city-energy-analyst.readthedocs.io/en/latest/index.html>`__  for installation manual and tutorials
 
 * Click `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ to report an issue
 
-* Click `here <mailto:cea@arch.ethz.ch>`__ to contact us
+* Click `here <https://www.cityenergyanalyst.com/contact>`__ to contact us
 
 
-.. attention:: We will end support of the ArcGIS interface by the 1st of May of 2019. This means that there will not be anymore
-               tutorials nor advice on how to use this interface. You could still use this interface at your own risk.
-               We invite all CEA users to get acquainted with the CEA Dashboard. The CEA dashboard is our new 100% open source user interface.
-               We will aim to create a first tutorial on how to use this interface by mid-april of 2019.
-
+.. attention:: We ended the support of the ArcGIS and Rhino/Grasshopper interfaces on 1 May 2019. 
+We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console.
+               
 Cite us:
 --------
 
-For V3.30.0 (stable):    |V3.30.0|
-
-.. |V3.30.0| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6494266.svg
-   :target: https://doi.org/10.5281/zenodo.6494266
+For V3.34.1 (stable): https://doi.org/10.5281/zenodo.8327389

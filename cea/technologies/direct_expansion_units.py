@@ -3,14 +3,11 @@
 direct expansion units
 """
 
-
-
-
-
 import numpy as np
 
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.optimization.constants import DX_COP, PRICE_DX_PER_W
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,15 +19,33 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # FIXME: this model is simplified, and required update
-PRICE_DX_PER_W = 1.6  # USD FIXME: to be moved to database
 
-
-# operation costs
 
 def calc_cop_DX(Q_load_W):
-    cop = 2.3
+    cop = DX_COP
 
     return cop
+
+
+def calc_AC_const(Q_load_Wh, COP):
+    """
+    Calculate the unitary air conditioner's operation for a fixed COP. Return required power supply and thermal energy
+    output to the outside air (condenser side) for a given indoor cooling load (evaporator side).
+
+    :param Q_load_Wh: Cooling load in Watt-hours (single value or time series).
+    :type Q_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the vapor compression chiller
+    :type COP: int, float
+
+    :return p_supply_Wh: Electrical power supply required to provide the given cooling load (single value or time series)
+    :rtype p_supply_Wh: int, float, list or pd.Series
+    :return q_cw_out_Wh: Thermal energy output to cold water loop, i.e. waste heat (single value or time series)
+    :rtype q_cw_out_Wh: int, float, list or pd.Series
+    """
+
+    p_supply_Wh = Q_load_Wh / COP
+    Q_out_Wh = p_supply_Wh + Q_load_Wh
+    return p_supply_Wh, Q_out_Wh
 
 
 def calc_DX(mdot_kgpers, T_sup_K, T_re_K):

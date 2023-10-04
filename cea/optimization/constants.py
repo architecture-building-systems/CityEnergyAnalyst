@@ -118,7 +118,7 @@ GHP_WMAX_SIZE = 1E3  # max electrical design size [Wel] FOR ONE PROBE
 GHP_ETA_EX = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
 GHP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
-GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficeincy
+GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficiency
 
 # Combined cycle
 
@@ -150,6 +150,10 @@ LAKE_COOLING_ALLOWED = True
 VCC_ALLOWED = True
 ABSORPTION_CHILLER_ALLOWED = True
 STORAGE_COOLING_ALLOWED = True
+
+# Direct expansion unit
+DX_COP = 2.3  # [-]
+PRICE_DX_PER_W = 1.6  # USD
 
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]

@@ -11,6 +11,8 @@ import ephem
 import datetime
 import collections
 from math import *
+
+from pyarrow import feather
 from timezonefinder import TimezoneFinder
 import pytz
 from cea.constants import HOURS_IN_YEAR
@@ -146,7 +148,7 @@ def calc_sun_properties(latitude, longitude, weather_data, datetime_local, confi
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(), 2)
+    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(numeric_only=True), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
@@ -205,7 +207,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(radiation_json_path, metadata_csv_path, config):
+def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
@@ -213,10 +215,10 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     #. eliminate points when hourly production < 50 W/m2
     #. augment the solar radiation due to differences between panel reflectance and original reflectances used in daysim
 
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
+    :param radiation_sensor_path: solar insulation data on all surfaces of each building
+    :type radiation_csv: str
     :param metadata_csv: solar insulation sensor data of each building
-    :type metadata_csv: .csv
+    :type metadata_csv: str
     :return max_annual_radiation: yearly horizontal radiation [Wh/m2/year]
     :rtype max_annual_radiation: float
     :return annual_radiation_threshold: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
@@ -241,7 +243,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
             return x
 
     # read radiation file
-    sensors_rad = pd.read_json(radiation_json_path)
+    sensors_rad = feather.read_feather(radiation_sensor_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
@@ -656,7 +658,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     To calculate angle of incidence from solar vector and surface normal vector.
     (Validated with Sandia pvlib.irrandiance.aoi)
 
-    :param lat: latitude of the loacation of case study [radians]
+    :param lat: latitude of the location of case study [radians]
     :param g: declination of the solar position [radians]
     :param ha: hour angle [radians]
     :param tilt: panel surface tilt angle [radians]
@@ -727,9 +729,9 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
         # write group properties
         group_key = pd.Series({'CATB': key[0], 'CATGB': key[1], 'CATteta_z': key[2], 'type_orientation': key[3]})
         group_info = pd.Series({'number_srfs': number_points, 'srfs': (''.join(surfaces_in_group))})
-        group_prop_sum = sensor_groups_ob.sum().loc[key,:][['AREA_m2','area_installed_module_m2']]
-        group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
-        group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
+        group_prop_sum = sensor_groups_ob.sum(numeric_only=True).loc[key][['AREA_m2', 'area_installed_module_m2']]
+        group_prop_mean = sensor_groups_ob.mean(numeric_only=True).loc[key].drop(['area_installed_module_m2', 'AREA_m2'])
+        group_properties[group_count] = pd.concat([group_key, group_prop_mean, group_prop_sum, group_info])
         # calculate mean radiation among surfaces in group
         group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 

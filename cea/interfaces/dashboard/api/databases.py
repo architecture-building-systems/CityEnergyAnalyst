@@ -4,7 +4,7 @@
 import os
 from collections import OrderedDict
 
-from flask_restplus import Namespace, Resource, abort
+from flask_restx import Namespace, Resource, abort
 import pandas as pd
 
 import cea.schemas
@@ -21,7 +21,8 @@ DATABASES_SCHEMA_KEYS = {
     "ENVELOPE": ["get_database_envelope_systems"],
     "CONVERSION": ["get_database_conversion_systems"],
     "DISTRIBUTION": ["get_database_distribution_systems"],
-    "FEEDSTOCKS": ["get_database_feedstocks"]
+    "FEEDSTOCKS": ["get_database_feedstocks"],
+    "ENERGY_CARRIERS": ["get_database_energy_carriers"]
 }
 
 

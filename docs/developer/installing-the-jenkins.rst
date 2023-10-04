@@ -6,7 +6,7 @@ How to set up the Jenkins server on a new PC
 .. note:: you only need to do this when the current Jenkins server dies
 
 .. note:: this guide assumes you are installing on a Windows 10 Professional system. Adjust accordingly for other
-    systems, but keep in mind that some functionality of the CEA is dependant on Windows.
+    systems, but keep in mind that some functionality of the CEA is dependent on Windows.
 
 There are a few steps to take to setting up a Jenkins server:
 
@@ -23,7 +23,7 @@ There are a few steps to take to setting up a Jenkins server:
 Installation of some prerequisites
 ----------------------------------
 
-You will need to install these softwares:
+You will need to install these software:
 
 - `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/latest>`_
   (install with the ``Setup_CityEnergyAnalyst_<VERSION>.exe`` installer)
@@ -100,11 +100,14 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
     - if you haven't checked out the CEA, download it from the `CEA GitHub repository`_
 
 - copy the CEA Dependencies folder (after installing CEA, it should be in
-  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice
+  ``%USERPROFILE%\Documents\CityEnergyAnalysts\Dependencies``) twice:
 
-  - once to ``C:\ProgramData\ceajenkins\ceatest``
-  - once to ``C:\ProgramData\ceajenkins\ceatestall``
-  - (actually rename the folder ``Dependencies`` to ``ceatest`` and ``ceatestall`` respectively)
+  - once to ``C:\ProgramData\ceajenkins\ceatest-py3``
+  - once to ``C:\ProgramData\ceajenkins\ceatestall-py3``
+  Actually, you could just rename the folder ``Dependencies`` to ``ceatest-py3`` and ``ceatestall-py3`` respectively.
+  The folder names should be consistent with the path specified in ``bin\ceatest.bat`` and ``bin\ceatestall.bat``.
+
+.. note:: Repeat this step to update python dependencies when needed!
 
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
   search function to find the control panel item "Edit System Environment Variables"):
@@ -179,7 +182,7 @@ https://github.com/jenkinsci/ghprb-plugin
 - scroll down to the "GitHub Pull Request Builder" section
 
   - leave the GitHub Server API URL: ``https://api.github.com``
-  - set the Jenkins URL overrride: ``https://ceajenkins.ngrok.io``
+  - set the Jenkins URL override: ``https://ceajenkins.ngrok.io``
   - leave the Shared secret: (bunch of \*'s... idk...)
   - select the credentials (This should be the GitHub auto generated token credentials you created above)
   - select Auto-manage webhooks

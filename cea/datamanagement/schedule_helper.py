@@ -45,7 +45,7 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
     :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
     :param buildings: the list of buildings to calculate the schedules for
     :type buildings: list[str]
-    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
+    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being calculated
     :type list_var_names: list[str]
     :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
     :type list_var_values: list[str]
@@ -94,7 +94,7 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
     :type building_typology_df: pandas.DataFrame
     :param building: name of buildings to calculate the schedules for
     :type building: str
-    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being caculated
+    :param list_var_names: List of column names in building_typology_df that contain the names of use-types being calculated
     :type list_var_names: list[str]
     :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
     :type list_var_values: list[str]

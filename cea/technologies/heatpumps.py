@@ -24,9 +24,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-#============================
-#operation costs
-#============================
+# ============================
+# technical model
+# ============================
+
+def calc_HP_const(q_load_Wh, COP):
+    """
+    Calculate heat pump operation for a fixed COP. Return required power supply and thermal energy drawn from
+    the environment for a given heating load.
+
+    :param q_load_Wh: Heating load in Watt-hours (single value or time series).
+    :type q_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the heat pump
+    :type COP: int, float
+
+    :return q_env_in_Wh: Thermal energy drawn from the environment, i.e. earth, water or air (single value or time series)
+    :rtype q_env_in_Wh: int, float, list or pd.Series
+    :return p_supply_Wh: Electrical power supply required to provide the given heating load (single value or time series)
+    :rtype p_supply_Wh: int, float, list or pd.Series
+    """
+    p_supply_Wh = q_load_Wh / COP
+    q_env_in_Wh = q_load_Wh - p_supply_Wh
+    return q_env_in_Wh, p_supply_Wh
+
 
 def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
@@ -127,6 +147,10 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
+# ============================
+# operation cost
+# ============================
+
 def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     """
     Operation cost of sewage water HP supplying DHN
@@ -152,7 +176,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     :returns q_therm: thermal energy supplied to DHN
 
     :rtype wdot: float
-    :returns wdot: electricty required for sewage water HP operation
+    :returns wdot: electricity required for sewage water HP operation
 
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
@@ -188,7 +212,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
     :type tground_K : float
     :param tground_K: ground temperature
     :type nProbes: float
-    :param nProbes: bumber of probes
+    :param nProbes: number of probes
     :rtype qhotdot: float
     :returns qhotdot: heating energy provided from GHSP
     :rtype COP: float
@@ -217,7 +241,7 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     :returns C_HPL_el: electricity cost of Lake HP operation
 
     :rtype wdot: float
-    :returns wdot: electricty required for Lake HP operation
+    :returns wdot: electricity required for Lake HP operation
 
     :rtype Q_cold_primary: float
     :returns Q_cold_primary: cold power requirement
@@ -306,7 +330,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
     :returns q_therm: thermal energy supplied to DHN
 
     :rtype wdot: float
-    :returns wdot: electricty required for sewage water HP operation
+    :returns wdot: electricity required for sewage water HP operation
 
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,

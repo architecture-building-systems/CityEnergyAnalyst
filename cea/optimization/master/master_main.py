@@ -9,7 +9,7 @@ from math import sqrt
 import numpy as np
 import pandas as pd
 from deap import algorithms
-from deap import tools, creator, base
+from deap import tools, base
 
 from cea.optimization.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
     DC_ACRONYM
@@ -20,6 +20,7 @@ from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
+from cea.optimization.master.optimisation_individual import Individual, FitnessMin
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -31,14 +32,12 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 warnings.filterwarnings("ignore")
-NOBJ = 2  # number of objectives
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,) * NOBJ)
-creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
 
 def objective_function(individual,
                        individual_number,
                        generation_number,
+                       objective_function_selection,
                        building_names_all,
                        column_names_buildings_heating,
                        column_names_buildings_cooling,
@@ -58,8 +57,9 @@ def objective_function(individual,
                        column_names,
                        print_final_results=False):
     """
-    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
-    individual
+    Objective function is used to calculate and return the costs, CO2, system energy demand and heat release and
+    simultaneously store all other variables corresponding to the individual.
+
     :param individual: Input individual
     :param individual_number: unique identifier of the individual in that generation
     :param generation_number: unique identifier of the generation in this optimization run
@@ -106,17 +106,23 @@ def objective_function(individual,
     :type column_names: list of str
     :type print_final_results: bool
 
-    :return: returns costs, CO2, primary energy and the master_to_slave_vars
+    :return dict objective_function_results
     """
     print('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation_number) + '/' + str(config.optimization.number_of_generations))
 
     TAC_sys_USD, \
     GHG_sys_tonCO2, \
+    HR_sys_MWh, \
+    SED_sys_MWh, \
     buildings_district_scale_costs, \
     buildings_district_scale_emissions, \
+    buildings_district_scale_heat, \
+    buildings_district_scale_sed, \
     buildings_building_scale_costs, \
     buildings_building_scale_emissions, \
+    buildings_building_scale_heat, \
+    buildings_building_scale_sed, \
     district_heating_generation_dispatch, \
     district_cooling_generation_dispatch, \
     district_electricity_dispatch, \
@@ -148,6 +154,18 @@ def objective_function(individual,
                                                                              technologies_cooling_allowed,
                                                                              )
 
+    objective_function_results = []
+    objective_function_handles = ["cost", "GHG_emissions", "system_energy_demand", "anthropogenic_heat"]
+
+    if objective_function_handles[0] in objective_function_selection:
+        objective_function_results.append(TAC_sys_USD)
+    if objective_function_handles[1] in objective_function_selection:
+        objective_function_results.append(GHG_sys_tonCO2)
+    if objective_function_handles[2] in objective_function_selection:
+        objective_function_results.append(HR_sys_MWh)
+    if objective_function_handles[3] in objective_function_selection:
+        objective_function_results.append(SED_sys_MWh)
+
     if config.debug or print_final_results:  # print for the last generation and
         print("SAVING RESULTS TO DISK")
         save_results(locator,
@@ -156,8 +174,12 @@ def objective_function(individual,
                      generation_number,
                      buildings_district_scale_costs,
                      buildings_district_scale_emissions,
+                     buildings_district_scale_heat,
+                     buildings_district_scale_sed,
                      buildings_building_scale_costs,
                      buildings_building_scale_emissions,
+                     buildings_building_scale_heat,
+                     buildings_building_scale_sed,
                      district_heating_generation_dispatch,
                      district_cooling_generation_dispatch,
                      district_electricity_dispatch,
@@ -170,7 +192,7 @@ def objective_function(individual,
                      buildings_building_scale_heating_capacities,
                      buildings_building_scale_cooling_capacities)
 
-    return TAC_sys_USD, GHG_sys_tonCO2
+    return objective_function_results
 
 
 def objective_function_wrapper(args):
@@ -212,6 +234,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
     crossover_method_continuous = config.optimization.crossover_method_continuous
 
     # SET-UP EVOLUTIONARY ALGORITHM
+    # Adapt the conversion classes to the current config (for cases where dashboard is used)
+    FitnessMin.set_objective_function_selection(config)
+    NOBJ = FitnessMin.nbr_of_objectives
+    objective_function_selection = FitnessMin.objective_function_selection
     # Hyperparameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
@@ -258,7 +284,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                      )
     toolbox.register("individual",
                      tools.initIterate,
-                     creator.Individual,
+                     Individual,
                      toolbox.generate)
     toolbox.register("population",
                      tools.initRepeat,
@@ -320,7 +346,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_ind, range(len(invalid_ind)), repeat(0, len(invalid_ind)),
+    fitnesses = toolbox.map(toolbox.evaluate, zip(invalid_ind,
+                                                  range(len(invalid_ind)),
+                                                  repeat(0, len(invalid_ind)),
+                                                  repeat(objective_function_selection, len(invalid_ind)),
                                                   repeat(building_names_all, len(invalid_ind)),
                                                   repeat(column_names_buildings_heating, len(invalid_ind)),
                                                   repeat(column_names_buildings_cooling, len(invalid_ind)),
@@ -373,7 +402,10 @@ def non_dominated_sorting_genetic_algorithm(locator,
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         invalid_ind = [ind for ind in invalid_ind if ind not in pop]
         fitnesses = toolbox.map(toolbox.evaluate,
-                                zip(invalid_ind, range(len(invalid_ind)), repeat(gen, len(invalid_ind)),
+                                zip(invalid_ind,
+                                    range(len(invalid_ind)),
+                                    repeat(gen, len(invalid_ind)),
+                                    repeat(objective_function_selection, len(invalid_ind)),
                                     repeat(building_names_all, len(invalid_ind)),
                                     repeat(column_names_buildings_heating, len(invalid_ind)),
                                     repeat(column_names_buildings_cooling, len(invalid_ind)),
@@ -445,6 +477,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
             systems_name_list = save_final_generation_pareto_individuals(toolbox,
                                                                          locator,
                                                                          gen,
+                                                                         objective_function_selection,
                                                                          record_individuals_tested,
                                                                          paretofrontier,
                                                                          building_names_all,
@@ -485,6 +518,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
 def save_final_generation_pareto_individuals(toolbox,
                                              locator,
                                              generation,
+                                             objective_function_selection,
                                              record_individuals_tested,
                                              paretofrontier,
                                              building_names_all,
@@ -524,6 +558,7 @@ def save_final_generation_pareto_individuals(toolbox,
     fitnesses = toolbox.map(toolbox.evaluate, zip(individual_in_pareto_list,
                                                   individual_number_list,
                                                   generation_number_list,
+                                                  repeat(objective_function_selection, len(individual_in_pareto_list)),
                                                   repeat(building_names_all, len(individual_in_pareto_list)),
                                                   repeat(column_names_buildings_heating,
                                                          len(individual_in_pareto_list)),

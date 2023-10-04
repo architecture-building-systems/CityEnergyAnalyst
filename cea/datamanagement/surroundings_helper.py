@@ -6,14 +6,14 @@ import math
 import os
 
 import numpy as np
-import osmnx.footprints
+import osmnx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from geopandas.tools import sjoin as spatial_join
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.zone_helper import parse_building_floors
+from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
 from cea.demand import constants
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
@@ -147,7 +147,7 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
 
 def geometry_extractor_osm(locator, config):
     """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
     NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
     """
 
@@ -171,7 +171,8 @@ def geometry_extractor_osm(locator, config):
     # get footprints of all the surroundings
     print("Getting building footprints")
     area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
-    all_surroundings = osmnx.footprints.footprints_from_polygon(polygon=area_with_buffer_polygon)
+    all_surroundings = osmnx.geometries.geometries_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
     all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area
@@ -183,6 +184,7 @@ def geometry_extractor_osm(locator, config):
     # clean attributes of height, name and number of floors
     result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
     result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    result = clean_geometries(result)
 
     # save to shapefile
     result.to_file(shapefile_out_path)

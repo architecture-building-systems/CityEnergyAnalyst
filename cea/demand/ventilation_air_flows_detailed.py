@@ -103,7 +103,7 @@ def get_properties_natural_ventilation(bpr):
     """
     gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building
-    :param bpr: building propert row
+    :param bpr: building property row
 
     :returns: dictionary containing natural ventilation properties of zone
     """

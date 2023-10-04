@@ -47,11 +47,11 @@ G_VALUE_DECENTRALIZED = 0.4 # calculated from ESP4401_Part-2 Air conditioning sy
 T_EVAP_AHU = 280.5 #K form CEA demand calculation
 T_EVAP_ARU = 280.5 #K form CEA demand calculation
 T_EVAP_SCU = 291 #K form CEA demand calculation
-DT_NETWORK_CENTRALIZED = 2 # Assumption for network losses. This value is based on a sample calculation with all loads supplied by the newtork.
+DT_NETWORK_CENTRALIZED = 2 # Assumption for network losses. This value is based on a sample calculation with all loads supplied by the network.
 CHILLER_DELTA_T_APPROACH = 2.8 # K , ESP4401_Part-2 Air conditioning system_AY2016_17.pdf
 CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the HEX b/t the condenser loop and CT
 CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
-DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calulation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
+DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calculation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 
 COMPRESSOR_TYPE_LIMIT_LOW = 1055056  # in W, according to ASHRAE 90.1 Appendix G. below this limit (300 RT), one water-cooled screw chiller should be implemented
 COMPRESSOR_TYPE_LIMIT_HIGH = 2110112  # in W, according to ASHRAE 90.1 Appendix G. below this limit (600 RT), two water-cooled screw chiller should be implemented, while above 2 centrifugal water source chllers hall be implemented, not larger then 800 RT (2813 kW)
@@ -77,5 +77,10 @@ BOILER_MIN = 0.05  # minimum Part Load of Boiler
 BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
 BOILER_ETA_HP = 0.9
 
-#natural gas conncetion
+#natural gas connection
 GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW
+
+# Thermal Network
+TYPE_MAT_DEFAULT = 'T1'  # Pipe material default
+PIPE_DIAMETER_DEFAULT = 150
+

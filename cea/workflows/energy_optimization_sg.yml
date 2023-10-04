@@ -1,8 +1,6 @@
-# run the whole cooling system workflow (simplified thermal-networks) for the current scenario
-# starting at radiation
+# skip CEA data management, from radiation optimization of energy supply system, using the new optimization script.
+
 - script: radiation
-  parameters:
-    consider-intersections: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -26,18 +24,11 @@
 - script: network-layout
   parameters:
     network-type: DC
-    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DC
-    network-model: simplified
 - script: decentralized
-- script: optimization
+- script: optimization-new
   parameters:
     network-type: DC
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
+    objective-functions: [system_energy_demand, GHG_emissions, cost]

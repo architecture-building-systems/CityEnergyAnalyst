@@ -62,7 +62,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     type_panel = config.solar.type_SCpanel
 
-    radiation_csv = locator.get_radiation_building_sensors(building=building_name)
+    radiation_path = locator.get_radiation_building_sensors(building=building_name)
     metadata_csv = locator.get_radiation_metadata(building=building_name)
 
     # solar properties
@@ -75,7 +75,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_csv, metadata_csv, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 
@@ -593,7 +593,7 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
     :param auxiliary_electricity_kW: electricity required to pump hot water in the transmission pipelines
     :param flow: index for the iteration number
     :param mcp_kWperK:
-    :param pipe_lengths: lengthes of transmission pipes
+    :param pipe_lengths: lengths of transmission pipes
     :param specific_flows_kgpers: specific mass flow of hot water in panels
     :param specific_pressure_losses_Pa: specific pressure drop per panel
     :param supply_losses_kW: heat loss through transmission pipelines
@@ -1009,7 +1009,7 @@ def main(config):
     # aggregate results from all buildings
     aggregated_annual_results = {}
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type))
+        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type)).set_index('Date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
             temperature_sup = hourly_results_per_building['T_SC_sup_C'].mean()
@@ -1018,11 +1018,10 @@ def main(config):
 
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
-        building_annual_results = annual_energy_production.append(panel_area_per_building)
+        building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
         aggregated_annual_results[building] = building_annual_results
 
     # save hourly results
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
     aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
         aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels

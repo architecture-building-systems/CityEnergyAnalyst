@@ -25,6 +25,27 @@ __status__ = "Production"
 
 
 # technical model
+def calc_VCC_const(q_chw_load_Wh, COP):
+    """
+    Calculate vapor compression chiller operation for a fixed COP. Return required power supply and thermal energy
+    output to cold water loop for a given chilled water cooling load.
+
+    :param q_chw_load_Wh: Chilled water cooling load in Watt-hours (single value or time series).
+    :type q_chw_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the vapor compression chiller
+    :type COP: int, float
+
+    :return p_supply_Wh: Electrical power supply required to provide the given cooling load (single value or time series)
+    :rtype p_supply_Wh: int, float, list or pd.Series
+    :return q_cw_out_Wh: Thermal energy output to cold water loop, i.e. waste heat (single value or time series)
+    :rtype q_cw_out_Wh: int, float, list or pd.Series
+    """
+    p_supply_Wh = q_chw_load_Wh / COP
+    q_cw_out_Wh = p_supply_Wh + q_chw_load_Wh
+
+    return p_supply_Wh, q_cw_out_Wh
+
+
 def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
     For the operation of a vapor compression chiller between a district cooling network and a condenser with fresh water
@@ -52,7 +73,6 @@ def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     if q_chw_load_Wh == 0.0:
         wdot_W = 0.0
         q_cw_W = 0.0
-
     elif q_chw_load_Wh > 0.0:
         COP = calc_COP_g(T_chw_sup_K, T_cw_in_K, VC_chiller)
         if COP < 0.0:
@@ -222,7 +242,6 @@ class VaporCompressionChiller(object):
             technology_type = VCC_CODE_DECENTRALIZED
         else:
             raise ValueError('scale must be of type "DISTRICT" or "BUILDING"')
-
         VCC_database = VCC_database[VCC_database['code'] == technology_type]
         self.max_VCC_capacity = int(VCC_database['cap_max'])
         self.min_VCC_capacity = int(VCC_database['cap_min'])

@@ -1,5 +1,5 @@
 """
-cehck perfromacne of pareto curve
+check performance of pareto curve
 https://arxiv.org/pdf/1901.00577.pdf
 """
 

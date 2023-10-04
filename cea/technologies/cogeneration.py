@@ -21,6 +21,34 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# ===========================
+# General Cogen-Plant Model
+# ===========================
+
+
+def calc_cogen_const(q_heat_Wh, thermal_eff, electrical_eff):
+    """
+    Calculate the combined heat and power plant's operational behaviour assuming a constant thermal and electrical
+    efficiency.
+
+    :param q_heat_Wh: heating load required from the cogen plant in Watt-hours
+    :type q_heat_Wh: int, float, list or pd.Series
+    :param thermal_eff: average thermal efficiency of the cogen plant
+    :type thermal_eff: float
+    :param thermal_eff: average electrical efficiency of the cogen plant
+    :type thermal_eff: float
+
+    :return q_fuel_Wh: total combustion heat (LHV) from the fuel required to operate the cogen plant in Watt-hours
+    :rtype q_fuel_Wh: float, list or pd.Series
+    :return p_el_Wh: electrical power provided by the cogen plant in Watt-hours
+    :rtype p_el_Wh: float, list or pd.Series
+    :return q_anth_Wh: anthropogenic heat emitted from the cogen plant in Watt-hours
+    :rtype q_anth_Wh: float, list or pd.Series
+    """
+    q_fuel_Wh = q_heat_Wh / thermal_eff
+    p_el_Wh = q_fuel_Wh * electrical_eff
+    q_anth_Wh = q_fuel_Wh - (q_heat_Wh + p_el_Wh)
+    return q_fuel_Wh, p_el_Wh, q_anth_Wh
 
 # ===========================
 # Combined Cycle Gas Turbine
@@ -29,7 +57,7 @@ __status__ = "Production"
 
 def calc_cop_CCGT(GT_size_W, T_sup_K, fuel_type):
     """
-    This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
+    This function calculates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
     This function iterates the combined cycle operation between its nominal capacity and minimum load and generate
     linear functions of the GT operation.

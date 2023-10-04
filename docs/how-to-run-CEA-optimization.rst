@@ -64,7 +64,7 @@ For this optimization, the users can adjust four optimization parameters or use 
 - district-cooling-network: Boolean, describes if a district cooling system should be optimized. Default is false
 - detailed-electricity-pricing:  Boolean, describes if a district cooling system should be optimized. Default is false
 - population-size:  Boolean, describes if a district cooling system should be optimized. Leave this field empty to use the standard 92 by Deb et al.,2014.
-- number-of-generations: number of iterations of GA algortihm (NSGA-III by Dep et al., 2014). Default is 100
+- number-of-generations: number of iterations of GA algorithm (NSGA-III by Dep et al., 2014). Default is 100
 - random-seed: Random seed to make it easy to replicate the results of the scenarios. Default 100
 - crossover-prob: Probability of crossover. Default 0.9
 - mutate-prob: Probability of mutation. Default 0.1
