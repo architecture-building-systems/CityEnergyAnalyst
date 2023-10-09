@@ -27,7 +27,7 @@ dependencies:
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx==1.2.2
+- osmnx==1.3.*
 - pandas<2
 - pip
 - psutil
