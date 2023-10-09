@@ -21,7 +21,6 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- gdal=3.3.*
 - geopandas
 - matplotlib
 - networkx<3
