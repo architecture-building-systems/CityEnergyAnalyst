@@ -17933,6 +17933,48 @@ get_zone_geometry:
         unit: 'NA'
         values: alphanumeric
         nullable: true
+      house_no:
+        description: House number in the address(if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      street:
+        description: Street name in the address (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      postcode:
+        description: Postal code in the address (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      house_name:
+        description: House number (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      resi_type:
+        description: Residential type, e.g. HDB for Singapore (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      city:
+        description: City name in the address (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+      country:
+        description: Country 2-digit code in the address (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
   used_by:
   - archetypes_mapper
   - decentralized

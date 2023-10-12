@@ -1,0 +1,5 @@
+# from solar radiation to energy demand
+
+- script: radiation
+- script: schedule-maker
+- script: demand

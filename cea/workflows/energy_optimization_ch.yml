@@ -1,17 +1,5 @@
-# from CEA data management to optimization of energy supply system, using the new optimization script.
+# skip CEA data management, from radiation optimization of energy supply system, using the new optimization script.
 
-- script: data-initializer
-  parameters:
-    databases-path: CH
-- script: archetypes-mapper
-- script: weather-helper
-  parameters:
-    weather: Zuerich-Kloten_1990_2010_TMY
-- script: surroundings-helper
-  parameters:
-    buffer: 100
-- script: terrain-helper
-- script: streets-helper
 - script: radiation
 - script: schedule-maker
 - script: demand
@@ -36,7 +24,6 @@
 - script: network-layout
   parameters:
     network-type: DH
-    network-model: simplified
 - script: thermal-network
   parameters:
     network-type: DH

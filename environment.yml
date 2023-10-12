@@ -9,7 +9,7 @@ dependencies:
 - flask-cors
 - flask-restx
 - flask-socketio
-- jupyter
+- notebook
 - openpyxl
 - plotly
 - sphinx

@@ -1,17 +1,5 @@
-# from CEA data management to optimization of energy supply system, using the new optimization script.
+# skip CEA data management, from radiation optimization of energy supply system, using the new optimization script.
 
-- script: data-initializer
-  parameters:
-    databases-path: SG
-- script: archetypes-mapper
-- script: weather-helper
-  parameters:
-    weather: Singapore-Changi_1990_2010_TMY
-- script: surroundings-helper
-  parameters:
-    buffer: 100
-- script: terrain-helper
-- script: streets-helper
 - script: radiation
 - script: schedule-maker
 - script: demand
@@ -35,8 +23,7 @@
     type-scpanel: ET
 - script: network-layout
   parameters:
-    network-type: DH
-    network-model: simplified
+    network-type: DC
 - script: thermal-network
   parameters:
     network-type: DC

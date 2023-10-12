@@ -1,0 +1,16 @@
+# from radiation to solar energy potential analysis including pv, pvt, sc
+
+- script: radiation
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
