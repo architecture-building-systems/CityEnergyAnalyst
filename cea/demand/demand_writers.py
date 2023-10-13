@@ -60,8 +60,8 @@ class DemandWriter(object):
     def calc_yearly_dataframe(self, bpr, building_name, tsd):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
-        data = dict((x + '_MWhyr', np.nan_to_num(tsd[x]).sum() / 1000000) for x in self.load_vars)
-        data.update(dict((x + '0_kW', np.nan_to_num(tsd[x]) .max() / 1000) for x in self.load_vars))
+        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in self.load_vars)
+        data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in self.load_vars))
         # get order of columns
         keys = data.keys()
         columns = self.OTHER_VARS
