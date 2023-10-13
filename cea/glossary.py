@@ -44,7 +44,7 @@ def read_glossary_df(plugins):
                     cd = schemas[lm]["schema"]["columns"][col]  # cd: column definition
                     rows.append(glossary_row(script, file_path, col, lm, cd, worksheet=""))
 
-        glossary_df = pd.concat([glossary_df, pd.DataFrame(rows)], ignore_index=True)
+        glossary_df = glossary_df.append(rows, ignore_index=True)
         glossary_df['key'] = glossary_df['FILE_NAME'] + '!!!' + glossary_df['VARIABLE']
         glossary_df = glossary_df.set_index(['key'])
         glossary_df = glossary_df.sort_values(by=['LOCATOR_METHOD', 'FILE_NAME', 'VARIABLE'])

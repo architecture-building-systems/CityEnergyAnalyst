@@ -8,12 +8,18 @@ dependencies:
 - flask
 - flask-cors
 - flask-restx
-- flask-socketio
+- werkzeug==2.0.*
+- gevent
+- gevent-websocket
+- ipykernel
+- ipython
 - notebook
 - openpyxl
 - plotly
 - sphinx
+- sympy
 - utm
+- wntr=0.2.2.1
 - fiona
 - geopandas
 - matplotlib
@@ -21,25 +27,24 @@ dependencies:
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx
+- osmnx==1.3.*
+- pandas<2
 - pip
 - psutil
-- libpysal
-- pythonocc-core
+- pysal=2.1.0
+- python>=3.7
+- pythonocc-core=7.4.1
 - pytz
 - pvlib-python
 - scipy
+- setuptools
 - shapely
 - pyyaml
 - timezonefinder
 - python-cufflinks
-- cvxopt # For wntr
 - pyarrow
-- python=3.8 # Held back by wntr version
 - pip:
   - xlrd
   - xlwt
   - staticmap
-  - wntr==0.2.3
-  - git+https://github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
-  - simple-websocket
+  - py4design-cea
