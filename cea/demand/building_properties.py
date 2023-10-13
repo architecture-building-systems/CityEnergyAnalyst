@@ -588,7 +588,6 @@ class BuildingPropertiesRow(object):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
-
 def weird_division(n, d):
     return n / d if d else 0.0
 
