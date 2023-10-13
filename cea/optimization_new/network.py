@@ -17,6 +17,8 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import cea.lib
+
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
@@ -241,7 +243,8 @@ class Network(object):
         # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
         building_identifiers = [building.identifier for building in domain.buildings]
         building_locations = [building.location for building in domain.buildings]
-        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
+        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'],
+                           crs=domain.buildings[0].crs, geometry="geometry")
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
@@ -444,7 +447,7 @@ class Network(object):
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
         plant_terminal['Type'][0] = "PLANT"
 
-        self.network_nodes = self.network_nodes.append(plant_terminal)
+        self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
         # create new edge
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
@@ -455,7 +458,7 @@ class Network(object):
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],
                                crs=Network._coordinate_reference_system)
-        self.network_edges = self.network_edges.append(plant_to_network)
+        self.network_edges = pd.concat([self.network_edges, plant_to_network])
 
     def _run_water_network_model(self):
         """

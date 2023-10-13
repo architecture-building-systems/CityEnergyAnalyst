@@ -21,3 +21,5 @@ include cea/workflows/*.yml
 include cea/dev/conda.bat
 
 graft cea/resources/radiation/bin
+
+graft cea/lib
