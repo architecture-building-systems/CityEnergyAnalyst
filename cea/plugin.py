@@ -12,7 +12,6 @@ from typing import Generator, Sequence
 import yaml
 import inspect
 import cea.schemas
-import cea.config
 import cea.plots.categories
 import cea.inputlocator
 import warnings
