@@ -9,8 +9,6 @@ import cea.config
 import cea.plots
 import cea.plots.cache
 
-socketio = None
-
 
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
@@ -18,14 +16,7 @@ def main(config):
     app = Flask(__name__, static_folder='base/static', )
     CORS(app)
     app.config.from_mapping({'SECRET_KEY': 'secret'})
-
-    global socketio
     socketio = SocketIO(app, cors_allowed_origins="*")
-
-    def shutdown(signum, frame):
-        print("Shutting Down...")
-        socketio.stop()
-    signal.signal(signal.SIGINT, shutdown)
 
     if config.server.browser:
         from cea.interfaces.dashboard.frontend import blueprint as frontend
@@ -44,16 +35,17 @@ def main(config):
     app.plot_cache = plot_cache
     app.socketio = socketio
 
-    print("start socketio.run")
-
+    print("start CEA dashboard server")
+    
     if config.server.browser:
         url = f"http://{config.server.host}:{config.server.port}"
         print(f"Open {url} in your browser to access the GUI")
         webbrowser.open(url)
 
     print("Press Ctrl+C to stop server")
-    socketio.run(app, host=config.server.host, port=config.server.port)
-    print("done socketio.run")
+    socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
+
+    print("\nserver exited")
 
 
 if __name__ == '__main__':
