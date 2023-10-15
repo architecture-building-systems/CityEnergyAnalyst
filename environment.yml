@@ -1,7 +1,6 @@
 name: cea
 channels:
 - conda-forge
-- defaults
 dependencies:
 - deap
 - ephem
