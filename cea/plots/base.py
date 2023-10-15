@@ -11,8 +11,6 @@ import re
 
 import jinja2
 
-import cea.config
-import cea.inputlocator
 from cea import MissingInputDataException
 from cea.plots.variable_naming import COLOR, NAMING
 
@@ -49,6 +47,7 @@ class PlotBase(object):
         self.parameters = parameters
         self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
+        import cea.config
         for parameter_name in self.expected_parameters:
             # Try to load missing parameters with default values
             if parameter_name not in parameters:
@@ -75,6 +74,7 @@ class PlotBase(object):
         """
         :rtype: cea.inputlocator.InputLocator
         """
+        import cea.inputlocator
         return cea.inputlocator.InputLocator(os.path.join(self.project, self.parameters['scenario-name']))
 
     @property

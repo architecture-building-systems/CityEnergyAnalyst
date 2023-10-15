@@ -10,11 +10,8 @@ import pkgutil
 import importlib
 import inspect
 import cea.plots
-import cea.config
-import cea.inputlocator
 import cea.plots.cache
 import cea.plots.base
-from typing import Type
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -104,6 +101,9 @@ class PlotCategory(object):
 
 
 if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
     from pprint import pprint
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
