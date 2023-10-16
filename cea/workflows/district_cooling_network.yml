@@ -1,0 +1,11 @@
+# solar radiation to energy demand to district cooling network
+
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: network-layout
+  parameters:
+    network-type: DC
+- script: thermal-network
+  parameters:
+    network-type: DC

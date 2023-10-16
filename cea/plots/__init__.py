@@ -16,8 +16,6 @@ The module ``cea.plots.categories`` contains helper-methods for dealing with the
 
 import os
 import yaml
-import cea.config
-import cea.inputlocator
 from cea.plots.base import PlotBase
 import cea.plots.categories
 
@@ -189,4 +187,5 @@ def main(config):
 
 
 if __name__ == '__main__':
+    import cea.config
     main(cea.config.Configuration())
