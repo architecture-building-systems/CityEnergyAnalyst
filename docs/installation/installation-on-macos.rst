@@ -13,13 +13,13 @@ Choose the one that suits your needs!
 
 Prerequisites
 ~~~~~~~~~~~~~
-* Download and install `Homebrew <https://brew.sh/>`__.
+* Download and install `Homebrew <https://brew.sh/>`__. Upon finishing installing Homebrew, pay attention to the message reverted. You may also have to execute ``brew install node``.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
 
 Installation
 ~~~~~~~~~~~~
-.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/update-mac-installation/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
+.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
@@ -62,7 +62,11 @@ In order to launch the CEA dashboard, you will need to do the following **each t
 #. Type ``mamba activate cea`` and press ENTER.
 #. Type ``cea dashboard`` and press ENTER.
 #. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
-#. Run the CEA dashboard located in (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
+#. Navigate your Finer to this location (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``)
+#. Double click on the CEA Icon (CityEnergyAnalyst-GUI.app)
+#. Wait for the CEA Dashboard to launch
+
+
 
 Here you can find a series of `blog posts <https://cityenergyanalyst.com/blogs>`_ to help you get started!
 
