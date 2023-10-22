@@ -21,13 +21,13 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- geopandas=0.13.2
-- matplotlib
+- geopandas<0.14
+- matplotlib-base
 - networkx<3
 - numba
 - numpy<1.24
 - numpy-financial
-- osmnx==1.3.*
+- osmnx<1.4
 - pandas<2
 - pip
 - psutil
@@ -38,13 +38,13 @@ dependencies:
 - pvlib-python
 - scipy
 - setuptools
-- shapely
+- shapely<2
 - pyyaml
 - timezonefinder
 - python-cufflinks
-- pyarrow
 - pip:
   - xlrd
   - xlwt
   - staticmap
   - py4design-cea
+  - pyarrow

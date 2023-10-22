@@ -270,14 +270,24 @@ def nearest_neighbor_within(others, point, max_distance):
 
 
 def near_analysis(building_centroids, street_network, crs):
-    # Get the nearest edge for each building centroid
-    nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
-    nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
+    near_point = []
+    building_name = []
+    for point, name in zip(building_centroids.geometry, building_centroids.Name):
+        point._crs = crs
+        distance = 10e10
+        for line in street_network.geometry:
+            line._crs = crs
+            nearest_point_candidate = line.interpolate(line.project(point))
+            distance_candidate = point.distance(nearest_point_candidate)
+            if distance_candidate < distance:
+                distance = distance_candidate
+                nearest_point = nearest_point_candidate
+        building_name.append(name)
+        near_point.append(nearest_point)
 
-    # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
-    nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
-
-    df = gdf({"Name": building_centroids["Name"]}, geometry=nearest_points, crs=crs)
+    geometry = near_point
+    df = gdf(geometry=geometry, crs=crs)
+    df["Name"] = building_name
     return df
 
 
