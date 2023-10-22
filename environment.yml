@@ -22,7 +22,7 @@ dependencies:
 - wntr=0.2.2.1
 - fiona
 - geopandas<0.14
-- matplotlib
+- matplotlib-base
 - networkx<3
 - numba
 - numpy<1.24
@@ -42,9 +42,9 @@ dependencies:
 - pyyaml
 - timezonefinder
 - python-cufflinks
-- pyarrow
 - pip:
   - xlrd
   - xlwt
   - staticmap
   - py4design-cea
+  - pyarrow
