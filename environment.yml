@@ -21,7 +21,7 @@ dependencies:
 - utm
 - wntr=0.2.2.1
 - fiona
-- geopandas
+- geopandas=0.13.2
 - matplotlib
 - networkx<3
 - numba
