@@ -20,6 +20,7 @@ dependencies:
 - sympy
 - utm
 - wntr=0.2.2.1
+- gdal<3.7
 - fiona
 - geopandas<0.14
 - matplotlib-base
