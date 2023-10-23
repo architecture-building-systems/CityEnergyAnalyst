@@ -20,7 +20,7 @@ dependencies:
 - sympy
 - utm
 - wntr=0.2.2.1
-- poppler
+- blosc <=1.21.0
 - fiona
 - geopandas<0.14
 - matplotlib-base
