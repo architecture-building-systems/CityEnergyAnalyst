@@ -15,7 +15,7 @@ dependencies:
 - sphinx
 - utm
 - fiona
-- geopandas
+- geopandas<0.14
 - matplotlib-base
 - networkx<3
 - numba
