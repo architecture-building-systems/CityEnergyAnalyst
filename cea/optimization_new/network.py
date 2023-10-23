@@ -484,19 +484,34 @@ class Network(object):
 
             # add loads
             building_base_demand_m3s = {}
+            demand_pattern_map = {}
+
+            def generate_demand_pattern(building_name: str) -> str:
+                """
+                Epanet demand patterns cannot have spaces and ?(has a 30-character limit).
+                Otherwise, simulation will throw "EPANET 200" error.
+
+                Returns a hash to create a unique code based on the building name
+                Stores mapping to building name in demand_pattern_map
+                """
+                import hashlib
+                _hash = hashlib.sha1(building_name.encode()).hexdigest()[:30]
+                demand_pattern_map[_hash] = building_name
+                return _hash
+
             for building in self.connected_buildings:
                 # Make sure that building names have no whitespaces when adding demand pattern to wn
-                _building = building.replace(" ", "_")
-                building_base_demand_m3s[_building] = self._domain_buildings_flow_rate_m3pers[building].max()
+                demand_pattern = generate_demand_pattern(building)
+                building_base_demand_m3s[demand_pattern] = self._domain_buildings_flow_rate_m3pers[building].max()
                 pattern_demand = (self._domain_buildings_flow_rate_m3pers[building].values /
-                                  building_base_demand_m3s[_building]).tolist()
-                wn.add_pattern(_building, pattern_demand)
+                                  building_base_demand_m3s[demand_pattern]).tolist()
+                wn.add_pattern(demand_pattern, pattern_demand)
 
             # add nodes
             consumer_nodes = []
             for node_name, node in self.network_nodes.iterrows():
                 if node["Type"] == "CONSUMER":
-                    demand_pattern = node['Building'].replace(" ", "_")
+                    demand_pattern = generate_demand_pattern(node['Building'])
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
                     consumer_nodes.append(node_name)
                     wn.add_junction(str(node_name),
