@@ -16,7 +16,7 @@ dependencies:
 - utm
 - fiona
 - geopandas
-- matplotlib
+- matplotlib-base
 - networkx<3
 - numba
 - numpy<1.24
@@ -34,7 +34,6 @@ dependencies:
 - timezonefinder
 - python-cufflinks
 - cvxopt # For wntr
-- pyarrow
 - python=3.8 # Held back by wntr version
 - pip:
   - xlrd
@@ -43,3 +42,4 @@ dependencies:
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
   - simple-websocket
+  - pyarrow
