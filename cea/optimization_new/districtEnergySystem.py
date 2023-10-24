@@ -211,7 +211,8 @@ class DistrictEnergySystem(object):
             building_demand_flows = [building.demand_flow for building in self.consumers
                                      if building.identifier in network.connected_buildings]
             aggregated_demand = EnergyFlow.aggregate(building_demand_flows)[0]
-            aggregated_demand.profile += network.network_losses
+            # subtract network losses (losses are negative, therefore subtracting them increases the demand requirement)
+            aggregated_demand.profile -= network.network_losses
             self.subsystem_demands[network.identifier] = aggregated_demand
 
         return self.subsystem_demands
