@@ -532,7 +532,7 @@ class CapacityIndicatorVectorMemory(object):
             lower_bracket_median = bracket_medians_list[lower_index]
 
             if i > 0 and lower_bracket_median > bracket_median:
-                break
+                break # Quit in case the lower index is out of bounds, i.e. loops around and fetches the highest bracket
 
             if (self.best_capacity_indicator_vectors[lower_bracket_median]
                     and self.best_capacity_indicator_vectors[lower_bracket_median] != former_optimal_civs):
@@ -551,7 +551,7 @@ class CapacityIndicatorVectorMemory(object):
             upper_bracket_median = bracket_medians_list[upper_index]
 
             if i > 0 and upper_bracket_median < bracket_median:
-                break
+                break # Quit in case the higher index is out of bounds, i.e. loops around and fetches the lowest bracket
 
             if (self.best_capacity_indicator_vectors[upper_bracket_median]
                     and self.best_capacity_indicator_vectors[upper_bracket_median] != former_optimal_civs):
