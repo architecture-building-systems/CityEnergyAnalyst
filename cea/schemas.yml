@@ -2647,6 +2647,17 @@ get_database_air_conditioning_systems:
           type: string
           unit: '[-]'
           values: alphanumeric
+        class_dhw:
+          choice:
+            values:
+              - NONE
+              - HIGH_TEMP
+              - MEDIUM_TEMP
+              - LOW_TEMP
+          description: Type or class of the DHW system
+          type: string
+          unit: '[-]'
+          values: alphanumeric
     VENTILATION:
       columns:
         Description:

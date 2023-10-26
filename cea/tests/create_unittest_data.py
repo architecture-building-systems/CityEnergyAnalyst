@@ -40,6 +40,12 @@ def main(output_file):
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
+    # reinit database to ensure updated databases are loaded
+    from cea.datamanagement.data_initializer import main as data_initializer
+    config.data_initializer.databases_path = "CH"
+    config.data_initializer.databases = ["archetypes", "assemblies", "components"]
+    data_initializer(config)
+
     # run properties script
     import cea.datamanagement.archetypes_mapper
     cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, [])
