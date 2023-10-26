@@ -398,8 +398,9 @@ class Domain(object):
 
         # FOR DES AS A WHOLE
         # Summarise performance metrics of the networks and print to file
-        network_perf_file = self.locator.get_new_optimization_detailed_network_performance_file(des_id)
-        Domain._write_detailed_network_performance(district_energy_system, network_perf_file)
+        if district_energy_system.networks:
+            network_perf_file = self.locator.get_new_optimization_detailed_network_performance_file(des_id)
+            Domain._write_detailed_network_performance(district_energy_system, network_perf_file)
 
         return
 
