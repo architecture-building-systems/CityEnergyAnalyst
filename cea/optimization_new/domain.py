@@ -177,13 +177,14 @@ class Domain(object):
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = toolbox.population(n=algorithm.population)
+        population = set(toolbox.population(n=algorithm.population))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
 
         # Consolidate certain objects in the child processes' memory and make them available to the main process
-        [main_process_memory.consolidate(non_dominated_front[1]) for non_dominated_front in non_dominated_fronts]
+        for non_dominated_front in non_dominated_fronts:
+            main_process_memory.consolidate(non_dominated_front[1])
         toolbox.evaluate.keywords['process_memory'] = main_process_memory
 
         # If parallel processing and detailed outputs are both enabled
@@ -192,10 +193,10 @@ class Domain(object):
             tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
         for generation in range(1, algorithm.generations_networks + 1):
-            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+            offspring = set(algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob))
 
             # Evaluate the individuals in the offspring, unless they are an exact copy of one of the parents
-            new_ind = [ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys())]
+            new_ind = set(ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys()))
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
             optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
@@ -210,9 +211,8 @@ class Domain(object):
                 # ...consolidate the tracker objects of each of the child processes
                 tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
-            population = toolbox.select(population + offspring, optimal_supply_system_combinations)
+            population = set(toolbox.select(population.union(offspring), optimal_supply_system_combinations))
             print(f"\n\nDES: gen {generation}")
-
 
         main_process_memory.recall_class_variables()
         self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
