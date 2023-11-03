@@ -161,7 +161,7 @@ class Domain(object):
                                   + component_classes
             main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
 
-            pool = multiprocessing.Pool(algorithm.parallel_cores)
+            pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
             toolbox.register("map", pool.map)
 
         toolbox.register("generate", ConnectivityVector.generate)
