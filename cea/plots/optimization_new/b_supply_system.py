@@ -378,10 +378,13 @@ class EnergyFlowGraphInfo(object):
                      ("sources", "primary"): ("sources", ("left", "top")),
                      ("sources", "secondary"): ("sources", ("left", "full")),
                      ("sources", "tertiary"): ("sources", ("left", "top"))}
+    colors_and_hues = {}
 
     def __init__(self, energy_carrier, supply_system_data):
         self.energy_carrier = energy_carrier
         self.instances = self._register_instances(supply_system_data)
+        self.color = self._assign_color()
+        self.hue = self._assign_hue()
         self.links = self._determine_links()
         self.paths = {}
 
@@ -462,7 +465,15 @@ class EnergyFlowGraphInfo(object):
 
         return links
 
-    def calculate_paths(self, category_anchorpoints, supply_system_data):
+    def _assign_color(self):
+        """ Assigns a color to the energy carrier """
+        return cea_colors[self.colors_and_hues[self.energy_carrier]["color"]]
+
+    def _assign_hue(self):
+        """ Assigns a hue to the energy carrier """
+        return cea_colors[self.colors_and_hues[self.energy_carrier]["hue"]]
+
+    def calculate_paths(self, category_anchorpoints, supply_system):
         """ Calculates the paths of the energy flow """
         # Initialize the paths dictionary
         self.paths = {}
@@ -480,12 +491,10 @@ class EnergyFlowGraphInfo(object):
                                      if sections}
 
         # Identify relevant sources and sinks and add their anchorpoints to the relevant anchorpoints
-        relevant_sources = {'sources': source
-                            for source in supply_system_data.sinks_and_sources['sources'].values()
-                            if re.sub(f"\d+", "_", self.energy_carrier) == source.ec_category_code}
-        relevant_sinks = {'sinks': sink
-                          for sink in supply_system_data.sinks_and_sources['sinks'].values()
-                          if re.sub(f"\d+", "_", self.energy_carrier) == sink.ec_category_code}
+        relevant_sources = [source for source in supply_system.sinks_and_sources['sources'].values()
+                            if re.sub(f"\d+", "_", self.energy_carrier) == source.ec_category_code]
+        relevant_sinks = [sink for sink in supply_system.sinks_and_sources['sinks'].values()
+                          if re.sub(f"\d+", "_", self.energy_carrier) == sink.ec_category_code]
 
         relevant_source_anchorpoints = {source.code: source.position for source in relevant_sources}
         relevant_sink_anchorpoints = {sink.code: sink.position for sink in relevant_sinks}
@@ -494,14 +503,14 @@ class EnergyFlowGraphInfo(object):
         for link in self.links:
             # Determine the start and end positions of the path
             if link[0] == "sources":
-                start_position = relevant_source_anchorpoints.values()
+                start_position = list(relevant_source_anchorpoints.values())
             else:
                 start_position = relevant_cat_anchorpoints[link[0]][EnergyFlowGraphInfo.paths_mapping[link][0]]
 
             if link[1] == "sinks":
-                end_position = relevant_sink_anchorpoints.values()
+                end_position = list(relevant_sink_anchorpoints.values())
             elif link[1] == "consumer":
-                end_position = supply_system_data.consumer.anchorpoints[self.energy_carrier]
+                end_position = supply_system.consumer.anchorpoints[self.energy_carrier]
             else:
                 end_position = relevant_cat_anchorpoints[link[1]][EnergyFlowGraphInfo.paths_mapping[link][1]]
 
@@ -511,15 +520,19 @@ class EnergyFlowGraphInfo(object):
 
 
     def _calculate_path(self, start_position, end_position):
-        """ Calculate intermediate points constituting the path between start and end positions """
+        """ Calculates the path of the energy flow between two anchorpoints """
+        # If the start or end positions come as a list (i.e. multiple anchorpoints), take only the first one
+        if isinstance(start_position, list):
+            start_position = start_position[0]
+        if isinstance(end_position, list):
+            end_position = end_position[0]
 
-            # Calculate the path
-            path = []
-            x_intermediate = (start_position[0] + end_position[0]) / 2
+        path = {"x": [], "y": []}
+        x_intermediate = round((start_position[0] + end_position[0]) / 2, 3)
 
-            
-
-            return path
+        path["x"] = [start_position[0], x_intermediate, x_intermediate, end_position[0]]
+        path["y"] = [start_position[1], start_position[1], end_position[1], end_position[1]]
+        return path
 
 def main():
     config = cea.config.Configuration()
@@ -551,6 +564,8 @@ def main():
                                          os.path.join(ConsumerGraphInfo.consumer_image_folder, file_name)
                                      for icon_code, file_name in consumers_images_lib['IconFiles'].items()}
 
+    # Assign relevant information to the EnergyCarrierGraphInfo class variables
+    EnergyFlowGraphInfo.colors_and_hues = energy_carrier_images_lib
 
     # Load the supply system data
     des_supply_systems_dict = {}
@@ -697,6 +712,26 @@ def update_graph(energy_system_id, supply_system_id):
         sizex=supply_system.consumer.size[0],
         sizey=supply_system.consumer.size[1],
     )
+
+    # Draw Energy Flow Paths
+    for ec_code, energy_flow in supply_system.energy_flows.items():
+        for path_description, path_coordinates in energy_flow.paths.items():
+            fig.add_trace(
+                go.Scatter(
+                    name=ec_code,
+                    x=path_coordinates['x'],
+                    y=path_coordinates['y'],
+                    mode="lines",
+                    line=dict(color=energy_flow.color, width=1),
+                    text=[f'{ec_code}'],
+                    hoverinfo='text',
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=12,
+                        font_family="Rockwell"
+                    ),
+                )
+            )
 
     # Set layout
     fig.update_layout(
