@@ -1,4 +1,5 @@
 import os
+import re
 import math
 import yaml
 import pandas as pd
@@ -42,6 +43,9 @@ class SupplySystemGraphInfo(object):
                            for code in self._supply_system_data["Component_code"]}
         self.energy_flows = {energy_carrier: EnergyFlowGraphInfo(energy_carrier, self._supply_system_data)
                              for energy_carrier in self._identify_energy_carriers()}
+        self.sinks_and_sources = {side: SourceAndSinkGraphInfo.position_icons(side, sources_or_sinks)
+                                  for side, sources_or_sinks in self._idenfify_sinks_and_sources().items()}
+        self.consumer = ConsumerGraphInfo(supply_system_id)
 
         # Calculate the category positions, sizes, and spacings of the components
         self.cat_positions = {category: self._category_positions[category]
@@ -66,6 +70,24 @@ class SupplySystemGraphInfo(object):
         other_output_ecs = self._supply_system_data["Other_outputs"]
         unique_ecs = pd.concat([main_ecs, other_input_ecs, other_output_ecs]).unique()
         return unique_ecs
+
+    def _idenfify_sinks_and_sources(self):
+        """ Identify the sinks and sources of the supply system """
+        ec_cat_to_sinks = [re.sub(f"\d+", "_", energy_carrier)
+                           for energy_carrier, energy_flow in self.energy_flows.items()
+                           if any([link[1] == 'sinks' for link in energy_flow.links])]
+        ec_cat_from_sources = [re.sub(f"\d+", "_", energy_carrier)
+                               for energy_carrier, energy_flow in self.energy_flows.items()
+                               if any([link[0] == 'sources' for link in energy_flow.links])]
+
+        sinks_and_sources = {'sinks': [{'code': SourceAndSinkGraphInfo.ec_to_code_mapping['Sinks'][ec_cat],
+                                        'associated_ec': ec_cat}
+                                       for ec_cat in ec_cat_to_sinks],
+                             'sources': [{'code': SourceAndSinkGraphInfo.ec_to_code_mapping['Sources'][ec_cat],
+                                          'associated_ec': ec_cat}
+                                         for ec_cat in ec_cat_from_sources]}
+
+        return sinks_and_sources
 
     def _calc_category_layout(self):
         """ Calculate the positions and sizes of the categories and their components"""
@@ -185,13 +207,38 @@ class SupplySystemGraphInfo(object):
                             for category, sections in cat_anchorpoints.items()}
         cat_anchorpoints = {category: sections for category, sections in cat_anchorpoints.items() if sections != {}}
 
+        # Calculate exact anchorpoints for sources and sinks
+        ecs_from_sources = [energy_flow.energy_carrier for energy_flow in self.energy_flows.values()
+                            if any([link[0] == 'sources' for link in energy_flow.links])]
+        ecs_from_specific_sources = {source.code: [ec for ec in ecs_from_sources
+                                                   if re.sub(f"\d+", "_", ec) == source.ec_category_code]
+                                     for source in self.sinks_and_sources['sources'].values()}
+        [source.set_anchorpoints(ecs_from_specific_sources[source.code])
+         for source in self.sinks_and_sources['sources'].values()]
+
+        ecs_to_sinks = [energy_flow.energy_carrier for energy_flow in self.energy_flows.values()
+                        if any([link[1] == 'sinks' for link in energy_flow.links])]
+        ecs_to_specific_sinks = {sink.code: [ec for ec in ecs_to_sinks
+                                             if re.sub(f"\d+", "_", ec) == sink.ec_category_code]
+                                 for sink in self.sinks_and_sources['sinks'].values()}
+        [sink.set_anchorpoints(ecs_to_specific_sinks[sink.code])
+         for sink in self.sinks_and_sources['sinks'].values()]
+
+        # Calculate exact anchorpoints for consumer
+        ecs_to_consumer = [energy_flow.energy_carrier for energy_flow in self.energy_flows.values()
+                           if any([link[1] == 'consumer' for link in energy_flow.links])]
+        self.consumer.set_anchorpoints(ecs_to_consumer)
+
+
         # Calculate the paths of the energy flows
-        [energy_flow.calculate_paths(cat_anchorpoints) for energy_flow in self.energy_flows.values() if energy_flow]
+        [energy_flow.calculate_paths(cat_anchorpoints, self)
+         for energy_flow in self.energy_flows.values() if energy_flow]
 
         return cat_anchorpoints
 
 class ComponentGraphInfo(object):
     image_folder_path = os.path.join(os.path.dirname(__file__), "images")
+    component_image_folder = os.path.join(image_folder_path, "component_img")
     image_paths = {"code": image_folder_path + "image_path"}
     icon_colors = {"code": cea_colors["red"]}
 
@@ -234,7 +281,103 @@ class ComponentGraphInfo(object):
 
         self.position = (round(x, 3), round(y, 3))
 
+class SourceAndSinkGraphInfo(object):
+
+    _image_folder_path = os.path.join(os.path.dirname(__file__), "images")
+    sources_and_sinks_image_folder = os.path.join(_image_folder_path, "sources_and_sinks_img")
+    ec_to_code_mapping = {"Consumers": {"energy_carrier_category": "icon_code"}}
+    image_paths = {"icon_code": sources_and_sinks_image_folder + "icon_file_name"}
+    _max_space_for_icons = 0.4
+    _max_icon_size = 0.2
+    _border_distance = - 0.1
+
+    def __init__(self, code, energy_carrier_category_code):
+        self.code = code
+        self.ec_category_code = energy_carrier_category_code
+        self.size = (0.2, 0.2)
+        self.position = (0.5, 0.5)
+        self.anchorpoints = {}
+
+    @staticmethod
+    def position_icons(side, sources_or_sinks):
+        # Calculate the upper and lower bound of the area where the sink/source icons can be placed
+        if side == "sources":
+            y_upper_bound = 1 - (0.5 - SourceAndSinkGraphInfo._max_space_for_icons) / 2
+        elif side == "sinks":
+            y_upper_bound = 0.5 - (0.5 - SourceAndSinkGraphInfo._max_space_for_icons) / 2
+        else:
+            raise ValueError("side must be either 'sources' or 'sinks'")
+
+        # Calculate the size of the icons
+        nbr_icons = len(sources_or_sinks)
+        calculated_icon_size = 2/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
+        icon_spacing = 1/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
+        icon_size = round(min(nbr_icons * calculated_icon_size + (nbr_icons - 1) * icon_spacing,
+                              SourceAndSinkGraphInfo._max_icon_size), 2)
+
+        # Calculate the position of the icons and create their corresponding SourceAndSinkGraphInfo objects
+        icons = {}
+        for i, source_or_sink in enumerate(sources_or_sinks):
+            icon = SourceAndSinkGraphInfo(source_or_sink["code"], source_or_sink["associated_ec"])
+            icon.size = (icon_size, icon_size)
+
+            # Calculate the position of the icon
+            x = SourceAndSinkGraphInfo._border_distance - icon_size / 2
+            y = y_upper_bound - (icon_size + icon_spacing) * i - icon_size / 2
+            icon.position = (round(x, 3), round(y, 3))
+
+            icons[icon.code] = icon
+
+        return icons
+
+    def set_anchorpoints(self, ec_code_list):
+        """ Set anchorpoints for each individual energy carrier drawn from the source / absorbed by the sink """
+        for i, ec_code in enumerate(ec_code_list):
+            x = self.position[0] + self.size[0] / 2
+            y_spacing = self.size[1] / (len(ec_code_list) + 1)
+            y = self.position[1] - self.size[1] / 2 + y_spacing * (i + 1)
+            self.anchorpoints[ec_code] = (round(x, 3), round(y, 3))
+
+class ConsumerGraphInfo(object):
+
+    image_folder_path = os.path.join(os.path.dirname(__file__), "images")
+    consumer_image_folder = os.path.join(image_folder_path, "consumer_img")
+    image_paths = {"icon_code": consumer_image_folder + "icon_file_name"}
+
+    def __init__(self, supply_system_id):
+        self.supply_system_id = supply_system_id
+        self.category = self._determine_category()
+        self.size = (0.2, 0.2)
+        self.position = (1.2, 0.5)
+        self.anchorpoints = {}
+
+    def _determine_category(self):
+        """ Determine if the supply system id corresponds to a building or a district """
+        if re.match("N\d{4}", self.supply_system_id):
+            return "district"
+        else:
+            return "building"
+
+    def set_anchorpoints(self, ec_code_list):
+        """ Set anchorpoints for each individual energy carrier delivered to the consumer """
+        for i, ec_code in enumerate(ec_code_list):
+            x = self.position[0] - self.size[0] / 2
+            y_spacing = self.size[1] / (len(ec_code_list) + 1)
+            y = self.position[1] - self.size[1] / 2 + y_spacing * (i + 1)
+            self.anchorpoints[ec_code] = (round(x, 3), round(y, 3))
+
+
 class EnergyFlowGraphInfo(object):
+
+    # Paths mapping
+    paths_mapping = {("primary", "consumer"): (("right", "full"), "consumer"),
+                     ("secondary", "primary"): (("right", "top"), ("left", "top")),
+                     ("primary", "tertiary"): (("left", "bottom"), ("right", "full")),
+                     ("secondary", "tertiary"): (("right", "bottom"), ("right", "full")),
+                     ("tertiary", "sinks"): (("left", "bottom"), "sinks"),
+                     ("sources", "primary"): ("sources", ("left", "top")),
+                     ("sources", "secondary"): ("sources", ("left", "full")),
+                     ("sources", "tertiary"): ("sources", ("left", "top"))}
 
     def __init__(self, energy_carrier, supply_system_data):
         self.energy_carrier = energy_carrier
@@ -307,7 +450,7 @@ class EnergyFlowGraphInfo(object):
             if category == "secondary" and "primary" in self.instances["other_absorbers"].keys():
                 links.append(("secondary", "primary"))
             if category == "tertiary":
-                links.append(("tertiary", "environment"))
+                links.append(("tertiary", "sinks"))
 
         for category in self.instances["other_absorbers"].keys():
             if category == "primary":
@@ -319,44 +462,64 @@ class EnergyFlowGraphInfo(object):
 
         return links
 
-    def calculate_paths(self, category_anchorpoints):
+    def calculate_paths(self, category_anchorpoints, supply_system_data):
         """ Calculates the paths of the energy flow """
         # Initialize the paths dictionary
         self.paths = {}
 
-        # Identify the relevant anchorpoints
-        relevant_anchorpoints = {category: {section: [anchorpoints["positions"][i]
-                                                      for i in range(len(anchorpoints["ec_codes"]))
-                                                      if anchorpoints["ec_codes"][i] == self.energy_carrier]
-                                            for section, anchorpoints in sections.items()}
-                                 for category, sections in category_anchorpoints.items()}
-        relevant_anchorpoints = {category: {section: anchorpoints for section, anchorpoints in sections.items()
-                                            if anchorpoints}
-                                 for category, sections in relevant_anchorpoints.items()}
-        relevant_anchorpoints = {category: sections for category, sections in relevant_anchorpoints.items() if sections}
+        # Identify the relevant anchorpoints (and remove empty/irrelevant sections from the dictionary)
+        relevant_cat_anchorpoints = {category: {section:
+                                                    anchorpoints["positions"][anchorpoints["ec_codes"]
+                                                                              ==self.energy_carrier]
+                                                for section, anchorpoints in sections.items()}
+                                     for category, sections in category_anchorpoints.items()}
+        relevant_cat_anchorpoints = {category: {section: anchorpoint for section, anchorpoint in sections.items()
+                                                if anchorpoint}
+                                     for category, sections in relevant_cat_anchorpoints.items()}
+        relevant_cat_anchorpoints = {category: sections for category, sections in relevant_cat_anchorpoints.items()
+                                     if sections}
 
-        # Paths mapping
-        paths_mapping = {("primary", "consumer"): (("right", "full"), "consumer"),
-                         ("secondary", "primary"): (("right", "top"), ("left", "top")),
-                         ("primary", "tertiary"): (("left", "bottom"), ("right", "full")),
-                         ("secondary", "tertiary"): (("right", "bottom"), ("right", "full")),
-                         ("tertiary", "environment"): (("left", "bottom"), "environment"),
-                         ("sources", "primary"): ("sources", ("left", "top")),
-                         ("sources", "secondary"): ("sources", ("left", "full")),
-                         ("sources", "tertiary"): ("sources", ("left", "top"))}
+        # Identify relevant sources and sinks and add their anchorpoints to the relevant anchorpoints
+        relevant_sources = {'sources': source
+                            for source in supply_system_data.sinks_and_sources['sources'].values()
+                            if re.sub(f"\d+", "_", self.energy_carrier) == source.ec_category_code}
+        relevant_sinks = {'sinks': sink
+                          for sink in supply_system_data.sinks_and_sources['sinks'].values()
+                          if re.sub(f"\d+", "_", self.energy_carrier) == sink.ec_category_code}
+
+        relevant_source_anchorpoints = {source.code: source.position for source in relevant_sources}
+        relevant_sink_anchorpoints = {sink.code: sink.position for sink in relevant_sinks}
 
         # Calculate the paths
         for link in self.links:
-            new_link = tuple(link)
-            # start_position = relevant_anchorpoints[link[0]][paths_mapping[link][0]]
-            # end_position = relevant_anchorpoints[link[1]][paths_mapping[link][1]]
-            # self.paths[link] = self._calculate_path(start_position, end_position)
+            # Determine the start and end positions of the path
+            if link[0] == "sources":
+                start_position = relevant_source_anchorpoints.values()
+            else:
+                start_position = relevant_cat_anchorpoints[link[0]][EnergyFlowGraphInfo.paths_mapping[link][0]]
+
+            if link[1] == "sinks":
+                end_position = relevant_sink_anchorpoints.values()
+            elif link[1] == "consumer":
+                end_position = supply_system_data.consumer.anchorpoints[self.energy_carrier]
+            else:
+                end_position = relevant_cat_anchorpoints[link[1]][EnergyFlowGraphInfo.paths_mapping[link][1]]
+
+            self.paths[link] = self._calculate_path(start_position, end_position)
 
         return self.paths
 
 
     def _calculate_path(self, start_position, end_position):
-        """"""
+        """ Calculate intermediate points constituting the path between start and end positions """
+
+            # Calculate the path
+            path = []
+            x_intermediate = (start_position[0] + end_position[0]) / 2
+
+            
+
+            return path
 
 def main():
     config = cea.config.Configuration()
@@ -366,13 +529,28 @@ def main():
     image_lib_yml = os.path.join(ComponentGraphInfo.image_folder_path, 'image_lib.yml')
     image_lib_dicts = yaml.load(open(image_lib_yml, "rb"), Loader=yaml.CLoader)
     component_images_lib = image_lib_dicts['Components']
+    sources_and_sinks_images_lib = image_lib_dicts['SinksAndSources']
+    consumers_images_lib = image_lib_dicts['Consumers']
     energy_carrier_images_lib = image_lib_dicts['EnergyCarriers']
 
     # Assign relevant information to the ComponentGraphInfo class variables
-    ComponentGraphInfo.image_paths = {key: os.path.join(ComponentGraphInfo.image_folder_path, value['icon'])
+    ComponentGraphInfo.image_paths = {key: os.path.join(ComponentGraphInfo.component_image_folder, value['icon'])
                                       for key, value in component_images_lib.items()}
     ComponentGraphInfo.icon_colors = {key: cea_colors[value['color']]
                                       for key, value in component_images_lib.items()}
+
+    # Assign relevant information to the SourcesAndSinksGraphInfo class variables
+    SourceAndSinkGraphInfo.ec_to_code_mapping = sources_and_sinks_images_lib['EnergyCarrierToIconCode']
+    SourceAndSinkGraphInfo.image_paths = {icon_code:
+                                              os.path.join(SourceAndSinkGraphInfo.sources_and_sinks_image_folder,
+                                                           file_name)
+                                          for icon_code, file_name in sources_and_sinks_images_lib['IconFiles'].items()}
+
+    # Assign relevant information to the ConsumerGraphInfo class variables
+    ConsumerGraphInfo.image_paths = {icon_code:
+                                         os.path.join(ConsumerGraphInfo.consumer_image_folder, file_name)
+                                     for icon_code, file_name in consumers_images_lib['IconFiles'].items()}
+
 
     # Load the supply system data
     des_supply_systems_dict = {}
@@ -414,7 +592,10 @@ def set_up_graph(dash_application=app):
     [Input('energy-system-id', 'value')]
 )
 def update_supply_system_dropdown(energy_system_id):
-    return [i for i in SupplySystemGraphInfo.supply_system_ids[energy_system_id]]
+    if energy_system_id is None:
+        return []
+    else:
+        return [i for i in SupplySystemGraphInfo.supply_system_ids[energy_system_id]]
 
 
 # Callback to update the graph
@@ -424,7 +605,10 @@ def update_supply_system_dropdown(energy_system_id):
 )
 def update_graph(energy_system_id, supply_system_id):
     # Define a corresponding supply system graph info object
-    supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id)
+    if energy_system_id is None or supply_system_id is None:
+        return go.Figure()
+    else:
+        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id)
 
     # Create figure
     fig = go.Figure()
@@ -484,11 +668,41 @@ def update_graph(energy_system_id, supply_system_id):
             )
         )
 
+    # Add sink and source images and tooltips
+    for sinks_or_sources in supply_system.sinks_and_sources.values():
+        for code, sink_or_source in sinks_or_sources.items():
+            icon = Image.open(SourceAndSinkGraphInfo.image_paths[code])
+            fig.add_layout_image(
+                source=icon,
+                xref="x",
+                yref="y",
+                x=sink_or_source.position[0],
+                y=sink_or_source.position[1],
+                xanchor="center",
+                yanchor="middle",
+                sizex=sink_or_source.size[0],
+                sizey=sink_or_source.size[1],
+            )
+
+    # Add consumer image
+    icon = Image.open(ConsumerGraphInfo.image_paths[supply_system.consumer.category])
+    fig.add_layout_image(
+        source=icon,
+        xref="x",
+        yref="y",
+        x=supply_system.consumer.position[0],
+        y=supply_system.consumer.position[1],
+        xanchor="center",
+        yanchor="middle",
+        sizex=supply_system.consumer.size[0],
+        sizey=supply_system.consumer.size[1],
+    )
+
     # Set layout
     fig.update_layout(
-        height=800,
-        width=800,
-        xaxis_range=[0, 1],
+        height=1000,
+        width=1700,
+        xaxis_range=[-0.35, 1.35],
         yaxis_range=[0, 1],
         xaxis_visible=False,
         yaxis_visible=False,
