@@ -528,9 +528,10 @@ class EnergyFlowGraphInfo(object):
             end_position = end_position[0]
 
         path = {"x": [], "y": []}
-        x_intermediate = round((start_position[0] + end_position[0]) / 2, 3)
+        x_intermediate_1 = round(start_position[0] + 1/5 * (end_position[0] - start_position[0]), 3)
+        x_intermediate_2 = round(start_position[0] + 4/5 * (end_position[0] - start_position[0]), 3)
 
-        path["x"] = [start_position[0], x_intermediate, x_intermediate, end_position[0]]
+        path["x"] = [start_position[0], x_intermediate_1, x_intermediate_2, end_position[0]]
         path["y"] = [start_position[1], start_position[1], end_position[1], end_position[1]]
         return path
 
@@ -715,6 +716,7 @@ def update_graph(energy_system_id, supply_system_id):
 
     # Draw Energy Flow Paths
     for ec_code, energy_flow in supply_system.energy_flows.items():
+        show_legend = True
         for path_description, path_coordinates in energy_flow.paths.items():
             fig.add_trace(
                 go.Scatter(
@@ -722,7 +724,7 @@ def update_graph(energy_system_id, supply_system_id):
                     x=path_coordinates['x'],
                     y=path_coordinates['y'],
                     mode="lines",
-                    line=dict(color=energy_flow.color, width=1),
+                    line=dict(color=energy_flow.hue, width=8),
                     text=[f'{ec_code}'],
                     hoverinfo='text',
                     hoverlabel=dict(
@@ -730,6 +732,27 @@ def update_graph(energy_system_id, supply_system_id):
                         font_size=12,
                         font_family="Rockwell"
                     ),
+                    showlegend=show_legend,
+                    legendgroup=ec_code,
+                )
+            )
+            show_legend = False
+            fig.add_trace(
+                go.Scatter(
+                    name=ec_code,
+                    x=path_coordinates['x'],
+                    y=path_coordinates['y'],
+                    mode="lines",
+                    line=dict(color=energy_flow.color, width=2),
+                    text=[f'{ec_code}'],
+                    hoverinfo='text',
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=12,
+                        font_family="Rockwell"
+                    ),
+                    showlegend=show_legend,
+                    legendgroup=ec_code,
                 )
             )
 
