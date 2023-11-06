@@ -197,9 +197,10 @@ class SupplySystemGraphInfo(object):
                 else:
                     continue
 
+                nbr_anchorpoints_in_section = len(cat_anchorpoints[category][section]["ec_codes"])
                 cat_anchorpoints[category][section]["positions"] = [(round(x_cooridinate, 2),
                                                                      round(y_first_coordinate + nbr * y_offset, 2))
-                                                                    for nbr in range(nbr_anchorpoints_right)]
+                                                                    for nbr in range(nbr_anchorpoints_in_section)]
 
         # Clear empty dict entries
         cat_anchorpoints = {category: {section: anchorpoints for section, anchorpoints in sections.items()
@@ -310,13 +311,16 @@ class SourceAndSinkGraphInfo(object):
 
         # Calculate the size of the icons
         nbr_icons = len(sources_or_sinks)
-        calculated_icon_size = 2/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
-        icon_spacing = 1/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
-        icon_size = round(min(nbr_icons * calculated_icon_size + (nbr_icons - 1) * icon_spacing,
-                              SourceAndSinkGraphInfo._max_icon_size), 2)
+        icons = {}
+        if nbr_icons == 0:
+            return icons
+        else:
+            calculated_icon_size = 2/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
+            icon_spacing = 1/3 * SourceAndSinkGraphInfo._max_space_for_icons / nbr_icons
+            icon_size = round(min(nbr_icons * calculated_icon_size + (nbr_icons - 1) * icon_spacing,
+                                  SourceAndSinkGraphInfo._max_icon_size), 2)
 
         # Calculate the position of the icons and create their corresponding SourceAndSinkGraphInfo objects
-        icons = {}
         for i, source_or_sink in enumerate(sources_or_sinks):
             icon = SourceAndSinkGraphInfo(source_or_sink["code"], source_or_sink["associated_ec"])
             icon.size = (icon_size, icon_size)
@@ -479,9 +483,9 @@ class EnergyFlowGraphInfo(object):
         self.paths = {}
 
         # Identify the relevant anchorpoints (and remove empty/irrelevant sections from the dictionary)
-        relevant_cat_anchorpoints = {category: {section:
-                                                    anchorpoints["positions"][anchorpoints["ec_codes"]
-                                                                              ==self.energy_carrier]
+        relevant_cat_anchorpoints = {category: {section: [anchorpoints["positions"][i]
+                                                          for i, ec in enumerate(anchorpoints["ec_codes"])
+                                                          if ec == self.energy_carrier]
                                                 for section, anchorpoints in sections.items()}
                                      for category, sections in category_anchorpoints.items()}
         relevant_cat_anchorpoints = {category: {section: anchorpoint for section, anchorpoint in sections.items()
@@ -496,8 +500,8 @@ class EnergyFlowGraphInfo(object):
         relevant_sinks = [sink for sink in supply_system.sinks_and_sources['sinks'].values()
                           if re.sub(f"\d+", "_", self.energy_carrier) == sink.ec_category_code]
 
-        relevant_source_anchorpoints = {source.code: source.position for source in relevant_sources}
-        relevant_sink_anchorpoints = {sink.code: sink.position for sink in relevant_sinks}
+        relevant_source_anchorpoints = {source.code: source.anchorpoints[self.energy_carrier] for source in relevant_sources}
+        relevant_sink_anchorpoints = {sink.code: sink.anchorpoints[self.energy_carrier] for sink in relevant_sinks}
 
         # Calculate the paths
         for link in self.links:
@@ -579,7 +583,7 @@ def main():
     SupplySystemGraphInfo.energy_system_ids = des_solution_folders
     SupplySystemGraphInfo.supply_system_ids = des_supply_systems_dict
 
-    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][0])
+    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][-1])
 
     return None
 
