@@ -305,7 +305,8 @@ class DistrictEnergySystem(object):
             system_structure.build()
 
             pareto_optimal_systems = self.optimise_supply_system(system_structure, network)
-            self.supply_systems[network.identifier] = pareto_optimal_systems
+            if pareto_optimal_systems:
+                self.supply_systems[network.identifier] = pareto_optimal_systems
 
         return self.supply_systems
 
@@ -411,12 +412,21 @@ class DistrictEnergySystem(object):
                   f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
                   f"% of offspring retained")
 
-        optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
-        [supply_system.evaluate() for supply_system in optimal_supply_systems]
-        self._civ_memory.update(optimal_supply_systems)
-        end_time = time.time()
-        print(f"Supply system {subsystem.identifier} optimised."
-              f"(Time elapsed {end_time-start_time} s)")
+        # evaluate the fitness of the final population and store the non-dominated individuals in the memory
+        # (in case some invalid individuals of the initial population remain, remove them now)
+        optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population
+                                  if list(ind.fitness.values) != [np.inf for _ in range(algorithm.nbr_objectives)]]
+        if optimal_supply_systems:
+            [supply_system.evaluate() for supply_system in optimal_supply_systems]
+            self._civ_memory.update(optimal_supply_systems)
+            end_time = time.time()
+            print(f"Supply system {subsystem.identifier} optimised."
+                  f"(Time elapsed {end_time-start_time} s)")
+        else:
+            end_time = time.time()
+            print(f"Supply system {subsystem.identifier} could not be optimised. There are no feasible solutions."
+                  f"Try checking the configuration (e.g. available components) of the district energy system."
+                  f"(Time elapsed {end_time-start_time} s)")
 
         return optimal_supply_systems
 
