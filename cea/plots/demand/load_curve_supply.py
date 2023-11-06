@@ -48,7 +48,7 @@ class LoadCurveSupplyPlot(cea.plots.demand.DemandPlotBase):
 
     @property
     def layout(self):
-        return dict(barmode='relative', yaxis=dict(title='Final Energy Demand [MW]'),
+        return dict(barmode='relative', yaxis=dict(title='Final Energy Demand [MWh]'),
                     yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'))
 
     @property
