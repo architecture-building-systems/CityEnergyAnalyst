@@ -17,6 +17,9 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import os.path
+import tempfile
+
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
@@ -476,27 +479,49 @@ class Network(object):
         :rtype wnm_pipe_diameters: pd.DataFrame
         """
         # BUILD WATER NETWORK
-        import cea.utilities
-        with cea.utilities.pushd(self._domain_locator.get_thermal_network_folder()):
+        thermal_network_folder = self._domain_locator.get_thermal_network_folder()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _file_location = os.path.join(tmpdir, f"{self.connectivity_id}_{self.identifier}")
+
+            # Create empty .inp file for WaterNetworkModel
+            inp_file = f"{_file_location}.inp"
+            with open(inp_file, "w") as f:
+                pass
 
             # Create a water network model instance
-            wn = wntr.network.WaterNetworkModel()
+            wn = wntr.network.WaterNetworkModel(inp_file)
 
             # add loads
             building_base_demand_m3s = {}
+            demand_pattern_map = {}
+
+            def generate_demand_pattern(building_name: str) -> str:
+                """
+                Epanet demand patterns cannot have spaces and ?(has a 30-character limit).
+                Otherwise, simulation will throw "EPANET 200" error.
+
+                Returns a hash to create a unique code based on the building name
+                Stores mapping to building name in demand_pattern_map
+                """
+                import hashlib
+                _hash = hashlib.sha1(building_name.encode()).hexdigest()[:30]
+                demand_pattern_map[_hash] = building_name
+                return _hash
+
             for building in self.connected_buildings:
                 # Make sure that building names have no whitespaces when adding demand pattern to wn
-                _building = building.replace(" ", "_")
-                building_base_demand_m3s[_building] = self._domain_buildings_flow_rate_m3pers[building].max()
+                demand_pattern = generate_demand_pattern(building)
+                building_base_demand_m3s[demand_pattern] = self._domain_buildings_flow_rate_m3pers[building].max()
                 pattern_demand = (self._domain_buildings_flow_rate_m3pers[building].values /
-                                  building_base_demand_m3s[_building]).tolist()
-                wn.add_pattern(_building, pattern_demand)
+                                  building_base_demand_m3s[demand_pattern]).tolist()
+                wn.add_pattern(demand_pattern, pattern_demand)
 
             # add nodes
             consumer_nodes = []
             for node_name, node in self.network_nodes.iterrows():
                 if node["Type"] == "CONSUMER":
-                    demand_pattern = node['Building'].replace(" ", "_")
+                    demand_pattern = generate_demand_pattern(node['Building'])
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
                     consumer_nodes.append(node_name)
                     wn.add_junction(str(node_name),
@@ -537,7 +562,7 @@ class Network(object):
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
@@ -559,7 +584,7 @@ class Network(object):
                 pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
 
             # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
             # get accumulated head loss per hour
@@ -582,7 +607,7 @@ class Network(object):
             reservoir.head_timeseries.base_value = int(base_head)
             reservoir.head_timeseries._pattern = 'reservoir'
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
 
         return wnm_results, wnm_pipe_diameters
 

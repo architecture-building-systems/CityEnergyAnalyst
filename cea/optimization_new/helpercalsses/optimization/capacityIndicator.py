@@ -522,27 +522,45 @@ class CapacityIndicatorVectorMemory(object):
             self.best_capacity_indicator_vectors[bracket_median].append(optimal_supply_system.capacity_indicator_vector)
 
         # Fill up to two adjacent empty brackets with the same optimal capacity indicator vectors
-        lower_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)-1]
-        i = 0
-        while (not self.best_capacity_indicator_vectors[lower_bracket_median])\
-                or self.best_capacity_indicator_vectors[lower_bracket_median] == former_optimal_civs:
-            self.best_capacity_indicator_vectors[lower_bracket_median] = \
-                self.best_capacity_indicator_vectors[bracket_median]
-            lower_bracket_median = bracket_medians_list[bracket_medians_list.index(lower_bracket_median)-1]
-            i += 1
-            if lower_bracket_median > bracket_median or i >= 2:
+        median_index = bracket_medians_list.index(bracket_median)
+
+        lower_index = median_index - 1
+        for i in range(2):
+            if lower_index < 0:  # Prevent index error
                 break
 
-        upper_bracket_median = bracket_medians_list[bracket_medians_list.index(bracket_median)+1]
-        i = 0
-        while (not self.best_capacity_indicator_vectors[upper_bracket_median]) \
-                or self.best_capacity_indicator_vectors[upper_bracket_median] == former_optimal_civs:
+            lower_bracket_median = bracket_medians_list[lower_index]
+
+            if i > 0 and lower_bracket_median > bracket_median:
+                break # Quit in case the lower index is out of bounds, i.e. loops around and fetches the highest bracket
+
+            if (self.best_capacity_indicator_vectors[lower_bracket_median]
+                    and self.best_capacity_indicator_vectors[lower_bracket_median] != former_optimal_civs):
+                break
+
+            self.best_capacity_indicator_vectors[lower_bracket_median] = \
+                self.best_capacity_indicator_vectors[bracket_median]
+
+            lower_index -= 1
+
+        upper_index = median_index + 1
+        for i in range(2):
+            if upper_index >= len(bracket_medians_list):  # Prevent index error
+                break
+
+            upper_bracket_median = bracket_medians_list[upper_index]
+
+            if i > 0 and upper_bracket_median < bracket_median:
+                break # Quit in case the higher index is out of bounds, i.e. loops around and fetches the lowest bracket
+
+            if (self.best_capacity_indicator_vectors[upper_bracket_median]
+                    and self.best_capacity_indicator_vectors[upper_bracket_median] != former_optimal_civs):
+                break
+
             self.best_capacity_indicator_vectors[upper_bracket_median] = \
                 self.best_capacity_indicator_vectors[bracket_median]
-            upper_bracket_median = bracket_medians_list[bracket_medians_list.index(upper_bracket_median)+1]
-            i += 1
-            if upper_bracket_median < bracket_median or i >= 2:
-                break
+
+            upper_index += 1
 
     def recall_optimal_civs(self, max_system_demand, current_civ):
         """

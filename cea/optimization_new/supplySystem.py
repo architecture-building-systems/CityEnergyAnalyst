@@ -23,10 +23,9 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
-from math import ceil, isclose
+from math import isclose
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-from cea.optimization_new.component import ActiveComponent
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
 from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
@@ -158,11 +157,11 @@ class SupplySystem(object):
 
             max_capacity_component = self.structure.max_cap_active_components[placement][component_model]
             component_class = type(max_capacity_component)
-            capacity_kW = capacity_indicator.value * max_capacity_component.capacity
+            capacity_kw = capacity_indicator.value * max_capacity_component.capacity
 
             try:
                 self.installed_components[placement][component_model] = \
-                    component_class(component_model, placement, capacity_kW)
+                    component_class(component_model, placement, capacity_kw)
             except ValueError:
                 capacity_indicator.value = 0
 
