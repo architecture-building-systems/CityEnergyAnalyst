@@ -87,6 +87,8 @@ SinksAndSources:
         T_A: "wind"
         E_AC: "grid"
       Sources:
+        T_W: "river"
+        T_A: "wind"
         E_AC: "grid"
         Cwod: "wood"
         Cwbm: "biomass"
