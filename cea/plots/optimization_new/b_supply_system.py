@@ -2,6 +2,7 @@ import os
 import re
 import math
 import yaml
+import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from PIL import Image
@@ -61,14 +62,19 @@ class SupplySystemGraphInfo(object):
             SupplySystemGraphInfo._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
                                                                                            supply_system_id)
         raw_supply_system_data = pd.read_csv(supply_system_file)
+        for column in ["Main_energy_carrier_code", "Other_inputs", "Other_outputs"]:
+            raw_supply_system_data[column] = pd.Series([ecs.split(', ')
+                                                        for ecs in raw_supply_system_data[column].array
+                                                        if isinstance(ecs, str)])
         self._supply_system_data = raw_supply_system_data[raw_supply_system_data["Capacity_kW"] != 0]
 
     def _identify_energy_carriers(self):
         """ Identify the unique energy carriers (ecs) present in the supply system """
-        main_ecs = self._supply_system_data["Main_energy_carrier_code"]
-        other_input_ecs = self._supply_system_data["Other_inputs"]
-        other_output_ecs = self._supply_system_data["Other_outputs"]
-        unique_ecs = pd.concat([main_ecs, other_input_ecs, other_output_ecs]).unique()
+        all_ecs = []
+        for column in ["Main_energy_carrier_code", "Other_inputs", "Other_outputs"]:
+            column_ecs = [ec for ecs in self._supply_system_data[column].array if isinstance(ecs, list) for ec in ecs]
+            all_ecs += column_ecs
+        unique_ecs = list(set(all_ecs))
         return unique_ecs
 
     def _idenfify_sinks_and_sources(self):
@@ -178,11 +184,11 @@ class SupplySystemGraphInfo(object):
 
             # Calculate the positions of the anchorpoints
             for section, flow_directions in sections.items():
-                if section[0] == "left":
+                if section[0] == "left" and nbr_anchorpoints_left > 0:
                     x_cooridinate = self.cat_positions[category][0] - 0.5 * self.cat_sizes[category][0]
                     y_edge = 0.5 * self.cat_sizes[category][1] / nbr_anchorpoints_left
                     y_offset = self.cat_sizes[category][1] / nbr_anchorpoints_left
-                elif section[0] == "right":
+                elif section[0] == "right" and nbr_anchorpoints_right > 0:
                     x_cooridinate = self.cat_positions[category][0] + 0.5 * self.cat_sizes[category][0]
                     y_edge = 0.5 * self.cat_sizes[category][1] / nbr_anchorpoints_right
                     y_offset = self.cat_sizes[category][1] / nbr_anchorpoints_right
@@ -402,8 +408,9 @@ class EnergyFlowGraphInfo(object):
         # Identify components and categories that input or output the given energy carrier
         # 1. Identify the components and categories that are operated to produce the energy carrier
         generator_components = supply_system_data[supply_system_data["Main_side"] == "output"]
-        main_generators_of_ec = generator_components[generator_components["Main_energy_carrier_code"] ==
-                                                     self.energy_carrier]
+        indexes_of_main_generators = [i for i, main_ecs in enumerate(generator_components["Main_energy_carrier_code"])
+                                      if isinstance(main_ecs, list) and self.energy_carrier in main_ecs]
+        main_generators_of_ec = generator_components.loc[indexes_of_main_generators, :]
         self.instances["main_generators"] = {category: [row["Component_code"] for index, row
                                                         in main_generators_of_ec.iterrows()
                                                         if row["Category"] == category]
@@ -411,23 +418,28 @@ class EnergyFlowGraphInfo(object):
 
         # 2. Identify the components and categories that are operated to absorb/reject the energy carrier
         absorber_components = supply_system_data[supply_system_data["Main_side"] == "input"]
-        main_absorbers_of_ec = absorber_components[absorber_components["Main_energy_carrier_code"] ==
-                                                   self.energy_carrier]
+        indexes_of_main_absorbers = [i for i, main_ecs in enumerate(absorber_components["Main_energy_carrier_code"])
+                                     if isinstance(main_ecs, list) and self.energy_carrier in main_ecs]
+        main_absorbers_of_ec = absorber_components.loc[indexes_of_main_absorbers, :]
         self.instances["main_absorbers"] = {category: [row["Component_code"] for index, row
                                                         in main_absorbers_of_ec.iterrows()
                                                         if row["Category"] == category]
                                              for category in main_absorbers_of_ec["Category"].unique()}
 
         # 3. Identify the components and categories that produce the energy carrier as a by-product
-        other_generator_of_ec = supply_system_data[supply_system_data["Other_outputs"] == self.energy_carrier]
+        indexes_of_other_generators = [i for i, ecs in enumerate(supply_system_data["Other_outputs"])
+                                       if isinstance(ecs, list) and self.energy_carrier in ecs]
+        other_generators_of_ec = supply_system_data.loc[indexes_of_other_generators, :]
         self.instances["other_generators"] = {category: [row["Component_code"] for index, row
-                                                         in other_generator_of_ec.iterrows()
+                                                         in other_generators_of_ec.iterrows()
                                                          if row["Category"] == category]
-                                              for category in other_generator_of_ec["Category"].unique()}
+                                              for category in other_generators_of_ec["Category"].unique()}
 
         # 4. Identify the components and categories that absorb/reject the energy carrier as a by-product
         #       (or simply to be able to operate)
-        other_absorbers_of_ec = supply_system_data[supply_system_data["Other_inputs"] == self.energy_carrier]
+        indexes_of_other_absorbers = [i for i, ecs in enumerate(supply_system_data["Other_inputs"])
+                                      if isinstance(ecs, list) and self.energy_carrier in ecs]
+        other_absorbers_of_ec = supply_system_data.loc[indexes_of_other_absorbers, :]
         self.instances["other_absorbers"] = {category: [row["Component_code"] for index, row
                                                         in other_absorbers_of_ec.iterrows()
                                                         if row["Category"] == category]
