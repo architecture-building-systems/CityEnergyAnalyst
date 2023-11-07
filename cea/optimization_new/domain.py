@@ -422,18 +422,29 @@ class Domain(object):
     @staticmethod
     def _write_combined_objective_function_profiles(date_time, supply_system, results_file):
         """Write the central objective function profiles of a supply system to the indicated csv file."""
-        combined_heat_rejection_profile = pd.concat([heat_rejection_profile
-                                                     for heat_rejection_profile
-                                                     in supply_system.heat_rejection.values()],
-                                                    axis=1).sum(1)
-        combined_ghg_emission_profile = pd.concat([ghg_emission_profile
-                                                   for ghg_emission_profile
-                                                   in supply_system.greenhouse_gas_emissions.values()],
-                                                  axis=1).sum(1)
-        combined_system_energy_demand_profile = pd.concat([system_demand_profile
-                                                           for system_demand_profile
-                                                           in supply_system.system_energy_demand.values()],
-                                                          axis=1).sum(1)
+        if supply_system.heat_rejection.values():
+            combined_heat_rejection_profile = pd.concat([heat_rejection_profile
+                                                         for heat_rejection_profile
+                                                         in supply_system.heat_rejection.values()],
+                                                        axis=1).sum(1)
+        else:
+            combined_heat_rejection_profile = pd.Series(0, index=range(len(date_time)))
+
+        if supply_system.greenhouse_gas_emissions.values():
+            combined_ghg_emission_profile = pd.concat([ghg_emission_profile
+                                                       for ghg_emission_profile
+                                                       in supply_system.greenhouse_gas_emissions.values()],
+                                                      axis=1).sum(1)
+        else:
+            combined_ghg_emission_profile = pd.Series(0, index=range(len(date_time)))
+
+        if supply_system.system_energy_demand.values():
+            combined_system_energy_demand_profile = pd.concat([system_demand_profile
+                                                               for system_demand_profile
+                                                               in supply_system.system_energy_demand.values()],
+                                                              axis=1).sum(1)
+        else:
+            combined_system_energy_demand_profile = pd.Series(0, index=range(len(date_time)))
 
         # combine the profiles into one data frame and write to file
         combined_objective_function_timelines = pd.concat([date_time.to_series(index=range(len(date_time))),
