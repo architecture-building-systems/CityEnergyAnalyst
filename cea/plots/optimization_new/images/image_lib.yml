@@ -123,7 +123,7 @@ EnergyCarriers:
     T60W:
       color: "blue"
       hue: "red_light"
-    T30W:
+    T35W:
       color: "blue"
       hue: "red_lighter"
     T20W:
