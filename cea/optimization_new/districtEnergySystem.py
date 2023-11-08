@@ -369,6 +369,10 @@ class DistrictEnergySystem(object):
 
             population[i].fitness.values = fit
 
+        # Eliminate duplicates from population
+        population = [ind1 for i, ind1 in enumerate(population)
+                      if not (ind1.values in [ind2.values for ind2 in population[i+1:]])]
+
         # Perform the genetic optimization
         for generation in range(1, algorithm.generations_supply_systems + 1):
             # initialize a few relevant variables
@@ -407,7 +411,10 @@ class DistrictEnergySystem(object):
                     break
 
             # select the fittest individuals among population and offspring and replace the population with them
-            population = toolbox.select(population + fit_offspring, algorithm.population)
+            if len(population + fit_offspring) >= algorithm.population:
+                population = toolbox.select(population + fit_offspring, algorithm.population)
+            else:
+                population = toolbox.select(population + fit_offspring, len(population + fit_offspring))
             print(f"{subsystem.identifier}: gen {generation} - "
                   f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
                   f"% of offspring retained")
