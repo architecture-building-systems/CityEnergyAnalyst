@@ -140,36 +140,41 @@ class SupplySystemGraphInfo(object):
     def _calc_energy_flow_anchorpoints(self):
         """ Calculate the positions of the energy flows """
         cat_flow_directions = {"primary": {("left", "top"): {"direction": "in",
-                                                             "ef_category": "other_absorbers"},
+                                                             "linked_categories": ["sources", "secondary"]},
                                            ("left", "bottom"): {"direction": "out",
-                                                                "ef_category": "other_generators"},
+                                                                "linked_categories": ["tertiary", "sinks"]},
                                            ("right", "full"): {"direction": "out",
-                                                               "ef_category": "main_generators"}},
-                               "secondary": {("left", "full"): {"direction": "in",
-                                                                "ef_category": "other_absorbers"},
+                                                               "linked_categories": ["consumer"]}},
+                               "secondary": {("left", "top"): {"direction": "in",
+                                                               "linked_categories": ["sources"]},
+                                             ("left", "bottom"): {"direction": "out",
+                                                                  "linked_categories": ["sinks"]},
                                              ("right", "top"): {"direction": "out",
-                                                                "ef_category": "main_generators"},
+                                                                "linked_categories": ["primary"]},
                                              ("right", "bottom"): {"direction": "out",
-                                                                   "ef_category": "other_generators"}},
+                                                                   "linked_categories": ["tertiary"]}},
                                "tertiary": {("left", "top"): {"direction": "in",
-                                                              "ef_category": "other_absorbers"},
+                                                              "linked_categories": ["sources"]},
                                             ("left", "bottom"): {"direction": "out",
-                                                                 "ef_category": "other_generators"},
+                                                                 "linked_categories": ["sinks"]},
                                             ("right", "full"): {"direction": "in",
-                                                                "ef_category": "main_absorbers"}}}
+                                                               "linked_categories": ["primary", "secondary"]}}}
         cat_anchorpoints = {category: {section : {"ec_codes": []}
                                        for section, flow_directions in sections.items()}
                             for category, sections in cat_flow_directions.items()}
 
-        # Determine the anchorpoints to be set for the primary category
+        # Determine the anchorpoints to be set for each category
         for category, sections in cat_flow_directions.items():
             # Determine the energy carriers to be included in the anchorpoints
             for section, flow_directions in sections.items():
+                if flow_directions['direction'] == "in":
+                    ef_links = [tuple([link_cat, category]) for link_cat in flow_directions['linked_categories']]
+                else:
+                    ef_links = [tuple([category, link_cat]) for link_cat in flow_directions['linked_categories']]
                 cat_anchorpoints[category][section] \
                     = {"ec_codes": [ec_code
                                     for ec_code, energy_flows in self.energy_flows.items()
-                                    if category
-                                    in energy_flows.instances[flow_directions["ef_category"]].keys()]}
+                                    if any([link in ef_links for link in energy_flows.links])]}
 
             # Determine the number of anchorpoints to be set on each side
             nbr_anchorpoints_left = sum([len(cat_anchorpoints[category][section]["ec_codes"])
@@ -183,7 +188,7 @@ class SupplySystemGraphInfo(object):
                 continue
 
             # Calculate the positions of the anchorpoints
-            for section, flow_directions in sections.items():
+            for section in sections.keys():
                 if section[0] == "left" and nbr_anchorpoints_left > 0:
                     x_cooridinate = self.cat_positions[category][0] - 0.5 * self.cat_sizes[category][0]
                     y_edge = 0.5 * self.cat_sizes[category][1] / nbr_anchorpoints_left
@@ -385,8 +390,9 @@ class EnergyFlowGraphInfo(object):
                      ("primary", "tertiary"): (("left", "bottom"), ("right", "full")),
                      ("secondary", "tertiary"): (("right", "bottom"), ("right", "full")),
                      ("tertiary", "sinks"): (("left", "bottom"), "sinks"),
+                     ("secondary", "sinks"): (("left", "bottom"), "sinks"),
                      ("sources", "primary"): ("sources", ("left", "top")),
-                     ("sources", "secondary"): ("sources", ("left", "full")),
+                     ("sources", "secondary"): ("sources", ("left", "top")),
                      ("sources", "tertiary"): ("sources", ("left", "top"))}
     colors_and_hues = {}
 
@@ -408,7 +414,7 @@ class EnergyFlowGraphInfo(object):
         # Identify components and categories that input or output the given energy carrier
         # 1. Identify the components and categories that are operated to produce the energy carrier
         generator_components = supply_system_data[supply_system_data["Main_side"] == "output"]
-        indexes_of_main_generators = [i for i, main_ecs in enumerate(generator_components["Main_energy_carrier_code"])
+        indexes_of_main_generators = [i for i, main_ecs in generator_components["Main_energy_carrier_code"].items()
                                       if isinstance(main_ecs, list) and self.energy_carrier in main_ecs]
         main_generators_of_ec = generator_components.loc[indexes_of_main_generators, :]
         self.instances["main_generators"] = {category: [row["Component_code"] for index, row
@@ -418,7 +424,7 @@ class EnergyFlowGraphInfo(object):
 
         # 2. Identify the components and categories that are operated to absorb/reject the energy carrier
         absorber_components = supply_system_data[supply_system_data["Main_side"] == "input"]
-        indexes_of_main_absorbers = [i for i, main_ecs in enumerate(absorber_components["Main_energy_carrier_code"])
+        indexes_of_main_absorbers = [i for i, main_ecs in absorber_components["Main_energy_carrier_code"].items()
                                      if isinstance(main_ecs, list) and self.energy_carrier in main_ecs]
         main_absorbers_of_ec = absorber_components.loc[indexes_of_main_absorbers, :]
         self.instances["main_absorbers"] = {category: [row["Component_code"] for index, row
@@ -427,7 +433,7 @@ class EnergyFlowGraphInfo(object):
                                              for category in main_absorbers_of_ec["Category"].unique()}
 
         # 3. Identify the components and categories that produce the energy carrier as a by-product
-        indexes_of_other_generators = [i for i, ecs in enumerate(supply_system_data["Other_outputs"])
+        indexes_of_other_generators = [i for i, ecs in supply_system_data["Other_outputs"].items()
                                        if isinstance(ecs, list) and self.energy_carrier in ecs]
         other_generators_of_ec = supply_system_data.loc[indexes_of_other_generators, :]
         self.instances["other_generators"] = {category: [row["Component_code"] for index, row
@@ -437,7 +443,7 @@ class EnergyFlowGraphInfo(object):
 
         # 4. Identify the components and categories that absorb/reject the energy carrier as a by-product
         #       (or simply to be able to operate)
-        indexes_of_other_absorbers = [i for i, ecs in enumerate(supply_system_data["Other_inputs"])
+        indexes_of_other_absorbers = [i for i, ecs in supply_system_data["Other_inputs"].items()
                                       if isinstance(ecs, list) and self.energy_carrier in ecs]
         other_absorbers_of_ec = supply_system_data.loc[indexes_of_other_absorbers, :]
         self.instances["other_absorbers"] = {category: [row["Component_code"] for index, row
@@ -466,13 +472,16 @@ class EnergyFlowGraphInfo(object):
                     links.append(("secondary", "tertiary"))
 
         for category in self.instances["other_generators"].keys():
-            if category == "secondary" and "primary" in self.instances["other_absorbers"].keys():
-                links.append(("secondary", "primary"))
+            if category == "secondary":
+                if "primary" in self.instances["other_absorbers"].keys():
+                    links.append(("secondary", "primary"))
+                else:
+                    links.append(("secondary", "sinks"))
             if category == "tertiary":
                 links.append(("tertiary", "sinks"))
 
         for category in self.instances["other_absorbers"].keys():
-            if category == "primary":
+            if category == "primary" and not "secondary" in self.instances["main_generators"].keys():
                 links.append(("sources", "primary"))
             elif category == "secondary":
                 links.append(("sources", "secondary"))
@@ -506,11 +515,11 @@ class EnergyFlowGraphInfo(object):
         relevant_cat_anchorpoints = {category: sections for category, sections in relevant_cat_anchorpoints.items()
                                      if sections}
 
-        # Identify relevant sources and sinks and add their anchorpoints to the relevant anchorpoints
+        # Identify relevant sources and sinks and add their anchorpoints to the list of relevant anchorpoints
         relevant_sources = [source for source in supply_system.sinks_and_sources['sources'].values()
-                            if re.sub(f"\d+", "_", self.energy_carrier) == source.ec_category_code]
+                            if self.energy_carrier in source.anchorpoints.keys()]
         relevant_sinks = [sink for sink in supply_system.sinks_and_sources['sinks'].values()
-                          if re.sub(f"\d+", "_", self.energy_carrier) == sink.ec_category_code]
+                          if self.energy_carrier in sink.anchorpoints.keys()]
 
         relevant_source_anchorpoints = {source.code: source.anchorpoints[self.energy_carrier] for source in relevant_sources}
         relevant_sink_anchorpoints = {sink.code: sink.anchorpoints[self.energy_carrier] for sink in relevant_sinks}
@@ -595,7 +604,7 @@ def main():
     SupplySystemGraphInfo.energy_system_ids = des_solution_folders
     SupplySystemGraphInfo.supply_system_ids = des_supply_systems_dict
 
-    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][-1])
+    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][-2])
 
     return None
 
