@@ -3,6 +3,7 @@ Creates a polygon shapefile from a list of comma-separated coordinate tuples and
 """
 
 import os
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -21,10 +22,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_polygon(coordinate_tuple_list, output_path, filename):
+def create_polygon(hapefile_df, output_path, filename):
+
+    # Create polygons based on coordinates and zone information for the attribute table
+    coordinate_tuple_list = hapefile_df['coordinate'].values.tolist()
     poly = Polygon(coordinate_tuple_list)
-    gdf = gpd.GeoDataFrame([{'geometry': poly}])
-    gdf.crs = get_geographic_coordinate_system()
+    gdf = gpd.GeoDataFrame(hapefile_df, geometry=poly, crs="EPSG:4326")
+    # gdf.crs = get_geographic_coordinate_system()
+
     # Make sure directory exists
     os.makedirs(output_path, exist_ok=True)
     gdf.to_file(os.path.join(output_path, '{filename}.shp'.format(filename=filename)))
@@ -32,13 +37,14 @@ def create_polygon(coordinate_tuple_list, output_path, filename):
 
 
 def main(config):
-    coordinate_tuple_list = config.create_polygon.coordinates
-    filename = config.create_polygon.filename
+    excel_path = config.shapefile_tools.excel_file
+    shapefile_df = pd.read_excel(excel_path)
 
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    output_path = locator.get_building_geometry_folder()
+    filename = config.shapefile_tools.filename
+    output_path = config.shapefile_tools.shapefile
 
-    create_polygon(coordinate_tuple_list, output_path, filename)
+
+    create_polygon(shapefile_df, output_path, filename)
 
 
 if __name__ == '__main__':
