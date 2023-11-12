@@ -910,7 +910,7 @@ class SupplySystemStructure(object):
         config = domain.config
         network_type = config.optimization_new.network_type
         if network_type == 'DH':
-            SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T35W')
+            SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T30W')
             SupplySystemStructure.system_type = 'heating'
         elif network_type == 'DC':
             SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T10W')
