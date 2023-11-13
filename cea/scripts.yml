@@ -327,17 +327,22 @@ Utilities:
                   'shapefile-tools:shapefile-name', 'shapefile-tools:polygon' ]
 
   - name: sensitivity-analysis-sampler
-    label: Generate samples for sensitivity analysis
+    label: Generate samples for SA
     description: Generate samples for sensitivity analysis using Sobol Method
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', 'sensitivity-analysis-tools:file-name', 'sensitivity-analysis-tools:file-path',
                   'sensitivity-analysis-tools:sample-n',
-                  'shapefile-tools:variable-1-lower-bound', 'shapefile-tools:variable-1-upper-bound',
-                  'shapefile-tools:variable-2-lower-bound', 'shapefile-tools:variable-2-upper-bound',
-                  'shapefile-tools:variable-3-lower-bound', 'shapefile-tools:variable-3-upper-bound',
-                  'shapefile-tools:variable-4-lower-bound', 'shapefile-tools:variable-4-upper-bound',
-                  'shapefile-tools:variable-5-lower-bound', 'shapefile-tools:variable-5-upper-bound'
+                  'sensitivity-analysis-tools:having-variable-1',
+                  'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-2',
+                  'sensitivity-analysis-tools:variable-2-lower-bound', 'sensitivity-analysis-tools:variable-2-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-3',
+                  'sensitivity-analysis-tools:variable-3-lower-bound', 'sensitivity-analysis-tools:variable-3-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-4',
+                  'sensitivity-analysis-tools:variable-4-lower-bound', 'sensitivity-analysis-tools:variable-4-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-5',
+                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound'
     ]
 
   - name: data-initializer

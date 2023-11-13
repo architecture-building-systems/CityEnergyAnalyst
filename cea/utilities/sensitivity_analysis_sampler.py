@@ -45,6 +45,7 @@ def write_results(param_values, names_vars, output_path, filename):
     # Make sure directory exists
     os.makedirs(output_path, exist_ok=True)
 
+    # Convert numpy array to DataFrame and write to disk
     sample = pd.DataFrame(param_values, columns=names_vars)
     sample.to_excel(os.path.join(output_path, '{filename}.xlsx'.format(filename=filename)))
 
@@ -63,6 +64,13 @@ def main(config):
     var_5_l = config.sensitivity_analysis_tools.variable_5_lower_bound
     var_5_u = config.sensitivity_analysis_tools.variable_5_upper_bound
 
+    has_var_1 = config.sensitivity_analysis_tools.having_variable_1
+    has_var_2 = config.sensitivity_analysis_tools.having_variable_2
+    has_var_3 = config.sensitivity_analysis_tools.having_variable_3
+    has_var_4 = config.sensitivity_analysis_tools.having_variable_4
+    has_var_5 = config.sensitivity_analysis_tools.having_variable_5
+    var_boolean = [has_var_1, has_var_2, has_var_3, has_var_4, has_var_5]
+
     sample_n = config.sensitivity_analysis_tools.sample_n
 
     bounds_vars = [[var_1_l, var_1_u],
@@ -75,10 +83,14 @@ def main(config):
     filename = config.sensitivity_analysis_tools.file_name
     output_path = config.sensitivity_analysis_tools.file_path
 
-    # Clean the lists when there are less than 5 variables
+    # Clean the lists based on the boolean toggle for each variable
+    names_vars = [i for (i, v) in zip(names_vars, var_boolean) if v]
+    bounds_vars = [i for (i, v) in zip(bounds_vars, var_boolean) if v]
+
+    # Check if any of the bounds is missing
     nan_idx = next((i for i, v in enumerate(bounds_vars) if sum(v) != sum(v)), -1)
-    bounds_vars.pop(nan_idx)
-    names_vars.pop(nan_idx)
+    if not nan_idx:
+        raise ValueError("missing upper and/or lower bounds for variable {}".format(nan_idx))
 
     # Construct the Problem for SALib
     problem = problem_for_salib(names_vars, bounds_vars)
