@@ -324,7 +324,7 @@ Utilities:
     interfaces: [ cli, dashboard ]
     module: cea.utilities.create_polygon
     parameters: [ 'general:scenario', 'shapefile-tools:excel-file', 'shapefile-tools:shapefile',
-                  'shapefile-tools:shapefile-name', 'shapefile-tools:polygon' ]
+                  'shapefile-tools:shapefile-name', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon' ]
 
   - name: sensitivity-analysis-sampler
     label: Generate samples for SA

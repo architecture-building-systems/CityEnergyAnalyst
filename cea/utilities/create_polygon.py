@@ -1,51 +1,82 @@
 """
-Creates a polygon shapefile from a list of comma-separated coordinate tuples and places it in building geometry folder
+Implements the CEA script
+``excel-to-shapefile``
+
+Similar to how ``excel-to-dbf`` takes a dBase database file (example.dbf) and converts that to Excel format,
+this does the same with a Shapefile.
+
+It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile.
+The geometry column is serialized to a nested list of coordinates using the JSON notation.
 """
 
+
 import os
+import shapely
+import json
 import pandas as pd
+import geopandas as gpd
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
-import geopandas as gpd
-from shapely.geometry import Polygon
-
-__author__ = "Reynold Mok"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Reynold Mok"]
+__author__ = "Daren Thomas, Zhongming Shi"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
-__maintainer__ = "Reynold Mok"
+__maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_polygon(hapefile_df, output_path, filename):
+def excel_to_shapefile(excel_file, shapefile, shapefile_name, reference_shapefile, polygon=True):
+    """
+    Expects the Excel file to be in the format created by
+    ``cea shapefile-to-excel``
 
-    # Create polygons based on coordinates and zone information for the attribute table
-    coordinate_tuple_list = hapefile_df['coordinate'].values.tolist()
-    poly = Polygon(coordinate_tuple_list)
-    gdf = gpd.GeoDataFrame(hapefile_df, geometry=poly, crs="EPSG:4326")
+    :param polygon: Set this to ``False`` if the Excel file contains polyline data in the
+        ``geometry`` column instead of the default polygon data. (polylines are used for representing streets etc.)
+
+    :type polygon: bool
+    """
+    crs = gpd.read_file(reference_shapefile).crs
+    # crs = 'PROJCS["unknown",GEOGCS["GCS_unknown",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+
+    df = pd.read_excel(excel_file)
+    if polygon:
+        geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+    else:
+        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
+    df.drop('geometry', axis=1)
+
+    gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     # gdf.crs = get_geographic_coordinate_system()
-
-    # Make sure directory exists
-    os.makedirs(output_path, exist_ok=True)
-    gdf.to_file(os.path.join(output_path, '{filename}.shp'.format(filename=filename)))
-    print('Polygon `{filename}` created in {output_path}'.format(filename=filename, output_path=output_path))
+    gdf.to_file(os.path.join(shapefile, '{filename}.shp'.format(filename=shapefile_name)),
+                driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
 def main(config):
-    excel_path = config.shapefile_tools.excel_file
-    shapefile_df = pd.read_excel(excel_path)
+    """
+    Run :py:func:`excel_to_shapefile` with the values from the configuration file, section ``[shapefile-tools]``.
 
-    filename = config.shapefile_tools.filename
-    output_path = config.shapefile_tools.shapefile
+    :param config: the configuration object to use
+    :type config: cea.config.Configuration
+    :return:
+    """
+    assert os.path.exists(config.shapefile_tools.excel_file), (
+        'Excel file not found: %s' % config.shapefile_tools.shapefile)
 
+    # print out all configuration variables used by this script
+    print("Running excel-to-shapefile with excel-file = %s" % config.shapefile_tools.excel_file)
+    print("Running excel-to-shapefile with polygon = %s" % config.shapefile_tools.polygon)
+    print("Saving the generated shapefile to directory = %s" % config.shapefile_tools.shapefile)
 
-    create_polygon(shapefile_df, output_path, filename)
+    excel_to_shapefile(excel_file=config.shapefile_tools.excel_file, shapefile=config.shapefile_tools.shapefile,
+                       shapefile_name=config.shapefile_tools.shapefile_name,
+                       reference_shapefile=config.shapefile_tools.reference_shapefile,
+                       polygon=config.shapefile_tools.polygon)
 
+    print("ESRI Shapefile has been generated.")
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
