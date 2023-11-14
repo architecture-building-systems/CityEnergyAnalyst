@@ -478,7 +478,7 @@ default:
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow
-    parameters: [workflow]
+    parameters: [workflow, 'general:scenario']
 
 Documentation:
   - name: html
