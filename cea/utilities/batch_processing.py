@@ -8,7 +8,7 @@ import subprocess
 
 __author__ = "Mathias Niffeler, Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Zhongming Shi"]
+__credits__ = ["Mathias Niffeler, Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Zhongming Shi"
