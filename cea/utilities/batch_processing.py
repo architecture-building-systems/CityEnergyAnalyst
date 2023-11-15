@@ -26,7 +26,7 @@ for filename in os.listdir(cea_project)[1:]:
 
     # adding CEA to the environment
     my_env = os.environ.copy()
-    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #replace zshi with your name
+    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path
 
     # executing CEA commands
     subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
