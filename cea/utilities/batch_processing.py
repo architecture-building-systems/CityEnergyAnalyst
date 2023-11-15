@@ -3,10 +3,8 @@ Batch processing CEA commands over all scenarios in a project.
 """
 
 import os
-import pandas as pd
-import cea.config
-import cea.inputlocator
 import subprocess
+import cea
 
 
 __author__ = "Zhongming Shi"
@@ -23,12 +21,7 @@ __status__ = "Production"
 cea_project = r'/Users/zshi/Dropbox/CEA2/batch'
 
 #loop over all scenarios under the project
-for filename in os.listdir(cea_project):
+for filename in os.listdir(cea_project)[1:]:
     cea_scenario = os.path.join(cea_project, '{scenario}'.format(scenario=filename))
     print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
-
-    # subprocess.run(["git", cea_scenario, f":cea/datamanagement/archetypes_mapper.py"])
-    # subprocess.run(['ls','sensitivity_analysis_sampler.py'])
-
-
-     # callthecommandhere(blablahbla, filename, foo)
+    subprocess.run(['python','cea demand --scenario /Users/zshi/Dropbox/CEA2/batch/1'], shell=True, text=True)
