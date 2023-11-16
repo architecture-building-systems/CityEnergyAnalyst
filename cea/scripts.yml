@@ -337,12 +337,12 @@ Utilities:
 
   - name: batch-process-workflow
     label: Batch Process Workflow (beta version)
-    description: "Batch process all scenarios under this project. This beta version is available to the ETH MiBS students taking the IDP 23 course. 
+    description: "Batch process the current scenario or all scenarios under this project. This beta version is available to the ETH MiBS students taking the IDP 23 course. 
     The CEA simulations include archetype mapper, surroundings helper, terrain helper, demand forecasting, solar energy assessment (PV, PVT, SC), 
     and LCA. Reach out to Zhongming for feedback or if assistance is needed."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
-    parameters: [ 'general:scenario' ]
+    parameters: [ 'general:scenario' , 'batch-process-workflow:all-scenarios']
 
   - name: data-migrator
     label: Data migrator

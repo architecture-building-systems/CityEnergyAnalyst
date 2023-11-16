@@ -35,13 +35,20 @@ def main(config):
 
     project_path = config.general.project
     scenario_path = config.general.scenario
+    project_boolean = config.batch_process_workflow.all_scenarios
 
     # adding CEA to the environment
     my_env = os.environ.copy()
     # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
-    #loop over all scenarios under the project
-    for filename in os.listdir(project_path):
+    # deciding to run all scenarios or the current the scenario only
+    if project_boolean:
+        scenarios_list = os.listdir(project_path)
+    else:
+        scenarios_list = [scenario_path]
+
+    #loop over one or all scenarios under the project
+    for filename in scenarios_list:
         cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=filename))
         print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
         # executing CEA commands
