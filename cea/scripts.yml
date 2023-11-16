@@ -313,18 +313,18 @@ Utilities:
 
   - name: dbf-to-excel-to-dbf
     label: DBF to Excel to DBF
-    description: dbf => xls => DBF
+    description: dbf => xlsx => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
-  - name: create-esri-shapefile
-    label: Create Esri Shapefile
-    description: Convert Excel to Esri Shapefile
+  - name: shp-to-excel-to-excel
+    label: SHP to Excel to SHP
+    description: shp => xlsx => shp
     interfaces: [ cli, dashboard ]
-    module: cea.utilities.create_polygon
-    parameters: [ 'general:scenario', 'shapefile-tools:excel-file', 'shapefile-tools:shapefile',
-                  'shapefile-tools:shapefile-name', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon' ]
+    module: cea.utilities.shapefile
+    parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',
+                  'shapefile-tools:output-path', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon' ]
 
   - name: sensitivity-analysis-sampler
     label: Generate samples for SA
