@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import cea.config
 import cea.inputlocator
-from SALib.sample import saltelli
+from SALib.sample import sobol
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
@@ -97,7 +97,7 @@ def main(config):
     problem = problem_for_salib(names_vars, bounds_vars)
 
     # Generate samples
-    param_values = saltelli.sample(problem, sample_n, calc_second_order=False)
+    param_values = sobol.sample(problem, sample_n, calc_second_order=False)
     # The Saltelli sampler generates samples N*(2D+2), where N is the argument we supplied
     # and D is the number of model inputs.
 
