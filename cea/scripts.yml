@@ -336,7 +336,7 @@ Utilities:
                   'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound']
 
   - name: batch-process-workflow
-    label: Batch Process Workflow (beta version)
+    label: Batch process Workflow (beta version)
     description: "Batch process the current scenario or all scenarios under this project. This beta version is available to the ETH MiBS students taking the IDP 23 course. 
     The CEA simulations include archetype mapper, surroundings helper, terrain helper, demand forecasting, solar energy assessment (PV, PVT, SC), 
     and LCA. Reach out to Zhongming for feedback or if assistance is needed."
