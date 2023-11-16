@@ -39,6 +39,7 @@ def problem_for_salib(names_vars, bounds_vars):
     }
     return problem
 
+
 # Write the results to disk
 def write_results(param_values, names_vars, output_path, filename):
 
@@ -47,7 +48,7 @@ def write_results(param_values, names_vars, output_path, filename):
 
     # Convert numpy array to DataFrame and write to disk
     sample = pd.DataFrame(param_values, columns=names_vars)
-    sample.to_excel(os.path.join(output_path, '{filename}.xlsx'.format(filename=filename)))
+    sample.to_csv(os.path.join(output_path, '{filename}.csv'.format(filename=filename)))
 
 
 def main(config):
@@ -80,8 +81,8 @@ def main(config):
                    [var_5_l, var_5_u]
                    ]
 
-    filename = config.sensitivity_analysis_tools.file_name
-    output_path = config.sensitivity_analysis_tools.file_path
+    filename = config.sensitivity_analysis_tools.outout_file_name
+    output_path = config.sensitivity_analysis_tools.output_path
 
     # Clean the lists based on the boolean toggle for each variable
     names_vars = [i for (i, v) in zip(names_vars, var_boolean) if v]

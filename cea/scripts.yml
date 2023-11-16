@@ -311,16 +311,16 @@ Utilities:
     input-files:
       - [get_database_construction_standards]
 
-  - name: dbf-to-excel-to-dbf
-    label: DBF to Excel to DBF
-    description: dbf => xlsx => dbf
+  - name: dbf-to-csv-to-dbf
+    label: DBF to CSV to DBF
+    description: dbf => csv => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
 
-  - name: shp-to-excel-to-excel
-    label: SHP to Excel to SHP
-    description: shp => xlsx => shp
+  - name: shp-to-csv-to-shp
+    label: SHP to CSV to SHP
+    description: shp => csv => shp
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',

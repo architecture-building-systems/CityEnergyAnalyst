@@ -1,8 +1,8 @@
 """
 Implements the CEA script
-``excel-to-shapefile-to-excel``
+``csv-to-shapefile-to-csv``
 
-Similar to how ``excel-to-dbf-to-excel`` takes a dBase database file (example.dbf) and converts that to Excel format,
+Similar to how ``csv-to-dbf-to-csv`` takes a dBase database file (example.dbf) and converts that to csv format,
 this does the same with a Shapefile.
 
 It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile.
@@ -29,20 +29,21 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def excel_to_shapefile(excel_file, shapefile_path, shapefile_name, reference_shapefile, polygon=True):
+def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefile, polygon=True):
     """
-    Expects the Excel file to be in the format created by
-    ``cea shapefile-to-excel``
+    Expects the csv file to be in the format created by
+    ``cea shapefile-to-csv``
 
-    :param polygon: Set this to ``False`` if the Excel file contains polyline data in the
+    :param polygon: Set this to ``False`` if the csv file contains polyline data in the
         ``geometry`` column instead of the default polygon data. (polylines are used for representing streets etc.)
 
     :type polygon: bool
     """
     if not reference_shapefile:
-        raise ValueError("""The reference-shapefile in the Optional Category cannot be blank when converting Excel Files to ESRI Shapefiles. """)
+        raise ValueError("""The reference-shapefile in the Optional Category cannot be blank when converting csv files to ESRI Shapefiles. """)
     crs = gpd.read_file(reference_shapefile).crs
-    df = pd.read_excel(excel_file)
+    df = pd.read_csv(csv_file).dropna().reset_index(drop=True)
+    print("Removing the csv file's row(s) with nan value, if any.")
     if polygon:
         geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     else:
@@ -54,18 +55,19 @@ def excel_to_shapefile(excel_file, shapefile_path, shapefile_name, reference_sha
                 driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def shapefile_to_excel(shapefile, excel_file_path, excel_file_name):
+def shapefile_to_csv(shapefile, csv_file_path, csv_file_name):
     """
     Expects shapefile to be the path to an ESRI Shapefile with the geometry column called
     ``geometry``
     """
-    index=None
+    index = None
     gdf = gpd.GeoDataFrame.from_file(shapefile)
     if index:
         gdf = gdf.set_index(index)
     df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
     df['geometry'] = gdf.geometry.apply(serialize_geometry)
-    df.to_excel(os.path.join(excel_file_path, '{filename}.xlsx'.format(filename=excel_file_name)))
+    df.to_csv(os.path.join(csv_file_path, '{filename}.csv'.format(filename=csv_file_name)))
+
 
 def serialize_geometry(geometry):
     """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
@@ -84,7 +86,7 @@ def serialize_geometry(geometry):
 
 def main(config):
     """
-    Run :py:func:`excel_to_shapefile` with the values from the configuration file, section ``[shapefile-tools]``.
+    Run :py:func:`shp-to-csv-to-shp` with the values from the configuration file, section ``[shapefile-tools]``.
 
     :param config: the configuration object to use
     :type config: cea.config.Configuration
@@ -99,13 +101,13 @@ def main(config):
     polygon = config.shapefile_tools.polygon
     reference_shapefile = config.shapefile_tools.reference_shapefile
 
-    if input_file.endswith('.xls') or input_file.endswith('.xlsx'):
+    if input_file.endswith('.csv'):
             # print out all configuration variables used by this script
-        print("Running excel-to-shapefile with excel-file = %s" % input_file)
-        print("Running excel-to-shapefile with polygon = %s" % polygon)
+        print("Running csv-to-shapefile with csv-file = %s" % input_file)
+        print("Running csv-to-shapefile with polygon = %s" % polygon)
         print("Saving the generated shapefile to directory = %s" % output_path)
 
-        excel_to_shapefile(excel_file=input_file, shapefile_path=output_path,
+        csv_to_shapefile(csv_file=input_file, shapefile_path=output_path,
                            shapefile_name=output_file_name,
                            reference_shapefile=reference_shapefile,
                            polygon=polygon)
@@ -114,15 +116,15 @@ def main(config):
 
     elif input_file.endswith('.shp'):
             # print out all configuration variables used by this script
-        print("Running shapefile-to-excel with shapefile = %s" % config.shapefile_tools.input_file)
-        print("Running shapefile-to-excel with excel-file = %s" % config.shapefile_tools.output_path)
+        print("Running shapefile-to-csv with shapefile = %s" % config.shapefile_tools.input_file)
+        print("Running shapefile-to-csv with csv-file = %s" % config.shapefile_tools.output_path)
 
-        shapefile_to_excel(shapefile=input_file, excel_file_path=output_path, excel_file_name=output_file_name)
+        shapefile_to_csv(shapefile=input_file, csv_file_path=output_path, csv_file_name=output_file_name)
 
-        print("Excel File has been generated.")
+        print("csv file has been generated.")
 
     else:
-        raise ValueError("""Input file type is not supported. Only .shp, .xls, and .xlsx file types are supported.""")
+        raise ValueError("""Input file type is not supported. Only .shp and .csv file types are supported.""")
 
 
 if __name__ == '__main__':
