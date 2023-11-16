@@ -300,16 +300,6 @@ Optimization:
       - [get_total_demand]
 
 Utilities:
-  - name: data-migrator
-    label: Data migrator
-    description: "Migrate older scenario inputs to the latest version.
-                  Please consider running this for scenario created before v3.22.
-                  NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.data_migrator
-    parameters: ['general:scenario']
-    input-files:
-      - [get_database_construction_standards]
 
   - name: dbf-to-csv-to-dbf
     label: DBF to CSV to DBF
@@ -342,8 +332,27 @@ Utilities:
                   'sensitivity-analysis-tools:having-variable-4',
                   'sensitivity-analysis-tools:variable-4-lower-bound', 'sensitivity-analysis-tools:variable-4-upper-bound',
                   'sensitivity-analysis-tools:having-variable-5',
-                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound'
-    ]
+                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound']
+
+  - name: batch-process-workflow
+    label: Batch Process Workflow (beta version)
+    description: "Batch process all scenarios under this project. This beta version is available to the ETH MiBS students taking the IDP 23 course. 
+    The CEA simulations include archetype mapper, surroundings helper, terrain helper, demand forecasting, solar energy assessment (PV, PVT, SC), 
+    and LCA. Reach out to Zhongming for feedback or if assistance is needed."
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.batch_process_workflow
+    parameters: [ 'general:scenario' ]
+
+  - name: data-migrator
+    label: Data migrator
+    description: "Migrate older scenario inputs to the latest version.
+                  Please consider running this for scenario created before v3.22.
+                  NOTE: This cannot be undone - save a copy of the scenario first."
+    interfaces: [ cli, dashboard ]
+    module: cea.datamanagement.data_migrator
+    parameters: [ 'general:scenario' ]
+    input-files:
+      - [ get_database_construction_standards ]
 
   - name: data-initializer
     label: Database Initializer

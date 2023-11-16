@@ -1,0 +1,25 @@
+# this workflow is designed just for ETH MiBS IDP 23 MD students only. To be removed when the class is over, or after the workflow designer is available.
+
+- script: archetypes-mapper
+- script: surroundings-helper
+  parameters:
+    buffer: 100
+- script: terrain-helper
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: emissions
+- script: system-costs
