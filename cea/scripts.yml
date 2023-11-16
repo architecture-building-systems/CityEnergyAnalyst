@@ -321,7 +321,8 @@ Utilities:
     description: Generate samples for sensitivity analysis using Sobol Method
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
-    parameters: [ 'general:scenario', 'sensitivity-analysis-tools:output-file-name', 'sensitivity-analysis-tools:output-path',
+    parameters: [ 'general:scenario',  'sensitivity-analysis-tools:output-path',
+                  'sensitivity-analysis-tools:output-file-name',
                   'sensitivity-analysis-tools:sample-n',
                   'sensitivity-analysis-tools:having-variable-1',
                   'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',

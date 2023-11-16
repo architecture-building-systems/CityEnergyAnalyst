@@ -81,7 +81,7 @@ def main(config):
                    [var_5_l, var_5_u]
                    ]
 
-    filename = config.sensitivity_analysis_tools.outout_file_name
+    filename = config.sensitivity_analysis_tools.output_file_name
     output_path = config.sensitivity_analysis_tools.output_path
 
     # Clean the lists based on the boolean toggle for each variable
