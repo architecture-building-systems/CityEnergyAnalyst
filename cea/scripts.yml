@@ -336,7 +336,7 @@ Utilities:
                   'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound']
 
   - name: batch-process-workflow
-    label: Batch process Workflow (beta version)
+    label: Batch process Workflow
     description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and save to config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
