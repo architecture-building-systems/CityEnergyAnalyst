@@ -140,9 +140,6 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'decentralized', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
         subprocess.run(['cea', 'optimization-new', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
 
-    # subprocess.run(['cea', 'workflow', '--workflow', 'idp-23-md', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
-
-
 def main(config):
     """
     Batch processing all scenarios under a project.
