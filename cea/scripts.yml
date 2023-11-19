@@ -350,7 +350,7 @@ Utilities:
     ]
 
   - name: data-migrator
-    label: Data migrator
+    label: Data Migrator
     description: "Migrate older scenario inputs to the latest version.
                   Please consider running this for scenario created before v3.22.
                   NOTE: This cannot be undone - save a copy of the scenario first."
