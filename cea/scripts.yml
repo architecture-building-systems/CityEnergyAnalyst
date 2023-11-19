@@ -306,7 +306,7 @@ Utilities:
     description: dbf => csv => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
-    parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
+    parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name']
 
   - name: shp-to-csv-to-shp
     label: SHP to CSV to SHP
@@ -314,7 +314,7 @@ Utilities:
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',
-                  'shapefile-tools:output-path', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon' ]
+                  'shapefile-tools:output-path', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon']
 
   - name: sensitivity-analysis-sampler
     label: Generate samples for SA
@@ -340,9 +340,9 @@ Utilities:
     description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and save to config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
-    parameters: [ 'general:scenario' , 'batch-process-workflow:all-scenarios',
+    parameters: [ 'general:scenario' , 'batch-process-workflow:all-scenarios', 'batch-process-workflow:zone-csv-to-shp', 'batch-process-workflow:typology-csv-to-dbf',
                   'batch-process-workflow:archetypes-mapper', 'batch-process-workflow:weather-helper', 'batch-process-workflow:surroundings-helper',
-                  'batch-process-workflow:terrain-helper', 'batch-process-workflow:streets-helper', 'batch-process-workflow:demand-forecasting',
+                  'batch-process-workflow:terrain-helper', 'batch-process-workflow:streets-helper', 'batch-process-workflow:streets-csv-to-shp', 'batch-process-workflow:demand-forecasting',
                   'batch-process-workflow:radiation-simplified', 'batch-process-workflow:emissions', 'batch-process-workflow:system-costs',
                   'batch-process-workflow:solar-potential-pv', 'batch-process-workflow:solar-potential-other', 'batch-process-workflow:shallow-geothermal-potential',
                   'batch-process-workflow:water-body-potential', 'batch-process-workflow:sewage-heat-potential', 'batch-process-workflow:thermal-network-layout',

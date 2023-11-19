@@ -28,6 +28,10 @@ def exec_cea_commands(config, cea_scenario):
     :return:
     """
     # acquire the user-defined CEA commands
+    zone_csv_to_shp = config.batch_process_workflow.zone_csv_to_shp
+    typology_csv_to_dbf = config.batch_process_workflow.zone_csv_to_shp
+    streets_csv_to_shp = config.batch_process_workflow.streets_csv_to_shp
+
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
     weather_helper = config.batch_process_workflow.weather_helper
     surroundings_helper = config.batch_process_workflow.surroundings_helper
@@ -53,9 +57,30 @@ def exec_cea_commands(config, cea_scenario):
 
     # adding CEA to the environment
     my_env = os.environ.copy()
-    # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
+    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
     # execute selected CEA commands
+    if zone_csv_to_shp:
+        zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.csv')
+        zone_out_path = os.path.join(cea_scenario, 'inputs/building-geometry')
+        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/reference.shp')
+        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
+                        '--input-file', '{zone_csv_path}'.format(zone_csv_path=zone_csv_path),
+                        '--output-file-name', 'zone',
+                        '--output-path', '{zone_out_path}'.format(zone_out_path=zone_out_path),
+                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
+                        '--polygon', 'true',
+                        ], env=my_env)
+
+    if typology_csv_to_dbf:
+        typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.csv')
+        typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
+        subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
+                        '--input-file', '{typology_csv_path}'.format(typology_csv_path=typology_csv_path),
+                        '--output-file-name', 'typology',
+                        '--output-path', '{typology_out_path}'.format(typology_out_path=typology_out_path),
+                        ], env=my_env)
+
     if archetypes_mapper:
         subprocess.run(['cea', 'archetypes-mapper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
     if weather_helper:
@@ -66,6 +91,17 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'terrain-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
     if streets_helper:
         subprocess.run(['cea', 'streets-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if streets_csv_to_shp:
+        streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.csv')
+        streets_out_path = os.path.join(cea_scenario, 'inputs/networks')
+        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/reference.shp')
+        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
+                        '--input-file', '{streets_csv_path}'.format(streets_csv_path=streets_csv_path),
+                        '--output-file-name', 'streets',
+                        '--output-path', '{streets_out_path}'.format(streets_out_path=streets_out_path),
+                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
+                        '--polygon', 'false',
+                        ], env=my_env)
 
     if demand_forecasting and not radiation_simplified:
         subprocess.run(['cea', 'radiation', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
