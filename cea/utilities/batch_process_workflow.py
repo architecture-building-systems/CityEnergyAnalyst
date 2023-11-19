@@ -17,6 +17,95 @@ __maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def exec_cea_commands(config, cea_scenario):
+    """
+    Automate user-defined CEA commands one after another.
+
+    :param config: the configuration object to use
+    :type config: cea.config.Configuration
+    :param cea_scenario: path to the CEA scenario to be assessed using CEA
+    :type cea_scenario: file path
+    :return:
+    """
+    # acquire the user-defined CEA commands
+    archetypes_mapper = config.batch_process_workflow.archetypes_mapper
+    weather_helper = config.batch_process_workflow.weather_helper
+    surroundings_helper = config.batch_process_workflow.surroundings_helper
+    terrain_helper = config.batch_process_workflow.terrain_helper
+    streets_helper = config.batch_process_workflow.streets_helper
+
+    demand_forecasting = config.batch_process_workflow.demand_forecasting
+    radiation_simplified = config.batch_process_workflow.radiation_simplified
+
+    emissions = config.batch_process_workflow.emissions
+    system_costs = config.batch_process_workflow.system_costs
+
+    solar_pv = config.batch_process_workflow.solar_potential_pv
+    solar_other = config.batch_process_workflow.solar_potential_other
+    shallow_geothermal = config.batch_process_workflow.shallow_geothermal_potential
+    water_body = config.batch_process_workflow.water_body_potential
+    sewage_heat = config.batch_process_workflow.sewage_heat_potential
+
+    thermal_network_layout = config.batch_process_workflow.thermal_network_layout
+    thermal_network_operation = config.batch_process_workflow.thermal_network_operation
+
+    optimization = config.batch_process_workflow.optimization
+
+    # adding CEA to the environment
+    my_env = os.environ.copy()
+    # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
+
+    # execute selected CEA commands
+    if archetypes_mapper:
+        subprocess.run(['cea', 'archetypes-mapper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if weather_helper:
+        subprocess.run(['cea', 'weather-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if surroundings_helper:
+        subprocess.run(['cea', 'surroundings-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if terrain_helper:
+        subprocess.run(['cea', 'terrain-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if streets_helper:
+        subprocess.run(['cea', 'streets-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    if demand_forecasting and not radiation_simplified:
+        subprocess.run(['cea', 'radiation', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'schedule-maker', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if demand_forecasting and radiation_simplified:
+        subprocess.run(['cea', 'radiation-simplified', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'schedule-maker', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    if emissions:
+        subprocess.run(['cea', 'emissions', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if system_costs:
+        subprocess.run(['cea', 'system-costs', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    if solar_pv:
+        subprocess.run(['cea', 'photovoltaic', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if solar_other:
+        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'FP', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'ET', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'FP', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'ET', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if shallow_geothermal:
+        subprocess.run(['cea', 'shallow-geothermal-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if water_body:
+        subprocess.run(['cea', 'water-body-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if sewage_heat:
+        subprocess.run(['cea', 'sewage-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    if thermal_network_layout:
+        subprocess.run(['cea', 'network-layout', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if thermal_network_operation:
+        subprocess.run(['cea', 'thermal-network', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    if optimization:
+        subprocess.run(['cea', 'decentralized', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        subprocess.run(['cea', 'optimization-new', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
+    # subprocess.run(['cea', 'workflow', '--workflow', 'idp-23-md', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+
 
 def main(config):
     """
@@ -27,7 +116,6 @@ def main(config):
     :return:
     """
 
-
     # Start the timer
     t0 = time.perf_counter()
 
@@ -37,10 +125,6 @@ def main(config):
     scenario_path = config.general.scenario
     project_boolean = config.batch_process_workflow.all_scenarios
 
-    # adding CEA to the environment
-    my_env = os.environ.copy()
-    # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
-
     # deciding to run all scenarios or the current the scenario only
     if project_boolean:
         scenarios_list = os.listdir(project_path)
@@ -48,11 +132,11 @@ def main(config):
         scenarios_list = [scenario_path]
 
     #loop over one or all scenarios under the project
-    for filename in scenarios_list:
-        cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=filename))
+    for scenario in scenarios_list:
+        cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
         print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
         # executing CEA commands
-        subprocess.run(['cea', 'workflow', '--workflow', 'idp-23-md', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+        exec_cea_commands(config, cea_scenario)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
