@@ -57,7 +57,7 @@ def exec_cea_commands(config, cea_scenario):
 
     # adding CEA to the environment
     my_env = os.environ.copy()
-    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
+    # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
     # execute selected CEA commands
     if zone_csv_to_shp:
@@ -94,7 +94,7 @@ def exec_cea_commands(config, cea_scenario):
     if streets_csv_to_shp:
         streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.csv')
         streets_out_path = os.path.join(cea_scenario, 'inputs/networks')
-        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/reference.shp')
+        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.shp')
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{streets_csv_path}'.format(streets_csv_path=streets_csv_path),
                         '--output-file-name', 'streets',
