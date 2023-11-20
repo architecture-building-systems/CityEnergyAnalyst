@@ -32,6 +32,7 @@ def exec_cea_commands(config, cea_scenario):
     typology_csv_to_dbf = config.batch_process_workflow.typology_csv_to_dbf
     streets_csv_to_shp = config.batch_process_workflow.streets_csv_to_shp
 
+    data_initializer = config.batch_process_workflow.data_initializer
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
     weather_helper = config.batch_process_workflow.weather_helper
     surroundings_helper = config.batch_process_workflow.surroundings_helper
@@ -81,6 +82,8 @@ def exec_cea_commands(config, cea_scenario):
                         '--output-path', '{typology_out_path}'.format(typology_out_path=typology_out_path),
                         ], env=my_env)
 
+    if data_initializer:
+        subprocess.run(['cea', 'data-initializer', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
     if archetypes_mapper:
         subprocess.run(['cea', 'archetypes-mapper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
     if weather_helper:
