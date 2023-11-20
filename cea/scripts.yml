@@ -1,7 +1,7 @@
-Data Management:
+Data management:
 
   - name: archetypes-mapper
-    label: Archetypes Mapper
+    label: Archetypes mapper
     description: Assign building properties and systems types from the Archetypes DataBase
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
@@ -48,7 +48,7 @@ Data Management:
 
 Demand forecasting:
   - name: radiation
-    label: Building Solar radiation
+    label: Building solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
@@ -63,7 +63,7 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: radiation-simplified
-    label: Building Solar radiation (simplified, beta version)
+    label: Building solar radiation (simplified, beta version)
     description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
     interfaces: [ cli, dashboard ]
     module: cea.resources.radiation.simplified.main
@@ -78,7 +78,7 @@ Demand forecasting:
       - [ get_weather_file ]
 
   - name: schedule-maker
-    label: Building Schedules
+    label: Building schedules
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
     interfaces: [dashboard, cli]
     module: cea.demand.schedule_maker.schedule_maker
@@ -95,7 +95,7 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: Building Energy demand
+    label: Building energy demand
     description: Calculate the Demand
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -120,7 +120,7 @@ Demand forecasting:
       - [get_radiation_building, building_name]
       - [get_schedule_model_file, building_name]
 
-Life Cycle Analysis:
+Life cycle analysis:
 
   - name: emissions
     label: Emissions
@@ -136,7 +136,7 @@ Life Cycle Analysis:
       - [get_building_supply]
 
   - name: system-costs
-    label: System Costs
+    label: System costs
     description: Calculate costs due to supply systems
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
@@ -233,7 +233,7 @@ Energy potentials:
 Networks:
 
   - name: network-layout
-    label: Thermal Network Part I (Layout)
+    label: Thermal network Part I (Layout)
     description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
@@ -244,7 +244,7 @@ Networks:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal Network Part II (simulation)
+    label: Thermal network Part II (simulation)
     description: Solve the thermal hydraulic network
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -268,14 +268,14 @@ Optimization:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply System Part I (decentralized)
+    label: Supply system Part I (decentralized)
     description: Run optimization for decentralized operation
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
-    label: Supply System Part II (centralized)
+    label: Supply system Part II (centralized)
     description: Run optimization for centralized operation
     interfaces: [cli, dashboard]
     module: cea.optimization.optimization_main
@@ -289,7 +289,7 @@ Optimization:
       - [PV_totals]
 
   - name: optimization-new
-    label: Supply System Part II (centralized- new script, beta version)
+    label: Supply system part II (centralized- new script, beta version)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -350,7 +350,7 @@ Utilities:
     ]
 
   - name: data-migrator
-    label: Data Migrator
+    label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
                   Please consider running this for scenario created before v3.22.
                   NOTE: This cannot be undone - save a copy of the scenario first."
@@ -361,7 +361,7 @@ Utilities:
       - [ get_database_construction_standards ]
 
   - name: data-initializer
-    label: Database Initializer
+    label: Database initializer
     description: Initialize databases for CEA
     interfaces: [cli, dashboard]
     module: cea.datamanagement.data_initializer
@@ -384,7 +384,7 @@ Utilities:
       - [get_zone_geometry]
 
   - name: create-mixed-use-type
-    label: Create mixed use-type
+    label: Create mixed-use type
     description: Creates a new use-type by aggregating values from a list of different use-types
     interfaces: [cli, dashboard]
     module: cea.utilities.create_mixed_use_type
@@ -400,7 +400,7 @@ Utilities:
     parameters: [test]
 
   - name: run-unit-tests
-    label: Unit Tests
+    label: Unit tests
     description: Run all the unit tests in the cea/tests folder
     interfaces: [test, cli, dashboard]
     module: cea.tests.run_unit_tests
