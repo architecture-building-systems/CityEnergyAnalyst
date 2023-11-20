@@ -42,8 +42,8 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
     if not reference_shapefile:
         raise ValueError("""The reference-shapefile in the Optional Category cannot be blank when converting csv files to ESRI Shapefiles. """)
     crs = gpd.read_file(reference_shapefile).crs
-    df = pd.read_csv(csv_file).dropna().reset_index(drop=True)
-    print("Removing the csv file's row(s) with nan value, if any.")
+    df = pd.read_csv(csv_file)
+    
     if polygon:
         geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     else:

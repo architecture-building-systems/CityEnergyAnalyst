@@ -29,7 +29,7 @@ def exec_cea_commands(config, cea_scenario):
     """
     # acquire the user-defined CEA commands
     zone_csv_to_shp = config.batch_process_workflow.zone_csv_to_shp
-    typology_csv_to_dbf = config.batch_process_workflow.zone_csv_to_shp
+    typology_csv_to_dbf = config.batch_process_workflow.typology_csv_to_dbf
     streets_csv_to_shp = config.batch_process_workflow.streets_csv_to_shp
 
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
