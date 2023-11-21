@@ -16,14 +16,14 @@ import json
 import pandas as pd
 import geopandas as gpd
 import ast
-from pyproj import Transformer
 
 import cea.config
 import cea.inputlocator
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Daren Thomas, Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas, Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Zhongming Shi"
@@ -31,43 +31,55 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefile, polygon=True):
+def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefile, polygon):
     """
-    Expects the csv file to be in the format created by
-    ``cea shapefile-to-csv``
+    This function converts .csv file to ESRI shapefile using the crs of a reference ESRI shapefile.
 
+    :param csv_file: path to the input .csv file
+    :type csv_file: string
+    :param shapefile_path: directory to story the output shapefile
+    :type shapefile_path: string
+    :param shapefile_name: name of the output shapefile
+    :type shapefile_name: string
+    :param reference_shapefile: path to the reference shapefile
+    :type reference_shapefile: string
     :param polygon: Set this to ``False`` if the csv file contains polyline data in the
         ``geometry`` column instead of the default polygon data. (polylines are used for representing streets etc.)
-
     :type polygon: bool
     """
 
     if not reference_shapefile:
-        raise ValueError("""The reference-shapefile in the Optional Category cannot be blank when converting csv files to ESRI Shapefiles. """)
-    crs = gpd.read_file(reference_shapefile).crs
-    df = pd.read_csv(csv_file)
-    geometry = df['geometry'].values.tolist()
+        raise ValueError("""The reference-shapefile cannot be blank when converting csv files to ESRI Shapefiles. """)
 
-    # True if the unit of the geometry's coordinates is in metres
+    # generate crs and DataFrame from files
+    # crs = gpd.read_file(reference_shapefile).crs
+    df = pd.read_csv(csv_file)
+
+    # generate GeoDataFrames from files and get its crs
+    gdf = gpd.GeoDataFrame.from_file(reference_shapefile)
+    crs = gdf.crs
+
+    # Check if the unit of the geometry's coordinates is in metres
+    geometry = df['geometry'].values.tolist()
     x0 = ast.literal_eval(geometry[0])[0][0]
     y0 = ast.literal_eval(geometry[0])[0][1]
-    geometry_in_metres = abs(x0) > 180 and abs(y0) > 90 #todo: this method is not 100% accurate but at least for now works for most of the cases.
+    geometry_in_metres = abs(x0) > 180 and abs(y0) > 90     # True if coordinates in metres
+    #todo: this method is not 100% accurate but at least for now works for most of the cases.
 
     # if the coordinates are in metres and the crs of the reference shapefile is not projected in metres,
     # convert the coordinates to degrees
     if 'epsg:4326' in str(crs) and geometry_in_metres:
-        print("The coordinates in this reference shapefile seems to be in decimal degrees. CEA is converting the unit of coordinates in the .csv file from metres to decimal degrees using EPSG:4326.")
-        geometry_m = []
-        transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326")
-        for building in geometry:
-            building_m = []
-            for coord in ast.literal_eval(building):
-                coord_m = transformer.transform(coord[0], coord[1])
-                coord_m = list(coord_m)
-                building_m.append(coord_m)
-            geometry_m.append(str(building_m))
-        df = df.drop('geometry', axis=1)
-        df['geometry'] = geometry_m
+        print("The coordinates in this reference shapefile seems to be in decimal degrees while the unit of coordinates "
+              "in the .csv file is in metres. CEA is projecting the reference shapefile first in metres and then convert "
+              "the .csv file to ESRI Shapefile based on the reference shapefile.")
+
+        # get longitude and latitude of reference shapefile's centroid
+        gdf_in_geographic_crs = gdf.to_crs(get_geographic_coordinate_system())
+        lon = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
+        lat = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+
+        # project the reference geometry to the global crs and get the crs
+        gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
 
     if polygon:
         geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
@@ -75,40 +87,43 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
         geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
-    gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
+    gdf = gpd.GeoDataFrame(df, crs=gdf.crs, geometry=geometry)
     gdf.to_file(os.path.join(shapefile_path, '{filename}.shp'.format(filename=shapefile_name)),
                 driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
 def shapefile_to_csv(shapefile, csv_file_path, csv_file_name):
     """
-    Expects shapefile to be the path to an ESRI Shapefile with the geometry column called
-    ``geometry``
-    """
-    index = None
-    gdf = gpd.GeoDataFrame.from_file(shapefile)
-    crs = gpd.read_file(shapefile).crs
+    This function converts ESRI shapefile to .csv file with a column ['geometry'] storing the coordinates of the
+    building footprints in metres.
 
+    :param shapefile: path to the input shapefile
+    :type shapefile: string
+    :param csv_file_path: directory to story the output .csv file
+    :type csv_file_path: string
+    :param csv_file_name: name of the output .csv file
+    :type csv_file_name: string
+
+    """
+    # generate GeoDataFrames from files
+    gdf = gpd.GeoDataFrame.from_file(shapefile)
+
+    # get longitude and latitude of reference shapefile's centroid
+    gdf_in_geographic_crs = gdf.to_crs(get_geographic_coordinate_system())
+    lon = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
+    lat = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+
+    # project the geometry to the global crs
+    gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
+
+    index = None
     if index:
         gdf = gdf.set_index(index)
+
     df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
     df['geometry'] = gdf.geometry.apply(serialize_geometry)
 
-    # if the coordinates are in decimal degrees, convert to metres
-    if 'epsg:4326' in str(crs):
-        print("The coordinates in this shapefile seems to be in decimal degrees. CEA is converting the unit into metres for editing in such platforms as Rhino/Grasshopper using EPSG:3857.")
-        geometry_m = []
-        for building in df['geometry'].values.tolist():
-            building_m = []
-            transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857")
-            for coord in ast.literal_eval(building):
-                coord_m = transformer.transform(coord[0], coord[1])
-                coord_m = list(coord_m)
-                building_m.append(coord_m)
-            geometry_m.append(str(building_m))
-        df = df.drop('geometry', axis=1)
-        df['geometry'] = geometry_m
-
+    # write to disk
     df.to_csv(os.path.join(csv_file_path, '{filename}.csv'.format(filename=csv_file_name)))
 
 
