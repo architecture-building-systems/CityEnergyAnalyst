@@ -15,6 +15,8 @@ import shapely
 import json
 import pandas as pd
 import geopandas as gpd
+import ast
+from pyproj import Transformer
 
 import cea.config
 import cea.inputlocator
@@ -39,10 +41,33 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
 
     :type polygon: bool
     """
+
     if not reference_shapefile:
         raise ValueError("""The reference-shapefile in the Optional Category cannot be blank when converting csv files to ESRI Shapefiles. """)
     crs = gpd.read_file(reference_shapefile).crs
     df = pd.read_csv(csv_file)
+    geometry = df['geometry'].values.tolist()
+
+    # True if the unit of the geometry's coordinates is in metres
+    x0 = ast.literal_eval(geometry[0])[0][0]
+    y0 = ast.literal_eval(geometry[0])[0][1]
+    geometry_in_metres = abs(x0) > 180 and abs(y0) > 90 #todo: this method is not 100% accurate but at least for now works for most of the cases.
+
+    # if the coordinates are in metres and the crs of the reference shapefile is not projected in metres,
+    # convert the coordinates to degrees
+    if 'epsg:4326' in str(crs) and geometry_in_metres:
+        print("The coordinates in this reference shapefile seems to be in decimal degrees. CEA is converting the unit of coordinates in the .csv file from metres to decimal degrees using EPSG:4326.")
+        geometry_m = []
+        transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326")
+        for building in geometry:
+            building_m = []
+            for coord in ast.literal_eval(building):
+                coord_m = transformer.transform(coord[0], coord[1])
+                coord_m = list(coord_m)
+                building_m.append(coord_m)
+            geometry_m.append(str(building_m))
+        df = df.drop('geometry', axis=1)
+        df['geometry'] = geometry_m
 
     if polygon:
         geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
@@ -62,10 +87,28 @@ def shapefile_to_csv(shapefile, csv_file_path, csv_file_name):
     """
     index = None
     gdf = gpd.GeoDataFrame.from_file(shapefile)
+    crs = gpd.read_file(shapefile).crs
+
     if index:
         gdf = gdf.set_index(index)
     df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
     df['geometry'] = gdf.geometry.apply(serialize_geometry)
+
+    # if the coordinates are in decimal degrees, convert to metres
+    if 'epsg:4326' in str(crs):
+        print("The coordinates in this shapefile seems to be in decimal degrees. CEA is converting the unit into metres for editing in such platforms as Rhino/Grasshopper using EPSG:3857.")
+        geometry_m = []
+        for building in df['geometry'].values.tolist():
+            building_m = []
+            transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857")
+            for coord in ast.literal_eval(building):
+                coord_m = transformer.transform(coord[0], coord[1])
+                coord_m = list(coord_m)
+                building_m.append(coord_m)
+            geometry_m.append(str(building_m))
+        df = df.drop('geometry', axis=1)
+        df['geometry'] = geometry_m
+
     df.to_csv(os.path.join(csv_file_path, '{filename}.csv'.format(filename=csv_file_name)))
 
 
