@@ -41,17 +41,30 @@ def problem_for_salib(names_vars, bounds_vars):
 
 
 # Write the results to disk
-def write_results(param_values, names_vars, output_path, filename):
-
-    # Make sure directory exists
-    os.makedirs(output_path, exist_ok=True)
-
+def write_results(param_values, names_vars, output_path):
     # Convert numpy array to DataFrame and write to disk
     sample = pd.DataFrame(param_values, columns=names_vars)
-    sample.to_csv(os.path.join(output_path, '{filename}.csv'.format(filename=filename)))
+    sample.to_csv(output_path)
 
+def create_inputs_directory(config, sample_n, n_variable):
+
+    # total number of scenarios
+    n_scenario = sample_n * (2 * n_variable + 2)
+    project_path = config.general.project
+
+    # create directory for the minimum CEA inputs
+    for n in range(1, n_scenario+1):
+        scenario = 'SA_{n}'.format(n=n)     # scenario_name = SA_1, 2, 3,...
+        inputs_path = os.path.join(project_path, '{scenario}/inputs'.format(scenario=scenario))
+        os.makedirs(inputs_path, exist_ok=True)
+        os.makedirs(os.path.join(inputs_path, 'building-geometry'), exist_ok=True)
+        os.makedirs(os.path.join(inputs_path, 'building-properties'), exist_ok=True)
 
 def main(config):
+
+    filename = config.sensitivity_analysis_tools.output_file_name
+    project_path = config.general.project
+
     names_vars = ['var_1', 'var_2', 'var_3', 'var_4', 'var_5']
 
     var_1_l = config.sensitivity_analysis_tools.variable_1_lower_bound
@@ -72,7 +85,9 @@ def main(config):
     has_var_5 = config.sensitivity_analysis_tools.having_variable_5
     var_boolean = [has_var_1, has_var_2, has_var_3, has_var_4, has_var_5]
 
-    sample_n = config.sensitivity_analysis_tools.sample_n
+    sample_n = config.sensitivity_analysis_tools.n
+
+    create_directory = config.sensitivity_analysis_tools.create_scenario_directory
 
     bounds_vars = [[var_1_l, var_1_u],
                    [var_2_l, var_2_u],
@@ -81,12 +96,11 @@ def main(config):
                    [var_5_l, var_5_u]
                    ]
 
-    filename = config.sensitivity_analysis_tools.output_file_name
-    output_path = config.sensitivity_analysis_tools.output_path
-
     # Clean the lists based on the boolean toggle for each variable
     names_vars = [i for (i, v) in zip(names_vars, var_boolean) if v]
     bounds_vars = [i for (i, v) in zip(bounds_vars, var_boolean) if v]
+
+    n_variable = len(names_vars)
 
     # Check if any of the bounds is missing
     nan_idx = next((i for i, v in enumerate(bounds_vars) if sum(v) != sum(v)), -1)
@@ -97,13 +111,20 @@ def main(config):
     problem = problem_for_salib(names_vars, bounds_vars)
 
     # Generate samples
+    print("sampling {n} variables for sobol' method SA".format(n=n_variable))
     param_values = sobol.sample(problem, sample_n, calc_second_order=False)
-    # The Saltelli sampler generates samples N*(2D+2), where N is the argument we supplied
+    # The Saltelli sampler generates samples n*(2D+2), where N is the argument we supplied
     # and D is the number of model inputs.
 
     # Write the results to disk
-    write_results(param_values, names_vars, output_path, filename)
+    output_path = os.path.join(project_path, '{filename}.csv'.format(filename=filename))
+    print("writing sampled variables to {output_path}".format(output_path=output_path))
+    write_results(param_values, names_vars, output_path)
 
+    # Create parallel CEA scenario inputs directories under current project
+    if create_directory:
+        print("creating parallel CEA scenario inputs directories under current project.")
+        create_inputs_directory(config, sample_n, n_variable)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
