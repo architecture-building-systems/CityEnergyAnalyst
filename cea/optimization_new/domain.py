@@ -84,6 +84,7 @@ class Domain(object):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
+                if not max(building.demand_flow.profile) > 0: continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
                 self.buildings.append(building)
