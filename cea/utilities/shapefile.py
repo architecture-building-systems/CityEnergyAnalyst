@@ -63,7 +63,7 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
     geometry = df['geometry'].values.tolist()
     x0 = ast.literal_eval(geometry[0])[0][0]
     y0 = ast.literal_eval(geometry[0])[0][1]
-    geometry_in_metres = abs(x0) > 180 and abs(y0) > 90     # True if coordinates in metres
+    geometry_in_metres = abs(x0) > 180 or abs(y0) > 90     # True if coordinates in metres
     #todo: this method is not 100% accurate but at least for now works for most of the cases.
 
     # if the coordinates are in metres and the crs of the reference shapefile is not projected in metres,
