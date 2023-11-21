@@ -872,19 +872,19 @@ class SupplySystemStructure(object):
                                     {'ActiveComponent_1.code': [<PassiveComponent_1>, <PassiveComponent_2>]})
             ...}
         """
-        for ec_code, ter_and_psv_cmpts in viable_active_and_passive_components_dict.items():
+        for ec_code, act_and_psv_cmpts in viable_active_and_passive_components_dict.items():
             self._component_selection_by_ec[component_category][ec_code] = [component.code for component in
-                                                                            ter_and_psv_cmpts['active']]
+                                                                            act_and_psv_cmpts['active']]
             self._max_cap_active_components[component_category].update({active_component.code: active_component
                                                                         for active_component
-                                                                        in ter_and_psv_cmpts['active']})
-            self._passive_component_selection.update(ter_and_psv_cmpts['passive'])
+                                                                        in act_and_psv_cmpts['active']})
+            self._passive_component_selection.update(act_and_psv_cmpts['passive'])
             self._max_cap_passive_components[component_category].update({active_component:
                                                                              {passive_component.code: passive_component
                                                                               for passive_component
                                                                               in passive_components}
                                                                          for active_component, passive_components
-                                                                         in ter_and_psv_cmpts['passive'].items()})
+                                                                         in act_and_psv_cmpts['passive'].items()})
         self._activation_order[component_category] = [code
                                                       for component_type in
                                                       SupplySystemStructure._full_component_activation_order
