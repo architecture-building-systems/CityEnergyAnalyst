@@ -191,7 +191,7 @@ def main(config):
         print("csv file has been generated.")
 
     else:
-        raise ValueError("""Input file type is not supported. Only .shp and .csv file types are supported.""")
+        raise ValueError("""Input file type is not supported. Only .shp, .csv and .xlsx file types are supported.""")
 
 
 if __name__ == '__main__':

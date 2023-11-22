@@ -303,14 +303,14 @@ Utilities:
 
   - name: dbf-to-csv-to-dbf
     label: DBF to CSV to DBF
-    description: dbf => csv => dbf
+    description: dbf => csv (xlsx) => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name']
 
   - name: shp-to-csv-to-shp
     label: SHP to CSV to SHP
-    description: shp => csv => shp
+    description: shp => csv (xlsx) => shp
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',

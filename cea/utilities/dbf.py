@@ -80,15 +80,21 @@ def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False):
         return pd.DataFrame(data)
 
 
-def csv_to_dbf(input_file, output_path, output_file_name):
-    df = pd.read_csv(input_file)
-    output_file = os.path.join(output_path, output_file_name + ".dbf")
+def csv_xlsx_to_dbf(input_file, output_path, output_file_name):
+    if input_file.endswith('.csv'):
+        df = pd.read_csv(input_file)
+    if input_file.endswith('.xlsx'):
+        df = pd.read_excel(input_file)
+    output_file = os.path.join(output_path, output_file_name)
     dataframe_to_dbf(df, output_file)
 
 
-def dbf_to_csv(input_file, output_path, output_file_name):
+def dbf_to_csv_xlsx(input_file, output_path, output_file_name):
     df = dbf_to_dataframe(input_file)
-    df.to_csv(os.path.join(output_path, output_file_name + ".csv"), index=False)
+    if output_file_name.endswith('.csv'):
+        df.to_csv(os.path.join(output_path, output_file_name), index=False)
+    if output_file_name.endswith('.xlsx'):
+        df.to_excel(os.path.join(output_path, output_file_name), index=False)
 
 
 def main(config):
@@ -98,11 +104,11 @@ def main(config):
     output_path = config.dbf_tools.output_path
 
     if input_file.endswith('.dbf'):
-        dbf_to_csv(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
-    elif input_file.endswith('.csv') or input_file.endswith('.csv'):
-        csv_to_dbf(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
+        dbf_to_csv_xlsx(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
+    elif input_file.endswith('.csv') or input_file.endswith('.xlsx'):
+        csv_xlsx_to_dbf(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
     else:
-        print('input file type not supported')
+        raise ValueError("""Input file type is not supported. Only .dbf, .csv and .xlsx file types are supported.""")
 
 
 if __name__ == '__main__':
