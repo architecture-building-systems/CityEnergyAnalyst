@@ -67,7 +67,7 @@ def exec_cea_commands(config, cea_scenario):
 
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{zone_csv_path}'.format(zone_csv_path=zone_csv_path),
-                        '--output-file-name', 'zone',
+                        '--output-file-name', 'zone.shp',
                         '--output-path', '{zone_out_path}'.format(zone_out_path=zone_out_path),
                         # '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
                         '--polygon', 'true',
@@ -78,7 +78,7 @@ def exec_cea_commands(config, cea_scenario):
         typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
         subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{typology_csv_path}'.format(typology_csv_path=typology_csv_path),
-                        '--output-file-name', 'typology',
+                        '--output-file-name', 'typology.shp',
                         '--output-path', '{typology_out_path}'.format(typology_out_path=typology_out_path),
                         ], env=my_env)
 
@@ -100,7 +100,7 @@ def exec_cea_commands(config, cea_scenario):
         reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.shp')
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{streets_csv_path}'.format(streets_csv_path=streets_csv_path),
-                        '--output-file-name', 'streets',
+                        '--output-file-name', 'streets.shp',
                         '--output-path', '{streets_out_path}'.format(streets_out_path=streets_out_path),
                         '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
                         '--polygon', 'false',
