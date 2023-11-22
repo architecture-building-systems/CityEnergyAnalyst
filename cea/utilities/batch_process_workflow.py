@@ -71,7 +71,7 @@ def exec_cea_commands(config, cea_scenario):
                         '--input-file', '{zone_csv_path}'.format(zone_csv_path=zone_csv_path),
                         '--output-file-name', 'zone',
                         '--output-path', '{zone_out_path}'.format(zone_out_path=zone_out_path),
-                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
+                        # '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
                         '--polygon', 'true',
                         ], env=my_env)
 
