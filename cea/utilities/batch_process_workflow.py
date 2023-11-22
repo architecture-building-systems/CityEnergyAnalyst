@@ -55,7 +55,7 @@ def exec_cea_commands(config, cea_scenario):
     thermal_network_operation = config.batch_process_workflow.thermal_network_operation
 
     optimization = config.batch_process_workflow.optimization
-    
+
     reference_shapefile_path = config.shapefile_tools.reference_shapefile
 
     # adding CEA to the environment
