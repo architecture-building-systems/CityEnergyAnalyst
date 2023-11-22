@@ -55,6 +55,8 @@ def exec_cea_commands(config, cea_scenario):
     thermal_network_operation = config.batch_process_workflow.thermal_network_operation
 
     optimization = config.batch_process_workflow.optimization
+    
+    reference_shapefile_path = config.shapefile_tools.reference_shapefile
 
     # adding CEA to the environment
     my_env = os.environ.copy()
@@ -64,7 +66,7 @@ def exec_cea_commands(config, cea_scenario):
     if zone_csv_to_shp:
         zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.csv')
         zone_out_path = os.path.join(cea_scenario, 'inputs/building-geometry')
-        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/reference.shp')
+
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{zone_csv_path}'.format(zone_csv_path=zone_csv_path),
                         '--output-file-name', 'zone',
