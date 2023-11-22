@@ -31,7 +31,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefile, polygon):
+def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_shapefile, polygon):
     """
     This function converts .csv file to ESRI shapefile using the crs of a reference ESRI shapefile.
 
@@ -52,8 +52,14 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
         raise ValueError("""The reference-shapefile cannot be blank when converting csv files to ESRI Shapefiles. """)
 
     # generate crs and DataFrame from files
-    # crs = gpd.read_file(reference_shapefile).crs
-    df = pd.read_csv(csv_file)
+    if input_file.endswith('.csv'):
+        df = pd.read_csv(input_file)
+
+    elif input_file.endswith('.xlsx'):
+        df = pd.read_excel(input_file)
+
+    else:
+        print("The input file type is not valid. Only .csv or .xlsx file types are supported.")
 
     # generate GeoDataFrames from files and get its crs
     gdf = gpd.GeoDataFrame.from_file(reference_shapefile)
@@ -88,21 +94,21 @@ def csv_to_shapefile(csv_file, shapefile_path, shapefile_name, reference_shapefi
     df.drop('geometry', axis=1)
 
     gdf = gpd.GeoDataFrame(df, crs=gdf.crs, geometry=geometry)
-    gdf.to_file(os.path.join(shapefile_path, '{filename}.shp'.format(filename=shapefile_name)),
+    gdf.to_file(os.path.join(shapefile_path, '{filename}'.format(filename=shapefile_name)),
                 driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def shapefile_to_csv(shapefile, csv_file_path, csv_file_name):
+def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name):
     """
-    This function converts ESRI shapefile to .csv file with a column ['geometry'] storing the coordinates of the
+    This function converts ESRI shapefile to .csv file or .xlsx with a column ['geometry'] storing the coordinates of the
     building footprints in metres.
 
     :param shapefile: path to the input shapefile
     :type shapefile: string
-    :param csv_file_path: directory to story the output .csv file
-    :type csv_file_path: string
-    :param csv_file_name: name of the output .csv file
-    :type csv_file_name: string
+    :param output_file_path: directory to story the output .csv file or .xlsx file
+    :type output_file_path_file_path: string
+    :param output_file_name_file_name: name of the output .csv file or .xlsx file
+    :type output_file_name_file_name: string
 
     """
     # generate GeoDataFrames from files
@@ -124,7 +130,10 @@ def shapefile_to_csv(shapefile, csv_file_path, csv_file_name):
     df['geometry'] = gdf.geometry.apply(serialize_geometry)
 
     # write to disk
-    df.to_csv(os.path.join(csv_file_path, '{filename}.csv'.format(filename=csv_file_name)))
+    if output_file_name.endswith('.csv'):
+        df.to_csv(os.path.join(output_file_path, '{filename}'.format(filename=output_file_name)))
+    if output_file_name.endswith('.xlsx'):
+        df.to_excel(os.path.join(output_file_path, '{filename}'.format(filename=output_file_name)))
 
 
 def serialize_geometry(geometry):
@@ -159,13 +168,13 @@ def main(config):
     polygon = config.shapefile_tools.polygon
     reference_shapefile = config.shapefile_tools.reference_shapefile
 
-    if input_file.endswith('.csv'):
+    if input_file.endswith('.csv') or input_file.endswith('.xlsx'):
             # print out all configuration variables used by this script
-        print("Running csv-to-shapefile with csv-file = %s" % input_file)
-        print("Running csv-to-shapefile with polygon = %s" % polygon)
+        print("Running csv-xlsx-to-shapefile with csv-file = %s" % input_file)
+        print("Running csv-xlsx-to-shapefile with polygon = %s" % polygon)
         print("Saving the generated shapefile to directory = %s" % output_path)
 
-        csv_to_shapefile(csv_file=input_file, shapefile_path=output_path,
+        csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path,
                            shapefile_name=output_file_name,
                            reference_shapefile=reference_shapefile,
                            polygon=polygon)
@@ -177,7 +186,7 @@ def main(config):
         print("Running shapefile-to-csv with shapefile = %s" % config.shapefile_tools.input_file)
         print("Running shapefile-to-csv with csv-file = %s" % config.shapefile_tools.output_path)
 
-        shapefile_to_csv(shapefile=input_file, csv_file_path=output_path, csv_file_name=output_file_name)
+        shapefile_to_csv_xlsx(shapefile=input_file, csv_file_path=output_path, csv_file_name=output_file_name)
 
         print("csv file has been generated.")
 
