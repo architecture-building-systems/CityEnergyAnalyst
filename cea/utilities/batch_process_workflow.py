@@ -56,8 +56,6 @@ def exec_cea_commands(config, cea_scenario):
 
     optimization = config.batch_process_workflow.optimization
 
-    reference_shapefile_path = config.shapefile_tools.reference_shapefile
-
     # adding CEA to the environment
     my_env = os.environ.copy()
     # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
