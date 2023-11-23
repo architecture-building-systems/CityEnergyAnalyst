@@ -84,6 +84,7 @@ class Domain(object):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
+                if not max(building.demand_flow.profile) > 0: continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
                 self.buildings.append(building)
@@ -161,7 +162,7 @@ class Domain(object):
                                   + component_classes
             main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
 
-            pool = multiprocessing.Pool(algorithm.parallel_cores)
+            pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
             toolbox.register("map", pool.map)
 
         toolbox.register("generate", ConnectivityVector.generate)
@@ -176,26 +177,45 @@ class Domain(object):
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
                          optimization_tracker=tracker)
 
-        population = toolbox.population(n=algorithm.population)
+        # Create initial population and evaluate it
+        population = set(toolbox.population(n=algorithm.population))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
+
+        # Consolidate certain objects in the child processes' memory and make them available to the main process
+        for non_dominated_front in non_dominated_fronts:
+            main_process_memory.consolidate(non_dominated_front[1])
+        toolbox.evaluate.keywords['process_memory'] = main_process_memory
+
+        # If parallel processing and detailed outputs are both enabled
         if algorithm.parallelize_computation and tracker:
-            tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
+            # ... consolidate the tracker objects in the main process' memory
+            tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
 
-        for generation in range(1, algorithm.generations+1):
-            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+        for generation in range(1, algorithm.generations_networks + 1):
+            offspring = set(algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob))
 
-            new_ind = [ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys())]
+            # Evaluate the individuals in the offspring, unless they are an exact copy of one of the parents
+            new_ind = set(ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys()))
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
             optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
-            if algorithm.parallelize_computation and tracker:
-                tracker.consolidate([non_dominated_front[1] for non_dominated_front in non_dominated_fronts])
 
-            population = toolbox.select(population + offspring, optimal_supply_system_combinations)
+            # Consolidate certain objects in the child processes' memory and make them available to the main process
+            main_process_memory.clear_variables()
+            [main_process_memory.consolidate(non_dominated_front[1]) for non_dominated_front in non_dominated_fronts]
+            toolbox.evaluate.keywords['process_memory'] = main_process_memory
+
+            # If parallel processing and detailed outputs are both enabled...
+            if algorithm.parallelize_computation and tracker:
+                # ...consolidate the tracker objects of each of the child processes
+                tracker.consolidate([non_dominated_front[2] for non_dominated_front in non_dominated_fronts])
+
+            population = set(toolbox.select(population.union(offspring), optimal_supply_system_combinations))
             print(f"\n\nDES: gen {generation}")
 
+        main_process_memory.recall_class_variables()
         self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
         if tracker:
             tracker.print_evolutions()
@@ -216,7 +236,8 @@ class Domain(object):
         #   them, i.e. find optimal combinations of each of the subsystems' non-dominated SupplySystem solutions.
         energy_systems_for_best_connectivity_vectors = [DistrictEnergySystem(ind, self.buildings, self.energy_potentials)
                                                         for ind in last_population]
-        [energy_system.evaluate(return_full_des=True) for energy_system in energy_systems_for_best_connectivity_vectors]
+        [energy_system.evaluate(return_full_des=True)
+         for energy_system in energy_systems_for_best_connectivity_vectors]
 
         # determine the non-dominated solutions across all DistrictEnergySystems of the last population
         #   (with definitive SupplySystem + Connectivity)
@@ -396,18 +417,29 @@ class Domain(object):
     @staticmethod
     def _write_combined_objective_function_profiles(date_time, supply_system, results_file):
         """Write the central objective function profiles of a supply system to the indicated csv file."""
-        combined_heat_rejection_profile = pd.concat([heat_rejection_profile
-                                                     for heat_rejection_profile
-                                                     in supply_system.heat_rejection.values()],
-                                                    axis=1).sum(1)
-        combined_ghg_emission_profile = pd.concat([ghg_emission_profile
-                                                   for ghg_emission_profile
-                                                   in supply_system.greenhouse_gas_emissions.values()],
-                                                  axis=1).sum(1)
-        combined_system_energy_demand_profile = pd.concat([system_demand_profile
-                                                           for system_demand_profile
-                                                           in supply_system.system_energy_demand.values()],
-                                                          axis=1).sum(1)
+        if supply_system.heat_rejection.values():
+            combined_heat_rejection_profile = pd.concat([heat_rejection_profile
+                                                         for heat_rejection_profile
+                                                         in supply_system.heat_rejection.values()],
+                                                        axis=1).sum(1)
+        else:
+            combined_heat_rejection_profile = pd.Series(0, index=range(len(date_time)))
+
+        if supply_system.greenhouse_gas_emissions.values():
+            combined_ghg_emission_profile = pd.concat([ghg_emission_profile
+                                                       for ghg_emission_profile
+                                                       in supply_system.greenhouse_gas_emissions.values()],
+                                                      axis=1).sum(1)
+        else:
+            combined_ghg_emission_profile = pd.Series(0, index=range(len(date_time)))
+
+        if supply_system.system_energy_demand.values():
+            combined_system_energy_demand_profile = pd.concat([system_demand_profile
+                                                               for system_demand_profile
+                                                               in supply_system.system_energy_demand.values()],
+                                                              axis=1).sum(1)
+        else:
+            combined_system_energy_demand_profile = pd.Series(0, index=range(len(date_time)))
 
         # combine the profiles into one data frame and write to file
         combined_objective_function_timelines = pd.concat([date_time.to_series(index=range(len(date_time))),
@@ -471,7 +503,8 @@ class Domain(object):
                                  for network in district_energy_system.networks}
         network_lengths = {network.identifier: sum(network.network_piping['length_m'])
                            for network in district_energy_system.networks}
-        network_costs = {network.identifier: network.piping_cost
+        network_costs = {network.identifier: network.annual_piping_cost *
+                                             network.configuration_defaults['network_lifetime_yrs']
                          for network in district_energy_system.networks}
 
         # write to DataFrame
