@@ -63,6 +63,8 @@ def exec_cea_commands(config, cea_scenario):
     # execute selected CEA commands
     if zone_csv_to_shp:
         zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.csv')
+        if not os.path.exists(zone_csv_path):
+            zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.xlsx')
         zone_out_path = os.path.join(cea_scenario, 'inputs/building-geometry')
 
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
@@ -75,6 +77,8 @@ def exec_cea_commands(config, cea_scenario):
 
     if typology_csv_to_dbf:
         typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.csv')
+        if not os.path.exists(typology_csv_path):
+            typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.xlsx')
         typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
         subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{typology_csv_path}'.format(typology_csv_path=typology_csv_path),
@@ -96,6 +100,8 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'streets-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
     if streets_csv_to_shp:
         streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.csv')
+        if not os.path.exists(streets_csv_path):
+            streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.xlsx')
         streets_out_path = os.path.join(cea_scenario, 'inputs/networks')
         reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.shp')
         subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
