@@ -63,7 +63,7 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: radiation-simplified
-    label: Building solar radiation (simplified, beta version)
+    label: Building solar radiation (simplified, beta)
     description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
     interfaces: [ cli, dashboard ]
     module: cea.resources.radiation.simplified.main
@@ -289,7 +289,7 @@ Optimization:
       - [PV_totals]
 
   - name: optimization-new
-    label: Supply system part II (centralized- new script, beta version)
+    label: Supply system part II (centralized, beta)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -338,7 +338,7 @@ Utilities:
     ]
 
   - name: batch-process-workflow
-    label: Batch process Workflow
+    label: Batch process Workflow (beta)
     description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
