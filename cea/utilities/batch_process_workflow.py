@@ -78,7 +78,7 @@ def exec_cea_commands(config, cea_scenario):
         typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
         subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
                         '--input-file', '{typology_csv_path}'.format(typology_csv_path=typology_csv_path),
-                        '--output-file-name', 'typology',
+                        '--output-file-name', 'typology.dbf',
                         '--output-path', '{typology_out_path}'.format(typology_out_path=typology_out_path),
                         ], env=my_env)
 

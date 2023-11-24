@@ -233,7 +233,7 @@ Energy potentials:
 Networks:
 
   - name: network-layout
-    label: Thermal network Part I (Layout)
+    label: Thermal network Part I (layout)
     description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
