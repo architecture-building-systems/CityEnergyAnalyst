@@ -438,7 +438,7 @@ class InputLocator(object):
         return os.path.join(self.get_potentials_folder(), "Water_body_potential.csv")
 
     def get_geothermal_potential(self):
-        """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
+        """scenario/outputs/data/potentials/geothermal/Shallow_geothermal_potential.csv"""
         return os.path.join(self.get_potentials_folder(), "Shallow_geothermal_potential.csv")
 
     def get_weather_file(self):
@@ -561,6 +561,18 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
+    def get_zone_csv(self):
+        """scenario/inputs/building-geometry/zone.csv"""
+        zone_csv_path = os.path.join(self.get_building_geometry_folder(), 'zone.csv')
+        check_cpg(zone_csv_path)
+        return zone_csv_path
+
+    def get_zone_xlsx(self):
+        """scenario/inputs/building-geometry/zone.xlsx"""
+        zone_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'zone.xlsx')
+        check_cpg(zone_xlsx_path)
+        return zone_xlsx_path
+
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         # NOTE: we renamed district.shp to surroundings.shp - this code will automatically upgrade old scenarios
@@ -577,11 +589,19 @@ class InputLocator(object):
         return zone_building_names
 
     def get_building_typology(self):
-        """scenario/inputs/building-properties/building_occupancy.dbf"""
+        """scenario/inputs/building-properties/typology.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
 
+    def get_building_typology_csv(self):
+        """scenario/inputs/building-properties/typology.csv"""
+        return os.path.join(self.get_building_properties_folder(), 'typology.csv')
+
+    def get_building_typology_xlsx(self):
+        """scenario/inputs/building-properties/typology.xlsx"""
+        return os.path.join(self.get_building_properties_folder(), 'typology.xlsx')
+
     def get_building_supply(self):
-        """scenario/inputs/building-properties/building_supply.dbf"""
+        """scenario/inputs/building-properties/supply_systems.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')
 
     def get_building_internal(self):
@@ -593,7 +613,7 @@ class InputLocator(object):
         return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.dbf')
 
     def get_building_air_conditioning(self):
-        """scenario/inputs/building-properties/air_conditioning_systems.dbf"""
+        """scenario/inputs/building-properties/air_conditioning.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'air_conditioning.dbf')
 
     def get_building_architecture(self):
@@ -656,13 +676,13 @@ class InputLocator(object):
             return self._ensure_folder(self.get_thermal_network_folder(), network_type, network_name)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name=""):
-        """scenario/outputs/thermal-network/DH or DC/network-edges.shp"""
+        """scenario/outputs/thermal-network/DH or DC/edges.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
-        """scenario/outputs/thermal-network/DH or DC/network-nodes.shp"""
+        """scenario/outputs/thermal-network/DH or DC/nodes.shp"""
         shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         check_cpg(shapefile_path)
         return shapefile_path
@@ -980,6 +1000,18 @@ class InputLocator(object):
         shapefile_path = os.path.join(self.get_networks_folder(), "streets.shp")
         check_cpg(shapefile_path)
         return shapefile_path
+
+    def get_streets_csv(self):
+        """scenario/inputs/networks/streets.csv"""
+        streets_csv_path = os.path.join(self.get_building_geometry_folder(), 'streets.csv')
+        check_cpg(streets_csv_path)
+        return streets_csv_path
+
+    def get_streets_xlsx(self):
+        """scenario/inputs/networks/streets.xlsx"""
+        streets_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'streets.xlsx')
+        check_cpg(streets_xlsx_path)
+        return streets_xlsx_path
 
     # OUTPUTS
 
