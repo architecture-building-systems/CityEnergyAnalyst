@@ -160,8 +160,9 @@ class SupplySystem(object):
             capacity_kw = capacity_indicator.value * max_capacity_component.capacity
 
             try:
-                self.installed_components[placement][component_model] = \
-                    component_class(component_model, placement, capacity_kw)
+                if capacity_kw > 0:
+                    self.installed_components[placement][component_model] = \
+                        component_class(component_model, placement, capacity_kw)
             except ValueError:
                 capacity_indicator.value = 0
 
