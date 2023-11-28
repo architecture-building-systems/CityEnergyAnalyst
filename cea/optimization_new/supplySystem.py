@@ -340,11 +340,9 @@ class SupplySystem(object):
 
         if not for_sizing:
             if not SupplySystem._ec_releases_to_env:
-                SupplySystem._ec_releases_to_env = [ec_code for ec_code in self.structure.releasable_energy_carriers
-                                                    if not (ec_code in self.structure.infinite_energy_carriers)]
+                SupplySystem._ec_releases_to_env = SupplySystemStructure().releasable_environmental_energy_carriers
             if not SupplySystem._ec_releases_to_grids:
-                SupplySystem._ec_releases_to_grids = [ec_code for ec_code in self.structure.releasable_energy_carriers
-                                                      if ec_code in self.structure.infinite_energy_carriers]
+                SupplySystem._ec_releases_to_grids = SupplySystemStructure().releasable_grid_based_energy_carriers
 
             self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
             self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
