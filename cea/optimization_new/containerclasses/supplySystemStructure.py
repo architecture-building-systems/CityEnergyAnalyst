@@ -39,7 +39,8 @@ class SupplySystemStructure(object):
     _system_type = ''
     _main_final_energy_carrier = EnergyCarrier()
     _infinite_energy_carriers = []
-    _releasable_energy_carriers = []
+    _releasable_environmental_energy_carriers = []
+    _releasable_grid_based_energy_carriers = []
     _active_component_classes = []
     _full_component_activation_order = ()
 
@@ -96,8 +97,16 @@ class SupplySystemStructure(object):
         return self._infinite_energy_carriers
 
     @property
+    def releasable_environmental_energy_carriers(self):
+        return self._releasable_environmental_energy_carriers
+
+    @property
+    def releasable_grid_based_energy_carriers(self):
+        return self._releasable_grid_based_energy_carriers
+
+    @property
     def releasable_energy_carriers(self):
-        return self._releasable_energy_carriers
+        return self._releasable_environmental_energy_carriers + self._releasable_grid_based_energy_carriers
 
     @property
     def active_component_classes(self):
@@ -215,9 +224,9 @@ class SupplySystemStructure(object):
         return infinite_energy_carriers
 
     @staticmethod  # TODO: Adapt this method when typical days are introduced
-    def _get_releasable_ecs(domain):
+    def _get_releasable_environmental_ecs(domain):
         """
-        Get the codes of all energy carriers that can be freely released to a grid or the environment.
+        Get the codes of all energy carriers that can be freely released to the environment.
         """
         avrg_yearly_temp = domain.weather['drybulb_C'].mean()
         typical_air_ec = EnergyCarrier.temp_to_thermal_ec('air', avrg_yearly_temp)
@@ -230,11 +239,16 @@ class SupplySystemStructure(object):
         else:
             raise ValueError('Make sure the energy system type is set before allocating environmental energy carriers.')
 
+        return releasable_environmental_ecs
+
+    @staticmethod
+    def _get_releasable_grid_based_ecs():
+        """
+        Get the codes of all energy carriers that can be freely released to a grid.
+        """
         releasable_grid_based_ecs = EnergyCarrier.get_all_electrical_ecs()
 
-        releasable_ecs = releasable_environmental_ecs + releasable_grid_based_ecs
-
-        return releasable_ecs
+        return releasable_grid_based_ecs
 
     @staticmethod
     def _get_component_priorities(optimisation_config):
@@ -845,7 +859,7 @@ class SupplySystemStructure(object):
             required_energy_flows = {required_energy_flows.energy_carrier.code: required_energy_flows}
 
         new_required_energy_flow = {ec_code: flow for ec_code, flow in required_energy_flows.items()
-                                    if ec_code not in SupplySystemStructure._infinite_energy_carriers}
+                                    if ec_code not in SupplySystemStructure().infinite_energy_carriers}
 
         return new_required_energy_flow
 
@@ -859,7 +873,7 @@ class SupplySystemStructure(object):
             energy_flows_to_release = {energy_flows_to_release.energy_carrier.code: energy_flows_to_release}
 
         remaining_energy_flows_to_release = {ec_code: flow for ec_code, flow in energy_flows_to_release.items()
-                                             if ec_code not in SupplySystemStructure._releasable_energy_carriers}
+                                             if ec_code not in SupplySystemStructure().releasable_energy_carriers}
 
         return remaining_energy_flows_to_release
 
@@ -920,8 +934,10 @@ class SupplySystemStructure(object):
 
         SupplySystemStructure._infinite_energy_carriers \
             = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources, domain)
-        SupplySystemStructure._releasable_energy_carriers \
-            = SupplySystemStructure._get_releasable_ecs(domain)
+        SupplySystemStructure._releasable_environmental_energy_carriers \
+            = SupplySystemStructure._get_releasable_environmental_ecs(domain)
+        SupplySystemStructure._releasable_grid_based_energy_carriers \
+            = SupplySystemStructure._get_releasable_grid_based_ecs()
         SupplySystemStructure._active_component_classes, \
         SupplySystemStructure._full_component_activation_order \
             = SupplySystemStructure._get_component_priorities(config.optimization_new)
