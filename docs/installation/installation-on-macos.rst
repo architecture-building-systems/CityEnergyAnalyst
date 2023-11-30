@@ -15,7 +15,7 @@ Prerequisites
 ~~~~~~~~~~~~~
 * Download and install `Homebrew <https://brew.sh/>`__. Upon finishing installing Homebrew, pay attention to the message reverted. You may also have to execute ``brew install node``.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
+* Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__. Upon finishing installing Micromamba, pay attention to the message reverted.
 
 Installation
 ~~~~~~~~~~~~
