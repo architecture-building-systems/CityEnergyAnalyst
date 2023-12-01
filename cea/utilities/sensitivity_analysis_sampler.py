@@ -7,6 +7,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from SALib.sample import sobol
+import subprocess
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
@@ -50,20 +51,29 @@ def create_inputs_directory(config, sample_n, n_variable):
 
     # total number of scenarios
     n_scenario = sample_n * (2 * n_variable + 2)
-    project_path = config.general.project
+    # project_path = config.general.project
+
+    # setting up environment for sub-processing
+    my_env = os.environ.copy()
+    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
     # create directory for the minimum CEA inputs
     for n in range(1, n_scenario+1):
         scenario = 'SA_{n}'.format(n=n)     # scenario_name = SA_1, 2, 3,...
-        inputs_path = os.path.join(project_path, '{scenario}/inputs'.format(scenario=scenario))
-        os.makedirs(inputs_path, exist_ok=True)
-        os.makedirs(os.path.join(inputs_path, 'building-geometry'), exist_ok=True)
-        os.makedirs(os.path.join(inputs_path, 'building-properties'), exist_ok=True)
+
+        subprocess.run(['cea', 'create-new-scenario',
+                        '--scenario-name', '{scenario}'.format(scenario=scenario),
+                        ], env=my_env)
+
+        # inputs_path = os.path.join(project_path, '{scenario}/inputs'.format(scenario=scenario))
+        # os.makedirs(inputs_path, exist_ok=True)
+        # os.makedirs(os.path.join(inputs_path, 'building-geometry'), exist_ok=True)
+        # os.makedirs(os.path.join(inputs_path, 'building-properties'), exist_ok=True)
 
 def main(config):
 
     filename = config.sensitivity_analysis_tools.output_file_name
-    project_path = config.general.project
+    output_path = config.sensitivity_analysis_tools.output_path
 
     names_vars = ['var_1', 'var_2', 'var_3', 'var_4', 'var_5']
 
@@ -117,9 +127,9 @@ def main(config):
     # and D is the number of model inputs.
 
     # Write the results to disk
-    output_path = os.path.join(project_path, '{filename}.csv'.format(filename=filename))
-    print("writing sampled variables to {output_path}".format(output_path=output_path))
-    write_results(param_values, names_vars, output_path)
+    csv_path = os.path.join(output_path, '{filename}.csv'.format(filename=filename))
+    print("writing sampled variables to {output_path}".format(output_path=csv_path))
+    write_results(param_values, names_vars, csv_path)
 
     # Create parallel CEA scenario inputs directories under current project
     if create_directory:

@@ -322,7 +322,7 @@ Utilities:
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario',
-                  'sensitivity-analysis-tools:output-file-name',
+                  'sensitivity-analysis-tools:output-file-name', 'sensitivity-analysis-tools:output-path',
                   'sensitivity-analysis-tools:n',
                   'sensitivity-analysis-tools:having-variable-1',
                   'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',
@@ -353,6 +353,15 @@ Utilities:
                   'batch-process-workflow:thermal-network-operation', 'batch-process-workflow:optimization'
     ]
 
+  - name: create-new-scenario
+    label: Create new Project/Scenario
+    description: Creates a new project and scenario following the CEA-format input directories. Expand Section Optional to view import options for creating a new scenario.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.create_new_scenario
+    parameters: ['create-new-scenario:project-name', 'create-new-scenario:output-path', 'create-new-scenario:scenario-name',
+                 'create-new-scenario:surroundings'
+    ]
+
   - name: data-migrator
     label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
@@ -370,13 +379,6 @@ Utilities:
     interfaces: [cli, dashboard]
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
-
-  - name: create-new-scenario
-    label: Create new scenario
-    description: Creates a new scenario
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.create_new_scenario
-    parameters: [create-new-scenario]
 
   - name: rename-building
     label: Rename building
