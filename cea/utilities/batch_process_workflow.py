@@ -39,8 +39,9 @@ def exec_cea_commands(config, cea_scenario):
     terrain_helper = config.batch_process_workflow.terrain_helper
     streets_helper = config.batch_process_workflow.streets_helper
 
-    demand_forecasting = config.batch_process_workflow.demand_forecasting
+    radiation = config.batch_process_workflow.radiation
     radiation_simplified = config.batch_process_workflow.radiation_simplified
+    demand_forecasting = config.batch_process_workflow.demand_forecasting
 
     emissions = config.batch_process_workflow.emissions
     system_costs = config.batch_process_workflow.system_costs
@@ -112,12 +113,11 @@ def exec_cea_commands(config, cea_scenario):
                         '--polygon', 'false',
                         ], env=my_env)
 
-    if demand_forecasting and not radiation_simplified:
+    if radiation and not radiation_simplified:
         subprocess.run(['cea', 'radiation', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
-        subprocess.run(['cea', 'schedule-maker', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
-        subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
-    if demand_forecasting and radiation_simplified:
+    if radiation and radiation_simplified:
         subprocess.run(['cea', 'radiation-simplified', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
+    if demand_forecasting:
         subprocess.run(['cea', 'schedule-maker', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
         subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
 
