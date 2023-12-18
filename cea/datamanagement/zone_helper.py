@@ -209,7 +209,7 @@ def assign_attributes_additional(shapefile):
     if 'addr:housename' not in list_of_columns:
         shapefile['addr:housename'] = [''] * no_buildings
     if 'addr:housenumber' not in list_of_columns:
-        shapefile['addr:country'] = [''] * no_buildings
+        shapefile['addr:housenumber'] = [''] * no_buildings
     if 'residential' not in list_of_columns:
         shapefile['residential'] = [''] * no_buildings     #not HDB
 
