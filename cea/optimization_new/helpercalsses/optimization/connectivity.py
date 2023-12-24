@@ -22,11 +22,12 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-from random import randint
+import random
 from deap import tools
 import hashlib
 
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+from cea.optimization_new.helpercalsses.optimization.clustering import Clustering
 
 
 class Connection(object):
@@ -83,6 +84,7 @@ class Connection(object):
 
 
 class ConnectivityVector(object):
+    _cluster_indexes: list = None
 
     def __init__(self, connection_list=None):
         if not connection_list:
@@ -217,22 +219,29 @@ class ConnectivityVector(object):
         if method == 'random':
             min_connection_ind = Connection.possible_connections.start
             max_connection_ind = Connection.possible_connections.stop - 1
-            connections_list = [Connection(randint(min_connection_ind, max_connection_ind), building)
+            connections_list = [Connection(random.randint(min_connection_ind, max_connection_ind), building)
                                 for building in Connection.possible_building_codes]
         else:
             connections_list = [Connection(0, building) for building in Connection.possible_building_codes]
         return connections_list
 
     @staticmethod
-    def mutate(cv, algorithm=None):
+    def mutate(cv, algorithm=None, connection_points:list=None):
         """
         Mutate the connectivity vector (inplace) according to the defined mutation algorithm.
+        :param cv: ConnectivityVector object to be mutated
+        :param algorithm: Genetic algorithm settings to be used
+        :param connection_points: List of connection points (needed for the ClusterSwitch mutation)
         """
         if algorithm.mutation == 'ShuffleIndexes':
             mutated_cv = tools.mutShuffleIndexes(cv, algorithm.mut_prob)
         elif algorithm.mutation == 'UniformInteger':
             nbr_of_networks = Connection.possible_connections.stop - 1
             mutated_cv = tools.mutUniformInt(cv, low=0, up=nbr_of_networks, indpb=algorithm.mut_prob)
+        elif algorithm.mutation == 'ClusterSwitch':
+            if not ConnectivityVector._cluster_indexes:
+                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+            mutated_cv = ConnectivityVector.ClusterSwitch(cv, algorithm.mut_prob)
         else:
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
                              f"connectivity vectors.")
@@ -243,9 +252,44 @@ class ConnectivityVector(object):
         return mutated_cv
 
     @staticmethod
-    def mate(cv_1, cv_2, algorithm=None):
+    def ClusterSwitch(cv, mut_prob:float):
+        """
+        Mutate the connectivity vector (inplace) by switching all switching buildings in the same cluster to a random
+        other connectivity value with a probability of mut_prob.
+        Outliers are switched with the same probability but individually (new random value chosen for each outlier).
+        :param cv: Connectivity vector to be mutated
+        :param mut_prob: Probability of mutation
+        """
+        # Identify clusters and possible connectivity values
+        clusters = list(set(ConnectivityVector._cluster_indexes))
+        possible_connections = list(Connection.possible_connections)
+
+        # Switch building connectivity values cluster-wise
+        for cluster in clusters:
+            # Switch all buildings in the same cluster to the same connectivity value
+            if cluster >= 0:
+                new_connectivity = random.choice(possible_connections)
+                for i, cluster_index in enumerate(ConnectivityVector._cluster_indexes):
+                    if cluster_index == cluster:
+                        if random.random() < mut_prob:
+                            cv[i] = new_connectivity
+            # Switch outliers individually
+            else:
+                for i, cluster_index in enumerate(ConnectivityVector._cluster_indexes):
+                    if cluster_index < 0:
+                        if random.random() < mut_prob:
+                            cv[i] = random.choice(possible_connections)
+                            
+        return cv
+
+    @staticmethod
+    def mate(cv_1, cv_2, algorithm=None, connection_points:list=None):
         """
         Recombine two connectivity vectors (inplace) according to the defined crossover algorithm.
+        :param cv_1: First connectivity vector
+        :param cv_2: Second connectivity vector
+        :param algorithm: Algorithm object containing the crossover method and probability
+        :param connection_points: List of all connection points in the network
         """
         if algorithm.crossover == 'OnePoint':
             recombined_cvs = tools.cxOnePoint(cv_1, cv_2)
@@ -253,6 +297,14 @@ class ConnectivityVector(object):
             recombined_cvs = tools.cxTwoPoint(cv_1, cv_2)
         elif algorithm.crossover == 'Uniform':
             recombined_cvs = tools.cxUniform(cv_1, cv_2, algorithm.cx_prob)
+        elif algorithm.crossover == 'ClusterSwap':
+            if not ConnectivityVector._cluster_indexes:
+                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+            recombined_cvs = ConnectivityVector.ClusterSwap(cv_1, cv_2, algorithm.cx_prob)
+        elif algorithm.crossover == 'ClusterAlignment':
+            if not ConnectivityVector._cluster_indexes:
+                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+            recombined_cvs = ConnectivityVector.ClusterAlignment(cv_1, cv_2, algorithm.cx_prob)
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "
                              f"connectivity vectors.")
@@ -262,6 +314,93 @@ class ConnectivityVector(object):
         recombined_cvs[1].reset()
 
         return recombined_cvs
+
+    @staticmethod
+    def ClusterSwap(cv_1, cv_2, cx_prob):
+        """
+        Recombine two connectivity vectors by exchanging the connectivity values of some of their clusters. Outliers
+        remain unchanged by this operation.
+        :param cv_1: connectivity vector 1
+        :param cv_2: connectivity vector 2
+        :param cx_prob: probability of exchanging the connectivity values of a cluster
+        """
+        # determine which clusters to swap
+        clusters = list(set(ConnectivityVector._cluster_indexes))
+        selected_clusters = ConnectivityVector.select_values_with_probability(clusters, cx_prob)
+
+        # swap the connectivity values of the selected clusters
+        for cluster in selected_clusters:
+            cluster_indexes = [i for i, x in enumerate(ConnectivityVector._cluster_indexes) if x == cluster]
+            for index in cluster_indexes:
+                cv_1[index], cv_2[index] = cv_2[index], cv_1[index]
+
+        return cv_1, cv_2
+
+    @staticmethod
+    def select_values_with_probability(values:list, probability:float):
+        """
+        Select a value from a list of values with a given probability.
+        """
+        selected_values = []
+        for value in values:
+            if random.random() < probability:
+                selected_values.append(value)
+        return selected_values
+
+    @staticmethod
+    def ClusterAlignment(cv_1, cv_2, cx_prob):
+        """
+        Recombine two connectivity vectors by exchanging the connectivity values of the buildings where:
+         1. they deviate from the most prevalent connectivity value of the cluster they belong to and
+         2. a swap of the connectivity value between the two connectivity vectors would align them with the most
+            prevalent connectivity value of their cluster.
+
+        e.g. if building b is connected to network 1 in cv_1 whereas the most prevalent connectivity value of b's
+        cluster is 0 in cv_1 and building b is unconnected (i.e. has a connectivity value of 0) in cv_2 whereas
+        the most prevalent connectivity in its cluster is 1 in cv_2, then the connectivity values of b in cv_1 and cv_2
+        are swapped.
+
+        Outliers remain unchanged by this operation.
+        """
+        # determine the most prevalent connectivity value for each cluster in cv_1 and cv_2
+        clusters = list(set(ConnectivityVector._cluster_indexes))
+        prevailing_connectivity_values_1 = ConnectivityVector._get_most_prevalent_connectivity_values(cv_1, clusters)
+        prevailing_connectivity_values_2 = ConnectivityVector._get_most_prevalent_connectivity_values(cv_2, clusters)
+
+        # determine buildings for which the connectivity values in cv_1 matches the most prevalent connectivity value of
+        # their cluster in cv_2 and vice-versa
+        swappable_building_indexes = [i for i, (pcv_1, pcv_2) in enumerate(zip(prevailing_connectivity_values_1,
+                                                                               prevailing_connectivity_values_2))
+                                      if cv_1[i] == pcv_2 and cv_2[i] == pcv_1]
+
+        # chose buildings to swap
+        buildings_to_swap = ConnectivityVector.select_values_with_probability(swappable_building_indexes, cx_prob)
+
+        # change the connectivity values of the selected buildings
+        for building in buildings_to_swap:
+            cv_1[building], cv_2[building] = cv_2[building], cv_1[building]
+
+        return cv_1, cv_2
+
+    @staticmethod
+    def _get_most_prevalent_connectivity_values(cv, clusters):
+        """
+        Determine the most prevalent connectivity value for each cluster in cv and return a list that contains that
+        value for each building's corresponding cluster. Ignore outliers (i.e. buildings that are not part of a
+        cluster).
+        """
+        most_prevalent_connectivity_values = [None] * len(cv)
+        for cluster in clusters:
+            if cluster < 0:
+                continue
+            relevant_building_indexes = [i for i, x in enumerate(ConnectivityVector._cluster_indexes) if x == cluster]
+            building_connectivity_values = [cv[i] for i in relevant_building_indexes]
+            most_prevalent_connectivity_value = max(set(building_connectivity_values),
+                                                    key=building_connectivity_values.count)
+            for index in relevant_building_indexes:
+                most_prevalent_connectivity_values[index] = most_prevalent_connectivity_value
+
+        return most_prevalent_connectivity_values
 
     @staticmethod
     def select(individuals_list, energy_system_solutions_dict, population_size, optimization_tracker=None):
