@@ -1,11 +1,10 @@
 name: cea
 channels:
 - conda-forge
+- defaults
 dependencies:
-- cvxopt # For wntr
 - deap
 - ephem
-- fiona
 - flask
 - flask-cors
 - flask-restx>=1.3.0 # Support for Flask >= 2.0
@@ -28,6 +27,7 @@ dependencies:
 - pytz # Not required from 3.9
 - pyyaml
 - salib
+- scikit-learn=1.3.2
 - scipy=1.10 # Due to python3.8 support
 - shapely=2
 - timezonefinder
@@ -35,6 +35,8 @@ dependencies:
 - notebook
 - openpyxl
 - plotly
+- sphinx
+- sympy
 - utm
 - xlrd
 - xlwt
@@ -42,6 +44,8 @@ dependencies:
 - git
 - yarn=4 # Use latest version of yarn
 - pip:
+  - xlrd
+  - xlwt
   - staticmap
-  - wntr==0.2.3
-  - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
+  - py4design-cea
+  - pyarrow
