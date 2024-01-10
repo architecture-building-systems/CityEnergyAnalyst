@@ -24,6 +24,7 @@ __status__ = "Production"
 
 from random import randint
 from deap import tools
+import hashlib
 
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 
@@ -200,6 +201,11 @@ class ConnectivityVector(object):
         Return the capacity indicator vector as single string-object (network connection values spaced by an underscore)
         """
         connectivity_str = '_'.join(map(str, self.values))
+        if len(connectivity_str) > 50:
+            connectivity_str_start = '_'.join(map(str, self.values[:8]))
+            connectivity_bytes = ' '.join(map(str, self.values[9:])).encode()
+            connectivity_str_end = hashlib.sha256(connectivity_bytes).hexdigest()
+            connectivity_str = connectivity_str_start + '_' + connectivity_str_end
         return connectivity_str
 
     @staticmethod
