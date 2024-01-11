@@ -53,6 +53,7 @@ class optimizationTracker(object):
         connectivity vectors have been analysed.
         """
         network_ids = [network.identifier for network in candidate_individual.networks]
+        networks_with_supsys = list(candidate_individual.supply_systems.keys())
         network_graphs = {network.identifier: network
                           for network in candidate_individual.networks}
         supsys_structures = {network_id: supply_systems[0].structure
@@ -65,7 +66,8 @@ class optimizationTracker(object):
             {network_id: {'network_graph': network_graphs[network_id],
                           'supsys_structure': supsys_structures[network_id],
                           'supsys_individuals': supsys_individuals[network_id]}
-             for network_id in network_ids}
+             for network_id in network_ids
+             if network_id in networks_with_supsys}
 
     def set_current_individual(self, connectivty_vector):
         """ Update the current connectivity vector which is being evaluated. """

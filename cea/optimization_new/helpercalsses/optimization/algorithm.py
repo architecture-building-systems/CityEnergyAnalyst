@@ -12,7 +12,7 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-from math import factorial
+from math import factorial, sqrt
 
 
 class Algorithm(object):
@@ -34,7 +34,11 @@ class GeneticAlgorithm(Algorithm):
         self.crossover = crossover
 
         self.population = population_size
-        self.generations = number_of_generations
+        self.generations_networks = number_of_generations
+        if number_of_generations:
+            self.generations_supply_systems = max(round(sqrt(number_of_generations)), 5)
+        else:
+            self.generations_supply_systems = None
 
         self.mut_prob = mut_probability
         self.cx_prob = cx_probability

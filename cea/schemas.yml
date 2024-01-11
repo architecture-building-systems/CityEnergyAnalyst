@@ -2647,6 +2647,17 @@ get_database_air_conditioning_systems:
           type: string
           unit: '[-]'
           values: alphanumeric
+        class_dhw:
+          choice:
+            values:
+              - NONE
+              - HIGH_TEMP
+              - MEDIUM_TEMP
+              - LOW_TEMP
+          description: Type or class of the DHW system
+          type: string
+          unit: '[-]'
+          values: alphanumeric
     VENTILATION:
       columns:
         Description:
@@ -15545,7 +15556,7 @@ get_new_optimization_optimal_supply_system_file:
           values: '{0.0...n}'
           min: 0.0
     used_by: []
-get_new_optimization_supply_systems_operation_file:
+get_new_optimization_supply_systems_detailed_operation_file:
     created_by:
     - optimization_new
     file_path: outputs/data/optimization_new/DHS_000/Supply_systems_operation_details/N0000_operation.csv
@@ -15576,6 +15587,82 @@ get_new_optimization_supply_systems_operation_file:
           values: '{0.0...n}'
           min: 0.0
     used_by: []
+get_new_optimization_supply_systems_annual_breakdown_file:
+  created_by:
+    - optimization_new
+  file_path: outputs/data/optimization_new/DHS_000/Supply_systems_operation_details/N0000_annual_breakdown.csv
+  file_type: csv
+  schema:
+    columns:
+      Annual_energy_demand_kWh:
+        description: Yearly energy demand for a given energy carrier by the network's supply system
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+      Annual_energy_carrier_cost_USD:
+        description: Yearly cost for a given energy carrier used in the network's supply system
+        type: float
+        unit: '[USD]'
+        values: '{0.0...n}'
+      Annual_GHG_emissions_kgCO2:
+        description: Yearly GHG-emissions from the consumption of a given energy carrier used in the network's supply system
+        type: float
+        unit: '[kg CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Annual_heat_rejection_kWh:
+        description: Annual quantity of heat of a given type rejected by the network's supply system
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Annual_cost_by_component_USD:
+        description: Annualised investment cost of components installed in the network's supply system
+        type: float
+        unit: '[USD]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: [ ]
+get_new_optimization_detailed_network_performance_file:
+  created_by:
+  - optimization_new
+  file_path: outputs/data/optimization_new/DHS_000/Supply_systems_operation_details/network_performance.csv
+  file_type: csv
+  schema:
+    columns:
+      Average hourly network losses [kWh]:
+        description: Average hourly losses across all pipes of a given network
+        type: float
+        unit: 'kWh'
+        values: '{0.0...n}'
+      Std. deviation of hourly network losses [kWh]:
+        description: Standard deviation of hourly losses across all pipes of a given network
+        type: float
+        unit: 'kWh'
+        values: '{0.0...n}'
+      Type:
+        description: Type of node (only for Point objects, 'nan' for LineString objects)
+        type: string
+        unit: 'NA'
+        values: '{"PLANT","CONSUMER","NONE"}'
+      Yearly network losses [kWh]:
+        description: Total thermal losses of the network in one year
+        type: float
+        unit: '[kWh]'
+        values: '{0.0...n}'
+      Network length [m]:
+        description: Comined length of all pipes in the network
+        type: float
+        unit: '[m]'
+        values: '{0.0...n}'
+        min: 0.0
+      Network cost [USD]:
+        description: Total construction cost of a given network
+        type: float
+        unit: '[USD - 2015]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: []
 get_new_optimization_debugging_fitness_tracker_file:
   created_by:
     - optimization_new
@@ -15696,6 +15783,63 @@ get_new_optimization_debugging_network_tracker_file:
         values: '{0.0...n}'
         min: 0.0
   used_by: [ ]
+  get_new_optimization_optimal_network_layout_file:
+    created_by:
+      - optimization_new
+    file_path: outputs/data/optimization_new/DHS_000/networks/N0000_layout.geojson
+    file_type: geojson
+    schema:
+      columns:
+        geometry:
+          description: List of Point and LineString objects to describe thermal network pipes, junctions and end-nodes
+          type: Point or LineString
+          unit: 'NA'
+          values: 'NA'
+        Building:
+          description: Building identifier (only for Point objects that represent a building's connection to the network,
+            'nan' for LineString objects)
+          type: string
+          unit: 'NA'
+          values: alphanumeric
+        Type:
+          description: Type of node (only for Point objects, 'nan' for LineString objects)
+          type: string
+          unit: 'NA'
+          values: '{"PLANT","CONSUMER","NONE"}'
+        length_m:
+          description: Length of pipe segment (only for LineString objects, 'nan' for Point objects)
+          type: float
+          unit: '[m]'
+          values: '{0.0...n}'
+          min: 0.0
+        Type_mat:
+          description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        Pipe_DN:
+          description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
+          type: float
+          unit: '[mm]'
+          values: '{0.0...n}'
+          min: 0.0
+        start node:
+          description: Node (i.e. index of Point corr. object) the pipe segments starts from (only for LineString objects)
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        end node:
+          description: Node (i.e. index of Point corr. object) the pipe segments ends at (only for LineString objects)
+          type: string
+          unit: 'NA'
+          values: 'NA'
+        D_int_m:
+          description: Exact diameter of pipe segment
+          type: float
+          unit: '[m]'
+          values: '{0.0...n}'
+          min: 0.0
+    used_by: [ ]
 get_new_optimization_debugging_supply_system_tracker_file:
   created_by:
     - optimization_new
