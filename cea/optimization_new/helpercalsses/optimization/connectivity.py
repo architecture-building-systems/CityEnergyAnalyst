@@ -196,12 +196,14 @@ class ConnectivityVector(object):
 
         return self
 
-    def as_str(self):
+    def as_str(self, for_filename=False):
         """
         Return the capacity indicator vector as single string-object (network connection values spaced by an underscore)
+        If the string is too long to be used as a filename, the string is shortened by hashing everything after the
+        first 8 values of the connectivity vector.
         """
         connectivity_str = '_'.join(map(str, self.values))
-        if len(connectivity_str) > 50:
+        if for_filename and len(connectivity_str) > 50:
             connectivity_str_start = '_'.join(map(str, self.values[:8]))
             connectivity_bytes = ' '.join(map(str, self.values[9:])).encode()
             connectivity_str_end = hashlib.sha256(connectivity_bytes).hexdigest()
