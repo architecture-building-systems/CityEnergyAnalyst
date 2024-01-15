@@ -5,6 +5,8 @@ This is a first exploration for the ETH MiBS IDP 2023.
 
 import os
 import subprocess
+import sys
+
 import cea.config
 import time
 
@@ -59,7 +61,9 @@ def exec_cea_commands(config, cea_scenario):
     optimization = config.batch_process_workflow.optimization
 
     # adding CEA to the environment
+    # Fix for running in PyCharm for users using micromamba
     my_env = os.environ.copy()
+    my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
 
     # execute selected CEA commands
     if zone_csv_to_shp:
