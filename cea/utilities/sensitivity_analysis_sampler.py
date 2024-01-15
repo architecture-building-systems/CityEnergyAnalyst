@@ -65,8 +65,7 @@ def create_inputs_directory(config, sample_n, n_variable):
 
 def main(config):
 
-    filename = config.sensitivity_analysis_tools.output_file_name
-    output_path = config.sensitivity_analysis_tools.output_path
+    output_path = config.project
 
     names_vars = ['var_1', 'var_2', 'var_3', 'var_4', 'var_5']
 
@@ -120,7 +119,7 @@ def main(config):
     # and D is the number of model inputs.
 
     # Write the results to disk
-    csv_path = os.path.join(output_path, '{filename}.csv'.format(filename=filename))
+    csv_path = os.path.join(output_path, 'sampled_variables.csv')
     print("writing sampled variables to {output_path}".format(output_path=csv_path))
     write_results(param_values, names_vars, csv_path)
 
