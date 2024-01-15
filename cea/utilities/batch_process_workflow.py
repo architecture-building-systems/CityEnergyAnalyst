@@ -17,6 +17,7 @@ __maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def exec_cea_commands(config, cea_scenario):
     """
     Automate user-defined CEA commands one after another.
@@ -59,7 +60,6 @@ def exec_cea_commands(config, cea_scenario):
 
     # adding CEA to the environment
     my_env = os.environ.copy()
-    # my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
     # execute selected CEA commands
     if zone_csv_to_shp:
@@ -149,6 +149,7 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'decentralized', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
         subprocess.run(['cea', 'optimization-new', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env)
 
+
 def main(config):
     """
     Batch processing all scenarios under a project.
@@ -173,8 +174,11 @@ def main(config):
     else:
         scenarios_list = [scenario_path]
 
-    #loop over one or all scenarios under the project
+    # loop over one or all scenarios under the project
     for scenario in scenarios_list:
+        # Ignore hidden directories
+        if scenario.startswith('.'):
+            continue
         cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
         print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
         # executing CEA commands
@@ -183,6 +187,7 @@ def main(config):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire batch processing sequence is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
