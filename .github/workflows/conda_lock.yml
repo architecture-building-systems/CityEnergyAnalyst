@@ -15,6 +15,7 @@ jobs:
       - name: Install conda-lock with Micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
+          environment-name: ci
           create-args: conda-lock
           init-shell: bash
 
