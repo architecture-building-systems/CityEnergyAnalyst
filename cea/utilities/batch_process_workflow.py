@@ -15,7 +15,7 @@ __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi, Mathias Niffeler"]
 __license__ = "MIT"
 __version__ = "0.1"
-__maintainer__ = "Zhongming Shi"
+__maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
