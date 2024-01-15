@@ -424,8 +424,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
             typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
     except KeyError:
-        raise KeyError('No building type could be found in the OSM-database, for the selected zone. Please assign  an occupancy '
-                       'type in the zone-helper settings.')
+        print('No building type could be found in the OSM-database for the selected zone. '
+              'Applying `MULTI_RES` as default type.')
+        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
+
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(
