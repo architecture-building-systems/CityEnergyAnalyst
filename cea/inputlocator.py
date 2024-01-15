@@ -561,17 +561,17 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_zone_csv(self):
-        """scenario/inputs/building-geometry/zone.csv"""
-        zone_csv_path = os.path.join(self.get_building_geometry_folder(), 'zone.csv')
-        check_cpg(zone_csv_path)
-        return zone_csv_path
+    # def get_zone_csv(self):
+    #     """scenario/inputs/building-geometry/zone.csv"""
+    #     zone_csv_path = os.path.join(self.get_building_geometry_folder(), 'zone.csv')
+    #     check_cpg(zone_csv_path)
+    #     return zone_csv_path
 
-    def get_zone_xlsx(self):
-        """scenario/inputs/building-geometry/zone.xlsx"""
-        zone_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'zone.xlsx')
-        check_cpg(zone_xlsx_path)
-        return zone_xlsx_path
+    # def get_zone_xlsx(self):
+    #     """scenario/inputs/building-geometry/zone.xlsx"""
+    #     zone_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'zone.xlsx')
+    #     check_cpg(zone_xlsx_path)
+    #     return zone_xlsx_path
 
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
@@ -592,13 +592,13 @@ class InputLocator(object):
         """scenario/inputs/building-properties/typology.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
 
-    def get_building_typology_csv(self):
-        """scenario/inputs/building-properties/typology.csv"""
-        return os.path.join(self.get_building_properties_folder(), 'typology.csv')
+    # def get_building_typology_csv(self):
+    #     """scenario/inputs/building-properties/typology.csv"""
+    #     return os.path.join(self.get_building_properties_folder(), 'typology.csv')
 
-    def get_building_typology_xlsx(self):
-        """scenario/inputs/building-properties/typology.xlsx"""
-        return os.path.join(self.get_building_properties_folder(), 'typology.xlsx')
+    # def get_building_typology_xlsx(self):
+    #     """scenario/inputs/building-properties/typology.xlsx"""
+    #     return os.path.join(self.get_building_properties_folder(), 'typology.xlsx')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/supply_systems.dbf"""
@@ -1001,17 +1001,17 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_streets_csv(self):
-        """scenario/inputs/networks/streets.csv"""
-        streets_csv_path = os.path.join(self.get_building_geometry_folder(), 'streets.csv')
-        check_cpg(streets_csv_path)
-        return streets_csv_path
-
-    def get_streets_xlsx(self):
-        """scenario/inputs/networks/streets.xlsx"""
-        streets_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'streets.xlsx')
-        check_cpg(streets_xlsx_path)
-        return streets_xlsx_path
+    # def get_streets_csv(self):
+    #     """scenario/inputs/networks/streets.csv"""
+    #     streets_csv_path = os.path.join(self.get_building_geometry_folder(), 'streets.csv')
+    #     check_cpg(streets_csv_path)
+    #     return streets_csv_path
+    #
+    # def get_streets_xlsx(self):
+    #     """scenario/inputs/networks/streets.xlsx"""
+    #     streets_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'streets.xlsx')
+    #     check_cpg(streets_xlsx_path)
+    #     return streets_xlsx_path
 
     # OUTPUTS
 
