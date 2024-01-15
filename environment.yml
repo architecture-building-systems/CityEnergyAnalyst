@@ -18,8 +18,8 @@ dependencies:
 - geopandas<0.14
 - matplotlib-base
 - networkx<3
-- numba==0.58.*
-- numpy==1.26.*
+- numba
+- numpy<1.25 # Due to python3.8 support
 - numpy-financial
 - osmnx
 - pip
