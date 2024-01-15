@@ -481,7 +481,7 @@ class FileParameter(Parameter):
             self.nullable = False
 
     def encode(self, value):
-        if value is None or value == "":
+        if value is None:
             if self.nullable:
                 return ''
             else:
