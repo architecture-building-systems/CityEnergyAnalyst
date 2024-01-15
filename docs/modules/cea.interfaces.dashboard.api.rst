@@ -9,6 +9,14 @@ cea.interfaces.dashboard.api package
 Submodules
 ----------
 
+cea.interfaces.dashboard.api.contents module
+--------------------------------------------
+
+.. automodule:: cea.interfaces.dashboard.api.contents
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cea.interfaces.dashboard.api.dashboard module
 ---------------------------------------------
 

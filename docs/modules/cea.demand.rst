@@ -33,14 +33,6 @@ cea.demand.building\_properties module
    :undoc-members:
    :show-inheritance:
 
-cea.demand.calc\_tm module
---------------------------
-
-.. automodule:: cea.demand.calc_tm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.demand.constants module
 ---------------------------
 
@@ -125,14 +117,6 @@ cea.demand.rc\_model\_SIA module
 --------------------------------
 
 .. automodule:: cea.demand.rc_model_SIA
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cea.demand.rc\_model\_sia\_cc module
-------------------------------------
-
-.. automodule:: cea.demand.rc_model_sia_cc
    :members:
    :undoc-members:
    :show-inheritance:

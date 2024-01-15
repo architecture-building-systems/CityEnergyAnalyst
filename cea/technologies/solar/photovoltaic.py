@@ -761,9 +761,10 @@ def aggregate_results_func(args):
     return aggregate_results(args[0], args[1])
 
 
-def write_aggregate_results(locator, building_names, num_process=1):
+def write_aggregate_results(config, locator, building_names, num_process=1):
     aggregated_hourly_results_df = pd.DataFrame()
     aggregated_annual_results = pd.DataFrame()
+    panel_type = config.solar.type_PVpanel
 
     pool = Pool(processes=num_process)
     args = [(locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
@@ -777,10 +778,10 @@ def write_aggregate_results(locator, building_names, num_process=1):
             aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
 
     # save hourly results
-    aggregated_hourly_results_df.to_csv(locator.PV_totals(), index=True, float_format='%.2f', na_rep='nan')
+    aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=panel_type), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(), index=True, index_label="Name",
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="Name",
                                         float_format='%.2f', na_rep='nan')
 
 
@@ -820,7 +821,7 @@ def main(config):
                                                            building_names)
 
     # aggregate results from all buildings
-    write_aggregate_results(locator, building_names, num_process)
+    write_aggregate_results(config, locator, building_names, num_process)
 
 
 if __name__ == '__main__':
