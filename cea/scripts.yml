@@ -286,7 +286,6 @@ Optimization:
       - [get_water_body_potential]
       - [get_sewage_heat_potential]
       - [get_geothermal_potential]
-      - [PV_totals]
 
   - name: optimization-new
     label: Supply system part II (centralized, beta)
