@@ -15,7 +15,7 @@ Prerequisites
 ~~~~~~~~~~~~~
 * Download and install `Homebrew <https://brew.sh/>`__. Upon finishing installing Homebrew, pay attention to the message reverted. You may also have to execute ``brew install node``.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
+* Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__. Upon finishing installing Micromamba, pay attention to the message reverted.
 
 Installation
 ~~~~~~~~~~~~
@@ -26,8 +26,8 @@ Installation
 #. Install CEA backend:
     #. Open a Terminal console
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``CONDA_SUBDIR=osx-64 mamba env create -f environment.yml`` and press ENTER.
-    #. Type ``mamba activate cea`` and press ENTER.
+    #. Type ``CONDA_SUBDIR=osx-64 micromamba env create -f environment.yml`` and press ENTER.
+    #. Type ``mircomamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
     #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
@@ -59,7 +59,7 @@ _________________________
 In order to launch the CEA dashboard, you will need to do the following **each time**:
 
 #. Open the Terminal
-#. Type ``mamba activate cea`` and press ENTER.
+#. Type ``micromamba activate cea`` and press ENTER.
 #. Type ``cea dashboard`` and press ENTER.
 #. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
 #. Navigate your Finer to this location (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``)

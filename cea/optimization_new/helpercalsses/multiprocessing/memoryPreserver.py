@@ -17,7 +17,6 @@ import inspect
 
 import cea.optimization_new as optimization_module
 
-
 class MemoryPreserver(object):
 
     def __init__(self, multiprocessing=False, class_list=None):
@@ -62,3 +61,24 @@ class MemoryPreserver(object):
             for cls_name in self.recorded_memory.keys():
                 for cls_var_name, cls_var_value in self.recorded_memory[cls_name].items():
                     setattr(memorised_classes[cls_name], cls_var_name, cls_var_value)
+
+
+    def update(self, classes=[]):
+        main_modules = [module[1] for module in inspect.getmembers(optimization_module, inspect.ismodule)]
+        classes_for_storage = [cls[1] for module in main_modules for cls in inspect.getmembers(module, inspect.isclass)
+                               if cls[0] in classes]
+        self.record_class_variables(classes_for_storage)
+
+    def clear_variables(self, variables=['_civ_memory']):
+        for cls_name in self.recorded_memory.keys():
+            for var_name, var_value in self.recorded_memory[cls_name].items():
+                if var_name in variables:
+                    self.recorded_memory[cls_name][var_name].clear()
+
+    def consolidate(self, child_process_memory, variables=['_civ_memory']):
+        for cls_name in self.recorded_memory.keys():
+            for var_name, var_value in self.recorded_memory[cls_name].items():
+                if var_name in variables:
+                    self.recorded_memory[cls_name][var_name].consolidate(
+                        child_process_memory.recorded_memory[cls_name][var_name])
+

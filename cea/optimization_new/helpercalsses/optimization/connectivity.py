@@ -114,10 +114,9 @@ class ConnectivityVector(object):
             # Set the connectivity vector
             self._connections = new_connections
 
-
     @property
     def values(self):
-        network_connection_values = [connection.network_connection for connection in self.connections]
+        network_connection_values = tuple(connection.network_connection for connection in self.connections)
         return network_connection_values
 
     @values.setter
@@ -148,6 +147,12 @@ class ConnectivityVector(object):
                              "selection functions need the attributes of that class to operate properly.")
         else:
             self._fitness = new_fitness
+
+    def __hash__(self):
+        return hash(self.values)
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.values == other.values
 
     def __len__(self):
         return len(self.connections)

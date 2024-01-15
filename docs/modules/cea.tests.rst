@@ -57,14 +57,6 @@ cea.tests.test\_check\_for\_radiation\_input\_in\_demand\_script module
    :undoc-members:
    :show-inheritance:
 
-cea.tests.test\_chiller\_vapor\_compression module
---------------------------------------------------
-
-.. automodule:: cea.tests.test_chiller_vapor_compression
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.tests.test\_config module
 -----------------------------
 
@@ -77,6 +69,14 @@ cea.tests.test\_dbf module
 --------------------------
 
 .. automodule:: cea.tests.test_dbf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cea.tests.test\_district\_cooling module
+----------------------------------------
+
+.. automodule:: cea.tests.test_district_cooling
    :members:
    :undoc-members:
    :show-inheritance:
