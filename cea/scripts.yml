@@ -356,15 +356,6 @@ Utilities:
                   'batch-process-workflow:thermal-network-operation', 'batch-process-workflow:optimization'
     ]
 
-  - name: create-new-scenario
-    label: Create new Project/Scenario
-    description: Creates a new project and scenario following the CEA-format input directories. Expand Section Optional to view import options for creating a new scenario.
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.create_new_scenario
-    parameters: ['create-new-scenario:project-name', 'create-new-scenario:output-path', 'create-new-scenario:scenario-name',
-                 'create-new-scenario:surroundings'
-    ]
-
   - name: data-migrator
     label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
