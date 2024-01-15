@@ -7,7 +7,6 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from SALib.sample import sobol
-import subprocess
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
@@ -47,28 +46,22 @@ def write_results(param_values, names_vars, output_path):
     sample = pd.DataFrame(param_values, columns=names_vars)
     sample.to_csv(output_path)
 
+
 def create_inputs_directory(config, sample_n, n_variable):
 
     # total number of scenarios
     n_scenario = sample_n * (2 * n_variable + 2)
-    # project_path = config.general.project
-
-    # setting up environment for sub-processing
-    my_env = os.environ.copy()
-    my_env['PATH'] = f"/Users/zshi/micromamba/envs/cea/bin:{my_env['PATH']}"  #todo: un-hard-coded the path for PyCharm, and it is working on CEA Dashboard now.
 
     # create directory for the minimum CEA inputs
     for n in range(1, n_scenario+1):
         scenario = 'SA_{n}'.format(n=n)     # scenario_name = SA_1, 2, 3,...
 
-        subprocess.run(['cea', 'create-new-scenario',
-                        '--scenario-name', '{scenario}'.format(scenario=scenario),
-                        ], env=my_env)
+        scenario_path = os.path.join(config.general.project, scenario)
+        locator = cea.inputlocator.InputLocator(scenario_path)
 
-        # inputs_path = os.path.join(project_path, '{scenario}/inputs'.format(scenario=scenario))
-        # os.makedirs(inputs_path, exist_ok=True)
-        # os.makedirs(os.path.join(inputs_path, 'building-geometry'), exist_ok=True)
-        # os.makedirs(os.path.join(inputs_path, 'building-properties'), exist_ok=True)
+        os.makedirs(locator.get_building_geometry_folder(), exist_ok=True)
+        os.makedirs(locator.get_building_properties_folder(), exist_ok=True)
+
 
 def main(config):
 
@@ -135,6 +128,7 @@ def main(config):
     if create_directory:
         print("creating parallel CEA scenario inputs directories under current project.")
         create_inputs_directory(config, sample_n, n_variable)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
