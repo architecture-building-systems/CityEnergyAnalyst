@@ -1,16 +1,17 @@
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 """
+import warnings
 
 import numpy as np
 import pandas as pd
 import os
 import cea.config
-import pysal.lib
-# import PySAL without the warning
-import warnings
 
-warnings.filterwarnings("ignore", category=UserWarning)
+# import PySAL without the warning
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import pysal.lib
 
 
 __author__ = "Clayton Miller, Zhongming Shi"
