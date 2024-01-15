@@ -322,7 +322,7 @@ Utilities:
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario',
-                  'sensitivity-analysis-tools:output-file-name', 'sensitivity-analysis-tools:output-path',
+                  'sensitivity-analysis-tools:create-scenario-directory',
                   'sensitivity-analysis-tools:n',
                   'sensitivity-analysis-tools:having-variable-1',
                   'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',
@@ -333,8 +333,7 @@ Utilities:
                   'sensitivity-analysis-tools:having-variable-4',
                   'sensitivity-analysis-tools:variable-4-lower-bound', 'sensitivity-analysis-tools:variable-4-upper-bound',
                   'sensitivity-analysis-tools:having-variable-5',
-                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound',
-                  'sensitivity-analysis-tools:create-scenario-directory'
+                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound'
     ]
 
   - name: batch-process-workflow
