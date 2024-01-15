@@ -19,7 +19,7 @@ dependencies:
 - matplotlib-base
 - networkx<3
 - numba
-- numpy<1.24
+- numpy
 - numpy-financial
 - osmnx
 - pip
