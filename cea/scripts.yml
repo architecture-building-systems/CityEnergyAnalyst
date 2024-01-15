@@ -1,7 +1,7 @@
-Data Management:
+Data management:
 
   - name: archetypes-mapper
-    label: Archetypes Mapper
+    label: Archetypes mapper
     description: Assign building properties and systems types from the Archetypes DataBase
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
@@ -48,7 +48,7 @@ Data Management:
 
 Demand forecasting:
   - name: radiation
-    label: Building Solar radiation
+    label: Building solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
@@ -63,7 +63,7 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: radiation-simplified
-    label: Building Solar radiation (simplified, beta version)
+    label: Building solar radiation (simplified, beta)
     description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
     interfaces: [ cli, dashboard ]
     module: cea.resources.radiation.simplified.main
@@ -78,7 +78,7 @@ Demand forecasting:
       - [ get_weather_file ]
 
   - name: schedule-maker
-    label: Building Schedules
+    label: Building occupancy
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
     interfaces: [dashboard, cli]
     module: cea.demand.schedule_maker.schedule_maker
@@ -95,7 +95,7 @@ Demand forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: Building Energy demand
+    label: Building energy demand
     description: Calculate the Demand
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -120,7 +120,7 @@ Demand forecasting:
       - [get_radiation_building, building_name]
       - [get_schedule_model_file, building_name]
 
-Life Cycle Analysis:
+Life cycle analysis:
 
   - name: emissions
     label: Emissions
@@ -136,7 +136,7 @@ Life Cycle Analysis:
       - [get_building_supply]
 
   - name: system-costs
-    label: System Costs
+    label: System costs
     description: Calculate costs due to supply systems
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
@@ -233,7 +233,7 @@ Energy potentials:
 Networks:
 
   - name: network-layout
-    label: Thermal Network Part I (Layout)
+    label: Thermal network Part I (layout)
     description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
@@ -244,7 +244,7 @@ Networks:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal Network Part II (simulation)
+    label: Thermal network Part II (simulation)
     description: Solve the thermal hydraulic network
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -268,14 +268,14 @@ Optimization:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply System Part I (decentralized)
+    label: Supply system Part I (decentralized)
     description: Run optimization for decentralized operation
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
-    label: Supply System Part II (centralized)
+    label: Supply system Part II (centralized)
     description: Run optimization for centralized operation
     interfaces: [cli, dashboard]
     module: cea.optimization.optimization_main
@@ -289,7 +289,7 @@ Optimization:
       - [PV_totals]
 
   - name: optimization-new
-    label: Supply System Part II (centralized- new script, beta version)
+    label: Supply system part II (centralized, beta)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -300,37 +300,78 @@ Optimization:
       - [get_total_demand]
 
 Utilities:
+
+  - name: dbf-to-csv-to-dbf
+    label: DBF to CSV to DBF
+    description: dbf => csv (xlsx) => dbf
+    interfaces: [cli, dashboard]
+    module: cea.utilities.dbf
+    parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name']
+
+  - name: shp-to-csv-to-shp
+    label: SHP to CSV to SHP
+    description: shp => csv (xlsx) => shp
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.shapefile
+    parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',
+                  'shapefile-tools:output-path', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon']
+
+  - name: sensitivity-analysis-sampler
+    label: Generate samples for SA
+    description: Generate samples for sensitivity analysis using Sobol Method
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.sensitivity_analysis_sampler
+    parameters: [ 'general:scenario',
+                  'sensitivity-analysis-tools:create-scenario-directory',
+                  'sensitivity-analysis-tools:n',
+                  'sensitivity-analysis-tools:having-variable-1',
+                  'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-2',
+                  'sensitivity-analysis-tools:variable-2-lower-bound', 'sensitivity-analysis-tools:variable-2-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-3',
+                  'sensitivity-analysis-tools:variable-3-lower-bound', 'sensitivity-analysis-tools:variable-3-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-4',
+                  'sensitivity-analysis-tools:variable-4-lower-bound', 'sensitivity-analysis-tools:variable-4-upper-bound',
+                  'sensitivity-analysis-tools:having-variable-5',
+                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound'
+    ]
+
+  - name: batch-process-workflow
+    label: Batch process Workflow (beta)
+    description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.batch_process_workflow
+    parameters: [ 'general:scenario' , 'batch-process-workflow:all-scenarios', 'batch-process-workflow:zone-csv-to-shp', 'batch-process-workflow:typology-csv-to-dbf',
+                  'batch-process-workflow:data-initializer', 'batch-process-workflow:archetypes-mapper',
+                  'batch-process-workflow:weather-helper', 'batch-process-workflow:surroundings-helper',
+                  'batch-process-workflow:terrain-helper', 'batch-process-workflow:streets-helper',
+                  'batch-process-workflow:streets-csv-to-shp',
+                  'batch-process-workflow:radiation',
+                  'batch-process-workflow:radiation-simplified',
+                  'batch-process-workflow:demand-forecasting',
+                  'batch-process-workflow:emissions', 'batch-process-workflow:system-costs',
+                  'batch-process-workflow:solar-potential-pv', 'batch-process-workflow:solar-potential-other', 'batch-process-workflow:shallow-geothermal-potential',
+                  'batch-process-workflow:water-body-potential', 'batch-process-workflow:sewage-heat-potential', 'batch-process-workflow:thermal-network-layout',
+                  'batch-process-workflow:thermal-network-operation', 'batch-process-workflow:optimization'
+    ]
+
   - name: data-migrator
     label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
                   Please consider running this for scenario created before v3.22.
                   NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [cli, dashboard]
+    interfaces: [ cli, dashboard ]
     module: cea.datamanagement.data_migrator
-    parameters: ['general:scenario']
+    parameters: [ 'general:scenario' ]
     input-files:
-      - [get_database_construction_standards]
-
-  - name: dbf-to-excel-to-dbf
-    label: DBF to Excel to DBF
-    description: dbf => xls => DBF
-    interfaces: [cli, dashboard]
-    module: cea.utilities.dbf
-    parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name' ]
+      - [ get_database_construction_standards ]
 
   - name: data-initializer
-    label: Database Initializer
+    label: Database initializer
     description: Initialize databases for CEA
     interfaces: [cli, dashboard]
     module: cea.datamanagement.data_initializer
     parameters: ['general:scenario', data-initializer]
-
-  - name: create-new-scenario
-    label: Create new scenario
-    description: Creates a new scenario
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.create_new_scenario
-    parameters: [create-new-scenario]
 
   - name: rename-building
     label: Rename building
@@ -342,7 +383,7 @@ Utilities:
       - [get_zone_geometry]
 
   - name: create-mixed-use-type
-    label: Create mixed use-type
+    label: Create mixed-use type
     description: Creates a new use-type by aggregating values from a list of different use-types
     interfaces: [cli, dashboard]
     module: cea.utilities.create_mixed_use_type
@@ -358,7 +399,7 @@ Utilities:
     parameters: [test]
 
   - name: run-unit-tests
-    label: Unit Tests
+    label: Unit tests
     description: Run all the unit tests in the cea/tests folder
     interfaces: [test, cli, dashboard]
     module: cea.tests.run_unit_tests
@@ -451,7 +492,7 @@ default:
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow
-    parameters: [workflow]
+    parameters: [workflow, 'general:scenario']
 
 Documentation:
   - name: html
