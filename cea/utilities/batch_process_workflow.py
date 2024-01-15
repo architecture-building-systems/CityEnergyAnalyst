@@ -12,7 +12,7 @@ import time
 
 __author__ = "Zhongming Shi, Mathias Niffeler"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Mathias Niffeler, Zhongming Shi"]
+__credits__ = ["Zhongming Shi, Mathias Niffeler"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Zhongming Shi"
