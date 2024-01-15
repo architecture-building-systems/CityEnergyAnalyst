@@ -1,0 +1,21 @@
+name: conda-lock
+
+on:
+  workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install conda-lock with Micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          create-args: conda-lock
+          init-shell: bash
+
+      - name: Run conda-lock
+        run: conda-lock lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64
+        shell: bash -el {0}
