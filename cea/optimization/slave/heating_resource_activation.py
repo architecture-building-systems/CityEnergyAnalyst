@@ -62,11 +62,11 @@ def heating_source_activator(Q_therm_req_W,
             if Q_heat_unmet_W <= Q_output_CC_max_W:  # Normal operation Possible within partload regime
                 Q_CHP_gen_W = Q_heat_unmet_W
                 NG_CHP_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
+                E_CHP_gen_W = float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
             else:  # Only part of the demand can be delivered as 100% load achieved
                 Q_CHP_gen_W = Q_output_CC_max_W
                 NG_CHP_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_CHP_gen_W = np.float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
+                E_CHP_gen_W = float(eta_elec_interpol(NG_CHP_req_W)) * NG_CHP_req_W
         else:
             NG_CHP_req_W = 0.0
             E_CHP_gen_W = 0.0

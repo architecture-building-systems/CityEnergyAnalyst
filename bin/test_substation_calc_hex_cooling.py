@@ -64,7 +64,7 @@ def calc_HEX_cooling_orig(Q, UA, thi, tho, tci, ch):
     else:
         tco = 0
         cc = 0
-    return np.float(tco), np.float(cc)
+    return float(tco), float(cc)
 
 
 if __name__ == '__main__':
