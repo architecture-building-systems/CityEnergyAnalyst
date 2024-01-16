@@ -20,5 +20,5 @@ jobs:
           init-shell: bash
 
       - name: Run conda-lock
-        run: conda-lock lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64
+        run: conda-lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64 --lockfile ${{ runner.temp }}/conda-lock.yml
         shell: bash -el {0}
