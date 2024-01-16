@@ -6,8 +6,8 @@
     :alt: Repo Size
 .. |lines_of_code| image:: https://img.shields.io/tokei/lines/github/architecture-building-systems/CityEnergyAnalyst
     :alt: Lines of code
-.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8327389.svg
-   :target: https://doi.org/10.5281/zenodo.8327389
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.10520492.svg
+   :target: https://doi.org/10.5281/zenodo.10520492
 
 .. image:: cea_logo.png
     :height: 420 px
