@@ -35,4 +35,4 @@ We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console
 Cite us:
 --------
 
-For V3.34.1 (stable): https://doi.org/10.5281/zenodo.8327389
+For V3.35.0 (stable): https://doi.org/10.5281/zenodo.10520492
