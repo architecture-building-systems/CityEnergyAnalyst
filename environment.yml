@@ -1,41 +1,40 @@
 name: cea
 channels:
 - conda-forge
-- defaults
 dependencies:
 - deap
 - ephem
-- flask
-- flask-cors
-- flask-restx
-- flask-socketio
-- notebook
-- openpyxl
-- plotly
-- sphinx
-- utm
 - fiona
-- geopandas<0.14
-- matplotlib-base
-- networkx<3
-- numba
-- numpy<1.25 # Due to python3.8 support
+- geopandas=0.13 # Due to python3.8 support
+- networkx=2.8
+- numba=0.57
+- numpy=1.24 # Due to python3.8 support
 - numpy-financial
-- osmnx
+- osmnx=1.8
 - pip
 - psutil
 - libpysal
 - pythonocc-core
-- pytz
 - pvlib-python
-- scipy
-- shapely<2
+- scipy=1.10 # Due to python3.8 support
+- shapely=2
 - pyyaml
 - timezonefinder
-- python-cufflinks
 - cvxopt # For wntr
 - python=3.8 # Held back by wntr version
 - pip:
+  - cufflinks
+  - flask
+  - flask-cors
+  - flask-restx
+  - flask-socketio
+  - matplotlib
+  - notebook
+  - openpyxl
+  - plotly
+  - pytz # Not required from 3.9
+  - sphinx
+  - utm
   - xlrd
   - xlwt
   - staticmap
