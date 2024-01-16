@@ -39,6 +39,6 @@ dependencies:
   - xlwt
   - staticmap
   - wntr==0.2.3
-  - git+https://github.com/reyery/py4design.git@be978c1 # modified p4design to remove deprecated functions
+  - git+https://github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
   - simple-websocket
   - pyarrow
