@@ -29,7 +29,7 @@ dependencies:
 - pytz
 - pvlib-python
 - scipy
-- shapely
+- shapely<2
 - pyyaml
 - timezonefinder
 - python-cufflinks
