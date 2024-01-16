@@ -41,6 +41,23 @@ Installation
         *   If you are running the *Building Solar radiation* tool using the dashboard, make sure the parameter *daysim-bin-directory* (under *Advanced*) points to the correct Daysim binary folder (by default, this should be ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst/setup/Dependencies/Daysim/mac``).
         *   If you are using the command line interface or Pycharm, you will need to modify the same parameter (i.e., ``config.radiation.daysim_bin_directory``) in the config file (usually located in ``/Users/your_name/cea.config``, where *your_name* represents your user name on your Mac).
 
+Update existing installation
+_________________________
+These steps would only work if your current installation is installed using the steps above.
+
+#. Update CEA backend:
+    #. Open a Terminal console
+    #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
+    #. Type ``git pull`` and press ENTER.
+    #. Type ``mircomamba activate cea`` and press ENTER.
+    #. Type ``micromamba update -f environment.yml`` and press ENTER.
+#. Update the CEA dashboard:
+    #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
+    #. Type ``git pull`` and press ENTER.
+    #. Type ``yarn`` and press ENTER.
+    #. Type ``yarn package`` and press ENTER.
+    #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+
 Interfaces
 ~~~~~~~~~~
 
