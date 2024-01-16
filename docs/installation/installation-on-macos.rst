@@ -25,12 +25,12 @@ Installation
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
 #. Install CEA backend:
     #. Open a Terminal console
-    #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
+    #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
     #. Type ``micromamba env create -f environment.yml`` and press ENTER.
     #. Type ``mircomamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
-    #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
+    #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn package`` and press ENTER.
