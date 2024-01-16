@@ -58,7 +58,7 @@ def calc_HEX_heating_orig(Q, UA, thi, tco, tci, cc):
     else:
         tho = 0
         ch = 0
-    return np.float(tho), np.float(ch)
+    return float(tho), float(ch)
 
 
 if __name__ == '__main__':

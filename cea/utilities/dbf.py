@@ -1,18 +1,14 @@
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 """
-import warnings
+from typing import List
 
 import numpy as np
 import pandas as pd
 import os
 import cea.config
 
-# import PySAL without the warning
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import pysal.lib
-
+import libpysal.io
 
 __author__ = "Clayton Miller, Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
@@ -33,7 +29,7 @@ TYPE_MAPPING = {
     np.bool_: ('L', 1, 0)}
 
 
-def dataframe_to_dbf(df, dbf_path, specs=None):
+def dataframe_to_dbf(df: pd.DataFrame, dbf_path: str, specs=None) -> str:
     """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
 
     :type df: pandas.Dataframe
@@ -54,31 +50,29 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
             l = max(l, df[df.columns[i]].apply(len).max())
             specs[i] = t, l, d
 
-    dbf = pysal.lib.io.open(dbf_path, 'w', 'dbf')
+    dbf = libpysal.io.open(dbf_path, 'w', 'dbf')
     dbf.header = list(df.columns)
     dbf.field_spec = specs
-    for row in range(len(df)):
-        dbf.write(df.iloc[row])
+    for _, row in df.iterrows():
+        dbf.write(row)
     dbf.close()
     return dbf_path
 
 
-def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False):
-    dbf = pysal.lib.io.open(dbf_path)
-    if cols:
-        if include_index:
-            cols.append(index)
-        vars_to_read = cols
-    else:
-        vars_to_read = dbf.header
-    data = dict([(var, dbf.by_col(var)) for var in vars_to_read])
+def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.DataFrame:
+    dbf = libpysal.io.open(dbf_path)
+    if cols is None:
+        cols = dbf.header
+
+    data = dbf.read()
+    df = pd.DataFrame(data, columns=dbf.header)
+    dbf.close()
+
+    out = df.loc[:, cols]
     if index:
-        index = dbf.by_col(index)
-        dbf.close()
-        return pd.DataFrame(data, index=index)
-    else:
-        dbf.close()
-        return pd.DataFrame(data)
+        out = out.set_index(index)
+
+    return out
 
 
 def csv_xlsx_to_dbf(input_file, output_path, output_file_name):
