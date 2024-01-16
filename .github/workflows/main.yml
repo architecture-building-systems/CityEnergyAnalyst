@@ -11,13 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Required for daysim
-      - name: Install Dependencies
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get clean && sudo apt-get update
-          sudo apt-get install -y libgl1
-
       - name: Install Conda environment with Micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
