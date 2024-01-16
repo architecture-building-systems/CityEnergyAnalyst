@@ -19,6 +19,8 @@ Prerequisites
 
 Installation
 ~~~~~~~~~~~~
+Fresh installation
+_________________________
 .. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
@@ -51,7 +53,7 @@ These steps would only work if your current installation is installed using the 
     #. Type ``git pull`` and press ENTER.
     #. Type ``mircomamba activate cea`` and press ENTER.
     #. Type ``micromamba update -f environment.yml`` and press ENTER.
-#. Update the CEA dashboard:
+#. Update the CEA Dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
