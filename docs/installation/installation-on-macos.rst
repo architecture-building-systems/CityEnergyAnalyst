@@ -26,7 +26,7 @@ Installation
 #. Install CEA backend:
     #. Open a Terminal console
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``CONDA_SUBDIR=osx-64 micromamba env create -f environment.yml`` and press ENTER.
+    #. Type ``micromamba env create -f environment.yml`` and press ENTER.
     #. Type ``mircomamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
