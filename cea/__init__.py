@@ -1,5 +1,8 @@
 __version__ = "3.34.2"
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 class ConfigError(Exception):
     """Raised when the configuration of a tool contains some invalid values."""
