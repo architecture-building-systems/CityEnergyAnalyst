@@ -471,6 +471,10 @@ def get_choices(choice_properties, path):
         out.append({'value': choice_properties['none_value'], 'label': ''})
     for choice in choices:
         label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
+
+        # Prevent labels to be encoded as NaN in JSON
+        if str(label) == 'nan':
+            label = 'none'
         out.append({'value': choice, 'label': label})
     return out
 
