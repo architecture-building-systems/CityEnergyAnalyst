@@ -51,7 +51,7 @@ These steps would only work if your current installation is installed using the 
     #. Open a Terminal console
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
-    #. Type ``mircomamba activate cea`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``micromamba update -f environment.yml`` and press ENTER.
 #. Update the CEA Dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
