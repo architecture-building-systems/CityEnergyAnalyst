@@ -35,4 +35,4 @@ We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console
 Cite us:
 --------
 
-For V3.35.0 (stable): https://doi.org/10.5281/zenodo.10520492
+The CEA Team (2024) City Energy Analyst V3.35.1: https://zenodo.org/records/10524765
