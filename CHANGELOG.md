@@ -1,3 +1,4 @@
+- 2024-01-17 - 3.35.0 - #3453 Fix dashboard server not shutting down
 - 2024-01-17 - 3.35.0 - #3452 Prevent labels from being encoded as NaN in JSON
 - 2024-01-17 - 3.35.0 - #3447 Release 3.35.0
 - 2024-01-16 - 3.34.2 - #3446 Add update instructions for macos
