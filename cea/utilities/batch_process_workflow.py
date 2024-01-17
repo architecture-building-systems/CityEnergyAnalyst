@@ -43,7 +43,6 @@ def exec_cea_commands(config, cea_scenario):
     streets_helper = config.batch_process_workflow.streets_helper
 
     radiation = config.batch_process_workflow.radiation
-    radiation_simplified = config.batch_process_workflow.radiation_simplified
     demand_forecasting = config.batch_process_workflow.demand_forecasting
 
     emissions = config.batch_process_workflow.emissions
@@ -120,11 +119,8 @@ def exec_cea_commands(config, cea_scenario):
                         '--polygon', 'false',
                         ], env=my_env, check=True)
 
-    if radiation and not radiation_simplified:
+    if radiation:
         subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True)
-    if radiation and radiation_simplified:
-        subprocess.run(
-            ['cea', 'radiation-simplified', '--scenario', cea_scenario], env=my_env, check=True)
     if demand_forecasting:
         subprocess.run(['cea', 'schedule-maker', '--scenario', cea_scenario], env=my_env, check=True)
         subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True)
