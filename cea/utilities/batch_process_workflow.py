@@ -72,10 +72,11 @@ def exec_cea_commands(config, cea_scenario):
             zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.xlsx')
         zone_out_path = os.path.join(cea_scenario, 'inputs/building-geometry')
 
-        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
-                        '--input-file', '{zone_csv_path}'.format(zone_csv_path=zone_csv_path),
+        subprocess.run(['cea', 'shp-to-csv-to-shp', 
+                        '--scenario', cea_scenario,
+                        '--input-file', zone_csv_path,
                         '--output-file-name', 'zone.shp',
-                        '--output-path', '{zone_out_path}'.format(zone_out_path=zone_out_path),
+                        '--output-path', zone_out_path,
                         # '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
                         '--polygon', 'true',
                         ], env=my_env, check=True)
@@ -85,37 +86,32 @@ def exec_cea_commands(config, cea_scenario):
         if not os.path.exists(typology_csv_path):
             typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.xlsx')
         typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
-        subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
-                        '--input-file', '{typology_csv_path}'.format(typology_csv_path=typology_csv_path),
+        subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', cea_scenario,
+                        '--input-file', typology_csv_path,
                         '--output-file-name', 'typology.dbf',
-                        '--output-path', '{typology_out_path}'.format(typology_out_path=typology_out_path),
+                        '--output-path', typology_out_path,
                         ], env=my_env, check=True)
 
     if data_initializer:
-        subprocess.run(['cea', 'data-initializer', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'data-initializer', '--scenario', cea_scenario], env=my_env, check=True)
     if archetypes_mapper:
-        subprocess.run(['cea', 'archetypes-mapper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'archetypes-mapper', '--scenario', cea_scenario], env=my_env, check=True)
     if weather_helper:
-        subprocess.run(['cea', 'weather-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'weather-helper', '--scenario', cea_scenario], env=my_env, check=True)
     if surroundings_helper:
-        subprocess.run(['cea', 'surroundings-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'surroundings-helper', '--scenario', cea_scenario], env=my_env, check=True)
     if terrain_helper:
-        subprocess.run(['cea', 'terrain-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'terrain-helper', '--scenario', cea_scenario], env=my_env, check=True)
     if streets_helper:
-        subprocess.run(['cea', 'streets-helper', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'streets-helper', '--scenario', cea_scenario], env=my_env, check=True)
+
     if streets_csv_to_shp:
         streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.csv')
         if not os.path.exists(streets_csv_path):
             streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.xlsx')
         streets_out_path = os.path.join(cea_scenario, 'inputs/networks')
         reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.shp')
-        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario),
+        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', cea_scenario,
                         '--input-file', '{streets_csv_path}'.format(streets_csv_path=streets_csv_path),
                         '--output-file-name', 'streets.shp',
                         '--output-path', '{streets_out_path}'.format(streets_out_path=streets_out_path),
@@ -125,61 +121,45 @@ def exec_cea_commands(config, cea_scenario):
                         ], env=my_env, check=True)
 
     if radiation and not radiation_simplified:
-        subprocess.run(['cea', 'radiation', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True)
     if radiation and radiation_simplified:
         subprocess.run(
-            ['cea', 'radiation-simplified', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-            env=my_env, check=True)
+            ['cea', 'radiation-simplified', '--scenario', cea_scenario], env=my_env, check=True)
     if demand_forecasting:
-        subprocess.run(['cea', 'schedule-maker', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
-        subprocess.run(['cea', 'demand', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env,
-                       check=True)
+        subprocess.run(['cea', 'schedule-maker', '--scenario', cea_scenario], env=my_env, check=True)
+        subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True)
 
     if emissions:
-        subprocess.run(['cea', 'emissions', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True)
     if system_costs:
-        subprocess.run(['cea', 'system-costs', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True)
 
     if solar_pv:
-        subprocess.run(['cea', 'photovoltaic', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'photovoltaic', '--scenario', cea_scenario], env=my_env, check=True)
     if solar_other:
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'FP', '--scenario',
-                        '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env, check=True)
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'ET', '--scenario',
-                        '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env, check=True)
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'FP', '--scenario',
-                        '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env, check=True)
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'ET', '--scenario',
-                        '{cea_scenario}'.format(cea_scenario=cea_scenario)], env=my_env, check=True)
-    if shallow_geothermal:
-        subprocess.run(
-            ['cea', 'shallow-geothermal-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-            env=my_env, check=True)
-    if water_body:
-        subprocess.run(
-            ['cea', 'water-body-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-            env=my_env, check=True)
-    if sewage_heat:
-        subprocess.run(['cea', 'sewage-potential', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
+        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'FP', '--scenario', cea_scenario],
                        env=my_env, check=True)
+        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'ET', '--scenario', cea_scenario],
+                       env=my_env, check=True)
+        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'FP', '--scenario', cea_scenario],
+                       env=my_env, check=True)
+        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'ET', '--scenario', cea_scenario],
+                       env=my_env, check=True)
+    if shallow_geothermal:
+        subprocess.run(['cea', 'shallow-geothermal-potential', '--scenario', cea_scenario], env=my_env, check=True)
+    if water_body:
+        subprocess.run(['cea', 'water-body-potential', '--scenario', cea_scenario], env=my_env, check=True)
+    if sewage_heat:
+        subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True)
 
     if thermal_network_layout:
-        subprocess.run(['cea', 'network-layout', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'network-layout', '--scenario', cea_scenario], env=my_env, check=True)
     if thermal_network_operation:
-        subprocess.run(['cea', 'thermal-network', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'thermal-network', '--scenario', cea_scenario], env=my_env, check=True)
 
     if optimization:
-        subprocess.run(['cea', 'decentralized', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
-        subprocess.run(['cea', 'optimization-new', '--scenario', '{cea_scenario}'.format(cea_scenario=cea_scenario)],
-                       env=my_env, check=True)
+        subprocess.run(['cea', 'decentralized', '--scenario', cea_scenario], env=my_env, check=True)
+        subprocess.run(['cea', 'optimization-new', '--scenario', cea_scenario], env=my_env, check=True)
 
 
 def main(config):
@@ -212,8 +192,8 @@ def main(config):
         if scenario.startswith('.') or os.path.isfile(scenario):
             continue
 
-        cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
-        print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
+        cea_scenario = os.path.join(project_path, scenario)
+        print(f'Executing CEA simulations on {cea_scenario}.')
         try:
             # executing CEA commands
             exec_cea_commands(config, cea_scenario)
