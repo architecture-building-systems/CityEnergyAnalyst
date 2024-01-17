@@ -209,7 +209,7 @@ def main(config):
     # loop over one or all scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
-        if scenario.startswith('.'):
+        if scenario.startswith('.') or os.path.isfile(scenario):
             continue
 
         cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
