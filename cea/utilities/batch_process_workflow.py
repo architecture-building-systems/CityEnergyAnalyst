@@ -206,22 +206,25 @@ def main(config):
     else:
         scenarios_list = [scenario_path]
 
-    try:
-        # loop over one or all scenarios under the project
-        for scenario in scenarios_list:
-            # Ignore hidden directories
-            if scenario.startswith('.'):
-                continue
-            cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
-            print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
+    # loop over one or all scenarios under the project
+    for scenario in scenarios_list:
+        # Ignore hidden directories
+        if scenario.startswith('.'):
+            continue
+
+        cea_scenario = os.path.join(project_path, '{scenario}'.format(scenario=scenario))
+        print('Executing CEA simulations on {cea_scenario}.'.format(cea_scenario=cea_scenario))
+        try:
             # executing CEA commands
             exec_cea_commands(config, cea_scenario)
+        except subprocess.CalledProcessError as e:
+            print("One of the scripts failed.")
+            print(f"ERROR: {e.stderr}")
+            return
 
-        # Print the time used for the entire processing
-        time_elapsed = time.perf_counter() - t0
-        print('The entire batch processing sequence is now completed - time elapsed: %d.2 seconds' % time_elapsed)
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: {e.stderr}")
+    # Print the time used for the entire processing
+    time_elapsed = time.perf_counter() - t0
+    print('The entire batch processing sequence is now completed - time elapsed: %d.2 seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
