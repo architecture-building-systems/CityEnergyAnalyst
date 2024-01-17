@@ -28,6 +28,8 @@ dependencies:
   - flask-cors
   - flask-restx
   - flask-socketio
+  - gevent # Required for flask-socketio
+  - gevent-websocket # Required for flask-socketio
   - matplotlib
   - notebook
   - openpyxl
