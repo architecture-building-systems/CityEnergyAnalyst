@@ -1,3 +1,5 @@
+- 2024-01-17 - 3.35.0 - #3452 Prevent labels from being encoded as NaN in JSON
+- 2024-01-17 - 3.35.0 - #3447 Release 3.35.0
 - 2024-01-16 - 3.34.2 - #3446 Add update instructions for macos
 - 2024-01-16 - 3.34.2 - #3408 Enable Mac ARM support
 - 2024-01-15 - 3.34.2 - #3444 batch processing and linkage to rhino/grasshopper
