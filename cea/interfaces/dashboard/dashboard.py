@@ -1,4 +1,3 @@
-import signal
 import webbrowser
 
 from flask import Flask
@@ -43,7 +42,7 @@ def main(config):
         webbrowser.open(url)
 
     print("Press Ctrl+C to stop server")
-    socketio.run(app, host=config.server.host, port=config.server.port, allow_unsafe_werkzeug=True)
+    socketio.run(app, host=config.server.host, port=config.server.port)
 
     print("\nserver exited")
 

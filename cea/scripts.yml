@@ -305,54 +305,28 @@ Utilities:
     description: dbf => csv (xlsx) => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
-    parameters: ['general:scenario', 'dbf-tools:input-file', 'dbf-tools:output-path','dbf-tools:output-file-name']
+    parameters: ['general:scenario', dbf-tools]
 
   - name: shp-to-csv-to-shp
     label: SHP to CSV to SHP
     description: shp => csv (xlsx) => shp
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
-    parameters: [ 'general:scenario', 'shapefile-tools:input-file', 'shapefile-tools:output-file-name',
-                  'shapefile-tools:output-path', 'shapefile-tools:reference-shapefile', 'shapefile-tools:polygon']
+    parameters: [ 'general:scenario', shapefile-tools]
 
   - name: sensitivity-analysis-sampler
     label: Generate samples for SA
     description: Generate samples for sensitivity analysis using Sobol Method
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
-    parameters: [ 'general:scenario',
-                  'sensitivity-analysis-tools:create-scenario-directory',
-                  'sensitivity-analysis-tools:n',
-                  'sensitivity-analysis-tools:having-variable-1',
-                  'sensitivity-analysis-tools:variable-1-lower-bound', 'sensitivity-analysis-tools:variable-1-upper-bound',
-                  'sensitivity-analysis-tools:having-variable-2',
-                  'sensitivity-analysis-tools:variable-2-lower-bound', 'sensitivity-analysis-tools:variable-2-upper-bound',
-                  'sensitivity-analysis-tools:having-variable-3',
-                  'sensitivity-analysis-tools:variable-3-lower-bound', 'sensitivity-analysis-tools:variable-3-upper-bound',
-                  'sensitivity-analysis-tools:having-variable-4',
-                  'sensitivity-analysis-tools:variable-4-lower-bound', 'sensitivity-analysis-tools:variable-4-upper-bound',
-                  'sensitivity-analysis-tools:having-variable-5',
-                  'sensitivity-analysis-tools:variable-5-lower-bound', 'sensitivity-analysis-tools:variable-5-upper-bound'
-    ]
+    parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
   - name: batch-process-workflow
     label: Batch process Workflow (beta)
     description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
-    parameters: [ 'general:scenario' , 'batch-process-workflow:all-scenarios', 'batch-process-workflow:zone-csv-to-shp', 'batch-process-workflow:typology-csv-to-dbf',
-                  'batch-process-workflow:data-initializer', 'batch-process-workflow:archetypes-mapper',
-                  'batch-process-workflow:weather-helper', 'batch-process-workflow:surroundings-helper',
-                  'batch-process-workflow:terrain-helper', 'batch-process-workflow:streets-helper',
-                  'batch-process-workflow:streets-csv-to-shp',
-                  'batch-process-workflow:radiation',
-                  'batch-process-workflow:radiation-simplified',
-                  'batch-process-workflow:demand-forecasting',
-                  'batch-process-workflow:emissions', 'batch-process-workflow:system-costs',
-                  'batch-process-workflow:solar-potential-pv', 'batch-process-workflow:solar-potential-other', 'batch-process-workflow:shallow-geothermal-potential',
-                  'batch-process-workflow:water-body-potential', 'batch-process-workflow:sewage-heat-potential', 'batch-process-workflow:thermal-network-layout',
-                  'batch-process-workflow:thermal-network-operation', 'batch-process-workflow:optimization'
-    ]
+    parameters: ['general:scenario', batch-process-workflow]
 
   - name: data-migrator
     label: Data migrator
