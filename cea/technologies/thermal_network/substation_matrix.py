@@ -628,11 +628,11 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
                         cc + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 # recalculate temperature
                 tco = tci + eff[1] * cmin * (thi - tci) / cc
-        t_return = np.float(tco)
-        mcp_return = np.float(cc / 1000)
+        t_return = float(tco)
+        mcp_return = float(cc / 1000)
 
     else:
-        t_return = np.float(tci)
+        t_return = float(tci)
         mcp_return = 0.0
         cc = 0.0
 
@@ -691,7 +691,7 @@ def calc_HEX_mix(heat, temperatures, mass_flows):
         tavg = sum(weighted)
     else:
         tavg = np.nanmean(temperatures)
-    return np.float(tavg)
+    return float(tavg)
 
 
 def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow):
@@ -757,11 +757,11 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
                         ch + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 # recalculate return temperature
                 tho = thi - eff[1] * cmin * (thi - tci) / ch
-        t_return = np.float(tho)
-        mcp_return = np.float(ch / 1000)
+        t_return = float(tho)
+        mcp_return = float(ch / 1000)
 
     else:
-        t_return = np.float(thi)
+        t_return = float(thi)
         mcp_return = 0.0
         ch = 0.0
 

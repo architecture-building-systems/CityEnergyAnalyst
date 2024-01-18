@@ -6,6 +6,7 @@ import os
 
 import osmnx
 import osmnx.utils_graph
+import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
 import cea.config
@@ -27,8 +28,10 @@ def calc_bounding_box(locator):
     # connect both files and avoid repetition
     data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
     data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = data_zone.append(data_dis, ignore_index=True, sort=True)
-    data = data.to_crs(get_geographic_coordinate_system())
+    data = pd.concat([
+        data_zone.to_crs(get_geographic_coordinate_system()),
+        data_dis.to_crs(get_geographic_coordinate_system())
+    ], ignore_index=True, sort=True)
     result = data.total_bounds  # in float
     return result
 

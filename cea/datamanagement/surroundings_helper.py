@@ -179,12 +179,15 @@ def geometry_extractor_osm(locator, config):
     print("Removing unwanted buildings")
     surroundings = erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer)
 
-    assert surroundings.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
-
-    # clean attributes of height, name and number of floors
-    result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
-    result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-    result = clean_geometries(result)
+    if not surroundings.shape[0] > 0:
+        print('No buildings were found within range based on buffer parameter.')
+        # Create an empty surroundings file
+        result = gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=surroundings.crs)
+    else:
+        # clean attributes of height, name and number of floors
+        result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
+        result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+        result = clean_geometries(result)
 
     # save to shapefile
     result.to_file(shapefile_out_path)

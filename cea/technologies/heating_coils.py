@@ -69,7 +69,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         tho = np.nan
         ch = 0.0
 
-    return np.float(thi-273), np.float(tho), np.float(ch)
+    return float(thi-273), float(tho), float(ch)
 
     # tasup = Ta_sup_hs + 273
     # tare = Ta_re_hs + 273
@@ -118,7 +118,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     #     trh = np.nan
     #     mcphs = 0
     # # return floats with numpy function. Needed when np.vectorize is use to call this function
-    # return np.float(tsh), np.float(trh), np.float(mcphs) # C,C, W/C
+    # return float(tsh), float(trh), float(mcphs) # C,C, W/C
 
 
 # tci = DCN_supply['T_DC_supply_to_cs_ref_data_C'] + 273  # fixme: change according to cs_ref or ce_ref_data
@@ -187,7 +187,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
         tci = np.nan
         cc = 0.0
 
-    return np.float(tci-273), np.float(tco), np.float(cc)
+    return float(tci-273), float(tco), float(cc)
 
 
 # def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0):
@@ -258,4 +258,4 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
 #         trc = np.nan
 #         mcpcs = 0
 #     # return floats with numpy function. Needed when np.vectorize is use to call this function
-#     return np.float(tsc), np.float(trc), np.float(mcpcs)  # C,C, W/C
+#     return float(tsc), float(trc), float(mcpcs)  # C,C, W/C

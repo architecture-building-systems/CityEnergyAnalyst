@@ -23,7 +23,6 @@ INSTALL_REQUIRES = ["cufflinks",
                     'flask-cors',
                     'flask-socketio',
                     'ipython',
-                    'mock',
                     'plotly',
                     'psutil',
                     'pyyaml',
@@ -36,7 +35,7 @@ INSTALL_REQUIRES = ["cufflinks",
 
 # For building the documentation on readthedocs, exclude some of the packages, as they create build errors...
 if os.environ.get('READTHEDOCS') == 'True':
-    INSTALL_REQUIRES = ['setuptools']
+    INSTALL_REQUIRES = ['setuptools', 'mock']
 
 
 setup(name='cityenergyanalyst',
