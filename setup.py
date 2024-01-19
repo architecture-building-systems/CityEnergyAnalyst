@@ -18,8 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 # TODO: Only install the bare minimum deps here, since it might modify any versions installed using conda
-INSTALL_REQUIRES = ["cufflinks",
-                    'flask-restx',
+INSTALL_REQUIRES = ['flask-restx',
                     'flask-cors',
                     'flask-socketio',
                     'ipython',

@@ -23,7 +23,6 @@ dependencies:
 - cvxopt # For wntr
 - python=3.8 # Held back by wntr version
 - pip:
-  - cufflinks
   - flask
   - flask-cors
   - flask-restx
