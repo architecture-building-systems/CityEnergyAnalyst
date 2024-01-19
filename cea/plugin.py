@@ -47,10 +47,7 @@ class CeaPlugin(object):
     def plot_categories(self):
         """
         Return a list of :py:class`cea.plots.PlotCategory` instances to add to the GUI. The default implementation
-        uses the ``plots.yml`` file to create PluginPlotCategory instances that use PluginPlotBase to provide a
-        simplified plot mechanism using cufflinks_
-
-        .. _cufflinks: https://plotly.com/python/cufflinks/
+        uses the ``plots.yml`` file to create PluginPlotCategory instances that use PluginPlotBase.
         """
         plots_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plots.yml")
         if not os.path.exists(plots_yml):
@@ -97,11 +94,10 @@ class CeaPlugin(object):
 
 class PluginPlotCategory(cea.plots.categories.PlotCategory):
     """
-    Normally, a PlotCategory reads it's plot classes by traversing a folder structure and importing all modules found
+    Normally, a PlotCategory reads its plot classes by traversing a folder structure and importing all modules found
     there. The PluginPlotCategory works just like a PlotCategory (i.e. compatible with the CEA GUI / Dashboard) but
     the category information and plots are loaded from a ``plots.yml`` file. Plugin Plots are a bit restricted (so
-    you might want to implement your plots directly the way they are implemented in CEA) but instead they are much
-    easier to understand as they use the cufflinks library.
+    you might want to implement your plots directly the way they are implemented in CEA)
     """
 
     def __init__(self, category_label, plots, plugin):
@@ -189,15 +185,10 @@ class PluginPlotBase(cea.plots.PlotBase):
 
     @property
     def layout(self):
-        """The layout for plugin plots needs to conform to the input parameters to iplot (see cufflinks docs)"""
         return self.plot_config.get("layout", {})
 
     def _plot_div_producer(self):
-        """Use the plot_config to create a plot with cufflinks"""
-        import cufflinks
-        import plotly.offline
-
-        cufflinks.go_offline()
+        import plotly
 
         # load the data
         df = self.locator_method.read(**self.locator_kwargs)
@@ -215,7 +206,7 @@ class PluginPlotBase(cea.plots.PlotBase):
         colors = {columns_mapping[k]: v for k, v in self.locator_method.colors().items()}
 
         fig = df.iplot(asFigure=True, colors=colors, theme="white", **self.layout)
-        div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+        div = plotly.io.to_html(fig, full_html=False, include_plotlyjs=False)
         return div
 
     def table_div(self):

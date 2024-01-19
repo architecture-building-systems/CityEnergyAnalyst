@@ -169,15 +169,8 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
-        import plotly.graph_objs
-        import plotly.offline
-
-        # Set default color template to 'none' for plotly version 4
-        try:
-            import plotly.io as pio
-            pio.templates.default = 'none'
-        except ImportError:
-            pass
+        import plotly
+        plotly.io.templates.default = 'none'
 
         fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
         fig['layout'].update(dict(hovermode='closest'))
@@ -198,7 +191,7 @@ class PlotBase(object):
             except Exception as e:
                 print(e)
 
-        div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+        div = plotly.io.to_html(fig, full_html=False, include_plotlyjs=False)
         return div
 
     def _plot_data_producer(self):
