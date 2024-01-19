@@ -27,7 +27,6 @@ INSTALL_REQUIRES = ['flask-restx',
                     'pyyaml',
                     'requests',
                     'setuptools',
-                    'sphinx',
                     'staticmap',
                     'xlrd',
                     'xlwt']
