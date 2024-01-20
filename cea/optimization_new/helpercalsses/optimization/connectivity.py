@@ -49,7 +49,7 @@ class Connection(object):
         if new_connection and not isinstance(new_connection, int):
             raise ValueError(f"Network connection indicators need to be integer values. Tried to assign "
                              f"{new_connection}.")
-        elif new_connection and not (new_connection in Connection.possible_connections):
+        elif new_connection and new_connection not in Connection.possible_connections:
             raise ValueError(f"The network connection indicator needs to be in the range "
                              f"[{Connection.possible_connections.start}, {Connection.possible_connections.stop - 1}]. "
                              f"Tried to assign {new_connection}.")
@@ -67,7 +67,7 @@ class Connection(object):
         if new_building_code and not isinstance(new_building_code, str):
             raise ValueError(f"The connection indicators' corresponding building codes need to be of type string. "
                              f"Tried to assign {new_building_code}.")
-        elif new_building_code and not (new_building_code in Connection.possible_building_codes):
+        elif new_building_code and new_building_code not in Connection.possible_building_codes:
             raise ValueError(f"The building code needs to be a valid identifier of one of the buildings withing the "
                              f"domain. Tried to assign {new_building_code}.")
         else:

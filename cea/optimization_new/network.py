@@ -17,7 +17,6 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-import cea.lib
 
 import os.path
 import tempfile

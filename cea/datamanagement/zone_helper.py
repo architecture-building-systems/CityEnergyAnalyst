@@ -569,7 +569,6 @@ def flatten_geometries(gdf):
     :return:
     """
     from shapely.ops import unary_union
-    import string
     DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
 
     # Explode MultiPolygons and GeometryCollections

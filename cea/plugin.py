@@ -8,7 +8,6 @@ A base class for creating CEA plugins. Subclass this class in your own namespace
 import importlib
 import os
 import configparser
-from typing import Generator, Sequence
 import yaml
 import inspect
 import cea.schemas
@@ -126,7 +125,7 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
                 category_name = category.name
                 category_path = category.name
                 expected_parameters = plot_config.get("expected-parameters", {})
-                if not "scenario-name" in expected_parameters:
+                if "scenario-name" not in expected_parameters:
                     expected_parameters["scenario-name"] = "general:scenario-name"
 
                 def __init__(self, project, parameters, cache):

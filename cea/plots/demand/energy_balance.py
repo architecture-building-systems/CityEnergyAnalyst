@@ -5,7 +5,7 @@
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import LOGO, COLOR
 import cea.plots.demand
 import pandas as pd
 import numpy as np

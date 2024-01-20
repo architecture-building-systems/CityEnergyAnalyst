@@ -143,7 +143,7 @@ class Domain(object):
             for building in self.buildings]
 
         # Optimise district energy systems
-        print(f"Starting optimisation of district energy systems (i.e. networks + supply systems)...")
+        print("Starting optimisation of district energy systems (i.e. networks + supply systems)...")
 
         algorithm = DistrictEnergySystem.optimisation_algorithm
         if self.config.general.debug:
@@ -158,7 +158,7 @@ class Domain(object):
         if algorithm.parallelize_computation:
             component_classes = [cls[1] for cls in inspect.getmembers(component_module, inspect.isclass)]
             initialised_classes = [cls[1] for cls in inspect.getmembers(sys.modules[__name__], inspect.isclass)
-                                   if not cls[0] in ['InputLocator', 'Domain', 'EnergyPotential']] \
+                                   if cls[0] not in ['InputLocator', 'Domain', 'EnergyPotential']] \
                                   + component_classes
             main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
 
@@ -197,7 +197,7 @@ class Domain(object):
             offspring = set(algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob))
 
             # Evaluate the individuals in the offspring, unless they are an exact copy of one of the parents
-            new_ind = set(ind for ind in offspring if not (ind.as_str() in optimal_supply_system_combinations.keys()))
+            new_ind = set(ind for ind in offspring if ind.as_str() not in optimal_supply_system_combinations.keys())
             non_dominated_fronts = toolbox.map(toolbox.evaluate, new_ind)
             optimal_supply_system_combinations.update({ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                                        in zip(new_ind, non_dominated_fronts)})
@@ -219,7 +219,7 @@ class Domain(object):
         self.optimal_energy_systems = self._select_final_optimal_systems(population, algorithm.population)
         if tracker:
             tracker.print_evolutions()
-        print(f"\nDistrict energy system optimisation complete!")
+        print("\nDistrict energy system optimisation complete!")
 
         return self.optimal_energy_systems
 

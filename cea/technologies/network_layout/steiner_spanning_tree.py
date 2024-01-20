@@ -13,7 +13,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely.geometry import LineString
-from typing import List
 
 import cea.config
 import cea.inputlocator
@@ -185,7 +184,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                         if new_mst_nodes['Type'][node_index] == 'NONE':
                             # create new edge
                             line = LineString((node_coords, new_neighbour))
-                            if not line in mst_edges['geometry']:
+                            if line not in mst_edges['geometry']:
                                 mst_edges = mst_edges.append(
                                     {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
                                      "Name": "PIPE" + str(mst_edges.Name.count())},

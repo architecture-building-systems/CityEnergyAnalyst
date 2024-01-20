@@ -4,8 +4,6 @@
 
 
 import numpy as np
-import math
-from cea.demand import constants
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

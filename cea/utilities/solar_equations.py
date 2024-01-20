@@ -15,7 +15,6 @@ from math import *
 from pyarrow import feather
 from timezonefinder import TimezoneFinder
 import pytz
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

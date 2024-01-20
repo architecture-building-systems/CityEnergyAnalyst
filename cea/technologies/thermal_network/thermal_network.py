@@ -1839,7 +1839,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
                                          columns=thermal_network.buildings_demands.keys(), index=['T_supply'])
 
     min_edge_flow_flag = False
-    if not t in thermal_network.delta_cap_mass_flow.keys():
+    if t not in thermal_network.delta_cap_mass_flow.keys():
         thermal_network.delta_cap_mass_flow[t] = 0
     iteration = 0
     reset_min_mass_flow_variables(thermal_network, t)
@@ -2069,7 +2069,7 @@ def initial_diameter_guess(thermal_network):
         for t in range(REDUCED_TIME_STEPS):
             min_edge_flow_flag = False
             iteration = 0
-            if not t in thermal_network_reduced.delta_cap_mass_flow.keys():
+            if t not in thermal_network_reduced.delta_cap_mass_flow.keys():
                 thermal_network_reduced.delta_cap_mass_flow[t] = 0
             reset_min_mass_flow_variables(thermal_network_reduced, t)
             print('\n calculating mass flows in edges... time step', t)
@@ -2207,7 +2207,7 @@ def solve_network_temperatures(thermal_network, t):
 
     """
     # initialize
-    if not t in thermal_network.delta_cap_mass_flow.keys():
+    if t not in thermal_network.delta_cap_mass_flow.keys():
         thermal_network.delta_cap_mass_flow[t] = 0
     if np.absolute(thermal_network.edge_mass_flow_df.iloc[t].values).sum() != 0:
         edge_mass_flow_df, \
@@ -2445,21 +2445,21 @@ def reset_min_mass_flow_variables(thermal_network, t):
     '''
     for key in thermal_network.substation_cooling_systems:
         key = 'cs_' + key
-        if not key in thermal_network.cc_old.keys():
+        if key not in thermal_network.cc_old.keys():
             thermal_network.cc_old[key] = {}
-        if not t in thermal_network.cc_old[key].keys():
+        if t not in thermal_network.cc_old[key].keys():
             thermal_network.cc_old[key][t] = pd.DataFrame(index=['0'])
-        if not key in thermal_network.cc_value.keys():
+        if key not in thermal_network.cc_value.keys():
             thermal_network.cc_value[key] = {}
         if t not in thermal_network.cc_value[key].keys():
             thermal_network.cc_value[key][t] = pd.DataFrame(index=['0'])
     for key in thermal_network.substation_heating_systems:
         key = 'hs_' + key
-        if not key in thermal_network.ch_old.keys():
+        if key not in thermal_network.ch_old.keys():
             thermal_network.ch_old[key] = {}
-        if not t in thermal_network.ch_old[key].keys():
+        if t not in thermal_network.ch_old[key].keys():
             thermal_network.ch_old[key][t] = pd.DataFrame(index=['0'])
-        if not key in thermal_network.ch_value.keys():
+        if key not in thermal_network.ch_value.keys():
             thermal_network.ch_value[key] = {}
         if t not in thermal_network.ch_value[key].keys():
             thermal_network.ch_value[key][t] = pd.DataFrame(index=['0'])
@@ -3072,8 +3072,8 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
                 # Store value
-                if not str(
-                        e) in thermal_network.problematic_edges.keys():  # add problematic edge and corresponding mass flow to the dictionary
+                if str(
+                        e) not in thermal_network.problematic_edges.keys():  # add problematic edge and corresponding mass flow to the dictionary
                     thermal_network.problematic_edges[str(e)] = m
                 elif thermal_network.problematic_edges[str(
                         e)] > m:  # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value

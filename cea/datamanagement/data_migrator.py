@@ -158,7 +158,7 @@ def is_3_22(scenario):
 def indoor_comfort_is_3_22(scenario):
     indoor_comfort = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "indoor_comfort.dbf"))
 
-    if not 'Ve_lpspax' in indoor_comfort.columns:
+    if 'Ve_lpspax' not in indoor_comfort.columns:
         return False
     return True
 
@@ -166,7 +166,7 @@ def indoor_comfort_is_3_22(scenario):
 def internal_loads_is_3_22(scenario):
     internal_loads = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-properties", "internal_loads.dbf"))
 
-    if not 'Occ_m2pax' in internal_loads.columns:
+    if 'Occ_m2pax' not in internal_loads.columns:
         return False
     return True
 

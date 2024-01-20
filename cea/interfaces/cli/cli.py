@@ -14,9 +14,7 @@ import datetime
 import cea.config
 import cea.scripts
 import cea
-from typing import List
 
-from cea.plugin import CeaPlugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

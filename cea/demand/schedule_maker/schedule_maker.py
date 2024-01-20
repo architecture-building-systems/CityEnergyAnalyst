@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
-import warnings
 from itertools import repeat
 
 import cea.config

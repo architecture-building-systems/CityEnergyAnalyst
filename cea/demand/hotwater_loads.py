@@ -9,7 +9,6 @@ import math
 from math import pi
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
-import pandas as pd
 from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"

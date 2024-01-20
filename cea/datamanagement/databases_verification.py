@@ -129,7 +129,7 @@ class InputFileValidator(object):
     def __init__(self, input_locator=None, plugins=None):
         # Need locator to read other files if lookup choice values
         self.locator = input_locator
-        self.plugins = plugins if not plugins is None else []
+        self.plugins = plugins if plugins is not None else []
 
     def validate(self, data, data_schema):
         """
@@ -314,7 +314,7 @@ class IntegerTypeValidator(NumericTypeValidator):
         super(IntegerTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if not type(value) is int:
+        if type(value) is not int:
             return 'value must be of type integer: got {}'.format(value)
         return super(IntegerTypeValidator, self).validate(value)
 
@@ -324,7 +324,7 @@ class FloatTypeValidator(NumericTypeValidator):
         super(FloatTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if not type(value) is float:
+        if type(value) is not float:
             return 'value must be of type float: got {}'.format(value)
         return super(FloatTypeValidator, self).validate(value)
 
