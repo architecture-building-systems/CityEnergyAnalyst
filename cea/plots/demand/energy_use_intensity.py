@@ -4,7 +4,7 @@
 
 import plotly.graph_objs as go
 import cea.plots.demand
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import COLOR, NAMING
 
 
 class EnergySupplyIntensityPlot(cea.plots.demand.DemandPlotBase):

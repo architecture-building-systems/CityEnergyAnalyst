@@ -1,7 +1,7 @@
 
 
 
-from flask import Blueprint, render_template, current_app, abort, make_response
+from flask import Blueprint, render_template, current_app, make_response
 
 import cea.inputlocator
 import cea.plots

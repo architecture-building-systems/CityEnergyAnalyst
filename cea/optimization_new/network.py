@@ -17,7 +17,6 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-import cea.lib
 
 import os.path
 import tempfile
@@ -90,7 +89,7 @@ class Network(object):
                                      columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
             self.network_nodes = Gdf([Point(node) for node in network_graph.nodes()],
                                      columns=['geometry'], crs=Network._coordinate_reference_system)
-        except:
+        except Exception:
             raise ValueError('There was an error while creating the Steiner tree. '
                              'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                              'the Steiner tree does not support disconnected graphs. '

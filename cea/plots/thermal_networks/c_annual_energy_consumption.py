@@ -2,13 +2,11 @@
 
 
 
-import os
 
 import cea.plots.thermal_networks
 import plotly.graph_objs as go
-from plotly.offline import plot
 
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import NAMING, COLOR
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

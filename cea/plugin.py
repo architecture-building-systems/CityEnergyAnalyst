@@ -8,13 +8,14 @@ A base class for creating CEA plugins. Subclass this class in your own namespace
 import importlib
 import os
 import configparser
-from typing import Generator, Sequence
 import yaml
 import inspect
 import cea.schemas
 import cea.plots.categories
 import cea.inputlocator
 import warnings
+
+from cea.plots.base import PlotBase
 from cea.utilities import identifier
 
 __author__ = "Daren Thomas"
@@ -126,7 +127,7 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
                 category_name = category.name
                 category_path = category.name
                 expected_parameters = plot_config.get("expected-parameters", {})
-                if not "scenario-name" in expected_parameters:
+                if "scenario-name" not in expected_parameters:
                     expected_parameters["scenario-name"] = "general:scenario-name"
 
                 def __init__(self, project, parameters, cache):
@@ -140,7 +141,7 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
             yield Plot
 
 
-class PluginPlotBase(cea.plots.PlotBase):
+class PluginPlotBase(PlotBase):
     """
     A simplified version of cea.plots.PlotBase that is configured with the ``plots.yml`` entries.
     """

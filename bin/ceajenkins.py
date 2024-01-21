@@ -34,7 +34,7 @@ class AppServerSvc(win32serviceutil.ServiceFramework):
         servicemanager.LogInfoMsg('ceajenkins before main')
         try:
             self.main()
-        except:
+        except Exception:
             servicemanager.LogErrorMsg(traceback.format_exc())
             sys.exit(-1)
         servicemanager.LogInfoMsg('normal exit')

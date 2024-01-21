@@ -133,7 +133,7 @@ class PlotBase(object):
         """
         import numpy as np
         fields = [field for field in fields if field in data.columns]
-        return [field for field in fields if np.isclose(data[field].sum(), 1e-8) == False]
+        return [field for field in fields if np.isclose(data[field].sum(), 1e-8) is False]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""

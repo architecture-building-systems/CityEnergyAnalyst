@@ -3,8 +3,6 @@
 
 import os
 import unittest
-import cea.config
-import cea.inputlocator
 from cea import MissingInputDataException
 
 

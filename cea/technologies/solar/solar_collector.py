@@ -3,12 +3,10 @@ solar collectors
 """
 
 
-
-
 import os
 import time
 from itertools import repeat
-from math import *
+from math import cos, atan, sin, degrees, radians, tan, log
 
 import geopandas as gpd
 import numpy as np
@@ -24,7 +22,7 @@ from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas"]
@@ -391,12 +389,12 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for time in range(HOURS_IN_YEAR):
+        for t in range(HOURS_IN_YEAR):
             Mfl_kgpers = calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C,
-                                         aperture_area_m2, specific_flows_kgpers[flow], time)
+                                         aperture_area_m2, specific_flows_kgpers[flow], t)
 
-            Tamb_C = Tamb_vector_C[time]
-            q_rad_Wperm2 = q_rad_vector[time]
+            Tamb_C = Tamb_vector_C[t]
+            q_rad_Wperm2 = q_rad_vector[t]
             Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
                                  q_rad_Wperm2, Mfl_kgpers)
             # calculate q_gain with the guess for DT[1]
@@ -420,10 +418,10 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out_C[flow][time] = Tout_Seg_C
-            temperature_in_C[flow][time] = Tin_C
-            supply_out_kW[flow][time] = q_out_kW
-            temperature_mean_C[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
+            temperature_out_C[flow][t] = Tout_Seg_C
+            temperature_in_C[flow][t] = Tin_C
+            supply_out_kW[flow][t] = q_out_kW
+            temperature_mean_C[flow][t] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
 
             # the following lines do not perform meaningful operation, the iteration on DT are performed in calc_q_gain
             # these lines are kept here as a reference to the original model in FORTRAN
@@ -660,7 +658,7 @@ def calc_q_gain(Tfl, q_rad_Whperm2, DT, Tin, aperture_area_m2, c1, c2, Mfl, delt
     xgain = 1
     xgainmax = 100
     exit = False
-    while exit == False:
+    while not exit:
         qgain_Whperm2 = q_rad_Whperm2 - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from collector, eq.(5)
 
         if Mfl > 0:
@@ -906,12 +904,12 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     mass_flow_all_kgpers = [m1 * const, m2 * const, m3 * const, m4 * const]  # [kg/s]
     dP_all_Pa = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # [Pa]
     balances = [abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
-    for time in range(HOURS_IN_YEAR):
-        balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
+    for t in range(HOURS_IN_YEAR):
+        balances_time = [balances[0][t], balances[1][t], balances[2][t], balances[3][t]]
         max_heat_production = np.max(balances_time)
         ix_max_heat_production = np.where(balances_time == max_heat_production)
-        mass_flow_opt[time] = mass_flow_all_kgpers[ix_max_heat_production[0][0]]
-        dP_opt[time] = dP_all_Pa[ix_max_heat_production[0][0]]
+        mass_flow_opt[t] = mass_flow_all_kgpers[ix_max_heat_production[0][0]]
+        dP_opt[t] = dP_all_Pa[ix_max_heat_production[0][0]]
     return mass_flow_opt, dP_opt
 
 
@@ -924,10 +922,10 @@ def calc_optimal_mass_flow_2(m, q, dp):
     :return m: hourly mass flow rate [kg/s]
     :return dp: hourly pressure drop [Pa]
     """
-    for time in range(HOURS_IN_YEAR):
-        if q[time] <= 0:
-            m[time] = 0
-            dp[time] = 0
+    for t in range(HOURS_IN_YEAR):
+        if q[t] <= 0:
+            m[t] = 0
+            dp[t] = 0
     return m, dp
 
 
