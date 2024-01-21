@@ -437,7 +437,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 def parse_year(year: Union[str, int]) -> int:
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
-    if type(year) == str:
+    if isinstance(year, str):
         # For year in "century" format e.g. `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:

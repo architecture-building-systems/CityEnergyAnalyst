@@ -259,9 +259,7 @@ def snap_points(points, lines, tolerance):
             line = lines.loc[i, "geometry"]
             point_inline_projection = line.interpolate(line.project(point))
             distance_to_line = point.distance(point_inline_projection)
-            if (point.x, point.y) in line.coords:
-                x = "nothing"
-            else:
+            if (point.x, point.y) not in line.coords:
                 if distance_to_line < tolerance:
                     buff = point.buffer(0.1)
                     ### Split the line on the buffer
@@ -303,7 +301,7 @@ def one_linestring_per_intersection(lines, crs):
     try:
         bounding_box = box(*lines_merged.bounds)
         lines_merged = lines_merged.intersection(bounding_box)
-    except:
+    except Exception:
         # if the bounding_box fails, then revert to lines merge.
         print('bounding box method did not work, falling to a more simple method, no need to worry')
 

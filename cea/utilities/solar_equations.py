@@ -10,7 +10,7 @@ import pandas as pd
 import ephem
 import datetime
 import collections
-from math import *
+from math import radians, degrees, asin, sin, acos, cos, tan, atan, pi
 
 from pyarrow import feather
 from timezonefinder import TimezoneFinder

@@ -597,7 +597,7 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
             Flag = False
             tol = 0.00000001
             while abs((eff[0] - eff[1]) / eff[0]) > tol:
-                if Flag == True:
+                if Flag:
                     eff[0] = eff[1]
                 else:
                     cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
@@ -726,7 +726,7 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
             Flag = False
             tol = 0.00000001
             while abs((eff[0] - eff[1]) / eff[0]) > tol:
-                if Flag == True:
+                if Flag:
                     eff[0] = eff[1]
                 else:
                     cmin = cc * (tco - tci) / ((thi - tci) * eff[0])

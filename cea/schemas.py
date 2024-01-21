@@ -56,7 +56,7 @@ def schemas(plugins):
             with open(schemas_pickle, "r") as schemas_pickle_fp:
                 try:
                     schemas_dict = pickle.load(schemas_pickle_fp)
-                except:
+                except Exception:
                     schemas_dict = None
 
         if not schemas_dict:

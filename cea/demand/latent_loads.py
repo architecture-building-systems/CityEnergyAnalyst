@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
-
-
 import numpy as np
 
 __author__ = "Gabriel Happle"
@@ -189,8 +184,8 @@ def calc_required_moisture_mech_vent_hu(tsd, t):
     # (78) in ISO 52016-1:2017
 
     x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
+    g_hu_ld = tsd['g_hu_ld'][t]
     m_ve_mech = tsd['m_ve_mech'][t]
-
 
     x_a_sup_hu_req = x_a_e + g_hu_ld / m_ve_mech
 
@@ -201,6 +196,7 @@ def calc_required_moisture_mech_vent_dhu(tsd, t):
     # (79) in ISO 52016-1:2017
 
     x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
+    g_dhu_ld = tsd['g_dhu_ld'][t]
     m_ve_mech = tsd['m_ve_mech'][t]
 
     x_a_sup_dhu_req = x_a_e - g_dhu_ld / m_ve_mech

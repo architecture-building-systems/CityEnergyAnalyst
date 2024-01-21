@@ -3,10 +3,7 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 """
 
 
-
-
 import os
-import cea
 import yaml
 import cea
 import cea.inputlocator

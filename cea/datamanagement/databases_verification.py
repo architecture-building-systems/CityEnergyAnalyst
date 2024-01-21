@@ -20,7 +20,7 @@ COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2N
 
 def assert_columns_names(zone_df, columns):
     try:
-        zone_test = zone_df[columns]
+        zone_df[columns]
     except ValueError:
         print(
             "one or more columns in the Zone or Surroundings input files is not compatible with CEA, please ensure the column" +
@@ -119,7 +119,7 @@ def verify_input_typology(typology_df):
 
 def verify_input_terrain(terrain_raster):
     # Verification 1. verify that we can create the geometry
-    if terrain_raster == None:
+    if terrain_raster is None:
         raise Exception("Your input terrain file is corrupted. Please verify that you have a non-null raster,"
                         "and that the grid of it be at least 5 X 5 meters, smaller grid sizes will drastically"
                         "make the solar radiation engine slow")
@@ -314,7 +314,7 @@ class IntegerTypeValidator(NumericTypeValidator):
         super(IntegerTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if type(value) is not int:
+        if not isinstance(value, int):
             return 'value must be of type integer: got {}'.format(value)
         return super(IntegerTypeValidator, self).validate(value)
 
@@ -324,7 +324,7 @@ class FloatTypeValidator(NumericTypeValidator):
         super(FloatTypeValidator, self).__init__(schema)
 
     def validate(self, value):
-        if type(value) is not float:
+        if not isinstance(value, float):
             return 'value must be of type float: got {}'.format(value)
         return super(FloatTypeValidator, self).validate(value)
 

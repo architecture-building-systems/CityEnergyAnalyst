@@ -27,7 +27,8 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
-import time, multiprocessing
+import time
+import multiprocessing
 
 from copy import deepcopy
 from deap import algorithms, base, tools

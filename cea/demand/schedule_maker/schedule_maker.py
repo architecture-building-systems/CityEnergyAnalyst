@@ -41,7 +41,7 @@ def schedule_maker_main(locator, config, building=None):
     else:
         raise ValueError("Invalid schedule model: {schedule_model}".format(**locals()))
 
-    if building != None:
+    if building is not None:
         buildings = [building]  # this is to run the tests
 
     # get variables of indoor comfort and internal loads

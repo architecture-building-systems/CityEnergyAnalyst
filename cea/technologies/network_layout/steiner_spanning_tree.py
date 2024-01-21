@@ -96,7 +96,7 @@ def calc_steiner_spanning_tree(crs_projected,
         nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
         mst_nodes = gdf.from_file(path_output_nodes_shp)
         mst_edges = gdf.from_file(path_output_edges_shp)
-    except:
+    except Exception:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs. '

@@ -2,14 +2,15 @@
 Hotwater load (it also calculates fresh water needs)
 """
 
-from cea.constants import *
+import math
+
 import numpy as np
 import scipy
-import math
-from math import pi
+
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -97,7 +98,7 @@ def calc_Qww_sys(bpr, tsd):
     Qww_nom_W = tsd['Qww'].max()
 
     # distribution and circulation losses
-    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
+    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * math.pi  # m3, volume inside distribution pipe
     Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd['Qww'].copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
                                                  V_dist_pipes_m3,Tww_sup_0_C)
     Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,

@@ -9,6 +9,8 @@ NOTE: You'll still need to run the archetypes-mapper after this script has run.
 
 
 import os
+from functools import cmp_to_key
+
 import cea
 import pandas as pd
 import collections
@@ -70,7 +72,13 @@ def migrate_2_29_to_2_31(scenario):
     def convert_occupancy(name, occupancy_dbf):
         row = occupancy_dbf[occupancy_dbf.Name == name].iloc[0]
         uses = set(row.to_dict().keys()) - {"Name", "REFERENCE"}
-        uses = sorted(uses, cmp=lambda a, b: cmp(float(row[a]), float(row[b])), reverse=True)
+
+        def cmp(a, b):
+            _a = float(row[a])
+            _b = float(row[b])
+            return (_a > _b) - (_a < _b)
+
+        uses = sorted(uses, key=cmp_to_key(cmp), reverse=True)
         result = {
             "1ST_USE": uses[0],
             "1ST_USE_R": float(row[uses[0]]),

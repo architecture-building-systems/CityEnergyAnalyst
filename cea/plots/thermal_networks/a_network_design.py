@@ -62,14 +62,14 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         # figure out colors
         p_loss_min = edges_df.Pipe_DN.min()
         p = edges_df.Pipe_DN.max()
-        scale_p_loss = lambda x: remap(x, p_loss_min, p, 1.0, 1.0)
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
         edges_df["_FillColor"] = edges_df.Pipe_DN.apply(
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
-                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
+                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
+                                          mix=lambda x: remap(x, p_loss_min, p, 1.0, 1.0))])).values
         return edges_df
 
     @property
@@ -162,7 +162,6 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         # Figure out the colors (based on the average supply temperatures)
         P_loss_min = nodes_df["Peak Thermal Demand [kW]"].min()
         P_loss_max = nodes_df["Peak Thermal Demand [kW]"].max()
-        scale_p_loss = lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0)
 
         # matplotlib works on RGB in ranges [0.0, 1.0] - scale the input colors to that, transform and then scale back
         # to web versions ([0, 255])
@@ -174,7 +173,8 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         nodes_df["_FillColor"] = nodes_df["Peak Thermal Demand [kW]"].apply(
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
-                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl, mix=scale_p_loss(p_loss))])).values
+                 for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
+                                          mix=lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0))])).values
 
         return nodes_df
 

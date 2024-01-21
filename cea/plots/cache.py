@@ -111,7 +111,7 @@ class PlotCache(object):
         :param input_files: A list of tuples (locator method, args) that, when applied, produce a path"""
         try:
             return max(os.path.getmtime(locator_method(*args)) for locator_method, args in input_files)
-        except:
+        except Exception:
             print('Could not read input files for cache!')
             return time.time()
 

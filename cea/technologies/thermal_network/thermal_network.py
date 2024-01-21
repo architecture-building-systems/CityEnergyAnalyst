@@ -532,7 +532,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
 
     print("Completed thermal-hydraulic calculation.\n")
 
-    if thermal_network.no_convergence_flag == True:  # no convergence of network diameters
+    if thermal_network.no_convergence_flag:  # no convergence of network diameters
         print('Results are to be treated with caution since network diameters did not converge. \n')
         if len(thermal_network.problematic_edges) > 0:
             print(
@@ -1843,11 +1843,11 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
         thermal_network.delta_cap_mass_flow[t] = 0
     iteration = 0
     reset_min_mass_flow_variables(thermal_network, t)
-    while min_edge_flow_flag == False:  # too low edge mass flows
+    while min_edge_flow_flag is False:  # too low edge mass flows
         reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
         # calculate substation flow rates and return temperatures
         if thermal_network.network_type == 'DH' or (
-                thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
+                thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) is False):
             _, mdot_all, thermal_demand_for_t = substation_matrix.substation_return_model_main(thermal_network,
                                                                                                T_substation_supply_K, t,
                                                                                                thermal_network.building_names)
@@ -1894,7 +1894,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, iteration_count
 
     :return:
     """
-    if thermal_network.no_convergence_flag == True:
+    if thermal_network.no_convergence_flag:
         pipe_min_mass_flow = thermal_network.minimum_edge_mass_flow / 2  # there are problems with convergence so reduce the minimum edge mass flow
     else:
         pipe_min_mass_flow = thermal_network.minimum_edge_mass_flow  # minimum acceptable mass flow defined in our constants file
@@ -2095,7 +2095,7 @@ def initial_diameter_guess(thermal_network):
                 # calculate substation flow rates and return temperatures
                 if thermal_network_reduced.network_type == 'DH' or (
                         thermal_network_reduced.network_type == 'DC' and math.isnan(
-                    t_substation_supply_K.values[0][0]) == False):
+                    t_substation_supply_K.values[0][0]) is False):
                     _, mdot_all, _ = substation_matrix.substation_return_model_main(thermal_network_reduced,
                                                                                     t_substation_supply_K, t,
                                                                                     thermal_network_reduced.building_names)
@@ -2227,7 +2227,7 @@ def solve_network_temperatures(thermal_network, t):
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw, switch_control = calc_supply_temperatures(t, edge_node_df.copy(),
                                                                                edge_mass_flow_df, k, thermal_network)
-        if switch_control == True:
+        if switch_control:
             thermal_network.temperature_control = 'CT'
             print(
                 'temperature not reached in timestep %s, control strategy is switched to: CT(Constant Temperature)' % str(
@@ -2245,7 +2245,7 @@ def solve_network_temperatures(thermal_network, t):
 
         while flag == 0:
             # calculate substation return temperatures according to supply temperatures
-            while min_edge_flow_flag == False:
+            while min_edge_flow_flag is False:
                 reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
                 consumer_building_names = thermal_network.all_nodes_df.loc[
                     thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
@@ -2295,7 +2295,7 @@ def solve_network_temperatures(thermal_network, t):
                 # increase flow to meet substation requirement with fixed plant supply temperature
                 VF_flag = True
                 VF_iter = 0
-                while VF_flag == True:
+                while VF_flag:
                     # iterate mass flow to meet substation requirement
                     t_supply_nodes_2__k, plant_node, \
                     q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(),
@@ -2347,7 +2347,7 @@ def solve_network_temperatures(thermal_network, t):
 
             # check if the supply temperature at substations converged
             node_dt = t_substation_supply_2 - t_substation_supply__k
-            if node_dt.dropna(axis=1).empty == True:
+            if node_dt.dropna(axis=1).empty:
                 max_node_dt = 0
             else:
                 max_node_dt = max(abs(node_dt).dropna(axis=1).values[0])
@@ -2668,7 +2668,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                 d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
                 # enter iteration if the node supply temperature is lower than the target supply temperature
                 # (0.1 is the tolerance)
-                if all(d_t > -0.1) == False and iteration <= 30:
+                if all(d_t > -0.1) is False and iteration <= 30:
                     # increase plant supply temperature and re-iterate the node supply temperature calculation
                     # increase by the maximum amount of temperature deficit at nodes
                     t_plant_sup = t_plant_sup + abs(d_t.min())
@@ -2681,7 +2681,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     t_node = np.zeros(z.shape[0])
                     iteration += 1
 
-                elif all(d_t > -0.1) == False and iteration > 30:
+                elif all(d_t > -0.1) is False and iteration > 30:
                     # end iteration if too many iterations
                     print('cannot fulfill substation supply node temperature requirement after iterations:',
                           iteration, abs(d_t).min())
@@ -2703,7 +2703,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
 
                 # enter iteration if the node supply temperature is higher than the target supply temperature
                 # (0.1 is the tolerance)
-                if all(d_t < 0.1) == False and iteration <= 30:
+                if all(d_t < 0.1) is False and iteration <= 30:
                     # increase plant supply temperature and re-iterate the node supply temperature calculation
                     # increase by the maximum amount of temperature deficit at nodes
                     t_plant_sup = t_plant_sup - abs(d_t.max())
@@ -2712,7 +2712,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     t_e_in = z_pipe_in.copy().dot(-1)
                     t_node = np.zeros(z.shape[0])
                     iteration += 1
-                elif all(d_t < 0.1) == False and iteration > 30:
+                elif all(d_t < 0.1) is False and iteration > 30:
                     # end iteration if too many iterations
                     print('cannot fulfill substation supply node temperature requirement after iterations:',
                           iteration, d_t.min())
@@ -3048,7 +3048,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
     district heating systems and model parameters calibration. Energy Conversion and Management, 120, 294-305.
     """
     # calculate pipe outlet temperature
-    if isinstance(edge, np.ndarray) == False:
+    if isinstance(edge, np.ndarray) is False:
         edge = np.array([edge])
 
     m_d = np.round(m_d, decimals=5)  # round to avoid errors at very very low massflows

@@ -764,7 +764,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -778,7 +778,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -792,7 +792,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -807,7 +807,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv or DC_T_Supply.csv
         Supply temperatures at each node for each time step for a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -822,7 +822,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -835,7 +835,7 @@ class InputLocator(object):
     def get_network_temperature_plant(self, network_type, network_name,
                                       representative_week=False):
 
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -847,7 +847,7 @@ class InputLocator(object):
 
     def get_thermal_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -861,7 +861,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -874,7 +874,7 @@ class InputLocator(object):
 
     def get_network_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -886,7 +886,7 @@ class InputLocator(object):
 
     def get_network_linear_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -898,7 +898,7 @@ class InputLocator(object):
 
     def get_network_total_thermal_loss_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -911,7 +911,7 @@ class InputLocator(object):
     def get_thermal_network_pressure_losses_edges_file(self, network_type, network_name,
                                                        representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -925,7 +925,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -939,7 +939,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -953,7 +953,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -968,7 +968,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
@@ -983,7 +983,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
         Heat requirement at from the plants in a district heating or cooling network
         """
-        if representative_week == True:
+        if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
         else:
             folder = self.get_thermal_network_folder()
