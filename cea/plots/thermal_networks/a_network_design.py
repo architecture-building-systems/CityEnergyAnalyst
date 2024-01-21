@@ -69,7 +69,7 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
                  for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
-                                          mix=lambda x: remap(x, p_loss_min, p, 1.0, 1.0))])).values
+                                          mix=remap(p_loss, p_loss_min, p, 1.0, 1.0))])).values
         return edges_df
 
     @property
@@ -174,7 +174,7 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
                  for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
-                                          mix=lambda x: remap(x, P_loss_min, P_loss_max, 0.0, 1.0))])).values
+                                          mix=remap(p_loss, P_loss_min, P_loss_max, 0.0, 1.0))])).values
 
         return nodes_df
 
