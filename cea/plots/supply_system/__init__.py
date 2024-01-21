@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import pandas.errors
 
-import cea.plots
 from cea.plots.base import PlotBase
 
 """

@@ -1,13 +1,8 @@
-
-
-
-
 import functools
 import os
 
 import pandas as pd
 
-import cea.inputlocator
 from cea.plots.base import PlotBase
 
 """
