@@ -14,6 +14,8 @@ import cea.schemas
 import cea.plots.categories
 import cea.inputlocator
 import warnings
+
+from cea.plots.base import PlotBase
 from cea.utilities import identifier
 
 __author__ = "Daren Thomas"
@@ -139,7 +141,7 @@ class PluginPlotCategory(cea.plots.categories.PlotCategory):
             yield Plot
 
 
-class PluginPlotBase(cea.plots.PlotBase):
+class PluginPlotBase(PlotBase):
     """
     A simplified version of cea.plots.PlotBase that is configured with the ``plots.yml`` entries.
     """

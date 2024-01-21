@@ -8,6 +8,7 @@ import pandas as pd
 import pandas.errors
 
 import cea.plots
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.SupplySystemPlotBase` as a base class for all plots in the category "supply-system" and also
@@ -27,7 +28,7 @@ __status__ = "Production"
 label = 'Supply System'
 
 
-class SupplySystemPlotBase(cea.plots.PlotBase):
+class SupplySystemPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "supply-system"
 

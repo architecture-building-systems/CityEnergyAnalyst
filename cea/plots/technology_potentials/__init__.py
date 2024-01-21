@@ -8,6 +8,7 @@ import os
 import pandas as pd
 
 import cea.inputlocator
+from cea.plots.base import PlotBase
 from cea.utilities import epwreader
 
 """
@@ -28,7 +29,7 @@ __status__ = "Production"
 label = 'Technology potentials'
 
 
-class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
+class SolarTechnologyPotentialsPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "technology-potentials"
 

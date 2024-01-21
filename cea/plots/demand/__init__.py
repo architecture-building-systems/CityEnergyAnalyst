@@ -11,6 +11,7 @@ import cea.config
 import cea.inputlocator
 import cea.plots
 import cea.plots.cache
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.DemandPlotBase` as a base class for all plots in the category "demand" and also
@@ -30,7 +31,7 @@ __status__ = "Production"
 label = 'Energy demand'
 
 
-class DemandPlotBase(cea.plots.PlotBase):
+class DemandPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "demand"
 

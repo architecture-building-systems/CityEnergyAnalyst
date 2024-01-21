@@ -11,6 +11,7 @@ import pandas as pd
 
 import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
+from cea.plots.base import PlotBase
 from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -32,7 +33,7 @@ __status__ = "Production"
 label = 'Thermal networks'
 
 
-class ThermalNetworksPlotBase(cea.plots.PlotBase):
+class ThermalNetworksPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "thermal-networks"
 
