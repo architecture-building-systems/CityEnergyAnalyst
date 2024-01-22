@@ -30,7 +30,7 @@ jobs:
         shell: bash -el {0}
 
       - name: Compare conda-lock hash
-        if: ${{ hashFiles('conda-lock.yml') != hashFiles(runner.temp'/conda-lock.yml') }}
+        if: ${{ hashFiles('conda-lock.yml') != hashFiles(format('{0}/conda-lock.yml', runner.temp)) }}
         run: exit 1
 
   build:
