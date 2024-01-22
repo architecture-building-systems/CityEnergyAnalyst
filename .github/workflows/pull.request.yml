@@ -24,7 +24,7 @@ jobs:
           echo "diff=$?" >> "$GITHUB_OUTPUT"
 
       - uses: actions/github-script@v6
-        if: ${{ steps.check_environment_yml.outputs.diff == 1 }}
+        if: ${{ steps.environment_yml_diff.outputs.diff != 0 }}
         with:
           script: |
             github.rest.issues.createComment({
