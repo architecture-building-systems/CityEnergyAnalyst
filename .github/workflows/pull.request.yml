@@ -14,10 +14,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check for changes in environment.yml
-        if: git diff --quiet HEAD..master -- environment.yml
-        run: exit 0
-
       - name: Install conda-lock with Micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
@@ -35,7 +31,6 @@ jobs:
 
   build:
     name: ${{ matrix.os }}
-    needs: conda-lock
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
