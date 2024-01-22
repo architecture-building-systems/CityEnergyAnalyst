@@ -8,33 +8,29 @@ on:
 jobs:
   check_environment_yml:
     runs-on: ubuntu-latest
-    outputs:
-      diff: ${{ steps.environment_yml_diff.outputs.diff }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup master branch locally without switching current branch
         run: git fetch origin master:master
+
       - name: Check environment.yml diff
         id: environment_yml_diff
         run: |
           git diff --quiet ..master -- environment.yml
           echo "diff=$?" >> "$GITHUB_OUTPUT"
 
-  warn_user:
-    runs-on: ubuntu-latest
-    needs: check_environment_yml
-    if: ${{ needs.check_environment_yml.outputs.diff  == 1 }}
-    steps:
       - uses: actions/github-script@v6
+        if: ${{ steps.check_environment_yml.outputs.diff == 1 }}
         with:
           script: |
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Changes detected in `environment.yml`.'
+              body: '@${{ github.event.issue.user.login }} Changes detected in `environment.yml`.'
             })
 
   build:
