@@ -1,0 +1,44 @@
+[project]
+name = "cityenergyanalyst"
+description = "City Energy Analyst"
+readme = "README.rst"
+requires-python = "==3.8.*"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Architecture and Building Systems", email = "cea@arch.ethz.ch" }
+]
+maintainers = [
+    { name = "Reynold Mok", email = "reynold.mok@arch.ethz.ch" }
+]
+dynamic = ["version"]
+
+# All dependencies are determined in environment.yml
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+docs = ["setuptools", "mock"]
+
+[project.urls]
+"Homepage" = "https://cityenergyanalyst.com"
+"Bug Reports" = "https://github.com/architecture-building-systems/CityEnergyAnalyst/issues"
+"Source" = "https://github.com/architecture-building-systems/CityEnergyAnalyst"
+
+[project.scripts]
+cea = "cea.interfaces.cli.cli:main"
+cea-config = "cea.interfaces.cli.cea_config:main"
+cea-doc = "cea.interfaces.cli.cea_doc:main"
+cea-dev = "cea.interfaces.cli.cea_dev:main"
+cea-worker = "cea.worker:main"
+cea-plot = "cea.plots.plot_cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cea*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = { attr = "cea.__version__" }
