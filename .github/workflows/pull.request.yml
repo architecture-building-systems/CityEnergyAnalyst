@@ -17,7 +17,7 @@ jobs:
       - name: Check environment.yml diff
         id: environment_yml_diff
         run: |
-          git diff --quiet HEAD..master -- environment.yml
+          git diff --quiet ..master -- environment.yml
           echo "diff=$?" >> "$GITHUB_OUTPUT"
 
   warn_user:
