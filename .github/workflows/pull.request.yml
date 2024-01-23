@@ -31,7 +31,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: ${{ format('@{0} Changes detected in `environment.yml`.', github.event.issue.user.login) }}
+              body: ${{ format('@{0} Changes detected in `environment.yml`.', github.event.pull_request.user.login) }}
             })
 
   build:
