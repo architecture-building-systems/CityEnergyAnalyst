@@ -1,4 +1,4 @@
-name: conda-lock
+name: Generate conda-lock file
 
 on: workflow_dispatch
 
@@ -19,3 +19,16 @@ jobs:
       - name: Run conda-lock
         run: conda-lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64 --lockfile ${{ runner.temp }}/conda-lock.yml
         shell: bash -el {0}
+
+      - name: Get branch name
+        id: branch_name
+        run: |
+          GITHUB_REF=$(echo $GITHUB_REF | sed -e "s#refs/heads/##g")
+          echo "name=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          add-paths: conda-lock.yml
+          branch: ${{ format("{0}-conda-lock", steps.branch_name.outputs.name) }}
+          
