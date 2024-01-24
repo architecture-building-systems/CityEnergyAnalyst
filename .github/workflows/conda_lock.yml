@@ -17,7 +17,7 @@ jobs:
           init-shell: bash
 
       - name: Run conda-lock
-        run: conda-lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64 --lockfile ${{ runner.temp }}/conda-lock.yml
+        run: conda-lock --mamba -f environment.yml -p osx-64 -p linux-64 -p win-64 --lockfile conda-lock.yml
         shell: bash -el {0}
 
       - name: Get branch name
