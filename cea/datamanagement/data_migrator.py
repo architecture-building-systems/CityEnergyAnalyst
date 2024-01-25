@@ -3,17 +3,14 @@ This script checks a scenario for v2.29.0 format and migrates the input tables i
 
 NOTE: You'll still need to run the archetypes-mapper after this script has run.
 """
-
-
-
-
-
+import glob
 import os
 from functools import cmp_to_key
 
+import xlrd
+
 import cea
 import pandas as pd
-import collections
 
 import cea.config
 import cea.inputlocator
@@ -35,10 +32,11 @@ def find_migrators(scenario):
     the data-migrator will run these in sequence starting from the first migrator found
     (NOTE: I've added a dummy migration - 2.31 - 2.31.1 - to show how the principle works)
     """
-    migrations = collections.OrderedDict()
+    migrations = dict()
     migrations["v2.29.0 - v2.31.0"] = (is_2_29, migrate_2_29_to_2_31)
     migrations["v2.31.0 - v2.31.1"] = (is_2_31, migrate_2_31_to_2_31_1)
     migrations["v3.22.0 - v3.22.1"] = (is_3_22, migrate_3_22_to_3_22_1)
+    migrations[".xls to .xlsx"] = (is_xls, migrate_xls_to_xlsx)
 
     for key, migration_info in migrations.items():
         identifier, migrator = migration_info
@@ -154,9 +152,9 @@ def migrate_2_31_to_2_31_1(scenario):
 
 
 def is_3_22(scenario):
-    '''
+    """
     Checks if "pax" is being used the indoor comfort dbf file.
-    '''
+    """
     if indoor_comfort_is_3_22(scenario) or internal_loads_is_3_22(scenario) or output_occupancy_is_3_22(scenario):
         return True
     else:
@@ -190,9 +188,9 @@ def output_occupancy_is_3_22(scenario):
 
 
 def migrate_3_22_to_3_22_1(scenario):
-    '''
+    """
     Renames columns in `indoor_comfort.dbf` and `internal_loads.dbf` to remove the use of "pax" meaning "people".
-    '''
+    """
 
     INDOOR_COMFORT_COLUMNS = {'Ve_lpspax': 'Ve_lsp'}
     INTERNAL_LOADS_COLUMNS = {'Occ_m2pax': 'Occ_m2p', 'Qs_Wpax': 'Qs_Wp', 'Vw_lpdpax': 'Vw_ldp',
@@ -254,6 +252,28 @@ def migrate_3_22_to_3_22_1(scenario):
                 schedule_df.to_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name))
 
     print("- done")
+
+
+def is_xls(scenario):
+    """
+    Checks if .xls files exist
+    """
+    try:
+        xls_files = glob.glob(os.path.join(scenario, 'inputs', 'technology', '**', '*.xls'), recursive=True)
+        return bool(xls_files)
+    except FileNotFoundError:
+        return False
+
+
+def migrate_xls_to_xlsx(scenario):
+    """
+    Converts .xls files to .xlsx
+    """
+    for xls_file in glob.glob(os.path.join(scenario, 'inputs', 'technology', '**', '*.xls'), recursive=True):
+        excel_sheets = pd.read_excel(xls_file, sheet_name=None, index_col=None, header=None)
+        with pd.ExcelWriter(xls_file+'x') as writer:
+            for sheet, df in excel_sheets.items():
+                df.to_excel(writer, sheet_name=sheet, index=False, header=False)
 
 
 def main(config):
