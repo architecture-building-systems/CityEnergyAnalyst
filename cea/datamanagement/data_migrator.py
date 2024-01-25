@@ -7,8 +7,6 @@ import glob
 import os
 from functools import cmp_to_key
 
-import xlrd
-
 import cea
 import pandas as pd
 
