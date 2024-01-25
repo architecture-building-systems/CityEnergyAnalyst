@@ -4,16 +4,11 @@ This script checks a scenario for v2.29.0 format and migrates the input tables i
 NOTE: You'll still need to run the archetypes-mapper after this script has run.
 """
 
-
-
-
-
 import os
 from functools import cmp_to_key
 
 import cea
 import pandas as pd
-import collections
 
 import cea.config
 import cea.inputlocator
@@ -35,7 +30,7 @@ def find_migrators(scenario):
     the data-migrator will run these in sequence starting from the first migrator found
     (NOTE: I've added a dummy migration - 2.31 - 2.31.1 - to show how the principle works)
     """
-    migrations = collections.OrderedDict()
+    migrations = dict()
     migrations["v2.29.0 - v2.31.0"] = (is_2_29, migrate_2_29_to_2_31)
     migrations["v2.31.0 - v2.31.1"] = (is_2_31, migrate_2_31_to_2_31_1)
     migrations["v3.22.0 - v3.22.1"] = (is_3_22, migrate_3_22_to_3_22_1)
@@ -254,6 +249,7 @@ def migrate_3_22_to_3_22_1(scenario):
                 schedule_df.to_csv(os.path.join(scenario, 'outputs', 'data', 'occupancy', file_name))
 
     print("- done")
+
 
 
 def main(config):
