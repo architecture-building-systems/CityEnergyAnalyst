@@ -3,7 +3,7 @@ name: Generate conda-lock file
 on: workflow_dispatch
 
 jobs:
-  test:
+  generate_conda_lock:
     runs-on: ubuntu-latest
 
     steps:
