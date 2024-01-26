@@ -12,7 +12,7 @@ import cea.plots.cache
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__, static_folder='base/static', )
+    app = Flask(__name__, static_folder='base/static')
     CORS(app)
     app.config.from_mapping({'SECRET_KEY': 'secret'})
     socketio = SocketIO(app, cors_allowed_origins="*")
@@ -22,7 +22,7 @@ def main(config):
         app.register_blueprint(frontend)
 
     from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
-    from cea.interfaces.dashboard.server import blueprint as server_blueprint
+    from cea.interfaces.dashboard.server import blueprint as server_blueprint, shutdown_server
     from cea.interfaces.dashboard.api import blueprint as api_blueprint
 
     app.register_blueprint(plots_blueprint)
@@ -42,9 +42,13 @@ def main(config):
         webbrowser.open(url)
 
     print("Press Ctrl+C to stop server")
-    socketio.run(app, host=config.server.host, port=config.server.port)
+    try:
+        socketio.run(app, host=config.server.host, port=config.server.port)
+    except KeyboardInterrupt:
+        with app.app_context():
+            shutdown_server()
 
-    print("\nserver exited")
+    print("server exited")
 
 
 if __name__ == '__main__':
