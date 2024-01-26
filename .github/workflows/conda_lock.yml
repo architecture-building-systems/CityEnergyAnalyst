@@ -30,5 +30,9 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           add-paths: conda-lock.yml
-          branch: ${{ format('{0}-conda-lock', steps.branch_name.outputs.name) }}
+          branch: ${{ steps.branch_name.outputs.name) }}-conda-lock
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          title: Update conda-lock.yml of `${{ steps.branch_name.outputs.name) }}`
+          commiter: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          commit-message: "Update conda-lock.yml"
           
