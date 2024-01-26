@@ -35,4 +35,5 @@ jobs:
           title: Update conda-lock.yml of `${{ steps.branch_name.outputs.name }}`
           committer: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           commit-message: "Update conda-lock.yml"
+          assignees: ${{ github.actor }}
           
