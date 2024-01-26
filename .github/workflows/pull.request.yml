@@ -45,6 +45,7 @@ jobs:
   build:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: check_environment_yml
     strategy:
       fail-fast: false
       matrix:
