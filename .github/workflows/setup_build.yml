@@ -7,7 +7,7 @@ jobs:
   build_win_setup:
     runs-on: "windows-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install conda environment from environment.yml
         uses: mamba-org/setup-micromamba@v1
@@ -44,14 +44,14 @@ jobs:
           python setup.py sdist
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
       - name: Cache GUI
         id: cache-gui
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
           key: ${{ runner.os }}-${{ hashFiles('gui/src', 'gui/yarn.lock') }}-gui-setup
@@ -79,7 +79,7 @@ jobs:
           makensis $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
 
       - name: Upload setup
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
