@@ -199,15 +199,14 @@ class ConnectivityVector(object):
     def as_str(self, for_filename=False):
         """
         Return the capacity indicator vector as single string-object (network connection values spaced by an underscore)
-        If the string is too long to be used as a filename, the string is shortened by hashing everything after the
-        first 8 values of the connectivity vector.
+        If the string is to be used in a filename, transform it to a hash instead to make sure it doesn't exceed the
+        maximum allowed length for filenames (https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf).
         """
-        connectivity_str = '_'.join(map(str, self.values))
-        if for_filename and len(connectivity_str) > 50:
-            connectivity_str_start = '_'.join(map(str, self.values[:8]))
-            connectivity_bytes = ' '.join(map(str, self.values[9:])).encode()
-            connectivity_str_end = hashlib.sha256(connectivity_bytes).hexdigest()
-            connectivity_str = connectivity_str_start + '_' + connectivity_str_end
+        if not for_filename:
+            connectivity_str = '_'.join(map(str, self.values))
+        else:
+            connectivity_bytes = ' '.join(map(str, self.values)).encode()
+            connectivity_str = hashlib.sha256(connectivity_bytes).hexdigest()
         return connectivity_str
 
     @staticmethod
