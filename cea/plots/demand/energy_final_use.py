@@ -8,7 +8,6 @@ Implements the Energy Supply pot.
 import cea.plots.demand.energy_end_use
 import plotly.graph_objs as go
 
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 class EnergySupplyPlot(cea.plots.demand.energy_end_use.EnergyDemandDistrictPlot):

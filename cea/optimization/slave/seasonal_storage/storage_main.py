@@ -15,7 +15,6 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 
 
 
-import os
 
 import numpy as np
 import pandas as pd

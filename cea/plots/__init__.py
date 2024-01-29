@@ -16,7 +16,6 @@ The module ``cea.plots.categories`` contains helper-methods for dealing with the
 
 import os
 import yaml
-from cea.plots.base import PlotBase
 import cea.plots.categories
 
 __author__ = "Daren Thomas"

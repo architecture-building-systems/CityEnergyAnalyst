@@ -1,25 +1,13 @@
-include cea/scripts.yml
-include cea/schemas.yml
-include cea/databases/weather/*.epw
-
-recursive-include cea/databases *.xlsx *.xls *.txt *.csv
-
 include cea/default.config
-
-recursive-include cea/tests *.config
-recursive-include cea/tests *.yml
-
 include cea/examples/*.zip
-
-recursive-include cea/interfaces/dashboard *.html *.js *.css *.otf *.eot *.svg *.ttf *.woff *.woff2 *.png *.jpg *.gif *.ico
-
 include cea/plots/naming.csv
-recursive-include cea/plots *.html
-
+include cea/schemas.yml
+include cea/scripts.yml
 include cea/workflows/*.yml
 
-include cea/dev/conda.bat
+recursive-include cea/databases *.xlsx *.xls *.txt *.csv *.epw
+recursive-include cea/lib *.so *.dylib
+recursive-include cea/plots *.html
+recursive-include cea/tests *.config *.yml
 
 graft cea/resources/radiation/bin
-
-graft cea/lib

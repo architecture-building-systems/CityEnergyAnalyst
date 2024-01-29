@@ -252,7 +252,7 @@ def write_shp(G, outdir):
     # delete pre-existing output first otherwise ogr chokes
     try:
         shpdir.DeleteLayer("nodes")
-    except:
+    except Exception:
         pass
     nodes = shpdir.CreateLayer("nodes", None, ogr.wkbPoint)
 
@@ -280,7 +280,7 @@ def write_shp(G, outdir):
 
     try:
         shpdir.DeleteLayer("edges")
-    except:
+    except Exception:
         pass
     edges = shpdir.CreateLayer("edges", None, ogr.wkbLineString)
 

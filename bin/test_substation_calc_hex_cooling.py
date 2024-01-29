@@ -2,7 +2,7 @@
 This file tests to make sure the refactored version of calc_HEX_cooling calculates the same values as
 the old calc_HEX_cooling.
 """
-from cea.technologies.substation import *
+from cea.technologies.substation import calc_plate_HEX, calc_HEX_cooling
 
 
 def main():
@@ -38,7 +38,7 @@ def calc_HEX_cooling_orig(Q, UA, thi, tho, tci, ch):
         Flag = False
         tol = 0.00000001
         while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
+            if Flag:
                 eff[0] = eff[1]
             else:
                 cmin = ch * (thi - tho) / ((thi - tci) * eff[0])

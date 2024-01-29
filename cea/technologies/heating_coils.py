@@ -5,8 +5,6 @@ Heating and cooling coils of Air handling units
 
 
 
-import scipy.optimize as sopt
-import scipy
 import numpy as np
 from cea.technologies import substation
 from cea.demand import constants

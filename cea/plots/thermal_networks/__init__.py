@@ -11,6 +11,7 @@ import pandas as pd
 
 import cea.plots.cache
 from cea.constants import HOURS_IN_YEAR
+from cea.plots.base import PlotBase
 from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -32,7 +33,7 @@ __status__ = "Production"
 label = 'Thermal networks'
 
 
-class ThermalNetworksPlotBase(cea.plots.PlotBase):
+class ThermalNetworksPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "thermal-networks"
 
@@ -168,7 +169,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         try:
             return pd.read_csv(self.locator.get_thermal_network_velocity_edges_file(self.network_type,
                                                                                        self.network_name))
-        except:
+        except Exception:
             #backward compatibility with detailed network simulation (which does not produce this data)
             return None
 
@@ -178,7 +179,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         try:
             return pd.read_csv(self.locator.get_thermal_network_layout_massflow_nodes_file(self.network_type,
                                                                                        self.network_name))
-        except:
+        except Exception:
         # backward compatibility with detailed network simulation (which does not produce this data)
             return None
 
@@ -194,7 +195,7 @@ class ThermalNetworksPlotBase(cea.plots.PlotBase):
         try:
             return pd.read_csv(self.locator.get_network_linear_thermal_loss_edges_file(self.network_type,
                                                                                        self.network_name))  # edge loss
-        except:
+        except Exception:
             # backward compatibility with detailed network simulation (which does not produce this data)
             return None
 

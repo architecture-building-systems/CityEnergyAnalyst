@@ -16,7 +16,7 @@ Prerequisites
 * Download and install `Homebrew <https://brew.sh/>`__. Upon finishing installing Homebrew, pay attention to the message reverted. You may also have to execute ``brew install node``.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__. Upon finishing installing Micromamba, pay attention to the message reverted.
-
+y
 Installation
 ~~~~~~~~~~~~
 Fresh installation
@@ -51,8 +51,11 @@ These steps would only work if your current installation is installed using the 
     #. Open a Terminal console
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
-    #. Type ``micromamba activate cea`` and press ENTER.
-    #. Type ``micromamba update -f environment.yml`` and press ENTER.
+    #. Type ``micromamba env remove -n cea`` and press ENTER.
+    #. Type ``micromamba env create -f environment.yml`` and press ENTER.
+    #. Type ``mircomamba activate cea`` and press ENTER.
+    #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
+
 #. Update the CEA Dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``git pull`` and press ENTER.

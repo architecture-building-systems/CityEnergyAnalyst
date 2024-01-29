@@ -7,7 +7,6 @@ import os
 import osmnx
 import osmnx.utils_graph
 import pandas as pd
-from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator

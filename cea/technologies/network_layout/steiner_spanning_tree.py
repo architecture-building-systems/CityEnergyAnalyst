@@ -13,7 +13,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely.geometry import LineString
-from typing import List
 
 import cea.config
 import cea.inputlocator
@@ -97,7 +96,7 @@ def calc_steiner_spanning_tree(crs_projected,
         nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
         mst_nodes = gdf.from_file(path_output_nodes_shp)
         mst_edges = gdf.from_file(path_output_edges_shp)
-    except:
+    except Exception:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs. '
@@ -185,7 +184,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                         if new_mst_nodes['Type'][node_index] == 'NONE':
                             # create new edge
                             line = LineString((node_coords, new_neighbour))
-                            if not line in mst_edges['geometry']:
+                            if line not in mst_edges['geometry']:
                                 mst_edges = mst_edges.append(
                                     {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
                                      "Name": "PIPE" + str(mst_edges.Name.count())},

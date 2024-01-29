@@ -18,7 +18,6 @@ __status__ = "Production"
 
 
 import pandas as pd
-import geopandas as gpd
 
 
 class optimizationTracker(object):
@@ -122,7 +121,7 @@ class optimizationTracker(object):
 
         # identify the newly selected connectivity vectors and their corresponding energy system information
         newly_selected = [individual for individual in selected_connectivities
-                          if not (individual in new_networks_selection.keys())]
+                          if individual not in new_networks_selection.keys()]
         selected_candidates = {ind: self.candidate_individuals[ind] for ind in newly_selected}
 
         # Summarise the newly selected individual's network-layout and supply system structure
@@ -208,7 +207,7 @@ class optimizationTracker(object):
                 if connectivity not in selected_connectivities:
                     continue
                 # ... and if it is, clear the memory of the last generation if it was also part of that selection
-                elif not (connectivity in new_supsys_combinations_selection[f'front_{front}'].keys()):
+                elif connectivity not in new_supsys_combinations_selection[f'front_{front}'].keys():
                     new_supsys_combinations_selection[f'front_{front}'][connectivity] = {}
 
                 # if this connectivity vector and supply systems combination is part of the previous generation...
@@ -279,7 +278,7 @@ class optimizationTracker(object):
         self._simplified_supsys_codes = {}
         for connectivities in self.current_supsys_combinations_selection.values():
             for connectivity, supsys_combinations in connectivities.items():
-                if not connectivity in self._simplified_supsys_codes.keys():
+                if connectivity not in self._simplified_supsys_codes.keys():
                     self._simplified_supsys_codes[connectivity] = {supsys_combination:
                                                                        f'{self._simplified_connectivity_codes[connectivity]}.{j+1}'
                                                                    for j, supsys_combination

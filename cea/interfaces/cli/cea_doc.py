@@ -41,7 +41,7 @@ def main(config=None):
         sys.exit(1)
     script_name = args.pop(0)
     cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
-    if not 'doc' in cea_script.interfaces:
+    if 'doc' not in cea_script.interfaces:
         print('Invalid script for cea-doc')
         print_valid_script_names(config.plugins)
         sys.exit(ScriptNotFoundException.rc)
@@ -72,7 +72,7 @@ def print_help(config, remaining_args):
         script_name = remaining_args[0]
         try:
             cea_script = cea.scripts.by_name(script_name, plugins=config.plugins)
-        except:
+        except Exception:
             print("Invalid value for SCRIPT.")
             print_valid_script_names(plugins=config.plugins)
             return
