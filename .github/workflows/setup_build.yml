@@ -41,7 +41,8 @@ jobs:
         shell: bash
         run: |
           CEA_VERSION=$(python -c "import cea; print(cea.__version__)")
-          python setup.py sdist
+          python -m pip install build
+          python -m build
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
 
       - uses: actions/checkout@v4
