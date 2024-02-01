@@ -29,7 +29,7 @@ _________________________
     #. Open a Terminal console
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
     #. Type ``micromamba env create -n cea -f conda-lock.yml`` and press ENTER.
-    #. Type ``mircomamba activate cea`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
@@ -53,7 +53,7 @@ These steps would only work if your current installation is installed using the 
     #. Type ``git pull`` and press ENTER.
     #. Type ``micromamba env remove -n cea`` and press ENTER.
     #. Type ``micromamba env create -n cea -f conda-lock.yml`` and press ENTER.
-    #. Type ``mircomamba activate cea`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 
 #. Update the CEA Dashboard:
