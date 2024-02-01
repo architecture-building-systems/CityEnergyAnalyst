@@ -1,7 +1,7 @@
 How to Cite
 ===========
 
-The CEA team, "City Energy Analyst v3.35.0", Zenodo, 2024, 10.5281/zenodo.10520492
+The CEA Team. (2024). City Energy Analyst (v3.35.2). Zenodo. https://doi.org/10.5281/zenodo.10602391
 
 The CEA team
 ============
