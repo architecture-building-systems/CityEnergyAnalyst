@@ -46,7 +46,8 @@ RUN chown $MAMBA_USER /project
 USER $MAMBA_USER
 # create the conda environment and install cea
 COPY --chown=$MAMBA_USER:$MAMBA_USER conda-lock.yml /tmp/conda-lock.yml
-RUN micromamba install --name base --yes --file /tmp/conda-lock.yml \
+RUN micromamba config set extract_threads 1 \
+    && micromamba install --name base --yes --file /tmp/conda-lock.yml \
     && micromamba clean --all --yes
 
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
