@@ -1,3 +1,13 @@
+- 2024-01-31 - 3.35.1 - #3478 Automate docker image build
+- 2024-01-26 - 3.35.1 - #3473 Shutdown flask server gracefully after keyboard interrupt
+- 2024-01-25 - 3.35.1 - #3471 Update data migrator
+- 2024-01-23 - 3.35.1 - #3467 Remove pytest from environment.yml
+- 2024-01-23 - 3.35.1 - #3466 Use conda-lock for tests
+- 2024-01-21 - 3.35.1 - #3465 Add linting workflow
+- 2024-01-21 - 3.35.1 - #3464 Add missing SALib dependency
+- 2024-01-19 - 3.35.1 - #3460 Clean conda dependencies
+- 2024-01-18 - 3.35.1 - #3455 Release 3.35.1
+- 2024-01-18 - 3.35.0 - #3454 Fix batch processing script errors
 - 2024-01-17 - 3.35.0 - #3453 Fix dashboard server not shutting down
 - 2024-01-17 - 3.35.0 - #3452 Prevent labels from being encoded as NaN in JSON
 - 2024-01-17 - 3.35.0 - #3447 Release 3.35.0

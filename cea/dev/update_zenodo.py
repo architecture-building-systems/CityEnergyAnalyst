@@ -10,8 +10,8 @@ DOI_PREFIX = "10.5281"
 
 ZENODO_BADGE_URL_PATTERN = re.compile(r"(https://zenodo\.org/badge/DOI/).+(\.svg)")
 DOI_URL_PATTERN = re.compile(r"(https://doi\.org/).+")
-README_CITE_PATTERN = re.compile(r"(For V)\d+.\d+.\d+( \(.+\): .+)")
-CREDITS_CITE_PATTERN = re.compile(r'(The CEA team, "City Energy Analyst v)\d+\.\d+\.\d+(", Zenodo, )\d+, .+')
+CITE_PATTERN = re.compile(r"(The CEA Team\. \()\d{4}(\)\. City Energy Analyst \(v)\d+.\d+.\d+(\)\. Zenodo\. "
+                          r"https://doi\.org/).+")
 
 
 def update_readme(version: str, doi: str) -> None:
@@ -20,20 +20,21 @@ def update_readme(version: str, doi: str) -> None:
         readme = f.read()
 
     result = readme
-    # Update badge url
+    # Update badge image url
     if not ZENODO_BADGE_URL_PATTERN.search(result):
         raise ValueError("Unable to find zenodo badge url in the file")
     result = ZENODO_BADGE_URL_PATTERN.sub(rf"\g<1>{doi}\g<2>", result)
 
-    # Update doi url
+    # Update badge target url
     if not DOI_URL_PATTERN.search(result):
         raise ValueError("Unable to find zenodo doi url in the file")
     result = DOI_URL_PATTERN.sub(rf"\g<1>{doi}", result)
 
     # Update version
-    if not README_CITE_PATTERN.search(result):
+    if not CITE_PATTERN.search(result):
         raise ValueError("Unable to find cite statement in the file")
-    result = README_CITE_PATTERN.sub(rf"\g<1>{version}\g<2>", result)
+    year = datetime.today().strftime("%Y")
+    result = CITE_PATTERN.sub(rf"\g<1>{year}\g<2>{version}\g<3>{doi}", result)
 
     with open(readme_path, "w") as f:
         f.write(result)
@@ -44,11 +45,10 @@ def update_credits(version: str, doi: str) -> None:
     with open(credits_path) as f:
         _credits = f.read()
 
-    if not CREDITS_CITE_PATTERN.search(_credits):
+    if not CITE_PATTERN.search(_credits):
         raise ValueError("Unable to find cite statement in the file")
-
     year = datetime.today().strftime("%Y")
-    result = CREDITS_CITE_PATTERN.sub(rf"\g<1>{version}\g<2>{year}, {doi}", _credits)
+    result = CITE_PATTERN.sub(rf"\g<1>{year}\g<2>{version}\g<3>{doi}", _credits)
 
     with open(credits_path, "w") as f:
         f.write(result)
