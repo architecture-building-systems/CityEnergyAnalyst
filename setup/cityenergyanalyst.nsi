@@ -70,6 +70,7 @@ Section "Base Installation" Base_Installation_Section
     File "activate.bat"
     File "cea-env.bat"
     File "..\conda-lock.yml"
+    File "cityenergyanalyst.tar.gz"
 
     # create CEA conda environment
     DetailPrint "micromamba create -n cea -f conda-lock.yml"
@@ -81,7 +82,7 @@ Section "Base Installation" Base_Installation_Section
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install git+${CEA_REPO_URL}@v${VERSION}'
+    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
