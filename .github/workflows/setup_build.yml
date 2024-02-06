@@ -13,12 +13,9 @@ jobs:
         with:
           python-version: '3.8' 
       
-      - name: Fetch micromamba
-        shell: pwsh
-        run: |
-          Invoke-Webrequest -URI https://micro.mamba.pm/api/micromamba/win-64/latest -OutFile micromamba.tar.bz2
-          tar xf micromamba.tar.bz2
-          MOVE -Force Library\bin\micromamba.exe setup\micromamba.exe
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-binary-path: setup/micromamba
 
       - name: Install CEA to conda environment
         shell: bash
