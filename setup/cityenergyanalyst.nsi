@@ -57,7 +57,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cityenergyanalyst.tar.gz"
-    File \r "dependencies"
+    File /r "dependencies"
 
     # add micromamba
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
