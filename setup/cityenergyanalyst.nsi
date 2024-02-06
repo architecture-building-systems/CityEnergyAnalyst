@@ -57,25 +57,23 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     File "cityenergyanalyst.tar.gz"
+    File \r "dependencies"
 
     # add micromamba
-    CreateDirectory "$INSTDIR\dependencies"
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
     File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
-    File "activate.bat"
-    File "cea-env.bat"
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$INSTDIR\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # create CEA conda environment
     DetailPrint "Installing git"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" micromamba install git -c conda-forge'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" micromamba install git -c conda-forge'
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
@@ -83,7 +81,7 @@ Section "Base Installation" Base_Installation_Section
     ${EndIf}
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" cea --help'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"
