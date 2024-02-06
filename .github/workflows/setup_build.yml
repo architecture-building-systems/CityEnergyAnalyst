@@ -51,7 +51,7 @@ jobs:
           cd $GITHUB_WORKSPACE/gui
           yarn
           yarn package
-          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
+          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/dashboard
 
       - name: Make setup
         shell: bash

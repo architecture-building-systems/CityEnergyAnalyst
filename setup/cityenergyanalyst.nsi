@@ -57,8 +57,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     # install the CEA-GUI to "dashboard" folder
-    File /r "CityEnergyAnalyst-GUI-win32-x64"
-    Rename "CityEnergyAnalyst-GUI-win32-x64" "dashboard"
+    File /r "dashboard"
 
     # add micromamba
     File "micromamba.exe"
