@@ -67,9 +67,13 @@ Section "Base Installation" Base_Installation_Section
     DetailPrint "Creating CEA conda environment (this might take awhile)"
     nsExec::ExecToLog '"$INSTDIR\dependencies\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
-    # create CEA conda environment
+    # install git
     DetailPrint "Installing git"
     nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" micromamba install git -c conda-forge'
+
+    # clean micromamba cache (to save space)
+    DetailPrint "Cleaning cache"
+    nsExec::ExecToLog '"$INSTDIR\dependencies\activate.bat" micromamba clean -afy'
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
