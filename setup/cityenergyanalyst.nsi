@@ -72,11 +72,11 @@ Section "Base Installation" Base_Installation_Section
     File "cityenergyanalyst.tar.gz"
 
     # create CEA conda environment
-    DetailPrint "micromamba create -n cea -f conda-lock.yml"
+    DetailPrint "Creating CEA conda environment"
     nsExec::ExecToLog '"$INSTDIR\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # create CEA conda environment
-    DetailPrint "micromamba create -n cea -f conda-lock.yml"
+    DetailPrint "Installing git"
     nsExec::ExecToLog '"$INSTDIR\cea-env.bat" micromamba install git -c conda-forge'
 
     # install CEA from tarball
