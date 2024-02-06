@@ -60,8 +60,7 @@ Section "Base Installation" Base_Installation_Section
     File /r "dashboard"
 
     # add micromamba
-    File "micromamba.exe"
-    Rename "micromamba.exe" "dependencies\micromamba.exe"
+    File /oname=dependencies\micromamba.exe "micromamba.exe"
 
     # Icon for shortcuts
     File "cea-icon.ico"
