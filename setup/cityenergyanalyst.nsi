@@ -56,20 +56,17 @@ Section "Base Installation" Base_Installation_Section
     SectionIn RO  # this section is required so user is unable to uncheck
     SetOutPath "$INSTDIR"
 
+    File "cityenergyanalyst.tar.gz"
+
     # add micromamba
     CreateDirectory "$INSTDIR\dependencies"
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
-
-    # Icon for shortcuts
-    File "cea-icon.ico"
-
+    File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
     File "activate.bat"
     File "cea-env.bat"
-    File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
-    File "cityenergyanalyst.tar.gz"
 
     # create CEA conda environment
-    DetailPrint "Creating CEA conda environment"
+    DetailPrint "Creating CEA conda environment (this might take awhile)"
     nsExec::ExecToLog '"$INSTDIR\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # create CEA conda environment
@@ -110,6 +107,9 @@ Section "Base Installation" Base_Installation_Section
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+    # Icon for shortcuts
+    File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
     CreateShortcut "$INSTDIR\CEA Console.lnk" "$%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe" \
