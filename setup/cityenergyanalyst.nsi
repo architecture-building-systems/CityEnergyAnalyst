@@ -56,9 +56,6 @@ Section "Base Installation" Base_Installation_Section
     SectionIn RO  # this section is required so user is unable to uncheck
     SetOutPath "$INSTDIR"
 
-    # install the CEA-GUI to "dashboard" folder
-    File /r "dashboard"
-
     # add micromamba
     CreateDirectory "$INSTDIR\dependencies"
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
@@ -107,6 +104,9 @@ Section "Base Installation" Base_Installation_Section
 
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
+
+    # install the CEA-GUI to "dashboard" folder
+    File /r "dashboard"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
