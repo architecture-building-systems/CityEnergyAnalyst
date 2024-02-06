@@ -64,11 +64,17 @@ Section "Base Installation" Base_Installation_Section
     File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
 
     # set up commands
-    Var /GLOBAL PowershellCommand "%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -Command"
-    Var /GLOBAL MicromambaPath "$INSTDIR\dependencies\micromamba.exe"
-    Var /GLOBAL RootPrefix "$INSTDIR\dependencies\micromamba"
-    Var /GLOBAL MicromambaHook '$PowershellCommand "& $MicromambaPath shell hook -r $RootPrefix -s powershell | Out-String | Invoke-Expression ;"'
-    Var /GLOBAL ActivateCEA "$MicromambaHook micromamba activate cea;"
+    Var /GLOBAL PowershellCommand
+    Var /GLOBAL MicromambaPath
+    Var /GLOBAL RootPrefix
+    Var /GLOBAL MicromambaHook
+    Var /GLOBAL ActivateCEA
+
+    StrCpy $PowershellCommand "%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -Command"
+    StrCpy $MicromambaPath "$INSTDIR\dependencies\micromamba.exe"
+    StrCpy $RootPrefix "$INSTDIR\dependencies\micromamba"
+    StrCpy $MicromambaHook '$PowershellCommand "& $MicromambaPath shell hook -r $RootPrefix -s powershell | Out-String | Invoke-Expression ;"'
+    StrCpy $ActivateCEA "$MicromambaHook micromamba activate cea;"
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
