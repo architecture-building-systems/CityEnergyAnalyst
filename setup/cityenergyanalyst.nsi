@@ -65,7 +65,7 @@ Section "Base Installation" Base_Installation_Section
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -r "$RootPrefix" -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # install git
     DetailPrint "Installing git"
