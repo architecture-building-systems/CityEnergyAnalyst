@@ -63,21 +63,28 @@ Section "Base Installation" Base_Installation_Section
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
     File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
 
+    # set up commands
+    Var PowershellCommand "%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -Command"
+    Var MicromambaPath "$INSTDIR\dependencies\micromamba.exe"
+    Var RootPrefix "$INSTDIR\dependencies\micromamba"
+    Var MicromambaHook '$PowershellCommand "& $MicromambaPath shell hook -r $RootPrefix -s powershell | Out-String | Invoke-Expression ;"'
+    Var ActivateCEA "$MicromambaHook micromamba activate cea"
+
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
+    nsExec::ExecToLog '$MicromambaHook micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # install git
     DetailPrint "Installing git"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" micromamba install git -c conda-forge'
+    nsExec::ExecToLog '$ActivateCEA micromamba install git -c conda-forge'
 
     # clean micromamba cache (to save space)
     DetailPrint "Cleaning cache"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\activate.bat" micromamba clean -afy'
+    nsExec::ExecToLog '$MicromambaHook micromamba clean -afy'
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '$ActivateCEA pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
@@ -85,7 +92,7 @@ Section "Base Installation" Base_Installation_Section
     ${EndIf}
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" cea --help'
+    nsExec::ExecToLog '$ActivateCEA cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"
@@ -114,7 +121,7 @@ Section "Base Installation" Base_Installation_Section
     File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
-    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" "$INSTDIR\dependencies\cea-env.bat" \
+    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
@@ -130,7 +137,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "$INSTDIR\dependencies\cea-env.bat" \
+    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
@@ -157,7 +164,7 @@ SectionEnd
 Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 
     # create shortcuts on the Desktop for launching the CEA console
-    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "$INSTDIR\dependencies\cea-env.bat" \
+    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
