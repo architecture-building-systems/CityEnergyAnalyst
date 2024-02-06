@@ -68,7 +68,7 @@ Section "Base Installation" Base_Installation_Section
     Var MicromambaPath "$INSTDIR\dependencies\micromamba.exe"
     Var RootPrefix "$INSTDIR\dependencies\micromamba"
     Var MicromambaHook '$PowershellCommand "& $MicromambaPath shell hook -r $RootPrefix -s powershell | Out-String | Invoke-Expression ;"'
-    Var ActivateCEA "$MicromambaHook micromamba activate cea"
+    Var ActivateCEA "$MicromambaHook micromamba activate cea;"
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
