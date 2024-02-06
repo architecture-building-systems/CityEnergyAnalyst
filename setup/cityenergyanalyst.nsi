@@ -68,12 +68,12 @@ Section "Base Installation" Base_Installation_Section
 
     File "activate.bat"
     File "cea-env.bat"
-    File "..\conda-lock.yml"
+    File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
     File "cityenergyanalyst.tar.gz"
 
     # create CEA conda environment
     DetailPrint "micromamba create -n cea -f conda-lock.yml"
-    nsExec::ExecToLog '"$INSTDIR\activate.bat" micromamba create -n cea -f conda-lock.yml'
+    nsExec::ExecToLog '"$INSTDIR\activate.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # create CEA conda environment
     DetailPrint "micromamba create -n cea -f conda-lock.yml"
