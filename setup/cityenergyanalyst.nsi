@@ -63,34 +63,21 @@ Section "Base Installation" Base_Installation_Section
     File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
     File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
 
-    # set up commands
-    Var /GLOBAL PowershellCommand
-    Var /GLOBAL MicromambaPath
-    Var /GLOBAL RootPrefix
-    Var /GLOBAL MicromambaHook
-    Var /GLOBAL ActivateCEA
-
-    StrCpy $PowershellCommand "%windir%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy ByPass -Command"
-    StrCpy $MicromambaPath "$INSTDIR\dependencies\micromamba.exe"
-    StrCpy $RootPrefix "$INSTDIR\dependencies\micromamba"
-    StrCpy $MicromambaHook "$PowershellCommand '& $MicromambaPath shell hook -r $RootPrefix -s powershell | Out-String | Invoke-Expression ;'"
-    StrCpy $ActivateCEA "$MicromambaHook micromamba activate cea;"
-
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$MicromambaHook" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -r "$RootPrefix" -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
 
     # install git
     DetailPrint "Installing git"
-    nsExec::ExecToLog '"$ActivateCEA" micromamba install git -c conda-forge'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; micromamba install git -c conda-forge'
 
     # clean micromamba cache (to save space)
     DetailPrint "Cleaning cache"
-    nsExec::ExecToLog '"$MicromambaHook" micromamba clean -afy'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba clean -afy'
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$ActivateCEA" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
@@ -98,7 +85,7 @@ Section "Base Installation" Base_Installation_Section
     ${EndIf}
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$ActivateCEA" cea --help'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"
