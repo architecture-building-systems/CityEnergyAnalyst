@@ -42,4 +42,4 @@ dependencies:
 - pip:
   - staticmap
   - wntr==0.2.3
-  - git+https://github.com/reyery/py4design.git@cea # modified p4design to remove deprecated functions
+  - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions

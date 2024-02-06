@@ -12,9 +12,9 @@ jobs:
       - name: Install conda environment from environment.yml
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: environment.yml
-          cache-environment: true
+          environment-file: conda-lock.yml
           environment-name: cea
+          cache-environment: true
           init-shell: bash powershell
 
       - name: Install CEA to conda environment
@@ -41,7 +41,8 @@ jobs:
         shell: bash
         run: |
           CEA_VERSION=$(python -c "import cea; print(cea.__version__)")
-          python setup.py sdist
+          python -m pip install build
+          python -m build
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
 
       - uses: actions/checkout@v4

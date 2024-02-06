@@ -23596,13 +23596,13 @@ package:
     scikit-learn: '*'
     cvxopt: '*'
     matplotlib: '*'
-  url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+  url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   hash:
-    sha256: c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    sha256: 3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   category: main
   source:
     type: url
-    url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   optional: false
 - name: py4design
   version: '0.32'
@@ -23619,13 +23619,13 @@ package:
     scikit-learn: '*'
     cvxopt: '*'
     matplotlib: '*'
-  url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+  url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   hash:
-    sha256: c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    sha256: 3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   category: main
   source:
     type: url
-    url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   optional: false
 - name: py4design
   version: '0.32'
@@ -23642,13 +23642,13 @@ package:
     scikit-learn: '*'
     cvxopt: '*'
     matplotlib: '*'
-  url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+  url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   hash:
-    sha256: c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    sha256: 3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   category: main
   source:
     type: url
-    url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   optional: false
 - name: py4design
   version: '0.32'
@@ -23665,13 +23665,13 @@ package:
     scikit-learn: '*'
     cvxopt: '*'
     matplotlib: '*'
-  url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+  url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   hash:
-    sha256: c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    sha256: 3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   category: main
   source:
     type: url
-    url: git+https://github.com/reyery/py4design.git@c0234c5c31a0ab8970e6c65444ba58aac0b8b723
+    url: git+https://github.com/reyery/py4design.git@3323b1a3209a38fc08fad0d28dba176d0b99d3e2
   optional: false
 - name: pycollada
   version: '0.8'
