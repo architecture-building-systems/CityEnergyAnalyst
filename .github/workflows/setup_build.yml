@@ -15,7 +15,7 @@ jobs:
       
       - uses: mamba-org/setup-micromamba@v1
         with:
-          micromamba-binary-path: setup/micromamba
+          micromamba-binary-path: setup/micromamba.exe
 
       - name: Install CEA to conda environment
         shell: bash
