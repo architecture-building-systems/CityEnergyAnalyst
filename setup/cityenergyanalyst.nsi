@@ -36,8 +36,9 @@ InstallDir "$DOCUMENTS\CityEnergyAnalyst"
 Function .onInit
     !insertmacro MULTIUSER_INIT
     # set default installation directory to ProgramFiles if user has privileges
-    ${If} $MultiUser.Privileges == "Admin" ${AndIf} $MultiUser.Privileges == "Power"
-          StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
+    ${If} "$MultiUser.Privileges" == "Admin"
+    ${AndIf} "$MultiUser.Privileges" == "Power"
+        StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
     ${EndIf}
 FunctionEnd
 
