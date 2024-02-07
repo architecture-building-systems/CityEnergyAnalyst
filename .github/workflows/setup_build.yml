@@ -41,7 +41,7 @@ jobs:
 
       - name: Move conda environment to setup
         shell: bash -el {0}
-        run: mv -p $MAMBA_ROOT_PREFIX setup/dependencies/micromamba
+        run: mkdir -p setup/dependencies/micromamba && mv $MAMBA_ROOT_PREFIX setup/dependencies/micromamba
 
       - uses: actions/checkout@v4
         with:
