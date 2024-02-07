@@ -32,15 +32,15 @@ jobs:
           environment-file: conda-lock.yml
           environment-name: cea
           cache-environment: true
-          micromamba-binary-path: setup/micromamba.exe
+          micromamba-binary-path: setup/dependencies/micromamba.exe
 
       - name: Clean conda environment
         shell: bash -el {0}
         run: micromamba clean -afy
 
-      - name: Move conda environment to setup
+      - name: Compress conda environment
         shell: bash -el {0}
-        run: mv $MAMBA_ROOT_PREFIX setup/dependencies/
+        run: 7z a setup/dependencies/cea_env.7z $MAMBA_ROOT_PREFIX
 
       - uses: actions/checkout@v4
         with:
@@ -62,6 +62,13 @@ jobs:
           yarn
           yarn package
           mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/dashboard
+
+      - name: Install setup plugin
+        shell: bash
+        run: |
+          cd "C:\Program Files (x86)\NSIS\Plugins\x86-unicode"
+          curl -o Nsis7z.7z https://nsis.sourceforge.io/mediawiki/images/6/69/Nsis7z_19.00.7z
+          7z e Nsis7z.7z Plugins/x86-unicode/nsis7z.dll
 
       - name: Make setup
         shell: bash

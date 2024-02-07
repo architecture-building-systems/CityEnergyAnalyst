@@ -77,9 +77,10 @@ Section "Base Installation" Base_Installation_Section
     File "cityenergyanalyst.tar.gz"
     File /r "dependencies"
 
-    # add micromamba
-    File /oname=$INSTDIR\dependencies\micromamba.exe "micromamba.exe"
-    File /oname=$INSTDIR\dependencies\conda-lock.yml "..\conda-lock.yml"
+    SetOutPath "$INSTDIR\dependencies\micromamba"
+    Nsis7z::ExtractWithDetails "$INSTDIR\dependencies\cea-env.7z" "Installing CEA dependencies %s..."
+    Delete "$INSTDIR\dependencies\cea-env.7z"
+    SetOutPath "$INSTDIR"
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
