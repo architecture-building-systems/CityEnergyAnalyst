@@ -5,6 +5,14 @@
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+# Request the highest possible execution level for the current user
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
+!define MULTIUSER_MUI
+
+!include MultiUser.nsh
+
 ; include some string functions
 #!include "StrFunc.nsh"
 #${StrRep}
@@ -23,7 +31,15 @@ CRCCheck On
 InstallDir "$DOCUMENTS\CityEnergyAnalyst"
 
 ;Request application privileges for Windows Vista
-RequestExecutionLevel user
+#RequestExecutionLevel user
+
+Function .onInit
+    !insertmacro MULTIUSER_INIT
+    # set default installation directory to ProgramFiles if user has privileges
+    ${If} $MultiUser.Privileges == "Admin" ${AndIf} $MultiUser.Privileges == "Power"
+          StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
+    ${EndIf}
+FunctionEnd
 
 ;--------------------------------
 ;Interface Settings
@@ -37,6 +53,7 @@ RequestExecutionLevel user
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
@@ -167,6 +184,10 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 SectionEnd
+
+Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
+FunctionEnd
 
 ;Uninstaller Section
 
