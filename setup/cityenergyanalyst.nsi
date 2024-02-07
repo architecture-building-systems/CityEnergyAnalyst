@@ -83,11 +83,11 @@ Section "Base Installation" Base_Installation_Section
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml" -y'
 
     # install git
     DetailPrint "Installing git"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; micromamba install git -c conda-forge'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; micromamba install git -c conda-forge -y'
 
     # clean micromamba cache (to save space)
     DetailPrint "Cleaning cache"
