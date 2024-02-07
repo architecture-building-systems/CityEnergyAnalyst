@@ -31,30 +31,9 @@ def exec_read_and_summarise(config, cea_scenario):
     :param cea_scenario: path to the CEA scenario to be assessed using CEA
     :type cea_scenario: file path
     :return:
+    :param summary_df: dataframe of the summarised results, indicating not found when not available
+    :type summary_df: DataFrame
     """
-
-    # paths to results
-    demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
-
-    lca_embodied_path = os.path.join(cea_scenario, 'outputs/data/emissions/Total_LCA_embodied.csv')
-    lca_operation_path = os.path.join(cea_scenario, 'outputs/data/emissions/Total_LCA_operation.csv')
-
-    cost_path = os.path.join(cea_scenario, 'outputs/data/costs/supply_system_costs_today.csv')
-
-    shallow_geothermal_path = os.path.join(cea_scenario, 'outputs/data/potentials/Shallow_geothermal_potential.csv')
-    sewage_heat_path = os.path.join(cea_scenario, 'outputs/data/potentials/Sewage_heat_potential.csv')
-    water_body_path = os.path.join(cea_scenario, 'outputs/data/potentials/Water_body_potential.csv')
-
-
-
-    pvt_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PVT_total_buildings.csv')
-    sc_et_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/SC_ET_total_buildings.csv')
-    sc_fp_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/SC_FP_total_buildings.csv')
-
-    dc_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_thermal_load_kW.csv')
-    dc_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_pumping_load_kW.csv')
-    dh_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_thermal_load_kW.csv')
-    dh_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_pumping_load_kW.csv')
 
     # create an empty DataFrame to store all the results
     summary_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
