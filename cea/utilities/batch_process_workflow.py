@@ -1,6 +1,6 @@
 """
 Batch processing CEA commands over all scenarios in a project.
-This is a first exploration for the ETH MiBS IDP 2023.
+This was originally explored and created for the ETH MiBS IDP 2023.
 """
 
 import os

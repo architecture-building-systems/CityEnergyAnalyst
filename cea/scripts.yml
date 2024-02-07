@@ -161,7 +161,7 @@ Energy potentials:
     parameters: ['general:scenario', water-body]
 
   - name: photovoltaic-thermal
-    label: Photovoltaic-thermal Panels
+    label: Photovoltaic-thermal panels
     description: Calculate electricity & heat production from photovoltaic / thermal technologies
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
@@ -257,26 +257,26 @@ Networks:
       - [get_database_conversion_systems]
       - [get_weather_file]
 
-Optimization:
+Optimisation:
 
   - name: thermal-network-optimization
-    label: Thermal network optimization
-    description: Optimize network design variables (plant locations, layout,...)
+    label: Thermal network optimisation
+    description: Optimise network design variables (plant locations, layout,...)
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply system Part I (decentralized)
-    description: Run optimization for decentralized operation
+    label: Supply system Part I (decentralised)
+    description: Run optimisation for decentralised operation
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
-    label: Supply system Part II (centralized)
-    description: Run optimization for centralized operation
+    label: Supply system Part II (centralised)
+    description: Run optimisation for centralised operation
     interfaces: [cli, dashboard]
     module: cea.optimization.optimization_main
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
@@ -288,7 +288,7 @@ Optimization:
       - [get_geothermal_potential]
 
   - name: optimization-new
-    label: Supply system part II (centralized, beta)
+    label: Supply system part II (centralised, beta)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -323,15 +323,22 @@ Utilities:
 
   - name: batch-process-workflow
     label: Batch process Workflow (beta)
-    description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
+    description: "Batch process some or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
+  - name: result-reader-summary
+    label: Result reader (summary)
+    description: "Summarise the CEA results (excluding optimisation) of some or all scenarios under this project."
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.result_reader_summary
+    parameters: ['general:scenario', result-reader-summary]
+
   - name: data-migrator
     label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
-                  Please consider running this for scenario created before v3.22.
+                  Please consider running this for scenario created before v3.22.0
                   NOTE: This cannot be undone - save a copy of the scenario first."
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.data_migrator
