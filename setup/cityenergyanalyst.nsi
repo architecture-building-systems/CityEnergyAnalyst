@@ -83,19 +83,19 @@ Section "Base Installation" Base_Installation_Section
 
     # create CEA conda environment
     DetailPrint "Creating CEA conda environment (this might take awhile)"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba create -n cea -f "$INSTDIR\dependencies\conda-lock.yml" -y'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" create -n cea -f "$INSTDIR\dependencies\conda-lock.yml" -y'
 
     # install git
     DetailPrint "Installing git"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; micromamba install git -c conda-forge -y'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -p "$INSTDIR\dependencies\micromamba\envs\cea" micromamba install git -c conda-forge -y'
 
     # clean micromamba cache (to save space)
     DetailPrint "Cleaning cache"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba clean -afy'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" clean -afy'
 
     # install CEA from tarball
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -p "$INSTDIR\dependencies\micromamba\envs\cea" pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
@@ -103,7 +103,7 @@ Section "Base Installation" Base_Installation_Section
     ${EndIf}
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\dependencies\hook.bat" micromamba activate cea; cea --help'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -p "$INSTDIR\dependencies\micromamba\envs\cea" cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"
