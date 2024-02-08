@@ -262,14 +262,12 @@ def main(config):
 
     # write the results
     if project_boolean:
-        summary_project_df = summary_project_df.reset_index(drop=True)
         summary_project_path = os.path.join(config.general.project, 'result_summary.csv')
-        summary_project_df.to_csv(summary_project_path, float_format='%.2f')
+        summary_project_df.to_csv(summary_project_path, index=False, float_format='%.2f')
 
     else:
-        summary_project_df = summary_project_df.reset_index(drop=True)
         summary_scenario_path = os.path.join(project_path, scenario_name, '{scenario_name}_result_summary.csv'.format(scenario_name=scenario_name))
-        summary_project_df.to_csv(summary_scenario_path, float_format='%.2f')
+        summary_project_df.to_csv(summary_scenario_path, index=False, float_format='%.2f')
 
 
     # Print the time used for the entire processing
