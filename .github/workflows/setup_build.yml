@@ -31,8 +31,8 @@ jobs:
         with:
           environment-file: conda-lock.yml
           environment-name: cea
-          cache-environment: true
           micromamba-binary-path: setup/dependencies/micromamba.exe
+          create-args: --no-pyc
 
       - name: Clean conda environment
         shell: bash -el {0}
