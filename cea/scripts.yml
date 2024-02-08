@@ -349,7 +349,7 @@ Utilities:
   - name: create-new-scenario
     label: Create new scenario
     description: Creates a new scenario
-    interfaces: [cli, dashboard]
+    interfaces: []
     module: cea.datamanagement.create_new_scenario
     parameters: [create-new-scenario]
 
