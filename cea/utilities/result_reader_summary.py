@@ -5,9 +5,6 @@ Read and summarise CEA results over all scenarios in a project.
 
 import os
 import pandas as pd
-import subprocess
-import sys
-
 import cea.config
 import time
 
@@ -22,7 +19,7 @@ __status__ = "Production"
 
 
 
-def exec_read_and_summarise(config, cea_scenario):
+def exec_read_and_summarise(cea_scenario):
     """
     read and summarise the "useful" CEA results one after another: demand, emissions, costs, potentials, thermal-network
 
@@ -259,14 +256,14 @@ def main(config):
         cea_scenario = os.path.join(project_path, scenario)
         print(f'Reading and summarising the CEA results for Scenario {cea_scenario}.')
         # executing CEA commands
-        summary_scenario_df = exec_read_and_summarise(config, cea_scenario)
+        summary_scenario_df = exec_read_and_summarise(cea_scenario)
         summary_scenario_df['scenario_name'] = scenario
         summary_project_df = pd.concat([summary_project_df, summary_scenario_df])
 
     # write the results
     summary_project_df = summary_project_df.reset_index(drop=True)
     summary_project_path = os.path.join(config.general.project, 'project_result_summary.csv')
-    summary_project_df.to_csv(summary_project_path)
+    summary_project_df.to_csv(summary_project_path, float_format='%.2f')
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
