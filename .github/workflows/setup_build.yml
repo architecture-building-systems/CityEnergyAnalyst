@@ -40,7 +40,7 @@ jobs:
 
       - name: Compress conda environment
         shell: bash -el {0}
-        run: 7z a setup/dependencies/cea_env.7z $MAMBA_ROOT_PREFIX
+        run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
 
       - uses: actions/checkout@v4
         with:
