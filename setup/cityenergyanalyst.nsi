@@ -77,7 +77,7 @@ Section "Base Installation" Base_Installation_Section
     File "cityenergyanalyst.tar.gz"
     File /r "dependencies"
 
-    SetOutPath "$INSTDIR\dependencies\micromamba"
+    SetOutPath "$INSTDIR\dependencies"
     Nsis7z::ExtractWithDetails "$INSTDIR\dependencies\cea-env.7z" "Installing CEA dependencies %s..."
     Delete "$INSTDIR\dependencies\cea-env.7z"
     SetOutPath "$INSTDIR"
