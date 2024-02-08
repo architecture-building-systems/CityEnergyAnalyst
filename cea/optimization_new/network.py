@@ -58,7 +58,7 @@ class Network(object):
                               'network_lifetime_yrs': 20}
 
     def __init__(self, domain_connectivity, network_id, connected_buildings):
-        self.connectivity_id = domain_connectivity.as_str()
+        self.connectivity = domain_connectivity
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
@@ -484,7 +484,7 @@ class Network(object):
         thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            _file_location = os.path.join(tmpdir, f"{self.connectivity_id}_{self.identifier}")
+            _file_location = os.path.join(tmpdir, f"{self.connectivity.as_str(for_filename=True)}_{self.identifier}")
 
             # Create empty .inp file for WaterNetworkModel
             inp_file = f"{_file_location}.inp"

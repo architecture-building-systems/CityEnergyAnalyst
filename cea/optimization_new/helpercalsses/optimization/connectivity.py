@@ -24,6 +24,7 @@ __status__ = "Production"
 
 from random import randint
 from deap import tools
+import hashlib
 
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 
@@ -195,11 +196,17 @@ class ConnectivityVector(object):
 
         return self
 
-    def as_str(self):
+    def as_str(self, for_filename=False):
         """
         Return the capacity indicator vector as single string-object (network connection values spaced by an underscore)
+        If the string is to be used in a filename, transform it to a hash instead to make sure it doesn't exceed the
+        maximum allowed length for filenames (https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf).
         """
-        connectivity_str = '_'.join(map(str, self.values))
+        if not for_filename:
+            connectivity_str = '_'.join(map(str, self.values))
+        else:
+            connectivity_bytes = ' '.join(map(str, self.values)).encode()
+            connectivity_str = hashlib.sha256(connectivity_bytes).hexdigest()
         return connectivity_str
 
     @staticmethod
