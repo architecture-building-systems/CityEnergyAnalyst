@@ -233,7 +233,7 @@ Energy potentials:
 Networks:
 
   - name: network-layout
-    label: Thermal network Part I (layout)
+    label: Thermal network Part I - layout
     description: Create a potential layout of the network with the minimum spanning tree
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
@@ -244,7 +244,7 @@ Networks:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal network Part II (simulation)
+    label: Thermal network Part II - simulation
     description: Solve the thermal hydraulic network
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -261,21 +261,21 @@ Optimisation:
 
   - name: thermal-network-optimization
     label: Thermal network optimisation
-    description: Optimise network design variables (plant locations, layout,...)
+    description: Optimise network design variables (plant locations, pipe layout,...)
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply system Part I (decentralised)
+    label: Supply system Part I - decentralised
     description: Run optimisation for decentralised operation
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
   - name: optimization
-    label: Supply system Part II (centralised)
+    label: Supply system Part II - centralised
     description: Run optimisation for centralised operation
     interfaces: [cli, dashboard]
     module: cea.optimization.optimization_main
@@ -288,7 +288,7 @@ Optimisation:
       - [get_geothermal_potential]
 
   - name: optimization-new
-    label: Supply system part II (centralised, beta)
+    label: Supply system part II - centralised (beta)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -329,7 +329,7 @@ Utilities:
     parameters: ['general:scenario', batch-process-workflow]
 
   - name: result-reader-summary
-    label: Result reader (summary)
+    label: Result reader - summary (beta)
     description: "Summarise the CEA results (excluding optimisation) of some or all scenarios under this project."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.result_reader_summary

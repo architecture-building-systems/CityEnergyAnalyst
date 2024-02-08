@@ -261,13 +261,21 @@ def main(config):
         summary_project_df = pd.concat([summary_project_df, summary_scenario_df])
 
     # write the results
-    summary_project_df = summary_project_df.reset_index(drop=True)
-    summary_project_path = os.path.join(config.general.project, 'project_result_summary.csv')
-    summary_project_df.to_csv(summary_project_path, float_format='%.2f')
+    if project_boolean:
+        summary_project_df = summary_project_df.reset_index(drop=True)
+        summary_project_path = os.path.join(config.general.project, 'result_summary.csv')
+        summary_project_df.to_csv(summary_project_path, float_format='%.2f')
+
+    else:
+        summary_project_df = summary_project_df.reset_index(drop=True)
+        summary_scenario_path = os.path.join(project_path, scenario_name, '{scenario_name}_result_summary.csv'.format(scenario_name=scenario_name))
+        summary_project_df.to_csv(summary_scenario_path, float_format='%.2f')
+
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire process of read-and-summarise is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
 
 
 if __name__ == '__main__':
