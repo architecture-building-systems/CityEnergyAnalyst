@@ -21,7 +21,7 @@ __status__ = "Production"
 
 def exec_read_and_summarise(cea_scenario):
     """
-    read and summarise the "useful" CEA results one after another: demand, emissions, costs, potentials, thermal-network
+    read and summarise the "useful" CEA results one after another: demand, emissions, potentials, thermal-network
 
     :param cea_scenario: path to the CEA scenario to be assessed using CEA
     :type cea_scenario: file path

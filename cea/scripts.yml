@@ -335,6 +335,17 @@ Utilities:
     module: cea.utilities.result_reader_summary
     parameters: ['general:scenario', result-reader-summary]
 
+  - name: result-reader-analysis
+    label: Result reader - analysis (beta)
+    description: "Analyse the CEA results of some or all scenarios under this project, and calculate UBEM performance indicators as follows. 
+    They are: (EUIs) energy use intensity [MWh/m2/yr],
+    on-site solar use indicators including solar energy penetration [-], self-consumption [-], and self-sufficiency [-],
+    capacity factors for photovoltaic panels [-], district heating (cooling) plants [-] and pumps [-].
+    "
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.result_reader_analysis
+    parameters: ['general:scenario', result-reader-analysis]
+
   - name: data-migrator
     label: Data migrator
     description: "Migrate older scenario inputs to the latest version.
