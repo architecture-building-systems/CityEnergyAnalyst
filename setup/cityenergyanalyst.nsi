@@ -119,6 +119,7 @@ Section "Base Installation" Base_Installation_Section
 
     # install the CEA-GUI to "dashboard" folder
     File /r "dashboard"
+    File "dashboard.bat"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
