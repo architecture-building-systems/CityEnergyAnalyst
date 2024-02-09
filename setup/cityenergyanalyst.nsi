@@ -95,6 +95,7 @@ Section "Base Installation" Base_Installation_Section
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
+    Delete "$INSTDIR\cityenergyanalyst.tar.gz"
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --help'
