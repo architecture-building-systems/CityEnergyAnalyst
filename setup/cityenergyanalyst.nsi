@@ -83,7 +83,7 @@ Section "Base Installation" Base_Installation_Section
     SetOutPath "$INSTDIR"
 
     # create hook for cmd shell
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" -r "$INSTDIR\dependencies\micromamba" shell hook'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"'
     # fix pip due to change in python path
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
 
