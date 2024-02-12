@@ -35,6 +35,64 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def calc_capacity_factor(sum_kWh, max_kW):
+    """
+    caculate the capacity factor of a device
+
+    :param sum_kWh: sum of actual energy output over 8'760 hours
+    :type sum_kWh: float
+    :param max_kWh: max of power over 8760 hours
+    :type max_kWh: float
+    :return:
+    :param capactiy_factor: the unitless ratio of actual energy output over a year to the theoretical maximum energy output over that period.
+    :type capactiy_factor: float
+    """
+    capacity_factor = sum_kWh/ (max_kW * 8760)
+
+    return capacity_factor
+
+
+def calc_self_consumption(gen_kWh, demand_kWh):
+    """
+    caculate the capacity factor of a device
+
+    :param gen_kWh_df: energy generation [kWh] by 8'760 rows (hours)
+    :type gen_kWh_df: Series
+    :param demand_kWh_df: energy load [kWh] by 8'760 rows (hours)
+    :type demand_kWh_df: Series
+    :return:
+    :param self_consumption: the unitless ratio describing how much of the generated electricity can be consumed instantaneously on-site
+    :type self_consumption: float
+    """
+    use = []
+    for t in range(10):
+        use.append(min(gen_kWh[t], demand_kWh[t]))
+
+    self_consumption = sum(use) / gen_kWh.sum()
+
+    return self_consumption
+
+
+def calc_self_sufficiency(gen_kWh, demand_kWh):
+    """
+    caculate the capacity factor of a device
+
+    :param gen_kWh_df:  energy generation [kWh] by 8'760 rows (hours)
+    :type gen_kWh_df: Series
+    :param demand_kWh_df: energy load [kWh] by 8'760 rows (hours)
+    :type demand_kWh_df: Series
+    :return:
+    :param self_sufficiency: the unitless ratio describing how much of the electricity demand can be instantaneously met on-site
+    :type self_sufficiency: float
+    """
+    use = []
+    for t in range(10):
+        use.append(min(gen_kWh[t], demand_kWh[t]))
+
+    self_sufficiency = sum(use) / demand_kWh[t]
+
+    return self_sufficiency
+
 
 def exec_read_and_analyse(cea_scenario):
     """
@@ -53,17 +111,35 @@ def exec_read_and_analyse(cea_scenario):
     # not found message to be reflected in the analysis DataFrame
     na = 'missing CEA results'
 
-    # EUI series
+    # metrics: EUI or energy demand-related
     try:
         demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
-        cea_result_df = pd.read_csv(demand_path)
-        analysis_df['EUI - grid electricity [kWh/m2/yr]'] = cea_result_df['GRID_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_df['E_sys_MWhyr'].sum().sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - cooling demand [kWh/m2/yr]'] = cea_result_df['QC_sys_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_df['Qcs_sys_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - heating demand [kWh/m2/yr]'] = cea_result_df['QH_sys_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - space heating demand [kWh/m2/yr]'] = cea_result_df['Qhs_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_df['Qww_MWhyr'].sum() / cea_result_df['GFA_m2'].sum() * 1000
+        cea_result_demand_df = pd.read_csv(demand_path)
+        analysis_df['EUI - grid electricity [kWh/m2/yr]'] = cea_result_demand_df['GRID_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_demand_df['E_sys_MWhyr'].sum().sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - cooling demand [kWh/m2/yr]'] = cea_result_demand_df['QC_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_demand_df['Qcs_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - heating demand [kWh/m2/yr]'] = cea_result_demand_df['QH_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - space heating demand [kWh/m2/yr]'] = cea_result_demand_df['Qhs_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_demand_df['Qww_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+
+        # metrics (excluding capacity factor): on-site solar energy use
+        pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
+        pv_database_df = pd.read_excel(pv_database_path, sheet_name="PV")
+        panel_types = list(set(pv_database_df['code']))
+        for panel_type in panel_types:
+            pv_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv'.format(panel_type=panel_type))
+
+            try:
+                cea_result_df = pd.read_csv(pv_path)
+                analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = cea_result_df['E_PV_gen_kWh'].sum() / cea_result_demand_df['GRID_MWhyr'].sum()
+                analysis_df[f'PV_{panel_type}_self_consumption[-]'.format(panel_type=panel_type)] = calc_self_consumption(cea_result_df['E_PV_gen_kWh'], cea_result_demand_df['GRID_MWhyr'])
+                analysis_df[f'PV_{panel_type}_energy_sufficiency[-]'.format(panel_type=panel_type)] = calc_self_sufficiency(cea_result_df['E_PV_gen_kWh'], cea_result_demand_df['GRID_MWhyr'])
+
+            except FileNotFoundError:
+                analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = na
+                analysis_df[f'PV_{panel_type}_self_consumption[-]'.format(panel_type=panel_type)] = na
+                analysis_df[f'PV_{panel_type}_energy_sufficiency[-]'.format(panel_type=panel_type)] = na
 
     except FileNotFoundError:
         analysis_df['EUI - grid electricity [kWh/m2/yr]'] = na
@@ -73,6 +149,70 @@ def exec_read_and_analyse(cea_scenario):
         analysis_df['EUI - heating demand [kWh/m2/yr]'] = na
         analysis_df['EUI - space heating demand [kWh/m2/yr]'] = na
         analysis_df['EUI - domestic hot water demand [kWh/m2/yr]'] = na
+
+        pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
+        pv_database_df = pd.read_excel(pv_database_path, sheet_name="PV")
+        panel_types = list(set(pv_database_df['code']))
+        for panel_type in panel_types:
+            analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = na
+            analysis_df[f'PV_{panel_type}_self_consumption[-]'.format(panel_type=panel_type)] = na
+            analysis_df[f'PV_{panel_type}_energy_sufficiency[-]'.format(panel_type=panel_type)] = na
+
+    # metric - capacity factor: on-site solar energy use
+    pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
+    pv_database_df = pd.read_excel(pv_database_path, sheet_name="PV")
+    panel_types = list(set(pv_database_df['code']))
+    panel_effiency = list(set(pv_database_df['PV_n']))
+    for n in range(len(panel_types)):
+        panel_type=panel_types[n]
+        pv_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv'.format(panel_type=panel_type))
+
+        try:
+            cea_result_df = pd.read_csv(pv_path)
+            max_kW = cea_result_df['Area_PV_m2'] * panel_effiency[n]
+            analysis_df[f'PV_{panel_type}_capacity_factor[-]'.format(panel_type=panel_type)] = calc_capacity_factor(cea_result_df['E_PV_gen_kWh'].sum(), max_kW)
+
+        except FileNotFoundError:
+            analysis_df[f'PV_{panel_type}_capacity_factor[-]'.format(panel_type=panel_type)] = na
+
+    # metrics: district heating plant - thermal
+    try:
+        dh_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_thermal_load_kW.csv')
+        cea_result_df = pd.read_csv(dh_plant_thermal_path)
+        analysis_df['DH_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'].sum(), cea_result_df['thermal_load_kW'].max())
+
+    except FileNotFoundError:
+        analysis_df['DH_plant_capacity_factor[-]'] = na
+
+
+    # metrics: district heating plant - pumping
+    try:
+        dh_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_pumping_load_kW.csv')
+        cea_result_df = pd.read_csv(dh_plant_pumping_path)
+        analysis_df['DH_pump_capacity_factor[-]'] = calc_capacity_factor( cea_result_df['pressure_loss_total_kW'].sum(), cea_result_df['pressure_loss_total_kW'].max())
+
+    except FileNotFoundError:
+        analysis_df['DH_pump_capacity_factor[-]'] = na
+
+
+    # metrics: district cooling plant - thermal
+    try:
+        dc_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_thermal_load_kW.csv')
+        cea_result_df = pd.read_csv(dc_plant_thermal_path)
+        analysis_df['DC_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'].sum(), cea_result_df['thermal_load_kW'].max())
+
+    except FileNotFoundError:
+        analysis_df['DC_plant_capacity_factor[-]'] = na
+
+
+    # metrics: district cooling plant - pumping
+    try:
+        dc_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_pumping_load_kW.csv')
+        cea_result_df = pd.read_csv(dc_plant_pumping_path)
+        analysis_df['DC_pump_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['pressure_loss_total_kW'].sum(), cea_result_df['pressure_loss_total_kW'].max())
+
+    except FileNotFoundError:
+        analysis_df['DC_pump_capacity_factor[-]'] = na
 
 
     # return analysis DataFrame
