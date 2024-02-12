@@ -1,3 +1,8 @@
+- 2024-02-12 - 3.35.2 - #3486 Update nsis workflow for Windows installation
+- 2024-02-12 - 3.35.2 - #3484 add create-new-scenario to scripts.yml
+- 2024-02-08 - 3.35.2 - #3458 Update network-file naming convention
+- 2024-02-01 - 3.35.2 - #3481 Use installation docs to use conda-lock
+- 2024-02-01 - 3.35.2 - #3479 Release 3.35.2
 - 2024-01-31 - 3.35.1 - #3478 Automate docker image build
 - 2024-01-26 - 3.35.1 - #3473 Shutdown flask server gracefully after keyboard interrupt
 - 2024-01-25 - 3.35.1 - #3471 Update data migrator
