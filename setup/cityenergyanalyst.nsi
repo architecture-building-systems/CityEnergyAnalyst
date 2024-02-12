@@ -1,64 +1,60 @@
 # NSIS script for creating the City Energy Analyst installer
-SetCompressor /FINAL lzma
-
 ; include logic library
 !include 'LogicLib.nsh'
 
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+# Request the highest possible execution level for the current user
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
+!define MULTIUSER_MUI
+
+!include MultiUser.nsh
+
 ; include some string functions
-!include "StrFunc.nsh"
-${StrRep}
-
-# icon stuff
-!define MUI_ICON "cea-icon.ico"
-
-
-# download CEA conda env from here
-;!define CEA_ENV_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/Dependencies.7z"
-!define CEA_ENV_URL "https://www.dropbox.com/s/2tusftdoivvp9ox/Dependencies.7z?dl=1"
-!define CEA_ENV_FILENAME "Dependencies.7z"
-!define RELATIVE_GIT_PATH "Dependencies\cmder\vendor\git-for-windows\bin\git.exe"
-!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-;!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v${VER}/win-unpacked.7z"
-!define CEA_ELECTRON_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst/releases/download/v3.8.0a0/win-unpacked.7z"
+#!include "StrFunc.nsh"
+#${StrRep}
 
 !define CEA_TITLE "City Energy Analyst"
-
-!define PIP_INSTALL '"$INSTDIR\pip-install.bat"'
-
-# figure out the version based on cea\__init__.py
-!system "get_version.exe"
-!include "cea_version.txt"
+!define VER $%CEA_VERSION%
+!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
 
 Name "${CEA_TITLE} ${VER}"
-
-!define MUI_FILE "savefile"
-!define MUI_BRANDINGTEXT "${CEA_TITLE} ${VER}"
+OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
+SetCompressor /FINAL lzma
 CRCCheck On
 
-
-OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
-
-
 ;--------------------------------
-;Folder selection page
-
+;Sets the default installation directory
 InstallDir "$DOCUMENTS\CityEnergyAnalyst"
 
 ;Request application privileges for Windows Vista
-RequestExecutionLevel user
+#RequestExecutionLevel user
+
+Function .onInit
+    !insertmacro MULTIUSER_INIT
+    # set default installation directory to ProgramFiles if user has privileges
+    ${If} "$MultiUser.Privileges" == "Admin"
+    ${AndIf} "$MultiUser.Privileges" == "Power"
+        StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
+    ${EndIf}
+FunctionEnd
 
 ;--------------------------------
 ;Interface Settings
 
+!define MUI_ICON "cea-icon.ico"
+!define MUI_FILE "savefile"
+!define MUI_BRANDINGTEXT "${CEA_TITLE} ${VER}"
 !define MUI_ABORTWARNING
 
 ;--------------------------------
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
@@ -69,81 +65,78 @@ RequestExecutionLevel user
 ;--------------------------------
 ;Languages
 
-  !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
 ;Installer Sections
 
 Section "Base Installation" Base_Installation_Section
-    SectionIn RO  # this section is required
+    SectionIn RO  # this section is required so user is unable to uncheck
     SetOutPath "$INSTDIR"
 
-    File "cea-icon.ico"
-    File "cea-env.bat"
-    File "pip-install.bat"
-    File "cea-env-run.bat"
-    CreateDirectory $INSTDIR\Dependencies\cmder\config\profile.d
-    File /oname=Dependencies\cmder\config\profile.d\cea-cmder-config.bat "cmder-config.bat"
-    File "dashboard.bat"
+    File "cityenergyanalyst.tar.gz"
+    File /r "dependencies"
 
-    # install cmder (incl. git and bash... woohoo!!)
-    File /r "Dependencies"
-    SetOutPath "$INSTDIR\Dependencies\cmder"
-    Nsis7z::ExtractWithDetails "cmder.7z" "Installing CEA Console %s..."
-    Delete "cmder.7z"
+    SetOutPath "$INSTDIR\dependencies"
+    Nsis7z::ExtractWithDetails "$INSTDIR\dependencies\cea-env.7z" "Installing CEA dependencies %s..."
+    Delete "$INSTDIR\dependencies\cea-env.7z"
     SetOutPath "$INSTDIR"
 
-    # install the CEA-GUI
-    File /r "CityEnergyAnalyst-GUI-win32-x64"
-
-    # create a shortcut in the $INSTDIR for launching the CEA console
-    CreateShortcut "$INSTDIR\CEA Console.lnk" "$INSTDIR\Dependencies\cmder\cmder.exe" "/single" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL \
-        CONTROL|SHIFT|F10 "Launch the CEA Console"
-
-    # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
-
-    CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-    
-    # make sure qt.conf has the correct paths
-    DetailPrint "Updating qt.conf..."
-    ${StrRep} $0 "$INSTDIR" "\" "/" # $0 now contains the $INSTDIR with forward slashes instead of backward slashes
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
-    WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
+    # create hook for cmd shell
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"'
+    # fix pip due to change in python path
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
 
     # install CEA from tarball
-    DetailPrint "Pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps "$INSTDIR\Dependencies\cityenergyanalyst.tar.gz"'
-
-    # make sure cea was installed
-    Pop $0
+    DetailPrint "pip installing CityEnergyAnalyst==${VER}"
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
+    Delete "$INSTDIR\cityenergyanalyst.tar.gz"
     
     # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" cea --help'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --help'
     Pop $0
     DetailPrint '"cea --help" returned $0'
     ${If} "$0" != "0"
         Abort "Installation failed - see Details"
     ${EndIf}
-    WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
+    #WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
+
+    # make sure qt.conf has the correct paths
+    #DetailPrint "Updating qt.conf..."
+    #${StrRep} $0 "$INSTDIR" "\" "/" # $0 now contains the $INSTDIR with forward slashes instead of backward slashes
+    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
+    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
+    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
+    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
     # make sure jupyter has access to the ipython kernel
-    nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
+    #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
 
-    # add sphinx so we can cea-doc html...
-    nsExec::ExecToLog '${PIP_INSTALL} --force-reinstall --no-deps sphinx'
+    # install the CEA-GUI to "dashboard" folder
+    File /r "dashboard"
+    File "dashboard.bat"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+    # Icon for shortcuts
+    File "cea-icon.ico"
+
+    # create a shortcut in the $INSTDIR for launching the CEA console
+    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+
+    # create a shortcut in the $INSTDIR for launching the CEA dashboard
+    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+
+    CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 SectionEnd
 
@@ -151,8 +144,8 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
@@ -169,17 +162,17 @@ SectionEnd
 Section /o "Developer version" Clone_Repository_Section
 
     DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
-    nsExec::ExecToLog '"$INSTDIR\${RELATIVE_GIT_PATH}" clone ${CEA_REPO_URL}'
+    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" git clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '${PIP_INSTALL} -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
 Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 
     # create shortcuts on the Desktop for launching the CEA console
-    CreateShortCut '$DESKTOP\CEA Console.lnk' '$INSTDIR\Dependencies\cmder\cmder.exe' '/single' \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL CONTROL|SHIFT|F10 "Launch the CEA Console"
+    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
@@ -189,39 +182,41 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 
 SectionEnd
 
-;--------------------------------
-;Descriptions
+Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
+FunctionEnd
 
-;Language strings
-;  LangString DESC_SecDummy ${LANG_ENGLISH} "A test section."
-
-  ;Assign language strings to sections
-;  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-;    !insertmacro MUI_DESCRIPTION_TEXT ${SecDummy} $(DESC_SecDummy)
-;  !insertmacro MUI_FUNCTION_DESCRIPTION_END
-
-;--------------------------------
 ;Uninstaller Section
 
 Section "Uninstall"
 
-  ; Delete the shortcuts
-  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
-  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
-  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
-  Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
-  RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
+    ; Delete the shortcuts
+    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
+    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
+    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
+    RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
-  Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
-  Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
-  Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
+    Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
+    Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
 
-  ; Delete the cea.config file
-  Delete /REBOOTOK "$PROFILE\cea.config"
+    ; Delete the cea.config file
+    Delete /REBOOTOK "$PROFILE\cea.config"
 
-  SetOutPath $TEMP
-  Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+    ; Delete files in install directory
+    Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
+    Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$INSTDIR\cea.config.lnk"
+    Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
+    RMDir /R /REBOOTOK "$INSTDIR\dashboard"
+    RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
-  RMDir /R /REBOOTOK "$INSTDIR"
+    Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+
+    ; Change current working directory so that it can be deleted
+    ; Will only be deleted if the directory is empty
+    SetOutPath $TEMP
+    RMDir /REBOOTOK "$INSTDIR"
 
 SectionEnd
