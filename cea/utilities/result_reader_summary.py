@@ -174,7 +174,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: district heating plant - thermal
     try:
-        dh_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_thermal_load_kW.csv')
+        dh_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DH__plant_thermal_load_kW.csv')
         cea_result_df = pd.read_csv(dh_plant_thermal_path)
         summary_df['DH_plant_thermal_load[thermal_load_kWh]'] = cea_result_df['thermal_load_kW'].sum()
         summary_df['DH_plant_power[thermal_load_kW]'] = cea_result_df['thermal_load_kW'].max()
@@ -185,7 +185,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: district heating plant - pumping
     try:
-        dh_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DH__plant_pumping_load_kW.csv')
+        dh_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DH__plant_pumping_load_kW.csv')
         cea_result_df = pd.read_csv(dh_plant_pumping_path)
         summary_df['DH_electricity_consumption_for_pressure_loss[pressure_loss_total_kWh]'] = cea_result_df['pressure_loss_total_kW'].sum()
         summary_df['DH_plant_pumping_power[pressure_loss_total_kW]'] = cea_result_df['pressure_loss_total_kW'].max()
@@ -196,7 +196,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: district cooling plant - thermal
     try:
-        dc_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_thermal_load_kW.csv')
+        dc_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DC__plant_thermal_load_kW.csv')
         cea_result_df = pd.read_csv(dc_plant_thermal_path)
         summary_df['DC_plant_thermal_load[thermal_load_kWh]'] = cea_result_df['thermal_load_kW'].sum()
         summary_df['DC_plant_power[thermal_load_kW]'] = cea_result_df['thermal_load_kW'].max()
@@ -207,7 +207,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: district cooling plant - pumping
     try:
-        dc_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/solar/DC__plant_pumping_load_kW.csv')
+        dc_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DC__plant_pumping_load_kW.csv')
         cea_result_df = pd.read_csv(dc_plant_pumping_path)
         summary_df['DC_electricity_consumption_for_pressure_loss[pressure_loss_total_kWh]'] = cea_result_df['pressure_loss_total_kW'].sum()
         summary_df['DC_plant_pumping_power[pressure_loss_total_kW]'] = cea_result_df['pressure_loss_total_kW'].max()
