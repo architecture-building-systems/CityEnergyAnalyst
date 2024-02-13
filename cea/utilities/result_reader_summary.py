@@ -34,11 +34,10 @@ def exec_read_and_summarise(cea_scenario):
     summary_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
 
     # not found message to be reflected in the summary DataFrame
-    na = 'not found'
-
+    na = float('Nan')
     # read and summarise: demand
     try:
-        demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand_buildings.csv')
+        demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
         cea_result_df = pd.read_csv(demand_path)
         summary_df['conditioned_floor_area[Af_m2]'] = cea_result_df['Af_m2'].sum()
         summary_df['roof_area[Aroof_m2]'] = cea_result_df['Aroof_m2'].sum()
