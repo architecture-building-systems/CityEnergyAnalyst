@@ -1096,6 +1096,10 @@ class InputLocator(object):
 
     def get_total_demand(self, format='csv'):
         """scenario/outputs/data/demand/Total_demand.csv"""
+        return os.path.join(self.get_demand_results_folder(), 'Total_demand_buildings.%(format)s' % locals())
+
+    def get_total_demand_hourly(self, format='csv'):
+        """scenario/outputs/data/demand/Total_demand_buildings.csv"""
         return os.path.join(self.get_demand_results_folder(), 'Total_demand.%(format)s' % locals())
 
     def get_demand_results_file(self, building, format='csv'):

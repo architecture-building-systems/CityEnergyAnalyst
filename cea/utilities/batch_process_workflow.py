@@ -3,6 +3,8 @@ Batch processing CEA commands over all scenarios in a project.
 This was originally explored and created for the ETH MiBS IDP 2023.
 """
 
+# TODO: change the hard-coded path; this is subject to a structural separation of project-based CEA Features from scenario-based CEA Features
+
 import os
 import subprocess
 import sys

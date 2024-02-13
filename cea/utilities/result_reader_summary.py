@@ -17,7 +17,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
+# TODO: change the hard-coded path; this is subject to a structural separation of project-based CEA Features from scenario-based CEA Features
 
 def exec_read_and_summarise(cea_scenario):
     """
@@ -38,7 +38,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: demand
     try:
-        demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
+        demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand_buildings.csv')
         cea_result_df = pd.read_csv(demand_path)
         summary_df['conditioned_floor_area[Af_m2]'] = cea_result_df['Af_m2'].sum()
         summary_df['roof_area[Aroof_m2]'] = cea_result_df['Aroof_m2'].sum()

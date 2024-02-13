@@ -20,6 +20,8 @@ The list of UBEM metrics include:
 
 """
 
+# TODO: change the hard-coded path; this is subject to a structural separation of project-based CEA Features from scenario-based CEA Features
+
 import os
 import pandas as pd
 import cea.config
@@ -65,7 +67,7 @@ def calc_self_consumption(gen_kWh, demand_kWh):
     :type self_consumption: float
     """
     use = []
-    for t in range(10):
+    for t in range(8760):
         use.append(min(gen_kWh[t], demand_kWh[t]))
 
     self_consumption = sum(use) / gen_kWh.sum()
@@ -113,28 +115,29 @@ def exec_read_and_analyse(cea_scenario):
 
     # metrics: EUI or energy demand-related
     try:
-        demand_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
-        cea_result_demand_df = pd.read_csv(demand_path)
-        analysis_df['EUI - grid electricity [kWh/m2/yr]'] = cea_result_demand_df['GRID_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_demand_df['E_sys_MWhyr'].sum().sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - cooling demand [kWh/m2/yr]'] = cea_result_demand_df['QC_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_demand_df['Qcs_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - heating demand [kWh/m2/yr]'] = cea_result_demand_df['QH_sys_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - space heating demand [kWh/m2/yr]'] = cea_result_demand_df['Qhs_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
-        analysis_df['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_demand_df['Qww_MWhyr'].sum() / cea_result_demand_df['GFA_m2'].sum() * 1000
+        demand_buildings_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand_buildings.csv')
+        demand_hourly_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
+        cea_result_demand_buildings_df = pd.read_csv(demand_buildings_path)
+        cea_result_demand_hourly_df = pd.read_csv(demand_hourly_path)
+        analysis_df['EUI - grid electricity [kWh/m2/yr]'] = cea_result_demand_buildings_df['GRID_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_demand_buildings_df['E_sys_MWhyr'].sum().sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - cooling demand [kWh/m2/yr]'] = cea_result_demand_buildings_df['QC_sys_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_demand_buildings_df['Qcs_sys_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - heating demand [kWh/m2/yr]'] = cea_result_demand_buildings_df['QH_sys_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - space heating demand [kWh/m2/yr]'] = cea_result_demand_buildings_df['Qhs_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
+        analysis_df['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_demand_buildings_df['Qww_MWhyr'].sum() / cea_result_demand_buildings_df['GFA_m2'].sum() * 1000
 
         # metrics (excluding capacity factor): on-site solar energy use
         pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
         pv_database_df = pd.read_excel(pv_database_path, sheet_name="PV")
         panel_types = list(set(pv_database_df['code']))
         for panel_type in panel_types:
-            pv_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv'.format(panel_type=panel_type))
-
             try:
+                pv_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv'.format(panel_type=panel_type))
                 cea_result_df = pd.read_csv(pv_path)
-                analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = cea_result_df['E_PV_gen_kWh'].sum() / cea_result_demand_df['GRID_MWhyr'].sum()
-                analysis_df[f'PV_{panel_type}_self_consumption[-]'.format(panel_type=panel_type)] = calc_self_consumption(cea_result_df['E_PV_gen_kWh'], cea_result_demand_df['GRID_MWhyr'])
-                analysis_df[f'PV_{panel_type}_energy_sufficiency[-]'.format(panel_type=panel_type)] = calc_self_sufficiency(cea_result_df['E_PV_gen_kWh'], cea_result_demand_df['GRID_MWhyr'])
+                analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = cea_result_df['E_PV_gen_kWh'].sum() / cea_result_demand_buildings_df['GRID_MWhyr'].sum()
+                analysis_df[f'PV_{panel_type}_self_consumption[-]'.format(panel_type=panel_type)] = calc_self_consumption(cea_result_df['E_PV_gen_kWh'], cea_result_demand_hourly_df['GRID_MWhyr'])
+                analysis_df[f'PV_{panel_type}_energy_sufficiency[-]'.format(panel_type=panel_type)] = calc_self_sufficiency(cea_result_df['E_PV_gen_kWh'], cea_result_demand_hourly_df['GRID_MWhyr'])
 
             except FileNotFoundError:
                 analysis_df[f'PV_{panel_type}_energy_penetration[-]'.format(panel_type=panel_type)] = na
