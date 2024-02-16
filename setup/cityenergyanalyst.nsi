@@ -209,6 +209,7 @@ Section "Uninstall"
     Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
     Delete /REBOOTOK "$INSTDIR\cea.config.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
+    Delete /REBOOTOK "$INSTDIR\dashboard.bat"
     RMDir /R /REBOOTOK "$INSTDIR\dashboard"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
