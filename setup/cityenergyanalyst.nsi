@@ -1,25 +1,22 @@
 # NSIS script for creating the City Energy Analyst installer
-; include logic library
-!include 'LogicLib.nsh'
-
-; include the modern UI stuff
-!include "MUI2.nsh"
+!define CEA_TITLE "City Energy Analyst"
+!define VER $%CEA_VERSION%
+!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
+!define MULTIUSER_INSTALLMODE_INSTDIR "CityEnergyAnalyst"
 !define MULTIUSER_MUI
 
 !include MultiUser.nsh
 
-; include some string functions
-#!include "StrFunc.nsh"
-#${StrRep}
+; include logic library
+!include 'LogicLib.nsh'
 
-!define CEA_TITLE "City Energy Analyst"
-!define VER $%CEA_VERSION%
-!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
+; include the modern UI stuff
+!include "MUI2.nsh"
 
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
@@ -27,18 +24,14 @@ SetCompressor /FINAL lzma
 CRCCheck On
 
 ;--------------------------------
-;Sets the default installation directory
-InstallDir "$DOCUMENTS\CityEnergyAnalyst"
-
 ;Request application privileges for Windows Vista
 #RequestExecutionLevel user
 
 Function .onInit
     !insertmacro MULTIUSER_INIT
-    # set default installation directory to ProgramFiles if user has privileges
-    ${If} "$MultiUser.Privileges" == "Admin"
-    ${AndIf} "$MultiUser.Privileges" == "Power"
-        StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
+    # set default installation directory to Documents if in CurrentUser mode
+    ${If} "$MultiUser.InstallMode" == "CurrentUser"
+        StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
     ${EndIf}
 FunctionEnd
 
