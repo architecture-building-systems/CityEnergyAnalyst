@@ -46,6 +46,7 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: vite-electron
 
       - name: Cache GUI
         id: cache-gui
@@ -60,8 +61,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
-          yarn package
-          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/dashboard
+          yarn electron:build
+          mv out/win-unpacked $GITHUB_WORKSPACE/setup/dashboard
 
       - name: Install setup plugin
         shell: bash
