@@ -1,25 +1,22 @@
 # NSIS script for creating the City Energy Analyst installer
-; include logic library
-!include 'LogicLib.nsh'
-
-; include the modern UI stuff
-!include "MUI2.nsh"
+!define CEA_TITLE "City Energy Analyst"
+!define VER $%CEA_VERSION%
+!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
+!define MULTIUSER_INSTALLMODE_INSTDIR "CityEnergyAnalyst"
 !define MULTIUSER_MUI
 
 !include MultiUser.nsh
 
-; include some string functions
-#!include "StrFunc.nsh"
-#${StrRep}
+; include logic library
+!include 'LogicLib.nsh'
 
-!define CEA_TITLE "City Energy Analyst"
-!define VER $%CEA_VERSION%
-!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
+; include the modern UI stuff
+!include "MUI2.nsh"
 
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
@@ -27,18 +24,14 @@ SetCompressor /FINAL lzma
 CRCCheck On
 
 ;--------------------------------
-;Sets the default installation directory
-InstallDir "$DOCUMENTS\CityEnergyAnalyst"
-
 ;Request application privileges for Windows Vista
 #RequestExecutionLevel user
 
 Function .onInit
     !insertmacro MULTIUSER_INIT
-    # set default installation directory to ProgramFiles if user has privileges
-    ${If} "$MultiUser.Privileges" == "Admin"
-    ${AndIf} "$MultiUser.Privileges" == "Power"
-        StrCpy $INSTDIR "$PROGRAMFILES\CityEnergyAnalyst"
+    # set default installation directory to Documents if in CurrentUser mode
+    ${If} "$MultiUser.InstallMode" == "CurrentUser"
+        StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
     ${EndIf}
 FunctionEnd
 
@@ -147,7 +140,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -174,7 +167,7 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\CityEnergyAnalyst-GUI-win32-x64\CityEnergyAnalyst-GUI.exe" "" \
+    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
     CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
@@ -209,6 +202,7 @@ Section "Uninstall"
     Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
     Delete /REBOOTOK "$INSTDIR\cea.config.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
+    Delete /REBOOTOK "$INSTDIR\dashboard.bat"
     RMDir /R /REBOOTOK "$INSTDIR\dashboard"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 

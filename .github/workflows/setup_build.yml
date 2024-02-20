@@ -26,8 +26,16 @@ jobs:
           python -m pip install build
           python -m build
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/cityenergyanalyst.tar.gz
+
+      - name: Cache CEA env
+        id: cache-env
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/setup/dependencies/cea-env.7z
+          key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
       
       - uses: mamba-org/setup-micromamba@v1
+        if: steps.cache-env.outputs.cache-hit != 'true'
         with:
           environment-file: conda-lock.yml
           environment-name: cea
@@ -35,10 +43,12 @@ jobs:
           create-args: --no-pyc
 
       - name: Clean conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: micromamba clean -afy
 
       - name: Compress conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
 
