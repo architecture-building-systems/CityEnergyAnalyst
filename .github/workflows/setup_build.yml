@@ -31,7 +31,9 @@ jobs:
         id: cache-env
         uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/setup/dependencies/cea-env.7z
+          path: |
+            setup/dependencies/cea-env.7z
+            setup/dependencies/micromamba.exe
           key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
       
       - uses: mamba-org/setup-micromamba@v1
