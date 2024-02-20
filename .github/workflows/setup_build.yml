@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/setup/dashboard
-          key: ${{ runner.os }}-${{ hashFiles('gui/src', 'gui/yarn.lock') }}-gui-setup
+          key: ${{ runner.os }}-${{ hashFiles('gui/electron', 'gui/src', 'gui/yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui.outputs.cache-hit != 'true'
