@@ -121,7 +121,7 @@ Section "Base Installation" Base_Installation_Section
     File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
-    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" "/K '$INSTDIR\dependencies\cea-env.bat'" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
@@ -137,7 +137,7 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
 
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K '$INSTDIR\dependencies\cea-env.bat'" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
@@ -164,7 +164,7 @@ SectionEnd
 Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 
     # create shortcuts on the Desktop for launching the CEA console
-    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K $INSTDIR\dependencies\cea-env.bat" \
+    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" "/K '$INSTDIR\dependencies\cea-env.bat'" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
