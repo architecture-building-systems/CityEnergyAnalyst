@@ -6,9 +6,9 @@ import cea.inputlocator
 import pandas as pd
 import numpy as np
 from math import log, ceil
-import sympy
+# import sympy
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

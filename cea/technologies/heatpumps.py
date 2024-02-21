@@ -6,13 +6,13 @@ heatpumps
 
 
 
-from math import floor, log, ceil
+from math import log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
-    GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
+    GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

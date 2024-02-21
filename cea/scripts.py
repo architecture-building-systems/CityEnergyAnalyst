@@ -3,16 +3,11 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 """
 
 
-
-
 import os
-import cea
 import yaml
 import cea
 import cea.inputlocator
 from cea.schemas import schemas
-from cea.plugin import CeaPlugin
-from typing import List
 
 SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
 
@@ -58,7 +53,7 @@ class CeaScript(object):
                                   else None)
             print('- {path}'.format(path=path))
             if script_suggestions:
-                print('  (HINT: try running {scripts})'.format(path=path, scripts=', '.join(script_suggestions)))
+                print('  (HINT: try running {scripts})'.format(scripts=', '.join(script_suggestions)))
 
     def missing_input_files(self, config):
         """

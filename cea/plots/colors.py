@@ -6,12 +6,6 @@ This is the official list of CEA colors to use in plots
 
 
 
-import os
-import pandas as pd
-import yaml
-import warnings
-import functools
-from typing import List, Callable
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"

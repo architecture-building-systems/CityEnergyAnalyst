@@ -38,7 +38,7 @@ def list_categories(plugins):
             yield PlotCategory(module)
         except GeneratorExit:
             return
-        except:
+        except Exception:
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
             continue
@@ -96,7 +96,7 @@ class PlotCategory(object):
                 continue
             module = importlib.import_module(modname)
             for cls_name, cls_object in inspect.getmembers(module, inspect.isclass):
-                if cea.plots.PlotBase in inspect.getmro(cls_object):
+                if cea.plots.base.PlotBase in inspect.getmro(cls_object):
                     yield cls_object
 
 

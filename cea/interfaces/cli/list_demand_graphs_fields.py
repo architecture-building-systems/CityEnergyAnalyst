@@ -23,7 +23,7 @@ def demand_graph_fields(scenario):
     fields.remove('DATE')
     fields.remove('Name')
     # remove fields in demand results files that do not have a corresponding field in the totals file
-    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+    bad_fields = set(field for field in fields if field.split('_')[0] + "_MWhyr" not in total_fields)
     fields = fields - bad_fields
     return list(fields)
 

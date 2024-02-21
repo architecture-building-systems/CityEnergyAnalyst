@@ -3,7 +3,6 @@ Evaluation function of an individual
 
 """
 
-import cea.inputlocator
 from cea.optimization.master import objective_function_calculator
 from cea.optimization.master import master_to_slave as master
 from cea.optimization.master.generation import individual_to_barcode

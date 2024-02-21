@@ -8,9 +8,6 @@ prEN 15316-2:2014
 """
 
 
-
-
-
 import numpy as np
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 

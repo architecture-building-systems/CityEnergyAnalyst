@@ -12,7 +12,6 @@ from plotly.offline import plot
 import cea.plots.demand
 from cea.plots.colors import COLORS_TO_RGB
 from cea.utilities.dbf import dbf_to_dataframe
-from cea.demand.control_heating_cooling_systems import convert_date_to_hour
 
 
 __author__ = "Gabriel Happle"

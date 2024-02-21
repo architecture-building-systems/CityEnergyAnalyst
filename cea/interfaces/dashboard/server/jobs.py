@@ -162,7 +162,7 @@ class JobCanceled(Resource):
 
 def kill_job(jobid):
     """Kill the processes associated with a jobid"""
-    if not jobid in worker_processes:
+    if jobid not in worker_processes:
         return
 
     popen = worker_processes[jobid]

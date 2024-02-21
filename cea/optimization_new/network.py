@@ -17,6 +17,7 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+
 import os.path
 import tempfile
 
@@ -57,7 +58,7 @@ class Network(object):
                               'network_lifetime_yrs': 20}
 
     def __init__(self, domain_connectivity, network_id, connected_buildings):
-        self.connectivity_id = domain_connectivity.as_str()
+        self.connectivity = domain_connectivity
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
@@ -88,7 +89,7 @@ class Network(object):
                                      columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
             self.network_nodes = Gdf([Point(node) for node in network_graph.nodes()],
                                      columns=['geometry'], crs=Network._coordinate_reference_system)
-        except:
+        except Exception:
             raise ValueError('There was an error while creating the Steiner tree. '
                              'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                              'the Steiner tree does not support disconnected graphs. '
@@ -245,7 +246,8 @@ class Network(object):
         # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
         building_identifiers = [building.identifier for building in domain.buildings]
         building_locations = [building.location for building in domain.buildings]
-        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
+        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'],
+                           crs=domain.buildings[0].crs, geometry="geometry")
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
@@ -450,7 +452,7 @@ class Network(object):
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
         plant_terminal['Type'][0] = "PLANT"
 
-        self.network_nodes = self.network_nodes.append(plant_terminal)
+        self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
         # create new edge
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
@@ -461,7 +463,7 @@ class Network(object):
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],
                                crs=Network._coordinate_reference_system)
-        self.network_edges = self.network_edges.append(plant_to_network)
+        self.network_edges = pd.concat([self.network_edges, plant_to_network])
 
     def _run_water_network_model(self):
         """
@@ -482,7 +484,7 @@ class Network(object):
         thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            _file_location = os.path.join(tmpdir, f"{self.connectivity_id}_{self.identifier}")
+            _file_location = os.path.join(tmpdir, f"{self.connectivity.as_str(for_filename=True)}_{self.identifier}")
 
             # Create empty .inp file for WaterNetworkModel
             inp_file = f"{_file_location}.inp"
