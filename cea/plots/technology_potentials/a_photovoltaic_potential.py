@@ -1,7 +1,4 @@
-
-
-
-
+import pandas as pd
 import plotly.graph_objs as go
 
 import cea.plots.technology_potentials
@@ -77,6 +74,16 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
                 return "%s for District (%s)" % (self.name, self.timeframe)
             else:
                 return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
+
+    # FOR PV PANELS
+    @cea.plots.cache.cached
+    def PV_hourly_aggregated_kW(self):
+        data = pd.read_csv(self.locator.PV_totals(self.panel_type)).set_index('Date')
+        data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
+                                              self.pv_analysis_fields_area)
+        PV_hourly_aggregated_kW = self.resample_time_data(data_normalized)
+
+        return PV_hourly_aggregated_kW
 
     def calc_graph(self):
         data = self.PV_hourly_aggregated_kW()
