@@ -24,13 +24,13 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
         'scenario-name': 'general:scenario-name',
         'timeframe': 'plots:timeframe',
         'normalization': 'plots:normalization',
-        'panel_type': 'solar:type-pvpanel'
+        'type-pvpanel': 'solar:type-pvpanel'
     }
 
     def __init__(self, project, parameters, cache):
         super(PVPotentialPlot, self).__init__(project, parameters, cache)
         self.normalization = self.parameters['normalization']
-        self.panel_type = self.parameters['panel_type']
+        self.panel_type = self.parameters['type-pvpanel']
         self.input_files = [(self.locator.PV_totals, [self.panel_type])] + [(self.locator.PV_results, [building])
                                                                             for building in self.buildings]
 
