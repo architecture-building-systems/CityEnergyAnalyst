@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import warnings
 from typing import Optional, Tuple, NamedTuple
 
@@ -36,19 +37,15 @@ class GridSize(NamedTuple):
 
 def create_temp_daysim_directory(directory):
     daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
-    temp_dir = os.path.join(directory, "cea-daysim-temp")
+    temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
 
     if sys.platform == "win32":
         daysim_dir = os.path.join(daysim_dir, "bin64")
-    
-    os.makedirs(temp_dir, exist_ok=True)
+
     for file in os.listdir(daysim_dir):
-        shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(directory, file))
+        shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(temp_dir.name, file))
 
-    def remove_dir():
-        shutil.rmtree(directory)
-
-    atexit.register(remove_dir)
+    atexit.register(temp_dir.cleanup)
 
     return temp_dir
 
