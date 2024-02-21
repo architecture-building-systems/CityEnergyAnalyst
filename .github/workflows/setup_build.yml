@@ -95,3 +95,4 @@ jobs:
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
+          compression-level: 0 
