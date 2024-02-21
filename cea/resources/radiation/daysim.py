@@ -3,7 +3,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import warnings
 from typing import Optional, Tuple, NamedTuple
 
@@ -36,16 +35,22 @@ class GridSize(NamedTuple):
 
 
 def create_temp_daysim_directory(directory):
-    tmp_dir = tempfile.TemporaryDirectory(dir=directory)
     daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
+    temp_dir = os.path.join(directory, "cea-daysim-temp")
 
     if sys.platform == "win32":
         daysim_dir = os.path.join(daysim_dir, "bin64")
-
+    
+    os.makedirs(temp_dir, exist_ok=True)
     for file in os.listdir(daysim_dir):
-        shutil.copyfile(os.path.join(daysim_dir, file), directory)
+        shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(directory, file))
 
-    atexit.register(tmp_dir.cleanup)
+    def remove_dir():
+        shutil.rmtree(directory)
+
+    atexit.register(remove_dir)
+
+    return temp_dir
 
 
 def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
@@ -148,8 +153,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     # FIXME: Temp solution for Windows users with space in directory
     if sys.platform == "win32":
         root_path = os.path.abspath(os.sep)
-        possible_path = os.path.join(root_path, "cea-daysim-temp")
-        create_temp_daysim_directory(possible_path)
+        possible_path = create_temp_daysim_directory(root_path)
 
         return str(possible_path), str(lib_path)
 
