@@ -46,12 +46,13 @@ def create_temp_daysim_directory(directory):
 
     for file in os.listdir(daysim_dir):
         binary_file = os.path.join(daysim_dir, file)
-        if not os.path.exists(binary_file):
-            shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(temp_dir.name, file))
+        output_file = os.path.join(temp_dir.name, file)
+        if not os.path.exists(output_file):
+            shutil.copyfile(binary_file, output_file)
 
     atexit.register(temp_dir.cleanup)
 
-    return temp_dir
+    return temp_dir.name
 
 
 def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
