@@ -37,13 +37,17 @@ class GridSize(NamedTuple):
 
 def create_temp_daysim_directory(directory):
     daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
+
+    os.makedirs(directory, exist_ok=True)
     temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
 
     if sys.platform == "win32":
         daysim_dir = os.path.join(daysim_dir, "bin64")
 
     for file in os.listdir(daysim_dir):
-        shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(temp_dir.name, file))
+        binary_file = os.path.join(daysim_dir, file)
+        if not os.path.exists(binary_file):
+            shutil.copyfile(os.path.join(daysim_dir, file), os.path.join(temp_dir.name, file))
 
     atexit.register(temp_dir.cleanup)
 
@@ -150,7 +154,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     # FIXME: Temp solution for Windows users with space in directory
     if sys.platform == "win32":
         root_path = os.path.abspath(os.sep)
-        possible_path = create_temp_daysim_directory(root_path)
+        possible_path = create_temp_daysim_directory(os.path.join(root_path, "temp"))
 
         return str(possible_path), str(lib_path)
 
