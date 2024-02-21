@@ -48,10 +48,6 @@ from cea.optimization_new.helpercalsses.optimization.tracker import optimization
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
-# Fix for running optimisation in command line for Apple Silicon
-from cea.lib import apply_wntr_fix
-apply_wntr_fix()
-
 
 class Domain(object):
     def __init__(self, config, locator):
