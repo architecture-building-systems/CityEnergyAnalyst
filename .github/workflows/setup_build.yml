@@ -9,53 +9,64 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install conda environment from environment.yml
-        uses: mamba-org/setup-micromamba@v1
+      - uses: actions/setup-python@v5
         with:
-          environment-file: conda-lock.yml
-          environment-name: cea
-          cache-environment: true
-          init-shell: bash powershell
+          python-version: '3.8'
 
-      - name: Install CEA to conda environment
-        shell: bash -l {0}
+      - name: Install CEA to python environment
         run: pip install .
 
-      - name: Install conda-pack
-        run: micromamba create -n conda-pack conda-pack
-
-      - name: Pack conda environment
-        shell: bash -l {0}
-        run: |
-          micromamba activate conda-pack
-          conda-pack -p $MAMBA_ROOT_PREFIX/envs/cea -o $GITHUB_WORKSPACE/cea.tar.gz --n-threads -1
-
-      - name: Extract tar
+      - name: Get CEA version
         shell: bash
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/setup/Dependencies/Python
-          cd $GITHUB_WORKSPACE/setup/Dependencies/Python
-          tar -xzf $GITHUB_WORKSPACE/cea.tar.gz --force-local
+        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
       - name: Create sdist of CEA
         shell: bash
         run: |
-          CEA_VERSION=$(python -c "import cea; print(cea.__version__)")
           python -m pip install build
           python -m build
-          mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/Dependencies/cityenergyanalyst.tar.gz
+          mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/cityenergyanalyst.tar.gz
+
+      - name: Cache CEA env
+        id: cache-env
+        uses: actions/cache@v4
+        with:
+          path: |
+            setup/dependencies/cea-env.7z
+            setup/dependencies/micromamba.exe
+          key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
+      
+      - uses: mamba-org/setup-micromamba@v1
+        if: steps.cache-env.outputs.cache-hit != 'true'
+        with:
+          environment-file: conda-lock.yml
+          environment-name: cea
+          cache-environment: true
+          micromamba-binary-path: setup/dependencies/micromamba.exe
+          create-args: --no-pyc
+
+      - name: Clean conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
+        shell: bash -el {0}
+        run: micromamba clean -afy
+
+      - name: Compress conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
+        shell: bash -el {0}
+        run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
 
       - uses: actions/checkout@v4
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: vite-electron
 
       - name: Cache GUI
         id: cache-gui
         uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/setup/CityEnergyAnalyst-GUI-win32-x64
-          key: ${{ runner.os }}-${{ hashFiles('gui/src', 'gui/yarn.lock') }}-gui-setup
+          path: ${{ github.workspace }}/setup/dashboard
+          key: ${{ runner.os }}-${{ hashFiles('gui/electron', 'gui/src', 'gui/yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui.outputs.cache-hit != 'true'
@@ -63,8 +74,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
-          yarn package
-          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/CityEnergyAnalyst-GUI-win32-x64
+          yarn electron:build
+          mv out/win-unpacked $GITHUB_WORKSPACE/setup/dashboard
 
       - name: Install setup plugin
         shell: bash
@@ -84,3 +95,4 @@ jobs:
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
+          compression-level: 0 
