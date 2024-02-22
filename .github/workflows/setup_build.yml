@@ -26,19 +26,32 @@ jobs:
           python -m pip install build
           python -m build
           mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/cityenergyanalyst.tar.gz
+
+      - name: Cache CEA env
+        id: cache-env
+        uses: actions/cache@v4
+        with:
+          path: |
+            setup/dependencies/cea-env.7z
+            setup/dependencies/micromamba.exe
+          key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
       
       - uses: mamba-org/setup-micromamba@v1
+        if: steps.cache-env.outputs.cache-hit != 'true'
         with:
           environment-file: conda-lock.yml
           environment-name: cea
+          cache-environment: true
           micromamba-binary-path: setup/dependencies/micromamba.exe
           create-args: --no-pyc
 
       - name: Clean conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: micromamba clean -afy
 
       - name: Compress conda environment
+        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
 
@@ -46,13 +59,14 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: vite-electron
 
       - name: Cache GUI
         id: cache-gui
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/setup/dashboard
-          key: ${{ runner.os }}-${{ hashFiles('gui/src', 'gui/yarn.lock') }}-gui-setup
+          key: ${{ runner.os }}-${{ hashFiles('gui/electron', 'gui/src', 'gui/yarn.lock') }}-gui-setup
 
       - name: Package CEA GUI
         if: steps.cache-gui.outputs.cache-hit != 'true'
@@ -60,8 +74,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
-          yarn package
-          mv out/CityEnergyAnalyst-GUI-win32-x64 $GITHUB_WORKSPACE/setup/dashboard
+          yarn electron:build
+          mv out/win-unpacked $GITHUB_WORKSPACE/setup/dashboard
 
       - name: Install setup plugin
         shell: bash
@@ -81,3 +95,4 @@ jobs:
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
+          compression-level: 0 
