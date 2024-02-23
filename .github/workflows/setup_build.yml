@@ -110,6 +110,9 @@ jobs:
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
           ref: vite-electron
 
+      - name: Create CEA GUI dependencies directory
+        run: mkdir gui/dependencies
+
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: cea/conda-lock.yml
