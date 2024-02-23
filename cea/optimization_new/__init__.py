@@ -14,7 +14,7 @@ def get_optimization_module_classes():
 
     def in_optimization_module(obj):
         try:
-            return inspect.getfile(obj).startswith(os.path.dirname(os.path.realpath(__file__)))
+            return os.path.realpath(inspect.getfile(obj)).startswith(os.path.dirname(os.path.realpath(__file__)))
         except TypeError:  # Ignore builtin mods
             return False
 
