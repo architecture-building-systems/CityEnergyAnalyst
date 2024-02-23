@@ -96,3 +96,41 @@ jobs:
           name: setup
           path: ${{ github.workspace }}\setup\Output
           compression-level: 0 
+
+  build_mac_dmg:
+    runs-on: "macos-latest"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cea
+
+      - uses: actions/checkout@v4
+        with:
+          path: gui
+          repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: vite-electron
+
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: cea/conda-lock.yml
+          environment-name: cea
+          cache-environment: true
+          micromamba-binary-path: gui/dependencies/micromamba
+
+      - name: Move CEA environment into CEA GUI dependencies
+        run: mv $MAMBA_ROOT_PREFIX gui/dependencies/micromamba
+
+      - name: Package CEA GUI
+        shell: bash
+        run: |
+          cd gui
+          yarn
+          yarn electron:build
+
+      - name: Upload setup
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: gui/out/CityEnergyAnalyst-GUI-*.dmg
+          compression-level: 0
+
