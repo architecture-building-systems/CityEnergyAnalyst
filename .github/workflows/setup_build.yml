@@ -120,7 +120,7 @@ jobs:
       - name: Move CEA environment into CEA GUI dependencies
         run: |
           mkdir gui/dependencies/micromamba
-          mv $MAMBA_ROOT_PREFIX gui/dependencies/micromamba
+          mv $MAMBA_ROOT_PREFIX/* gui/dependencies/micromamba
 
       - name: Package CEA GUI
         shell: bash
