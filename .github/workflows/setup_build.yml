@@ -117,6 +117,10 @@ jobs:
           cache-environment: true
           micromamba-binary-path: gui/dependencies/micromamba
 
+      - name: Install CEA to environment
+        shell: bash -el {0}
+        run: pip install ./cea
+
       - name: Move CEA environment into CEA GUI dependencies
         run: |
           mkdir gui/dependencies/micromamba-root
