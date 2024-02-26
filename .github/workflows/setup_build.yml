@@ -139,7 +139,7 @@ jobs:
       - name: Upload setup
         uses: actions/upload-artifact@v4
         with:
-          name: dmg-${{ env.RUNNER_ARCH }}
+          name: dmg-${{ runner.arch }}
           path: gui/out/CityEnergyAnalyst-GUI-*.dmg
           compression-level: 0
 
