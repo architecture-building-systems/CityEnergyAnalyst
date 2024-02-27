@@ -137,7 +137,7 @@ jobs:
           yarn electron:build
 
       - name: Upload setup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: dmg-${{ runner.arch }}
           path: gui/out/CityEnergyAnalyst-GUI-*.dmg
