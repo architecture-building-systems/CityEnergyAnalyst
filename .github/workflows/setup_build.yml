@@ -119,7 +119,7 @@ jobs:
           environment-name: cea
           cache-environment: true
           micromamba-binary-path: gui/dependencies/micromamba
-          create-args: --platform ${{ matrix.arch == "x64" && "osx-64" || "osx-arm64" }}
+          create-args: --platform ${{ matrix.arch == 'x64' && 'osx-64' || 'osx-arm64' }}
 
       - name: Install CEA to environment
         shell: bash -el {0}
