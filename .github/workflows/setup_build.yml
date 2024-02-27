@@ -101,7 +101,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["macos-12", "macos-14"]
+        arch: ["x64", "arm64"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -119,6 +119,7 @@ jobs:
           environment-name: cea
           cache-environment: true
           micromamba-binary-path: gui/dependencies/micromamba
+          create-args: --platform ${{ matrix.arch == "x64" && "osx-64" || "osx-arm64" }}
 
       - name: Install CEA to environment
         shell: bash -el {0}
@@ -134,12 +135,12 @@ jobs:
         run: |
           cd gui
           yarn
-          yarn electron:build
+          yarn electron:build --${{ matrix.arch }}
 
       - name: Upload setup
         uses: actions/upload-artifact@v4
         with:
-          name: dmg-${{ runner.arch }}
+          name: dmg-${{ matrix.arch }}
           path: gui/out/CityEnergyAnalyst-GUI-*.dmg
           compression-level: 0
 
