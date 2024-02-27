@@ -98,7 +98,7 @@ jobs:
           compression-level: 0 
 
   build_mac_dmg:
-    runs-on: ${{ matrix.os }}
+    runs-on: "macos-latest"
     strategy:
       matrix:
         arch: ["x64", "arm64"]
