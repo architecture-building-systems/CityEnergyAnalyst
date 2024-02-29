@@ -27,7 +27,8 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
-import time, sys, multiprocessing
+import time
+import multiprocessing
 
 from copy import deepcopy
 from deap import algorithms, base, tools
@@ -38,7 +39,7 @@ from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
 from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
@@ -46,6 +47,7 @@ class DistrictEnergySystem(object):
     _max_nbr_networks = 0
     _number_of_selected_DES = 0
     _network_type = ""
+    _civ_memory = CapacityIndicatorVectorMemory()
     optimisation_algorithm = GeneticAlgorithm()
 
     def __init__(self, connectivity, buildings, energy_potentials):
@@ -104,14 +106,21 @@ class DistrictEnergySystem(object):
         if optimization_tracker:
             optimization_tracker.set_current_individual(connectivity_vector)
 
+        if not DistrictEnergySystem._civ_memory.max_district_energy_demand:
+            max_district_demand = max(sum([building.demand_flow.profile for building in district_buildings]))
+            DistrictEnergySystem._civ_memory = CapacityIndicatorVectorMemory(max_district_demand)
+
         # build a new district cooling system including its networks
         new_district_cooling_system = DistrictEnergySystem(connectivity_vector,
                                                            district_buildings,
                                                            energy_potentials)
 
-        non_dominated_systems, optimization_tracker = new_district_cooling_system.evaluate(optimization_tracker)
+        non_dominated_systems, optimization_tracker \
+            = new_district_cooling_system.evaluate(optimization_tracker)
 
-        return non_dominated_systems, optimization_tracker
+        process_memory.update(['DistrictEnergySystem'])
+
+        return non_dominated_systems, process_memory, optimization_tracker
 
     def evaluate(self, optimization_tracker=None, return_full_des=False):
         """
@@ -143,7 +152,7 @@ class DistrictEnergySystem(object):
         self.generate_optimal_supply_systems()
 
         # aggregate objective functions for all subsystems across the entire district energy system
-        self.combine_supply_systems()
+        self.combine_supply_systems_and_networks()
 
         # if prompted, track certain core characteristics of the district energy system
         if optimization_tracker:
@@ -211,7 +220,8 @@ class DistrictEnergySystem(object):
             building_demand_flows = [building.demand_flow for building in self.consumers
                                      if building.identifier in network.connected_buildings]
             aggregated_demand = EnergyFlow.aggregate(building_demand_flows)[0]
-            aggregated_demand.profile += network.network_losses
+            # subtract network losses (losses are negative, therefore subtracting them increases the demand requirement)
+            aggregated_demand.profile -= network.network_losses
             self.subsystem_demands[network.identifier] = aggregated_demand
 
         return self.subsystem_demands
@@ -283,7 +293,7 @@ class DistrictEnergySystem(object):
 
         return self.distributed_potentials
 
-    def generate_optimal_supply_systems(self, print_results=False):
+    def generate_optimal_supply_systems(self):
         """
         Build and calculate operation for supply systems of each of the subsystems of the district energy system:
 
@@ -296,7 +306,8 @@ class DistrictEnergySystem(object):
             system_structure.build()
 
             pareto_optimal_systems = self.optimise_supply_system(system_structure, network)
-            self.supply_systems[network.identifier] = pareto_optimal_systems
+            if pareto_optimal_systems:
+                self.supply_systems[network.identifier] = pareto_optimal_systems
 
         return self.supply_systems
 
@@ -319,17 +330,21 @@ class DistrictEnergySystem(object):
 
         start_time = time.time()
 
+        subsystem_demand = self.subsystem_demands[subsystem.identifier]
+        max_subsystem_demand = subsystem_demand.profile.max()
+
         structure_civ = system_structure.capacity_indicators
         algorithm = SupplySystem.optimisation_algorithm
         ref_points = tools.uniform_reference_points(algorithm.nbr_objectives, 12)
         main_process_memory = MemoryPreserver()
 
         toolbox = base.Toolbox()
-        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ)
-        toolbox.register("individual", tools.initIterate, CapacityIndicatorVector, toolbox.generate)
+        toolbox.register("generate", CapacityIndicatorVector.generate, civ_structure=structure_civ, method='from_memory',
+                         civ_memory=self._civ_memory, max_system_demand=max_subsystem_demand)
+        toolbox.register("individual", CapacityIndicatorVector.initialize,
+                         capacity_indicator_generator=toolbox.generate, dependencies=structure_civ.dependencies)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-        subsystem_demand = self.subsystem_demands[subsystem.identifier]
         toolbox.register("evaluate", SupplySystem.evaluate_supply_system,
                          system_structure=system_structure, demand_energy_flow=subsystem_demand,
                          objectives=algorithm.objectives, process_memory=main_process_memory)
@@ -337,35 +352,93 @@ class DistrictEnergySystem(object):
         toolbox.register("mutate", CapacityIndicatorVector.mutate, algorithm=algorithm)
         toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
+        # Generate initial population
         population = toolbox.population(n=algorithm.population)
         fitnesses = toolbox.map(toolbox.evaluate, population)
-        for ind, fit in zip(population, fitnesses):
-            ind.fitness.values = fit
+        for i, fit in enumerate(fitnesses):
+            # if the supply system could not be built and/or operated properly, generate and evaluate a new capacity
+            #   indicator vector until a fit supply system is found or until 10 attempts have been made
+            j = 0
+            while not fit:
+                if j > 10:
+                    fit = [np.inf for _ in range(algorithm.nbr_objectives)]
+                    break
+                else:
+                    population[i] = toolbox.individual()
+                    fit = toolbox.evaluate(population[i])
+                    j += 1
 
-        for generation in range(1, algorithm.generations+1):
+            population[i].fitness.values = fit
+
+        # Eliminate duplicates from population
+        population = [ind1 for i, ind1 in enumerate(population)
+                      if ind1.values not in [ind2.values for ind2 in population[i+1:]]]
+
+        # Perform the genetic optimization
+        for generation in range(1, algorithm.generations_supply_systems + 1):
+            # initialize a few relevant variables
             population_civs = set(tuple(pop_ind.values) for pop_ind in population)
-            offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+            targeted_number_of_offspring = 0
+            offspring = []
+            fit_offspring = []
+            unfit_offspring = []
+            procreation_attempts = 0
 
-            novel_offspring = [offspring_ind for offspring_ind in offspring
-                               if not tuple(offspring_ind.values) in population_civs]
-            fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
-            for ind, fit in zip(novel_offspring, fitnesses):
-                ind.fitness.values = fit
+            # generate offspring until a sufficient number of fit offspring has been generated
+            while unfit_offspring or procreation_attempts == 0:
+                # perform mutation and crossover to generate a batch of offspring
+                offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
+                # filter out offspring that are identical to existing population members
+                novel_offspring = [offspring_ind for offspring_ind in offspring
+                                   if tuple(offspring_ind.values) not in population_civs]
+                # decide on the number of offspring to create in this generation
+                if procreation_attempts == 0:
+                    targeted_number_of_offspring = len(novel_offspring)
+                # reset the list of unfit offspring
+                unfit_offspring = []
+                # evaluate the fitness of the offspring
+                fitnesses = toolbox.map(toolbox.evaluate, novel_offspring)
+                for ind, fit in zip(novel_offspring, fitnesses):
+                    if fit:
+                        ind.fitness.values = fit
+                        if tuple(ind.values) not in set(tuple(fit_ind.values) for fit_ind in fit_offspring):
+                            fit_offspring += [ind]
+                    else:
+                        unfit_offspring += [ind]
+                # if the targeted number of offspring is not yet reached and there have been fewer than 10 attempts,
+                #   try again
+                procreation_attempts += 1
+                if procreation_attempts >= 10 or len(fit_offspring) >= targeted_number_of_offspring:
+                    break
 
-            population = toolbox.select(population + novel_offspring, algorithm.population)
+            # select the fittest individuals among population and offspring and replace the population with them
+            if len(population + fit_offspring) >= algorithm.population:
+                population = toolbox.select(population + fit_offspring, algorithm.population)
+            else:
+                population = toolbox.select(population + fit_offspring, len(population + fit_offspring))
             print(f"{subsystem.identifier}: gen {generation} - "
-                  f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
+                  f"{round(sum([1 for i in population if tuple(i.values) not in population_civs])/len(offspring)*100)}"
                   f"% of offspring retained")
 
-        optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population]
-        [supply_system.evaluate() for supply_system in optimal_supply_systems]
-        end_time = time.time()
-        print(f"Supply system {subsystem.identifier} optimised."
-              f"(Time elapsed {end_time-start_time} s)")
+        # evaluate the fitness of the final population and store the non-dominated individuals in the memory
+        # (in case some invalid individuals of the initial population remain, remove them now)
+        optimal_supply_systems = [SupplySystem(system_structure, ind, subsystem_demand) for ind in population
+                                  if list(ind.fitness.values) != [np.inf for _ in range(algorithm.nbr_objectives)]]
+        if optimal_supply_systems:
+            [supply_system.evaluate() for supply_system in optimal_supply_systems]
+            self._civ_memory.update(optimal_supply_systems)
+            end_time = time.time()
+            print(f"Supply system {subsystem.identifier} optimised."
+                  f"(Time elapsed {end_time-start_time} s)")
+        else:
+            end_time = time.time()
+            print(f"Supply system {subsystem.identifier} could not be optimised. There are no feasible solutions."
+                  f"Try checking the configuration (e.g. available components) of the district energy system."
+                  f"(Time elapsed {end_time-start_time} s)")
 
         return optimal_supply_systems
 
-    def combine_supply_systems(self):
+    def combine_supply_systems_and_networks(self):
         """
         Combine optimal supply systems of the different subsystems (networks or buildings) TODO: add latter option to config
         of the district energy system and identify the non-dominated system combinations (i.e. combinations that
@@ -391,6 +464,7 @@ class DistrictEnergySystem(object):
             supply_system_combinations = [SystemCombination([connectivity_str,  first_network + "-" + str(i)])
                                           for i, supply_system in enumerate(self.supply_systems[first_network])]
             for i, system_combination in enumerate(supply_system_combinations):
+                self.add_network_cost(first_network, i)
                 system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
             supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
                                                                        first_front_only=True)
@@ -416,6 +490,7 @@ class DistrictEnergySystem(object):
                 new_combinations = [SystemCombination(combination.encoding + [network + '-' + str(i)])
                                     for i, supply_system in enumerate(self.supply_systems[network])]
                 for i, system_combination in enumerate(new_combinations):
+                    self.add_network_cost(network, i)
                     system_combination.fitness.values = \
                         tuple([fit_1 + fit_2 for fit_1, fit_2 in
                                zip(list(combination.fitness.values),
@@ -434,6 +509,16 @@ class DistrictEnergySystem(object):
         self.best_supsys_combinations = supply_system_combinations
 
         return self.best_supsys_combinations
+
+    def add_network_cost(self, network_id, supply_system_index):
+        """ Add the network cost to its associated supply system's overall fitness """
+        # retrieve the network cost
+        network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id][0]
+        # if cost is part of the objective functions, add the network cost
+        if 'cost' in self.supply_systems[network_id][supply_system_index].overall_fitness.keys():
+            self.supply_systems[network_id][supply_system_index].overall_fitness['cost'] += network_cost
+
+        return
 
     def select_supply_system_combination(self, supply_system_combination):
         """

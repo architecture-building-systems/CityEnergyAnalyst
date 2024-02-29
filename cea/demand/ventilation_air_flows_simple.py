@@ -5,9 +5,8 @@
 
 
 import numpy as np
-from cea.demand import control_ventilation_systems, constants, control_heating_cooling_systems
+from cea.demand import control_ventilation_systems, constants
 from cea.utilities import physics
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

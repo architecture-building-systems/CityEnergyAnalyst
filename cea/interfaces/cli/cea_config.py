@@ -3,7 +3,6 @@ Update the user configuration file and show the current settings.
 """
 
 import sys
-from typing import List
 
 import cea.config
 import cea.inputlocator

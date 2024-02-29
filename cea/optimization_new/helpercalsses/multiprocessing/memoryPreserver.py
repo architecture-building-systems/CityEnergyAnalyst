@@ -12,10 +12,9 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-
 import inspect
 
-import cea.optimization_new as optimization_module
+from cea.optimization_new import get_optimization_module_classes
 
 
 class MemoryPreserver(object):
@@ -37,28 +36,35 @@ class MemoryPreserver(object):
 
             self.record_class_variables(class_list)
 
-
     def record_class_variables(self, classes_for_storage):
         for cls in classes_for_storage:
             self.recorded_memory[cls.__name__] = {i: j for i, j in vars(cls).items()
                                                   if (not callable(j) and not isinstance(j, staticmethod)
-                                                     and not isinstance(j, property) and not i[:2] == '__')}
+                                                      and not isinstance(j, property) and not i[:2] == '__')}
 
     def recall_class_variables(self):
 
         if self.multiprocessing:
-            memorised_classes = {}
-            modules = inspect.getmembers(optimization_module, inspect.ismodule)
-            while len(self.recorded_memory) > len(memorised_classes) and modules:
-                memorised_classes.update({cls[0]: cls[1] for module in modules
-                                          for cls in inspect.getmembers(module[1], inspect.isclass)
-                                          if cls[0] in self.recorded_memory.keys()})
-                namespace_modules = [module for module in modules
-                                     if (hasattr(module[1], '__path__') and
-                                         getattr(module[1], '__file__', None) is None)]
-                modules = [module for namespace_module in namespace_modules
-                           for module in inspect.getmembers(namespace_module[1], inspect.ismodule)]
+            modules = get_optimization_module_classes()
+            memorised_classes = {module[0]: module[1] for module in modules}
 
             for cls_name in self.recorded_memory.keys():
                 for cls_var_name, cls_var_value in self.recorded_memory[cls_name].items():
                     setattr(memorised_classes[cls_name], cls_var_name, cls_var_value)
+
+    def update(self, classes=[]):
+        classes_for_storage = [cls[1] for cls in get_optimization_module_classes() if cls[0] in classes]
+        self.record_class_variables(classes_for_storage)
+
+    def clear_variables(self, variables=['_civ_memory']):
+        for cls_name in self.recorded_memory.keys():
+            for var_name, var_value in self.recorded_memory[cls_name].items():
+                if var_name in variables:
+                    self.recorded_memory[cls_name][var_name].clear()
+
+    def consolidate(self, child_process_memory, variables=['_civ_memory']):
+        for cls_name in self.recorded_memory.keys():
+            for var_name, var_value in self.recorded_memory[cls_name].items():
+                if var_name in variables:
+                    self.recorded_memory[cls_name][var_name].consolidate(
+                        child_process_memory.recorded_memory[cls_name][var_name])

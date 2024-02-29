@@ -310,7 +310,7 @@ class Section:
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
-            if self.config.restricted_to is not None and not self.parameters[cid].fqname in self.config.restricted_to:
+            if self.config.restricted_to is not None and self.parameters[cid].fqname not in self.config.restricted_to:
                 raise AttributeError(
                     f"Parameter not configured to work with this script: {self.parameters[cid].fqname}")
             return self.parameters[cid].get()
@@ -325,7 +325,7 @@ class Section:
 
         cid = config_identifier(key)
         if cid in self.parameters:
-            if self.config.restricted_to is not None and not self.parameters[cid].fqname in self.config.restricted_to:
+            if self.config.restricted_to is not None and self.parameters[cid].fqname not in self.config.restricted_to:
                 raise AttributeError(
                     f"Parameter not configured to work with this script: {self.parameters[cid].fqname}")
             return self.parameters[cid].set(value)
@@ -470,7 +470,7 @@ class FileParameter(Parameter):
         self._extensions = parser.get(self.section.name, f"{self.name}.extensions").split()
         try:
             self._direction = parser.get(self.section.name, f"{self.name}.direction")
-            if not self._direction in {'input', 'output'}:
+            if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
             self._direction = 'input'
@@ -813,7 +813,7 @@ class DatabasePathParameter(Parameter):
                 default_file_path = os.path.join(default_template, folder, file)
                 if not os.path.isfile(default_file_path):
                     continue
-                if not os.path.splitext(default_file_path)[1] in {'.xls', '.xlsx'}:
+                if os.path.splitext(default_file_path)[1] not in {'.xls', '.xlsx'}:
                     # we're only interested in the excel files
                     continue
                 template_file_path = os.path.join(path, folder, file)
@@ -964,7 +964,7 @@ class SingleBuildingParameter(ChoiceParameter):
         return building_names
 
     def encode(self, value):
-        if not str(value) in self._choices:
+        if str(value) not in self._choices:
             return self._choices[0]
         return str(value)
 
@@ -986,7 +986,7 @@ class SingleThermalStorageParameter(ChoiceParameter):
         return thermal_storage_names
 
     def encode(self, value):
-        if not str(value) in self._choices:
+        if str(value) not in self._choices:
             return self._choices[0]
         return str(value)
 
@@ -1053,7 +1053,7 @@ class SystemParameter(ChoiceParameter):
         return unique_systems_scenario_list
 
     def encode(self, value):
-        if not str(value) in self._choices:
+        if str(value) not in self._choices:
             if len(self._choices) > 1:
                 return self._choices[1]
             return self._choices[0]

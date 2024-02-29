@@ -10,12 +10,11 @@ import pandas as pd
 import ephem
 import datetime
 import collections
-from math import *
+from math import radians, degrees, asin, sin, acos, cos, tan, atan, pi
 
 from pyarrow import feather
 from timezonefinder import TimezoneFinder
 import pytz
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

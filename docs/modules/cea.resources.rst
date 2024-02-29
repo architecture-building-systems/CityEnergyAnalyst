@@ -12,7 +12,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   cea.resources.radiation_daysim
+   cea.resources.radiation
 
 Submodules
 ----------

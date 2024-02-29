@@ -23,10 +23,9 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
-from math import ceil, isclose
+from math import isclose
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-from cea.optimization_new.component import ActiveComponent
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
 from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
@@ -82,9 +81,11 @@ class SupplySystem(object):
         supply_system = SupplySystem(system_structure=system_structure,
                                      capacity_indicator_vector=capacity_indicators,
                                      demand_energy_flow=demand_energy_flow)
-        supply_system.evaluate()
-
-        fitness = [supply_system.overall_fitness[objective] for objective in objectives]
+        try:
+            supply_system.evaluate()
+            fitness = [supply_system.overall_fitness[objective] for objective in objectives]
+        except ValueError:
+            fitness = None
 
         return fitness
 
@@ -149,28 +150,21 @@ class SupplySystem(object):
             is sufficient, or
          2. set to the minimum available capacity of the component type otherwise.
         """
-        for index, capacity_indicator in enumerate(self.capacity_indicator_vector):
+        for capacity_indicator in self.capacity_indicator_vector.capacity_indicators:
 
-            component_model = self.capacity_indicator_vector.capacity_indicators[index].code
-            placement = self.capacity_indicator_vector.capacity_indicators[index].category
+            component_model = capacity_indicator.code
+            placement = capacity_indicator.category
 
             max_capacity_component = self.structure.max_cap_active_components[placement][component_model]
             component_class = type(max_capacity_component)
-            capacity_kW = capacity_indicator * max_capacity_component.capacity
+            capacity_kw = capacity_indicator.value * max_capacity_component.capacity
 
             try:
-                self.installed_components[placement][component_model] = \
-                    component_class(component_model, placement, capacity_kW)
-            except ValueError:
-                if sum(self.capacity_indicator_vector.get_cat(placement)) - capacity_indicator < 1:
-                    min_model_capacity = ActiveComponent.get_smallest_capacity(component_class, component_model)
-                    new_cap_indicator = ceil(min_model_capacity / max_capacity_component.capacity * 100) / 100
-                    self.capacity_indicator_vector[index] = new_cap_indicator
-                    capacity_kW = new_cap_indicator * max_capacity_component.capacity
+                if capacity_kw > 0:
                     self.installed_components[placement][component_model] = \
-                        component_class(component_model, placement, capacity_kW)
-                else:
-                    self.capacity_indicator_vector[index] = 0
+                        component_class(component_model, placement, capacity_kw)
+            except ValueError:
+                capacity_indicator.value = 0
 
         return self.installed_components
 
@@ -193,7 +187,7 @@ class SupplySystem(object):
                                          self.component_energy_inputs[placement].items()
                                          for ec_code, energy_flow in energy_flows.items()]
             else:
-                raise ValueError(f'Please indicate a valid placement category or list of placement categories.')
+                raise ValueError('Please indicate a valid placement category or list of placement categories.')
         elif side == 'out':
             if isinstance(placements, str):
                 relevant_energy_flows = [energy_flow
@@ -207,7 +201,7 @@ class SupplySystem(object):
                                          self.component_energy_outputs[placement].items()
                                          for ec_code, energy_flow in energy_flows.items()]
             else:
-                raise ValueError(f'Please indicate a valid placement category or list of placement categories.')
+                raise ValueError('Please indicate a valid placement category or list of placement categories.')
         else:
             raise ValueError("Please indicate whether the energy flows into (side='in') or out of (side='out') should "
                              f"be aggregated for the {placements} category of the supply system.")
@@ -346,11 +340,9 @@ class SupplySystem(object):
 
         if not for_sizing:
             if not SupplySystem._ec_releases_to_env:
-                SupplySystem._ec_releases_to_env = [ec_code for ec_code in self.structure.releasable_energy_carriers
-                                                    if not (ec_code in self.structure.infinite_energy_carriers)]
+                SupplySystem._ec_releases_to_env = SupplySystemStructure().releasable_environmental_energy_carriers
             if not SupplySystem._ec_releases_to_grids:
-                SupplySystem._ec_releases_to_grids = [ec_code for ec_code in self.structure.releasable_energy_carriers
-                                                      if ec_code in self.structure.infinite_energy_carriers]
+                SupplySystem._ec_releases_to_grids = SupplySystemStructure().releasable_grid_based_energy_carriers
 
             self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
             self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
@@ -422,7 +414,7 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = {ec_code: sum(energy_flow) * EnergyCarrier.get_unit_cost(ec_code)
+        annual_energy_supply_cost = {ec_code: max(sum(energy_flow), 0) * EnergyCarrier.get_unit_cost(ec_code)
                                      for ec_code, energy_flow in self.system_energy_demand.items()}
 
         self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}

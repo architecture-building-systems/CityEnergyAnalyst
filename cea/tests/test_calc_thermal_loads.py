@@ -8,8 +8,6 @@ import unittest
 
 import pandas as pd
 
-import cea.config
-import cea.inputlocator
 from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
@@ -39,6 +37,12 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.date_range = get_date_range_hours_from_year(year)
         cls.test_config = configparser.ConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
+
+        # reinit database to ensure updated databases are loaded
+        from cea.datamanagement.data_initializer import main as data_initializer
+        cls.config.data_initializer.databases_path = "CH"
+        cls.config.data_initializer.databases = ["archetypes", "assemblies", "components"]
+        data_initializer(cls.config)
 
         # run properties script
         import cea.datamanagement.archetypes_mapper

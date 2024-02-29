@@ -8,7 +8,7 @@ Electrical loads
 
 import numpy as np
 
-from cea.constants import *
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
 from cea.demand import control_heating_cooling_systems, constants
 from cea.utilities import physics
@@ -341,6 +341,7 @@ def calc_Eve(tsd):
     fan_power = P_FAN  # specific fan consumption in W/m3/h, s
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
+    tsd['m_ve_rec'] = np.nan_to_num(tsd['m_ve_rec'])    # TODO:DOCUMENTATION, in heating case, m_ve_rec is nan
     q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
                 + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
 

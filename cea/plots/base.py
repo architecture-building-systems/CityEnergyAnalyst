@@ -11,8 +11,6 @@ import re
 
 import jinja2
 
-import cea.config
-import cea.inputlocator
 from cea import MissingInputDataException
 from cea.plots.variable_naming import COLOR, NAMING
 
@@ -49,6 +47,7 @@ class PlotBase(object):
         self.parameters = parameters
         self.buildings = self.process_buildings_parameter() if 'buildings' in self.expected_parameters else None
 
+        import cea.config
         for parameter_name in self.expected_parameters:
             # Try to load missing parameters with default values
             if parameter_name not in parameters:
@@ -75,6 +74,7 @@ class PlotBase(object):
         """
         :rtype: cea.inputlocator.InputLocator
         """
+        import cea.inputlocator
         return cea.inputlocator.InputLocator(os.path.join(self.project, self.parameters['scenario-name']))
 
     @property
@@ -133,7 +133,7 @@ class PlotBase(object):
         """
         import numpy as np
         fields = [field for field in fields if field in data.columns]
-        return [field for field in fields if np.isclose(data[field].sum(), 1e-8) == False]
+        return [field for field in fields if not np.isclose(data[field].sum(), 1e-8)]
 
     def calc_graph(self):
         """Calculate a plotly Data object as to be passed to the data attribute of Figure"""
@@ -169,15 +169,8 @@ class PlotBase(object):
         return self.cache.lookup_plot_div(self, self._plot_div_producer)
 
     def _plot_div_producer(self):
-        import plotly.graph_objs
-        import plotly.offline
-
-        # Set default color template to 'none' for plotly version 4
-        try:
-            import plotly.io as pio
-            pio.templates.default = 'none'
-        except ImportError:
-            pass
+        import plotly
+        plotly.io.templates.default = 'none'
 
         fig = plotly.graph_objs.Figure(data=self._plot_data_producer(), layout=self.layout)
         fig['layout'].update(dict(hovermode='closest'))
@@ -198,7 +191,7 @@ class PlotBase(object):
             except Exception as e:
                 print(e)
 
-        div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+        div = plotly.io.to_html(fig, full_html=False, include_plotlyjs=False)
         return div
 
     def _plot_data_producer(self):

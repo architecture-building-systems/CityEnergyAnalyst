@@ -10,11 +10,8 @@ import pkgutil
 import importlib
 import inspect
 import cea.plots
-import cea.config
-import cea.inputlocator
 import cea.plots.cache
 import cea.plots.base
-from typing import Type
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -41,7 +38,7 @@ def list_categories(plugins):
             yield PlotCategory(module)
         except GeneratorExit:
             return
-        except:
+        except Exception:
             # this module does not follow the conventions outlined in ``cea.plots.__init__.py`` and will be
             # ignored
             continue
@@ -99,11 +96,14 @@ class PlotCategory(object):
                 continue
             module = importlib.import_module(modname)
             for cls_name, cls_object in inspect.getmembers(module, inspect.isclass):
-                if cea.plots.PlotBase in inspect.getmro(cls_object):
+                if cea.plots.base.PlotBase in inspect.getmro(cls_object):
                     yield cls_object
 
 
 if __name__ == '__main__':
+    import cea.config
+    import cea.inputlocator
+
     from pprint import pprint
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()

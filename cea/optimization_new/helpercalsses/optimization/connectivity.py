@@ -24,6 +24,7 @@ __status__ = "Production"
 
 from random import randint
 from deap import tools
+import hashlib
 
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 
@@ -49,7 +50,7 @@ class Connection(object):
         if new_connection and not isinstance(new_connection, int):
             raise ValueError(f"Network connection indicators need to be integer values. Tried to assign "
                              f"{new_connection}.")
-        elif new_connection and not (new_connection in Connection.possible_connections):
+        elif new_connection and new_connection not in Connection.possible_connections:
             raise ValueError(f"The network connection indicator needs to be in the range "
                              f"[{Connection.possible_connections.start}, {Connection.possible_connections.stop - 1}]. "
                              f"Tried to assign {new_connection}.")
@@ -67,7 +68,7 @@ class Connection(object):
         if new_building_code and not isinstance(new_building_code, str):
             raise ValueError(f"The connection indicators' corresponding building codes need to be of type string. "
                              f"Tried to assign {new_building_code}.")
-        elif new_building_code and not (new_building_code in Connection.possible_building_codes):
+        elif new_building_code and new_building_code not in Connection.possible_building_codes:
             raise ValueError(f"The building code needs to be a valid identifier of one of the buildings withing the "
                              f"domain. Tried to assign {new_building_code}.")
         else:
@@ -114,10 +115,9 @@ class ConnectivityVector(object):
             # Set the connectivity vector
             self._connections = new_connections
 
-
     @property
     def values(self):
-        network_connection_values = [connection.network_connection for connection in self.connections]
+        network_connection_values = tuple(connection.network_connection for connection in self.connections)
         return network_connection_values
 
     @values.setter
@@ -148,6 +148,12 @@ class ConnectivityVector(object):
                              "selection functions need the attributes of that class to operate properly.")
         else:
             self._fitness = new_fitness
+
+    def __hash__(self):
+        return hash(self.values)
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.values == other.values
 
     def __len__(self):
         return len(self.connections)
@@ -190,11 +196,17 @@ class ConnectivityVector(object):
 
         return self
 
-    def as_str(self):
+    def as_str(self, for_filename=False):
         """
         Return the capacity indicator vector as single string-object (network connection values spaced by an underscore)
+        If the string is to be used in a filename, transform it to a hash instead to make sure it doesn't exceed the
+        maximum allowed length for filenames (https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf).
         """
-        connectivity_str = '_'.join(map(str, self.values))
+        if not for_filename:
+            connectivity_str = '_'.join(map(str, self.values))
+        else:
+            connectivity_bytes = ' '.join(map(str, self.values)).encode()
+            connectivity_str = hashlib.sha256(connectivity_bytes).hexdigest()
         return connectivity_str
 
     @staticmethod

@@ -17,6 +17,10 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+
+import os.path
+import tempfile
+
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
@@ -45,22 +49,23 @@ class Network(object):
     _domain_buildings_return_temp_K = pd.DataFrame()
     _domain_locator = None
     _pipe_catalog = pd.DataFrame()
-    _configuration_defaults = {'network_type': None,
-                               'thermal_transfer_unit_design_head_m': 0.0,
-                               'hazen_williams_friction_coefficient': 0.0,
-                               'peak_load_velocity_ms': 0.0,
-                               'equivalent_length_factor': 0.0,
-                               'peak_load_percentage': 0.0}
+    configuration_defaults = {'network_type': None,
+                              'thermal_transfer_unit_design_head_m': 0.0,
+                              'hazen_williams_friction_coefficient': 0.0,
+                              'peak_load_velocity_ms': 0.0,
+                              'equivalent_length_factor': 0.0,
+                              'peak_load_percentage': 0.0,
+                              'network_lifetime_yrs': 20}
 
     def __init__(self, domain_connectivity, network_id, connected_buildings):
-        self.connectivity_id = domain_connectivity.as_str()
+        self.connectivity = domain_connectivity
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
         self.network_nodes = Gdf()
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
-        self.piping_cost = 0.0
+        self.annual_piping_cost = 0.0
 
     def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
         """
@@ -84,7 +89,7 @@ class Network(object):
                                      columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
             self.network_nodes = Gdf([Point(node) for node in network_graph.nodes()],
                                      columns=['geometry'], crs=Network._coordinate_reference_system)
-        except:
+        except Exception:
             raise ValueError('There was an error while creating the Steiner tree. '
                              'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                              'the Steiner tree does not support disconnected graphs. '
@@ -241,7 +246,8 @@ class Network(object):
         # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
         building_identifiers = [building.identifier for building in domain.buildings]
         building_locations = [building.location for building in domain.buildings]
-        buildings_df = pd.DataFrame(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'])
+        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'],
+                           crs=domain.buildings[0].crs, geometry="geometry")
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
@@ -265,7 +271,7 @@ class Network(object):
         Gets the network related configurations from the domain's configs and stores them in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (None in Network._configuration_defaults):
+        if (domain is None) & (None in Network.configuration_defaults):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
             Network._domain_locator = domain.locator
@@ -276,12 +282,14 @@ class Network(object):
             peak_load_velocity_ms = domain.config.optimization_new.peak_load_velocity
             equivalent_length_factor = domain.config.optimization_new.equivalent_length_factor
             peak_load_percentage = domain.config.optimization_new.peak_load_percentage
-            Network._configuration_defaults = {'network_type': network_type,
-                                               'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
-                                               'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
-                                               'peak_load_velocity_ms': peak_load_velocity_ms,
-                                               'equivalent_length_factor': equivalent_length_factor,
-                                               'peak_load_percentage': peak_load_percentage}
+            network_lifetime = domain.config.optimization_new.network_lifetime
+            Network.configuration_defaults = {'network_type': network_type,
+                                              'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
+                                              'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
+                                              'peak_load_velocity_ms': peak_load_velocity_ms,
+                                              'equivalent_length_factor': equivalent_length_factor,
+                                              'peak_load_percentage': peak_load_percentage,
+                                              'network_lifetime_yrs': network_lifetime}
 
     @staticmethod
     def _set_potential_network_terminals(domain):
@@ -444,7 +452,7 @@ class Network(object):
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
         plant_terminal['Type'][0] = "PLANT"
 
-        self.network_nodes = self.network_nodes.append(plant_terminal)
+        self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
         # create new edge
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
@@ -455,7 +463,7 @@ class Network(object):
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],
                                crs=Network._coordinate_reference_system)
-        self.network_edges = self.network_edges.append(plant_to_network)
+        self.network_edges = pd.concat([self.network_edges, plant_to_network])
 
     def _run_water_network_model(self):
         """
@@ -473,34 +481,58 @@ class Network(object):
         :rtype wnm_pipe_diameters: pd.DataFrame
         """
         # BUILD WATER NETWORK
-        import cea.utilities
-        with cea.utilities.pushd(self._domain_locator.get_thermal_network_folder()):
+        thermal_network_folder = self._domain_locator.get_thermal_network_folder()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _file_location = os.path.join(tmpdir, f"{self.connectivity.as_str(for_filename=True)}_{self.identifier}")
+
+            # Create empty .inp file for WaterNetworkModel
+            inp_file = f"{_file_location}.inp"
+            with open(inp_file, "w") as f:
+                pass
 
             # Create a water network model instance
-            wn = wntr.network.WaterNetworkModel()
+            wn = wntr.network.WaterNetworkModel(inp_file)
 
             # add loads
             building_base_demand_m3s = {}
+            demand_pattern_map = {}
+
+            def generate_demand_pattern(building_name: str) -> str:
+                """
+                Epanet demand patterns cannot have spaces and ?(has a 30-character limit).
+                Otherwise, simulation will throw "EPANET 200" error.
+
+                Returns a hash to create a unique code based on the building name
+                Stores mapping to building name in demand_pattern_map
+                """
+                import hashlib
+                _hash = hashlib.sha1(building_name.encode()).hexdigest()[:30]
+                demand_pattern_map[_hash] = building_name
+                return _hash
+
             for building in self.connected_buildings:
-                building_base_demand_m3s[building] = self._domain_buildings_flow_rate_m3pers[building].max()
+                # Make sure that building names have no whitespaces when adding demand pattern to wn
+                demand_pattern = generate_demand_pattern(building)
+                building_base_demand_m3s[demand_pattern] = self._domain_buildings_flow_rate_m3pers[building].max()
                 pattern_demand = (self._domain_buildings_flow_rate_m3pers[building].values /
-                                  building_base_demand_m3s[building]).tolist()
-                wn.add_pattern(building, pattern_demand)
+                                  building_base_demand_m3s[demand_pattern]).tolist()
+                wn.add_pattern(demand_pattern, pattern_demand)
 
             # add nodes
             consumer_nodes = []
             for node_name, node in self.network_nodes.iterrows():
                 if node["Type"] == "CONSUMER":
-                    demand_pattern = node['Building']
+                    demand_pattern = generate_demand_pattern(node['Building'])
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
                     consumer_nodes.append(node_name)
                     wn.add_junction(str(node_name),
                                     base_demand=base_demand_m3s,
                                     demand_pattern=demand_pattern,
-                                    elevation=self._configuration_defaults['thermal_transfer_unit_design_head_m'],
+                                    elevation=self.configuration_defaults['thermal_transfer_unit_design_head_m'],
                                     coordinates=node["coordinates"])
                 elif node["Type"] == "PLANT":
-                    base_head = int(self._configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
+                    base_head = int(self.configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
                     start_node = str(node_name)
                     name_node_plant = start_node
                     wn.add_reservoir(start_node,
@@ -516,8 +548,8 @@ class Network(object):
                 length_m = edge["length_m"]
                 wn.add_pipe(str(edge_name), edge["start node"],
                             edge["end node"],
-                            length=length_m * (1 + self._configuration_defaults['equivalent_length_factor']),
-                            roughness=self._configuration_defaults['hazen_williams_friction_coefficient'],
+                            length=length_m * (1 + self.configuration_defaults['equivalent_length_factor']),
+                            roughness=self.configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
                             status='OPEN')
 
@@ -532,14 +564,14 @@ class Network(object):
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
-                                                                         velocity_ms=self._configuration_defaults[
+                                                                         velocity_ms=self.configuration_defaults[
                                                                              'peak_load_velocity_ms'],
                                                                          peak_load_percentage=
-                                                                         self._configuration_defaults[
+                                                                         self.configuration_defaults[
                                                                              'peak_load_percentage'])
                                                        for flow in max_volume_flow_rates_m3s])
             pipe_dn = pd.Series(Pipe_DN, pipe_names)
@@ -554,7 +586,7 @@ class Network(object):
                 pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
 
             # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
             # get accumulated head loss per hour
@@ -565,7 +597,7 @@ class Network(object):
                 length_m = self.network_edges.loc[column]['length_m']
                 head_loss_m[column] = head_loss_m[column] * length_m
             reservoir_head_loss_m = head_loss_m.sum(axis=1) + \
-                                    self._configuration_defaults[
+                                    self.configuration_defaults[
                                         'thermal_transfer_unit_design_head_m'] * 1.2  # fixme: only one thermal_transfer_unit_design_head_m from one substation?
             # @lguilhermers, @shanshanhsieh --- please review the 3 lines above ---
 
@@ -577,7 +609,7 @@ class Network(object):
             reservoir.head_timeseries.base_value = int(base_head)
             reservoir.head_timeseries._pattern = 'reservoir'
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=self.connectivity_id + '_' + self.identifier)
+            wnm_results = sim.run_sim(file_prefix=_file_location)
 
         return wnm_results, wnm_pipe_diameters
 
@@ -589,4 +621,6 @@ class Network(object):
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
         piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['Pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])
-        self.piping_cost = piping_cost_aggregated
+        annualised_piping_cost = piping_cost_aggregated / self.configuration_defaults['network_lifetime_yrs']
+
+        self.annual_piping_cost = annualised_piping_cost
