@@ -124,6 +124,10 @@ jobs:
         shell: bash -el {0}
         run: pip install ./cea
 
+      - name: Get CEA version
+        shell: bash
+        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
+
       - name: Move CEA environment into CEA GUI dependencies
         run: |
           mkdir gui/dependencies/micromamba-root
@@ -134,6 +138,7 @@ jobs:
         run: |
           cd gui
           yarn
+          yarn version --new-version $CEA_VERSION --no-git-tag-version
           yarn electron:build
 
       - name: Upload setup
