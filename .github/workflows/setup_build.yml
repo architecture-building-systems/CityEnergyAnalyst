@@ -128,6 +128,10 @@ jobs:
         shell: bash -el {0}
         run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
+      - name: Clean conda environment
+        shell: bash -el {0}
+        run: micromamba clean -afy
+
       - name: Move CEA environment into CEA GUI dependencies
         run: |
           mkdir gui/dependencies/micromamba-root
