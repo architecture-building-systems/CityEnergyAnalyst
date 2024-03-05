@@ -345,7 +345,7 @@
             if (nodes) layers.push(new deck.GeoJsonLayer({
                 id: 'nodes',
                 data: nodes,
-                getRadius: f => f.properties["_Radius"],
+                getPointRadius: f => f.properties["_Radius"],
                 getFillColor: f => JSON.parse(f.properties["_FillColor"]),
                 pickable: true,
                 autoHighlight: true,
