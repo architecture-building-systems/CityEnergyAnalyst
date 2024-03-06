@@ -139,6 +139,9 @@ jobs:
 
       - name: Package CEA GUI
         shell: bash
+        env:
+          CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
         run: |
           cd gui
           yarn
