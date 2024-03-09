@@ -7,7 +7,6 @@ from collections import OrderedDict
 from flask_restx import Namespace, Resource, abort
 import pandas as pd
 
-import cea.schemas
 from cea.databases import get_regions, get_database_tree, databases_folder_path
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
@@ -21,7 +20,8 @@ DATABASES_SCHEMA_KEYS = {
     "ENVELOPE": ["get_database_envelope_systems"],
     "CONVERSION": ["get_database_conversion_systems"],
     "DISTRIBUTION": ["get_database_distribution_systems"],
-    "FEEDSTOCKS": ["get_database_feedstocks"]
+    "FEEDSTOCKS": ["get_database_feedstocks"],
+    "ENERGY_CARRIERS": ["get_database_energy_carriers"]
 }
 
 

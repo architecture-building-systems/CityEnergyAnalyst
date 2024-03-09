@@ -9,7 +9,6 @@ import time
 import numpy as np
 import scipy
 import cea.config
-from math import ceil
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
@@ -287,7 +286,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         if thermal_network.network_type == 'DH':
             for key in thermal_network.substation_heating_systems:
                 key = 'hs_' + key
-                if not name in thermal_network.ch_old[key][t].columns:
+                if name not in thermal_network.ch_old[key][t].columns:
                     thermal_network.ch_old[key][t][name] = 0.0
 
             # calculate DH substation return temperature and substation flow rate
@@ -298,7 +297,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         else:
             for key in thermal_network.substation_cooling_systems:
                 key = 'cs_' + key
-                if not name in thermal_network.cc_old[key][t].columns:
+                if name not in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
             T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(
@@ -598,7 +597,7 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
             Flag = False
             tol = 0.00000001
             while abs((eff[0] - eff[1]) / eff[0]) > tol:
-                if Flag == True:
+                if Flag:
                     eff[0] = eff[1]
                 else:
                     cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
@@ -628,11 +627,11 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
                         cc + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 # recalculate temperature
                 tco = tci + eff[1] * cmin * (thi - tci) / cc
-        t_return = np.float(tco)
-        mcp_return = np.float(cc / 1000)
+        t_return = float(tco)
+        mcp_return = float(cc / 1000)
 
     else:
-        t_return = np.float(tci)
+        t_return = float(tci)
         mcp_return = 0.0
         cc = 0.0
 
@@ -691,7 +690,7 @@ def calc_HEX_mix(heat, temperatures, mass_flows):
         tavg = sum(weighted)
     else:
         tavg = np.nanmean(temperatures)
-    return np.float(tavg)
+    return float(tavg)
 
 
 def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow):
@@ -727,7 +726,7 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
             Flag = False
             tol = 0.00000001
             while abs((eff[0] - eff[1]) / eff[0]) > tol:
-                if Flag == True:
+                if Flag:
                     eff[0] = eff[1]
                 else:
                     cmin = cc * (tco - tci) / ((thi - tci) * eff[0])
@@ -757,11 +756,11 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
                         ch + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 # recalculate return temperature
                 tho = thi - eff[1] * cmin * (thi - tci) / ch
-        t_return = np.float(tho)
-        mcp_return = np.float(ch / 1000)
+        t_return = float(tho)
+        mcp_return = float(ch / 1000)
 
     else:
-        t_return = np.float(thi)
+        t_return = float(thi)
         mcp_return = 0.0
         ch = 0.0
 
@@ -847,7 +846,6 @@ def main(config):
     run the whole network summary routine
     """
     from cea.technologies.thermal_network.thermal_network import ThermalNetwork
-    import cea.inputlocator as inputlocator
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 

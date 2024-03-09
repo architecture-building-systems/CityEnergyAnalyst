@@ -6,13 +6,14 @@ heatpumps
 
 
 
-from math import floor, log, ceil
+from math import log, ceil
 import pandas as pd
 from cea.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
     GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
+
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -24,9 +25,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-#============================
-#operation costs
-#============================
+# ============================
+# technical model
+# ============================
+
+def calc_HP_const(q_load_Wh, COP):
+    """
+    Calculate heat pump operation for a fixed COP. Return required power supply and thermal energy drawn from
+    the environment for a given heating load.
+
+    :param q_load_Wh: Heating load in Watt-hours (single value or time series).
+    :type q_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the heat pump
+    :type COP: int, float
+
+    :return q_env_in_Wh: Thermal energy drawn from the environment, i.e. earth, water or air (single value or time series)
+    :rtype q_env_in_Wh: int, float, list or pd.Series
+    :return p_supply_Wh: Electrical power supply required to provide the given heating load (single value or time series)
+    :rtype p_supply_Wh: int, float, list or pd.Series
+    """
+    p_supply_Wh = q_load_Wh / COP
+    q_env_in_Wh = q_load_Wh - p_supply_Wh
+    return q_env_in_Wh, p_supply_Wh
+
 
 def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
@@ -126,6 +147,10 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     qcolddot_W =  qhotdot_W - wdot_W
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
+
+# ============================
+# operation cost
+# ============================
 
 def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
     """

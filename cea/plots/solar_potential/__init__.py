@@ -1,13 +1,9 @@
-
-
-
-
 import functools
 import os
 
 import pandas as pd
 
-import cea.inputlocator
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.SolarPotentialPlotBase` as a base class for all plots in the category "solar-potential"
@@ -26,7 +22,8 @@ __status__ = "Production"
 # identifies this package as a plots category and sets the label name for the category
 label = 'Solar Potentials'
 
-class SolarPotentialPlotBase(cea.plots.PlotBase):
+
+class SolarPotentialPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "solar-potential"
 

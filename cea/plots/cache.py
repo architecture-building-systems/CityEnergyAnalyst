@@ -111,7 +111,7 @@ class PlotCache(object):
         :param input_files: A list of tuples (locator method, args) that, when applied, produce a path"""
         try:
             return max(os.path.getmtime(locator_method(*args)) for locator_method, args in input_files)
-        except:
+        except Exception:
             print('Could not read input files for cache!')
             return time.time()
 
@@ -139,7 +139,7 @@ class MemoryPlotCache(PlotCache):
     def load_cached_value(self, data_path, parameters):
         """Check memory cache before loading from disk"""
         key = self._cached_data_file(data_path, parameters)
-        if not key in self._cache:
+        if key not in self._cache:
             self._cache[key] = super(MemoryPlotCache, self).load_cached_value(data_path, parameters)
         return self._cache[key]
 

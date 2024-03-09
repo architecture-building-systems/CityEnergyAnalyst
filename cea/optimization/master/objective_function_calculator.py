@@ -29,7 +29,7 @@ from cea.constants import N_PVT, ACH_TYPE_DOUBLE, N_SC_ET, N_SC_FP, VCC_CODE_CEN
 from cea.optimization.master.emissions_model import calc_emissions_Whyr_to_tonCO2yr
 from cea.technologies.pumps import calc_Cinv_pump
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -4,9 +4,6 @@ In this file, all sub-functions are stored that are used for storage design and 
 They are called by either the operation or optimization of storage.
 """
 
-
-
-
 import numpy as np
 
 from cea.constants import STORAGE_MAX_UPTAKE_LIMIT_FLAG, HEAT_CAPACITY_OF_WATER_JPERKGK, HP_ETA_EX, WH_TO_J, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3

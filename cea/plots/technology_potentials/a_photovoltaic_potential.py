@@ -1,7 +1,4 @@
-
-
-
-
+import pandas as pd
 import plotly.graph_objs as go
 
 import cea.plots.technology_potentials
@@ -23,17 +20,22 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
     name = "Photovoltaic Potential"
 
     expected_parameters = {
-        'buildings': 'plots:buildings',
+        # 'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
         'timeframe': 'plots:timeframe',
         'normalization': 'plots:normalization',
+        'type-pvpanel': 'solar:type-pvpanel'
     }
 
     def __init__(self, project, parameters, cache):
         super(PVPotentialPlot, self).__init__(project, parameters, cache)
         self.normalization = self.parameters['normalization']
-        self.input_files = [(self.locator.PV_totals, [])] + [(self.locator.PV_results, [building])
-                                                             for building in self.buildings]
+        self.panel_type = self.parameters['type-pvpanel']
+        # self.input_files = [(self.locator.PV_totals, [self.panel_type])] + [(self.locator.PV_results, [building])
+        #                                                                     for building in self.buildings]
+        self.input_files = [(self.locator.PV_totals, [self.panel_type])]
+        # FIXME: Remove this
+        self.buildings = []
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
@@ -57,24 +59,35 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
     @property
     def title(self):
         """Override the version in PlotBase"""
-        if set(self.buildings) != set(self.locator.get_zone_building_names()):
-            if len(self.buildings) == 1:
-                if self.normalization == "none":
-                    return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
-                else:
-                    return "%s for Building %s normalized to %s (%s)" % (
-                        self.name, self.buildings[0], self.normalization, self.timeframe)
-            else:
-                if self.normalization == "none":
-                    return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
-                else:
-                    return "%s for Selected Buildings normalized to %s (%s)" % (
-                        self.name, self.normalization, self.timeframe)
+        # if set(self.buildings) != set(self.locator.get_zone_building_names()):
+        #     if len(self.buildings) == 1:
+        #         if self.normalization == "none":
+        #             return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
+        #         else:
+        #             return "%s for Building %s normalized to %s (%s)" % (
+        #                 self.name, self.buildings[0], self.normalization, self.timeframe)
+        #     else:
+        #         if self.normalization == "none":
+        #             return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
+        #         else:
+        #             return "%s for Selected Buildings normalized to %s (%s)" % (
+        #                 self.name, self.normalization, self.timeframe)
+        # else:
+
+        if self.normalization == "none":
+            return "%s for District (%s)" % (self.name, self.timeframe)
         else:
-            if self.normalization == "none":
-                return "%s for District (%s)" % (self.name, self.timeframe)
-            else:
-                return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
+            return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
+
+    # FOR PV PANELS
+    @cea.plots.cache.cached
+    def PV_hourly_aggregated_kW(self):
+        data = pd.read_csv(self.locator.PV_totals(self.panel_type)).set_index('Date')
+        data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
+                                              self.pv_analysis_fields_area)
+        PV_hourly_aggregated_kW = self.resample_time_data(data_normalized)
+
+        return PV_hourly_aggregated_kW
 
     def calc_graph(self):
         data = self.PV_hourly_aggregated_kW()
@@ -99,7 +112,7 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    cache = cea.plots.cache.PlotCache(config.project)
+    cache = cea.plots.cache.NullPlotCache()
     PVPotentialPlot(config.project, {'buildings': None,
                                      'scenario-name': config.scenario_name,
                                      'timeframe': config.plots.timeframe,

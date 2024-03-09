@@ -1,7 +1,9 @@
-import json
+import atexit
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import warnings
 from typing import Optional, Tuple, NamedTuple
 
@@ -18,9 +20,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from pyarrow import feather
+
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry
 
+BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
 REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
 
@@ -28,6 +33,26 @@ REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
 class GridSize(NamedTuple):
     roof: int
     walls: int
+
+
+def create_temp_daysim_directory(directory):
+    daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
+
+    os.makedirs(directory, exist_ok=True)
+    temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
+
+    if sys.platform == "win32":
+        daysim_dir = os.path.join(daysim_dir, "bin64")
+
+    for file in os.listdir(daysim_dir):
+        binary_file = os.path.join(daysim_dir, file)
+        output_file = os.path.join(temp_dir.name, file)
+        if not os.path.exists(output_file):
+            shutil.copyfile(binary_file, output_file)
+
+    atexit.register(temp_dir.cleanup)
+
+    return temp_dir.name
 
 
 def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
@@ -127,6 +152,13 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
 
         return str(possible_path), str(lib_path)
 
+    # FIXME: Temp solution for Windows users with space in directory
+    if sys.platform == "win32":
+        root_path = os.path.abspath(os.sep)
+        possible_path = create_temp_daysim_directory(os.path.join(root_path, "temp"))
+
+        return str(possible_path), str(lib_path)
+
     raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
 
 
@@ -190,7 +222,7 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
             sensor_area, \
             sensor_orientation, \
             sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roof" else grid_size.walls,
+                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
                                                            srf_type,
                                                            orientation,
                                                            normal,
@@ -325,8 +357,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
 
 
 def write_sensor_results(sensor_data_path, sensor_values):
-    with open(sensor_data_path, 'w') as outfile:
-        json.dump(sensor_values.T.to_dict(orient="list"), outfile)
+    feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
 def write_aggregated_results(building_name, sensor_values, locator, date):

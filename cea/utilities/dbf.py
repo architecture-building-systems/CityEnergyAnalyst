@@ -1,24 +1,21 @@
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 """
+from typing import List
 
 import numpy as np
 import pandas as pd
 import os
 import cea.config
 
-# import PySAL without the warning
-import warnings
+import libpysal.io
 
-warnings.filterwarnings("ignore", category=UserWarning)
-import pysal.lib
-
-__author__ = "Clayton Miller"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__author__ = "Clayton Miller, Zhongming Shi"
+__copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Clayton Miller", "Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
-__maintainer__ = "Daren Thomas"
+__maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
@@ -32,7 +29,7 @@ TYPE_MAPPING = {
     np.bool_: ('L', 1, 0)}
 
 
-def dataframe_to_dbf(df, dbf_path, specs=None):
+def dataframe_to_dbf(df: pd.DataFrame, dbf_path: str, specs=None) -> str:
     """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
 
     :type df: pandas.Dataframe
@@ -53,46 +50,46 @@ def dataframe_to_dbf(df, dbf_path, specs=None):
             l = max(l, df[df.columns[i]].apply(len).max())
             specs[i] = t, l, d
 
-    dbf = pysal.lib.io.open(dbf_path, 'w', 'dbf')
+    dbf = libpysal.io.open(dbf_path, 'w', 'dbf')
     dbf.header = list(df.columns)
     dbf.field_spec = specs
-    for row in range(len(df)):
-        dbf.write(df.iloc[row])
+    for _, row in df.iterrows():
+        dbf.write(row)
     dbf.close()
     return dbf_path
 
 
-def dbf_to_dataframe(dbf_path, index=None, cols=None, include_index=False, codec=None):
-    try:
-        dbf = pysal.lib.io.open(dbf_path)
-        if cols:
-            if include_index:
-                cols.append(index)
-            vars_to_read = cols
-        else:
-            vars_to_read = dbf.header
-        data = dict([(var, dbf.by_col(var)) for var in vars_to_read])
-        if index:
-            index = dbf.by_col(index)
-            dbf.close()
-            return pd.DataFrame(data, index=index)
-        else:
-            dbf.close()
-            return pd.DataFrame(data)
-    except:
-        import geopandas
-        return geopandas.read_file(dbf_path)
+def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.DataFrame:
+    dbf = libpysal.io.open(dbf_path)
+    if cols is None:
+        cols = dbf.header
+
+    data = dbf.read()
+    df = pd.DataFrame(data, columns=dbf.header)
+    dbf.close()
+
+    out = df.loc[:, cols]
+    if index:
+        out = out.set_index(index)
+
+    return out
 
 
-def xls_to_dbf(input_file, output_path, output_file_name):
-    df = pd.read_excel(input_file)
-    output_file = os.path.join(output_path, output_file_name + ".dbf")
+def csv_xlsx_to_dbf(input_file, output_path, output_file_name):
+    if input_file.endswith('.csv'):
+        df = pd.read_csv(input_file, sep=None)
+    if input_file.endswith('.xlsx'):
+        df = pd.read_excel(input_file)
+    output_file = os.path.join(output_path, output_file_name)
     dataframe_to_dbf(df, output_file)
 
 
-def dbf_to_xls(input_file, output_path, output_file_name):
+def dbf_to_csv_xlsx(input_file, output_path, output_file_name):
     df = dbf_to_dataframe(input_file)
-    df.to_excel(os.path.join(output_path, output_file_name + ".xlsx"), index=False)
+    if output_file_name.endswith('.csv'):
+        df.to_csv(os.path.join(output_path, output_file_name), index=False)
+    if output_file_name.endswith('.xlsx'):
+        df.to_excel(os.path.join(output_path, output_file_name), index=False)
 
 
 def main(config):
@@ -102,11 +99,11 @@ def main(config):
     output_path = config.dbf_tools.output_path
 
     if input_file.endswith('.dbf'):
-        dbf_to_xls(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
-    elif input_file.endswith('.xls') or input_file.endswith('.xlsx'):
-        xls_to_dbf(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
+        dbf_to_csv_xlsx(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
+    elif input_file.endswith('.csv') or input_file.endswith('.xlsx'):
+        csv_xlsx_to_dbf(input_file=input_file, output_path=output_path, output_file_name=output_file_name)
     else:
-        print('input file type not supported')
+        raise ValueError("""Input file type is not supported. Only .dbf, .csv and .xlsx file types are supported.""")
 
 
 if __name__ == '__main__':

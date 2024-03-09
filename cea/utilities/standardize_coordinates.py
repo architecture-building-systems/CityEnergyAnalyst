@@ -15,7 +15,7 @@ __status__ = "Production"
 
 def shapefile_to_WSG_and_UTM(shapefile_path):
 
-    # read the CPG and replace whateever is there with ISO, and save
+    # read the CPG and replace whatever is there with ISO, and save
     ensure_cpg_file(shapefile_path)
 
     # get coordinate system and project to WSG 84
@@ -54,9 +54,9 @@ def get_geographic_coordinate_system():
 def get_projected_coordinate_system(lat, lon):
     easting, northing, zone_number, zone_letter = utm.from_latlon(lat, lon)
     if zone_letter in "NPQRSTUVWXX":
-        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
-    elif zone_letter in "CDEFGHJKLM":
         return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    elif zone_letter in "CDEFGHJKLM":
+        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
     else:
         Exception('The projected coordinate system is unknown, lon{}, lat{}').format(lat, lon)
 

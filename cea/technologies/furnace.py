@@ -12,7 +12,7 @@ import pandas as pd
 from scipy import interpolate
 from cea.constants import FURNACE_FUEL_COST_WET, FURNACE_FUEL_COST_DRY, FURNACE_MIN_LOAD, \
     FURNACE_MIN_ELECTRIC, BOILER_P_AUX
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

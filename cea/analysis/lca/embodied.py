@@ -18,7 +18,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro", "Maryam Meshkinkiya"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -35,7 +35,7 @@ def lca_embodied(locator, config):
     The results are provided in total as well as per square meter:
 
     - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
-    - embodied greenhouse gas emissions: GHG_sys_embodied_tonCO2 and GHG_sys_embodied_kgCO2m2
+    - embodied greenhouse gas emissions: GHG_sys_embodied_tonCO2yr and GHG_sys_embodied_kgCO2m2yr
 
     As part of the algorithm, the following files are read from InputLocator:
 
@@ -146,6 +146,7 @@ def lca_embodied(locator, config):
     fields9 = ['Name', "GHG_COLUMN_kgCO2m2", "GHG_COLUMN_STRUCTURE_RATIO"]
     fields10 = ['Name', "area_pv"]
 
+
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
                                           on='Name').merge(df4[fields4],
@@ -192,15 +193,14 @@ def lca_embodied(locator, config):
     ## total floor area
     data_merged_df['GFA_m2'] = data_merged_df['footprint'] * (data_merged_df['floors_ag'] + data_merged_df['floors_bg'])
 
-    result_emissions = calculate_contributions(data_merged_df,
-                                               config)
+    result_emissions = calculate_contributions(data_merged_df,config)
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
     # building, both total (in t CO2-eq. and GJ) and per square meter (in kg CO2-eq./m2 and MJ/m2)
     result_emissions.to_csv(locator.get_lca_embodied(),
                             index=False,
                             float_format='%.2f', na_rep='nan')
-    print('done!')
+    print('Calculation completed.')
 
 
 def calculate_contributions(df, config):
@@ -310,9 +310,22 @@ def calculate_contributions(df, config):
                         df['GHG_structure_kgCO2'] + \
                         df['GHG_excavation_fundations_kgCO2']
 
-    # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
-    df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
-    df['GHG_sys_embodied_kgCO2m2'] = df[total_column] / df['GFA_m2']
+
+    df[total_column] = ((df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) +
+                         df['GHG_win_kgCO2m2'] * df['windows_ag'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']) +
+                         df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) +
+                         df['GHG_base_kgCO2m2'] * df['floor_area_bg'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) +
+                         df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) *
+                         CONVERSION_AREA_TO_FLOOR_AREA_RATIO *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part']) +
+                         df['GHG_roof_kgCO2m2'] * df['footprint'] *
+                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']))
+                        / SERVICE_LIFE_OF_BUILDINGS
+                        ) * df['confirm']
 
     # the total and specific embodied energy/emissions are returned
     result = df[['Name',
@@ -329,6 +342,14 @@ def calculate_contributions(df, config):
                  'GHG_structure_kgCO2',
                  'GHG_excavation_fundations_kgCO2']]
 
+
+    # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
+
+    df['GHG_sys_embodied_tonCO2yr'] = df[total_column] / 1000  # kG-CO2 eq to ton
+    df['GHG_sys_embodied_kgCO2m2yr'] = df[total_column] / df['GFA_m2']
+
+    # the total and specific embodied emissions are returned
+    result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr', 'GFA_m2']]
     return result
 
 

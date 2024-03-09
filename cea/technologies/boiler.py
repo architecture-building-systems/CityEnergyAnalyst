@@ -8,6 +8,7 @@ condensing boilers
 
 from scipy.interpolate import interp1d
 from math import log, ceil
+
 import pandas as pd
 import numpy as np
 from cea.constants import BOILER_P_AUX
@@ -23,7 +24,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# operation costs
+def calc_boiler_const(Q_load_Wh, thermal_efficiency):
+    """
+    Calculate operating conditions of a boiler assuming a constant thermal efficiency.
+    """
+    Q_fuel_Wh = Q_load_Wh / thermal_efficiency
+    Q_losses_Wh = Q_fuel_Wh - Q_load_Wh
+
+    return Q_fuel_Wh, Q_losses_Wh
 
 def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
@@ -155,7 +163,7 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
         phi = float(q_load_Wh) / float(Q_nom_W)
         if phi >=1.0: # avoid rounding error
             phi = 0.98
-        T_return_C = np.float(T_return_to_boiler_K - 273.15)
+        T_return_C = float(T_return_to_boiler_K - 273.15)
         eff_score = eff_of_phi(phi) / eff_of_phi(1)
         boiler_eff = (eff_score * eff_of_T_return([T_return_C]))[0] / 100.0
     else:

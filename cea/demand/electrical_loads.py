@@ -10,6 +10,7 @@ import numpy as np
 
 from cea.constants import HOURS_IN_YEAR, MIN_HEIGHT_THAT_REQUIRES_PUMPING, P_WATER_KGPERM3, P_FAN, DELTA_P_1, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.demand import control_heating_cooling_systems
+
 from cea.utilities import physics
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
@@ -362,6 +363,7 @@ def calc_Eve(tsd):
     fan_power = P_FAN  # specific fan consumption in W/m3/h, s
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
+    tsd['m_ve_rec'] = np.nan_to_num(tsd['m_ve_rec'])    # TODO:DOCUMENTATION, in heating case, m_ve_rec is nan
     q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
                 + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
 

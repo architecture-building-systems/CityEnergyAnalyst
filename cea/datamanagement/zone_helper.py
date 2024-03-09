@@ -73,12 +73,6 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
-        selected_columns = list(set(list_of_columns).intersection(set(OSM_COLUMNS)))
-        shapefile[selected_columns] = shapefile[selected_columns] \
-            .fillna(1).apply(lambda x: pd.to_numeric(x, errors='coerce'))
-
-        # Make sure relevant OSM parameters (if available) are passed as floats, not strings
-        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
         shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
             shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
@@ -204,6 +198,46 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
 
     return cleaned_shapefile
+
+def assign_attributes_additional(shapefile):
+    """
+    This script fills the zone.shp file with additional information from OSM,
+    including house number, street name, postcode, if HDB (for Singapore), city, country
+    """
+    # TODO: include different terms used by OSM in different countries
+    #  As of 19 Sept 2023, this function works fine in Switzerland and Singapore
+
+    # local variables
+    no_buildings = shapefile.shape[0]
+    list_of_columns = shapefile.columns
+
+    # Check which attributes OSM has (sometimes it does not have any) and create the column if missing
+    if 'addr:city' not in list_of_columns:
+        shapefile['addr:city'] = [''] * no_buildings
+    if 'addr:country' not in list_of_columns:
+        shapefile['addr:country'] = [''] * no_buildings
+    if 'addr:postcode' not in list_of_columns:
+        shapefile['addr:postcode'] = [''] * no_buildings
+    if 'addr:street' not in list_of_columns:
+        shapefile['addr:street'] = [''] * no_buildings
+    if 'addr:housename' not in list_of_columns:
+        shapefile['addr:housename'] = [''] * no_buildings
+    if 'addr:housenumber' not in list_of_columns:
+        shapefile['addr:housenumber'] = [''] * no_buildings
+    if 'residential' not in list_of_columns:
+        shapefile['residential'] = [''] * no_buildings     #not HDB
+
+    # Assign the cea-formatted columns with attributes
+    shapefile['house_no'] = shapefile['addr:housenumber']
+    shapefile['street'] = shapefile['addr:street']
+    shapefile['postcode'] = shapefile['addr:postcode']
+    shapefile['house_name'] = shapefile['addr:housename']
+    shapefile['resi_type'] = shapefile['residential']
+    shapefile['city'] = shapefile['addr:city']
+    shapefile['country'] = shapefile['addr:country']
+
+    return shapefile
+
 
 
 def fix_overlapping_geoms(buildings, zone):
@@ -404,8 +438,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
             typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
     except KeyError:
-        raise KeyError('No building type could be found in the OSM-database, for the selected zone. Please assign  an occupancy '
-                       'type in the zone-helper settings.')
+        print('No building type could be found in the OSM-database for the selected zone. '
+              'Applying `MULTI_RES` as default type.')
+        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
+
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(
@@ -415,7 +451,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 def parse_year(year: Union[str, int]) -> int:
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
-    if type(year) == str:
+    if isinstance(year, str):
         # For year in "century" format e.g. `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:
@@ -478,16 +514,19 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
+    shapefile = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
-        # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-        building_parts = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0],
+        try:
+            # get all footprints in the district tagged as 'building' or 'building:part' in OSM
+            building_parts = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0],
                                                                   tags={"building": ["part"]})
-        shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
-        # using building:part tags requires fixing overlapping polygons
-        if not fix_overlapping:
-            print('Building parts included, fixing overlapping geometries activated.')
-            fix_overlapping = True
+            shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
+            # using building:part tags requires fixing overlapping polygons
+            if not fix_overlapping:
+                print('Building parts included, fixing overlapping geometries activated.')
+                fix_overlapping = True
+        except osmnx._errors.InsufficientResponseError:
+            pass
 
     # clean geometries
     shapefile = clean_geometries(shapefile)
@@ -495,6 +534,10 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     # clean attributes of height, name and number of floors
     shapefile = assign_attributes(shapefile, buildings_height, buildings_floors,
                                  buildings_height_below_ground, buildings_floors_below_ground, key="B")
+
+    # adding additional information from OSM
+    # (e.g. house number, street number, postcode, if HDB for Singapore buildings)
+    shapefile = assign_attributes_additional(shapefile)
 
     # fix geometries of buildings with overlapping polygons
     if fix_overlapping is True:
@@ -512,7 +555,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     # clean up attributes
     cleaned_shapefile = shapefile[
         ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "REFERENCE"]]
+         "REFERENCE", 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     
     # save shapefile to zone.shp
@@ -540,7 +583,6 @@ def flatten_geometries(gdf):
     :return:
     """
     from shapely.ops import unary_union
-    import string
     DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
 
     # Explode MultiPolygons and GeometryCollections

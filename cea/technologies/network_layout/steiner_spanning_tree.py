@@ -13,7 +13,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely.geometry import LineString
-from typing import List
 
 import cea.config
 import cea.inputlocator
@@ -97,7 +96,7 @@ def calc_steiner_spanning_tree(crs_projected,
         nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
         mst_nodes = gdf.from_file(path_output_nodes_shp)
         mst_edges = gdf.from_file(path_output_edges_shp)
-    except:
+    except Exception:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs. '
@@ -186,7 +185,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                         if new_mst_nodes['Type'][node_index] == 'NONE':
                             # create new edge
                             line = LineString((node_coords, new_neighbour))
-                            if not line in mst_edges['geometry']:
+                            if line not in mst_edges['geometry']:
                                 mst_edges = mst_edges.append(
                                     {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
                                      "Name": "PIPE" + str(mst_edges.Name.count())},
@@ -285,6 +284,8 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     x1 = building_coordinates[0][0]
     y1 = building_coordinates[0][1]
     delta = 10E24  # big number
+    node_id = None
+
     for node in copy_of_new_mst_nodes.iterrows():
         if node[1]['Type'] == 'NONE':
             x2 = node[1].geometry.coords[0][0]
@@ -293,19 +294,22 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
             if 0 < distance < delta:
                 delta = distance
                 node_id = node[1].Name
-    pd.options.mode.chained_assignment = None  # avoid warning
+
+    if node_id is None:
+        raise ValueError("Could not find closest node.")
+
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
-    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
-    selected_node.loc[:, "Name"] = "NODE" + str(new_mst_nodes.Name.count())
-    selected_node.loc[:, "Type"] = "PLANT"
+    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id].iloc[[0]]
+    selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
+    selected_node["Type"] = "PLANT"
     new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
     new_mst_nodes.reset_index(inplace=True, drop=True)
 
     # create new edge
-    point1 = (selected_node.geometry.x, selected_node.geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
-              new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
+    point1 = (selected_node.iloc[0].geometry.x, selected_node.iloc[0].geometry.y)
+    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.x,
+              new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
     mst_edges = pd.concat([mst_edges,
                            pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,

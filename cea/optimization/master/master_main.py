@@ -9,7 +9,8 @@ from math import sqrt
 import numpy as np
 import pandas as pd
 from deap import algorithms
-from deap import tools, creator, base
+from deap import tools, base
+
 
 import cea.config
 from cea.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, DH_ACRONYM, \
@@ -21,6 +22,7 @@ from cea.optimization.master.generation import generate_main
 from cea.optimization.master.generation import individual_to_barcode
 from cea.optimization.master.mutations import mutation_main
 from cea.optimization.master.normalization import scaler_for_normalization, normalize_fitnesses
+from cea.optimization.master.optimisation_individual import Individual, FitnessMin
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +48,7 @@ def create_individual_class(ceaConfig):
 
 #need to keep it here otherwise it breaks on a MAc. one needs to declare creator.create variables global at the beginning of the script
 create_individual_class(cea.config.Configuration())
+
 
 def objective_function(individual,
                        individual_number,
@@ -248,7 +251,9 @@ def non_dominated_sorting_genetic_algorithm(locator,
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Adapt the conversion classes to the current config (for cases where dashboard is used)
-    NOBJ, objective_function_selection = create_individual_class(config)
+    FitnessMin.set_objective_function_selection(config)
+    NOBJ = FitnessMin.nbr_of_objectives
+    objective_function_selection = FitnessMin.objective_function_selection
     # Hyperparameters
     P = 12
     ref_points = tools.uniform_reference_points(NOBJ, P)
@@ -295,7 +300,7 @@ def non_dominated_sorting_genetic_algorithm(locator,
                      )
     toolbox.register("individual",
                      tools.initIterate,
-                     creator.Individual,
+                     Individual,
                      toolbox.generate)
     toolbox.register("population",
                      tools.initRepeat,

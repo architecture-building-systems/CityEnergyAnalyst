@@ -9,6 +9,7 @@ import pandas as pd
 
 from cea.optimization import slave_data
 from cea.constants import DH_CONVERSION_TECHNOLOGIES_SHARE, DC_CONVERSION_TECHNOLOGIES_SHARE, Q_MARGIN_FOR_NETWORK
+
 from cea.optimization.master import summarize_network
 from cea.technologies import substation
 

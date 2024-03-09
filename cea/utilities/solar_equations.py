@@ -10,10 +10,11 @@ import pandas as pd
 import ephem
 import datetime
 import collections
-from math import *
+from math import radians, degrees, asin, sin, acos, cos, tan, atan, pi
+
+from pyarrow import feather
 from timezonefinder import TimezoneFinder
 import pytz
-from cea.constants import HOURS_IN_YEAR
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -205,7 +206,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(radiation_json_path, metadata_csv_path, config):
+def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
@@ -213,10 +214,10 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
     #. eliminate points when hourly production < 50 W/m2
     #. augment the solar radiation due to differences between panel reflectance and original reflectances used in daysim
 
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
+    :param radiation_sensor_path: solar insulation data on all surfaces of each building
+    :type radiation_csv: str
     :param metadata_csv: solar insulation sensor data of each building
-    :type metadata_csv: .csv
+    :type metadata_csv: str
     :return max_annual_radiation: yearly horizontal radiation [Wh/m2/year]
     :rtype max_annual_radiation: float
     :return annual_radiation_threshold: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
@@ -241,7 +242,7 @@ def filter_low_potential(radiation_json_path, metadata_csv_path, config):
             return x
 
     # read radiation file
-    sensors_rad = pd.read_json(radiation_json_path)
+    sensors_rad = feather.read_feather(radiation_sensor_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata

@@ -8,6 +8,7 @@ import pandas as pd
 from math import ceil, log
 from cea.constants import CT_MIN_PARTLOAD_RATIO
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
@@ -17,7 +18,27 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 # technical model
+def calc_CT_const(q_hot_Wh, eff_rating):
+    """
+    Calculate the cooling tower's operational behaviour assuming a constant efficiency rating. i.e. return electrical
+    power demand for fans, pumping and water treatment given a certain heat rejection load.
+
+    :param q_hot_Wh: heat rejection load on the cooling tower
+    :type q_hot_Wh: int, float, list or pd.Series
+    :param eff_rating: average efficiency rating of the cooling tower
+    :type eff_rating: float
+
+    :return p_el_vent: power demand of the cooling tower (ventilation, pumping, water treatment) in Watt-hours
+    :rtype p_el_vent: float, list or pd.Series
+    :return q_anth_Wh: anthropogenic heat emissions from cooling tower in Watt-hours
+    :rtype p_el_vent: float, list or pd.Series
+    """
+    p_el_vent = q_hot_Wh * eff_rating
+    q_anth_Wh = q_hot_Wh + p_el_vent
+    return p_el_vent, q_anth_Wh
+
 
 def calc_CT(q_hot_Wh, Q_nom_W):
     """

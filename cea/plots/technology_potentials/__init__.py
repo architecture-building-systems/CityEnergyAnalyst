@@ -8,6 +8,7 @@ import os
 import pandas as pd
 
 import cea.inputlocator
+from cea.plots.base import PlotBase
 from cea.utilities import epwreader
 
 """
@@ -28,7 +29,7 @@ __status__ = "Production"
 label = 'Technology potentials'
 
 
-class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
+class SolarTechnologyPotentialsPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "technology-potentials"
 
@@ -106,29 +107,11 @@ class SolarTechnologyPotentialsPlotBase(cea.plots.PlotBase):
                     data_processed[energy] = data_processed[energy] / data_processed[area]
         return data_processed
 
-    # FOR PV PANELS
-    def PV_hourly_aggregated_kW(self):
-        data = self._calculate_PV_hourly_aggregated_kW()
-        data_normalized = self.normalize_data(data, self.buildings, self.pv_analysis_fields,
-                                              self.pv_analysis_fields_area)
-        PV_hourly_aggregated_kW = self.resample_time_data(data_normalized)
-
-        return PV_hourly_aggregated_kW
-
     def add_pv_fields(self, df1, df2):
         """Add the demand analysis fields together - use this in reduce to sum up the summable parts of the dfs"""
         fields = self.pv_analysis_fields + self.pv_analysis_fields_area
         df1[fields] = df2[fields] + df1[fields]
         return df1
-
-    @cea.plots.cache.cached
-    def _calculate_PV_hourly_aggregated_kW(self):
-        # get extra data of weather and date
-        pv_hourly_aggregated_kW = functools.reduce(self.add_pv_fields, (pd.read_csv(self.locator.PV_results(building))
-                                                                        for building in self.buildings)).set_index(
-            'Date')
-
-        return pv_hourly_aggregated_kW
 
     # FOR SOLAR COLLECTORS
     def SC_ET_hourly_aggregated_kW(self):

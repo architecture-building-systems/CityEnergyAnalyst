@@ -1,0 +1,37 @@
+# skip CEA data management, from radiation optimization of energy supply system, using the new optimization script.
+
+- script: radiation
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DH
+- script: thermal-network
+  parameters:
+    network-type: DH
+- script: decentralized
+- script: optimization-new
+  parameters:
+    network-type: DH
+    number-of-generations: 100
+    population-size: 100
+    random-seed: 100
+    objective-functions: [system_energy_demand, GHG_emissions, cost]

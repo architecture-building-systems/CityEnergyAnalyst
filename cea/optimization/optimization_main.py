@@ -17,7 +17,6 @@ from cea.constants import DH_ACRONYM, DC_ACRONYM
 
 warnings.filterwarnings("ignore")
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca", "Sreepathi Bhargava Krishna"]

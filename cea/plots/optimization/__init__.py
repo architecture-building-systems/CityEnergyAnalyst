@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.plots.cache
 from cea.analysis.multicriteria.main import multi_criteria_main
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.OptimizationOverviewPlotBase` as a base class for all plots in the category "optimization-overview" and also
@@ -28,7 +29,7 @@ __status__ = "Production"
 label = 'Optimization'
 
 
-class GenerationPlotBase(cea.plots.PlotBase):
+class GenerationPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "optimization"
 
@@ -70,7 +71,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
     @cea.plots.cache.cached
     def process_generation_total_performance_pareto(self):
         data_processed = pd.read_csv(self.locator.get_optimization_generation_total_performance_pareto(self.generation))
-        data_processed['GHG_sys_embodied_tonCO2'] = pd.read_csv(self.locator.get_lca_embodied())['GHG_sys_embodied_tonCO2'].sum()
+        data_processed['GHG_sys_embodied_tonCO2yr'] = pd.read_csv(self.locator.get_lca_embodied())['GHG_sys_embodied_tonCO2yr'].sum()
         return data_processed
 
     def normalize_data(self, data_processed, normalization, analysis_fields):
@@ -81,7 +82,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
             data_processed['GHG_sys_district_scale_tonCO2'] = data_processed['GHG_sys_district_scale_tonCO2'] * 1000  # convert to kg
             data_processed['GHG_sys_building_scale_tonCO2'] = data_processed['GHG_sys_building_scale_tonCO2'] * 1000  # convert to kg
-            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2yr'] = data_processed['GHG_sys_embodied_tonCO2yr'] * 1000  # convert to kg
         elif normalization == "net floor area":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['Aocc_m2'])
@@ -89,7 +90,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
             data_processed['GHG_sys_district_scale_tonCO2'] = data_processed['GHG_sys_district_scale_tonCO2'] * 1000  # convert to kg
             data_processed['GHG_sys_building_scale_tonCO2'] = data_processed['GHG_sys_building_scale_tonCO2'] * 1000  # convert to kg
-            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2yr'] = data_processed['GHG_sys_embodied_tonCO2yr'] * 1000  # convert to kg
         elif normalization == "air conditioned floor area":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['Af_m2'])
@@ -97,7 +98,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
             data_processed['GHG_sys_district_scale_tonCO2'] = data_processed['GHG_sys_district_scale_tonCO2'] * 1000  # convert to kg
             data_processed['GHG_sys_building_scale_tonCO2'] = data_processed['GHG_sys_building_scale_tonCO2'] * 1000  # convert to kg
-            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2yr'] = data_processed['GHG_sys_embodied_tonCO2yr'] * 1000  # convert to kg
         elif normalization == "building occupancy":
             data = pd.read_csv(self.locator.get_total_demand())
             normalizatioon_factor = sum(data['people0'])
@@ -105,7 +106,7 @@ class GenerationPlotBase(cea.plots.PlotBase):
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
             data_processed['GHG_sys_district_scale_tonCO2'] = data_processed['GHG_sys_district_scale_tonCO2'] * 1000  # convert to kg
             data_processed['GHG_sys_building_scale_tonCO2'] = data_processed['GHG_sys_building_scale_tonCO2'] * 1000  # convert to kg
-            data_processed['GHG_sys_embodied_tonCO2'] = data_processed['GHG_sys_embodied_tonCO2'] * 1000  # convert to kg
+            data_processed['GHG_sys_embodied_tonCO2yr'] = data_processed['GHG_sys_embodied_tonCO2yr'] * 1000  # convert to kg
 
         return data_processed
 

@@ -8,7 +8,7 @@ import numpy as np
 
 from cea.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
-    DECENTRALIZED_AUX_PERCENTAGE, COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYPE_LIMIT_HIGH, ASHRAE_CAPACITY_LIMIT
+    DECENTRALIZED_AUX_PERCENTAGE
 
 from cea.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
@@ -24,6 +24,27 @@ __status__ = "Production"
 
 
 # technical model
+def calc_VCC_const(q_chw_load_Wh, COP):
+    """
+    Calculate vapor compression chiller operation for a fixed COP. Return required power supply and thermal energy
+    output to cold water loop for a given chilled water cooling load.
+
+    :param q_chw_load_Wh: Chilled water cooling load in Watt-hours (single value or time series).
+    :type q_chw_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the vapor compression chiller
+    :type COP: int, float
+
+    :return p_supply_Wh: Electrical power supply required to provide the given cooling load (single value or time series)
+    :rtype p_supply_Wh: int, float, list or pd.Series
+    :return q_cw_out_Wh: Thermal energy output to cold water loop, i.e. waste heat (single value or time series)
+    :rtype q_cw_out_Wh: int, float, list or pd.Series
+    """
+    p_supply_Wh = q_chw_load_Wh / COP
+    q_cw_out_Wh = p_supply_Wh + q_chw_load_Wh
+
+    return p_supply_Wh, q_cw_out_Wh
+
+
 def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
     For the operation of a vapor compression chiller between a district cooling network and a condenser with fresh water
@@ -170,7 +191,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
     :param centralized:
     :return:
     """
-    if centralized == True:
+    if centralized is True:
         g_value = G_VALUE_CENTRALIZED
     else:
         g_value = G_VALUE_DECENTRALIZED
@@ -184,7 +205,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
             T_evap_K = min(T_evap_K, T_EVAP_SCU)
         else:
             print('Undefined cooling load_type for chiller COP calculation.')
-    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+    if centralized is True:  # Todo: improve this to a better approximation than a static value DT_Network
         # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
     # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
@@ -192,7 +213,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
     # calculate chiller COP
     cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
     # calculate system COP with pumping power of auxiliaries
-    if centralized == True:
+    if centralized is True:
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
     else:
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
@@ -220,7 +241,6 @@ class VaporCompressionChiller(object):
             technology_type = VCC_CODE_DECENTRALIZED
         else:
             raise ValueError('scale must be of type "DISTRICT" or "BUILDING"')
-
         VCC_database = VCC_database[VCC_database['code'] == technology_type]
         self.max_VCC_capacity = int(VCC_database['cap_max'])
         self.min_VCC_capacity = int(VCC_database['cap_min'])

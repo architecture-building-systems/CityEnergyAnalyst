@@ -6,9 +6,9 @@ import cea.inputlocator
 import pandas as pd
 import numpy as np
 from math import log, ceil
-import sympy
+# import sympy
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -21,6 +21,31 @@ __status__ = "Production"
 
 
 # technical model
+def calc_ACH_const(q_chw_load_Wh, COP, p_aux_share):
+    """
+    Calculate absorption chiller operation for a fixed COP. Return required heat and auxiliary power (i.e. pumping power)
+    supply and thermal energy (i.e. waste heat) output to cold water loop for a given chilled water cooling load.
+
+    :param q_chw_load_Wh: Chilled water cooling load in Watt-hours (single value or time series).
+    :type q_chw_load_Wh: int, float, list or pd.Series
+    :param COP: Characteristic coefficient of performance of the absorption chiller
+    :type COP: int, float
+    :param p_aux_share: Characteristic share electrical power required for pumping (expressed as share of cooling)
+    :type p_aux_share: float
+
+    :return q_supply_Wh: Heat supply (hot water or steam) required to provide the given cooling load (single value or
+                         time series)
+    :rtype q_supply_Wh: int, float, list or pd.Series
+    :return p_aux_supply_Wh: Electrical power required for pumping of fluids
+    :rtype p_aux_supply_Wh: float, list or pd.Series
+    :return q_cw_out_Wh: Thermal energy output to cold water loop, i.e. waste heat (single value or time series)
+    :rtype q_cw_out_Wh: int, float, list or pd.Series
+    """
+    q_supply_Wh = q_chw_load_Wh / COP
+    p_aux_supply_Wh = q_chw_load_Wh * p_aux_share
+    q_cw_out_Wh = q_supply_Wh + p_aux_supply_Wh + q_chw_load_Wh
+    return q_supply_Wh, p_aux_supply_Wh, q_cw_out_Wh
+
 
 def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, absorption_chiller):
     """

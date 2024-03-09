@@ -14,9 +14,7 @@ import datetime
 import cea.config
 import cea.scripts
 import cea
-from typing import List
 
-from cea.plugin import CeaPlugin
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -87,7 +85,7 @@ def print_help(config, remaining_args):
         script_name = remaining_args[0]
         try:
             cea_script = cea.scripts.by_name(script_name, config.plugins)
-        except:
+        except Exception:
             print("Invalid value for SCRIPT.")
             print_valid_script_names(config.plugins)
             return

@@ -3,13 +3,10 @@ Photovoltaic thermal panels
 """
 
 
-
-
-
 import os
 import time
 from itertools import repeat
-from math import *
+from math import radians, log
 
 import geopandas as gpd
 import numpy as np
@@ -30,7 +27,7 @@ from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -68,7 +65,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     """
     t0 = time.perf_counter()
 
-    radiation_json_path = locator.get_radiation_building_sensors(building_name)
+    radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
 
     # solar properties
@@ -82,7 +79,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_json_path, metadata_csv_path, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
 
     print('filtering low potential sensor points done for building %s' % building_name)
 
@@ -414,15 +411,15 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for time in range(HOURS_IN_YEAR):
+        for t in range(HOURS_IN_YEAR):
             # c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
-            c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time)
-            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], time,
+            c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, t)
+            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], t,
                                          Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
 
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
-            Tamb_C = Tamb_vector_C[time]
-            q_rad_Wperm2 = q_rad_vector[time]
+            Tamb_C = Tamb_vector_C[t]
+            q_rad_Wperm2 = q_rad_vector[t]
             Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C,
                                  aperture_area_m2, c1_pvt, q_rad_Wperm2)
 
@@ -447,10 +444,10 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out[flow][time] = Tout_Seg_C
-            temperature_in[flow][time] = Tin_C
-            supply_out_kW[flow][time] = q_out_kW
-            temperature_mean[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
+            temperature_out[flow][t] = Tout_Seg_C
+            temperature_in[flow][t] = Tin_C
+            supply_out_kW[flow][t] = q_out_kW
+            temperature_mean[flow][t] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
 
             q_gain_Wperm2 = 0
             TavgB = 0
@@ -715,7 +712,7 @@ def main(config):
     # aggregate results from all buildings
     aggregated_annual_results = {}
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.PVT_results(building))
+        hourly_results_per_building = pd.read_csv(locator.PVT_results(building)).set_index("Date")
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
             temperature_sup = []
@@ -737,7 +734,6 @@ def main(config):
     aggregated_hourly_results_df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
     aggregated_hourly_results_df = aggregated_hourly_results_df[aggregated_hourly_results_df.columns.drop(
         aggregated_hourly_results_df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    aggregated_hourly_results_df = aggregated_hourly_results_df.set_index('Date')
     aggregated_hourly_results_df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T

@@ -365,7 +365,8 @@ class RadSurface(object):
     __slots__ = ['name', 'points', 'material']
 
     def __init__(self, name, occ_face, material):
-        self.name = name
+        # Make sure there are no spaces in the name, which could affect Daysim parsing the radiance geometry file
+        self.name = name.replace(" ", "_")
         self.points = points_frm_occface(occ_face)
         self.material = material
 

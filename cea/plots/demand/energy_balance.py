@@ -5,7 +5,7 @@
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import LOGO, COLOR
 import cea.plots.demand
 import pandas as pd
 import numpy as np
@@ -204,7 +204,7 @@ def calc_monthly_energy_balance(data_frame, normalize_value):
 
     # convert to monthly
     data_frame.index = pd.to_datetime(data_frame.index)
-    data_frame_month = data_frame.resample("M").sum()  # still kWh
+    data_frame_month = data_frame.resample("M").sum(numeric_only=True)  # still kWh
     data_frame_month["month"] = data_frame_month.index.strftime("%B")
     data_frame_month.set_index("month", inplace=True)
 
