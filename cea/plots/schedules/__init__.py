@@ -6,6 +6,7 @@ import functools
 import os
 
 import pandas as pd
+from cea.plots.base import PlotBase
 
 import cea.inputlocator
 
@@ -26,7 +27,7 @@ __status__ = "Production"
 # identifies this package as a plots category and sets the label name for the category
 label = 'Schedules'
 
-class SchedulesPlotBase(cea.plots.PlotBase):
+class SchedulesPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "schedules"
 
