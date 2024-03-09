@@ -8,7 +8,7 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
-from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
+from cea.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

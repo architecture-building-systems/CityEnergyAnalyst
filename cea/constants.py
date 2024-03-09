@@ -518,6 +518,11 @@ BOILER_P_AUX = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy
 BOILER_MIN = 0.05  # minimum Part Load of Boiler
 BOILER_EQU_RATIO = 0.2  # 20% own capital required (equity ratio)
 BOILER_ETA_HP = 0.9
+BOILER_ETA_HP = 0.9
 
 #natural gas connection
 GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW
+
+# Thermal Network
+TYPE_MAT_DEFAULT = 'T1'  # Pipe material default
+PIPE_DIAMETER_DEFAULT = 150
