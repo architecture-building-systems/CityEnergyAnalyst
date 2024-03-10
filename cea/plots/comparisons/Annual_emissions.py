@@ -25,7 +25,7 @@ class ComparisonsAnnualEmissionsPlot(cea.plots.comparisons.ComparisonsPlotBase):
         super(ComparisonsAnnualEmissionsPlot, self).__init__(project, parameters, cache)
         self.analysis_fields = ["GHG_sys_district_scale_tonCO2",
                                 "GHG_sys_building_scale_tonCO2",
-                                "GHG_sys_embodied_tonCO2yr",
+                                "GHG_sys_embodied_tonCO2",
                                 ]
         self.normalization = self.parameters['normalization']
         self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else

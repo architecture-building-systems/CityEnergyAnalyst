@@ -25,6 +25,7 @@ def costs_main(locator, config):
     capital = config.costs.capital
     operational = config.costs.operational
 
+    field_to_hold=["Name", "TAC, opex", "capex"]
     # get demand
     demand = pd.read_csv(locator.get_total_demand())
 
@@ -34,26 +35,35 @@ def costs_main(locator, config):
     # COSTS DUE TO HEATING SERIVICES (EXCEPT HOTWATER)
     heating_final_services = ['OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'GRID_hs', 'DH_hs']
     costs_heating_services_dict = calc_costs_per_energy_service(heating_db, heating_final_services)
+    costs_heating_services_dict = costs_heating_services_dict[[field for field in costs_heating_services_dict.columns if any(item in field for item in field_to_hold)]]
 
     # COSTS DUE TO HOT WATER SERVICES
     hot_water_final_services = ['OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'GRID_ww', 'DH_ww']
     costs_hot_water_services_dict = calc_costs_per_energy_service(hot_water_db, hot_water_final_services)
+    costs_hot_water_services_dict = costs_hot_water_services_dict[
+        [field for field in costs_hot_water_services_dict.columns if any(item in field for item in field_to_hold)]]
 
     # COSTS DUE TO COOLING SERVICES
     cooling_final_services = ['GRID_cs', 'GRID_cdata', 'GRID_cre', 'DC_cs']
     costs_cooling_services_dict = calc_costs_per_energy_service(cooling_db, cooling_final_services)
+    costs_cooling_services_dict = costs_cooling_services_dict[
+        [field for field in costs_cooling_services_dict.columns if any(item in field for item in field_to_hold)]]
 
     # COSTS DUE TO ELECTRICITY SERVICES
     electricity_final_services = ['GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve']
     costs_electricity_services_dict = calc_costs_per_energy_service(electricity1_db, electricity_final_services)
+    costs_electricity_services_dict = costs_electricity_services_dict[
+        [field for field in costs_electricity_services_dict.columns if any(item in field for item in field_to_hold)]]
 
     # COSTS DUE TO ELECTRICITY2 SERVICES
     costs_pv_services2_dict = calc_costs_per_energy_service_pv(electricity2_db)
+    costs_pv_services2_dict = costs_pv_services2_dict[[field for field in costs_pv_services2_dict.columns if any(item in field for item in field_to_hold)]]
 
     # COMBINE INTO ONE DICT
-    result = dict(itertools.chain(costs_heating_services_dict.items(), costs_hot_water_services_dict.items(),
-                                  costs_cooling_services_dict.items(), costs_electricity_services_dict.items(),
-                                  costs_pv_services2_dict.items()))
+    result = costs_heating_services_dict.merge(costs_hot_water_services_dict, on="Name"
+                                               ).merge(costs_cooling_services_dict, on="Name"
+                                                       ).merge(costs_electricity_services_dict, on="Name"
+                                                               ).merge(costs_pv_services2_dict, on="Name")
 
     # sum up for all fields
     # create a dict to map from the convention of fields to the final variables
@@ -89,47 +99,44 @@ def costs_main(locator, config):
         result[value] = np.zeros(n_buildings)
 
     # loop inside the results and sum the results
-    for field in result.keys():
-        for key, value in mapping_dict.items():
-            if key in field:
-                result[value] += result[field]
-
-    # add name and create dataframe
-    result.update({'Name': demand.Name.values})
-    result_out = pd.DataFrame(result)
+    for field in result.columns:
+        if field != "Name":
+            for key, value in mapping_dict.items():
+                if key in field:
+                    result[value] += result[field]
 
     # save dataframe
-    result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
+    result.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
 
 def calc_costs_per_energy_service_pv(database):
-    result = {}
+    result = database.copy()
     # TOTALS
     service = "PV"
-    result["PV" + '_capex_total_USD'] = (database[service + '0_kW'].values *
-                                           database['CAPEX_USD2015kW'].values)
+    result["PV" + '_capex_total_USD'] = (result[service + '0_kW'] *
+                                           result['CAPEX_USD2015kW'])
 
-    result[service + '_opex_var_USD'] = database["PV_export" + '_MWhyr'].values * -database['Opex_var_sell_USD2015kWh'].values * 1000
+    result[service + '_opex_var_USD'] = result["PV_export" + '_MWhyr'] * -result['Opex_var_sell_USD2015kWh'] * 1000
 
-    result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
+    result[service + '_opex_fixed_USD'] = result[service + '_capex_total_USD'] * result['O&M_%'] / 100
 
     result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
 
     # ANNUALIZED
-    result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'],
-                                                                           database['IR_%'],
-                                                                           database['LT_yr'])
+    result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'].values,
+                                                                           result['IR_%'].values,
+                                                                           result['LT_yr'].values)
 
-    result[service + '_opex_a_fixed_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_fixed_USD'],
-                                                                               database['IR_%'],
-                                                                               database['LT_yr'])
+    result[service + '_opex_a_fixed_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_fixed_USD'].values,
+                                                                               result['IR_%'].values,
+                                                                               result['LT_yr'].values)
 
-    result[service + '_opex_a_var_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_var_USD'],
-                                                                             database['IR_%'],
-                                                                             database['LT_yr'])
+    result[service + '_opex_a_var_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_var_USD'].values,
+                                                                             result['IR_%'].values,
+                                                                             result['LT_yr'].values)
 
-    result[service + '_opex_a_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_USD'],
-                                                                         database['IR_%'],
-                                                                         database['LT_yr'])
+    result[service + '_opex_a_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_USD'].values,
+                                                                         result['IR_%'].values,
+                                                                         result['LT_yr'].values)
 
     result[service + '_TAC_USD'] = result[service + '_opex_a_USD'] + result[service + '_capex_a_USD']
 
@@ -140,42 +147,38 @@ def calc_costs_per_energy_service_pv(database):
         field_city_scale = field.split("_USD")[0] + "_city_scale_USD"
         result[service + field_district], \
         result[service + field_building_scale], \
-        result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field],
-                                                                                    database['scale'])
+        result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field].values,
+                                                                                    result['scale'].values)
     return result
 
 def calc_costs_per_energy_service(database, services):
-    result = {}
+    result = database.copy()
     for service in services:
         # TOTALS
-        result[service + '_capex_total_USD'] = (database[service + '0_kW'].values *
-                                                database['efficiency'].values *  # because it is based on the end use
-                                                database['CAPEX_USD2015kW'].values)
-        result[service + '_opex_var_USD'] = database[service + '_MWhyr'].values * database[
-            'Opex_var_buy_USD2015kWh'].values * 1000
-
-        result[service + '_opex_fixed_USD'] = (result[service + '_capex_total_USD'] * database['O&M_%'].values / 100)
-
-
+        result[service + '_capex_total_USD'] = (result[service + '0_kW'] *
+                                                result['efficiency'] *  # because it is based on the end use
+                                                result['CAPEX_USD2015kW'])
+        result[service + '_opex_var_USD'] = result[service + '_MWhyr'] * result['Opex_var_buy_USD2015kWh'] * 1000
+        result[service + '_opex_fixed_USD'] = result[service + '_capex_total_USD'] * result['O&M_%'] / 100
 
         result[service + '_opex_USD'] = result[service + '_opex_fixed_USD'] + result[service + '_opex_var_USD']
 
         # ANNUALIZED
-        result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'],
-                                                                               database['IR_%'],
-                                                                               database['LT_yr'])
+        result[service + '_capex_a_USD'] = np.vectorize(calc_capex_annualized)(result[service + '_capex_total_USD'].values,
+                                                                               result['IR_%'].values,
+                                                                               result['LT_yr'].values)
 
         result[service + '_opex_a_fixed_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_fixed_USD'],
-                                                                                   database['IR_%'],
-                                                                                   database['LT_yr'])
+                                                                                   result['IR_%'].values,
+                                                                                   result['LT_yr'].values)
 
         result[service + '_opex_a_var_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_var_USD'],
-                                                                                 database['IR_%'],
-                                                                                 database['LT_yr'])
+                                                                                 result['IR_%'].values,
+                                                                                 result['LT_yr'].values)
 
         result[service + '_opex_a_USD'] = np.vectorize(calc_opex_annualized)(result[service + '_opex_USD'],
-                                                                             database['IR_%'],
-                                                                             database['LT_yr'])
+                                                                             result['IR_%'].values,
+                                                                             result['LT_yr'].values)
 
         result[service + '_TAC_USD'] = result[service + '_opex_a_USD'] + result[service + '_capex_a_USD']
 
@@ -186,8 +189,8 @@ def calc_costs_per_energy_service(database, services):
             field_city_scale = field.split("_USD")[0] + "_city_scale_USD"
             result[service + field_district], \
             result[service + field_building_scale], \
-            result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field],
-                                                                                database['scale'])
+            result[service + field_city_scale] = np.vectorize(calc_scale_costs)(result[service + field].values,
+                                                                                result['scale'].values)
     return result
 
 

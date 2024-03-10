@@ -455,9 +455,9 @@ Emissions and Primary Energy,GHG_sys_district_scale_tonCO2,ton CO2-eq/yr,Annual 
 Emissions and Primary Energy,PEN_sys_building_scale_MJoil,MJ oil-eq/yr,Annual primary energy of building-scale systems operation,red_light
 Emissions and Primary Energy,PEN_sys_district_scale_MJoil,MJ oil-eq/yr,Annual primary energy of district-scale system operation,red
 
-Emissions and Primary Energy,GHG_sys_embodied_tonCO2yr,ton CO2-eq/yr,Annual building Embodied Emissions,grey_light
+Emissions and Primary Energy,GHG_sys_embodied_tonCO2,ton CO2-eq/yr,Annual building Embodied Emissions,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
-Emissions and Primary Energy,GHG_sys_embodied_kgCO2m2yr,kg CO2-eq/m2.yr,Annual building Embodied Emissions,black
+Emissions and Primary Energy,GHG_sys_embodied_kgCO2m2,kg CO2-eq/m2.yr,Annual building Embodied Emissions,black
 Emissions and Primary Energy,GHG_sys_kgCO2m2,kg CO2-eq/m2.yr,Energy system operation,grey
 
 Thermal Network,P_loss_%,-,Pumping energy,grey

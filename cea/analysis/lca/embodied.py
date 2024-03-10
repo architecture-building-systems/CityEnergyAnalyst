@@ -35,7 +35,7 @@ def lca_embodied(locator, config):
     The results are provided in total as well as per square meter:
 
     - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
-    - embodied greenhouse gas emissions: GHG_sys_embodied_tonCO2yr and GHG_sys_embodied_kgCO2m2yr
+    - embodied greenhouse gas emissions: GHG_sys_embodied_tonCO2 and GHG_sys_embodied_kgCO2m2
 
     As part of the algorithm, the following files are read from InputLocator:
 
