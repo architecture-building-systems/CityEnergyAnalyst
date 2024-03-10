@@ -44,3 +44,4 @@ dependencies:
   - staticmap
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
+  - conda-lock # to lock the environment, very handy for macOs installation
