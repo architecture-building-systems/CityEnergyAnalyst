@@ -310,22 +310,9 @@ def calculate_contributions(df, config):
                         df['GHG_structure_kgCO2'] + \
                         df['GHG_excavation_fundations_kgCO2']
 
-
-    df[total_column] = ((df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) +
-                         df['GHG_win_kgCO2m2'] * df['windows_ag'] *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']) +
-                         df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) +
-                         df['GHG_base_kgCO2m2'] * df['floor_area_bg'] *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) +
-                         df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) *
-                         CONVERSION_AREA_TO_FLOOR_AREA_RATIO *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part']) +
-                         df['GHG_roof_kgCO2m2'] * df['footprint'] *
-                         np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']))
-                        / SERVICE_LIFE_OF_BUILDINGS
-                        ) * df['confirm']
+    # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
+    df['GHG_sys_embodied_tonCO2'] = df[total_column] / 1000  # kG-CO2 eq to ton
+    df['GHG_sys_embodied_kgCO2m2'] = df[total_column] / df['GFA_m2']
 
     # the total and specific embodied energy/emissions are returned
     result = df[['Name',
@@ -342,14 +329,6 @@ def calculate_contributions(df, config):
                  'GHG_structure_kgCO2',
                  'GHG_excavation_fundations_kgCO2']]
 
-
-    # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
-
-    df['GHG_sys_embodied_tonCO2yr'] = df[total_column] / 1000  # kG-CO2 eq to ton
-    df['GHG_sys_embodied_kgCO2m2yr'] = df[total_column] / df['GFA_m2']
-
-    # the total and specific embodied emissions are returned
-    result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr', 'GFA_m2']]
     return result
 
 

@@ -43,7 +43,7 @@ class WaterUsePlot(cea.plots.schedules.SchedulesPlotBase):
 
     @property
     def layout(self):
-        return go.Layout(barmode='relative', yaxis=dict(title=self.calc_titles()))
+        return go.Layout(barmode='group', yaxis=dict(title=self.calc_titles()))
 
     @property
     def title(self):
