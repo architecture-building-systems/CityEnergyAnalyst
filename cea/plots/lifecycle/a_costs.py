@@ -57,10 +57,10 @@ class AnnualCostsPlot(cea.plots.lifecycle.LifecyclePlotBase):
         """Override the version in PlotBase"""
         if set(self.buildings) != set(self.locator.get_zone_building_names()):
             if len(self.buildings) == 1:
-                return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
+                return "%s for Building %s " % (self.name, self.buildings[0])
             else:
-                return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
-        return "%s for District (%s)" % (self.name, self.timeframe)
+                return "%s for Selected Buildings" % (self.name)
+        return "%s for District" % (self.name)
 
     @property
     def layout(self):

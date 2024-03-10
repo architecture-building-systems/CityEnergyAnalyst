@@ -25,7 +25,7 @@ def costs_main(locator, config):
     capital = config.costs.capital
     operational = config.costs.operational
 
-    field_to_hold=["Name", "TAC, opex", "capex"]
+    field_to_hold=["Name", "TAC", "opex", "capex"]
     # get demand
     demand = pd.read_csv(locator.get_total_demand())
 

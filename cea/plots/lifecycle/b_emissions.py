@@ -3,12 +3,13 @@
 
 
 import plotly.graph_objs as go
+import pandas as pd
 
-import cea.plots.schedules
-from cea.plots.variable_naming import COLOR, NAMING
+from cea.plots.variable_naming import NAMING, COLOR
+import cea.plots.lifecycle
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__author__ = "Jimeno Fonseca"
+__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -17,95 +18,89 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class WaterUsePlot(cea.plots.schedules.SchedulesPlotBase):
-    """implements the solar-radiation-curve plot"""
-    name = "Emissions"
+class AnnualEmissionsPlot(cea.plots.lifecycle.LifecyclePlotBase):
+    """Implement the "CAPEX vs. OPEX of a building system"""
+    name = "Annualized Emissions"
+    expected_parameters = {
+        'buildings': 'plots:buildings',
+        'scenario-name': 'general:scenario-name',
+        'normalization': 'plots-schedules:normalization',
+    }
 
     def __init__(self, project, parameters, cache):
-        """Override the version in OccupancyPlotBase"""
-        super(WaterUsePlot, self).__init__(project, parameters, cache)
-        self.schedule_analysis_fields = ['Vww_lph',
-                                      'Vw_lph',]
+        super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
+        self.analysis_fields = ["GHG_sys_district_scale_tonCO2",
+                                "GHG_sys_building_scale_tonCO2",
+                                "GHG_sys_embodied_tonCO2",
+                                ]
+        self.normalization = self.parameters['normalization']
+        self.input_files = [(self.locator.get_lca_embodied, []),
+                            (self.locator.get_lca_operation, [])]
+        self.titley = self.calc_titles()
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
-            titley = 'Water Use [l/m2]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "net floor area":
-            titley = 'Water Use [l/m2]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "air conditioned floor area":
-            titley = 'Water Use [l/m2]'
+            titley = 'Annual emissions [kg CO2-eq/m2.yr]'
         elif self.normalization == "building occupancy":
-            titley = 'Water Use [l/p]'
+            titley = 'Annual emissions [kg CO2-eq/p.yr]'
         else:
-            titley = 'Water Use [l]'
+            titley = 'Annual emissions [ton CO2-eq/yr]'
         return titley
-
-
-    @property
-    def layout(self):
-        return go.Layout(barmode='group', yaxis=dict(title=self.calc_titles()))
 
     @property
     def title(self):
         """Override the version in PlotBase"""
         if set(self.buildings) != set(self.locator.get_zone_building_names()):
             if len(self.buildings) == 1:
-                if self.normalization == "none":
-                    return "%s for Building %s (%s)" % (self.name, self.buildings[0], self.timeframe)
-                else:
-                    return "%s for Building %s normalized to %s (%s)" % (
-                        self.name, self.buildings[0], self.normalization, self.timeframe)
+                return "%s for Building %s " % (self.name, self.buildings[0])
             else:
-                if self.normalization == "none":
-                    return "%s for Selected Buildings (%s)" % (self.name, self.timeframe)
-                else:
-                    return "%s for Selected Buildings normalized to %s (%s)" % (
-                        self.name, self.normalization, self.timeframe)
+                return "%s for Selected Buildings" % (self.name)
+        return "%s for District" % (self.name)
+
+    @property
+    def layout(self):
+        return go.Layout(barmode='relative', yaxis=dict(title=self.titley))
+
+    @cea.plots.cache.cached
+    def data_building(self):
+        data_embodied = pd.read_csv(self.locator.get_lca_embodied())
+        data_operations = pd.read_csv(self.locator.get_lca_operation())
+        all_data = data_embodied.merge(data_operations, on="Name").set_index('Name')
+        if len(self.buildings) == 1:
+            data_raw_df = pd.DataFrame(all_data.loc[self.buildings]).T
         else:
-            if self.normalization == "none":
-                return "%s for District (%s)" % (self.name, self.timeframe)
-            else:
-                return "%s for District normalized to %s (%s)" % (self.name, self.normalization, self.timeframe)
+            data_raw_df = pd.DataFrame(all_data.loc[self.buildings])
+        data_normalized = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
+        return data_normalized
 
     def calc_graph(self):
-        data = self.schedule_data_aggregated()
-        traces = []
-        analysis_fields = self.remove_unused_fields(data, self.schedule_analysis_fields)
-        for field in analysis_fields:
-            if self.normalization != "none":
-                y = data[field].values  # in people
-            else:
-                y = data[field].values
+        data = self.data_building()
+        graph = []
+        for field in self.analysis_fields:
+            y = data[field].values
+            trace = go.Bar(x=data.index, y=y, name=NAMING[field],
+                           marker=dict(color=COLOR[field]))
+            graph.append(trace)
 
-            name = NAMING[field]
-            trace = go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]))
-            traces.append(trace)
-        return traces
+        return graph
 
 
 def main():
     """Test this plot"""
     import cea.config
-    import cea.inputlocator
     import cea.plots.cache
+    import cea.inputlocator
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
-    WaterUsePlot(config.project, {'buildings': None,
-                                        'scenario-name': config.scenario_name,
-                                        'timeframe': config.plots.timeframe,
-                                        'normalization': config.plots_schedules.normalization},
-                       cache).plot(auto_open=True)
-    WaterUsePlot(config.project, {'buildings': locator.get_zone_building_names()[0:2],
-                                        'scenario-name': config.scenario_name,
-                                        'timeframe': config.plots.timeframe,
-                                        'normalization': config.plots_schedules.normalization},
-                       cache).plot(auto_open=True)
-    WaterUsePlot(config.project, {'buildings': [locator.get_zone_building_names()[0]],
-                                        'scenario-name': config.scenario_name,
-                                        'timeframe': config.plots.timeframe,
-                                        'normalization': config.plots_schedules.normalization},
-                       cache).plot(auto_open=True)
+    AnnualEmissionsPlot(config.project,
+                    {'buildings': locator.get_zone_building_names(),
+                     'scenario-name': config.scenario_name},
+                    cache).plot(auto_open=True)
 
 
 if __name__ == '__main__':
