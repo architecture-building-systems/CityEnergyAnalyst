@@ -73,6 +73,13 @@ The reference will be updated as soon as it underwent the review process and has
 
 ## Archetypes
 
+The naming convention for the buildings is defined as follows:
+
+`Building Type(_Category)_Age(_Refurbishment status)`
+
+The Category is included only for non-residential buildings for the IWU typology,
+while the Refurbishment status is only available for residential buildings.
+
 ### CONSTRUCTION_STANDARD
 
 #### STANDARD_DEFINITION
