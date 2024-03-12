@@ -77,6 +77,8 @@ The naming convention for the buildings is defined as follows:
 
 `Building Type(_Category)_Age(_Refurbishment status)`
 
+For example, for a multi-family home, with normal refurbishment from the 80s: `MFH_H_NR`. For a commercial building destined to services with a generalized profile: `NWG_G1_A`.
+
 The Category is included only for non-residential buildings for the IWU typology,
 while the Refurbishment status is only available for residential buildings.
 
