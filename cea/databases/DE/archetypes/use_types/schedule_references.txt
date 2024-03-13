@@ -6,15 +6,10 @@ From original CEA archetypes
 #######INTERNAL_LOADS#######
 all values taken from SIA 2024 (2015) where available
 
-MULTI_RES	: 1.1
-SINGLE_RES	: 1.2
 HOTEL		: 2.1 (Hotelzimmer)
-OFFICE		: 3.1 (Einzel-, Gruppenbüro)
 RETAIL		: 5.2 (Fachgeschäft)
 FOODSTORE	: 5.1 (Lebensmittelverkauf)	< Ea_Wm2 from RETAIL assumed, negative internal gains assumed to correspond to refrigeration (i.e., Qcre_Wm2 = 10 W/m2) >
-RESTAURANT	: 6.1 
 INDUSTRIAL	: 9.1 (Grobe Arbeit)		< Epro_Wm2 and Qhpro_Wm2 from original CEA database >
-SCHOOL		: 4.1 (Schulzimmer)
 GYM		: 11.2 (Fitnessraum)
 SWIMMING	: 11.3
 SERVERROOM	: 12.12
@@ -27,6 +22,23 @@ UNIVERSITY	: 4.4 (Hörsaal)
 HOSPITAL	: calculated as a combination of 43% Bettenzimmer (8.1), 1% Stationszimmer (8.2) and 56% Behandlungsraum (8.3) based on data on the floor areas of a hospital in Zurich
 						< Qhpro_Wm2 from old CEA database >
 
+In contrast, the German standard lacks such a data basis, particularly for energy modelling on an hourly basis.
+DIN EN 18599 describes various, energetic parameters for many usages, but in the context of simplified calculation based on a simplified monthly balancing procedure taking into account the different thermal zones of a building. Due to this structural differences the values cannot be directly transferred to CEA. Based on this and other regulation we modified the Swiss occupancy profiles for residential usage in single and multi family houses.
+DIN EN 16789-1:2019 presents indoor environmental input parameters for design and assessment of energy performance of buildings and includes information on indoor air quality, thermal environment, lighting and acoustics.
+
+for the german database, the german standard values are used to modify the values from the swiss standard reference marked after ":", for the following types
+MULTI_RES	: 1.1
+SINGLE_RES	: 1.2
+SENIOR_RES	
+SCHOOL		: 4.1 (Schulzimmer)
+OFFICE		: 3.1 (Einzel-, Gruppenbüro)
+OFFICE_1P
+RESTAURANT	: 6.1 
+FOODSTORE	: 5.1 (Lebensmittelverkauf)	
+KINDERGARDEN
+
+Due to the naming conventions the names are kept as in the other databases. This needs to be taken into account while changing databases for a use case.
+
 
 #######INDOOR_COMFORT#######
 Tcs_set_C and Ths_set_C : from SIA 2024
@@ -34,6 +46,48 @@ Tcs_setb_C and Ths_setb_C : kept the same as the old CEA Database
 Ve_lsp: from SIA 2024			< no value for SERVERROOM in SIA hence left unchanged from old CEA database value >
 RH_min_pc and RH_max_pc: taken from SIA 2024
 					< no value in SIA for PARKING and COOLROOM, assumed same as SIA Lager values >
+
+For the modification of the german database, for residental usage:
+##### Use type properties - internal loads
+
+| Parameter   | Description   | Method  |
+|---   |---   |---  |
+| `Occ_m2P` | Occupancy density (refers to “code”) | According to Sagner: 48 m2 per person for house owner (SFH)  and 35m2 per Person in rented flats (MFH)  |
+| `El_Wm2` |  Peak specific electrical load due to artificial lighting (refers to “code”)| DIN V 18599-4 Anhang B (Abbildung B.12) =  6,4 W/m²  |
+| `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany [^BDEW] |
+| `Vww_ldp` | Peak specific hot water consumption (refers to “code”)| 10% of `Vww` (educated guess) |
+
+##### Use type properties - indoor comfort
+
+| Parameter   | Description   | Method  |
+|---   |---   |---  |
+| `Tcs_set_C` |   Setpoint temperature for cooling system (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.3 Höchstwert für Kühlung in der Sommerperiode Wohnen Kat. II : 26°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegung Kühlfall|
+| `Tcs_setb_C` |  Setback point of temperature for cooling system (refers to "code")  | DIN V 18599-10:2018-09 Tab. 4 |
+| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | DIN EN 16798-1:2022-03 Tab.NA.3  Wohnen Kat. I: 20°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall |
+| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K -> 16°C|
+| `Ve_lsp` | Minimum outdoor air ventilation rate per person for Air Quality (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.6 Kat. II - I  (erhöht auf Grdl. VDI Empfehlung zu 30 m³/h |
+
+##### SCHEDULES
+
+| Parameter   | Method  |
+|---   |---   |
+| OCCUPANCY | modified according to  DIN EN 16798 and DIN18599 |
+| APPLIENCES | 0.5 as baseline, others correlating with occupancy  |  
+| LIGHTING | starting at 7 am, correlationg with occupancy, but modified  |  
+| WATER | starting at 7 am, correlationg with occupancy  |  
+| SETPOINT | DIN V 18599-10:2018 Tab. 4 Nutzungszeit von 6:00 - 23:00 |  
+| SETBACK | if not SETPOINT|  
+
+#### Non-Residential types
+
+In the current status, there are no non-residential use types included.
+
+There is only a very heterogeneous data basis for non-residential buildings in Germany:
+
+- DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
+- Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
+- ...
+
 
 ****************************************************************************************************************************************************************************************************************************************
 **occupancy_schedules.xlsx**
