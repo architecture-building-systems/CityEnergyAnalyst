@@ -153,10 +153,10 @@ SectionEnd
 
 Section /o "Developer version" Clone_Repository_Section
 
-    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" git clone ${CEA_REPO_URL}'
+    DetailPrint 'Cloning GitHub Repository ${CEA_REPO_URL} to "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" git clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
