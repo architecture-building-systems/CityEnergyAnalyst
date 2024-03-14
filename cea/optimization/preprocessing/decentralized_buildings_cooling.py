@@ -26,7 +26,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
-                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.decentralized_buildings_heating import get_unique_keys_from_dicts
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -233,12 +233,14 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # capacity of cooling technologies
     operation_results[2][0] = Qc_nom_AHU_ARU_SCU_W
     operation_results[2][4] = Qc_nom_AHU_ARU_SCU_W  # 4: ACH_SC_FP
-    q_total_load = q_chw_single_ACH_Wh[None, :] + q_sc_gen_FP_Wh[None,
-                                                  :] + q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh[None, :]
-    system_COP_list = np.divide(q_total_load, (
-            el_total_Wh[None, :] + q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh[None, :])).flatten()
-    system_COP = np.nansum(q_total_load * system_COP_list) / np.nansum(
-        q_total_load)  # weighted average of the system efficiency
+    q_total_load = (q_chw_single_ACH_Wh[None, :] +
+                    q_sc_gen_FP_Wh[None, :] +
+                    q_load_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh[None, :])
+    system_COP_list = np.divide(q_total_load,
+                                (el_total_Wh[None, :] + q_gas_Boiler_FP_to_single_ACH_to_AHU_ARU_SCU_Wh[None, :])
+                                ).flatten()
+    system_COP = (np.nansum(q_total_load * system_COP_list) /
+                  np.nansum(q_total_load))  # weighted average of the system efficiency
     operation_results[2][9] += system_COP
 
     # 3: SC_ET + single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
@@ -286,8 +288,8 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     operation_results[3][5] = Qc_nom_AHU_ARU_SCU_W
     q_total_load = (q_burner_load_Wh[None, :] + q_chw_single_ACH_Wh[None, :] + q_sc_gen_ET_Wh[None, :])
     system_COP_list = np.divide(q_total_load, (el_total_Wh[None, :] + q_gas_for_burner_Wh[None, :])).flatten()
-    system_COP = np.nansum(q_total_load * system_COP_list) / np.nansum(
-        q_total_load)  # weighted average of the system efficiency
+    system_COP = (np.nansum(q_total_load * system_COP_list) /
+                  np.nansum(q_total_load))  # weighted average of the system efficiency
     operation_results[3][9] += system_COP
 
     # these two configurations are only activated when SCU is in use
@@ -673,9 +675,9 @@ def get_SC_data(building_name, locator, panel_type):
     SC_data = pd.read_csv(locator.SC_results(building_name, panel_type),
                           usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
                                    "Eaux_SC_kWh"])
-    q_sc_gen_Wh = SC_data['Q_SC_gen_kWh'] * 1000
+    q_sc_gen_Wh = (SC_data['Q_SC_gen_kWh'] * 1000).values
     q_sc_gen_Wh = np.where(q_sc_gen_Wh < 0.0, 0.0, q_sc_gen_Wh)
-    el_aux_SC_Wh = SC_data['Eaux_SC_kWh'] * 1000
+    el_aux_SC_Wh = (SC_data['Eaux_SC_kWh'] * 1000).values
     if panel_type == "FP":
         T_hw_in_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_data['T_SC_re_C']]
     elif panel_type == "ET":

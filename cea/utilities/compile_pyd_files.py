@@ -7,8 +7,7 @@ Currently used for:
 
 In order to run this script, you will need to install Numba. Try: `conda install numba`
 """
-
-
+from importlib import reload
 
 from numba.pycc import CC
 import shutil
@@ -40,6 +39,7 @@ def delete_pyd(*pathspec):
     path_to_calc_tm_pyd = os.path.join(os.path.dirname(__file__), *pathspec)
     if os.path.exists(path_to_calc_tm_pyd):
         os.remove(path_to_calc_tm_pyd)
+
 
 def copy_pyd(source, destination):
     parent = os.path.dirname(__file__)
@@ -91,6 +91,7 @@ def compile_storagetank():
     cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storage_tank.ode_hot_water_tank)
 
     cc.compile()
+
 
 if __name__ == '__main__':
     main()

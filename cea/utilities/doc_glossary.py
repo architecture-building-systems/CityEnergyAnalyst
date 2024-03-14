@@ -64,7 +64,7 @@ def main(_=None):
         intermediate_input_methods_fp.write(template.render(schemas=intermediate_input_locators))
     # write output_methods
     output_locators = {lm: schemas[lm] for lm in schemas if
-                       not lm in input_locators and not lm in intermediate_input_locators}
+                       lm not in input_locators and lm not in intermediate_input_locators}
     with open(os.path.join(documentation_dir, "output_methods.rst"), "w") as output_methods_fp:
         output_methods_fp.write(template.render(schemas=output_locators))
     # error check

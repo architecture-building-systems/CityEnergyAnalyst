@@ -51,7 +51,7 @@ class EnergyCarrier(object):
 
     @code.setter
     def code(self, new_code):
-        if not (new_code in EnergyCarrier._available_energy_carriers['code'].to_list()):
+        if new_code not in EnergyCarrier._available_energy_carriers['code'].to_list():
             raise ValueError(f'Tried to assign a new energy energy carrier using the code "{new_code}". This code '
                              f'could not be found in the energy carriers database.')
         else:
@@ -64,7 +64,7 @@ class EnergyCarrier(object):
     @type.setter
     def type(self, new_type):
         allowed_types = ['thermal', 'electrical', 'combustible', 'radiation']
-        if not (new_type in allowed_types):
+        if new_type not in allowed_types:
             raise ValueError("The energy carrier data base contains an invalid energy type. Valid energy carrier "
                              "types are: \n 'thermal', 'electrical', 'combustible', 'radiation'")
         else:
@@ -80,7 +80,7 @@ class EnergyCarrier(object):
                             'electrical': ['AC', 'DC'],
                             'combustible': ['fossil', 'biofuel'],
                             'radiation': ['-']}
-        if not (new_subtype in allowed_subtypes[self.type]):
+        if new_subtype not in allowed_subtypes[self.type]:
             raise ValueError("The energy carrier data base contains an invalid energy type. The only valid subtypes "
                              f"for energy carriers of type '{self.type}' are {allowed_subtypes[self.type]} for the "
                              "moment. \n Including further subtypes would require changes to be made to the code of "
@@ -94,7 +94,7 @@ class EnergyCarrier(object):
 
     @qualifier.setter
     def qualifier(self, new_qualifier):
-        if not (new_qualifier in EnergyCarrier._available_energy_carriers['qualifier'].to_list()):
+        if new_qualifier not in EnergyCarrier._available_energy_carriers['qualifier'].to_list():
             raise ValueError('Please make sure all basic energy carrier qualifiers appear in the data base, namely: '
                              'temperature, voltage, wavelength')
         else:
@@ -106,7 +106,7 @@ class EnergyCarrier(object):
 
     @qual_unit.setter
     def qual_unit(self, new_qual_unit):
-        if not (new_qual_unit in EnergyCarrier._available_energy_carriers['unit_qual'].to_list()):
+        if new_qual_unit not in EnergyCarrier._available_energy_carriers['unit_qual'].to_list():
             raise ValueError('Please make sure the energy carrier qualifier units are set correctly.')
         else:
             self._qual_unit = new_qual_unit

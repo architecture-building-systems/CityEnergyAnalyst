@@ -9,15 +9,12 @@ building properties algorithm
 
 
 
-import warnings
 
 import numpy as np
 import pandas as pd
 
-from typing import List, Tuple
 import cea.config
 import cea.inputlocator
-from cea import InvalidOccupancyNameException
 from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, get_lists_of_var_names_and_var_values
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 

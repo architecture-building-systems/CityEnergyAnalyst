@@ -116,7 +116,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
 
         trace = go.Scattergl(x=xs, y=ys, mode='markers', name='Pareto optimal systems', text=individual_names,
                              marker=dict(size=18, color=zs,
-                                         colorbar=go.ColorBar(title=self.titlez, titleside='bottom'),
+                                         colorbar=go.scattergl.marker.ColorBar(title=self.titlez, titleside='bottom'),
                                          colorscale='Jet', showscale=True, opacity=0.8))
         graph.append(trace)
 

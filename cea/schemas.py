@@ -11,7 +11,6 @@ import pandas as pd
 import yaml
 import warnings
 import functools
-from typing import List
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -57,7 +56,7 @@ def schemas(plugins):
             with open(schemas_pickle, "r") as schemas_pickle_fp:
                 try:
                     schemas_dict = pickle.load(schemas_pickle_fp)
-                except:
+                except Exception:
                     schemas_dict = None
 
         if not schemas_dict:
@@ -93,7 +92,7 @@ def get_schema_variables(schema):
         else:
             script = schema[locator_method]['created_by'][0]
 
-        if not "schema" in schema[locator_method] or not schema[locator_method]["schema"]:
+        if "schema" not in schema[locator_method] or not schema[locator_method]["schema"]:
             print("Could not find schema for {locator_method}".format(locator_method=locator_method))
             continue
 

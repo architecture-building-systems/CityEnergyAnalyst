@@ -87,7 +87,7 @@ def read_version(commit_id):
         if not match:
             return "0.1"
         return match.group(1)
-    except:
+    except Exception:
         return "<unversioned>"
 
 

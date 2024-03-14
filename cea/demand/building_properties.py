@@ -13,7 +13,6 @@ from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
-from typing import List
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

@@ -76,6 +76,3 @@ def register_scripts():
 
 
 register_scripts()
-
-if __name__ == '__main__':
-    print(demand.__doc__)

@@ -301,7 +301,7 @@ def get_network(config, network_type):
     except IOError as e:
         print(e)
         return None, [], None
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return None, [], None
 
@@ -321,7 +321,7 @@ def df_to_json(file_location, bbox=False):
     except (IOError, DriverError) as e:
         print(e)
         return None, None
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return None, None
 
@@ -432,7 +432,7 @@ class InputDatabaseValidate(Resource):
                         errors = validator.validate(df, schema)
                         if errors:
                             out[db_name] = errors
-                    except IOError as e:
+                    except IOError:
                         out[db_name] = [{}, 'Could not find or read file: {}'.format(db_path)]
                 else:
                     for use_type in get_all_schedule_names(locator.get_database_use_types_folder()):
@@ -442,7 +442,7 @@ class InputDatabaseValidate(Resource):
                             errors = validator.validate(df, schema)
                             if errors:
                                 out[use_type] = errors
-                        except IOError as e:
+                        except IOError:
                             out[use_type] = [{}, 'Could not find or read file: {}'.format(db_path)]
         return out
 
@@ -471,6 +471,10 @@ def get_choices(choice_properties, path):
         out.append({'value': choice_properties['none_value'], 'label': ''})
     for choice in choices:
         label = df.loc[df[lookup['column']] == choice, 'Description'].values[0] if 'Description' in df.columns else ''
+
+        # Prevent labels to be encoded as NaN in JSON
+        if str(label) == 'nan':
+            label = 'none'
         out.append({'value': choice, 'label': label})
     return out
 

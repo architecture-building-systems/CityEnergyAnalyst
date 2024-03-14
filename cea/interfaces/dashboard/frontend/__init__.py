@@ -14,7 +14,7 @@ def frontend():
 
 
 def get_build():
-    url = "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v3.32.1-browser/build.zip"
+    url = "https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI/releases/download/v3.35.0-browser/build.zip"
     output = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build")
 
     print("Fetching GUI build...")

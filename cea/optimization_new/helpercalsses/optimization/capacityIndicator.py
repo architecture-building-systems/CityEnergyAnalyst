@@ -50,7 +50,7 @@ class CapacityIndicator(object):
 
     @category.setter
     def category(self, new_category):
-        if new_category and not (new_category in ['primary', 'secondary', 'tertiary']):
+        if new_category and new_category not in ['primary', 'secondary', 'tertiary']:
             raise ValueError("The capacity indicators' associated supply system category needs to be either: "
                              "'primary', 'secondary' or 'tertiary'")
         else:
@@ -235,7 +235,7 @@ class CapacityIndicatorVector(object):
         """
         Get values of all capacity indicators corresponding to the chosen supply system category.
         """
-        if not (category in ['primary', 'secondary', 'tertiary']):
+        if category not in ['primary', 'secondary', 'tertiary']:
             raise ValueError(f"The indicated supply system category ({category}) doesn't exist.")
         else:
             values_of_cat = [self.capacity_indicators[i].value for i in range(len(self))
@@ -246,7 +246,7 @@ class CapacityIndicatorVector(object):
         """
         Set values of all capacity indicators corresponding to the chosen supply system category.
         """
-        if not (category in ['primary', 'secondary', 'tertiary']):
+        if category not in ['primary', 'secondary', 'tertiary']:
             raise ValueError(f"The indicated supply system category ({category}) doesn't exist.")
         else:
             new_val_vector = []

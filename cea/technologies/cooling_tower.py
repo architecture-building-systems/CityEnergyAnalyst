@@ -7,7 +7,7 @@ System Modeling: Cooling tower
 import pandas as pd
 from math import ceil, log
 from cea.technologies.constants import CT_MIN_PARTLOAD_RATIO
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]

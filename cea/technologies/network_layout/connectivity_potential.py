@@ -34,24 +34,24 @@ def compute_intersections(lines, crs):
     for line1, line2 in itertools.combinations(lines, 2):
         if line1.intersects(line2):
             inter = line1.intersection(line2)
-            if "Point" == inter.type:
+            if "Point" == inter.geom_type:
                 inters.append(inter)
-            elif "MultiPoint" == inter.type:
+            elif "MultiPoint" == inter.geom_type:
                 inters.extend([pt for pt in inter.geoms])
-            elif "MultiLineString" == inter.type:
+            elif "MultiLineString" == inter.geom_type:
                 multiLine = [line for line in inter]
                 first_coords = multiLine[0].coords[0]
                 last_coords = multiLine[len(multiLine) - 1].coords[1]
                 inters.append(Point(first_coords[0], first_coords[1]))
                 inters.append(Point(last_coords[0], last_coords[1]))
-            elif "GeometryCollection" == inter.type:
+            elif "GeometryCollection" == inter.geom_type:
                 for geom in inter:
-                    if "Point" == geom.type:
+                    if "Point" == geom.geom_type:
                         inters.append(geom)
-                    elif "MultiPoint" == geom.type:
-                        inters.extend([pt for pt in geom])
-                    elif "MultiLineString" == geom.type:
-                        multiLine = [line for line in geom]
+                    elif "MultiPoint" == geom.geom_type:
+                        inters.extend([pt for pt in geom.geoms])
+                    elif "MultiLineString" == geom.geom_type:
+                        multiLine = [line for line in geom.geoms]
                         first_coords = multiLine[0].coords[0]
                         last_coords = multiLine[len(multiLine) - 1].coords[1]
                         inters.append(Point(first_coords[0], first_coords[1]))
@@ -94,9 +94,9 @@ def nearest_neighbor_within(others, point, max_distance):
     elif isinstance(interesting_points, Point):
         closest_point = interesting_points
     else:
-        distances = [point.distance(ip) for ip in interesting_points
+        distances = [point.distance(ip) for ip in interesting_points.geoms
                      if point.distance(ip) > 0]
-        closest_point = interesting_points[distances.index(min(distances))]
+        closest_point = interesting_points.geoms[distances.index(min(distances))]
 
     return closest_point
 
@@ -225,16 +225,13 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
 
     # union all geometries
     line = gdf_line.geometry.unary_union
-    line._crs = crs
     snap_points = gdf_points.geometry.unary_union
-    snap_points._crs = crs
 
     # snap and split coords on line
     # returns GeometryCollection
     # snap_points = snap(coords, line, tolerance)
     # snap_points._crs = crs
     split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
-    split_line._crs = crs
     segments = [feature for feature in split_line.geoms if feature.length > 0.01]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
@@ -243,72 +240,30 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
     return gdf_segments
 
 
-def nearest_neighbor_within(others, point, max_distance):
-    """Find nearest point among others up to a maximum distance.
-
-    Args:
-        others: a list of Points or a MultiPoint
-        point: a Point
-        max_distance: maximum distance to search for the nearest neighbor
-
-    Returns:
-        A shapely Point if one is within max_distance, None otherwise
-    """
-    search_region = point.buffer(max_distance)
-    interesting_points = search_region.intersection(MultiPoint(others))
-
-    if not interesting_points:
-        closest_point = None
-    elif isinstance(interesting_points, Point):
-        closest_point = interesting_points
-    else:
-        distances = [point.distance(ip) for ip in interesting_points.geoms
-                     if point.distance(ip) > 0]
-        closest_point = interesting_points.geoms[distances.index(min(distances))]
-
-    return closest_point
-
-
 def near_analysis(building_centroids, street_network, crs):
-    near_point = []
-    building_name = []
-    for point, name in zip(building_centroids.geometry, building_centroids.Name):
-        point._crs = crs
-        distance = 10e10
-        for line in street_network.geometry:
-            line._crs = crs
-            nearest_point_candidate = line.interpolate(line.project(point))
-            distance_candidate = point.distance(nearest_point_candidate)
-            if distance_candidate < distance:
-                distance = distance_candidate
-                nearest_point = nearest_point_candidate
-        building_name.append(name)
-        near_point.append(nearest_point)
+    # Get the nearest edge for each building centroid
+    nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
+    nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
 
-    geometry = near_point
-    df = gdf(geometry=geometry, crs=crs)
-    df["Name"] = building_name
+    # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
+    nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
+
+    df = gdf({"Name": building_centroids["Name"]}, geometry=nearest_points, crs=crs)
     return df
 
 
-def snap_points(points, lines, tolerance, crs):
+def snap_points(points, lines, tolerance):
     length = lines.shape[0]
     for i in range(length):
         for point in points.geometry:
             line = lines.loc[i, "geometry"]
-            line._crs = crs
-            point._crs = crs
             point_inline_projection = line.interpolate(line.project(point))
-            point_inline_projection._crs = crs
             distance_to_line = point.distance(point_inline_projection)
-            if (point.x, point.y) in line.coords:
-                x = "nothing"
-            else:
+            if (point.x, point.y) not in line.coords:
                 if distance_to_line < tolerance:
                     buff = point.buffer(0.1)
                     ### Split the line on the buffer
                     geometry = split(line, buff)
-                    geometry._crs = crs
                     line_1_points = [tuple(xy) for xy in geometry.geoms[0].coords[:-1]]
                     line_1_points.append((point.x, point.y))
                     line_2_points = []
@@ -346,7 +301,7 @@ def one_linestring_per_intersection(lines, crs):
     try:
         bounding_box = box(*lines_merged.bounds)
         lines_merged = lines_merged.intersection(bounding_box)
-    except:
+    except Exception:
         # if the bounding_box fails, then revert to lines merge.
         print('bounding box method did not work, falling to a more simple method, no need to worry')
 
@@ -373,7 +328,7 @@ def create_terminals(building_centroids, crs, street_network):
     # get list of nearest points
     near_points = near_analysis(building_centroids, street_network, crs)
     # extend to the building centroids
-    all_points = pd.concat([near_points, building_centroids])
+    all_points = pd.concat([near_points.to_crs(crs), building_centroids.to_crs(crs)])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
     lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
@@ -426,8 +381,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # first split in intersections
-    prototype_network = one_linestring_per_intersection(prototype_network.geometry.values,
-                                                        crs)
+    prototype_network = one_linestring_per_intersection(prototype_network.geometry.tolist(), crs)
     # snap endings of all vectors to ending of all other vectors
     prototype_network = snappy_endings(prototype_network.geometry.values, SNAP_TOLERANCE, crs)
 
@@ -435,7 +389,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
 
     # snap these points to the lines and transform lines
-    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE, crs)
+    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE)
 
     # save for verification purposes
     prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')

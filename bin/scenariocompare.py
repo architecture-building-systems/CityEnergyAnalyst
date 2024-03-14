@@ -12,7 +12,7 @@ from sklearn.metrics import mean_squared_error
 
 
 def main(s1, s2):
-    print(f"FILE, FIELD, RMSE, ERROR")
+    print("FILE, FIELD, RMSE, ERROR")
     after_root = pathlib.Path(s2)
     for before in pathlib.Path(s1).rglob("*.csv"):
         if r"building-properties\schedules" in str(before):
@@ -41,7 +41,7 @@ def main(s1, s2):
 
         float_fields = [f for f in before_df.dtypes.index if before_df.dtypes[f] == "float64"]
         for f in float_fields:
-            if after_df is None or not f in after_df:
+            if after_df is None or f not in after_df:
                 error = "left only"
                 rmse = np.nan
                 diff_df[f] = np.nan

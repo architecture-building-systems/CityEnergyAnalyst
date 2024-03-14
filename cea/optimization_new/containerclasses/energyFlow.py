@@ -56,7 +56,7 @@ class EnergyFlow(object):
     def input_category(self, new_input_category):
         allowed_input_categories = ['source', 'primary', 'secondary', 'tertiary', 'storage', 'primary or secondary',
                                     'passive_conversion']
-        if not (new_input_category in allowed_input_categories):
+        if new_input_category not in allowed_input_categories:
             raise ValueError('An invalid component-placement was specified as the origin of energy flow.')
         else:
             self._input_category = new_input_category
@@ -69,7 +69,7 @@ class EnergyFlow(object):
     def output_category(self, new_output_category):
         allowed_output_categories = ['primary', 'secondary', 'tertiary', 'storage', 'consumer', 'environment',
                                      'passive_conversion']
-        if not (new_output_category in allowed_output_categories):
+        if new_output_category not in allowed_output_categories:
             raise ValueError('An invalid component-placement was specified as the target an energy flow.')
         else:
             self._output_category = new_output_category

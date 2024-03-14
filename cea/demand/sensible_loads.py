@@ -185,7 +185,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     :rtype: None
     """
 
-    from cea.technologies import radiators, heating_coils, tabs
+    from cea.technologies import radiators, heating_coils
 
     #
     # TEMPERATURES HEATING SYSTEMS

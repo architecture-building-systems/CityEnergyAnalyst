@@ -31,6 +31,7 @@ class Building(object):
         self.identifier = identifier
         self.demands_file_path = demands_file_path
         self.stand_alone_supply_system = SupplySystem()
+        self.crs = None
         self._demand_flow = EnergyFlow()
         self._footprint = None
         self._location = None
@@ -98,6 +99,7 @@ class Building(object):
         reference system).
         """
         if self.location is None:
+            self.crs = domain_shp_file.crs
             self.footprint = domain_shp_file[domain_shp_file.Name == self.identifier].geometry.iloc[0]
             self.location = self.footprint.representative_point()
         else:
@@ -190,7 +192,7 @@ class Building(object):
 
         # group the potentials by energy carriers and sum them up if necessary
         for potential in building_scale_energy_potentials:
-            for building, profile in potential.main_building_profiles.iteritems():
+            for building, profile in potential.main_building_profiles.items():
                 if potential.main_potential.energy_carrier.code in building_energy_potentials[building].keys():
                     building_energy_potentials[building][potential.main_potential.energy_carrier.code] += \
                         EnergyFlow('source', 'secondary',
@@ -199,7 +201,7 @@ class Building(object):
                     building_energy_potentials[building][potential.main_potential.energy_carrier.code] = \
                         EnergyFlow('source', 'secondary',
                                     potential.main_potential.energy_carrier.code, profile)
-            for building, profile in potential.auxiliary_building_profiles.iteritems():
+            for building, profile in potential.auxiliary_building_profiles.items():
                 if potential.auxiliary_potential.energy_carrier.code in building_energy_potentials[building].keys():
                     building_energy_potentials[building][potential.auxiliary_potential.energy_carrier.code] += \
                         EnergyFlow('source', 'secondary',

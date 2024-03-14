@@ -6,18 +6,11 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
+import math
 import os
 import pickle
-from itertools import repeat
-
-from osgeo import osr
-
-import cea
-
-cea.suppress_3rd_party_debug_loggers()
-
-import math
 import time
+from itertools import repeat
 
 import numpy as np
 import py4design.py3dmodel.calculate as calculate
@@ -27,8 +20,10 @@ import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
 from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
+from osgeo import osr
 from py4design import urbangeom
 
+import cea
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel

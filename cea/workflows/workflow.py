@@ -11,7 +11,6 @@ import cea.inputlocator
 import cea.api
 import cea.scripts
 import yaml
-import tempfile
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -104,7 +103,7 @@ def read_resume_info(resume_yml, workflow_yml):
     except IOError:
         # no resume file found?
         resume_dict = {workflow_yml: 0}
-    if not workflow_yml in resume_dict:
+    if workflow_yml not in resume_dict:
         resume_dict[workflow_yml] = 0
     return resume_dict
 

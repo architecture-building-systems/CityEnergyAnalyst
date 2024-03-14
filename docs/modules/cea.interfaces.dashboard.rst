@@ -13,6 +13,7 @@ Subpackages
    :maxdepth: 4
 
    cea.interfaces.dashboard.api
+   cea.interfaces.dashboard.frontend
    cea.interfaces.dashboard.plots
    cea.interfaces.dashboard.server
 

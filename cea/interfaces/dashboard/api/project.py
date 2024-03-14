@@ -208,7 +208,7 @@ def check_scenario_exists(func):
                 # DELETE method might have a "project" payload...
                 data = json.loads(request.data.decode('utf-8'))
                 config.project = data["project"]
-            except:
+            except Exception:
                 pass
         choices = list_scenario_names_for_project(config)
         if kwargs['scenario'] not in choices:

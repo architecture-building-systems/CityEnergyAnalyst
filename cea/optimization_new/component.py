@@ -795,8 +795,8 @@ class PowerTransformer(PassiveComponent):
                 raise ValueError(f"The selected transformer model {self.code} cannot operate with a high voltage side "
                                  f"at {voltage_after}V and a low voltage side at {voltage_before}V.")
         else:
-            raise ValueError(f'The voltage levels of the power transformer are either identical or invalid. If they '
-                             f'are identical it makes no sense to install a power transformer.')
+            raise ValueError('The voltage levels of the power transformer are either identical or invalid. If they '
+                             'are identical it makes no sense to install a power transformer.')
         # assign energy carriers
         if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
             self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))
@@ -931,9 +931,9 @@ class HeatExchanger(PassiveComponent):
                                  f"of {temperature_before}°C and {temperature_after}°C.")
         else:
             if self.medium_in == self.medium_out:
-                raise ValueError(f'The energy carrier medium and temperature levels on either side of the heat '
-                                 f'exchanger are either identical or invalid. If they are identical it makes no sense '
-                                 f'to install a heat exchanger.')
+                raise ValueError('The energy carrier medium and temperature levels on either side of the heat '
+                                 'exchanger are either identical or invalid. If they are identical it makes no sense '
+                                 'to install a heat exchanger.')
         # assign energy carriers
         if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
             self.main_energy_carrier = \
@@ -953,8 +953,7 @@ class HeatExchanger(PassiveComponent):
         i.e. heat absorption or heat rejection.
         """
         if (heat_source_temp is not None) and (heat_sink_temp is None):  # heat absorption method
-            if not ([self.placement['after'], self.placement['before']]
-                    in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]):
+            if [self.placement['after'], self.placement['before']] not in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
                 raise ValueError('Providing a heat source for the heat exchanger would indicate that it is meant to '
                                  'draw the indicated heat transfer flow from that heat source. The heat exchanger '
                                  f"cannot sensibly be placed between the '{self.placement['before']}' and "
@@ -967,8 +966,7 @@ class HeatExchanger(PassiveComponent):
             self.input_energy_carriers = [thermal_ec_hot_side]
             self.output_energy_carriers = []
         elif (heat_source_temp is None) and (heat_sink_temp is not None):  # heat rejection method
-            if not ([self.placement['after'], self.placement['before']]
-                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]):
+            if [self.placement['after'], self.placement['before']] not in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
                 raise ValueError('Providing a heat sink for the heat exchanger would indicate that it is meant to '
                                  'reject the indicated heat transfer flow. The heat exchanger cannot sensibly be '
                                  f"placed between the '{self.placement['before']}' and the '{self.placement['after']}' "

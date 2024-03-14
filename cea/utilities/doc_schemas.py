@@ -137,7 +137,7 @@ def get_json_schema(filename, buildings):
             for column_name in df.columns:
                 column_name = replace_repetitive_column_names(column_name, buildings)
                 schema[column_name.encode('ascii', 'ignore')] = get_column_schema(df[column_name])
-        except:
+        except Exception:
             # in case json file has an odd shape, get a simplified schema
             for key in json_file.keys():
                 print(type(json_file[key]).__name__)

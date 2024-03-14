@@ -1,3 +1,55 @@
+- 2024-02-23 - 3.35.3 - #3503 Fix fetching all optimization classes for Windows
+- 2024-02-22 - 3.35.3 - #3496 Fixing surroundings helper with uploaded building footprints.
+- 2024-02-21 - 3.35.3 - #3501 Fix libraries for wntr in Apple Silicon machines
+- 2024-02-21 - 3.35.3 - #3500 Fix Windows setup bugs and plots
+- 2024-02-20 - 3.35.3 - #3497 Fix Windows setup bugs
+- 2024-02-12 - 3.35.3 - #3487 Release 3.35.3
+- 2024-02-12 - 3.35.2 - #3486 Update nsis workflow for Windows installation
+- 2024-02-12 - 3.35.2 - #3484 add create-new-scenario to scripts.yml
+- 2024-02-08 - 3.35.2 - #3458 Update network-file naming convention
+- 2024-02-01 - 3.35.2 - #3481 Use installation docs to use conda-lock
+- 2024-02-01 - 3.35.2 - #3479 Release 3.35.2
+- 2024-01-31 - 3.35.1 - #3478 Automate docker image build
+- 2024-01-26 - 3.35.1 - #3473 Shutdown flask server gracefully after keyboard interrupt
+- 2024-01-25 - 3.35.1 - #3471 Update data migrator
+- 2024-01-23 - 3.35.1 - #3467 Remove pytest from environment.yml
+- 2024-01-23 - 3.35.1 - #3466 Use conda-lock for tests
+- 2024-01-21 - 3.35.1 - #3465 Add linting workflow
+- 2024-01-21 - 3.35.1 - #3464 Add missing SALib dependency
+- 2024-01-19 - 3.35.1 - #3460 Clean conda dependencies
+- 2024-01-18 - 3.35.1 - #3455 Release 3.35.1
+- 2024-01-18 - 3.35.0 - #3454 Fix batch processing script errors
+- 2024-01-17 - 3.35.0 - #3453 Fix dashboard server not shutting down
+- 2024-01-17 - 3.35.0 - #3452 Prevent labels from being encoded as NaN in JSON
+- 2024-01-17 - 3.35.0 - #3447 Release 3.35.0
+- 2024-01-16 - 3.34.2 - #3446 Add update instructions for macos
+- 2024-01-16 - 3.34.2 - #3408 Enable Mac ARM support
+- 2024-01-15 - 3.34.2 - #3444 batch processing and linkage to rhino/grasshopper
+- 2024-01-08 - 3.34.2 - #3428 fixing inappropriate coordinate system
+- 2023-12-18 - 3.34.2 - #3440 Update zone_helper.py
+- 2023-12-07 - 3.34.2 - #3437 Fixing a typo in the CH database
+- 2023-11-30 - 3.34.2 - #3436 Update installation-on-macos.rst
+- 2023-11-29 - 3.34.2 - #3435 Seperating release to envrionment and grids
+- 2023-11-27 - 3.34.2 - #3433 Eliminating zero-capacity components
+- 2023-11-23 - 3.34.2 - #3414 Improving search for optimal CapacityIndicatorVector
+- 2023-10-26 - 3.34.2 - #3419 Update load_curve_supply.py
+- 2023-10-26 - 3.34.2 - #3403 removing restriction on dhw types
+- 2023-10-25 - 3.34.2 - #3387 3346 added detail on optimal district energy networks
+- 2023-10-24 - 3.34.2 - #3413 Fix network losses
+- 2023-10-23 - 3.34.2 - #3361 Replace whitespaces with underscore in building name
+- 2023-10-20 - 3.34.2 - #3411 Update electrical_loads.py
+- 2023-10-16 - 3.34.2 - #3409 Fix network layout script
+- 2023-10-13 - 3.34.2 - #3406 Revert "Update pythonocc to enable Mac ARM support"
+- 2023-10-13 - 3.34.2 - #3402 Update demand_writers to remove nan values.py
+- 2023-10-13 - 3.34.2 - #3265 Update pythonocc to enable Mac ARM support
+- 2023-09-28 - 3.34.2 - #3395 Update installation-on-macos.rst
+- 2023-09-26 - 3.34.2 - #3393 Use temp directory created by python
+- 2023-09-20 - 3.34.2 - #3392 updated workflows based on idp feedback
+- 2023-09-19 - 3.34.2 - #3390 Release 3.34.2
+- 2023-09-19 - 3.34.1 - #3388 Saving additional info zone helper
+- 2023-09-11 - 3.34.1 - #3382 correcting typos
+- 2023-09-11 - 3.34.1 - #3381 Update sg_energy_optimization.yml
+- 2023-09-08 - 3.34.1 - #3380 Release 3.34.1
 - 2023-09-07 - 3.34.0 - #3378 Change sensor value orientation before saving
 - 2023-09-06 - 3.34.0 - #3377 Release 3.34.0
 - 2023-09-06 - 3.33.0 - #3374 Update MacOS installation guide
@@ -900,4 +952,3 @@
 - 2016-04-01 - 0.1 - #115 I37 extract properties tool etc
 - 2016-03-31 - 0.1 - #106 Ii023 atot
 - 2016-03-30 - 0.1 - #103 I099 new properties - seems to be working for now...
-

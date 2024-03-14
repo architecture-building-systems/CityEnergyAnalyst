@@ -9,14 +9,6 @@ cea.optimization.master package
 Submodules
 ----------
 
-cea.optimization.master.cost\_model module
-------------------------------------------
-
-.. automodule:: cea.optimization.master.cost_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.optimization.master.crossover module
 ----------------------------------------
 
@@ -49,14 +41,6 @@ cea.optimization.master.evaluation module
    :undoc-members:
    :show-inheritance:
 
-cea.optimization.master.generation module
------------------------------------------
-
-.. automodule:: cea.optimization.master.generation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.optimization.master.master\_main module
 -------------------------------------------
 
@@ -85,6 +69,22 @@ cea.optimization.master.normalization module
 --------------------------------------------
 
 .. automodule:: cea.optimization.master.normalization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cea.optimization.master.objective\_function\_calculator module
+--------------------------------------------------------------
+
+.. automodule:: cea.optimization.master.objective_function_calculator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cea.optimization.master.optimisation\_individual module
+-------------------------------------------------------
+
+.. automodule:: cea.optimization.master.optimisation_individual
    :members:
    :undoc-members:
    :show-inheritance:

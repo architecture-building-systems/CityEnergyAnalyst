@@ -164,8 +164,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.graphviz',
               'sphinx.ext.intersphinx',
-              'sphinx.ext.autosectionlabel'
+              'sphinx.ext.autosectionlabel',
               # 'sphinx.ext.githubpages',
+              'sphinx_rtd_theme'
               ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -223,7 +224,7 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # this should make the style the blue read-the-docs style
-# html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_rtd_theme"
 # html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 modindex_common_prefix = ['cea.']
 

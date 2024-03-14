@@ -70,9 +70,9 @@
                 "osm-tiles": {
                     "type": "raster",
                     "tiles": [
-                        "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     ],
                     "tileSize": 256,
                     "attribution": "Map data \u00A9 OpenStreetMap contributors"
@@ -345,7 +345,7 @@
             if (nodes) layers.push(new deck.GeoJsonLayer({
                 id: 'nodes',
                 data: nodes,
-                getRadius: f => f.properties["_Radius"],
+                getPointRadius: f => f.properties["_Radius"],
                 getFillColor: f => JSON.parse(f.properties["_FillColor"]),
                 pickable: true,
                 autoHighlight: true,

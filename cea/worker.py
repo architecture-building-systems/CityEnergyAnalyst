@@ -40,7 +40,7 @@ def consume_nowait(q, msg):
         messages = [msg]
         try:
             msg = q.get_nowait()
-            while not msg is EOFError:
+            while msg is not EOFError:
                 messages.append(msg)
                 msg = q.get_nowait()
             # msg is now EOFError, put it back
@@ -57,7 +57,7 @@ def stream_poster(jobid, server, queue):
     """Post items from queue until a sentinel (the EOFError class object) is read."""
     msg = queue.get(block=True, timeout=None)  # block until first message
 
-    while not msg is EOFError:
+    while msg is not EOFError:
         msg = consume_nowait(queue, msg)
         requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message

@@ -8,11 +8,10 @@ import numpy as np
 
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
-    DECENTRALIZED_AUX_PERCENTAGE, COMPRESSOR_TYPE_LIMIT_LOW, COMPRESSOR_TYPE_LIMIT_HIGH, ASHRAE_CAPACITY_LIMIT
+    DECENTRALIZED_AUX_PERCENTAGE
 
 from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
-from cea.utilities.physics import kelvin_to_fahrenheit
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -192,7 +191,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
     :param centralized:
     :return:
     """
-    if centralized == True:
+    if centralized is True:
         g_value = G_VALUE_CENTRALIZED
     else:
         g_value = G_VALUE_DECENTRALIZED
@@ -206,7 +205,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
             T_evap_K = min(T_evap_K, T_EVAP_SCU)
         else:
             print('Undefined cooling load_type for chiller COP calculation.')
-    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+    if centralized is True:  # Todo: improve this to a better approximation than a static value DT_Network
         # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
     # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
@@ -214,7 +213,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
     # calculate chiller COP
     cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
     # calculate system COP with pumping power of auxiliaries
-    if centralized == True:
+    if centralized is True:
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
     else:
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))

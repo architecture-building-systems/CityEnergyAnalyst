@@ -14,9 +14,6 @@ import os
 import cea.config
 import cea.inputlocator
 from cea.interfaces.dashboard.api.inputs import get_input_database_schemas
-import yaml
-import geopandas
-import cea.utilities.dbf as dbf
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

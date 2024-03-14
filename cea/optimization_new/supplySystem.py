@@ -187,7 +187,7 @@ class SupplySystem(object):
                                          self.component_energy_inputs[placement].items()
                                          for ec_code, energy_flow in energy_flows.items()]
             else:
-                raise ValueError(f'Please indicate a valid placement category or list of placement categories.')
+                raise ValueError('Please indicate a valid placement category or list of placement categories.')
         elif side == 'out':
             if isinstance(placements, str):
                 relevant_energy_flows = [energy_flow
@@ -201,7 +201,7 @@ class SupplySystem(object):
                                          self.component_energy_outputs[placement].items()
                                          for ec_code, energy_flow in energy_flows.items()]
             else:
-                raise ValueError(f'Please indicate a valid placement category or list of placement categories.')
+                raise ValueError('Please indicate a valid placement category or list of placement categories.')
         else:
             raise ValueError("Please indicate whether the energy flows into (side='in') or out of (side='out') should "
                              f"be aggregated for the {placements} category of the supply system.")

@@ -56,7 +56,7 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         tsh = np.nan
         trh = np.nan
     # return floats with numpy function. Needed when np.vectorize is use to call this function
-    return np.float(tsh), np.float(trh), np.float(mCw) # C, C, W/C
+    return float(tsh), float(trh), float(mCw) # C, C, W/C
 
 def fh(x, delta_t, Qh0, Qh, tair, LMRT0, nh):
     '''

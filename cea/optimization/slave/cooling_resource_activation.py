@@ -334,7 +334,7 @@ def activate_CCandACH_trigen(Q_cooling_unmet_W,
             if Qh_CCGT_req_W <= Q_output_CC_max_W:  # Normal operation possible within part load regime
                 Q_CHP_gen_W = float(Qh_CCGT_req_W)
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
+                E_Trigen_NG_gen_W = float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
 
             else:  # Only part of the demand can be delivered as 100% load achieved
                 # This case should never occur, since it means that another heat source would be required to run
@@ -342,7 +342,7 @@ def activate_CCandACH_trigen(Q_cooling_unmet_W,
                 print("WARNING: Gas turbine can not output enough heat to power the absorption chiller!")
                 Q_CHP_gen_W = Q_output_CC_max_W
                 NG_Trigen_req_W = Q_used_prim_CC_fn_W(Q_CHP_gen_W)
-                E_Trigen_NG_gen_W = np.float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
+                E_Trigen_NG_gen_W = float(eta_elec_interpol(NG_Trigen_req_W)) * NG_Trigen_req_W
 
         # if the operation of the combined cycle is not possible due to its limited capacity, the absorption chiller
         # (i.e. the cooling technology of the tri-generation plant) can not be powered either

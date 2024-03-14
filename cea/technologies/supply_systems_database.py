@@ -7,7 +7,6 @@ is to avoid reading this data (which is constant during the lifetime of a script
 
 
 import pandas as pd
-import cea.inputlocator
 
 # keep track of locators previously seen so we don't re-read excel files twice
 _locators = {}

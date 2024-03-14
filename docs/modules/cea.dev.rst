@@ -16,3 +16,19 @@ cea.dev.build module
    :members:
    :undoc-members:
    :show-inheritance:
+
+cea.dev.release module
+----------------------
+
+.. automodule:: cea.dev.release
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cea.dev.update\_zenodo module
+-----------------------------
+
+.. automodule:: cea.dev.update_zenodo
+   :members:
+   :undoc-members:
+   :show-inheritance:

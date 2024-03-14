@@ -139,10 +139,14 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
 
     within_buffer = all_surroundings.geometry.intersects(buffer_polygon)
     surroundings = all_surroundings[within_buffer]
-    rep_points = gdf(geometry=surroundings.geometry.representative_point(), crs=all_surroundings.crs)
-    not_in_zone = spatial_join(rep_points, zone_area, how='left')['index_right'].isna()
 
-    return surroundings[not_in_zone].copy()
+    footprints_without_overlaps = [s_building_footprint for s_building_footprint in surroundings.geometry
+                                   if not any([s_building_footprint.intersects(z_building_footprint)
+                                               for z_building_footprint in zone.geometry])]
+    footprints_gdf = gdf(geometry=footprints_without_overlaps, crs=surroundings.crs)
+    relevant_surroundings = spatial_join(surroundings, footprints_gdf, op='within')
+
+    return relevant_surroundings.copy()
 
 
 def geometry_extractor_osm(locator, config):
@@ -179,12 +183,15 @@ def geometry_extractor_osm(locator, config):
     print("Removing unwanted buildings")
     surroundings = erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer)
 
-    assert surroundings.shape[0] > 0, 'No buildings were found within range based on buffer parameter.'
-
-    # clean attributes of height, name and number of floors
-    result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
-    result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-    result = clean_geometries(result)
+    if not surroundings.shape[0] > 0:
+        print('No buildings were found within range based on buffer parameter.')
+        # Create an empty surroundings file
+        result = gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=surroundings.crs)
+    else:
+        # clean attributes of height, name and number of floors
+        result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
+        result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+        result = clean_geometries(result)
 
     # save to shapefile
     result.to_file(shapefile_out_path)

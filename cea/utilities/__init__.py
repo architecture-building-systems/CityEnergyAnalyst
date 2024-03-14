@@ -4,7 +4,6 @@
 import os
 import sys
 import string
-from typing import Sequence, List
 
 
 def remap(x, in_min, in_max, out_min, out_max):
@@ -82,7 +81,7 @@ def unique(sequence):
     seen = set()
     result = []
     for item in sequence:
-        if not item in seen:
+        if item not in seen:
             result.append(item)
             seen.add(item)
     return result

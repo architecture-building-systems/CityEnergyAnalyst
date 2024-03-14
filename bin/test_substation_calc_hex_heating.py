@@ -2,7 +2,7 @@
 This file tests to make sure the refactored version of calc_HEX_heating calculates the same values as
 the old calc_HEX_heating.
 """
-from cea.technologies.substation import *
+from cea.technologies.substation import calc_shell_HEX, calc_HEX_heating
 
 
 def main():
@@ -36,7 +36,7 @@ def calc_HEX_heating_orig(Q, UA, thi, tco, tci, cc):
         Flag = False
         tol = 0.00000001
         while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
+            if Flag:
                 eff[0] = eff[1]
             else:
                 cmin = cc * (dT_primary) / ((thi - tci) * eff[0])
@@ -58,7 +58,7 @@ def calc_HEX_heating_orig(Q, UA, thi, tco, tci, cc):
     else:
         tho = 0
         ch = 0
-    return np.float(tho), np.float(ch)
+    return float(tho), float(ch)
 
 
 if __name__ == '__main__':

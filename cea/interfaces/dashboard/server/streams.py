@@ -5,7 +5,7 @@ FIXME: when does this data get cleared?
 """
 
 from flask import request, current_app
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"

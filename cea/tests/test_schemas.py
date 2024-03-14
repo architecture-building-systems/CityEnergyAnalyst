@@ -174,7 +174,7 @@ class TestSchemas(unittest.TestCase):
                     "type_of_district_network": "space-heating",
                 }
                 for p in list(parameters.keys()):
-                    if not p in method.__code__.co_varnames:
+                    if p not in method.__code__.co_varnames:
                         del parameters[p]
                 folder = method(**parameters)
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))

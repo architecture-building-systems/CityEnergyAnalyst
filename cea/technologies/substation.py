@@ -709,7 +709,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     else:
         tco_C = 0.0
         cc_kWperK = 0.0
-    return np.float(tco_C), np.float(cc_kWperK)
+    return float(tco_C), float(cc_kWperK)
 
 
 @jit(nopython=True)
@@ -750,7 +750,7 @@ def calc_HEX_mix_2_flows(Q1, Q2, m1, m2, t1, t2):
     if (m1 + m2) > 0:
         if Q1 > 0 or Q2 > 0:
             tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
-    return np.float(tavg)
+    return float(tavg)
 
 
 def calc_HEX_mix_3_flows(Q1, Q2, Q3, m1, m2, m3, t1, t2, t3):
@@ -758,7 +758,7 @@ def calc_HEX_mix_3_flows(Q1, Q2, Q3, m1, m2, m3, t1, t2, t3):
     if (m1 + m2 + m3) > 0:
         if Q1 > 0 or Q2 > 0 or Q3 > 0:
             tavg = (t1 * m1 + t2 * m2 + t3 * m3) / (m1 + m2 + m3)
-    return np.float(tavg)
+    return float(tavg)
 
 
 @jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
@@ -813,7 +813,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     else:
         tho_C = 0
         ch_kWperK = 0
-    return np.float(tho_C), np.float(ch_kWperK)
+    return float(tho_C), float(ch_kWperK)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco):

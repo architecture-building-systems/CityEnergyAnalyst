@@ -27,7 +27,8 @@ __status__ = "Production"
 
 import numpy as np
 import pandas as pd
-import time, multiprocessing
+import time
+import multiprocessing
 
 from copy import deepcopy
 from deap import algorithms, base, tools
@@ -371,7 +372,7 @@ class DistrictEnergySystem(object):
 
         # Eliminate duplicates from population
         population = [ind1 for i, ind1 in enumerate(population)
-                      if not (ind1.values in [ind2.values for ind2 in population[i+1:]])]
+                      if ind1.values not in [ind2.values for ind2 in population[i+1:]]]
 
         # Perform the genetic optimization
         for generation in range(1, algorithm.generations_supply_systems + 1):
@@ -389,7 +390,7 @@ class DistrictEnergySystem(object):
                 offspring = algorithms.varAnd(population, toolbox, cxpb=algorithm.cx_prob, mutpb=algorithm.mut_prob)
                 # filter out offspring that are identical to existing population members
                 novel_offspring = [offspring_ind for offspring_ind in offspring
-                                   if not tuple(offspring_ind.values) in population_civs]
+                                   if tuple(offspring_ind.values) not in population_civs]
                 # decide on the number of offspring to create in this generation
                 if procreation_attempts == 0:
                     targeted_number_of_offspring = len(novel_offspring)
@@ -416,7 +417,7 @@ class DistrictEnergySystem(object):
             else:
                 population = toolbox.select(population + fit_offspring, len(population + fit_offspring))
             print(f"{subsystem.identifier}: gen {generation} - "
-                  f"{round(sum([1 for i in population if not tuple(i.values) in population_civs])/len(offspring)*100)}"
+                  f"{round(sum([1 for i in population if tuple(i.values) not in population_civs])/len(offspring)*100)}"
                   f"% of offspring retained")
 
         # evaluate the fitness of the final population and store the non-dominated individuals in the memory

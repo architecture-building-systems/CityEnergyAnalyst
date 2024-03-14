@@ -8,15 +8,10 @@ Trace the InputLocator calls in a selection of scripts.
 import sys
 import os
 import cea.api
-import cea.config as config
 from datetime import datetime
-from jinja2 import Template
 import cea.inputlocator
-import pandas
-import pandas.errors
 import yaml
 import cea.utilities.doc_schemas
-from dateutil.parser import parse
 
 __author__ = "Daren Thomas & Jack Hawthorne"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

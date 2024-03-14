@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.plots.cache
 from cea.analysis.multicriteria.main import multi_criteria_main
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.OptimizationOverviewPlotBase` as a base class for all plots in the category "optimization-overview" and also
@@ -28,7 +29,7 @@ __status__ = "Production"
 label = 'Optimization'
 
 
-class GenerationPlotBase(cea.plots.PlotBase):
+class GenerationPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "optimization"
 

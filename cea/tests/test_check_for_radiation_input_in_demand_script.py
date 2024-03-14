@@ -3,8 +3,6 @@
 
 import os
 import unittest
-import cea.config
-import cea.inputlocator
 from cea import MissingInputDataException
 
 
@@ -15,6 +13,10 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
 
     This fixes the issue #222
     """
+
+    def test_gdal_import(self):
+        from osgeo import gdal
+        print(f'GDAL version: {gdal.__version__}')
 
     def test_demand_checks_radiation_daysim_script(self):
         import cea.demand.demand_main

@@ -7,7 +7,6 @@ NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature refere
 
 
 
-import os
 import cea.config
 import cea.inputlocator
 

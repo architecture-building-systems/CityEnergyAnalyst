@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 import cea.plots.cache
+from cea.plots.base import PlotBase
 
 """
 Implements py:class:`cea.plots.OptimizationOverviewPlotBase` as a base class for all plots in the category "optimization-overview" and also
@@ -27,7 +28,7 @@ __status__ = "Production"
 # identifies this package as a plots category and sets the label name for the category
 label = 'Scenario comparisons'
 
-class ComparisonsPlotBase(cea.plots.PlotBase):
+class ComparisonsPlotBase(PlotBase):
     """Implements properties / methods used by all plots in this category"""
     category_name = "comparisons"
 

@@ -30,6 +30,12 @@ def shutdown_worker_processes():
         kill_job(jobid)
 
 
+def shutdown_server():
+    print("Shutting down server...")
+    shutdown_worker_processes()
+    current_app.socketio.stop()
+
+
 @api.route("/alive")
 class ServerAlive(Resource):
     def get(self):
@@ -39,6 +45,5 @@ class ServerAlive(Resource):
 @api.route("/shutdown")
 class ServerShutdown(Resource):
     def post(self):
-        shutdown_worker_processes()
-        current_app.socketio.stop()
+        shutdown_server()
         return {'message': 'Shutting down...'}

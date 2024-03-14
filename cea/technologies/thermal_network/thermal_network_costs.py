@@ -10,16 +10,13 @@ import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
 from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 import cea.technologies.pumps as pumps
-import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cooling_tower as CTModel
-from cea.optimization.constants import PUMP_ETA
-from cea.optimization.lca_calculations import LcaCalculations
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
-from cea.analysis.costs.equations import calc_capex_annualized, calc_opex_annualized
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -209,7 +209,7 @@ def assign_attributes_additional(shapefile):
     if 'addr:housename' not in list_of_columns:
         shapefile['addr:housename'] = [''] * no_buildings
     if 'addr:housenumber' not in list_of_columns:
-        shapefile['addr:country'] = [''] * no_buildings
+        shapefile['addr:housenumber'] = [''] * no_buildings
     if 'residential' not in list_of_columns:
         shapefile['residential'] = [''] * no_buildings     #not HDB
 
@@ -424,8 +424,10 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
             typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
     except KeyError:
-        raise KeyError('No building type could be found in the OSM-database, for the selected zone. Please assign  an occupancy '
-                       'type in the zone-helper settings.')
+        print('No building type could be found in the OSM-database for the selected zone. '
+              'Applying `MULTI_RES` as default type.')
+        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
+
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(
@@ -435,7 +437,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
 def parse_year(year: Union[str, int]) -> int:
     import re
     # `start-date` formats can be found here https://wiki.openstreetmap.org/wiki/Key:start_date#Formatting
-    if type(year) == str:
+    if isinstance(year, str):
         # For year in "century" format e.g. `C19`
         century_year = re.search(r'C(\d{2})', year)
         if century_year:
@@ -498,16 +500,19 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
+    shapefile = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
-        # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-        building_parts = osmnx.geometries.geometries_from_polygon(polygon=poly['geometry'].values[0],
+        try:
+            # get all footprints in the district tagged as 'building' or 'building:part' in OSM
+            building_parts = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0],
                                                                   tags={"building": ["part"]})
-        shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
-        # using building:part tags requires fixing overlapping polygons
-        if not fix_overlapping:
-            print('Building parts included, fixing overlapping geometries activated.')
-            fix_overlapping = True
+            shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
+            # using building:part tags requires fixing overlapping polygons
+            if not fix_overlapping:
+                print('Building parts included, fixing overlapping geometries activated.')
+                fix_overlapping = True
+        except osmnx._errors.InsufficientResponseError:
+            pass
 
     # clean geometries
     shapefile = clean_geometries(shapefile)
@@ -564,7 +569,6 @@ def flatten_geometries(gdf):
     :return:
     """
     from shapely.ops import unary_union
-    import string
     DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
 
     # Explode MultiPolygons and GeometryCollections

@@ -6,13 +6,11 @@ Initializes the database of cea
 # J. A. Fonseca  script development          03.02.20
 
 
-
-
+from shutil import copytree
 
 import cea.config
 import cea.inputlocator
 import os
-from distutils.dir_util import copy_tree
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -38,20 +36,18 @@ def data_initializer(locator,
     if initialize_archetypes_database:
         complete_databases_path = os.path.join(databases_path, 'archetypes')
         complete_output_directory = locator.get_databases_archetypes_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
-        copy_tree(complete_databases_path, complete_output_directory)
+        copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
     if initialize_components_database:
         complete_databases_path = os.path.join(databases_path, 'components')
         complete_output_directory = locator.get_databases_systems_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
-        copy_tree(complete_databases_path, complete_output_directory)
+        copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
     if initialize_assemblies_database:
         complete_databases_path = os.path.join(databases_path, 'assemblies')
         complete_output_directory = locator.get_databases_assemblies_folder()
-        os.makedirs(complete_output_directory, exist_ok=True)
-        copy_tree(complete_databases_path, complete_output_directory)
+        copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
+
 
 def main(config):
     """

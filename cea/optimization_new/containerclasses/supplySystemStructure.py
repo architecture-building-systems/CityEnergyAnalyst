@@ -75,7 +75,7 @@ class SupplySystemStructure(object):
 
     @system_type.setter
     def system_type(self, new_system_type):
-        if not (new_system_type in ['cooling', 'heating']):
+        if new_system_type not in ['cooling', 'heating']:
             raise TypeError("The indicated system type is invalid. The only two types currently allowed are 'heating'"
                             "and 'cooling'.")
         else:
@@ -355,11 +355,11 @@ class SupplySystemStructure(object):
         max_tertiary_components_demand = {}
         max_tertiary_demand_flow = {}
         for ec_code in all_main_tertiary_ecs:
-            if not (ec_code in max_tertiary_demand_from_primary.keys()):
+            if ec_code not in max_tertiary_demand_from_primary.keys():
                 max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_secondary[ec_code]
                 max_tertiary_demand_flow[ec_code] = EnergyFlow('secondary', 'tertiary', ec_code,
                                                                pd.Series(max_tertiary_demand_from_secondary[ec_code]))
-            elif not (ec_code in max_tertiary_demand_from_secondary.keys()):
+            elif ec_code not in max_tertiary_demand_from_secondary.keys():
                 max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_primary[ec_code]
                 max_tertiary_demand_flow[ec_code] = EnergyFlow('primary', 'tertiary', ec_code,
                                                                pd.Series(max_tertiary_demand_from_primary[ec_code]))

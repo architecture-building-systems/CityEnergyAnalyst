@@ -9,7 +9,6 @@ and recalculates the imports from grid and exports to the grid
 
 
 
-import os
 
 import numpy as np
 import pandas as pd

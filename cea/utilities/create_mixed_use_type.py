@@ -7,7 +7,6 @@ This script creates a new use-type by aggregating values from a list of differen
 
 import os
 
-import numpy as np
 import pandas as pd
 
 import cea
