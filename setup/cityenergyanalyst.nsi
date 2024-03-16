@@ -127,9 +127,6 @@ Section "Base Installation" Base_Installation_Section
     CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
-    CreateShortcut "$INSTDIR\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
 SectionEnd
 
 Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
@@ -142,9 +139,6 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
-
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
@@ -153,10 +147,10 @@ SectionEnd
 
 Section /o "Developer version" Clone_Repository_Section
 
-    DetailPrint "Cloning GitHub Repository ${CEA_REPO_URL}"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" git clone ${CEA_REPO_URL}'
+    DetailPrint 'Cloning GitHub Repository ${CEA_REPO_URL} to "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" git clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
@@ -168,9 +162,6 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
-
-    CreateShortcut "$DESKTOP\cea.config.lnk" "$WINDIR\notepad.exe" "$PROFILE\cea.config" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Open CEA Configuration file"
 
 SectionEnd
 
@@ -185,21 +176,15 @@ Section "Uninstall"
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
-    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\cea.config.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
     RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
     Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
-    Delete /REBOOTOK "$DESKTOP\cea.config.lnk"
-
-    ; Delete the cea.config file
-    Delete /REBOOTOK "$PROFILE\cea.config"
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
-    Delete /REBOOTOK "$INSTDIR\cea.config.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
     Delete /REBOOTOK "$INSTDIR\dashboard.bat"
     RMDir /R /REBOOTOK "$INSTDIR\dashboard"
