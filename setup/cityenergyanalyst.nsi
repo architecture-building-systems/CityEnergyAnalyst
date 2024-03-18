@@ -29,10 +29,9 @@ CRCCheck On
 
 Function .onInit
     !insertmacro MULTIUSER_INIT
-    # set default installation directory to Documents if in CurrentUser mode
-    ${If} "$MultiUser.InstallMode" == "CurrentUser"
-        StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
-    ${EndIf}
+
+    # set default installation directory to Documents
+    StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
 FunctionEnd
 
 ;--------------------------------

@@ -132,7 +132,7 @@ class JobError(Resource):
     def post(self, jobid):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
-        job.error = request.data
+        job.error = request.data.decode()
         if job.id in worker_processes:
             del worker_processes[job.id]
         current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
