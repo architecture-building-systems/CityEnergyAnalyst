@@ -121,7 +121,9 @@ Source for descriptions of the parameters: [^cea-desc].
 
 #### HVAC_ASSMEBLIES
 
-Used  standard values of CEA for all types. HVAC_HEATING_AS1 or HVAC_HEATING_AS2 depending on TABULA typology, HVAC_COOLING_AS3, HVAC_HOTWATER_AS1, HVAC_CONTROLLER_AS1, HVAC_VENTILATION_AS2.
+Used  standard values of CEA for all types. HVAC_HEATING_AS1 (90/70 radiators °C) or HVAC_HEATING_AS2 (70/55 °C) depending on TABULA typology and renovations tatus. Used HVAC_VENTILATION_AS2 or HVAC_VENTILATION_AS0 depending on EPISCOPE Advanced Reonvation scenario including heat recovery in the ventilation.
+
+HVAC_COOLING_AS3, HVAC_HOTWATER_AS1, HVAC_CONTROLLER_AS1 used for all types. 
 
 Heating starting and ending dates are assumed all year and no cooling demands (heat_starts = 01|09 and heat_ends = 31|08; cool_starts and cool_ends = 00|00). Alternatively, the "Mietrecht" (tenancy law) in Germany requires heating from 01|10 until 30|04.
 
