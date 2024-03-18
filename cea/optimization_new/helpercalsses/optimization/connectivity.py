@@ -241,7 +241,7 @@ class ConnectivityVector(object):
         elif algorithm.mutation == 'ClusterSwitch':
             if not ConnectivityVector._cluster_indexes:
                 ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
-            mutated_cv = ConnectivityVector.ClusterSwitch(cv, algorithm.mut_prob)
+            mutated_cv = ConnectivityVector.mutClusterSwitch(cv, algorithm.mut_prob)
         else:
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
                              f"connectivity vectors.")
@@ -252,7 +252,7 @@ class ConnectivityVector(object):
         return mutated_cv
 
     @staticmethod
-    def ClusterSwitch(cv, mut_prob:float):
+    def mutClusterSwitch(cv, mut_prob:float):
         """
         Mutate the connectivity vector (inplace) by switching all switching buildings in the same cluster to a random
         other connectivity value with a probability of mut_prob.
@@ -280,7 +280,7 @@ class ConnectivityVector(object):
                         if random.random() < mut_prob:
                             cv[i] = random.choice(possible_connections)
                             
-        return cv
+        return cv,
 
     @staticmethod
     def mate(cv_1, cv_2, algorithm=None, connection_points:list=None):
@@ -300,11 +300,11 @@ class ConnectivityVector(object):
         elif algorithm.crossover == 'ClusterSwap':
             if not ConnectivityVector._cluster_indexes:
                 ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
-            recombined_cvs = ConnectivityVector.ClusterSwap(cv_1, cv_2, algorithm.cx_prob)
+            recombined_cvs = ConnectivityVector.cxClusterSwap(cv_1, cv_2, algorithm.cx_prob)
         elif algorithm.crossover == 'ClusterAlignment':
             if not ConnectivityVector._cluster_indexes:
                 ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
-            recombined_cvs = ConnectivityVector.ClusterAlignment(cv_1, cv_2, algorithm.cx_prob)
+            recombined_cvs = ConnectivityVector.cxClusterAlignment(cv_1, cv_2, algorithm.cx_prob)
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "
                              f"connectivity vectors.")
@@ -316,7 +316,7 @@ class ConnectivityVector(object):
         return recombined_cvs
 
     @staticmethod
-    def ClusterSwap(cv_1, cv_2, cx_prob):
+    def cxClusterSwap(cv_1, cv_2, cx_prob):
         """
         Recombine two connectivity vectors by exchanging the connectivity values of some of their clusters. Outliers
         remain unchanged by this operation.
@@ -348,7 +348,7 @@ class ConnectivityVector(object):
         return selected_values
 
     @staticmethod
-    def ClusterAlignment(cv_1, cv_2, cx_prob):
+    def cxClusterAlignment(cv_1, cv_2, cx_prob):
         """
         Recombine two connectivity vectors by exchanging the connectivity values of the buildings where:
          1. they deviate from the most prevalent connectivity value of the cluster they belong to and
