@@ -70,6 +70,7 @@ The reference will be updated as soon as it underwent the review process and has
 - WW: domestic hot water
 - IWU: Institut Wohnen und Umwelt
 - BMVBS: Bundesministerium für Verkehr, Bau und Stadtentwicklung; now called Bundesministerium für Digitales und Verkehr.
+- GDR: German Democratic Republic ("East Germany" before unification)
 
 ## Archetypes
 
@@ -77,10 +78,12 @@ The naming convention for the buildings is defined as follows:
 
 `Building Type(_Category)_Age(_Refurbishment status)`
 
-For example, for a multi-family home, with normal refurbishment from the 80s: `MFH_H_NR`. For a commercial building destined to services with a generalized profile: `NWG_G1_A`.
+For example, for a multi-family home, with normal refurbishment from the 80s: `MFH_H_NR`.
+For a commercial building destined to services with a generalized profile: `NWG_G1_A`.
 
 The Category is included only for non-residential buildings for the IWU typology,
-while the Refurbishment status is only available for residential buildings.
+while the Refurbishment status is only available for residential buildings. An additional
+term `-EAST` designates the eastern german (former GDR) buildings.
 
 ### CONSTRUCTION_STANDARD
 
