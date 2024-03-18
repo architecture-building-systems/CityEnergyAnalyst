@@ -27,13 +27,6 @@ CRCCheck On
 ;Request application privileges for Windows Vista
 #RequestExecutionLevel user
 
-Function .onInit
-    !insertmacro MULTIUSER_INIT
-
-    # set default installation directory to Documents
-    StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
-FunctionEnd
-
 ;--------------------------------
 ;Interface Settings
 
@@ -58,6 +51,19 @@ FunctionEnd
 ;Languages
 
 !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+;Callback Functions
+
+Function .onInit
+    !insertmacro MULTIUSER_INIT
+    # set default installation directory to Documents
+    StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
+FunctionEnd
+
+Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
+FunctionEnd
 
 ;--------------------------------
 ;Installer Sections
@@ -164,10 +170,6 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
 
 SectionEnd
-
-Function un.onInit
-  !insertmacro MULTIUSER_UNINIT
-FunctionEnd
 
 ;Uninstaller Section
 
