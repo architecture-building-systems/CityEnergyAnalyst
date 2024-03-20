@@ -160,7 +160,7 @@ SectionEnd
 Section /o "Developer version" Clone_Repository_Section
 
     DetailPrint 'Installing git to CEA environment'
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" -r "$INSTDIR\dependencies\micromamba" -n cea install git -y'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" -r "$INSTDIR\dependencies\micromamba" -n cea install git -c conda-forge -y'
 
     DetailPrint 'Cloning GitHub Repository ${CEA_REPO_URL} to "$INSTDIR\CityEnergyAnalyst"'
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea git clone ${CEA_REPO_URL}'
