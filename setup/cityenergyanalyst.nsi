@@ -8,6 +8,7 @@
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
 !define MULTIUSER_INSTALLMODE_INSTDIR "CityEnergyAnalyst"
+!define MULTIUSER_INSTALLMODE_FUNCTION onMultiUserModeChanged
 !define MULTIUSER_MUI
 
 !include MultiUser.nsh
@@ -57,12 +58,17 @@ CRCCheck On
 
 Function .onInit
     !insertmacro MULTIUSER_INIT
-    # set default installation directory to Documents
-    StrCpy $INSTDIR "$DOCUMENTS\CityEnergyAnalyst"
 FunctionEnd
 
 Function un.onInit
   !insertmacro MULTIUSER_UNINIT
+FunctionEnd
+
+Function onMultiUserModeChanged
+# set default installation directory to Documents if CurrentUser mode
+${If} $MultiUser.InstallMode == "CurrentUser"
+    StrCpy $INSTDIR "$DOCUMENTS\${MULTIUSER_INSTALLMODE_INSTDIR}"
+${EndIf}
 FunctionEnd
 
 ;--------------------------------
