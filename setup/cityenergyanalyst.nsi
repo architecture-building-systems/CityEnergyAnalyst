@@ -159,10 +159,13 @@ SectionEnd
 
 Section /o "Developer version" Clone_Repository_Section
 
+    DetailPrint 'Installing git to CEA environment'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" -r "$INSTDIR\dependencies\micromamba" -n cea install git -y'
+
     DetailPrint 'Cloning GitHub Repository ${CEA_REPO_URL} to "$INSTDIR\CityEnergyAnalyst"'
-    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" git clone ${CEA_REPO_URL}'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea git clone ${CEA_REPO_URL}'
     DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\cea-env.bat" pip install -e "$INSTDIR\CityEnergyAnalyst"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 
