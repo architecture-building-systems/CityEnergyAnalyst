@@ -1,3 +1,11 @@
+- 2024-03-20 - 3.35.4 - #3531 Correctly set installation directory for CurrentUser mode for Windows setup
+- 2024-03-20 - 3.35.4 - #3530 Add missing schema keys
+- 2024-03-16 - 3.35.4 - #3525 Fix Windows setup bugs regarding developer version
+- 2024-03-11 - 3.35.4 - #3522 Use copytree from shutil instead of copy_tree
+- 2024-03-11 - 3.35.4 - #3523 Always set default installation directory to Documents
+- 2024-03-05 - 3.35.4 - #3515 Use https for osm map tiles
+- 2024-03-05 - 3.35.4 - #3510 Add workflow to build mac dmg
+- 2024-02-23 - 3.35.4 - #3505 Release 3.35.4
 - 2024-02-23 - 3.35.3 - #3503 Fix fetching all optimization classes for Windows
 - 2024-02-22 - 3.35.3 - #3496 Fixing surroundings helper with uploaded building footprints.
 - 2024-02-21 - 3.35.3 - #3501 Fix libraries for wntr in Apple Silicon machines
