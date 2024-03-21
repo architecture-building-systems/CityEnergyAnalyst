@@ -176,7 +176,7 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWMAXIMIZED "" "Launch the CEA Dashboard"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
 SectionEnd
 
