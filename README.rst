@@ -10,8 +10,6 @@
    :target: https://doi.org/10.5281/zenodo.10847779
 
 .. image:: cea_logo.png
-    :height: 420 px
-    :width: 1500 px
     :scale: 25 %
     :alt: City Energy Analyst (CEA) logo
     :target: https://www.cityenergyanalyst.com
