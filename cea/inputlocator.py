@@ -491,11 +491,6 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xlsx')
 
-    def get_database_supply_assemblies_new(self):
-        """Returns the database of basic supply system compositions for stand-alone buildings in the energy system
-        optimisation. """
-        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY_NEW.xlsx')
-
     def get_database_air_conditioning_systems(self):
         return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xlsx')
 
@@ -533,10 +528,6 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xlsx')
 
-    def get_database_energy_carriers(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'ENERGY_CARRIERS.xlsx')
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""

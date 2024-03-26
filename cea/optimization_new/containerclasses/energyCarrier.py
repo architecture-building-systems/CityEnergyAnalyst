@@ -172,7 +172,8 @@ class EnergyCarrier(object):
 
     @staticmethod
     def _load_energy_carriers(locator):
-        EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_energy_carriers())
+        EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_feedstocks(),
+                                                                 sheet_name='ENERGY_CARRIERS')
 
     @staticmethod
     def _extract_thermal_energy_carriers():

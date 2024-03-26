@@ -133,7 +133,7 @@ class Building(object):
 
         # load the 'assemblies'-supply systems database as a class variable
         if Building._supply_system_database.empty:
-            supply_systems_database_file = pd.ExcelFile(file_locator.get_database_supply_assemblies_new())
+            supply_systems_database_file = pd.ExcelFile(file_locator.get_database_supply_assemblies())
             if energy_system_type == 'DH':
                 Building._supply_system_database = pd.read_excel(supply_systems_database_file, 'HEATING')
             elif energy_system_type == 'DC':
