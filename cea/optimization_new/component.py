@@ -68,7 +68,7 @@ class Component(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
-        Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems_new(), None)
+        Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems(), None)
         Component._model_complexity = domain.config.optimization_new.component_efficiency_model_complexity
         Component.code_to_class_mapping = Component.create_code_mapping(Component._components_database)
         AbsorptionChiller.initialize_subclass_variables(Component._components_database)
