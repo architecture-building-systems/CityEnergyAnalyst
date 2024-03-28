@@ -29,21 +29,25 @@ class SupplySystemsDatabase(object):
         self.ENERGY_CARRIERS = energy_carriers_worksheet
         self.FEEDSTOCKS = feedstocks_worksheets
         self.PIPING = distribution_systems_worksheets["THERMAL_GRID"]
-        self.PV = conversion_systems_worksheets["PV"]
-        self.SC = conversion_systems_worksheets["SC"]
-        self.PVT = conversion_systems_worksheets["PVT"]
-        self.Boiler = conversion_systems_worksheets["Boiler"]
-        self.Furnace = conversion_systems_worksheets["Furnace"]
-        self.FC = conversion_systems_worksheets["FC"]
-        self.CCGT = conversion_systems_worksheets["CCGT"]
-        self.Chiller = conversion_systems_worksheets["Chiller"]
-        self.Absorption_chiller = conversion_systems_worksheets["Absorption_chiller"]
-        self.CT = conversion_systems_worksheets["CT"]
-        self.HEX = conversion_systems_worksheets["HEX"]
-        self.BH = conversion_systems_worksheets["BH"]
-        self.HP = conversion_systems_worksheets["HP"]
-        self.TES = conversion_systems_worksheets["TES"]
-        self.Pump = conversion_systems_worksheets["Pump"]
+        self.PHOTOVOLTAIC_PANELS = conversion_systems_worksheets["PHOTOVOLTAIC_PANELS"]
+        self.SOLAR_THERMAL_PANELS = conversion_systems_worksheets["SOLAR_THERMAL_PANELS"]
+        self.PHOTOVOLTAIC_THERMAL_PANELS = conversion_systems_worksheets["PHOTOVOLTAIC_THERMAL_PANELS"]
+        self.BOILERS = conversion_systems_worksheets["BOILERS"]
+        self.COGENERATION_PLANTS = conversion_systems_worksheets["COGENERATION_PLANTS"]
+        self.HEAT_EXCHANGERS = conversion_systems_worksheets["HEAT_EXCHANGERS"]
+        self.CHILLER_CONFIGURATION = conversion_systems_worksheets["CHILLER_CONFIGURATION"]
+        self.VAPOR_COMPRESSION_CHILLERS = conversion_systems_worksheets["VAPOR_COMPRESSION_CHILLERS"]
+        self.ABSORPTION_CHILLERS = conversion_systems_worksheets["ABSORPTION_CHILLERS"]
+        self.COOLING_TOWERS = conversion_systems_worksheets["COOLING_TOWERS"]
+        self.FUEL_CELLS = conversion_systems_worksheets["FUEL_CELLS"]
+        self.UNITARY_AIR_CONDITIONERS = conversion_systems_worksheets["UNITARY_AIR_CONDITIONERS"]
+        self.HEAT_PUMPS = conversion_systems_worksheets["HEAT_PUMPS"]
+        self.THERMAL_ENERGY_STORAGES = conversion_systems_worksheets["THERMAL_ENERGY_STORAGES"]
+        self.POWER_TRANSFORMERS = conversion_systems_worksheets["POWER_TRANSFORMERS"]
+        self.HYDRAULIC_PUMPS = conversion_systems_worksheets["HYDRAULIC_PUMPS"]
+        self.BORE_HOLES = conversion_systems_worksheets["BORE_HOLES"]
+
+
 
     def read_excel(self, locator):
         """Read in the excel file, using the cache _locators"""

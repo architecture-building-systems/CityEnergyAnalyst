@@ -498,6 +498,7 @@ class InputLocator(object):
         """databases/Systems/envelope_systems.csv"""
         return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xlsx')
 
+
     def get_database_conversion_systems(self):
         """Returns the database of supply components for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
@@ -508,7 +509,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_database_conversion_systems()):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="TES")
+        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="THERMAL_ENERGY_STORAGES")
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
