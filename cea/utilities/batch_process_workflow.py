@@ -1,7 +1,9 @@
 """
 Batch processing CEA commands over all scenarios in a project.
-This is a first exploration for the ETH MiBS IDP 2023.
+This was originally explored and created for the ETH MiBS IDP 2023.
 """
+
+# TODO: change the hard-coded path; this is subject to a structural separation of project-based CEA Features from scenario-based CEA Features
 
 import os
 import subprocess
@@ -19,6 +21,10 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# adding CEA to the environment
+# Fix for running in PyCharm for users using micromamba
+my_env = os.environ.copy()
+my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
 
 def exec_cea_commands(config, cea_scenario):
     """
@@ -58,11 +64,6 @@ def exec_cea_commands(config, cea_scenario):
     thermal_network_operation = config.batch_process_workflow.thermal_network_operation
 
     optimization = config.batch_process_workflow.optimization
-
-    # adding CEA to the environment
-    # Fix for running in PyCharm for users using micromamba
-    my_env = os.environ.copy()
-    my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
 
     # execute selected CEA commands
     if zone_csv_to_shp:
@@ -214,6 +215,15 @@ def main(config):
             if err_msg is not None:
                 print(err_msg.decode())
             raise e
+
+    # Read and summarise project results
+    project_result_summary = config.batch_process_workflow.result_summary
+    if project_result_summary and project_boolean:
+        subprocess.run(['cea', 'result-reader-summary', '--all-scenarios', 'true'], env=my_env, check=True, capture_output=True)
+    elif project_result_summary and not project_boolean:
+        subprocess.run(['cea', 'result-reader-summary', '--all-scenarios', 'false'], env=my_env, check=True, capture_output=True)
+
+
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
