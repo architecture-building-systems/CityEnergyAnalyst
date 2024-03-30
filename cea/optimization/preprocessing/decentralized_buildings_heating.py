@@ -71,9 +71,9 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
 def disconnected_heating_for_building(building_name, supply_systems, T_ground_K, geothermal_potential_data, lca,
                                       locator, prices):
     print('{building_name} disconnected heating supply system simulations...'.format(building_name=building_name))
-    GHP_cost_data = supply_systems.HP
-    BH_cost_data = supply_systems.BH
-    boiler_cost_data = supply_systems.Boiler
+    GHP_cost_data = supply_systems.HEAT_PUMPS
+    BH_cost_data = supply_systems.BORE_HOLES
+    boiler_cost_data = supply_systems.BOILERS
 
     # run substation model to derive temperatures of the building
     substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", ""))
@@ -219,7 +219,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     Opex_a_fixed_USD[1][0] = Opex_a_fixed_Boiler_USD
     Capex_opex_a_fixed_only_USD[1][0] = Capex_a_Boiler_USD + Opex_a_fixed_Boiler_USD  # TODO:variable price?
     # 2: Fuel Cell
-    Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom_W, supply_systems.FC)
+    Capex_a_FC_USD, Opex_fixed_FC_USD, Capex_FC_USD = FC.calc_Cinv_FC(Qnom_W, supply_systems.FUEL_CELLS)
     Capex_total_USD[2][0] = Capex_FC_USD
     Capex_a_USD[2][0] = Capex_a_FC_USD
     Opex_a_fixed_USD[2][0] = Opex_fixed_FC_USD
