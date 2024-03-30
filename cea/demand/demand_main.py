@@ -7,6 +7,7 @@ import os
 import time
 import warnings
 from itertools import repeat
+from datetime import datetime
 
 import cea.config
 import cea.inputlocator
@@ -74,6 +75,9 @@ def demand_calculation(locator, config):
     year = weather_data['year'][0]
     # create date range for the calculation year
     date_range = get_date_range_hours_from_year(year)
+    # set sampling dates for the anthropogenic heat emissions
+    sampling_dates = ['01-01-2005', '29-08-2005', '08-10-2005']
+    sampling_date_datetimes = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_dates]
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     print('Running demand calculation for the following buildings=%s' % building_names)
@@ -103,23 +107,26 @@ def demand_calculation(locator, config):
     calc_thermal_loads = cea.utilities.parallel.vectorize(thermal_loads.calc_thermal_loads,
                                                           config.get_number_of_processes(), on_complete=print_progress)
 
-    calc_thermal_loads(
+    building_ah_emissions = calc_thermal_loads(
         building_names,
         [building_properties[b] for b in building_names],
         repeat(weather_data, n),
         repeat(date_range, n),
+        repeat(sampling_date_datetimes, n),
         repeat(locator, n),
         repeat(use_dynamic_infiltration, n),
         repeat(resolution_output, n),
         repeat(loads_output, n),
         repeat(massflows_output, n),
         repeat(temperatures_output, n),
-         repeat(config, n),
+        repeat(config, n),
         repeat(debug, n))
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     writer_totals.write_to_csv(building_names, locator)
+    writer_ah_emissions = demand_writers.AnthropogenicHeatWriter(building_ah_emissions, sampling_date_datetimes, locator)
+    writer_ah_emissions.write_to_geojson()
     time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
 
