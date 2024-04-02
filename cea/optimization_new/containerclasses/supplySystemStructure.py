@@ -252,6 +252,7 @@ class SupplySystemStructure(object):
 
     @staticmethod
     def _get_component_priorities(optimisation_config):
+        print(optimisation_config)
         """
         Get the chosen component priorities from the optimisation configurations.
         """
@@ -267,8 +268,12 @@ class SupplySystemStructure(object):
             component_types_list.append(ActiveComponent.get_types(technology))
 
         for technology in optimisation_config.heat_rejection_components:
+            print(technology)
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
+
+        #active_components_list.append(ActiveComponent.get_subclass("HeatSink"))
+        #component_types_list.append(ActiveComponent.get_types("HeatSink"))
 
         component_types_tuple = tuple([type_code
                                        for component_types in component_types_list
@@ -386,7 +391,6 @@ class SupplySystemStructure(object):
                                                                                                     'tertiary',
                                                                                                     'primary or secondary')
                                                  for ec_code, max_flow in max_tertiary_components_demand.items()}
-
         # determine dependencies between secondary and primary components
         maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
         shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
@@ -528,6 +532,7 @@ class SupplySystemStructure(object):
         all_active_component_classes = [component_class for component_class in
                                         SupplySystemStructure._active_component_classes
                                         if component_class.main_side == main_side]
+        print(all_active_component_classes)
         viable_component_models = [[component_class, component_class.possible_main_ecs[main_energy_carrier]]
                                    for component_class in all_active_component_classes
                                    if main_energy_carrier in component_class.possible_main_ecs.keys()]

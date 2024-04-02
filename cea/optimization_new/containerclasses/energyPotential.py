@@ -126,7 +126,7 @@ class EnergyPotential(object):
             main_potential_flow_profile = geothermal_potential.QGHP_kW
             average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            self.main_potential.generate('source', 'tertiary', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None
@@ -139,7 +139,7 @@ class EnergyPotential(object):
             main_potential_flow_profile = water_body_potential.QLake_kW
             average_return_temperature = self._get_average_temp(water_body_potential.Ts_C)
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            self.main_potential.generate('source', 'tertiary', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None
@@ -152,7 +152,7 @@ class EnergyPotential(object):
             main_potential_flow_profile = sewage_potential.Qsw_kW
             average_return_temperature = self._get_average_temp(sewage_potential.Ts_C)
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            self.main_potential.generate('source', 'tertiary', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None

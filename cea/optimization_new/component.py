@@ -80,6 +80,7 @@ class Component(object):
         CoolingTower.initialize_subclass_variables(Component._components_database)
         PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
+        HeatSink.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -710,6 +711,76 @@ class CoolingTower(ActiveComponent):
         possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
                                   for ec in model_and_ec_code_match['ec'].unique()}
         CoolingTower.possible_main_ecs = possible_main_ecs_dict
+
+class HeatSink(ActiveComponent):
+
+    main_side = 'input'
+    _database_tab = 'cooling_towers'
+
+    def __init__(self, ct_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(HeatSink._database_tab, ct_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.aux_power_share = self._model_data['aux_power'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_in_design'].values[0]))]
+
+    def operate(self, heat_rejection):
+        """
+        Operate the cooling tower, so that it rejects the targeted amount of heat. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heat_rejection: Targeted heat rejection from the cooling tower's water loop
+        :type heat_rejection: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Power supply required to reject the targeted amount of heat
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        self._check_operational_requirements(heat_rejection)
+
+        # initialize energy flows
+        electricity_in = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+        anthropogenic_heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
+
+        # run operational/efficiency code
+        if Component._model_complexity == 'constant':
+            electricity_in.profile, anthropogenic_heat_out.profile = self._constant_efficiency_operation(heat_rejection)
+        else:
+            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
+                             f"implemented for {self.technology}")
+
+        # reformat outputs to dicts
+        input_energy_flows = {self.input_energy_carriers[0].code: electricity_in}
+        output_energy_flows = {self.output_energy_carriers[0].code: anthropogenic_heat_out}
+
+        return input_energy_flows, output_energy_flows
+
+    def _constant_efficiency_operation(self, heat_rejection_load):
+        """ Operate cooling tower assuming a constant electrical efficiency rating. """
+        electricity_flow, anthropogenic_heat_out = calc_CT_const(heat_rejection_load.profile, self.aux_power_share)
+        return electricity_flow, anthropogenic_heat_out
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
+        variable.
+        """
+        ct_database = components_database[HeatSink._database_tab]
+        hot_water_temperatures = ct_database['T_water_in_design'].unique()
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        HeatSink.possible_main_ecs = possible_main_ecs_dict
 
 
 class PowerTransformer(PassiveComponent):
