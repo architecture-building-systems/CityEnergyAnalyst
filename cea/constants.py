@@ -64,7 +64,10 @@ MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
 H0_KWPERM2K = 1.5  # kW/m2K # heat transfer coefficient/ got from Rabtherm technology
 
-#ground temperature values
+# ==============================================================================================================
+# geothermal potential
+# ==============================================================================================================
+
 SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
 SOIL_lambda_WmK = 1.6
 SOIL_rho_kgm3 = 1600
@@ -84,3 +87,30 @@ BOLTZMANN = 0.000000056697  # W/m2K4
 
 # KELVIN TO DEGREE CELSIUS CONVERSION
 KELVIN_OFFSET = 273.0
+
+# ==============================================================================================================
+# datacenter heat integration
+# ==============================================================================================================
+
+P_UPS = 52500 #[W]
+P_D = 275000 #[W]
+E = 18 #[W]
+# Values are estimated from typical values in the context of Singapore data centers
+
+# ==============================================================================================================
+# water body integration
+# ==============================================================================================================
+
+max_delta_T = 0.5 #K
+# Fink, Gabriel 2014. “Large Lakes as Sources and Sinks of Anthropogenic Heat:Capacities and Limits.”
+area_tot = 3 #km2
+water_vol = 0.016 #km3
+max_depth_res = 20 #m
+average_depth_res = 5 #m
+length_reservoir = 4 #km
+T_sup = 30 #°C
+T_bot = 27 #°C
+Mixed_Layer_Depth = 1 #m #Defined with a decrease in temperature of 0.5°C, as from Wells, Mathew G. “Surface Mixed Layers in Lakes.”
+
+# All the reservoir data refer to Kranji reservoir and were taken from:
+# Xing, Zikun, Derek A. Fong “Water and Heat Budgets of a Shallow Tropical Reservoir.”
