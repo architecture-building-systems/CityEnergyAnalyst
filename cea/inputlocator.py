@@ -1123,7 +1123,7 @@ class InputLocator(object):
         if not sensible_or_latent in ['SH', 'LH']:
             raise ValueError('sensible_or_latent must be either SH or LH')
         file_name = 'buildings_%(sensible_or_latent)s_%(date_str)s.%(format)s' % locals()
-        return os.path.join(self.get_ah_emission_results_folder(), file_name)
+        return os.path.join(solution_folder, file_name)
 
 
     # EMISSIONS
