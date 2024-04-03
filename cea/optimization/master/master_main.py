@@ -9,7 +9,7 @@ from math import sqrt
 import numpy as np
 import pandas as pd
 from deap import algorithms
-from deap import tools, base
+from deap import tools, base, creator
 
 
 import cea.config
