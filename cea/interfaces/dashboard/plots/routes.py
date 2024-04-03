@@ -17,7 +17,6 @@ blueprint = Blueprint(
     __name__,
     url_prefix='/plots',
     template_folder='templates',
-    static_folder='static',
 )
 
 

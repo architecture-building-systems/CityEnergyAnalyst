@@ -12,7 +12,7 @@ import cea.plots.cache
 def main(config):
     config.restricted_to = None  # allow access to the whole config file
     plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__, static_folder='base/static')
+    app = Flask(__name__)
     CORS(app)
     app.config.from_mapping({'SECRET_KEY': 'secret'})
     socketio = SocketIO(app, cors_allowed_origins="*")

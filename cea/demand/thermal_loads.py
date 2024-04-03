@@ -8,6 +8,7 @@ Demand model of thermal loads
 
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 from cea.demand import demand_writers
@@ -17,10 +18,11 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
+from cea.demand.anthropogenic_heat_emissions import AnthropogenicHeatEmissions
 from cea.utilities import reporting
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
+def calc_thermal_loads(building_name, bpr, weather_data, date_range, sampling_dates, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, config, debug):
     """
@@ -158,11 +160,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
     tsd = electrical_loads.calc_E_sys(tsd)  # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
+    # CALCULATE ANTHROPOGENIC HEAT PROFILE
+    building_ah_profile = AnthropogenicHeatEmissions(building_name, tsd, sampling_dates, date_range)
+
     # WRITE SOLAR RESULTS
     write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug)
 
-    return
+    return building_ah_profile
 
 
 def calc_QH_sys_QC_sys(tsd):
@@ -180,6 +185,18 @@ def write_results(bpr, building_name, date, loads_output, locator, massflows_out
         writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
     else:
         raise Exception('error')
+
+    # TODO: -- replace this with a config input in the future
+    ah_emission_output_date_stamps = '2005-01-01', '2005-09-22', '2005-09-28'
+    ah_emission_output_dates = [datetime.strptime(date, '%Y-%m-%d') for date in ah_emission_output_date_stamps]
+
+    # write anthopogenic heat emission output files
+    if not any([ah_emission_date in date for ah_emission_date in ah_emission_output_dates]):
+        raise ValueError('The indicated dates for anthropogenic heat emissions are not part of the simulation period.')
+    else:
+        for date in ah_emission_output_dates:
+            ah_emissions_file = locator.get_ah_emission_results_file(date)
+            # writer.add_ah_emissions(ah_emissions_file, tsd)
 
     if debug:
         print('Creating instant plotly visualizations of demand variable time series.')
