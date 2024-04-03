@@ -7,7 +7,7 @@ the `MonthlyDemandWriter`.
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from geojson import Feature, FeatureCollection, dump
+from geojson import Feature, FeatureCollection
 
 FLOAT_FORMAT = '%.3f'
 
