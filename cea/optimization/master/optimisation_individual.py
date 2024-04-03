@@ -16,7 +16,7 @@ __status__ = "Production"
 
 from deap.base import Fitness
 
-from cea.optimization.constants import DH_ACRONYM, DC_ACRONYM
+from cea.constants import DH_ACRONYM, DC_ACRONYM
 
 
 class Individual(list):
