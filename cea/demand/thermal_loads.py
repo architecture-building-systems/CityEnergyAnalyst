@@ -186,18 +186,6 @@ def write_results(bpr, building_name, date, loads_output, locator, massflows_out
     else:
         raise Exception('error')
 
-    # TODO: -- replace this with a config input in the future
-    ah_emission_output_date_stamps = '2005-01-01', '2005-09-22', '2005-09-28'
-    ah_emission_output_dates = [datetime.strptime(date, '%Y-%m-%d') for date in ah_emission_output_date_stamps]
-
-    # write anthopogenic heat emission output files
-    if not any([ah_emission_date in date for ah_emission_date in ah_emission_output_dates]):
-        raise ValueError('The indicated dates for anthropogenic heat emissions are not part of the simulation period.')
-    else:
-        for date in ah_emission_output_dates:
-            ah_emissions_file = locator.get_ah_emission_results_file(date)
-            # writer.add_ah_emissions(ah_emissions_file, tsd)
-
     if debug:
         print('Creating instant plotly visualizations of demand variable time series.')
         print('Behavior can be changed in cea.utilities.reporting code.')
