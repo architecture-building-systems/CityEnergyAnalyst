@@ -309,6 +309,7 @@ class Domain(object):
             self._write_supply_systems_to_csv(des)
 
             # generate anthropogenic heat emission data for selected sampling dates
+            # TODO: import these dates from a configuration file
             from datetime import datetime # declared here to avoid compatibility issues with the multiprocessing module
             sampling_date_strings = ['01-01-2005', '29-08-2005', '08-10-2005']
             sampling_dates = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_date_strings]
@@ -441,8 +442,8 @@ class Domain(object):
                 ah_features.append(Feature(geometry=location, properties=properties))
 
             district_ah_features[date] = FeatureCollection(ah_features)
-
-        self._write_to_geojson(district_ah_features)
+            with open(self.locator.get_ah_emission_results_file(date, district_energy_system.identifier), 'w') as file:
+                file.write(str(district_ah_features[date]))
 
         return district_ah_features
 
@@ -453,12 +454,6 @@ class Domain(object):
                                    [index for index, date in enumerate(weather_dates) if date == sampling_date]
                                for sampling_date in sampling_dates}
         return sampling_time_steps
-
-    def _write_to_geojson(self, feature_collection, date):
-        """Write the anthropogenic heat emissions to a geojson file"""
-        
-
-        return date
 
     @staticmethod
     def _write_system_structure(results_file, supply_system):
