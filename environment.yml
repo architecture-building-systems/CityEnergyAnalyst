@@ -40,6 +40,8 @@ dependencies:
 - xlrd
 - xlwt
 - pyarrow
+- git
+- yarn
 - pip:
   - staticmap
   - wntr==0.2.3
