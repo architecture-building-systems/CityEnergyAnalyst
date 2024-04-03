@@ -1106,8 +1106,9 @@ class InputLocator(object):
         """scenario/outputs/data/emissions"""
         return self._ensure_folder(self.get_lca_emissions_results_folder(), 'AH')
 
-    def get_ah_emission_results_file(self, date, sensible_or_latent='SH', format='geojson'):
-        """scenario/outputs/data/emissions/AH/{building}.geojson"""
+    def get_ah_emission_results_file(self, date, solution='base', sensible_or_latent='SH', format='geojson'):
+        """scenario/outputs/data/emissions/AH/{solution}/building_{sensible_or_latent}_{date}.{format}"""
+        solution_folder = self._ensure_folder(self.get_ah_emission_results_folder(), solution)
         date_str = date.strftime('%Y%m%d')
         if not sensible_or_latent in ['SH', 'LH']:
             raise ValueError('sensible_or_latent must be either SH or LH')
