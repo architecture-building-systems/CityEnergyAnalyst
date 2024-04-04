@@ -383,7 +383,7 @@ class Domain(object):
                 building_ah_on_date = sum([heat_emissions[sampling_time_steps[date]]
                                            for code, heat_emissions in building_heat_emissions.items()])
                 # Construct properties of feature
-                properties = {f"AH_{time_step%24}:MW": heat_emissions
+                properties = {f"AH_{time_step%24}:MW": round(heat_emissions / 1000, 6)
                               for time_step, heat_emissions in enumerate(building_ah_on_date)}
                 properties["building_name"] = building_id
                 # Create the feature
