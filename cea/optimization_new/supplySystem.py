@@ -134,10 +134,14 @@ class SupplySystem(object):
         self.installed_components = self._build_supply_system()
         # operate primary components
         primary_demand_dict = {self.structure.main_final_energy_carrier.code: self.demand_energy_flow}
-        self._perform_water_filling_principle('primary', primary_demand_dict)
+        remaining_primary_demand_dict = self._draw_from_potentials(primary_demand_dict, reset=True)
+        remaining_primary_demand_dict = self._draw_from_infinite_sources(remaining_primary_demand_dict)
+        self._perform_water_filling_principle('primary', remaining_primary_demand_dict)
         # operate secondary components
         secondary_demand_dict = self._group_component_flows_by_ec('primary', 'in')
-        self._perform_water_filling_principle('secondary', secondary_demand_dict)
+        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
+        remaining_secondary_demand_dict = self._draw_from_infinite_sources(remaining_secondary_demand_dict)
+        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
         # operate tertiary components
         component_energy_release_dict = self._group_component_flows_by_ec(['primary', 'secondary'], 'out')
         tertiary_demand_dict = self._release_to_grids_or_env(component_energy_release_dict)
@@ -267,11 +271,9 @@ class SupplySystem(object):
         :param demand_dict: dictionary of demand energy flows that need to be met, keys are energy carrier codes
         :type demand_dict: dict of <cea.optimization_new.energyFlow>-EnergyFlow class objects
         """
-        remaining_demand_dict = self._draw_from_potentials(demand_dict, reset=True)
-        remaining_demand_dict = self._draw_from_infinite_sources(remaining_demand_dict)
 
-        for ec_code in remaining_demand_dict.keys():
-            demand = remaining_demand_dict[ec_code]
+        for ec_code in demand_dict.keys():
+            demand = demand_dict[ec_code]
 
             for component_model in self.structure.activation_order[placement]:
                 if not ((component_model in self.structure.component_selection_by_ec[placement][ec_code]) and
