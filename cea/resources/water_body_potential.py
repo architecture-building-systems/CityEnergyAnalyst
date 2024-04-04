@@ -5,6 +5,7 @@ Water body potential
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import math
 
 import cea.config
 import cea.inputlocator
@@ -74,7 +75,7 @@ def calc_lake_potential_new(locator, config, q_disc_oper):
         T.append(Water_temperature)
     plt.plot(T, Z)
     plt.gca().invert_yaxis()
-    plt.show()
+    # plt.show()
 
     if q_disc_oper > Q_max_kwh:
         print('The heat dischargeable in the lake is more than the maximum allowed to keep the temperature increase within 0.5 K')
@@ -82,9 +83,11 @@ def calc_lake_potential_new(locator, config, q_disc_oper):
         m_w_max = q_disc_oper / (heat_capacity_water * AT_max_K)  # kg
 
     q_yearly = [Q_max_kwh] * 8760
+
     # export
     lake_gen = locator.get_water_body_potential()
     pd.DataFrame({"Ts_C": Water_temperature, "QLake_kW": q_yearly}).to_csv(lake_gen, index=False, float_format='%.3f')
+    update_ec(locator, Water_temperature)
 
 def model_temperature_variation(z):
     """
@@ -124,6 +127,21 @@ def model_temperature_variation(z):
         T_water = None
 
     return T_water
+
+def update_ec(locator, Water_temperature):
+    T_water = math.trunc(Water_temperature)
+    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
+    row_copy['mean_qual'] = T_water
+    row_copy['code'] = f'T{T_water}LW'
+    row_copy['description'] = 'Bottom Lake Water'
+
+    if not e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'].empty:
+        e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'] = row_copy
+    else:
+        e_carriers = pd.concat([e_carriers, row_copy], axis=0)
+
+    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
