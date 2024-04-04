@@ -346,7 +346,7 @@ class Domain(object):
     def _write_ah_emission_profiles_to_geojson(self, district_energy_system, sampling_dates):
         """
         Writes anthropogenic heat emission profiles for the selected sampling dates to geojson files
-        (b.
+        (one heat source per network + one for each stand-alone building).
         """
         district_ah_features = {}
         sampling_time_steps = self._identify_time_steps(sampling_dates)
@@ -364,7 +364,7 @@ class Domain(object):
                 network_ah_on_date = sum([heat_emissions[sampling_time_steps[date]]
                                                      for code, heat_emissions in network_heat_emissions.items()])
                 # Construct properties of the feature
-                properties = {f"AH_{time_step%24}:MW": heat_emissions
+                properties = {f"AH_{time_step%24}:MW": round(heat_emissions / 1000, 6)
                                 for time_step, heat_emissions in enumerate(network_ah_on_date)}
                 properties["network_name"] = network.identifier
                 # Construct the feature
