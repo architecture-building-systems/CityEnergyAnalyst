@@ -5,7 +5,7 @@ import traceback
 from collections import OrderedDict
 
 import geopandas
-import pandas
+import pandas as pd
 from flask import current_app, request
 from flask_restx import Namespace, Resource, abort
 
@@ -161,10 +161,10 @@ class AllInputs(Resource):
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
-                    table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                    table_df = pd.DataFrame(table_df.drop(columns='geometry'))
                     out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
                 elif file_type == 'dbf':
-                    table_df = pandas.read_json(json.dumps(tables[db]), orient='index')
+                    table_df = pd.read_json(json.dumps(tables[db]), orient='index')
 
                     # Make sure index name is 'Name;
                     table_df.index.name = 'Name'
@@ -192,12 +192,12 @@ class AllInputs(Resource):
                 schedule_data = schedule_dict['SCHEDULES']
                 schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
                                                'METADATA': schedule_dict['METADATA']}
-                data = pandas.DataFrame()
+                data = pd.DataFrame()
                 for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
-                    df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+                    df = pd.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
                     for schedule_type, schedule in schedule_data.items():
                         df[schedule_type] = schedule[day]
-                    data = data.append(df, ignore_index=True)
+                    data = pd.concat([data, df], ignore_index=True)
                 save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
         return out
@@ -219,7 +219,7 @@ def get_building_properties():
         try:
             if file_type == 'shp':
                 table_df = geopandas.GeoDataFrame.from_file(file_path)
-                table_df = pandas.DataFrame(
+                table_df = pd.DataFrame(
                     table_df.drop(columns='geometry'))
                 if 'geometry' in db_columns:
                     del db_columns['geometry']
@@ -334,7 +334,7 @@ class BuildingSchedule(Resource):
         try:
             schedule_path = locator.get_building_weekly_schedules(building)
             schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-            df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+            df = pd.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
             out = {'SCHEDULES': {
                 schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
                 for schedule_type in df.columns}}
@@ -428,7 +428,7 @@ class InputDatabaseValidate(Resource):
                 if schema_key != 'get_database_standard_schedules_use':
                     db_path = locator.__getattribute__(schema_key)()
                     try:
-                        df = pandas.read_excel(db_path, sheet_name=None)
+                        df = pd.read_excel(db_path, sheet_name=None)
                         errors = validator.validate(df, schema)
                         if errors:
                             out[db_name] = errors
@@ -448,9 +448,9 @@ class InputDatabaseValidate(Resource):
 
 
 def database_dict_to_file(db_dict, db_path):
-    with pandas.ExcelWriter(db_path) as writer:
+    with pd.ExcelWriter(db_path) as writer:
         for sheet_name, data in db_dict.items():
-            df = pandas.DataFrame(data).dropna(axis=0, how='all')
+            df = pd.DataFrame(data).dropna(axis=0, how='all')
             df.to_excel(writer, sheet_name=sheet_name, index=False)
     print('Database file written to {}'.format(db_path))
 
@@ -458,13 +458,13 @@ def database_dict_to_file(db_dict, db_path):
 def schedule_dict_to_file(schedule_dict, schedule_path):
     schedule = OrderedDict()
     for key, data in schedule_dict.items():
-        schedule[key] = pandas.DataFrame(data)
+        schedule[key] = pd.DataFrame(data)
     schedule_to_file(schedule, schedule_path)
 
 
 def get_choices(choice_properties, path):
     lookup = choice_properties['lookup']
-    df = pandas.read_excel(path, lookup['sheet'])
+    df = pd.read_excel(path, lookup['sheet'])
     choices = df[lookup['column']].tolist()
     out = []
     if 'none_value' in choice_properties:
