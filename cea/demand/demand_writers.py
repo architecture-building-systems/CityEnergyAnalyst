@@ -226,7 +226,7 @@ class AnthropogenicHeatWriter(object):
                     continue
                 building_ah_on_date = building_ah_emissions.heat_emissions[date]
                 # Construct properties of feature
-                properties = {f"AH_{time_step}:MW": building_ah_on_date.profile[time_step] / 1000
+                properties = {f"AH_{time_step}:MW": round(building_ah_on_date.profile[time_step] / 1e6, 6)
                               for time_step in range(building_ah_on_date.time_steps)}
                 properties["building_name"] = building
                 # Create the feature
