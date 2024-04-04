@@ -222,7 +222,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
 
 
 class VaporCompressionChiller(object):
-    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator", "chiller_configuration"]
+    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator"]
 
     def __init__(self, locator, scale):
         self.max_VCC_capacity = 0
@@ -230,7 +230,6 @@ class VaporCompressionChiller(object):
         self.g_value = 0.0
         self.scale = scale
         self.locator = locator
-        self.chiller_configuration = None
         self.setup()
 
     def setup(self):
@@ -245,16 +244,3 @@ class VaporCompressionChiller(object):
         self.max_VCC_capacity = int(VCC_database['cap_max'])
         self.min_VCC_capacity = int(VCC_database['cap_min'])
         self.g_value = float(VCC_database['G_VALUE'])
-        self.chiller_configuration = pd.read_excel(self.locator.get_database_conversion_systems(),
-                                                   sheet_name="Chiller_configuration")
-
-    def configuration_values(self, source_type, compressor_type):
-        df = self.chiller_configuration
-        df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type)]
-
-        filter_plfs = [col for col in df if col.startswith('plf')]
-        filter_qs = [col for col in df if col.startswith('q')]
-
-        plfs = df[filter_plfs].to_dict('records')[0]
-        qs = df[filter_qs].to_dict('records')[0]
-        return {'PLFs': plfs, 'Qs': qs}
