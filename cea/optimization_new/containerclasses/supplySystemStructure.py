@@ -236,6 +236,8 @@ class SupplySystemStructure(object):
         elif SupplySystemStructure.system_type == 'cooling':
             releasable_environmental_ecs = EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air',
                                                                                 include_thermal_ec=True)
+            releasable_environmental_ecs_water = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            releasable_environmental_ecs.extend(releasable_environmental_ecs_water)
         else:
             raise ValueError('Make sure the energy system type is set before allocating environmental energy carriers.')
 
@@ -252,7 +254,6 @@ class SupplySystemStructure(object):
 
     @staticmethod
     def _get_component_priorities(optimisation_config):
-        print(optimisation_config)
         """
         Get the chosen component priorities from the optimisation configurations.
         """
@@ -268,12 +269,8 @@ class SupplySystemStructure(object):
             component_types_list.append(ActiveComponent.get_types(technology))
 
         for technology in optimisation_config.heat_rejection_components:
-            print(technology)
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
-
-        #active_components_list.append(ActiveComponent.get_subclass("HeatSink"))
-        #component_types_list.append(ActiveComponent.get_types("HeatSink"))
 
         component_types_tuple = tuple([type_code
                                        for component_types in component_types_list
@@ -532,7 +529,6 @@ class SupplySystemStructure(object):
         all_active_component_classes = [component_class for component_class in
                                         SupplySystemStructure._active_component_classes
                                         if component_class.main_side == main_side]
-        print(all_active_component_classes)
         viable_component_models = [[component_class, component_class.possible_main_ecs[main_energy_carrier]]
                                    for component_class in all_active_component_classes
                                    if main_energy_carrier in component_class.possible_main_ecs.keys()]
@@ -736,7 +732,26 @@ class SupplySystemStructure(object):
             else:
                 input_and_output_energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
+                '''            
+                for component_code in ['HEXLW', 'HEXSW', 'HEXGW']:
+                if component_code in input_and_output_energy_flows.keys():
+                    
+                    outputs = input_and_output_energy_flows[component_code][1].keys()
+                    ec_carriers = EnergyCarrier.get_thermal_ecs_of_subtype('water')
+                    residual_heat = [output for output in outputs if output in ec_carriers]
+                    if residual_heat:
+                        for residual in residual_heat:
+                            to_be_discharged = input_and_output_energy_flows[component_code][1][residual].profile.sum()
+                            while to_be_discharged > 0:
+                                for cool_tower in ['CT1', 'CT2']:
+                                    
+                                    input_and_output_energy_flows[cool_tower][1][residual].profile = (
+                                        input_and_output_energy_flows[cool_tower][1][residual].profile +
+                                            input_and_output_energy_flows[component_code][1][residual].profile)
+                                    del input_and_output_energy_flows[component_code][1][residual]
 
+
+                '''
         return input_and_output_energy_flows
 
     @staticmethod

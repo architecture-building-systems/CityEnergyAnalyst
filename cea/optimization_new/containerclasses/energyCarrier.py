@@ -76,7 +76,7 @@ class EnergyCarrier(object):
 
     @subtype.setter
     def subtype(self, new_subtype):
-        allowed_subtypes = {'thermal': ['water', 'air', 'brine'],
+        allowed_subtypes = {'thermal': ['water', 'air', 'brine', 'water sink'],
                             'electrical': ['AC', 'DC'],
                             'combustible': ['fossil', 'biofuel'],
                             'radiation': ['-']}
