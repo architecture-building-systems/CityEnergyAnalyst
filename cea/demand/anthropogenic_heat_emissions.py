@@ -54,7 +54,7 @@ class AnthropogenicHeatEmissions:
 
     def extract_heat_emission_profiles(self, time_series_data):
         """ Method to extract the heat emissions profile from the time series data for the selected dates."""
-        self.heat_emissions = {date: HeatEmissionsProfile([x +y for x, y in
+        self.heat_emissions = {date: HeatEmissionsProfile([x + y for x, y in
                                                            zip(list(time_series_data['E_cs'][time_steps]),
                                                                list(time_series_data['Qcs_sys'][time_steps]))])
                                for date, time_steps in self.sampling_time_steps.items()}
