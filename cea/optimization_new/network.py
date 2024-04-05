@@ -36,8 +36,8 @@ from cea.technologies.network_layout.connectivity_potential import calc_connecti
 from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
-from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
-from cea.optimization.constants import PUMP_ETA
+from cea.constants import PIPE_DIAMETER_DEFAULT
+from cea.constants import PUMP_ETA
 
 
 class Network(object):
@@ -115,7 +115,6 @@ class Network(object):
                                                                           network_graph,
                                                                           self.network_edges,
                                                                           self.network_nodes,
-                                                                          TYPE_MAT_DEFAULT,
                                                                           PIPE_DIAMETER_DEFAULT)
             # mst_edges.drop(['weight'], inplace=True, axis=1)
 
@@ -211,12 +210,11 @@ class Network(object):
         self.network_losses = thermal_losses_supply_kWh.sum(axis=1) * 2 - accumulated_head_loss_total_kW.values
 
         # aggregate network piping information
-        self.network_piping = self.network_edges[['Type_mat', 'Pipe_DN']].drop_duplicates()
+        self.network_piping = self.network_edges[['Pipe_DN']].drop_duplicates()
         self.network_piping.reset_index(inplace=True, drop=True)
         self.network_piping['length_m'] = 0.0
         for index, pipe_type in self.network_piping.iterrows():
-            using_type = self.network_edges.apply(lambda row: row['Type_mat'] == pipe_type['Type_mat'] and
-                                                              row['Pipe_DN'] == pipe_type['Pipe_DN'], axis=1)
+            using_type = self.network_edges.apply(lambda row: row['Pipe_DN'] == pipe_type['Pipe_DN'], axis=1)
             self.network_piping['length_m'][index] = self.network_edges['length_m'][using_type].sum()
         self._calculate_piping_cost()
 
@@ -376,7 +374,7 @@ class Network(object):
         thermal network operation (simplified_thermal_network.py).
 
         :return self.network_edges: GeoDataFrame structure for thermal network edges.
-                                    ['geometry', 'length', 'Type_mat'(dummy), 'Pipe_DN'(dummy), 'start_node', 'end_node']
+                                    ['geometry', 'length', 'Pipe_DN'(dummy), 'start_node', 'end_node']
                                     index: PIPEi
         :return self.network_nodes: GeoDataFrame structure for nodes of the thermal network.
                                     ['geometry', 'coordinates', 'Building', 'Type']
@@ -403,7 +401,6 @@ class Network(object):
                              'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
         # POPULATE FIELDS IN EDGES
-        self.network_edges.loc[:, 'Type_mat'] = TYPE_MAT_DEFAULT
         self.network_edges.loc[:, 'Pipe_DN'] = PIPE_DIAMETER_DEFAULT
         self.network_edges = self.network_edges.rename(index=lambda x: "PIPE" + str(x))
         # assign edge properties
@@ -458,7 +455,7 @@ class Network(object):
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
         point2 = (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
         line = LineString((point1, point2))
-        plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'Type_mat': TYPE_MAT_DEFAULT,
+        plant_to_network = Gdf({'geometry': line, 'length_m': line.length,
                                 'Pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],

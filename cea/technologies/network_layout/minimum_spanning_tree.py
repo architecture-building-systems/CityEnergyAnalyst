@@ -23,7 +23,7 @@ __status__ = "Production"
 
 
 def calc_minimum_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
-                               weight_field, type_mat_default, pipe_diameter_default):
+                               weight_field, pipe_diameter_default):
     # read shapefile into networkx format into a directed graph
     graph = nx.read_shp(input_network_shp)
 
@@ -43,9 +43,8 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     mst_directed.add_edges_from(mst_non_directed)
     nx.write_shp(mst_directed, output_network_folder)
 
-    # populate fields Type_mat, Name, Pipe_Dn
+    # populate fields, Name, Pipe_Dn
     mst_edges = gdf.from_file(output_edges)
-    mst_edges['Type_mat'] = type_mat_default
     mst_edges['Pipe_DN'] = pipe_diameter_default
     mst_edges['Name'] = ["PIPE" + str(x) for x in mst_edges['FID']]
     mst_edges.drop("FID", axis=1, inplace=True)
@@ -78,7 +77,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weight_field = 'Shape_Leng'
-    type_mat_default = config.network_layout.type_mat
     pipe_diameter_default = config.network_layout.pipe_diameter
     type_network = config.network_layout.network_type
     building_nodes = locator.get_temporary_file("nodes_buildings.shp")
@@ -87,7 +85,7 @@ def main(config):
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
     output_network_folder = locator.get_input_network_folder(type_network,'')
     calc_minimum_spanning_tree(input_network_shp, output_network_folder, building_nodes, output_edges,
-                               output_nodes, weight_field, type_mat_default, pipe_diameter_default)
+                               output_nodes, weight_field, pipe_diameter_default)
 
 
 if __name__ == '__main__':

@@ -141,7 +141,6 @@ ThermalNetwork.edge_df
 
 :Columns: - initially:
 
-            - Type_mat
             - Pipe_DN
             - geometry
             - coordinates

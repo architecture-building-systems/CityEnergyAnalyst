@@ -8,7 +8,7 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
-from cea.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
+from cea.constants import PIPE_DIAMETER_DEFAULT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +30,6 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
-    type_mat_default = network_layout.type_mat
     pipe_diameter_default = network_layout.pipe_diameter
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
@@ -68,7 +67,6 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                path_output_edges_shp,
                                path_output_nodes_shp,
                                weight_field,
-                               type_mat_default,
                                pipe_diameter_default,
                                type_network,
                                total_demand_location,
@@ -87,12 +85,11 @@ class NetworkLayout(object):
         self.connected_buildings = network_layout.connected_buildings
         self.disconnected_buildings = []
         self.pipe_diameter = PIPE_DIAMETER_DEFAULT
-        self.type_mat = TYPE_MAT_DEFAULT
         self.create_plant = True
         self.allow_looped_networks = False
         self.consider_only_buildings_with_demand = False
 
-        attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
+        attributes = ["network_type", "pipe_diameter", "create_plant", "allow_looped_networks",
                       "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings"]
         for attr in attributes:
             # copy any matching attributes in network_layout (because it could be an instance of NetworkInfo)

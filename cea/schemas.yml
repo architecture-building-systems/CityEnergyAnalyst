@@ -9019,11 +9019,6 @@ get_network_layout_edges_shapefile:
         type: string
         unit: 'NA'
         values: alphanumeric
-      Type_mat:
-        description: Material type
-        type: string
-        unit: 'NA'
-        values: alphanumeric
       geometry:
         description: Geometry
         type: LineString
@@ -13075,11 +13070,6 @@ get_new_optimization_optimal_network_layout_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-      Type_mat:
-        description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
-        type: string
-        unit: 'NA'
-        values: 'NA'
       Pipe_DN:
         description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
         type: float

@@ -35,7 +35,6 @@ def calc_steiner_spanning_tree(crs_projected,
                                path_output_edges_shp,
                                path_output_nodes_shp,
                                weight_field,
-                               type_mat_default,
                                pipe_diameter_default,
                                type_network,
                                total_demand_location,
@@ -54,7 +53,6 @@ def calc_steiner_spanning_tree(crs_projected,
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str weight_field: e.g. "Shape_Leng"
-    :param str type_mat_default: e.g. "T1"
     :param float pipe_diameter_default: e.g. 150
     :param str type_network: "DC" or "DH"
     :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
@@ -125,7 +123,6 @@ def calc_steiner_spanning_tree(crs_projected,
                          'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
     # POPULATE FIELDS IN EDGES
-    mst_edges.loc[:, 'Type_mat'] = type_mat_default
     mst_edges.loc[:, 'Pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'Name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
@@ -135,7 +132,6 @@ def calc_steiner_spanning_tree(crs_projected,
                                                     mst_non_directed,
                                                     mst_nodes,
                                                     mst_edges,
-                                                    type_mat_default,
                                                     pipe_diameter_default)
         # mst_edges.drop(['weight'], inplace=True, axis=1)
 
@@ -143,26 +139,26 @@ def calc_steiner_spanning_tree(crs_projected,
         for building in plant_building_names:
             building_anchor = building_node_from_name(building, mst_nodes)
             mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                             type_mat_default, pipe_diameter_default)
+                                                             pipe_diameter_default)
     elif os.path.exists(total_demand_location):
         if len(plant_building_names) > 0:
             building_anchor = mst_nodes[mst_nodes['Building'].isin(plant_building_names)]
         else:
             building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                         type_mat_default, pipe_diameter_default)
+                                                         pipe_diameter_default)
 
     # GET COORDINATE AND SAVE FINAL VERSION TO DISK
     print(crs_projected)
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']
-    mst_edges[['geometry', 'length_m', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp,
+    mst_edges[['geometry', 'length_m', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp,
                                                                                driver='ESRI Shapefile')
     mst_nodes[['geometry', 'Building', 'Name', 'Type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
-def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat, pipe_dn):
+def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, pipe_dn):
     added_a_loop = False
     # Identify all NONE type nodes in the steiner tree
     for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
@@ -187,7 +183,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                             line = LineString((node_coords, new_neighbour))
                             if line not in mst_edges['geometry']:
                                 mst_edges = mst_edges.append(
-                                    {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                    {"geometry": line, "Pipe_DN": pipe_dn,
                                      "Name": "PIPE" + str(mst_edges.Name.count())},
                                     ignore_index=True)
                                 added_a_loop = True
@@ -223,7 +219,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                         line = LineString((node_coords, new_neighbour))
                                         if line not in mst_edges['geometry']:
                                             mst_edges = mst_edges.append(
-                                                {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                                {"geometry": line, "Pipe_DN": pipe_dn,
                                                  "Name": "PIPE" + str(mst_edges.Name.count())},
                                                 ignore_index=True)
                                         # Add new node from potential network to steiner tree
@@ -246,7 +242,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                         line2 = LineString((new_neighbour, potential_second_deg_neighbour))
                                         if line2 not in mst_edges['geometry']:
                                             mst_edges = mst_edges.append(
-                                                {"geometry": line2, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                                {"geometry": line2, "Pipe_DN": pipe_dn,
                                                  "Name": "PIPE" + str(mst_edges.Name.count())},
                                                 ignore_index=True)
                                             added_a_loop = True
@@ -277,7 +273,7 @@ def building_node_from_name(building_name, nodes_df):
     return building_series
 
 
-def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
+def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, pipe_dn):
     # find closest node
     copy_of_new_mst_nodes = new_mst_nodes.copy()
     building_coordinates = building_anchor.geometry.values[0].coords
@@ -312,7 +308,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
               new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
     mst_edges = pd.concat([mst_edges,
-                           pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                           pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn,
                                          "Name": "PIPE" + str(mst_edges.Name.count())}])], ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
@@ -322,7 +318,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weight_field = 'Shape_Leng'
-    type_mat_default = config.network_layout.type_mat
     pipe_diameter_default = config.network_layout.pipe_diameter
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
@@ -333,7 +328,7 @@ def main(config):
     output_network_folder = locator.get_input_network_folder(type_network, '')
     total_demand_location = locator.get_total_demand()
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
-                               output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
+                               output_nodes, weight_field, pipe_diameter_default, type_network,
                                total_demand_location, create_plant)
 
 

@@ -514,20 +514,20 @@ def thermal_network_simplified(locator, config, network_name=''):
                          index=False)
 
     # summary of edges used for the calculation
-    fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
+    fields_edges = ['length_m', 'Pipe_DN', 'D_int_m']
     edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
     fields_nodes = ['Type', 'Building']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
-    fields = ['length_m', 'Pipe_DN', 'Type_mat']
+    fields = ['length_m', 'Pipe_DN']
     edge_df = edge_df[fields]
     edge_df['name'] = edge_df.index.values
     network_edges_df = dbf_to_dataframe(
         locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
     network_edges_df = network_edges_df.merge(edge_df, left_on='Name', right_on='name', suffixes=('_x', ''))
-    network_edges_df = network_edges_df.drop(['Pipe_DN_x', 'Type_mat_x', 'name', 'length_m_x'], axis=1)
+    network_edges_df = network_edges_df.drop(['Pipe_DN_x', 'name', 'length_m_x'], axis=1)
     dataframe_to_dbf(network_edges_df,
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 

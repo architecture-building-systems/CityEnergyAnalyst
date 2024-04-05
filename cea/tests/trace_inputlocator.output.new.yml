@@ -3178,9 +3178,6 @@ get_optimization_network_edge_list_file:
         Pipe_DN_y:
             sample_value: 125.0
             types_found: [float]
-        Type_mat:
-            sample_value: T1
-            types_found: [str]
         Vdot_max_m3s:
             sample_value: 0.045743321706281266
             types_found: [float]
