@@ -282,6 +282,10 @@ class SupplySystem(object):
 
                 component = self.installed_components[placement][component_model]
                 main_energy_flow = demand.cap_at(component.capacity)
+                if component.code in ['HEXLW', 'HEXSW', 'HEXGW']:
+                    tot_dischargeable = sum(component.load_potentials().profile)
+                    if tot_dischargeable < sum(main_energy_flow.profile):
+                        main_energy_flow = main_energy_flow.cap_at(component.load_potentials().profile.max())
                 demand = demand - main_energy_flow
 
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:

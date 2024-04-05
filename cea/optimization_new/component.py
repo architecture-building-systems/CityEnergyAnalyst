@@ -67,7 +67,6 @@ class Component(object):
         self.input_energy_carriers = {}
         self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
-        self.locator = InputLocator(scenario=Configuration().scenario)
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -734,6 +733,7 @@ class HeatSink(ActiveComponent):
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_sink'].values[0]))]
         self.water_source = self._model_data['Water_source_code'].values[0]
+        self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heat_rejection):
         """
@@ -748,16 +748,13 @@ class HeatSink(ActiveComponent):
         :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # load potentials from heat sink resources
+        anthropogenic_heat_out = self.load_potentials()
+
         self._check_operational_requirements(heat_rejection)
 
         # initialize energy flows
         electricity_in = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
-
-        # load potentials from heat sink resources
-        anthropogenic_heat_out = self.load_potentials(self.locator)
-
-        # Extract allowed quantity of rejection heat
-        max_heat_rejection = anthropogenic_heat_out.profile
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
@@ -769,12 +766,6 @@ class HeatSink(ActiveComponent):
         # reformat outputs to dicts
         input_energy_flows = {self.input_energy_carriers[0].code: electricity_in}
         output_energy_flows = {anthropogenic_heat_out.energy_carrier.code: anthropogenic_heat_out}
-
-        if sum(anthropogenic_heat_out.profile) > sum(max_heat_rejection):
-            residual_heat = anthropogenic_heat_out
-            residual_heat.profile = residual_heat.profile - sum(max_heat_rejection)
-            output_energy_flows = {anthropogenic_heat_out.energy_carrier.code: anthropogenic_heat_out,
-                                   self.main_energy_carrier.code: residual_heat}
 
         return input_energy_flows, output_energy_flows
 
@@ -798,9 +789,9 @@ class HeatSink(ActiveComponent):
                                   for ec in model_and_ec_code_match['ec'].unique()}
         HeatSink.possible_main_ecs = possible_main_ecs_dict
 
-    def load_potentials(self,locator):
-        potential_dictionary = {'LW': locator.get_water_body_potential(), 'SW': locator.get_sewage_heat_potential(),
-                                'GW': locator.get_geothermal_potential()}
+    def load_potentials(self):
+        potential_dictionary = {'LW': self.locator.get_water_body_potential(), 'SW': self.locator.get_sewage_heat_potential(),
+                                'GW': self.locator.get_geothermal_potential()}
         path_to_potential = potential_dictionary[self.water_source]
         ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
         return ec_flow.main_potential

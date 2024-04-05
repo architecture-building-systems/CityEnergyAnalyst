@@ -34,7 +34,6 @@ from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.component import ActiveComponent, PassiveComponent
 from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicator, CapacityIndicatorVector
 
-
 class SupplySystemStructure(object):
     _system_type = ''
     _main_final_energy_carrier = EnergyCarrier()
@@ -511,7 +510,7 @@ class SupplySystemStructure(object):
         return {'active': viable_active_components_list, 'passive': necessary_passive_components}
 
     @staticmethod
-    def _fetch_viable_active_components(main_energy_carrier, maximum_demand, component_placement):
+    def _fetch_viable_active_components(main_energy_carrier, maximum_demand, component_placement,):
         """
         Get a list of all 'active' components that can generate or absorb a given maximum demand of a given
         energy carrier.
@@ -732,26 +731,6 @@ class SupplySystemStructure(object):
             else:
                 input_and_output_energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
-                '''            
-                for component_code in ['HEXLW', 'HEXSW', 'HEXGW']:
-                if component_code in input_and_output_energy_flows.keys():
-                    
-                    outputs = input_and_output_energy_flows[component_code][1].keys()
-                    ec_carriers = EnergyCarrier.get_thermal_ecs_of_subtype('water')
-                    residual_heat = [output for output in outputs if output in ec_carriers]
-                    if residual_heat:
-                        for residual in residual_heat:
-                            to_be_discharged = input_and_output_energy_flows[component_code][1][residual].profile.sum()
-                            while to_be_discharged > 0:
-                                for cool_tower in ['CT1', 'CT2']:
-                                    
-                                    input_and_output_energy_flows[cool_tower][1][residual].profile = (
-                                        input_and_output_energy_flows[cool_tower][1][residual].profile +
-                                            input_and_output_energy_flows[component_code][1][residual].profile)
-                                    del input_and_output_energy_flows[component_code][1][residual]
-
-
-                '''
         return input_and_output_energy_flows
 
     @staticmethod
