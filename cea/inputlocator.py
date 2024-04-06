@@ -1112,20 +1112,6 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building)s.%(format)s' % locals())
 
-    def get_ah_emission_results_folder(self):
-        """scenario/outputs/data/emissions"""
-        return self._ensure_folder(self.get_lca_emissions_results_folder(), 'AH')
-
-    def get_ah_emission_results_file(self, date, solution='base', sensible_or_latent='SH', format='geojson'):
-        """scenario/outputs/data/emissions/AH/{solution}/building_{sensible_or_latent}_{date}.{format}"""
-        solution_folder = self._ensure_folder(self.get_ah_emission_results_folder(), solution)
-        date_str = date.strftime('%Y%m%d')
-        if not sensible_or_latent in ['SH', 'LH']:
-            raise ValueError('sensible_or_latent must be either SH or LH')
-        file_name = 'buildings_%(sensible_or_latent)s_%(date_str)s.%(format)s' % locals()
-        return os.path.join(solution_folder, file_name)
-
-
     # EMISSIONS
     def get_lca_emissions_results_folder(self):
         """scenario/outputs/data/emissions"""

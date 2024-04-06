@@ -523,8 +523,8 @@ class CogenPlant(ActiveComponent):
 
         # initialize energy flows
         fuel_in = EnergyFlow('source', self.placement, self.input_energy_carriers[0].code)
-        electricity_out = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
-        waste_heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[1].code)
+        electricity_out = EnergyFlow(self.placement, 'primary', self.input_energy_carriers[0].code)
+        waste_heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':

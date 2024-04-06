@@ -24,7 +24,6 @@ import multiprocessing
 import sys
 import inspect
 from random import seed
-from geojson import Feature, FeatureCollection
 
 from deap import base, tools, algorithms
 
@@ -65,7 +64,7 @@ class Domain(object):
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
-        self.weather = epwreader.epw_reader(weather_path)[['date', 'year', 'drybulb_C', 'wetbulb_C',
+        self.weather = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
                                                            'relhum_percent', 'windspd_ms', 'skytemp_C']]
         EnergyFlow.time_series = self.weather['date']
         return self.weather
@@ -308,13 +307,6 @@ class Domain(object):
             # then save all information about the selected supply systems
             self._write_supply_systems_to_csv(des)
 
-            # generate anthropogenic heat emission data for selected sampling dates
-            # TODO: import these dates from a configuration file
-            from datetime import datetime # declared here to avoid compatibility issues with the multiprocessing module
-            sampling_date_strings = ['01-01-2005', '29-08-2005', '08-10-2005']
-            sampling_dates = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_date_strings]
-            self._write_ah_emission_profiles_to_geojson(des, sampling_dates)
-
             # if prompted, generate detailed outputs
             if self.config.optimization_new.generate_detailed_outputs:
                 self._write_detailed_results_to_csv(des)
@@ -398,62 +390,6 @@ class Domain(object):
         pd.DataFrame(supply_system_summary).to_csv(summary_file, index=False)
 
         return
-
-    def _write_ah_emission_profiles_to_geojson(self, district_energy_system, sampling_dates):
-        """
-        Writes anthropogenic heat emission profiles for the selected sampling dates to geojson files
-        (one heat source per network + one for each stand-alone building).
-        """
-        district_ah_features = {}
-        sampling_time_steps = self._identify_time_steps(sampling_dates)
-        indexed_buildings = {building.identifier: building for building in self.buildings}
-
-        for date in sampling_dates:
-            ah_features = []
-
-            # Extract the anthropogenic heat emissions for each network
-            for network in district_energy_system.networks:
-                # Extract the plant location
-                location = network.network_nodes.loc[network.network_nodes['Type'] == 'PLANT'].geometry[0]
-                # Extract the plant anthropogenic heat emissions on the date
-                network_heat_emissions = district_energy_system.supply_systems[network.identifier].heat_rejection
-                network_ah_on_date = sum([heat_emissions[sampling_time_steps[date]]
-                                                     for code, heat_emissions in network_heat_emissions.items()])
-                # Construct properties of the feature
-                properties = {f"AH_{time_step%24}:MW": round(heat_emissions / 1000, 6)
-                                for time_step, heat_emissions in enumerate(network_ah_on_date)}
-                properties["network_name"] = network.identifier
-                # Construct the feature
-                ah_features.append(Feature(geometry=location, properties=properties))
-
-            # Extract the anthropogenic heat emissions for each stand-alone building
-            for building_id in district_energy_system.stand_alone_buildings:
-                # Extract the building location
-                location = indexed_buildings[building_id].location
-                # Extract the anthropogenic heat emissions for the building on the date
-                building_heat_emissions = indexed_buildings[building_id].stand_alone_supply_system.heat_rejection
-                building_ah_on_date = sum([heat_emissions[sampling_time_steps[date]]
-                                           for code, heat_emissions in building_heat_emissions.items()])
-                # Construct properties of feature
-                properties = {f"AH_{time_step%24}:MW": round(heat_emissions / 1000, 6)
-                              for time_step, heat_emissions in enumerate(building_ah_on_date)}
-                properties["building_name"] = building_id
-                # Create the feature
-                ah_features.append(Feature(geometry=location, properties=properties))
-
-            district_ah_features[date] = FeatureCollection(ah_features)
-            with open(self.locator.get_ah_emission_results_file(date, district_energy_system.identifier), 'w') as file:
-                file.write(str(district_ah_features[date]))
-
-        return district_ah_features
-
-    def _identify_time_steps(self, sampling_dates):
-        """Identify the time steps for the given date"""
-        weather_dates = [date_datetime.date() for date_datetime in self.weather['date']]
-        sampling_time_steps = {sampling_date:
-                                   [index for index, date in enumerate(weather_dates) if date == sampling_date]
-                               for sampling_date in sampling_dates}
-        return sampling_time_steps
 
     @staticmethod
     def _write_system_structure(results_file, supply_system):
