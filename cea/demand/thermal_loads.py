@@ -8,7 +8,6 @@ Demand model of thermal loads
 
 import numpy as np
 import pandas as pd
-from datetime import datetime
 
 from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 from cea.demand import demand_writers
@@ -18,11 +17,10 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
-from cea.demand.anthropogenic_heat_emissions import AnthropogenicHeatEmissions
 from cea.utilities import reporting
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, date_range, sampling_dates, locator,
+def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, config, debug):
     """
@@ -160,14 +158,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, sampling_da
     tsd = electrical_loads.calc_E_sys(tsd)  # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
-    # CALCULATE ANTHROPOGENIC HEAT PROFILE
-    building_ah_profile = AnthropogenicHeatEmissions(building_name, tsd, sampling_dates, date_range)
-
     # WRITE SOLAR RESULTS
     write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug)
 
-    return building_ah_profile
+    return
 
 
 def calc_QH_sys_QC_sys(tsd):

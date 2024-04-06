@@ -4,10 +4,12 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
+
+
+
+
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gdf
-from geojson import Feature, FeatureCollection
 
 FLOAT_FORMAT = '%.3f'
 
@@ -189,59 +191,3 @@ class YearlyDemandWriter(DemandWriter):
                                   for building_name in
                                   list_buildings]
         return df, monthly_data_buildings
-
-class AnthropogenicHeatWriter(object):
-    """Write out the anthropogenic heat results"""
-
-    def __init__(self, building_ah_emissions, sampling_dates, locator):
-        self._locator = locator
-        self.sampling_dates = sampling_dates
-        self.building_names = [ah_emissions.building for ah_emissions in building_ah_emissions]
-        self.building_locations = self.load_building_locations()
-        self.building_ah_features = self.form_ah_features(building_ah_emissions)
-
-    def load_building_locations(self):
-        """Load the building locations"""
-        zone = gdf.from_file(self._locator.get_zone_geometry())
-        building_locations = {building["Name"]: building["geometry"].representative_point()
-                              for row, building in zone.iterrows()}
-        return building_locations
-
-    def form_ah_features(self, all_building_ah_emissions):
-        """
-        Extract and reorganize the anthropogenic heat emissions for each building to form a FeatureCollection
-        for each sampling date.
-        """
-        building_ah_features = {}
-
-        for date in self.sampling_dates:
-            ah_features = []
-
-            for building in self.building_names:
-                # Extract the anthropogenic heat emissions for the building on the date
-                building_ah_emissions = next((ah_emission for ah_emission in all_building_ah_emissions
-                                              if ah_emission.building == building), None)
-                if building_ah_emissions is None:
-                    print(f"No anthropogenic heat emissions for {building}")
-                    continue
-                building_ah_on_date = building_ah_emissions.heat_emissions[date]
-                # Construct properties of feature
-                properties = {f"AH_{time_step}:MW": round(building_ah_on_date.profile[time_step] / 1e6, 6)
-                              for time_step in range(building_ah_on_date.time_steps)}
-                properties["building_name"] = building
-                # Create the feature
-                ah_features.append(Feature(geometry=self.building_locations[building], properties=properties))
-
-            # Consolidate the features for the date into a FeatureCollection
-            building_ah_features[date] = FeatureCollection(ah_features)
-
-        return building_ah_features
-
-    def write_to_geojson(self, dates='all'):
-        """Write the anthropogenic heat emissions to a geojson file"""
-        if dates == 'all':
-            dates = self.sampling_dates
-
-        for date in dates:
-            with open(self._locator.get_ah_emission_results_file(date), 'w') as file:
-                file.write(str(self.building_ah_features[date]))
