@@ -137,7 +137,8 @@ def update_ec(locator, Water_temperature):
     row_copy['description'] = 'Bottom Lake Water'
 
     if not e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'].empty:
-        e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'] = row_copy
+        row_copy.index = e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'].index
+        e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'] = row_copy.copy()
     else:
         e_carriers = pd.concat([e_carriers, row_copy], axis=0)
 
