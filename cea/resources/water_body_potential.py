@@ -135,6 +135,7 @@ def update_ec(locator, Water_temperature):
     row_copy['mean_qual'] = T_water
     row_copy['code'] = f'T{T_water}LW'
     row_copy['description'] = 'Bottom Lake Water'
+    row_copy['subtype'] = 'water sink'
 
     if not e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'].empty:
         row_copy.index = e_carriers.loc[e_carriers['description'] == 'Bottom Lake Water'].index
