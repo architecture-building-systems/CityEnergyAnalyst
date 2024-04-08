@@ -11,6 +11,7 @@ import cea.config
 import cea.inputlocator
 from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, max_delta_T, Mixed_Layer_Depth , area_tot, water_vol, max_depth_res, average_depth_res, length_reservoir, T_sup, T_bot, HEX_WIDTH_M
 from cea.resources.geothermal import calc_temperature_underground
+from cea.datamanagement.surroundings_helper import get_water_basin
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -53,7 +54,7 @@ def calc_lake_potential(locator, config):
     lake_gen = locator.get_water_body_potential()
     pd.DataFrame({"Ts_C": t_source_final, "QLake_kW": Q_max_kwh}).to_csv(lake_gen, index=False, float_format='%.3f')
 
-def calc_lake_potential_new(locator, config, q_disc_oper):
+def calc_lake_potential_new(locator, config):
     """
     Calculation of lake potential. This refers to CEA original publication.
     """
@@ -69,20 +70,19 @@ def calc_lake_potential_new(locator, config, q_disc_oper):
     Z = [] # depth in meters
     T = [] # temperature in kelvin
     Water_temperature = 0
-    for z in np.arange(0, average_depth_res, 0.1):
-        Water_temperature = model_temperature_variation(z) - 273 #°C
-        Z.append(z)
-        T.append(Water_temperature)
-    plt.plot(T, Z)
-    plt.gca().invert_yaxis()
-    # plt.show()
+    check = check_presence_water_basin(locator)
 
-    if q_disc_oper > Q_max_kwh:
-        print('The heat dischargeable in the lake is more than the maximum allowed to keep the temperature increase within 0.5 K')
+    if check:
+        for z in np.arange(0, average_depth_res, 0.1):
+            Water_temperature = model_temperature_variation(z) - 273 #°C
+            Z.append(z)
+            T.append(Water_temperature)
+        plt.plot(T, Z)
+        plt.gca().invert_yaxis()
+        # plt.show()
+        q_yearly = [Q_max_kwh] * 8760
     else:
-        m_w_max = q_disc_oper / (heat_capacity_water * AT_max_K)  # kg
-
-    q_yearly = [Q_max_kwh] * 8760
+        q_yearly = [0] * 8760
 
     # export
     lake_gen = locator.get_water_body_potential()
@@ -145,10 +145,18 @@ def update_ec(locator, Water_temperature):
 
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
+def check_presence_water_basin(locator):
+    """
+    Check if the water basin is present in the database
+    """
+    water_basin_check = get_water_basin(locator)
+
+    return water_basin_check
+
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    calc_lake_potential_new(locator=locator, config=config, q_disc_oper=10)
+    calc_lake_potential_new(locator=locator, config=config)
     #calc_lake_potential(locator=locator, config=config)
 
 

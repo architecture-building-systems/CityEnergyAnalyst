@@ -196,6 +196,49 @@ def geometry_extractor_osm(locator, config):
     # save to shapefile
     result.to_file(shapefile_out_path)
 
+def get_water_basin(locator):
+    """
+    This script checks whether the zone has a water basin nearby. If it does, it calculates the potential of the
+    water basin to be used as a heat sink for the cooling system. The potential is calculated based on the temperature
+    of the water basin, which is assumed to be the same as the bottom temperature of the lake.
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500 # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    water_tags = {'natural': 'water'}
+
+    try:
+        water_basin = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                               tags=water_tags)
+        # Select only big water bodies to discharge heat
+        for i in range(len(water_basin)):
+            if water_basin['water'][i] in ['lake', 'reservoir', 'river']:
+                check_water_basin = True
+                break
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        water_basin.plot(column='water', categorical=True, legend=True, ax=ax)
+        plt.title('Water Features')
+        # plt.show()
+
+    except:
+        print('No water basins found in the area')
+        check_water_basin = False
+
+    return check_water_basin
 
 def main(config):
     """
