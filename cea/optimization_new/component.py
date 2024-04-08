@@ -716,6 +716,8 @@ class CoolingTower(ActiveComponent):
         CoolingTower.possible_main_ecs = possible_main_ecs_dict
 
 class HeatSink(ActiveComponent):
+    """ This component refers to any condeser for the chillers that releases heat coming from primary and secondary
+    components through water loops, if any of the potentials (water basin, sewage, geothermal) are available  """
 
     main_side = 'input'
     _database_tab = 'heat_sink'
@@ -731,7 +733,7 @@ class HeatSink(ActiveComponent):
         self.input_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_sink'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_in_sink'].values[0]))]
         self.water_source = self._model_data['Water_source_code'].values[0]
         self.locator = InputLocator(scenario=Configuration().scenario)
 
@@ -740,7 +742,7 @@ class HeatSink(ActiveComponent):
         Operate the heat sink, so that it rejects the targeted amount of heat. The operation is modeled according to
         the chosen general component efficiency code complexity.
 
-        :param heat_rejection: Targeted heat rejection from the cooling tower's water loop
+        :param heat_rejection: Targeted heat rejection from the heat sink's water loop
         :type heat_rejection: <cea.optimization_new.energyFlow>-EnergyFlow object
 
         :return input_energy_flows: Power supply required to reject the targeted amount of heat
@@ -770,7 +772,8 @@ class HeatSink(ActiveComponent):
         return input_energy_flows, output_energy_flows
 
     def _constant_efficiency_operation(self, heat_rejection_load):
-        """ Operate cooling tower assuming a constant electrical efficiency rating. """
+        """ Operate heat sink assuming a constant electrical efficiency rating, using the same approach of
+        Cooling Towers. """
         electricity_flow, anthropogenic_heat_out = calc_CT_const(heat_rejection_load.profile, self.aux_power_share)
         return electricity_flow, anthropogenic_heat_out
 
@@ -781,6 +784,7 @@ class HeatSink(ActiveComponent):
         variable.
         """
         ct_database = components_database[HeatSink._database_tab]
+        # Assumed hot water temperature value at same value of open circuit Cooling Towers
         hot_water_temperatures = ct_database['T_water_in_design'].unique()
         heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
         ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
