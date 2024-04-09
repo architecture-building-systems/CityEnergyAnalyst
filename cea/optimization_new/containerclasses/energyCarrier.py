@@ -172,8 +172,42 @@ class EnergyCarrier(object):
 
     @staticmethod
     def _load_energy_carriers(locator):
-        EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_feedstocks(),
-                                                                 sheet_name='ENERGY_CARRIERS')
+        """ Fetch a complete description of available energy carriers from the FEEDSTOCKS database """
+        # Load the feedstock database
+        feedstock = pd.ExcelFile(locator.get_database_feedstocks())
+        energy_carriers_overview = feedstock.parse('ENERGY_CARRIERS')
+
+        # Correct potential basic format errors if there are any
+        energy_carriers_overview['cost_and_ghg_tab'].fillna('-', inplace=True)
+        energy_carriers_overview['cost_and_ghg_tab'] = \
+            energy_carriers_overview['cost_and_ghg_tab'].astype(str).str.strip().str.upper()
+
+        # Check if tab references are valid
+        referenced_tabs = [tab_name for tab_name in list(set(energy_carriers_overview['cost_and_ghg_tab']))
+                           if tab_name != '-']
+        if not all([tab_name in feedstock.sheet_names for tab_name in referenced_tabs]):
+            raise ValueError('The energy carriers data base contains references to tabs that do not exist in the '
+                             'feedstock data base. Please make sure the tabs are named correctly.')
+
+        # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
+        energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
+        for tab_name in referenced_tabs:
+            cost_and_ghg = feedstock.parse(tab_name)
+            energy_carrier_properties = \
+                energy_carrier_properties.append({'cost_and_ghg_tab': tab_name,
+                                                  'unit_cost_USD.kWh': round(
+                                                      (cost_and_ghg['Opex_var_buy_USD2015kWh'].mean() +
+                                                       cost_and_ghg['Opex_var_sell_USD2015kWh'].mean()) / 2
+                                                      , 6),
+                                                  'unit_ghg_kgCO2.kWh': round(cost_and_ghg['GHG_kgCO2MJ'].mean() * 3.6
+                                                                              , 6)},
+                                                 ignore_index=True)
+
+        # Add unitary emissions and prices to the energy carriers overview
+        energy_carriers_overview = pd.merge(energy_carriers_overview, energy_carrier_properties,
+                                            on='cost_and_ghg_tab', how='left')
+        EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
+
 
     @staticmethod
     def _extract_thermal_energy_carriers():
