@@ -69,7 +69,6 @@ def calc_lake_potential_new(locator, config):
 
     Z = [] # depth in meters
     T = [] # temperature in kelvin
-    Water_temperature = 0
     check = check_presence_water_basin(locator)
 
     if check:
@@ -83,11 +82,14 @@ def calc_lake_potential_new(locator, config):
         q_yearly = [Q_max_kwh] * 8760
     else:
         q_yearly = [0] * 8760
+        T = [0]
 
     # export
     lake_gen = locator.get_water_body_potential()
-    pd.DataFrame({"Ts_C": Water_temperature, "QLake_kW": q_yearly}).to_csv(lake_gen, index=False, float_format='%.3f')
-    update_ec(locator, Water_temperature)
+    pd.DataFrame({"Ts_C": T[-1], "QLake_kW": q_yearly}).to_csv(lake_gen, index=False, float_format='%.3f')
+    if T[-1] == 0:
+        return
+    update_ec(locator, T[-1])
 
 def model_temperature_variation(z):
     """
