@@ -195,7 +195,8 @@ There is only a very heterogeneous data basis for non-residential buildings in G
 
 ### ENVELOPE
 
-The current renovation scenarios are entirely based on the IWU EPISCOPE project (normal or advanced). If more detailed scenarios are needed, the relevant construction standards for Germany (i.e. Wärmeschutzverordnung WSchW, Energieeinsparverordnung EnEV) need to be implemented in the database, refer to [^EnEV].[^WSchV].
+The current renovation scenarios are entirely based on the IWU EPISCOPE project (normal or advanced). If more detailed scenarios are needed, the relevant construction standards for Germany (i.e. Wärmeschutzverordnung WSchW, Energieeinsparverordnung EnEV) need to be implemented in the database, refer to [^EnEV].[^WSchV]. The Service life parameter is filled with the default values of the
+CH database.
 
 #### CONSTRUCTION
 
@@ -223,7 +224,8 @@ The current renovation scenarios are entirely based on the IWU EPISCOPE project 
 | `a_roof` | Solar absorption coefficient. Defined according to ISO 13790 | Assumption of standard value from CEA CH database |
 | `e_roof` | Emissivity of external surface. Defined according to ISO 13790. | Assumption of standard value from CEA CH database |
 | `r_roof` | Reflectance in the Red spectrum. Defined according Radiance. (long-wave) | Assumption of standard value from CEA CH database |
-| `GHG_roof_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | Assumption of standard value from CEA H database |
+| `GHG_roof_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | Assumption of standard value from CEA CH database |
+| `Service_Life_roof` | Service life of the component in years (entire building life cycle) | Assumption of standard value from CEA CH database |
 
 #### WALL
 
@@ -236,6 +238,7 @@ The current renovation scenarios are entirely based on the IWU EPISCOPE project 
 | `e_wall` | Emissivity of external surface. Defined according to ISO 13790. | Assumption of standard value from CH database |
 | `r_wall` | Reflectance in the Red spectrum. Defined according Radiance. (long-wave) | Assumption of standard value from CH database |
 | `GHG_wall_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | Assumption of standard value from CH database |
+| `Service_Life_wall` | Service life of the component in years (entire building life cycle) | Assumption of standard value from CEA CH database |
 
 #### FLOOR
 
@@ -245,6 +248,7 @@ The current renovation scenarios are entirely based on the IWU EPISCOPE project 
 | `code` | Assembly code used used in ENVELOPE_ASSEMBLIES | Naming convention depending on typology and renovation status (see Abbreviations) |
 | `U_base` | U value of the floor construction [W/m2K] | Depending on archetype, typology and renovation status value or assumed equal to floor for TABULA archetypes |
 | `GHG_floor_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | Assumption of standard value from CH database |
+| `Service_Life_floor` | Service life of the component in years (entire building life cycle) | Assumption of standard value from CEA CH database |
 
 #### WINDOW
 
@@ -257,6 +261,7 @@ The current renovation scenarios are entirely based on the IWU EPISCOPE project 
 | `e_win` | Emissivity of external surface. Defined according to ISO 13790. | Assignment of standard values from CH database, depending on standard window type specified in TABULA; assumption for NWG since not included in archetype |
 | `F_F` | Window frame fraction coefficient. Defined according to ISO 13790. | Standard TABULA value (p. 8) of 0.3 |
 | `GHG_win_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | Assumption of standard value from CH database |
+| `Service_Life_win` | Service life of the component in years (entire building life cycle) | Assumption of standard value from CEA CH database |
 
 #### SHADING
 
