@@ -229,6 +229,11 @@ def calculate_contributions(df, year_to_calculate):
 
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
+    Embodied_wall='Embodied_wall'
+    Embodied_floor = 'Embodied_floor'
+    Embodied_base = 'Embodied_base'
+    Embodied_roof = 'Embodied_roof'
+
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
@@ -255,8 +260,17 @@ def calculate_contributions(df, year_to_calculate):
                         / SERVICE_LIFE_OF_BUILDINGS
                         ) * df['confirm']
 
-    df[total_column] += (((df['floor_area_ag'] + df[
-        'floor_area_bg']) * df['GHG_TECHNICAL_SYSTEMS_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
+    df[Embodied_wall] = df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) * df['confirm']
+    df[Embodied_wall]/=1000
+    df[Embodied_floor] = df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] * np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) * df['confirm']
+    df[Embodied_floor]/=1000
+    df[Embodied_base] = df['GHG_base_kgCO2m2'] * df['floor_area_bg'] * np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) * df['confirm']
+    df[Embodied_base]/=1000
+    df[Embodied_roof] = df['GHG_roof_kgCO2m2'] * df['footprint'] * np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']) * df['confirm']
+    df[Embodied_roof]/=1000
+
+
+# df[total_column] += (((df['floor_area_ag'] + df['floor_area_bg']) * df['GHG_TECHNICAL_SYSTEMS_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
 
     # df[total_column] += (((df['floor_area_ag'] + df[
     #     'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
@@ -267,7 +281,8 @@ def calculate_contributions(df, year_to_calculate):
     df['GHG_sys_embodied_kgCO2m2yr'] = df[total_column] / df['GFA_m2']
 
     # the total and specific embodied emissions are returned
-    result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr', 'GFA_m2']]
+    result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr',
+                 'GFA_m2','Embodied_wall','Embodied_floor','Embodied_base','Embodied_roof']]
     return result
 
 def calc_if_existing(x, y):

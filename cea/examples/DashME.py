@@ -19,6 +19,7 @@ import os
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.data_initializer import main as intialmain
+from cea.datamanagement.archetypes_mapper import main as archMapmain
 from cea.datamanagement.surroundings_helper import main as surrmain
 from cea.datamanagement.terrain_helper import main as termain
 from cea.resources.radiation.main import main as radmain
@@ -26,7 +27,6 @@ from cea.demand.demand_main import main as demandmain
 from cea.analysis.lca.embodied import main as emissionmain
 from cea.analysis.lca.operation import main as operationmain
 from cea.datamanagement.zone_helper import main as zmain
-from cea.datamanagement.schedule_helper import main as schmain
 from cea.demand.schedule_maker.schedule_maker import main as schedulemain
 from cea.datamanagement.streets_helper import geometry_extractor_osm as ge2
 from cea.datamanagement.weather_helper import main as mainweather
@@ -52,16 +52,18 @@ def embodiedUpdated(locator, config):
 
 
     # intialmain(config)
+    # archMapmain(config)
     # zmain(config)
     # surrmain(config)
-    # schmain(config)
-    # schedulemain(config)
     # termain(config)
     # ge2(locator, config)
     # mainweather(config)
+
+    # archMapmain(config)
+    # schedulemain(config)
     # radmain(config)
-    # demandmain(config)
-    emissionmain(config)
+    demandmain(config)
+    # emissionmain(config)
     # operationmain(config)
 
     pass
