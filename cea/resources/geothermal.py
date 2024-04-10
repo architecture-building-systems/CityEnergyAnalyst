@@ -49,6 +49,7 @@ def calc_geothermal_potential(locator, config):
 
     # convert back to degrees C
     t_source_final = [x - 273 for x in T_ground_K]
+    t_source_avg = np.mean(t_source_final)
 
     gw_flow = calc_groundwater_flow(permeability, water_level_piezometers, dist_piezometers) #L/s
 
@@ -59,6 +60,7 @@ def calc_geothermal_potential(locator, config):
     pd.DataFrame({"Ts_C": t_source_final, "QGHP_kW": Q_max_kwh, "Area_avail_m2": area_geothermal}).to_csv(output_file,
                                                                                                           index=False,
                                                                                                           float_format='%.3f')
+    update_ec(locator, t_source_avg)
 
 
 def calc_area_buildings(locator, buildings_list):
@@ -118,11 +120,27 @@ def calc_groundwater_flow(permeability, water_level_piezometers, dist_piezometer
 
     return flow_L_s
 
+def update_ec(locator, groundwater_temperature):
+    water_temp = math.trunc(groundwater_temperature)
+    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
+    row_copy['mean_qual'] = water_temp
+    row_copy['code'] = f'T{water_temp}LW'
+    row_copy['description'] = 'Ground Water'
+    row_copy['subtype'] = 'water sink'
+
+    if not e_carriers.loc[e_carriers['description'] == 'Ground Water'].empty:
+        row_copy.index = e_carriers.loc[e_carriers['description'] == 'Ground Water'].index
+        e_carriers.loc[e_carriers['description'] == 'Ground Water'] = row_copy.copy()
+    else:
+        e_carriers = pd.concat([e_carriers, row_copy], axis=0)
+
+    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     calc_geothermal_potential(locator=locator, config=config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
