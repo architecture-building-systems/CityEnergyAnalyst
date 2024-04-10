@@ -9,7 +9,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3
+from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3, GW_TEMPERATURE, PERMEABIL, PIEZ, DIST_PIEZ, MAX_T_INCREASE, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 from cea.utilities import epwreader
 
@@ -32,6 +32,12 @@ def calc_geothermal_potential(locator, config):
     extra_area = config.shallow_geothermal.extra_area_available
     depth_m = config.shallow_geothermal.average_probe_depth
 
+    permeability = PERMEABIL
+    water_level_piezometers = PIEZ
+    dist_piezometers = DIST_PIEZ
+    water_temperature_raise = MAX_T_INCREASE
+    water_heat_capacity = HEAT_CAPACITY_OF_WATER_JPERKGK
+
     # dataprocessing
     area_below_buildings = calc_area_buildings(locator, buildings)
     T_ambient_C = epwreader.epw_reader(weather_file)[['drybulb_C']].values
@@ -42,9 +48,11 @@ def calc_geothermal_potential(locator, config):
     T_ground_K = calc_ground_temperature(T_ambient_C, depth_m)
 
     # convert back to degrees C
-    t_source_final = [x[0] - 273 for x in T_ground_K]
+    t_source_final = [x - 273 for x in T_ground_K]
 
-    Q_max_kwh = np.ceil(area_geothermal / GHP_A) * GHP_HMAX_SIZE / 1000  # [kW th]
+    gw_flow = calc_groundwater_flow(permeability, water_level_piezometers, dist_piezometers) #L/s
+
+    Q_max_kwh = [(gw_flow * water_heat_capacity / 1000) * (water_temperature_raise - x) for x in t_source_final]   # in kW
 
     # export
     output_file = locator.get_geothermal_potential()
@@ -85,8 +93,8 @@ def calc_ground_temperature(T_ambient_C, depth_m):
     conductivity_soil = SOIL_lambda_WmK
     density_soil = SOIL_rho_kgm3
 
-    T_amplitude = abs((max(T_ambient_C) - min(T_ambient_C)) + 273.15)  # to K
     T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    T_amplitude = abs((max(T_ambient_C)[0] + 273.15 - T_avg))  # K
     T_ground_K = calc_temperature_underground(T_amplitude, T_avg, conductivity_soil, density_soil, depth_m,
                                               heat_capacity_soil)
 
@@ -102,6 +110,13 @@ def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, densit
                   for i in range(1, HOURS_IN_YEAR + 1)]
 
     return T_ground_K
+
+def calc_groundwater_flow(permeability, water_level_piezometers, dist_piezometers):
+
+    flow_L_s = (math.pi * permeability * (water_level_piezometers[1] ** 2 - water_level_piezometers[0] ** 2) /
+                math.log(dist_piezometers[1] / dist_piezometers[0])) * 1000  # L/s
+
+    return flow_L_s
 
 
 def main(config):

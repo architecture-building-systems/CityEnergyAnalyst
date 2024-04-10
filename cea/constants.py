@@ -42,7 +42,7 @@ HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be therma
                                 # the results of these hours will be overwritten
 
 # Specific heat
-HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
+HEAT_CAPACITY_OF_WATER_JPERKGK = 4186  # [J/kg K]
 DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 = 983.21  # [kg/m^3] density of Water @ 60°C
 P_WATER_KGPERM3 = 998.0  # water density kg/m3
 P_SEWAGEWATER_KGPERM3 = 1400  # sewagewater density kg/m3
@@ -67,7 +67,15 @@ H0_KWPERM2K = 1.5  # kW/m2K # heat transfer coefficient/ got from Rabtherm techn
 #ground temperature values
 SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
 SOIL_lambda_WmK = 1.6
-SOIL_rho_kgm3 = 1600
+SOIL_rho_kgm3 = 1600 # Bulk density of soil
+GW_TEMPERATURE = 27.7 #°C
+PERMEABIL = 10**-7
+PIEZ = [10, 30]
+DIST_PIEZ = [0.5, 20]
+MAX_T_INCREASE = 35 #°C #Li, Xinguo, 2006. “Simulation and Experiment on the Thermal Performance of U-Vertical
+# Ground Coupled Heat Exchanger.”
+
+# Singapore Groundwater Temperature according to “AG 31-008 Geothermal Heat Pump Design Manual - McQuay” (April 9, 2024)
 
 #insulation of pipes
 PUR_lambda_WmK = 0.023
