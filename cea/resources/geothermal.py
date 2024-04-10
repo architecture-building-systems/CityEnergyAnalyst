@@ -125,7 +125,7 @@ def update_ec(locator, groundwater_temperature):
     e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
     row_copy['mean_qual'] = water_temp
-    row_copy['code'] = f'T{water_temp}LW'
+    row_copy['code'] = f'T{water_temp}GW'
     row_copy['description'] = 'Ground Water'
     row_copy['subtype'] = 'water sink'
 
