@@ -124,8 +124,14 @@ class EnergyPotential(object):
         if exists(geothermal_potential_file):
             geothermal_potential = pd.read_csv(geothermal_potential_file)
             main_potential_flow_profile = geothermal_potential.QGHP_kW
-            average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
-            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+            list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            if any("GW" in s for s in list_ec):
+                for ec in list_ec:
+                    if 'GW' in ec:
+                        main_energy_carrier = ec
+            else:
+                average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
+                main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
             self.main_potential.generate('tertiary', 'environment', main_energy_carrier, main_potential_flow_profile)
             return self
         else:

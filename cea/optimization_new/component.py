@@ -794,10 +794,18 @@ class HeatSink(ActiveComponent):
         HeatSink.possible_main_ecs = possible_main_ecs_dict
 
     def load_potentials(self):
-        potential_dictionary = {'LW': self.locator.get_water_body_potential(), 'SW': self.locator.get_sewage_heat_potential(),
-                                'GW': self.locator.get_geothermal_potential()}
-        path_to_potential = potential_dictionary[self.water_source]
-        ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
+        potential_path_dictionary = {'LW': self.locator.get_water_body_potential(),
+                                     'SW': self.locator.get_sewage_heat_potential(),
+                                     'GW': self.locator.get_geothermal_potential()}
+        path_to_potential = potential_path_dictionary[self.water_source]
+
+        if self.water_source == 'LW':
+            ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
+        elif self.water_source == 'SW':
+            ec_flow = EnergyPotential().load_water_body_potential(potential_path_dictionary['LW'])
+        elif self.water_source == 'GW':
+            ec_flow = EnergyPotential().load_geothermal_potential(path_to_potential)
+
         return ec_flow.main_potential
 
 class PowerTransformer(PassiveComponent):

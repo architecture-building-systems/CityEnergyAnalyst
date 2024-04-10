@@ -286,7 +286,17 @@ class SupplySystem(object):
                 if component.code in ['HEXLW', 'HEXSW', 'HEXGW']:
                     tot_dischargeable = sum(component.load_potentials().profile)
                     if tot_dischargeable < sum(main_energy_flow.profile):
-                        main_energy_flow = main_energy_flow.cap_at(component.load_potentials().profile.max())
+                        diff = sum(main_energy_flow.profile) - tot_dischargeable
+                        while diff > 0:
+                            # Find the minimum value in the list
+                            non_zero_values = [(index, value) for index, value in enumerate(main_energy_flow.profile) if value != 0]
+                            min_index, min_value = min(non_zero_values, key=lambda x: x[1])
+
+                            main_energy_flow.profile[min_index] = 0
+                            diff = sum(main_energy_flow.profile) - tot_dischargeable
+                            print(diff)
+                            if diff <= 0:
+                                break
 
                 demand = demand - main_energy_flow
 
