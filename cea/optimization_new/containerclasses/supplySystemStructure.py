@@ -267,9 +267,25 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
-        for technology in optimisation_config.heat_rejection_components:
-            active_components_list.append(ActiveComponent.get_subclass(technology))
-            component_types_list.append(ActiveComponent.get_types(technology))
+        # Prioritise the environment heat sinks over the cooling towers
+
+        if ('heat_sink' in optimisation_config.heat_rejection_components and
+                optimisation_config.heat_rejection_components.index('heat_sink') != 0):
+
+            technology_list = optimisation_config.heat_rejection_components.copy()
+            # Remove 'heat_sink' from its current position
+            technology_list.remove('heat_sink')
+            # Insert 'heat_sink' at the beginning of the list
+            technology_list.insert(0, 'heat_sink')
+
+            for technology in technology_list:
+                active_components_list.append(ActiveComponent.get_subclass(technology))
+                component_types_list.append(ActiveComponent.get_types(technology))
+
+        else:
+            for technology in optimisation_config.heat_rejection_components:
+                active_components_list.append(ActiveComponent.get_subclass(technology))
+                component_types_list.append(ActiveComponent.get_types(technology))
 
         component_types_tuple = tuple([type_code
                                        for component_types in component_types_list
