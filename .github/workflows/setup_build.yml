@@ -1,4 +1,4 @@
-name: Build CEA Windows setup
+name: Build CEA Setup
 
 on:
   workflow_dispatch
