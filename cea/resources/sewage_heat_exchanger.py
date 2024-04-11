@@ -8,7 +8,7 @@ Sewage source heat exchanger
 import pandas as pd
 import numpy as np
 import scipy
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER
 import cea.config
 import cea.inputlocator
 
@@ -82,8 +82,8 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
     :type tsww: float
     :param trww: DHW return temperature
     :type trww: float
-    :param totwater: fresh water flow rate
-    :type totwater: float
+    :param mcptw: fresh water flow rate
+    :type mcptw: float
     :param mcpww: DHW heat capacity
     :type mcpww: float
     :param SW_ratio: ratio of decrease/increase in sewage water due to solids and also water intakes.
@@ -101,7 +101,7 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
         m_DHW = mcpww * SW_ratio
         m_TW = mcptw * SW_ratio
         mcp_combi = m_DHW + m_TW
-        t_combi = ( m_DHW * t_spur + m_TW * trww ) / mcp_combi
+        t_combi = ( m_DHW * t_spur + m_TW * T_FRESHWATER ) / mcp_combi
         t_to_sewage = 0.90 * t_combi                  # assuming 10% thermal loss through piping
     else:
         t_to_sewage = trww
