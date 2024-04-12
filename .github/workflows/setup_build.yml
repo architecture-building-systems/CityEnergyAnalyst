@@ -111,16 +111,18 @@ jobs:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
       - uses: mamba-org/setup-micromamba@v1
         with:
           micromamba-binary-path: gui/dependencies/micromamba
 
       - name: Install CEA to environment
-        shell: bash -el {0}
         run: pip install ./cea
 
       - name: Get CEA version
-        shell: bash -el {0}
         run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
       - name: save api key secret to file
