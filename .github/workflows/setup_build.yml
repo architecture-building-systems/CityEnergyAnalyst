@@ -126,7 +126,7 @@ jobs:
         shell: bash -el {0}
         run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
-      - name: save api key secret to file
+      - name: Save Apple API Key secret to file
         env:
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
         run: |
