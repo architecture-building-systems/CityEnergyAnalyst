@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy
 import math
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER, T_GROUND, CONSUMPTION_PER_PERSON_L_PER_DAY, MULTI_RES_OCC, SEWAGE_T_DROP
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER, T_GROUND, CONSUMPTION_PER_PERSON_L_PER_DAY, MULTI_RES_OCC, SEWAGE_T_DROP, MAX_T
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.surroundings_helper import get_surrounding_building_sewage
@@ -179,7 +179,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
         alpha = h0 * A_HEX * (1 / mcpa - 1 / mcp_kWC_total)
         n = ( 1 - scipy.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * scipy.exp(-alpha))
         tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
-        Q_source = mcp_kWC_total * (tb1 - tb2)
+        Q_source = mcp_kWC_total * (MAX_T - tb1)
         ta2 = ta1 + Q_source / mcpa
         t_source = ( tb2 + tb1 ) / 2
     else:

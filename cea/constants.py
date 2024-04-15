@@ -62,6 +62,7 @@ T_GROUND = 27  # °C
 CONSUMPTION_PER_PERSON_L_PER_DAY = 149  # in L/day/person
 MULTI_RES_OCC = 35  # in m2/person
 SEWAGE_T_DROP = 1.93  # K/km
+MAX_T = 35  # °C
 
 # ??
 VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
