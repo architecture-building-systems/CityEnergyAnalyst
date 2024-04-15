@@ -8,9 +8,11 @@ Sewage source heat exchanger
 import pandas as pd
 import numpy as np
 import scipy
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER, T_GROUND
+import math
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER, T_GROUND, CONSUMPTION_PER_PERSON_L_PER_DAY, MULTI_RES_OCC, SEWAGE_T_DROP
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.surroundings_helper import get_surrounding_building_sewage
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -41,7 +43,10 @@ def calc_sewage_heat_exchanger(locator, config):
     names = pd.read_csv(locator.get_total_demand()).Name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
-    V_lps_external = config.sewage.sewage_water_district
+    # V_lps_external = config.sewage.sewage_water_district
+    surroundings_sewage, buffer_m = get_surrounding_building_sewage(locator)
+    T_sewage_drop = buffer_m / 1000 * SEWAGE_T_DROP
+    V_lps_external = calculate_external_sewage_flow(surroundings_sewage)
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
@@ -57,13 +62,15 @@ def calc_sewage_heat_exchanger(locator, config):
 
     Q_source, t_source, t_in_sew, t_out, tin_e, tout_e, mcpwaste_total = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
                                                                               VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_LPERS,
-                                                                              heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external)
+                                                                              heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external, T_sewage_drop)
 
     #save to disk
     pd.DataFrame({"Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : t_in_sew,
                   "mww_zone_kWperC":mcpwaste_total,
                     "T_out_HP_C" : tout_e, "T_in_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
                                                                       index=False, float_format='%.3f')
+    avg_temp = np.mean(t_in_sew)
+    return avg_temp
 
 
 
@@ -108,7 +115,7 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
         mcp_combi = mcptw * SW_ratio  # in [kW_K]
     return mcp_combi, t_to_sewage # in lh or kgh and in C
 
-def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, tmin_C, ATmin, V_lps_external):
+def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, tmin_C, ATmin, V_lps_external, T_sewage_drop):
     """
     Calculates the operation of sewage heat exchanger.
 
@@ -150,9 +157,14 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
     """
     V_lps_zone = mcp_kWC_zone/ (HEAT_CAPACITY_OF_WATER_JPERKGK / 1E3)
     V_lps_total = V_lps_zone + V_lps_external
-    mcp_kWC_external = (V_lps_external /1000) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK/1E3) #kW_C
-    mcp_kWC_total = mcp_kWC_zone + mcp_kWC_external #kW_C
-    t_sewage = (mcp_kWC_zone * tin_C + mcp_kWC_external * T_GROUND) / mcp_kWC_total
+    mcp_kWC_external = (V_lps_external /1000) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK/1E3)  # kW_C
+    mcp_kWC_total = mcp_kWC_zone + mcp_kWC_external  # kW_C
+
+    t_sewage_external = tin_C - T_sewage_drop  # °C
+    if t_sewage_external < T_GROUND:
+        t_sewage_external = T_GROUND
+
+    t_sewage = (mcp_kWC_zone * tin_C + mcp_kWC_external * t_sewage_external) / mcp_kWC_total
     mcp_max = (Vf_ms * w_HEX_m * 0.20) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK /1E3)  # 20 cm is the depth of the active water in contact with the HEX
     A_HEX = w_HEX_m * L_HEX_m   # area of heat exchange
 
@@ -180,12 +192,59 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
 
     return Q_source, t_source, tb1, tb2, ta1, ta2, mcp_kWC_total
 
+def calculate_external_sewage_flow(buffer_buildings):
+    """
+    This function calculates the sewage water flow rate from the buildings in the surroundings of the zone.
+    The sewage water flow rate is calculated based on the daily water consumption per person in Singapore, considering
+    only residential buildings.
+    """
+    # Include only residential buildings
+    residential = buffer_buildings[buffer_buildings['building'] == 'residential']
+
+    # Extract the number of floors of the buildings
+    list_floors_nr = residential['building:levels'].values
+    floor_nr = []
+    for item in list_floors_nr:
+        x = float(item)
+
+        if not math.isnan(x):
+            floor_nr.append(int(x))
+        else:
+            floor_nr.append(1)
+
+    # Extract the area of the buildings
+    buildings_area = residential.area
+
+    # Calculate the total area of the buildings included in the buffer and calculate nr of people
+    tot_area = sum(buildings_area * floor_nr)
+    tot_people = tot_area / MULTI_RES_OCC
+    water_consumption = tot_people * CONSUMPTION_PER_PERSON_L_PER_DAY / (3600 * 24)  # L/s
+
+    return water_consumption
+
+def update_ec(locator, sewage_temperature):
+    water_temp = math.trunc(sewage_temperature)
+    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
+    row_copy['mean_qual'] = water_temp
+    row_copy['code'] = f'T{water_temp}SW'
+    row_copy['description'] = 'Sewage Water'
+    row_copy['subtype'] = 'water sink'
+
+    if not e_carriers.loc[e_carriers['description'] == 'Sewage Water'].empty:
+        row_copy.index = e_carriers.loc[e_carriers['description'] == 'Sewage Water'].index
+        e_carriers.loc[e_carriers['description'] == 'Sewage Water'] = row_copy.copy()
+    else:
+        e_carriers = pd.concat([e_carriers, row_copy], axis=0)
+
+    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+
 
 def main(config):
 
     locator = cea.inputlocator.InputLocator(config.scenario)
-
-    calc_sewage_heat_exchanger(locator=locator, config=config)
+    avg_temp = calc_sewage_heat_exchanger(locator=locator, config=config)
+    update_ec(locator, avg_temp)
 
 
 if __name__ == '__main__':

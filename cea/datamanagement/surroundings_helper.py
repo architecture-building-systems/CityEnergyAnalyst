@@ -196,6 +196,40 @@ def geometry_extractor_osm(locator, config):
     # save to shapefile
     result.to_file(shapefile_out_path)
 
+def get_surrounding_building_sewage(locator):
+    """
+    This script checks the nearby buildings, in a 500 m radius of the analysed zone
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500  # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    all_surroundings = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
+    all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    # Exclude buildings included in the zone and outside of the buffer
+    surroundings = erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer)
+
+    fig, ax = plt.subplots( figsize=(10, 10) )
+    surroundings.plot(column='building', categorical=True, legend=True, ax=ax)
+    plt.title('Buildings in the surroundings of the zone')
+    # plt.show()
+
+    return surroundings, buffer_m
+
+
 
 def main(config):
     """
