@@ -17,7 +17,6 @@ dependencies:
 - networkx=2.8
 - numba=0.57
 - numpy=1.24 # Due to python3.8 support
-- blas=*=openblas # Helps with performance for numpy and environment size
 - numpy-financial
 - osmnx=1.8
 - pip
