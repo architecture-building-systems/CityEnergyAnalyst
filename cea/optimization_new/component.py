@@ -802,7 +802,7 @@ class HeatSink(ActiveComponent):
         if self.water_source == 'LW':
             ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
         elif self.water_source == 'SW':
-            ec_flow = EnergyPotential().load_water_body_potential(potential_path_dictionary['LW'])
+            ec_flow = EnergyPotential().load_sewage_potential(path_to_potential)
         elif self.water_source == 'GW':
             ec_flow = EnergyPotential().load_geothermal_potential(path_to_potential)
 

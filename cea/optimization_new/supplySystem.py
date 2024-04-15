@@ -294,7 +294,6 @@ class SupplySystem(object):
 
                             main_energy_flow.profile[min_index] = 0
                             diff = sum(main_energy_flow.profile) - tot_dischargeable
-                            print(diff)
                             if diff <= 0:
                                 break
 
