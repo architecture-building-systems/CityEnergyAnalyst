@@ -11,7 +11,6 @@ import math
 
 import cea.config
 import cea.inputlocator
-from cea.resources.geothermal import calc_temperature_underground
 from cea.constants import HOURS_IN_YEAR, P_UPS, P_D, E
 from cea.datamanagement.surroundings_helper import find_datacenters_nearby
 
@@ -25,11 +24,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_wasteheat_potential(locator, config):
+def calc_wasteheat_potential(locator):
     """
-    Quick calculation of lake potential. This does not refer to CEA original publication.
-    In that case, the implementation of the lake potential algorithm was carried out with another tool and then
-    the result was implemented in CEA for a specific case study.
+    Main function for the calculation of the waste heat potential in the area. The function calculates the total area of
+    the industries in the area and then calculates the waste heat potential (from the data centers) in the area.
 
     """
     # local variables
@@ -38,7 +36,7 @@ def calc_wasteheat_potential(locator, config):
 
     industries, check = find_datacenters_nearby(locator)
     if check:
-        tot_area = calculate_external_sewage_flow(industries)
+        tot_area = calculate_industry_total_area(industries)
         Qh_waste = datacenter_wasteheat_equation(tot_area, avg_max_it_capacity * utilization_rate) / 1e3  # [kW]
         T_source = 70  # °C
     else:
@@ -79,11 +77,10 @@ def update_ec(locator, temperature):
 
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
-def calculate_external_sewage_flow(industries):
+def calculate_industry_total_area(industries):
     """
-    This function calculates the sewage water flow rate from the buildings in the surroundings of the zone.
-    The sewage water flow rate is calculated based on the daily water consumption per person in Singapore, considering
-    only residential buildings.
+    This function calculates the total area of the industries in the area, in case it is needed for the waste heat
+    calculation.
     """
     import matplotlib.pyplot as plt
 
@@ -112,7 +109,7 @@ def calculate_external_sewage_flow(industries):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    calc_wasteheat_potential(locator=locator, config=config)
+    calc_wasteheat_potential(locator=locator)
 
 
 if __name__ == '__main__':
