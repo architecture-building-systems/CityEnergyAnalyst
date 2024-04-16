@@ -193,7 +193,7 @@ class Building(object):
         # ... or for the network supply system
         if self.initial_connectivity_state == 'network':
 
-            if not system_details['code'].values[0] in SupplySystemStructure.initial_network_supply_systems.keys():
+            if system_details['code'].values[0] not in SupplySystemStructure.initial_network_supply_systems.keys():
                 network_id = f'N{len(SupplySystemStructure.initial_network_supply_systems) + 1001}'
                 SupplySystemStructure.initial_network_supply_systems[system_details['code'].values[0]] = network_id
                 SupplySystemStructure.initial_network_supply_systems_composition[network_id] = {'primary': [],
