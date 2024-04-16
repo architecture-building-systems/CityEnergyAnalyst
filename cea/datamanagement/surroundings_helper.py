@@ -196,6 +196,42 @@ def geometry_extractor_osm(locator, config):
     # save to shapefile
     result.to_file(shapefile_out_path)
 
+def find_datacenters_nearby(locator):
+    """
+    This script checks the nearby buildings, in a 500 m radius of the analysed zone, and checks whether they are
+    industry buildings, to identify potential data centers.
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500  # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+    industry_tag = {'building': 'industrial'}
+
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+
+    try:
+        industrial_buildings = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags=industry_tag)
+        industrial_buildings = industrial_buildings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+        check_industry = True
+
+    except:
+        print('No industrial building found in the area')
+        check_industry = False
+        industrial_buildings = None
+
+    return industrial_buildings, check_industry
 
 def main(config):
     """
@@ -209,6 +245,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     geometry_extractor_osm(locator, config)
+    find_datacenters_nearby(locator)
 
 
 if __name__ == '__main__':

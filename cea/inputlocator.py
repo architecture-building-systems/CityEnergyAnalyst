@@ -448,6 +448,9 @@ class InputLocator(object):
     def get_sewage_heat_potential(self):
         return os.path.join(self.get_potentials_folder(), "Sewage_heat_potential.csv")
 
+    def get_wasteheat_potential(self):
+        return os.path.join(self.get_potentials_folder(), "Waste_heat_potential.csv")
+
     def get_water_body_potential(self):
         return os.path.join(self.get_potentials_folder(), "Water_body_potential.csv")
 
