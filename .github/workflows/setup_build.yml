@@ -61,21 +61,14 @@ jobs:
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
           ref: "windows-gui-update"
 
-      - name: Cache GUI
-        id: cache-gui
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/setup/dashboard
-          key: ${{ runner.os }}-${{ hashFiles('gui/electron', 'gui/src', 'gui/yarn.lock') }}-gui-setup
-
       - name: Package CEA GUI
-        if: steps.cache-gui.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
-          yarn electron:build
-          mv out/win-unpacked $GITHUB_WORKSPACE/setup/dashboard
+          yarn version --new-version $CEA_VERSION --no-git-tag-version
+          yarn electron:release
+          mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 
       - name: Install setup plugin
         shell: bash
