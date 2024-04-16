@@ -122,7 +122,7 @@ class DistrictEnergySystem(object):
 
         return non_dominated_systems, process_memory, optimization_tracker
 
-    def evaluate(self, optimization_tracker=None, return_full_des=False):
+    def evaluate(self, optimization_tracker=None, return_full_des=False, component_selection=None):
         """
         Evaluate the possible district energy system configurations (based on buildings, potentials and connectivity) by:
 
@@ -148,7 +148,12 @@ class DistrictEnergySystem(object):
         self.aggregate_demand()
         self.distribute_potentials()
 
-        # optimise supply systems for each network
+        # apply user-designated supply systems for each network ...
+        if component_selection:
+            self.apply_designated_supply_systems(component_selection)
+            return
+
+        # ... or find the optimal supply systems for each network
         self.generate_optimal_supply_systems()
 
         # aggregate objective functions for all subsystems across the entire district energy system
@@ -292,6 +297,30 @@ class DistrictEnergySystem(object):
                             self.distributed_potentials[network_id][aux_energy_carrier] = aux_network_pot_flow
 
         return self.distributed_potentials
+
+    def apply_designated_supply_systems(self, designated_supply_system_components):
+        """
+        Apply designated supply systems to the district energy system.
+
+        :param dict designated_supply_system_components: component selection for the supply systems for each of the
+                                                         networks in the district energy system.
+        """
+        for network in self.networks:
+            # use the SupplySystemStructure methods to dimension each of the system's designated components
+            system_structure = SupplySystemStructure(max_supply_flow=self.subsystem_demands[network.identifier],
+                                                     available_potentials=self.distributed_potentials[network.identifier],
+                                                     user_component_selection=
+                                                     designated_supply_system_components[network.identifier])
+            system_structure.build()
+
+            # create a SupplySystem-instance and operate the system to meet the yearly demand profile.
+            designated_supply_system = SupplySystem(system_structure,
+                                                    system_structure.capacity_indicators,
+                                                    self.subsystem_demands[network.identifier])
+            designated_supply_system.evaluate()
+            self.supply_systems[network.identifier] = designated_supply_system
+
+        return self.supply_systems
 
     def generate_optimal_supply_systems(self):
         """
