@@ -473,8 +473,8 @@ class SupplySystemStructure(object):
                                                                               component_placement,
                                                                               component_capacity)
             if component_code in ['HEXLW', 'HEXSW', 'HEXGW']:
-                potential = component.load_potentials().profile
-                if sum(potential) == 0:
+                potential = component.load_potentials()
+                if potential is None:
                     continue
             if component.main_energy_carrier.code == demand_energy_carrier:
                 fitting_components += [component]
@@ -557,8 +557,8 @@ class SupplySystemStructure(object):
         for component, component_models in viable_component_models:
             for model_code in component_models:
                 if model_code in ['HEXLW', 'HEXSW', 'HEXGW']:
-                    potential = component(model_code, component_placement, maximum_demand).load_potentials().profile
-                    if sum(potential) == 0:
+                    potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                    if potential is None:
                         continue
                 try:
                     viable_components_list.append(component(model_code, component_placement, maximum_demand))

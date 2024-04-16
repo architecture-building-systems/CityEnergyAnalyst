@@ -284,7 +284,7 @@ class SupplySystem(object):
                 main_energy_flow = demand.cap_at(component.capacity)
 
                 if component.code in ['HEXLW', 'HEXSW', 'HEXGW']:
-                    tot_dischargeable = sum(component.load_potentials().profile)
+                    tot_dischargeable = sum(component.load_potentials().main_potential.profile)
                     if tot_dischargeable < sum(main_energy_flow.profile):
                         diff = sum(main_energy_flow.profile) - tot_dischargeable
                         while diff > 0:

@@ -751,7 +751,7 @@ class HeatSink(ActiveComponent):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         # load potentials from heat sink resources
-        anthropogenic_heat_out = self.load_potentials()
+        anthropogenic_heat_out = self.load_potentials().main_potential
 
         self._check_operational_requirements(heat_rejection)
 
@@ -806,7 +806,7 @@ class HeatSink(ActiveComponent):
         elif self.water_source == 'GW':
             ec_flow = EnergyPotential().load_geothermal_potential(path_to_potential)
 
-        return ec_flow.main_potential
+        return ec_flow
 
 class PowerTransformer(PassiveComponent):
 

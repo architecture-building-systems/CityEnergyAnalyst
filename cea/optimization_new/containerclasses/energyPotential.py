@@ -144,6 +144,8 @@ class EnergyPotential(object):
         if exists(water_body_potential_file):
             water_body_potential = pd.read_csv(water_body_potential_file)
             main_potential_flow_profile = water_body_potential.QLake_kW
+            if sum(water_body_potential.QLake_kW) == 0:
+                return None
             list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
             if any("LW" in s for s in list_ec):
                 for ec in list_ec:
