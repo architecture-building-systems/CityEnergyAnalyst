@@ -59,6 +59,7 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: "windows-gui-update"
 
       - name: Cache GUI
         id: cache-gui
