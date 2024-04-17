@@ -34,8 +34,8 @@ _________________________
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
-    #. Type ``yarn package`` and press ENTER.
-    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+    #. Type ``yarn electron:build`` and press ENTER.
+    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
 .. attention:: In order to run CEA on Mac, you will need to select the correct Daysim binaries:
 
@@ -59,8 +59,8 @@ These steps would only work if your current installation is installed using the 
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
-    #. Type ``yarn package`` and press ENTER.
-    #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+    #. Type ``yarn electron:build`` and press ENTER.
+    #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
 Interfaces
 ~~~~~~~~~~

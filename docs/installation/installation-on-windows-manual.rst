@@ -28,8 +28,8 @@ Installation
 #. Build the CEA dashboard:
     #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
-    #. Type ``yarn package`` and press ENTER.
-    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+    #. Type ``yarn electron:build`` and press ENTER.
+    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/win-unpacked/``
 
 Interfaces
 ~~~~~~~~~~
@@ -52,7 +52,7 @@ In order to launch the CEA dashboard, you will need to do the following **each t
 #. Type ``mamba activate cea`` and press ENTER.
 #. Type ``cea dashboard`` and press ENTER.
 #. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
-#. Run the CEA dashboard located in (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``).
+#. Run the CEA dashboard located in (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/win-unpacked/CityEnergyAnalyst-GUI.exe``).
 
 Here you can find a series of `blog posts <https://cityenergyanalyst.com/blogs>`_ to help you get started!
 
