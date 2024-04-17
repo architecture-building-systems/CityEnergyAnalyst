@@ -40,7 +40,7 @@ class EnergyPotential(object):
 
     @type.setter
     def type(self, new_type):
-        if new_type in ['SolarPV', 'SolarPVT', 'SolarCollectorET', 'SolarCollectorFP', 'WaterBody', 'Geothermal', 'Sewage']:
+        if new_type in ['SolarPV', 'SolarPVT', 'SolarCollectorET', 'SolarCollectorFP', 'WaterBody', 'Geothermal', 'Sewage', 'WasteHeat']:
             self._type = new_type
         else:
             raise ValueError("Unexpected type of energy potential. "
@@ -118,6 +118,22 @@ class EnergyPotential(object):
         else:
             return None
 
+    def load_wasteheat_potential(self, wasteheat_potential_file):
+        self.type = 'WasteHeat'
+        self.scale = 'Domain'
+        if exists(wasteheat_potential_file):
+            wasteheat_potential = pd.read_csv(wasteheat_potential_file)
+            main_potential_flow_profile = wasteheat_potential.Qdata_kW
+            if sum(wasteheat_potential.Qdata_kW) == 0:
+                return None
+
+            average_return_temperature = self._get_average_temp(wasteheat_potential.Ts_C)
+            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            return self
+        else:
+            return None
+
     def load_geothermal_potential(self, geothermal_potential_file):
         self.type = 'Geothermal'
         self.scale = 'Domain'
@@ -146,6 +162,7 @@ class EnergyPotential(object):
             main_potential_flow_profile = water_body_potential.QLake_kW
             if sum(water_body_potential.QLake_kW) == 0:
                 return None
+
             list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
             if any("LW" in s for s in list_ec):
                 for ec in list_ec:

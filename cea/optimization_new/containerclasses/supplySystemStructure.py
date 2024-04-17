@@ -854,6 +854,16 @@ class SupplySystemStructure(object):
                                 if ec_code in self._used_potentials.keys() else self.available_potentials[ec_code]
                                 for ec_code in self.available_potentials.keys()}
 
+        new_absorption_feed = None
+        if 'T100W' in required_energy_flows.keys():
+            for ec_code in remaining_potentials.keys():
+                temp = remaining_potentials[ec_code].energy_carrier.mean_qual
+                type = remaining_potentials[ec_code].energy_carrier.qualifier
+                if temp >= 70 and type == 'temperature':
+                    new_absorption_feed = ec_code
+                    required_energy_flows[ec_code] = required_energy_flows['T100W']
+                    del required_energy_flows['T100W']
+
         min_potentials = {ec_code: remaining_potentials[ec_code].profile.min()
                           if ec_code in remaining_potentials.keys() else 0.0
                           for ec_code in required_energy_flows.keys()}
@@ -861,7 +871,12 @@ class SupplySystemStructure(object):
                                   for ec_code in min_potentials.keys()}
         new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - min_potentials[ec_code]
                                     for ec_code in required_energy_flows.keys()
-                                    if insufficient_potential}
+                                    if insufficient_potential[ec_code]}
+
+        if new_absorption_feed in new_required_energy_flow.keys():
+            new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+            del new_required_energy_flow[new_absorption_feed]
+
         for ec_code in min_potentials.keys():
             if ec_code in self._used_potentials.keys():
                 self._used_potentials[ec_code] += min_potentials[ec_code]

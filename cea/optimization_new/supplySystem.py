@@ -350,17 +350,31 @@ class SupplySystem(object):
                         EnergyFlow('source', 'secondary', ec_code,
                                    pd.Series([min_potentials[ec_code]] * EnergyFlow.time_frame))
         else:
+            new_absorption_feed = None
+            if 'T100W' in required_energy_flows.keys():
+                for ec_code in remaining_potentials.keys():
+                    temp = remaining_potentials[ec_code].energy_carrier.mean_qual
+                    type = remaining_potentials[ec_code].energy_carrier.qualifier
+                    if temp >= 70 and type == 'temperature':
+                        new_absorption_feed = ec_code
+                        required_energy_flows[ec_code] = required_energy_flows['T100W']
+                        del required_energy_flows['T100W']
+
             usable_potential = {ec_code: remaining_potentials[ec_code].cap_at(required_energy_flows[ec_code].profile)
                                 if ec_code in remaining_potentials.keys() else required_energy_flows[ec_code].cap_at(0)
                                 for ec_code in required_energy_flows.keys()}
             new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - usable_potential[ec_code]
                                         for ec_code in required_energy_flows.keys()}
+
+            if new_absorption_feed:
+                new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+                del new_required_energy_flow[new_absorption_feed]
+
             for ec_code in usable_potential.keys():
                 if ec_code in self.used_potentials.keys():
                     self.used_potentials[ec_code] += usable_potential[ec_code]
                 elif ec_code in self.available_potentials.keys():
                     self.used_potentials[ec_code] = usable_potential[ec_code]
-
         return new_required_energy_flow
 
     def _draw_from_infinite_sources(self, required_energy_flows, for_sizing=False):

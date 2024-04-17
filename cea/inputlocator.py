@@ -451,6 +451,9 @@ class InputLocator(object):
     def get_water_body_potential(self):
         return os.path.join(self.get_potentials_folder(), "Water_body_potential.csv")
 
+    def get_waste_heat_potential(self):
+        return os.path.join(self.get_potentials_folder(), "Waste_heat_potential.csv")
+
     def get_geothermal_potential(self):
         """scenario/outputs/data/potentials/geothermal/Shallow_geothermal_potential.csv"""
         return os.path.join(self.get_potentials_folder(), "Shallow_geothermal_potential.csv")

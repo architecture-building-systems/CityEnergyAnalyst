@@ -115,8 +115,9 @@ class Domain(object):
         geothermal_potential = EnergyPotential().load_geothermal_potential(self.locator.get_geothermal_potential())
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
+        wasteheat_potential = EnergyPotential().load_wasteheat_potential(self.locator.get_waste_heat_potential())
 
-        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
+        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential, wasteheat_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 
