@@ -164,7 +164,11 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
     if t_sewage_external < T_GROUND:
         t_sewage_external = T_GROUND
 
-    t_sewage = (mcp_kWC_zone * tin_C + mcp_kWC_external * t_sewage_external) / mcp_kWC_total
+    if mcp_kWC_total != 0:
+         t_sewage = (mcp_kWC_zone * tin_C + mcp_kWC_external * t_sewage_external) / mcp_kWC_total
+    else:
+         t_sewage = 0
+
     mcp_max = (Vf_ms * w_HEX_m * 0.20) * P_SEWAGEWATER_KGPERM3 * (HEAT_CAPACITY_OF_WATER_JPERKGK /1E3)  # 20 cm is the depth of the active water in contact with the HEX
     A_HEX = w_HEX_m * L_HEX_m   # area of heat exchange
 
@@ -179,7 +183,10 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
         alpha = h0 * A_HEX * (1 / mcpa - 1 / mcp_kWC_total)
         n = ( 1 - scipy.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * scipy.exp(-alpha))
         tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
-        Q_source = mcp_kWC_total * (MAX_T - tb1)
+        if mcp_kWC_total != 0:
+            Q_source = mcp_kWC_total * (MAX_T - tb1)
+        else:
+            Q_source = 0
         ta2 = ta1 + Q_source / mcpa
         t_source = ( tb2 + tb1 ) / 2
     else:
