@@ -195,6 +195,10 @@ Section "Uninstall"
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
     Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
 
+    ; Uninstall CEA GUI silently
+    DetailPrint 'Uninstalling CityEnergyAnalyst-GUI'
+    nsExec::ExecToLog '"$INSTDIR\dashboard\Uninstall CityEnergyAnalyst-GUI.exe" /S'
+
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
