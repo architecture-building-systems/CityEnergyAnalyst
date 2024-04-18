@@ -200,11 +200,21 @@ class SupplySystemStructure(object):
         return self._max_cap_passive_components
 
     @staticmethod
-    def _get_infinite_ecs(energy_sources_config):
+    def _get_infinite_ecs(energy_sources_config, domain):
         """
         Get the codes of all energy carriers which are quasi-infinitely available.
         """
         infinite_energy_carriers = []
+        avrg_yearly_temp = domain.weather['drybulb_C'].mean()
+        typical_air_ec = EnergyCarrier.temp_to_thermal_ec('air', avrg_yearly_temp)
+
+        if SupplySystemStructure.system_type == 'heating':
+            infinite_energy_carriers.extend(EnergyCarrier.get_colder_thermal_ecs(typical_air_ec, 'air',
+                                                                                 include_thermal_ec=True))
+        elif SupplySystemStructure.system_type == 'cooling':
+            infinite_energy_carriers.extend(EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air',
+                                                                                 include_thermal_ec=True))
+
         if 'power_grid' in energy_sources_config:
             infinite_energy_carriers.extend(EnergyCarrier.get_all_electrical_ecs())
         if 'fossil_fuels' in energy_sources_config:
@@ -914,7 +924,7 @@ class SupplySystemStructure(object):
         config = domain.config
         network_type = config.optimization_new.network_type
         if network_type == 'DH':
-            SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T60W')
+            SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T30W')
             SupplySystemStructure.system_type = 'heating'
         elif network_type == 'DC':
             SupplySystemStructure.main_final_energy_carrier = EnergyCarrier('T10W')
@@ -923,7 +933,7 @@ class SupplySystemStructure(object):
             raise ValueError("The only accepted values for the network type are 'DH' and 'DC'.")
 
         SupplySystemStructure._infinite_energy_carriers \
-            = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources)
+            = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources, domain)
         SupplySystemStructure._releasable_environmental_energy_carriers \
             = SupplySystemStructure._get_releasable_environmental_ecs(domain)
         SupplySystemStructure._releasable_grid_based_energy_carriers \
