@@ -196,7 +196,7 @@ def geometry_extractor_osm(locator, config):
     # save to shapefile
     result.to_file(shapefile_out_path)
 
-def find_datacenters_nearby(locator):
+def find_industries_nearby(locator):
     """
     This script checks the nearby buildings, in a 500 m radius of the analysed zone, and checks whether they are
     industry buildings, to identify potential data centers.
@@ -245,7 +245,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     geometry_extractor_osm(locator, config)
-    find_datacenters_nearby(locator)
 
 
 if __name__ == '__main__':

@@ -8,11 +8,13 @@ Waste heat potential calculation
 
 import pandas as pd
 import math
+from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR, P_UPS, P_D, E
-from cea.datamanagement.surroundings_helper import find_datacenters_nearby
+from cea.datamanagement.surroundings_helper import find_industries_nearby
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 
 __author__ = "Giuseppe Nappi"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -34,9 +36,16 @@ def calc_wasteheat_potential(locator):
     avg_max_it_capacity = 13 * 1e6  # [W]
     utilization_rate = 0.3  # utilization rate of the data center
 
-    industries, check = find_datacenters_nearby(locator)
+    # Check if there are data centers in the area, otherwise check for industries. If any of the two is found, calculate
+    # the total area of the industries in the zone.
+    check, tot_area = find_datacenters_inzone(locator)
+    if not check:
+        industries, check = find_industries_nearby(locator)
+        if check:
+            tot_area = calculate_industry_total_area(industries)
+
+    # If datacenters or industries are found, calculate the waste heat potential
     if check:
-        tot_area = calculate_industry_total_area(industries)
         Qh_waste = datacenter_wasteheat_equation(tot_area, avg_max_it_capacity * utilization_rate) / 1e3  # [kW]
         T_source = 70  # °C
     else:
@@ -105,6 +114,29 @@ def calculate_industry_total_area(industries):
 
 
     return tot_area
+
+
+def find_datacenters_inzone(locator):
+    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
+    building_type = building_typology_df.set_index(building_typology_df['Name'])
+    prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+    # Separate list to store index values
+    buildings_code = []
+    check_server = False
+    # Check if 'server' is present in each row of the column and save index if true
+    for index, row in building_type.iterrows():
+        if 'SERVERROOM' in row['1ST_USE']:
+            buildings_code.append(index)
+            check_server = True
+
+    if check_server:
+        datacenters = prop_geometry.loc[prop_geometry.Name.isin(buildings_code)]
+        tot_area = sum(datacenters.area)
+    else:
+        tot_area = 0
+
+    return check_server, tot_area
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
