@@ -30,7 +30,7 @@ import pandas as pd
 import time
 import multiprocessing
 
-from copy import copy, deepcopy
+from copy import copy
 from deap import algorithms, base, tools
 
 from cea.optimization_new.network import Network
