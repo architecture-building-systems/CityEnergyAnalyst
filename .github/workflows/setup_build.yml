@@ -1,4 +1,4 @@
-name: Build CEA Windows setup
+name: Build CEA Setup
 
 on:
   workflow_dispatch
@@ -59,7 +59,6 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
-          ref: vite-electron
 
       - name: Cache GUI
         id: cache-gui
@@ -111,14 +110,13 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
-          ref: vite-electron
 
       - uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: cea/conda-lock.yml
-          environment-name: cea
-          cache-environment: true
           micromamba-binary-path: gui/dependencies/micromamba
+          environment-name: cea
+          create-args: >-
+            python=3.8
 
       - name: Install CEA to environment
         shell: bash -el {0}
@@ -128,30 +126,24 @@ jobs:
         shell: bash -el {0}
         run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
-      - name: Clean conda environment
-        shell: bash -el {0}
-        run: micromamba clean -afy
-
-      - name: Move CEA environment into CEA GUI dependencies
+      - name: Save Apple API Key secret to file
+        env:
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
         run: |
-          mkdir gui/dependencies/micromamba-root
-          mv $MAMBA_ROOT_PREFIX/* gui/dependencies/micromamba-root
+          echo -n $APPLE_API_KEY_BASE64 | base64 -d -o ${{ github.workspace }}/gui/api_key.p8
 
       - name: Package CEA GUI
         shell: bash
         env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ github.workspace }}/gui/api_key.p8
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd gui
           yarn
           yarn version --new-version $CEA_VERSION --no-git-tag-version
-          yarn electron:build
-
-      - name: Upload setup
-        uses: actions/upload-artifact@v3
-        with:
-          name: dmg-${{ runner.arch }}
-          path: gui/out/CityEnergyAnalyst-GUI-*.dmg
-          compression-level: 0
+          yarn electron:release
 
