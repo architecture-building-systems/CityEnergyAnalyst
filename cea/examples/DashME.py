@@ -62,7 +62,7 @@ def embodiedUpdated(locator, config):
     # archMapmain(config)
     # schedulemain(config)
     # radmain(config)
-    demandmain(config)
+    # demandmain(config)
     # emissionmain(config)
     # operationmain(config)
 

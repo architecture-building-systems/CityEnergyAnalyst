@@ -1,0 +1,157 @@
+  Page 1                                    Fri Apr 29 20:27:00 2022
+
+  ******************************************************************
+  *                           E P A N E T                          *
+  *                   Hydraulic and Water Quality                  *
+  *                   Analysis for Pipe Networks                   *
+  *                         Version 2.00.12                        *
+  ******************************************************************
+  
+   
+      Input Data File ................... temp.inp
+      Number of Junctions................ 36
+      Number of Reservoirs............... 1
+      Number of Tanks ................... 0
+      Number of Pipes ................... 36
+      Number of Pumps ................... 0
+      Number of Valves .................. 0
+      Headloss Formula .................. Hazen-Williams
+      Hydraulic Timestep ................ 1.00 hrs
+      Hydraulic Accuracy ................ 0.010000
+      Status Check Frequency ............ 2
+      Maximum Trials Checked ............ 10
+      Damping Limit Threshold ........... 0.000000
+      Maximum Trials .................... 100
+      Quality Analysis .................. None
+      Specific Gravity .................. 1.00
+      Relative Kinematic Viscosity ...... 1.00
+      Relative Chemical Diffusivity ..... 1.00
+      Demand Multiplier ................. 1.00
+      Total Duration .................... 8759.00 hrs
+      Reporting Criteria:
+         No Nodes
+         No Links
+   
+  Analysis begun Fri Apr 29 20:27:00 2022
+
+  WARNING: Negative pressures at 3477:00:00 hrs.
+  
+  WARNING: Negative pressures at 3717:00:00 hrs.
+  
+  WARNING: Negative pressures at 3741:00:00 hrs.
+  
+  WARNING: Negative pressures at 3765:00:00 hrs.
+  
+  WARNING: Negative pressures at 3836:00:00 hrs.
+  
+  WARNING: Negative pressures at 3837:00:00 hrs.
+  
+  WARNING: Negative pressures at 3860:00:00 hrs.
+  
+  WARNING: Negative pressures at 3861:00:00 hrs.
+  
+  WARNING: Negative pressures at 3885:00:00 hrs.
+  
+  WARNING: Negative pressures at 3909:00:00 hrs.
+  
+  WARNING: Negative pressures at 3981:00:00 hrs.
+  
+  WARNING: Negative pressures at 4197:00:00 hrs.
+  
+  WARNING: Negative pressures at 4244:00:00 hrs.
+  
+  WARNING: Negative pressures at 4245:00:00 hrs.
+  
+  WARNING: Negative pressures at 4268:00:00 hrs.
+  
+  WARNING: Negative pressures at 4269:00:00 hrs.
+  
+  WARNING: Negative pressures at 4316:00:00 hrs.
+  
+  WARNING: Negative pressures at 4317:00:00 hrs.
+  
+  WARNING: Negative pressures at 4340:00:00 hrs.
+  
+  WARNING: Negative pressures at 4341:00:00 hrs.
+  
+  WARNING: Negative pressures at 4364:00:00 hrs.
+  
+  WARNING: Negative pressures at 4365:00:00 hrs.
+  
+  WARNING: Negative pressures at 4388:00:00 hrs.
+  
+  WARNING: Negative pressures at 4389:00:00 hrs.
+  
+  WARNING: Negative pressures at 4412:00:00 hrs.
+  
+  WARNING: Negative pressures at 4413:00:00 hrs.
+  
+  WARNING: Negative pressures at 4437:00:00 hrs.
+  
+  WARNING: Negative pressures at 4485:00:00 hrs.
+  
+  WARNING: Negative pressures at 4509:00:00 hrs.
+  
+  WARNING: Negative pressures at 4532:00:00 hrs.
+  
+  WARNING: Negative pressures at 4533:00:00 hrs.
+  
+  WARNING: Negative pressures at 4557:00:00 hrs.
+  
+  WARNING: Negative pressures at 4581:00:00 hrs.
+  
+  WARNING: Negative pressures at 4604:00:00 hrs.
+  
+  WARNING: Negative pressures at 4605:00:00 hrs.
+  
+  WARNING: Negative pressures at 4653:00:00 hrs.
+  
+  WARNING: Negative pressures at 4677:00:00 hrs.
+  
+  WARNING: Negative pressures at 4701:00:00 hrs.
+  
+  WARNING: Negative pressures at 4725:00:00 hrs.
+  
+  WARNING: Negative pressures at 4773:00:00 hrs.
+  
+  WARNING: Negative pressures at 4820:00:00 hrs.
+  
+  WARNING: Negative pressures at 4821:00:00 hrs.
+  
+  WARNING: Negative pressures at 4845:00:00 hrs.
+  
+  WARNING: Negative pressures at 4869:00:00 hrs.
+  
+  WARNING: Negative pressures at 4989:00:00 hrs.
+  
+  WARNING: Negative pressures at 5013:00:00 hrs.
+  
+  WARNING: Negative pressures at 5109:00:00 hrs.
+  
+  WARNING: Negative pressures at 5181:00:00 hrs.
+  
+  WARNING: Negative pressures at 5325:00:00 hrs.
+  
+  WARNING: Negative pressures at 5349:00:00 hrs.
+  
+  WARNING: Negative pressures at 5359:00:00 hrs.
+  
+  WARNING: Negative pressures at 5541:00:00 hrs.
+  
+  WARNING: Negative pressures at 5564:00:00 hrs.
+  
+  WARNING: Negative pressures at 5565:00:00 hrs.
+  
+  WARNING: Negative pressures at 5589:00:00 hrs.
+  
+  WARNING: Negative pressures at 5612:00:00 hrs.
+  
+  WARNING: Negative pressures at 5613:00:00 hrs.
+  
+  WARNING: Negative pressures at 5661:00:00 hrs.
+  
+  WARNING: Negative pressures at 5685:00:00 hrs.
+  
+  WARNING: Negative pressures at 5709:00:00 hrs.
+  
+  Analysis ended Fri Apr 29 20:27:00 2022
