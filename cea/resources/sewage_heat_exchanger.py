@@ -46,7 +46,7 @@ def calc_sewage_heat_exchanger(locator, config):
     # V_lps_external = config.sewage.sewage_water_district
     surroundings_sewage, buffer_m = get_surrounding_building_sewage(locator)
     T_sewage_drop = buffer_m / 1000 * SEWAGE_T_DROP
-    V_lps_external = calculate_external_sewage_flow(surroundings_sewage)
+    V_lps_external = calculate_external_sewage_flow(surroundings_sewage, locator)
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
@@ -199,17 +199,16 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
 
     return Q_source, t_source, tb1, tb2, ta1, ta2, mcp_kWC_total
 
-def calculate_external_sewage_flow(buffer_buildings):
+def calculate_external_sewage_flow(buffer_buildings, locator):
     """
     This function calculates the sewage water flow rate from the buildings in the surroundings of the zone.
     The sewage water flow rate is calculated based on the daily water consumption per person in Singapore, considering
     only residential buildings.
     """
-    # Include only residential buildings
-    residential = buffer_buildings[buffer_buildings['building'] == 'residential']
+    selected_buildings = filter_buildings(buffer_buildings, locator)
 
     # Extract the number of floors of the buildings
-    list_floors_nr = residential['building:levels'].values
+    list_floors_nr = selected_buildings['building:levels'].values
     floor_nr = []
     for item in list_floors_nr:
         x = float(item)
@@ -220,11 +219,10 @@ def calculate_external_sewage_flow(buffer_buildings):
             floor_nr.append(1)
 
     # Extract the area of the buildings
-    buildings_area = residential.area
+    buildings_area = selected_buildings.area
 
     # Calculate the total area of the buildings included in the buffer and calculate nr of people
-    tot_area = sum(buildings_area * floor_nr)
-    tot_people = tot_area / MULTI_RES_OCC
+    tot_people = sum(buildings_area * floor_nr / selected_buildings.occupancy.values)
     water_consumption = tot_people * CONSUMPTION_PER_PERSON_L_PER_DAY / (3600 * 24)  # L/s
 
     return water_consumption
@@ -245,6 +243,19 @@ def update_ec(locator, sewage_temperature):
         e_carriers = pd.concat([e_carriers, row_copy], axis=0)
 
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+
+def filter_buildings(buffer_buildings, locator):
+    # Include buildings with large water consumption
+    included_buildings = {'residential': 'MULTI_RES', 'industrial': 'INDUSTRIAL', 'house': 'SINGLE_RES',
+                          'apartment': 'MULTI_RES', 'hospital': 'HOSPITAL', 'hotel': 'HOTEL'}
+    selected_buildings = buffer_buildings[buffer_buildings['building'].isin(included_buildings.keys())]
+    typology_information = pd.read_excel(locator.get_database_use_types_properties(),'INTERNAL_LOADS')
+    types = typology_information.set_index(typology_information['code'])
+
+    for index, row in selected_buildings.iterrows():
+        selected_buildings.loc[index, 'occupancy'] = types.loc[included_buildings[row['building']], 'Occ_m2p']
+
+    return selected_buildings
 
 
 def main(config):
