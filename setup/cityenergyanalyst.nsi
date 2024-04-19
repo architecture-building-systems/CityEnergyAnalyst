@@ -122,8 +122,13 @@ Section "Base Installation" Base_Installation_Section
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
 
     # install the CEA-GUI to "dashboard" folder
-    File /r "dashboard"
+    File "gui_setup.exe"
     File "dashboard.bat"
+
+    # Run GUI Setup
+    DetailPrint "Installing CEA GUI"
+    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\dashboard"'
+    Delete "$INSTDIR\gui_setup.exe"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
@@ -189,6 +194,10 @@ Section "Uninstall"
 
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
     Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+
+    ; Uninstall CEA GUI silently
+    DetailPrint 'Uninstalling CityEnergyAnalyst-GUI'
+    nsExec::ExecToLog '"$INSTDIR\dashboard\Uninstall CityEnergyAnalyst-GUI.exe" /S'
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
