@@ -24,7 +24,6 @@ from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 
 
 class EnergyPotential(object):
-    time_frame = 8760  # placeholder, this will be made variable in the future
 
     def __init__(self):
         self._type = 'e.g. SolarPV'
@@ -172,10 +171,10 @@ class EnergyPotential(object):
         # initialise necessary variables
         nbr_of_files = len(energy_potential_files)
         average_temps = [np.nan] * nbr_of_files
-        main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                       columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         if auxiliary_potential_column_name is not None:
-            auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         else:
             auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
