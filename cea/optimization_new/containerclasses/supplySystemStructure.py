@@ -266,6 +266,10 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
+        for technology in optimisation_config.electricity_components:
+            active_components_list.append(ActiveComponent.get_subclass(technology))
+            component_types_list.append(ActiveComponent.get_types(technology))
+
         for technology in optimisation_config.heat_rejection_components:
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
