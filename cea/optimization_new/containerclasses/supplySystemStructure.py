@@ -318,8 +318,9 @@ class SupplySystemStructure(object):
 
         # Check if any of the input energy flows can be covered by the energy potential flows
         #   (if so, subtract them from demand)
-        remaining_max_primary_energy_flows_in = self._draw_from_potentials(max_primary_energy_flows_in)
-        max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
+        max_secondary_components_demand = self._draw_from_potentials(max_primary_energy_flows_in)
+        if self.user_component_selection:
+            max_secondary_components_demand = self._draw_from_infinite_sources(max_secondary_components_demand)
         max_secondary_components_demand_flow = {ec_code:
                                                     EnergyFlow('secondary', 'primary', ec_code, pd.Series(max_demand))
                                                 for ec_code, max_demand in max_secondary_components_demand.items()}
@@ -350,6 +351,7 @@ class SupplySystemStructure(object):
         split_by_secondary_component = \
             SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
                                                                      viable_secondary_and_passive_components)
+        # max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
 
         # check if any of the outgoing energy-flows can be absorbed by the environment directly
         max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)

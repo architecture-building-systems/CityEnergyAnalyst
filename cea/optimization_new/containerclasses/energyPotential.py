@@ -33,6 +33,8 @@ class EnergyPotential(object):
         self.auxiliary_potential = EnergyFlow()
         self.main_building_profiles = pd.DataFrame()
         self.auxiliary_building_profiles = pd.DataFrame()
+        self.area_typology = ['roofs_top_m2', 'walls_east_m2', 'walls_north_m2', 'walls_west_m2', 'walls_south_m2']
+        self.area_usage = pd.DataFrame()
 
     @property
     def type(self):
@@ -63,10 +65,16 @@ class EnergyPotential(object):
     def load_PV_potential(self, locator, building_codes):
         self.type = 'SolarPV'
         self.scale = 'Building'
+        tech_code = 'PV'
+        area_used = []
+        for area in self.area_typology:
+            tech_area = tech_code + '_' + area
+            area_used.append(tech_area)
         pv_potential_files = np.vectorize(locator.PV_results)(building_codes)
-        potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
+        potentials, area = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh', area_usage=area_used)
         if potentials:
             main_energy_carrier = 'E230AC'
+            self.area_usage = area
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
             self.main_building_profiles = potentials['main_building_profiles']
             return self
@@ -77,7 +85,7 @@ class EnergyPotential(object):
         self.type = 'SolarPVT'
         self.scale = 'Building'
         pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes)
-        potentials = self._get_building_potentials(pvt_potential_files, building_codes,
+        potentials, area = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:
             main_energy_carrier = 'E230AC'
@@ -94,7 +102,7 @@ class EnergyPotential(object):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
         scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
-        potentials = self._get_building_potentials(scet_potential_files, building_codes,
+        potentials, area = self._get_building_potentials(scet_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
@@ -108,7 +116,7 @@ class EnergyPotential(object):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
         scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
-        potentials = self._get_building_potentials(scfp_potential_files, building_codes,
+        potentials, area = self._get_building_potentials(scfp_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
@@ -158,7 +166,7 @@ class EnergyPotential(object):
             return None
 
     def _get_building_potentials(self, energy_potential_files, building_codes, main_potential_column_name,
-                                 temperature_column_name=None, auxiliary_potential_column_name=None):
+                                 temperature_column_name=None, auxiliary_potential_column_name=None, area_usage=None):
         """
         Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
         object attributes. In case a temperature column name is indicated, the average temperature (when operating
@@ -174,9 +182,12 @@ class EnergyPotential(object):
         average_temps = [np.nan] * nbr_of_files
         main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
                                       columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        if area_usage is not None:
+            area_tech = pd.DataFrame(0.0, index=building_codes,
+                                      columns=area_usage)
         if auxiliary_potential_column_name is not None:
             auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
-                                               columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         else:
             auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
@@ -184,6 +195,8 @@ class EnergyPotential(object):
             if exists(file):
                 pvt_potential = pd.read_csv(file)
                 main_potential[building_codes[i]] = pvt_potential[main_potential_column_name]
+                if area_usage is not None:
+                    area_tech.loc[building_codes[i]] = pvt_potential[area_usage].values[0]
                 if temperature_column_name is not None:
                     average_temps[i] = self._get_average_temp(pvt_potential[temperature_column_name], building_codes[i])
                 if auxiliary_potential_column_name is not None:
@@ -198,11 +211,15 @@ class EnergyPotential(object):
         else:
             average_temperature = None
         # return potentials and average temperature
-        return {'main_profile': main_potential['domain_potential'],
-                'main_building_profiles': main_potential[building_codes],
-                'auxiliary_profile': auxiliary_potential['domain_potential'],
-                'auxiliary_building_profiles': auxiliary_potential[building_codes],
-                'average_temp': average_temperature}
+        potential_dict = {'main_profile': main_potential['domain_potential'],
+                            'main_building_profiles': main_potential[building_codes],
+                            'auxiliary_profile': auxiliary_potential['domain_potential'],
+                            'auxiliary_building_profiles': auxiliary_potential[building_codes],
+                            'average_temp': average_temperature}
+        if area_usage is not None:
+            area_usage = area_tech
+
+        return potential_dict, area_usage
 
     def _get_average_temp(self, temperature_series, building_code=None):
         average_temp = np.mean(temperature_series)
@@ -216,3 +233,28 @@ class EnergyPotential(object):
         elif average_temp == 0:
             average_temp = np.nan
         return average_temp
+
+    def load_available_solar_area(self, locator, building_codes, area_usage):
+        """
+        Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
+        object attributes. In case a temperature column name is indicated, the average temperature (when operating
+        the corresponding component at maximum potential) is returned.
+        """
+        # check if there are potential files for any of the buildings
+        radiation_file = np.vectorize(locator.get_radiation_building)(building_codes)
+        if not any([exists(file) for file in radiation_file]):
+            print(f"No {self.type} potentials could be found for the indicated buildings. If you would like to include "
+                  f"potentials, consider running potentials scripts and then rerun the optimisation.")
+            return None
+        # initialise necessary variables
+        nbr_of_files = len(radiation_file)
+        average_temps = [np.nan] * nbr_of_files
+        area_availability = pd.DataFrame(0.0, index=self.area_availability,
+                                      columns=building_codes)
+        # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
+        for (file, i) in zip(radiation_file, np.arange(nbr_of_files)):
+            if exists(file):
+                area_on_building = pd.read_csv(file)
+                area_availability[building_codes[i]] = area_on_building[area_usage].values[0]
+
+        return area_availability
