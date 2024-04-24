@@ -342,6 +342,17 @@ class SupplySystemStructure(object):
                                                        for ec_code, max_flow in max_secondary_components_demand.items()}
 
         # determine dependencies between secondary and primary components
+        if 'E230AC' in viable_secondary_and_passive_components.keys():
+            min = 1000000
+            for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
+                cap = viable_secondary_and_passive_components['E230AC']['active'][i].capacity
+                remaining_demand = max_secondary_components_demand['E230AC'] - cap
+
+                if remaining_demand > 0 and min > cap:
+                    min = cap
+                    max_secondary_components_demand['E230AC'] = cap
+                    max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
+
         self._determine_dependencies('secondary', viable_secondary_and_passive_components,
                                      split_by_primary_component['input'])
 
@@ -351,7 +362,6 @@ class SupplySystemStructure(object):
         split_by_secondary_component = \
             SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
                                                                      viable_secondary_and_passive_components)
-        # max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
 
         # check if any of the outgoing energy-flows can be absorbed by the environment directly
         max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
@@ -543,7 +553,14 @@ class SupplySystemStructure(object):
         for component, component_models in viable_component_models:
             for model_code in component_models:
                 try:
-                    viable_components_list.append(component(model_code, component_placement, maximum_demand))
+                    if model_code in ['PV1', 'PV2', 'PV3']:
+                        PV_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap = PV_potential.main_potential.profile.max()
+                        # Overdimension the solar system in order to cover the maximum area, regardless of the max
+                        # demand, so that it can be taken advantage from selling electricity to the grid
+                        viable_components_list.append(component(model_code, component_placement, max_cap))
+                    else:
+                        viable_components_list.append(component(model_code, component_placement, maximum_demand))
                 except ValueError:
                     pass
 
@@ -735,8 +752,9 @@ class SupplySystemStructure(object):
                                                      component.operate(passive_component_demand_flows[component.code])
                                                  for component in viable_active_components}
             else:
-                input_and_output_energy_flows = {component.code: component.operate(main_flow)
+                energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
+                input_and_output_energy_flows.update(energy_flows)
 
         return input_and_output_energy_flows
 

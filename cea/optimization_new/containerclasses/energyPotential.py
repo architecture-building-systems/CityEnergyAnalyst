@@ -183,8 +183,8 @@ class EnergyPotential(object):
         main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
                                       columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         if area_usage is not None:
-            area_tech = pd.DataFrame(0.0, index=building_codes,
-                                      columns=area_usage)
+            area_tech = pd.DataFrame(0.0, index=pd.concat([building_codes, pd.Series('Total')]),
+                                      columns=self.area_typology)
         if auxiliary_potential_column_name is not None:
             auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
                                                 columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
@@ -217,6 +217,7 @@ class EnergyPotential(object):
                             'auxiliary_building_profiles': auxiliary_potential[building_codes],
                             'average_temp': average_temperature}
         if area_usage is not None:
+            area_tech.loc['Total'] = area_tech.iloc[0:-1].sum()
             area_usage = area_tech
 
         return potential_dict, area_usage
@@ -234,7 +235,7 @@ class EnergyPotential(object):
             average_temp = np.nan
         return average_temp
 
-    def load_available_solar_area(self, locator, building_codes, area_usage):
+    def load_available_solar_area(self, locator, building_codes):
         """
         Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
         object attributes. In case a temperature column name is indicated, the average temperature (when operating
@@ -249,12 +250,14 @@ class EnergyPotential(object):
         # initialise necessary variables
         nbr_of_files = len(radiation_file)
         average_temps = [np.nan] * nbr_of_files
-        area_availability = pd.DataFrame(0.0, index=self.area_availability,
-                                      columns=building_codes)
+        area_availability = pd.DataFrame(0.0, index=pd.concat([building_codes, pd.Series('Total')]),
+                                            columns=self.area_typology)
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
         for (file, i) in zip(radiation_file, np.arange(nbr_of_files)):
             if exists(file):
                 area_on_building = pd.read_csv(file)
-                area_availability[building_codes[i]] = area_on_building[area_usage].values[0]
+                area_availability.loc[building_codes[i]] = area_on_building[self.area_typology].values[0]
+
+        area_availability.loc['Total'] = area_availability.iloc[0:-1].sum()
 
         return area_availability

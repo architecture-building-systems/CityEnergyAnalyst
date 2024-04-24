@@ -578,7 +578,7 @@ class Solar_PV(ActiveComponent):
             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))
         self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
         self.output_energy_carriers = (
-            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0])))
+           [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))])
         self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heating_out):
@@ -598,25 +598,17 @@ class Solar_PV(ActiveComponent):
         self._check_operational_requirements(heating_out)
 
         # load potentials from solar resources
-        solarPV_potential = self.load_potentials()
-        area_used = solarPV_potential.area_usage
+        solarPV_potential, max_area_available = self.load_potentials()
         electricity_flow = solarPV_potential.main_potential
-        
+        area_used = solarPV_potential.area_usage
+        max_cap = max(electricity_flow.profile)
 
         # initialize energy flows
-        radiation_in = EnergyFlow('source', self.placement, self.main_energy_carrier[0].code)
-        electricity_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier[0].code)
-
-        # run operational/efficiency code
-        if Component._model_complexity == 'constant':
-            radiation_in.profile, \
-            electricity_out.profile = self._constant_efficiency_operation(heating_out)
-        else:
-            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
-                             f"implemented for {self.technology}")
+        electricity_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
+        electricity_out.profile = pd.Series(max_cap)
 
         # reformat outputs to dicts
-        input_energy_flows = {self.input_energy_carriers[0].code: radiation_in}
+        input_energy_flows = {}
         output_energy_flows = {self.output_energy_carriers[0].code: electricity_out}
 
         return input_energy_flows, output_energy_flows
@@ -648,9 +640,9 @@ class Solar_PV(ActiveComponent):
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         building_list = shp_file['Name']
         PV_potential = EnergyPotential().load_PV_potential(self.locator, building_list)
+        max_area = EnergyPotential().load_available_solar_area(self.locator, building_list)
 
-
-        return PV_potential
+        return PV_potential, max_area
 
 
 
