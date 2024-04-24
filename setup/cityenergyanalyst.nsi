@@ -9,7 +9,7 @@
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
 !define MULTIUSER_INSTALLMODE_INSTDIR "CityEnergyAnalyst"
 !define MULTIUSER_INSTALLMODE_FUNCTION onMultiUserModeChanged
-!define MULTIUSER_MUI
+# !define MULTIUSER_MUI
 
 !include MultiUser.nsh
 
