@@ -197,7 +197,7 @@ class AllInputs(Resource):
                     df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
                     for schedule_type, schedule in schedule_data.items():
                         df[schedule_type] = schedule[day]
-                    data = data.append(df, ignore_index=True)
+                    data = pandas.concat([df, data], ignore_index=True)
                 save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
         return out
