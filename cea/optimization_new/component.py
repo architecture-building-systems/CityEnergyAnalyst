@@ -597,15 +597,20 @@ class Solar_PV(ActiveComponent):
         """
         self._check_operational_requirements(heating_out)
 
-        # load potentials from solar resources
+        # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
+        chosen_cap = self.capacity
         solarPV_potential, max_area_available = self.load_potentials()
         electricity_flow = solarPV_potential.main_potential
-        area_used = solarPV_potential.area_usage
+        max_area_used = solarPV_potential.area_usage
         max_cap = max(electricity_flow.profile)
+
+        # Resize the used area based on the chosen capacity
+        ratio = chosen_cap / max_cap
+        area_used = max_area_used * ratio
 
         # initialize energy flows
         electricity_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
-        electricity_out.profile = pd.Series(max_cap)
+        electricity_out.profile = electricity_flow.profile  # pd.Series(max_cap)
 
         # reformat outputs to dicts
         input_energy_flows = {}

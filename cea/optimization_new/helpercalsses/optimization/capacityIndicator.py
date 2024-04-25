@@ -311,6 +311,23 @@ class CapacityIndicatorVector(object):
 
         return upper_bound_breached
 
+    def _exceeded_solar_capacity(self, category, energy_carrier, new_capacity_indicator_values):
+        """
+        Check if the values of a list of capacity indicators of a given category and with a given
+        main energy carrier (MEC) are overdimensioned (i.e. cumulated capacity of the component group would exceed the
+        maximum demand required by upstream components by more than a factor of X).
+        """
+        upper_bound = 1
+        cumulated_ci_values = sum([capacity_indicator_value
+                                   for i, capacity_indicator_value in enumerate(new_capacity_indicator_values)
+                                   if (self.capacity_indicators[i].category == category) and
+                                   (self.capacity_indicators[i].main_energy_carrier == energy_carrier)])
+
+        upper_bound_breached = round(cumulated_ci_values, 2) > \
+                               round(upper_bound, 2)
+
+        return upper_bound_breached
+
     def _get_upper_bound(self, category, energy_carrier, capacity_indicator_values):
         """
         Calculate the upper bound of cumulated capacity indicator values for a given category and
@@ -355,12 +372,17 @@ class CapacityIndicatorVector(object):
                                  for category, main_ecs in main_energy_carriers_in_cat.items()
                                  for main_ec in main_ecs
                                  if self._values_breach_upper_bound(category, main_ec, new_capacity_indicator_values)]
-
+        solar_cap_exceeded = False
         # Step 3
         while overdimensioned_groups:
             for group in overdimensioned_groups:
+                if group['main_ec'] == 'E230AC':
+                    solar_cap_exceeded = self._exceeded_solar_capacity(group['category'], group['main_ec'],
+                                                                       new_capacity_indicator_values)
                 while self._values_breach_upper_bound(group['category'], group['main_ec'],
-                                                      new_capacity_indicator_values):
+                                                      new_capacity_indicator_values) or solar_cap_exceeded:
+
+
                     # Step 3a
                     non_zero_ci_values_in_group = {self.capacity_indicators[i].code: ci_value
                                                    for i, ci_value in enumerate(new_capacity_indicator_values)
@@ -370,18 +392,25 @@ class CapacityIndicatorVector(object):
                                                    (ci_value > 0)}
                     lowest_ci_components = [component for component, value in non_zero_ci_values_in_group.items()
                                             if value == min(non_zero_ci_values_in_group.values())]
-                    component_to_resize = random.choice(lowest_ci_components)
 
                     # Step 3b
                     upper_bound = self._get_upper_bound(group['category'], group['main_ec'],
                                                         new_capacity_indicator_values)
                     odf_corrected_bound = upper_bound * CapacityIndicatorVector._overdimensioning_factor
-                    corrected_ci_value = min(non_zero_ci_values_in_group.values()) - \
-                                         (sum(non_zero_ci_values_in_group.values()) - odf_corrected_bound)
+                    if solar_cap_exceeded:
+                        component_to_resize = random.choice(list(non_zero_ci_values_in_group.keys()))
+                        corrected_ci_value = round(non_zero_ci_values_in_group[component_to_resize], 2) - \
+                                             (sum(non_zero_ci_values_in_group.values()) - upper_bound)
+                    else:
+                        component_to_resize = random.choice(lowest_ci_components)
+                        corrected_ci_value = min(non_zero_ci_values_in_group.values()) - \
+                                            (sum(non_zero_ci_values_in_group.values()) - odf_corrected_bound)
                     new_capacity_indicator_values = [ci_value
                                                      if not self.capacity_indicators[i].code == component_to_resize
                                                      else max(corrected_ci_value, 0)
                                                      for i, ci_value in enumerate(new_capacity_indicator_values)]
+                    solar_cap_exceeded = self._exceeded_solar_capacity(group['category'], group['main_ec'],
+                                                                       new_capacity_indicator_values)
 
             # check if the changing the CI-values in one category have led to overdimensioning in a downstream category
             overdimensioned_groups = [{'category': category, 'main_ec': main_ec}
