@@ -258,8 +258,8 @@ def get_building_properties():
 
         except (IOError, DriverError, ValueError) as e:
             print(e)
-            store['tables'][db] = {}
-            store['columns'][db] = {}
+            store['tables'][db] = None
+            store['columns'][db] = None
 
     return store
 
