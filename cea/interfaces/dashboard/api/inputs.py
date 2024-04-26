@@ -99,7 +99,7 @@ class InputGeojson(Resource):
             location = getattr(locator, db_info['location'])()
             if db_info['file_type'] != 'shp':
                 abort(500, 'Invalid database for geojson: %s' % location)
-            return df_to_json(location, bbox=True)[0]
+            return df_to_json(location)[0]
         elif kind in NETWORK_KEYS:
             return get_network(config, kind)[0]
         elif kind == 'streets':
@@ -123,9 +123,9 @@ class AllInputs(Resource):
         store['geojsons'] = {}
         store['connected_buildings'] = {}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True)
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-            locator.get_surroundings_geometry(), bbox=True)
+            locator.get_surroundings_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
@@ -306,17 +306,22 @@ def get_network(config, network_type):
         return None, [], None
 
 
-def df_to_json(file_location, bbox=False):
+def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
-        lat, lon = get_lat_lon_projected_shapefile(table_df)
-        crs = get_projected_coordinate_system(lat, lon)
+        if table_df.empty:
+            # Set crs to generic projection if empty
+            crs = table_df.crs.to_proj4()
+        else:
+            lat, lon = get_lat_lon_projected_shapefile(table_df)
+            crs = get_projected_coordinate_system(lat, lon)
+
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())
-        out = json.loads(out.to_json(show_bbox=bbox))
+        out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError) as e:
         print(e)
