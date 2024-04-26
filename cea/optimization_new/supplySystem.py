@@ -309,7 +309,11 @@ class SupplySystem(object):
                     demand = demand - main_energy_flow
 
             if ec_code == 'E230AC' and demand.profile.sum() > 0:
-                demand[ec_code] = self._draw_from_infinite_sources({ec_code: demand})
+                leftovers = self._draw_from_infinite_sources({ec_code: demand})
+                if leftovers:
+                    demand.profile = leftovers[ec_code].profile
+                else:
+                    demand.profile = pd.Series([0] * len(demand.profile))
 
             if not isclose(max(demand.profile), 0, abs_tol=1e-09):
                 raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '

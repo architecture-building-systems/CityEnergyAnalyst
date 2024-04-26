@@ -84,6 +84,7 @@ class Component(object):
         PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
         Solar_PV.initialize_subclass_variables(Component._components_database)
+        # Solar_collector.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -568,9 +569,9 @@ class Solar_PV(ActiveComponent):
 
     _database_tab = 'photovoltaic_panels'
 
-    def __init__(self, cogen_model_code, placement, capacity):
+    def __init__(self, pv_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(Solar_PV._database_tab, cogen_model_code, capacity, placement)
+        super().__init__(Solar_PV._database_tab, pv_model_code, capacity, placement)
         # initialise subclass attributes
         self.electrical_eff = self._model_data['PV_n'].values[0]
         # assign technology-specific energy carriers
@@ -649,7 +650,90 @@ class Solar_PV(ActiveComponent):
 
         return PV_potential, max_area
 
+class Solar_collector(ActiveComponent):
 
+    _database_tab = 'solar_thermal_panels'
+
+    def __init__(self, sc_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(Solar_collector._database_tab, sc_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.electrical_eff = self._model_data['n0'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))
+        self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
+        self.output_energy_carriers = (
+           [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))])
+        self.locator = InputLocator(scenario=Configuration().scenario)
+
+    def operate(self, heating_out):
+        """
+        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
+        The electrical output is simply given by that operating point. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        self._check_operational_requirements(heating_out)
+
+        # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
+        chosen_cap = self.capacity
+        solarcollector_potential, max_area_available = self.load_potentials()
+        thermal_flow = solarcollector_potential.main_potential
+        max_area_used = solarcollector_potential.area_usage
+        max_cap = max(thermal_flow.profile)
+
+        # Resize the used area based on the chosen capacity
+        ratio = chosen_cap / max_cap
+        area_used = max_area_used * ratio
+
+        # initialize energy flows
+        thermal_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
+        thermal_out.profile = thermal_out.profile  # pd.Series(max_cap)
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {self.output_energy_carriers[0].code: thermal_out}
+
+        return input_energy_flows, output_energy_flows
+
+    def _constant_efficiency_operation(self, heating_load):
+        """ Operate cogeneration plant assuming constant thermal and electrical efficiency ratings. """
+        fuel_flow, \
+        electricity_flow, \
+        waste_heat_flow = calc_cogen_const(heating_load.profile, self.electrical_eff)
+        return fuel_flow, electricity_flow, waste_heat_flow
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of cogeneration plants from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        """
+        ct_database = components_database[Solar_collector._database_tab]
+        temp_levels = ct_database['T_supply_sup'].unique()
+        heating_ecs = {volt: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in temp_levels}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_supply_sup']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        Solar_collector.possible_main_ecs = possible_main_ecs_dict
+
+    def load_potentials(self):
+
+        shp_file = gpd.read_file(self.locator.get_zone_geometry())
+        building_list = shp_file['Name']
+        thermal_potential = EnergyPotential().load_SCET_potential(self.locator, building_list)
+        max_area = EnergyPotential().load_available_solar_area(self.locator, building_list)
+
+        return thermal_potential, max_area
 
 class HeatPump(ActiveComponent):
 
