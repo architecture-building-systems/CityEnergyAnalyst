@@ -148,8 +148,8 @@ class SupplySystem(object):
         self._perform_water_filling_principle('tertiary', tertiary_demand_dict)
 
         system_energy_flows_in = self._group_component_flows_by_ec(['secondary', 'tertiary'], 'in')
-        remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
-        unavailable_system_energy_flows_in = self._draw_from_infinite_sources(remaining_system_energy_flows_in)
+        # remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
+        unavailable_system_energy_flows_in = self._draw_from_infinite_sources(system_energy_flows_in)
 
         system_energy_flows_out = self._group_component_flows_by_ec('tertiary', 'out')
         unreleasable_system_energy_flows_out = self._release_to_grids_or_env(system_energy_flows_out)
@@ -303,8 +303,9 @@ class SupplySystem(object):
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
-                if component_model in ['PV1', 'PV2', 'PV3']:
+                if component_model in ['PV1', 'PV2', 'PV3', 'SC2']:
                     demand = demand - self.component_energy_outputs[placement][component_model][ec_code]
+                    del self.component_energy_outputs[placement][component_model][ec_code]
                 else:
                     demand = demand - main_energy_flow
 

@@ -262,11 +262,11 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
-        for technology in optimisation_config.heating_components:
+        for technology in optimisation_config.solar_technologies:
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
-        for technology in optimisation_config.electricity_components:
+        for technology in optimisation_config.heating_components:
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
@@ -341,7 +341,6 @@ class SupplySystemStructure(object):
                                                                                                           'primary')
                                                        for ec_code, max_flow in max_secondary_components_demand.items()}
 
-        # determine dependencies between secondary and primary components
         if 'E230AC' in viable_secondary_and_passive_components.keys():
             min = 1000000
             for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
@@ -353,6 +352,7 @@ class SupplySystemStructure(object):
                     max_secondary_components_demand['E230AC'] = cap
                     max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
 
+        # determine dependencies between secondary and primary components
         self._determine_dependencies('secondary', viable_secondary_and_passive_components,
                                      split_by_primary_component['input'])
 
@@ -362,6 +362,10 @@ class SupplySystemStructure(object):
         split_by_secondary_component = \
             SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
                                                                      viable_secondary_and_passive_components)
+        hot_water_supply = None
+        if 'T100W' in max_secondary_energy_flows_out.keys():
+            hot_water_supply = max_secondary_energy_flows_out['T100W']
+            del max_secondary_energy_flows_out['T100W']
 
         # check if any of the outgoing energy-flows can be absorbed by the environment directly
         max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
@@ -404,6 +408,9 @@ class SupplySystemStructure(object):
                                                  for ec_code, max_flow in max_tertiary_components_demand.items()}
 
         # determine dependencies between secondary and primary components
+        if hot_water_supply:
+            max_secondary_energy_flows_out['T100W'] = hot_water_supply
+
         maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
         shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
         split_by_component = SupplySystemStructure._combine_energy_flow_shares('output', maximum_outputs,
@@ -423,6 +430,10 @@ class SupplySystemStructure(object):
         required_external_tertiary_inputs = self._draw_from_potentials(max_tertiary_energy_flows_in)
         unmet_inputs = {**self._draw_from_infinite_sources(required_external_secondary_inputs),
                         **self._draw_from_infinite_sources(required_external_tertiary_inputs)}
+
+        if 'T100W' in max_secondary_energy_flows_out.keys():
+            hot_water_supply = max_secondary_energy_flows_out['T100W']
+            del max_secondary_energy_flows_out['T100W']
 
         unreleasable_outputs = {**self._release_to_grids_or_env(max_secondary_energy_flows_out),
                                 **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
@@ -553,9 +564,15 @@ class SupplySystemStructure(object):
         for component, component_models in viable_component_models:
             for model_code in component_models:
                 try:
-                    if model_code in ['PV1', 'PV2', 'PV3']:
+                    max_cap = None
+                    if 'PV' in model_code:
                         PV_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = PV_potential.main_potential.profile.max()
+                    elif 'SC' in model_code:
+                        SC_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap = SC_potential.main_potential.profile.max()
+
+                    if max_cap and max_cap < maximum_demand:
                         # Overdimension the solar system in order to cover the maximum area, regardless of the max
                         # demand, so that it can be taken advantage from selling electricity to the grid
                         viable_components_list.append(component(model_code, component_placement, max_cap))

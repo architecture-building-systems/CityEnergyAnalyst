@@ -84,7 +84,7 @@ class Component(object):
         PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
         Solar_PV.initialize_subclass_variables(Component._components_database)
-        # Solar_collector.initialize_subclass_variables(Component._components_database)
+        Solar_collector.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -578,8 +578,7 @@ class Solar_PV(ActiveComponent):
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))
         self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
-        self.output_energy_carriers = (
-           [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))])
+        self.output_energy_carriers = []
         self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heating_out):
@@ -597,6 +596,7 @@ class Solar_PV(ActiveComponent):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         self._check_operational_requirements(heating_out)
+        oversize_factor = 1.2
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
@@ -607,15 +607,17 @@ class Solar_PV(ActiveComponent):
 
         # Resize the used area based on the chosen capacity
         ratio = chosen_cap / max_cap
+        if ratio < 1:
+            ratio = ratio * oversize_factor
         area_used = max_area_used * ratio
 
         # initialize energy flows
         electricity_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
-        electricity_out.profile = electricity_flow.profile  # pd.Series(max_cap)
+        electricity_out.profile = electricity_flow.profile * ratio
 
         # reformat outputs to dicts
         input_energy_flows = {}
-        output_energy_flows = {self.output_energy_carriers[0].code: electricity_out}
+        output_energy_flows = {self.main_energy_carrier.code: electricity_out}
 
         return input_energy_flows, output_energy_flows
 
@@ -662,9 +664,8 @@ class Solar_collector(ActiveComponent):
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))
-        self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
-        self.output_energy_carriers = (
-           [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))])
+        self.input_energy_carriers = []
+        self.output_energy_carriers = []
         self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heating_out):
@@ -682,25 +683,28 @@ class Solar_collector(ActiveComponent):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         self._check_operational_requirements(heating_out)
+        oversize_factor = 1.2
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
-        solarcollector_potential, max_area_available = self.load_potentials()
-        thermal_flow = solarcollector_potential.main_potential
-        max_area_used = solarcollector_potential.area_usage
+        solar_collector_potential, max_area_available = self.load_potentials()
+        thermal_flow = solar_collector_potential.main_potential
+        max_area_used = solar_collector_potential.area_usage
         max_cap = max(thermal_flow.profile)
 
         # Resize the used area based on the chosen capacity
         ratio = chosen_cap / max_cap
+        if ratio < 1:
+            ratio = ratio * oversize_factor
         area_used = max_area_used * ratio
 
         # initialize energy flows
         thermal_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
-        thermal_out.profile = thermal_out.profile  # pd.Series(max_cap)
+        thermal_out.profile = thermal_flow.profile * ratio
 
         # reformat outputs to dicts
         input_energy_flows = {}
-        output_energy_flows = {self.output_energy_carriers[0].code: thermal_out}
+        output_energy_flows = {self.main_energy_carrier.code: thermal_out}
 
         return input_energy_flows, output_energy_flows
 
@@ -719,7 +723,7 @@ class Solar_collector(ActiveComponent):
         """
         ct_database = components_database[Solar_collector._database_tab]
         temp_levels = ct_database['T_supply_sup'].unique()
-        heating_ecs = {volt: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in temp_levels}
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in temp_levels}
         ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_supply_sup']], name='ec')
         model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
         possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
