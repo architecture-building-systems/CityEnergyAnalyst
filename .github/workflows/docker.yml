@@ -39,13 +39,13 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/cea:dev
-            ghcr.io/${{ env.REPO_NAME }}/cea:dev
+            ghcr.io/${REPO_NAME}/cea:dev
 
       - name: Push version tag on release
         if: github.event_name == 'release' && github.event.action == 'published'
         run: |
           docker buildx imagetools create \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/cea:${GITHUB_REF##*/} \
-            --tag ghcr.io/${{ env.REPO_NAME }}/cea:${GITHUB_REF##*/} \
-            ghcr.io/${{ env.REPO_NAME }}/cea:dev
+            --tag ghcr.io/${REPO_NAME}/cea:${GITHUB_REF##*/} \
+            ghcr.io/${REPO_NAME}/cea:dev
             
