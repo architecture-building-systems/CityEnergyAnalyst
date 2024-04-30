@@ -33,7 +33,7 @@ def full_report_to_xls(tsd, output_folder, basename):
     #timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     #output_path = os.path.join(output_folder,"%(basename)s-%(timestamp)s.xls" % locals())
     output_path = os.path.join(output_folder, "%(basename)s.xls" % locals())
-    with pd.ExcelWriter("path_to_file.xlsx", engine="openpyxl") as writer:
+    with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         df.to_excel(writer, na_rep="NaN")
 
 
