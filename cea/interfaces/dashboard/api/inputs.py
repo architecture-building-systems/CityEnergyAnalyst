@@ -5,7 +5,7 @@ import traceback
 from collections import OrderedDict
 
 import geopandas
-import pandas
+import pandas as pd
 from flask import current_app, request
 from flask_restx import Namespace, Resource, abort
 
@@ -99,7 +99,7 @@ class InputGeojson(Resource):
             location = getattr(locator, db_info['location'])()
             if db_info['file_type'] != 'shp':
                 abort(500, 'Invalid database for geojson: %s' % location)
-            return df_to_json(location, bbox=True)[0]
+            return df_to_json(location)[0]
         elif kind in NETWORK_KEYS:
             return get_network(config, kind)[0]
         elif kind == 'streets':
@@ -123,9 +123,9 @@ class AllInputs(Resource):
         store['geojsons'] = {}
         store['connected_buildings'] = {}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True)
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-            locator.get_surroundings_geometry(), bbox=True)
+            locator.get_surroundings_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
@@ -161,10 +161,10 @@ class AllInputs(Resource):
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
-                    table_df = pandas.DataFrame(table_df.drop(columns='geometry'))
+                    table_df = pd.DataFrame(table_df.drop(columns='geometry'))
                     out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
                 elif file_type == 'dbf':
-                    table_df = pandas.read_json(json.dumps(tables[db]), orient='index')
+                    table_df = pd.read_json(json.dumps(tables[db]), orient='index')
 
                     # Make sure index name is 'Name;
                     table_df.index.name = 'Name'
@@ -192,12 +192,12 @@ class AllInputs(Resource):
                 schedule_data = schedule_dict['SCHEDULES']
                 schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
                                                'METADATA': schedule_dict['METADATA']}
-                data = pandas.DataFrame()
+                data = pd.DataFrame()
                 for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
-                    df = pandas.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+                    df = pd.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
                     for schedule_type, schedule in schedule_data.items():
                         df[schedule_type] = schedule[day]
-                    data = data.append(df, ignore_index=True)
+                    data = pd.concat([df, data], ignore_index=True)
                 save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
         return out
@@ -219,7 +219,7 @@ def get_building_properties():
         try:
             if file_type == 'shp':
                 table_df = geopandas.GeoDataFrame.from_file(file_path)
-                table_df = pandas.DataFrame(
+                table_df = pd.DataFrame(
                     table_df.drop(columns='geometry'))
                 if 'geometry' in db_columns:
                     del db_columns['geometry']
@@ -258,8 +258,8 @@ def get_building_properties():
 
         except (IOError, DriverError, ValueError) as e:
             print(e)
-            store['tables'][db] = {}
-            store['columns'][db] = {}
+            store['tables'][db] = None
+            store['columns'][db] = None
 
     return store
 
@@ -306,17 +306,22 @@ def get_network(config, network_type):
         return None, [], None
 
 
-def df_to_json(file_location, bbox=False):
+def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
-        lat, lon = get_lat_lon_projected_shapefile(table_df)
-        crs = get_projected_coordinate_system(lat, lon)
+        if table_df.empty:
+            # Set crs to generic projection if empty
+            crs = table_df.crs.to_proj4()
+        else:
+            lat, lon = get_lat_lon_projected_shapefile(table_df)
+            crs = get_projected_coordinate_system(lat, lon)
+
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())
-        out = json.loads(out.to_json(show_bbox=bbox))
+        out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError) as e:
         print(e)
@@ -334,7 +339,7 @@ class BuildingSchedule(Resource):
         try:
             schedule_path = locator.get_building_weekly_schedules(building)
             schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-            df = pandas.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+            df = pd.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
             out = {'SCHEDULES': {
                 schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
                 for schedule_type in df.columns}}
@@ -428,7 +433,7 @@ class InputDatabaseValidate(Resource):
                 if schema_key != 'get_database_standard_schedules_use':
                     db_path = locator.__getattribute__(schema_key)()
                     try:
-                        df = pandas.read_excel(db_path, sheet_name=None)
+                        df = pd.read_excel(db_path, sheet_name=None)
                         errors = validator.validate(df, schema)
                         if errors:
                             out[db_name] = errors
@@ -448,9 +453,9 @@ class InputDatabaseValidate(Resource):
 
 
 def database_dict_to_file(db_dict, db_path):
-    with pandas.ExcelWriter(db_path) as writer:
+    with pd.ExcelWriter(db_path) as writer:
         for sheet_name, data in db_dict.items():
-            df = pandas.DataFrame(data).dropna(axis=0, how='all')
+            df = pd.DataFrame(data).dropna(axis=0, how='all')
             df.to_excel(writer, sheet_name=sheet_name, index=False)
     print('Database file written to {}'.format(db_path))
 
@@ -458,13 +463,13 @@ def database_dict_to_file(db_dict, db_path):
 def schedule_dict_to_file(schedule_dict, schedule_path):
     schedule = OrderedDict()
     for key, data in schedule_dict.items():
-        schedule[key] = pandas.DataFrame(data)
+        schedule[key] = pd.DataFrame(data)
     schedule_to_file(schedule, schedule_path)
 
 
 def get_choices(choice_properties, path):
     lookup = choice_properties['lookup']
-    df = pandas.read_excel(path, lookup['sheet'])
+    df = pd.read_excel(path, lookup['sheet'])
     choices = df[lookup['column']].tolist()
     out = []
     if 'none_value' in choice_properties:

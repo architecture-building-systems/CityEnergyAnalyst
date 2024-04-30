@@ -3,6 +3,9 @@ name: Docker build
 on:
   push:
     branches: [master]
+  release:
+    types: [published]
+
 
 jobs:
   docker:
@@ -20,8 +23,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Repository Name
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY@L}" >>${GITHUB_ENV}
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cea:dev
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/cea:dev
+            ghcr.io/${{ env.REPO_NAME }}/cea:dev
+
+      - name: Push version tag on release
+        if: github.event_name == 'release' && github.event.action == 'published'
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/cea:${GITHUB_REF##*/} \
+            --tag ghcr.io/${{ env.REPO_NAME }}/cea:${GITHUB_REF##*/} \
+            ghcr.io/${{ env.REPO_NAME }}/cea:dev
+            

@@ -9,7 +9,7 @@
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
 !define MULTIUSER_INSTALLMODE_INSTDIR "CityEnergyAnalyst"
 !define MULTIUSER_INSTALLMODE_FUNCTION onMultiUserModeChanged
-!define MULTIUSER_MUI
+# !define MULTIUSER_MUI
 
 !include MultiUser.nsh
 
@@ -40,7 +40,7 @@ CRCCheck On
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
-!insertmacro MULTIUSER_PAGE_INSTALLMODE
+# !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
