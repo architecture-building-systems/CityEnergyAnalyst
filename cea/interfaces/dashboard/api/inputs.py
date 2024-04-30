@@ -152,12 +152,14 @@ class AllInputs(Resource):
             location = getattr(locator, db_info['location'])()
             file_type = db_info['file_type']
 
-            if len(tables[db]) != 0:
+            if tables.get(db) is None:  # ignore if table does not exist
+                continue
+
+            if len(tables[db]):
                 if file_type == 'shp':
-                    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
-                    out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
+                    out['geojsons'][db] = json.loads(table_df.to_json())
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
@@ -173,15 +175,22 @@ class AllInputs(Resource):
                     cea.utilities.dbf.dataframe_to_dbf(table_df, location)
                     out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
 
-            else:  # delete file if empty
-                out['tables'][db] = {}
-                if os.path.isfile(location):
+            else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)
+                if db == "surroundings":
+                    table_df = geopandas.GeoDataFrame(columns=["Name", "height_ag", "floors_ag"], geometry=[],
+                                                      crs=get_geographic_coordinate_system())
+                    table_df.to_file(location)
+
+                    out['tables'][db] = []
+
+                elif os.path.isfile(location):
                     if file_type == 'shp':
                         import glob
                         for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
                             os.remove(filepath)
                     elif file_type == 'dbf':
                         os.remove(location)
+
                 if file_type == 'shp':
                     out['geojsons'][db] = {}
 
