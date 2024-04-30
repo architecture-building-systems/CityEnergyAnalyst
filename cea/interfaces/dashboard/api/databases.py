@@ -21,11 +21,6 @@ DATABASES_SCHEMA_KEYS = {
     "CONVERSION": ["get_database_conversion_systems"],
     "DISTRIBUTION": ["get_database_distribution_systems"],
     "FEEDSTOCKS": ["get_database_feedstocks"],
-    "ENERGY_CARRIERS": ["get_database_energy_carriers"],
-
-    # TODO: Remove after databases are merged
-    "SUPPLY_NEW": ["get_database_supply_assemblies_new"],
-    "CONVERSION_NEW": ["get_database_conversion_systems_new"]
 }
 
 
