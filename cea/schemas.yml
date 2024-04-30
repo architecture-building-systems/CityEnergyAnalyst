@@ -3463,7 +3463,7 @@ get_database_conversion_systems:
         fuel_code:
           choice:
             lookup:
-              path: get_database_energy_carriers
+              path: get_database_feedstocks
               sheet: ENERGY_CARRIERS
               column: code
           description: code of the combustible energy carrier used by the boiler (matching code in EnergyCarriers
@@ -3707,7 +3707,7 @@ get_database_conversion_systems:
         fuel_code:
           choice:
             lookup:
-              path: get_database_energy_carriers
+              path: get_database_feedstocks
               sheet: ENERGY_CARRIERS
               column: code
           description: code of the combustible energy carrier used by the cogeneration plant (matching code in
