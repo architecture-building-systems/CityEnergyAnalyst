@@ -564,17 +564,13 @@ class SupplySystemStructure(object):
         for component, component_models in viable_component_models:
             for model_code in component_models:
                 try:
-                    max_cap = None
                     if 'PV' in model_code:
                         PV_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = PV_potential.main_potential.profile.max()
+                        viable_components_list.append(component(model_code, component_placement, max_cap))
                     elif 'SC' in model_code:
                         SC_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = SC_potential.main_potential.profile.max()
-
-                    if max_cap and max_cap < maximum_demand:
-                        # Overdimension the solar system in order to cover the maximum area, regardless of the max
-                        # demand, so that it can be taken advantage from selling electricity to the grid
                         viable_components_list.append(component(model_code, component_placement, max_cap))
                     else:
                         viable_components_list.append(component(model_code, component_placement, maximum_demand))

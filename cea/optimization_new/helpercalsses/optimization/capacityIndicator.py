@@ -350,15 +350,15 @@ class CapacityIndicatorVector(object):
             PV_component = random.choice(PV_components)
             SC_component = random.choice(SC_components)
             solar_components = [PV_component, SC_component]
-
-        new_capacity_indicator_values = [0
+            new_capacity_indicator_values = [0
                                          if (self.capacity_indicators[i].code in non_zero_ci_values_in_solar) and
                                             (self.capacity_indicators[i].code not in solar_components) else ci_value
                                          for i, ci_value in enumerate(new_capacity_indicator_values)]
 
+        tolerance = 0.05
 
-
-        while (non_zero_ci_values_in_solar[PV_component] + non_zero_ci_values_in_solar[SC_component]) > upper_bound:
+        while ((non_zero_ci_values_in_solar[PV_component] + non_zero_ci_values_in_solar[SC_component]) >
+               upper_bound + tolerance):
             component_to_resize = random.choice(solar_components)
 
             non_zero_ci_values_in_solar[component_to_resize] = non_zero_ci_values_in_solar[component_to_resize] - 0.1
@@ -416,7 +416,13 @@ class CapacityIndicatorVector(object):
                                  for main_ec in main_ecs
                                  if self._values_breach_upper_bound(category, main_ec, new_capacity_indicator_values)]
         # Step 3
-        new_capacity_indicator_values = self._solar_capacity_control(new_capacity_indicator_values)
+        solar_components = {self.capacity_indicators[i].code: ci_value
+                               for i, ci_value in enumerate(new_capacity_indicator_values)
+                               if ('PV' in self.capacity_indicators[i].code) or
+                               ('SC' in self.capacity_indicators[i].code)}
+        if sum(solar_components.values()) > 1:
+            new_capacity_indicator_values = self._solar_capacity_control(new_capacity_indicator_values)
+
         while overdimensioned_groups:
             for group in overdimensioned_groups:
                 while self._values_breach_upper_bound(group['category'], group['main_ec'],
