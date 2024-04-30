@@ -596,20 +596,15 @@ class Solar_PV(ActiveComponent):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         self._check_operational_requirements(heating_out)
-        oversize_factor = 1.2
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
-        solarPV_potential, max_area_available = self.load_potentials()
+        solarPV_potential = self.load_potentials()
         electricity_flow = solarPV_potential.main_potential
-        max_area_used = solarPV_potential.area_usage
         max_cap = max(electricity_flow.profile)
 
         # Resize the used area based on the chosen capacity
         ratio = chosen_cap / max_cap
-        if ratio < 1:
-            ratio = ratio * oversize_factor
-        area_used = max_area_used * ratio
 
         # initialize energy flows
         electricity_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
@@ -648,9 +643,8 @@ class Solar_PV(ActiveComponent):
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         building_list = shp_file['Name']
         PV_potential = EnergyPotential().load_PV_potential(self.locator, building_list)
-        max_area = EnergyPotential().load_available_solar_area(self.locator, building_list)
 
-        return PV_potential, max_area
+        return PV_potential
 
 class Solar_collector(ActiveComponent):
 
@@ -683,20 +677,15 @@ class Solar_collector(ActiveComponent):
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
         self._check_operational_requirements(heating_out)
-        oversize_factor = 1.2
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
-        solar_collector_potential, max_area_available = self.load_potentials()
+        solar_collector_potential = self.load_potentials()
         thermal_flow = solar_collector_potential.main_potential
-        max_area_used = solar_collector_potential.area_usage
         max_cap = max(thermal_flow.profile)
 
         # Resize the used area based on the chosen capacity
         ratio = chosen_cap / max_cap
-        if ratio < 1:
-            ratio = ratio * oversize_factor
-        area_used = max_area_used * ratio
 
         # initialize energy flows
         thermal_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
@@ -735,9 +724,8 @@ class Solar_collector(ActiveComponent):
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         building_list = shp_file['Name']
         thermal_potential = EnergyPotential().load_SCET_potential(self.locator, building_list)
-        max_area = EnergyPotential().load_available_solar_area(self.locator, building_list)
 
-        return thermal_potential, max_area
+        return thermal_potential
 
 class HeatPump(ActiveComponent):
 

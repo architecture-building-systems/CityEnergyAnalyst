@@ -565,11 +565,11 @@ class SupplySystemStructure(object):
             for model_code in component_models:
                 try:
                     if 'PV' in model_code:
-                        PV_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
+                        PV_potential = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = PV_potential.main_potential.profile.max()
                         viable_components_list.append(component(model_code, component_placement, max_cap))
                     elif 'SC' in model_code:
-                        SC_potential, max_area = component(model_code, component_placement, maximum_demand).load_potentials()
+                        SC_potential = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = SC_potential.main_potential.profile.max()
                         viable_components_list.append(component(model_code, component_placement, max_cap))
                     else:
