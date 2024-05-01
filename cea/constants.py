@@ -68,11 +68,10 @@ H0_KWPERM2K = 1.5  # kW/m2K # heat transfer coefficient/ got from Rabtherm techn
 SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
 SOIL_lambda_WmK = 1.6
 SOIL_rho_kgm3 = 1600 # Bulk density of soil
-GW_TEMPERATURE = 27.7 #°C
 PERMEABIL = 10**-7
 PIEZ = [10, 30]
 DIST_PIEZ = [0.5, 20]
-MAX_T_INCREASE = 35 #°C #Li, Xinguo, 2006. “Simulation and Experiment on the Thermal Performance of U-Vertical
+#Li, Xinguo, 2006. “Simulation and Experiment on the Thermal Performance of U-Vertical
 # Ground Coupled Heat Exchanger.”
 
 # Singapore Groundwater Temperature according to “AG 31-008 Geothermal Heat Pump Design Manual - McQuay” (April 9, 2024)
