@@ -35,7 +35,6 @@ class SupplySystemsDatabase(object):
         self.BOILERS = conversion_systems_worksheets["BOILERS"]
         self.COGENERATION_PLANTS = conversion_systems_worksheets["COGENERATION_PLANTS"]
         self.HEAT_EXCHANGERS = conversion_systems_worksheets["HEAT_EXCHANGERS"]
-        self.CHILLER_CONFIGURATION = conversion_systems_worksheets["CHILLER_CONFIGURATION"]
         self.VAPOR_COMPRESSION_CHILLERS = conversion_systems_worksheets["VAPOR_COMPRESSION_CHILLERS"]
         self.ABSORPTION_CHILLERS = conversion_systems_worksheets["ABSORPTION_CHILLERS"]
         self.COOLING_TOWERS = conversion_systems_worksheets["COOLING_TOWERS"]
