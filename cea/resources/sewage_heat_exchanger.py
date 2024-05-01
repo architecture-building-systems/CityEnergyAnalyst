@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy
 import math
-from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, T_FRESHWATER, T_GROUND, CONSUMPTION_PER_PERSON_L_PER_DAY, MULTI_RES_OCC, SEWAGE_T_DROP, MAX_T
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3, MULTI_RES_OCC
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.surroundings_helper import get_surrounding_building_sewage
@@ -43,15 +43,20 @@ def calc_sewage_heat_exchanger(locator, config):
     names = pd.read_csv(locator.get_total_demand()).Name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
-    # V_lps_external = config.sewage.sewage_water_district
+    freshwater_temperature = config.sewage.fresh_water_temperature
+    ground_temperature = config.sewage.ground_temperature
+    water_consumption = config.sewage.water_consumption_person
+    sewage_temperature_drop = config.sewage.sewage_temperature_drop
+    max_temperature = config.sewage.maximum_temperature_increase
+
     surroundings_sewage, buffer_m = get_surrounding_building_sewage(locator)
-    T_sewage_drop = buffer_m / 1000 * SEWAGE_T_DROP
-    V_lps_external = calculate_external_sewage_flow(surroundings_sewage, locator)
+    T_sewage_drop = buffer_m / 1000 * sewage_temperature_drop
+    V_lps_external = calculate_external_sewage_flow(surroundings_sewage, locator, water_consumption)
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
         mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)(building.Qww_sys_kWh, building.Qww_kWh, building.Tww_sys_sup_C,
-                                                     building.Tww_sys_re_C, building.mcptw_kWperC, building.mcpww_sys_kWperC, sewage_water_ratio)
+                                                     building.Tww_sys_re_C, building.mcptw_kWperC, building.mcpww_sys_kWperC, sewage_water_ratio, freshwater_temperature)
         mcpwaste.append(mcp_combi)
         twaste.append(t_to_sewage)
         mXt.append(mcp_combi*t_to_sewage)
@@ -62,7 +67,7 @@ def calc_sewage_heat_exchanger(locator, config):
 
     Q_source, t_source, t_in_sew, t_out, tin_e, tout_e, mcpwaste_total = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
                                                                               VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_LPERS,
-                                                                              heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external, T_sewage_drop)
+                                                                              heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external, T_sewage_drop, ground_temperature, max_temperature)
 
     #save to disk
     pd.DataFrame({"Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : t_in_sew,
@@ -77,7 +82,7 @@ def calc_sewage_heat_exchanger(locator, config):
 
 # Calc Sewage heat
 
-def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
+def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio, freshwater_temperature):
     """
     Calculate sewage temperature and flow rate released from DHW usages and Fresh Water (FW) in buildings.
 
@@ -108,14 +113,14 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
         m_DHW = mcpww * SW_ratio
         m_TW = mcptw * SW_ratio
         mcp_combi = m_DHW + m_TW
-        t_combi = ( m_DHW * t_spur + m_TW * T_FRESHWATER ) / mcp_combi
+        t_combi = ( m_DHW * t_spur + m_TW * freshwater_temperature ) / mcp_combi
         t_to_sewage = 0.90 * t_combi                  # assuming 10% thermal loss through piping
     else:
         t_to_sewage = trww
         mcp_combi = mcptw * SW_ratio  # in [kW_K]
     return mcp_combi, t_to_sewage # in lh or kgh and in C
 
-def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, tmin_C, ATmin, V_lps_external, T_sewage_drop):
+def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, tmin_C, ATmin, V_lps_external, T_sewage_drop, ground_temperature, max_temperature):
     """
     Calculates the operation of sewage heat exchanger.
 
@@ -161,8 +166,8 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
     mcp_kWC_total = mcp_kWC_zone + mcp_kWC_external  # kW_C
 
     t_sewage_external = tin_C - T_sewage_drop  # °C
-    if t_sewage_external < T_GROUND:
-        t_sewage_external = T_GROUND
+    if t_sewage_external < ground_temperature:
+        t_sewage_external = ground_temperature
 
     if mcp_kWC_total != 0:
          t_sewage = (mcp_kWC_zone * tin_C + mcp_kWC_external * t_sewage_external) / mcp_kWC_total
@@ -184,7 +189,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
         n = ( 1 - scipy.exp( -alpha ) ) / (1 - mcpa / mcp_kWC_total * scipy.exp(-alpha))
         tb2 = tb1 + mcpa / mcp_kWC_total * n * (ta1 - tb1)
         if mcp_kWC_total != 0:
-            Q_source = mcp_kWC_total * (MAX_T - tb1)
+            Q_source = mcp_kWC_total * (max_temperature - tb1)
         else:
             Q_source = 0
         ta2 = ta1 + Q_source / mcpa
@@ -199,7 +204,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
 
     return Q_source, t_source, tb1, tb2, ta1, ta2, mcp_kWC_total
 
-def calculate_external_sewage_flow(buffer_buildings, locator):
+def calculate_external_sewage_flow(buffer_buildings, locator, water_consumption):
     """
     This function calculates the sewage water flow rate from the buildings in the surroundings of the zone.
     The sewage water flow rate is calculated based on the daily water consumption per person in Singapore, considering
@@ -223,7 +228,7 @@ def calculate_external_sewage_flow(buffer_buildings, locator):
 
     # Calculate the total area of the buildings included in the buffer and calculate nr of people
     tot_people = sum(buildings_area * floor_nr / selected_buildings.occupancy.values)
-    water_consumption = tot_people * CONSUMPTION_PER_PERSON_L_PER_DAY / (3600 * 24)  # L/s
+    water_consumption = tot_people * water_consumption / (3600 * 24)  # L/s
 
     return water_consumption
 

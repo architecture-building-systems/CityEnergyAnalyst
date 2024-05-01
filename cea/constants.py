@@ -57,12 +57,7 @@ HEX_WIDTH_M = 0.40  # in m
 AT_HEX_K = 5  # rule of thumb, Approach temperature of a heat exchanger
 AT_MIN_K = 2  # rule of thumb, Minimum approach temperature of a heat exchanger
 CT_MAX_SIZE_W = 10000000
-T_FRESHWATER = 23  # °C
-T_GROUND = 27  # °C
-CONSUMPTION_PER_PERSON_L_PER_DAY = 149  # in L/day/person
 MULTI_RES_OCC = 35  # in m2/person
-SEWAGE_T_DROP = 1.93  # K/km
-MAX_T = 35  # °C
 
 # ??
 VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
