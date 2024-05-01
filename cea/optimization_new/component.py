@@ -579,8 +579,8 @@ class Solar_PV(ActiveComponent):
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))
         self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
-        self.output_energy_carriers = (
-            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['V_power_supply'].values[0])))
+        self.output_energy_carriers = [(
+            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['V_power_supply'].values[0])))]
         self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heating_out):
@@ -661,7 +661,8 @@ class Solar_collector(ActiveComponent):
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))
         self.input_energy_carriers = []
-        self.output_energy_carriers = []
+        self.output_energy_carriers = [(
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0])))]
         self.locator = InputLocator(scenario=Configuration().scenario)
 
     def operate(self, heating_out):

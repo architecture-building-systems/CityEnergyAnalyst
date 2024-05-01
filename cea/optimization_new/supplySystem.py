@@ -148,8 +148,8 @@ class SupplySystem(object):
         self._perform_water_filling_principle('tertiary', tertiary_demand_dict)
 
         system_energy_flows_in = self._group_component_flows_by_ec(['secondary', 'tertiary'], 'in')
-        # remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
-        unavailable_system_energy_flows_in = self._draw_from_infinite_sources(system_energy_flows_in)
+        remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
+        unavailable_system_energy_flows_in = self._draw_from_infinite_sources(remaining_system_energy_flows_in)
 
         system_energy_flows_out = self._group_component_flows_by_ec('tertiary', 'out')
         unreleasable_system_energy_flows_out = self._release_to_grids_or_env(system_energy_flows_out)
@@ -271,13 +271,13 @@ class SupplySystem(object):
         :param demand_dict: dictionary of demand energy flows that need to be met, keys are energy carrier codes
         :type demand_dict: dict of <cea.optimization_new.energyFlow>-EnergyFlow class objects
         """
-        # remaining_demand_dict = self._draw_from_potentials(demand_dict, reset=True)
+        remaining_demand_dict = self._draw_from_potentials(demand_dict, reset=True)
         required_electricity = None
-        if 'E230AC' in demand_dict.keys() and self.structure.activation_order[placement]:
-            required_electricity = demand_dict['E230AC']
-            del demand_dict['E230AC']
+        if 'E230AC' in remaining_demand_dict.keys() and self.structure.activation_order[placement]:
+            required_electricity = remaining_demand_dict['E230AC']
+            del remaining_demand_dict['E230AC']
 
-        remaining_demand_dict = self._draw_from_infinite_sources(demand_dict)
+        remaining_demand_dict = self._draw_from_infinite_sources(remaining_demand_dict)
         if required_electricity is not None:
             remaining_demand_dict['E230AC'] = required_electricity
 
