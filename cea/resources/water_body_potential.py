@@ -9,7 +9,7 @@ import math
 
 import cea.config
 import cea.inputlocator
-from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, max_delta_T, Mixed_Layer_Depth , area_tot, water_vol, max_depth_res, average_depth_res, length_reservoir, T_sup, T_bot, HEX_WIDTH_M
+from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, Mixed_Layer_Depth, T_sup, T_bot, HEX_WIDTH_M
 from cea.resources.geothermal import calc_temperature_underground
 from cea.datamanagement.surroundings_helper import get_water_basin
 
@@ -60,8 +60,9 @@ def calc_lake_potential_new(locator, config):
     """
     # local variables
     heat_capacity_water = HEAT_CAPACITY_OF_WATER_JPERKGK  # JkgK
-    AT_max_K = max_delta_T  # K
-    V_max_m3 = water_vol * 1e9 # m3
+    AT_max_K = config.water_body.max_delta_temperature_withdrawal  # K
+    V_max_m3 = config.water_body.water_volume * 1e9 # m3
+    avg_depth = config.water_body.average_depth # m
 
     Q_max_kwh = (V_max_m3 * P_WATER_KGPERM3 / 3600) * heat_capacity_water / 1000 * AT_max_K / 8760 # in kW
     # Max heat dischargeable in the lake to obtain an increase of 0.5 K in one year, which does not cause substantial
@@ -69,11 +70,11 @@ def calc_lake_potential_new(locator, config):
 
     Z = [] # depth in meters
     T = [] # temperature in kelvin
-    check = check_presence_water_basin(locator)
+    check, area = check_presence_water_basin(locator)
 
     if check:
-        for z in np.arange(0, average_depth_res, 0.1):
-            Water_temperature = model_temperature_variation(z) - 273 #°C
+        for z in np.arange(0, avg_depth, 0.1):
+            Water_temperature = model_temperature_variation(z, avg_depth) - 273 #°C
             Z.append(z)
             T.append(Water_temperature)
         plt.plot(T, Z)
@@ -91,11 +92,11 @@ def calc_lake_potential_new(locator, config):
         return
     update_ec(locator, T[-1])
 
-def model_temperature_variation(z):
+def model_temperature_variation(z, avg_depth):
     """
     Calculation of temperature of the lake at a chosen depth z
     """
-    measurement_depth = average_depth_res
+    measurement_depth = avg_depth
     heat_capacity_water = HEAT_CAPACITY_OF_WATER_JPERKGK  # JkgK
     drag = 0.002 # surface drag coefficient
     alpha_T = 1.6509e-5 #1/K
@@ -151,9 +152,9 @@ def check_presence_water_basin(locator):
     """
     Check if the water basin is present in the database
     """
-    water_basin_check = get_water_basin(locator)
+    water_basin_check, area_tot = get_water_basin(locator)
 
-    return water_basin_check
+    return water_basin_check, area_tot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

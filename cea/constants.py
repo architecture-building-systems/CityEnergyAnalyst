@@ -101,13 +101,7 @@ E = 18 #[W]
 # water body integration
 # ==============================================================================================================
 
-max_delta_T = 0.5 #K
 # Fink, Gabriel 2014. “Large Lakes as Sources and Sinks of Anthropogenic Heat:Capacities and Limits.”
-area_tot = 3 #km2
-water_vol = 0.016 #km3
-max_depth_res = 20 #m
-average_depth_res = 5 #m
-length_reservoir = 4 #km
 T_sup = 30 #°C
 T_bot = 27 #°C
 Mixed_Layer_Depth = 1 #m #Defined with a decrease in temperature of 0.5°C, as from Wells, Mathew G. “Surface Mixed Layers in Lakes.”
