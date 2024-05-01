@@ -295,6 +295,16 @@ class SupplySystem(object):
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
+                    output_list = list(self.component_energy_outputs[placement][component_model].items())[0]
+                    output_code = output_list[0]
+                    output_object = output_list[1]
+                    # Convert the flow in order to obtain the required energy carrier (e.g. from DC output of PV to AC)
+                    if 'PV' in component_model and output_code != main_energy_flow.energy_carrier.code:
+                        auxiliary_component = list(self.structure.max_cap_passive_components[placement][component_model].values())[0]
+                        converted_flow = auxiliary_component.operate(output_object)
+                        self.component_energy_outputs[placement][component_model][converted_flow.energy_carrier.code] = converted_flow
+                        del self.component_energy_outputs[placement][component_model][output_code]
+
                 else:
                     auxiliary_component = list(self.structure.max_cap_passive_components[placement]
                                                [component_model].values())[0]  # TODO: change this to allow all passive components to be activated
@@ -303,7 +313,7 @@ class SupplySystem(object):
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
-                if component_model in ['PV1', 'PV2', 'PV3', 'SC2']:
+                if 'PV' in component_model or 'SC' in component_model:
                     demand = demand - self.component_energy_outputs[placement][component_model][ec_code]
                     del self.component_energy_outputs[placement][component_model][ec_code]
                 else:

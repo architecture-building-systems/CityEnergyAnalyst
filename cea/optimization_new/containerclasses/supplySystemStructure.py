@@ -611,7 +611,8 @@ class SupplySystemStructure(object):
             component_placement,
             maximum_demand,
             required_energy_carrier_code,
-            demand_origin)
+            demand_origin,
+            ecs_with_possible_active_components)
         alternative_active_components = [active_component
                                          for active_component in pot_alternative_active_components
                                          if active_component.code in required_passive_components.keys()]
@@ -640,7 +641,7 @@ class SupplySystemStructure(object):
 
     @staticmethod
     def _fetch_viable_passive_components(active_components_to_feed, active_component_placement, maximum_demand,
-                                         required_energy_carrier_code, demand_origin):
+                                         required_energy_carrier_code, demand_origin, ecs_with_possible_active_components):
         """
         Get the passive components for a list of active components. The premise of this function is that the
         main energy carriers generated/absorbed by the active components can only satisfy the original demand if
@@ -650,12 +651,12 @@ class SupplySystemStructure(object):
                                          for component in active_components_to_feed]))
 
         # find passive components that can provide the energy carriers generated/absorbed by the active components
-        passive_components_for_ec = {alternative_ec:
+        passive_components_for_ec = {required_energy_carrier_code:
                                          {component_class:
                                               component_class.conversion_matrix[alternative_ec][
                                                   required_energy_carrier_code]}
                                      for component_class in PassiveComponent.__subclasses__()
-                                     for alternative_ec in active_component_ecs
+                                     for alternative_ec in ecs_with_possible_active_components
                                      if alternative_ec in component_class.conversion_matrix.columns}
 
         # try to instantiate appropriate passive components for each the active components
@@ -691,9 +692,26 @@ class SupplySystemStructure(object):
                         in passive_components_for_ec[active_component.main_energy_carrier.code].items():
                     for component_model in component_models:
                         try:
-                            passive_component_list.append(
+                            if 'PV' in active_component.code:
+                                max_cap = active_component.capacity
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            max_cap,
+                                                            EnergyCarrier(
+                                                                ecs_with_possible_active_components[0]).mean_qual,
+                                                            mean_qual_after))
+                            elif 'SC' in active_component.code:
+                                max_cap = active_component.capacity
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            max_cap,
+                                                            EnergyCarrier(
+                                                                ecs_with_possible_active_components[0]).mean_qual,
+                                                            mean_qual_after))
+                            else:
+                                passive_component_list.append(
                                 passive_component_class(component_model, placed_before, placed_after, maximum_demand,
-                                                        active_component.main_energy_carrier.mean_qual,
+                                                        EnergyCarrier(ecs_with_possible_active_components[0]).mean_qual,
                                                         mean_qual_after))
                         except ValueError:
                             continue
@@ -758,12 +776,18 @@ class SupplySystemStructure(object):
             necessary_passive_components = viable_active_and_passive_components[main_energy_carrier]['passive']
 
             if necessary_passive_components:
-                passive_component_demand_flows = {active_component_code: passive_component[0].operate(main_flow)
-                                                  for active_component_code, passive_component in
-                                                  necessary_passive_components.items()}
-                input_and_output_energy_flows = {component.code:
-                                                     component.operate(passive_component_demand_flows[component.code])
+                active_component_demand_flow = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
+
+                for active_component_code, passive_component in necessary_passive_components.items():
+                    flow = list(active_component_demand_flow[active_component_code][1].items())
+                    object_flow = flow[0][1]
+                    adjusted_flow = passive_component[0].operate(object_flow)
+                    input = active_component_demand_flow[active_component_code][0]
+                    active_component_demand_flow[active_component_code] = (input, {
+                        adjusted_flow.energy_carrier.code: adjusted_flow})
+
+                input_and_output_energy_flows.update(active_component_demand_flow)
             else:
                 energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}

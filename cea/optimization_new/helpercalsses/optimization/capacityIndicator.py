@@ -112,6 +112,8 @@ class CapacityIndicatorVector(object):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         else:
             self._capacity_indicators = new_capacity_indicators
+            new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
+            self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
                 self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
 
@@ -313,12 +315,12 @@ class CapacityIndicatorVector(object):
 
         return upper_bound_breached
 
-    def _solar_capacity_control(self, new_capacity_indicator_values):
+    def _solar_capacity_control(self, capacity_indicator_values):
 
-        non_zero_ci_values_in_solar = {self.capacity_indicators[i].code: ci_value
-                                       for i, ci_value in enumerate(new_capacity_indicator_values)
+        non_zero_ci_values_in_solar = {self.capacity_indicators[i].code: ci_value.value
+                                       for i, ci_value in enumerate(capacity_indicator_values)
                                        if ('PV' in self.capacity_indicators[i].code) or
-                                       ('SC' in self.capacity_indicators[i].code) and (ci_value > 0)}
+                                       ('SC' in self.capacity_indicators[i].code) and (ci_value.value > 0)}
         upper_bound = 1
 
         PV_components = [component for component, value in non_zero_ci_values_in_solar.items()
@@ -331,20 +333,30 @@ class CapacityIndicatorVector(object):
 
             new_capacity_indicator_values = [0
                                              if (self.capacity_indicators[i].code in PV_components) and
-                                                (self.capacity_indicators[i].code != PV_component) else ci_value
-                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
-            return new_capacity_indicator_values
+                                                (self.capacity_indicators[i].code != PV_component) else ci_value.value
+                                             for i, ci_value in enumerate(capacity_indicator_values)]
+
+            for i, ci_value in enumerate(capacity_indicator_values):
+                ci_value.value = new_capacity_indicator_values[i]
+
+            return capacity_indicator_values
 
         elif SC_components and not PV_components:
             SC_component = random.choice(SC_components)
 
             new_capacity_indicator_values = [0
                                              if (self.capacity_indicators[i].code in SC_components) and
-                                                (self.capacity_indicators[i].code != SC_component) else ci_value
-                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
-            return new_capacity_indicator_values
+                                                (self.capacity_indicators[i].code != SC_component) else ci_value.value
+                                             for i, ci_value in enumerate(capacity_indicator_values)]
+
+            for i, ci_value in enumerate(capacity_indicator_values):
+                ci_value.value = new_capacity_indicator_values[i]
+
+            return capacity_indicator_values
+
         elif not SC_components and not PV_components:
-            return new_capacity_indicator_values
+
+            return capacity_indicator_values
 
         else:
             PV_component = random.choice(PV_components)
@@ -352,8 +364,8 @@ class CapacityIndicatorVector(object):
             solar_components = [PV_component, SC_component]
             new_capacity_indicator_values = [0
                                          if (self.capacity_indicators[i].code in non_zero_ci_values_in_solar) and
-                                            (self.capacity_indicators[i].code not in solar_components) else ci_value
-                                         for i, ci_value in enumerate(new_capacity_indicator_values)]
+                                            (self.capacity_indicators[i].code not in solar_components) else ci_value.value
+                                         for i, ci_value in enumerate(capacity_indicator_values)]
 
         tolerance = 0.05
 
@@ -367,9 +379,10 @@ class CapacityIndicatorVector(object):
                                              else round(max(non_zero_ci_values_in_solar[component_to_resize], 0), 2)
                                              for i, ci_value in enumerate(new_capacity_indicator_values)]
 
+        for i, ci_value in enumerate(capacity_indicator_values):
+            ci_value.value = new_capacity_indicator_values[i]
 
-
-        return new_capacity_indicator_values
+        return capacity_indicator_values
 
     def _get_upper_bound(self, category, energy_carrier, capacity_indicator_values):
         """
@@ -416,13 +429,6 @@ class CapacityIndicatorVector(object):
                                  for main_ec in main_ecs
                                  if self._values_breach_upper_bound(category, main_ec, new_capacity_indicator_values)]
         # Step 3
-        solar_components = {self.capacity_indicators[i].code: ci_value
-                               for i, ci_value in enumerate(new_capacity_indicator_values)
-                               if ('PV' in self.capacity_indicators[i].code) or
-                               ('SC' in self.capacity_indicators[i].code)}
-        if sum(solar_components.values()) > 1:
-            new_capacity_indicator_values = self._solar_capacity_control(new_capacity_indicator_values)
-
         while overdimensioned_groups:
             for group in overdimensioned_groups:
                 while self._values_breach_upper_bound(group['category'], group['main_ec'],

@@ -67,7 +67,7 @@ class EnergyPotential(object):
         pv_potential_files = np.vectorize(locator.PV_results)(building_codes)
         potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
         if potentials:
-            main_energy_carrier = 'E230AC'
+            main_energy_carrier = 'E30DC'
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
             self.main_building_profiles = potentials['main_building_profiles']
             return self
