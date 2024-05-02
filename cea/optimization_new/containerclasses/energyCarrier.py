@@ -159,6 +159,11 @@ class EnergyCarrier(object):
             self.unit_cost = energy_carrier['unit_cost_USD.kWh'].iloc[0]
             self.unit_ghg = energy_carrier['unit_ghg_kgCO2.kWh'].iloc[0]
 
+    def describe(self):
+        """ Provide a short written description of the energy carrier."""
+        description = self._description + ": " + str(self.mean_qual) + " " + self.qual_unit
+        return description
+
     @staticmethod
     def initialize_class_variables(domain):
         """

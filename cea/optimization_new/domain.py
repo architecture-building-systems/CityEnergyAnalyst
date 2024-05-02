@@ -102,9 +102,8 @@ class Domain(object):
         :return self.energy_potentials: list of energy potentials with the scale they apply to (building or domain)
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
-        shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
         # pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
@@ -340,10 +339,16 @@ class Domain(object):
     @staticmethod
     def _write_system_structure(results_file, supply_system):
         """Summarise supply system structure and write it to the indicated results file"""
-        supply_system_info = [{'Component_category': component_category,
-                               'Component_type': component.technology,
+        supply_system_info = [{'Component': component.technology,
+                               'Component_type': component.type,
                                'Component_code': component_code,
-                               'Capacity_kW': round(component.capacity, 3)}
+                               'Category': component_category,
+                               'Capacity_kW': round(component.capacity, 3),
+                               'Main_side': component.main_side,
+                               'Main_energy_carrier': component.main_energy_carrier.describe(),
+                               'Main_energy_carrier_code': component.main_energy_carrier.code,
+                               'Other_inputs': ', '.join([ip.code for ip in component.input_energy_carriers]),
+                               'Other_outputs': ', '.join([op.code for op in component.output_energy_carriers])}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
