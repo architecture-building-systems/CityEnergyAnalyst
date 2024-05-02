@@ -351,12 +351,6 @@ class InputLocator(object):
         """Returns the folder containing the scenario's results for the new optimization script"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization_new')
 
-    def get_new_optimization_des_solution_folders(self):
-        """Returns the folder structure of the optimization results folder"""
-        des_solution_folders = next(os.walk(self.get_new_optimization_results_folder()))[1]
-        des_solution_folders = [folder for folder in des_solution_folders if folder != 'debugging']
-        return des_solution_folders
-
     def get_new_optimization_base_case_folder(self, network_type):
         """Returns the folder containing the base-case energy systems against which optimal systems are compared"""
         return self._ensure_folder(self.get_new_optimization_results_folder(), f'base_{network_type}S')
@@ -381,14 +375,6 @@ class InputLocator(object):
         """Returns the results-file for the general supply systems results of the n-th near-pareto-optimal DES"""
         des_folder = self.get_new_optimization_optimal_district_energy_system_folder(district_energy_system_id)
         return self._ensure_folder(des_folder, 'Supply_systems')
-
-    def get_new_optimization_optimal_supply_system_ids(self, district_energy_system_id='DES_000'):
-        """Returns the identifiers of the supply systems of the n-th near-pareto-optimal DES"""
-        des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
-        supply_system_files = next(os.walk(des_supsys_folder))[2]
-        supply_system_ids = [file.split('_')[0] for file in supply_system_files
-                             if file.split('.')[1] == 'csv' and file.split('_')[0] != 'Supply']
-        return supply_system_ids
 
     def get_new_optimization_optimal_supply_system_file(self, district_energy_system_id='DES_000',
                                                         supply_system_id='N0000_or_B0000'):
