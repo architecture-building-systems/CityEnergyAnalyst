@@ -225,18 +225,17 @@ def get_water_basin(locator):
                                                                tags=water_tags)
         water_basin = water_basin.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
         allowed_basins = ['lake', 'reservoir', 'river', 'canal']
+
         # Select only big water bodies to discharge heat
-        for i in range(len(water_basin)):
-            if water_basin['water'][i] in allowed_basins:
-                check_water_basin = True
-
-                # Filter out rows with NaN values in the 'water' column
-                water_filtered = water_basin[water_basin['water'].notna()]
-                # Filter the DataFrame to keep only rows where the 'water' column contains any of the substrings
-                filtered_water_basin = water_filtered[water_filtered['water'].str.contains('|'.join(allowed_basins))]
-                tot_area_available = filtered_water_basin.area.sum() / 1e6  # km2
-
-                break
+        water_filtered = water_basin[water_basin['water'].notna()]
+        # Filter the DataFrame to keep only rows where the 'water' column contains any of the substrings
+        filtered_water_basin = water_filtered[water_filtered['water'].str.contains('|'.join(allowed_basins))]
+        if not filtered_water_basin.empty:
+            tot_area_available = filtered_water_basin.area.sum() / 1e6  # km2
+            check_water_basin = True
+        else:
+            check_water_basin = False
+            tot_area_available = None
 
         fig, ax = plt.subplots(figsize=(10, 10))
         water_basin.plot(column='water', categorical=True, legend=True, ax=ax)
@@ -246,6 +245,7 @@ def get_water_basin(locator):
     except:
         print('No water basins found in the area')
         check_water_basin = False
+        tot_area_available = None
 
     return check_water_basin, tot_area_available
 
