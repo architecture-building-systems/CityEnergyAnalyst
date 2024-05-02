@@ -971,7 +971,7 @@ class SupplySystemStructure(object):
             raise ValueError("The only accepted values for the network type are 'DH' and 'DC'.")
 
         SupplySystemStructure._infinite_energy_carriers \
-            = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources)
+            = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources, domain)
         SupplySystemStructure._releasable_environmental_energy_carriers \
             = SupplySystemStructure._get_releasable_environmental_ecs(domain)
         SupplySystemStructure._releasable_grid_based_energy_carriers \
