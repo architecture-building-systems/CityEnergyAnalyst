@@ -4,6 +4,7 @@ jobs: maintain a list of jobs to be simulated.
 
 import subprocess
 from dataclasses import dataclass, asdict
+from datetime import datetime
 
 import psutil
 
@@ -35,6 +36,8 @@ job_info_model = api.model('JobInfo', {
     'state': fields.Integer,
     'error': fields.String,
     'parameters': fields.Raw,
+    'start_time': fields.DateTime,
+    'end_time': fields.DateTime,
 })
 
 job_info_request_parser = reqparse.RequestParser()
@@ -66,9 +69,8 @@ class JobInfo:
     parameters: dict
     state: int = JOB_STATE_PENDING
     error: str = None
-
-    def __repr__(self):
-        return "<JobInfo(id={id}, script={script}, state={state}>".format(**self.__dict__)
+    start_time: datetime = None
+    end_time: datetime = None
 
 
 jobs = {
@@ -109,6 +111,7 @@ class JobStarted(Resource):
     def post(self, jobid):
         job = jobs[jobid]
         job.state = JOB_STATE_STARTED
+        job.start_time = datetime.now()
         current_app.socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
         return job
 
@@ -120,6 +123,7 @@ class JobSuccess(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_SUCCESS
         job.error = None
+        job.end_time = datetime.now()
         if job.id in worker_processes:
             del worker_processes[job.id]
         current_app.socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
@@ -133,6 +137,7 @@ class JobError(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_ERROR
         job.error = request.data.decode()
+        job.end_time = datetime.now()
         if job.id in worker_processes:
             del worker_processes[job.id]
         current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
@@ -155,6 +160,7 @@ class JobCanceled(Resource):
         job = jobs[jobid]
         job.state = JOB_STATE_CANCELED
         job.error = "Canceled by user"
+        job.end_time = datetime.now()
         kill_job(jobid)
         current_app.socketio.emit("cea-worker-canceled", api.marshal(job, job_info_model))
         return job
