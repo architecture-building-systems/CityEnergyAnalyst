@@ -23,8 +23,10 @@ import pandas as pd
 from math import log
 # third party libraries
 # other files (modules) of this project
+from cea.inputlocator import InputLocator
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.technologies.chiller_vapor_compression import calc_VCC_const
 from cea.technologies.chiller_absorption import calc_ACH_const
@@ -33,6 +35,7 @@ from cea.technologies.boiler import calc_boiler_const
 from cea.technologies.cogeneration import calc_cogen_const
 from cea.technologies.heatpumps import calc_HP_const
 from cea.technologies.cooling_tower import calc_CT_const
+from cea.config import Configuration
 
 
 class Component(object):
@@ -80,6 +83,7 @@ class Component(object):
         CoolingTower.initialize_subclass_variables(Component._components_database)
         PowerTransformer.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
+        HeatSink.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -711,6 +715,98 @@ class CoolingTower(ActiveComponent):
                                   for ec in model_and_ec_code_match['ec'].unique()}
         CoolingTower.possible_main_ecs = possible_main_ecs_dict
 
+class HeatSink(ActiveComponent):
+    """ This component refers to any condeser for the chillers that releases heat coming from primary and secondary
+    components through water loops, if any of the potentials (water basin, sewage, geothermal) are available  """
+
+    main_side = 'input'
+    _database_tab = 'heat_sink'
+
+    def __init__(self, ct_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(HeatSink._database_tab, ct_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.aux_power_share = self._model_data['aux_power'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_in_sink'].values[0]))]
+        self.water_source = self._model_data['Water_source_code'].values[0]
+        self.locator = InputLocator(scenario=Configuration().scenario)
+
+    def operate(self, heat_rejection):
+        """
+        Operate the heat sink, so that it rejects the targeted amount of heat. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heat_rejection: Targeted heat rejection from the heat sink's water loop
+        :type heat_rejection: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Power supply required to reject the targeted amount of heat
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        # load potentials from heat sink resources
+        anthropogenic_heat_out = self.load_potentials().main_potential
+
+        self._check_operational_requirements(heat_rejection)
+
+        # initialize energy flows
+        electricity_in = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+
+        # run operational/efficiency code
+        if Component._model_complexity == 'constant':
+            electricity_in.profile, anthropogenic_heat_out.profile = self._constant_efficiency_operation(heat_rejection)
+        else:
+            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
+                             f"implemented for {self.technology}")
+
+        # reformat outputs to dicts
+        input_energy_flows = {self.input_energy_carriers[0].code: electricity_in}
+        output_energy_flows = {anthropogenic_heat_out.energy_carrier.code: anthropogenic_heat_out}
+
+        return input_energy_flows, output_energy_flows
+
+    def _constant_efficiency_operation(self, heat_rejection_load):
+        """ Operate heat sink assuming a constant electrical efficiency rating, using the same approach of
+        Cooling Towers. """
+        electricity_flow, anthropogenic_heat_out = calc_CT_const(heat_rejection_load.profile, self.aux_power_share)
+        return electricity_flow, anthropogenic_heat_out
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
+        variable.
+        """
+        ct_database = components_database[HeatSink._database_tab]
+        # Assumed hot water temperature value at same value of open circuit Cooling Towers
+        hot_water_temperatures = ct_database['T_water_in_design'].unique()
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        HeatSink.possible_main_ecs = possible_main_ecs_dict
+
+    def load_potentials(self):
+        potential_path_dictionary = {'LW': self.locator.get_water_body_potential(),
+                                     'SW': self.locator.get_sewage_heat_potential(),
+                                     'GW': self.locator.get_geothermal_potential()}
+        path_to_potential = potential_path_dictionary[self.water_source]
+
+        if self.water_source == 'LW':
+            ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
+        elif self.water_source == 'SW':
+            ec_flow = EnergyPotential().load_sewage_potential(path_to_potential)
+        elif self.water_source == 'GW':
+            ec_flow = EnergyPotential().load_geothermal_potential(path_to_potential)
+
+        return ec_flow
 
 class PowerTransformer(PassiveComponent):
 

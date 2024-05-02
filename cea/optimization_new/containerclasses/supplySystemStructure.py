@@ -34,7 +34,6 @@ from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.component import ActiveComponent, PassiveComponent
 from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicator, CapacityIndicatorVector
 
-
 class SupplySystemStructure(object):
     _system_type = ''
     _main_final_energy_carrier = EnergyCarrier()
@@ -226,6 +225,8 @@ class SupplySystemStructure(object):
         elif SupplySystemStructure.system_type == 'cooling':
             releasable_environmental_ecs = EnergyCarrier.get_hotter_thermal_ecs(typical_air_ec, 'air',
                                                                                 include_thermal_ec=True)
+            releasable_environmental_ecs_water = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            releasable_environmental_ecs.extend(releasable_environmental_ecs_water)
         else:
             raise ValueError('Make sure the energy system type is set before allocating environmental energy carriers.')
 
@@ -256,9 +257,25 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
-        for technology in optimisation_config.heat_rejection_components:
-            active_components_list.append(ActiveComponent.get_subclass(technology))
-            component_types_list.append(ActiveComponent.get_types(technology))
+        # Prioritise the environment heat sinks over the cooling towers
+
+        if ('heat_sink' in optimisation_config.heat_rejection_components and
+                optimisation_config.heat_rejection_components.index('heat_sink') != 0):
+
+            technology_list = optimisation_config.heat_rejection_components.copy()
+            # Remove 'heat_sink' from its current position
+            technology_list.remove('heat_sink')
+            # Insert 'heat_sink' at the beginning of the list
+            technology_list.insert(0, 'heat_sink')
+
+            for technology in technology_list:
+                active_components_list.append(ActiveComponent.get_subclass(technology))
+                component_types_list.append(ActiveComponent.get_types(technology))
+
+        else:
+            for technology in optimisation_config.heat_rejection_components:
+                active_components_list.append(ActiveComponent.get_subclass(technology))
+                component_types_list.append(ActiveComponent.get_types(technology))
 
         component_types_tuple = tuple([type_code
                                        for component_types in component_types_list
@@ -376,7 +393,6 @@ class SupplySystemStructure(object):
                                                                                                     'tertiary',
                                                                                                     'primary or secondary')
                                                  for ec_code, max_flow in max_tertiary_components_demand.items()}
-
         # determine dependencies between secondary and primary components
         maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
         shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
@@ -446,6 +462,10 @@ class SupplySystemStructure(object):
             component = ActiveComponent.code_to_class_mapping[component_code](component_code,
                                                                               component_placement,
                                                                               component_capacity)
+            if component_code in ['HEXLW', 'HEXSW', 'HEXGW']:
+                potential = component.load_potentials()
+                if potential is None:
+                    continue
             if component.main_energy_carrier.code == demand_energy_carrier:
                 fitting_components += [component]
             else:
@@ -500,7 +520,7 @@ class SupplySystemStructure(object):
         return {'active': viable_active_components_list, 'passive': necessary_passive_components}
 
     @staticmethod
-    def _fetch_viable_active_components(main_energy_carrier, maximum_demand, component_placement):
+    def _fetch_viable_active_components(main_energy_carrier, maximum_demand, component_placement,):
         """
         Get a list of all 'active' components that can generate or absorb a given maximum demand of a given
         energy carrier.
@@ -526,6 +546,10 @@ class SupplySystemStructure(object):
         viable_components_list = []
         for component, component_models in viable_component_models:
             for model_code in component_models:
+                if model_code in ['HEXLW', 'HEXSW', 'HEXGW']:
+                    potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                    if potential is None:
+                        continue
                 try:
                     viable_components_list.append(component(model_code, component_placement, maximum_demand))
                 except ValueError:
@@ -721,7 +745,6 @@ class SupplySystemStructure(object):
             else:
                 input_and_output_energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
-
         return input_and_output_energy_flows
 
     @staticmethod
@@ -821,6 +844,16 @@ class SupplySystemStructure(object):
                                 if ec_code in self._used_potentials.keys() else self.available_potentials[ec_code]
                                 for ec_code in self.available_potentials.keys()}
 
+        new_absorption_feed = None
+        if 'T100W' in required_energy_flows.keys():
+            for ec_code in remaining_potentials.keys():
+                temp = remaining_potentials[ec_code].energy_carrier.mean_qual
+                type = remaining_potentials[ec_code].energy_carrier.qualifier
+                if temp >= 70 and type == 'temperature':
+                    new_absorption_feed = ec_code
+                    required_energy_flows[ec_code] = required_energy_flows['T100W']
+                    del required_energy_flows['T100W']
+
         min_potentials = {ec_code: remaining_potentials[ec_code].profile.min()
                           if ec_code in remaining_potentials.keys() else 0.0
                           for ec_code in required_energy_flows.keys()}
@@ -828,7 +861,12 @@ class SupplySystemStructure(object):
                                   for ec_code in min_potentials.keys()}
         new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - min_potentials[ec_code]
                                     for ec_code in required_energy_flows.keys()
-                                    if insufficient_potential}
+                                    if insufficient_potential[ec_code]}
+
+        if new_absorption_feed in new_required_energy_flow.keys():
+            new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+            del new_required_energy_flow[new_absorption_feed]
+
         for ec_code in min_potentials.keys():
             if ec_code in self._used_potentials.keys():
                 self._used_potentials[ec_code] += min_potentials[ec_code]

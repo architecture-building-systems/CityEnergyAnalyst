@@ -40,7 +40,7 @@ class EnergyPotential(object):
 
     @type.setter
     def type(self, new_type):
-        if new_type in ['SolarPV', 'SolarPVT', 'SolarCollectorET', 'SolarCollectorFP', 'WaterBody', 'Geothermal', 'Sewage']:
+        if new_type in ['SolarPV', 'SolarPVT', 'SolarCollectorET', 'SolarCollectorFP', 'WaterBody', 'Geothermal', 'Sewage', 'WasteHeat']:
             self._type = new_type
         else:
             raise ValueError("Unexpected type of energy potential. "
@@ -118,15 +118,38 @@ class EnergyPotential(object):
         else:
             return None
 
+    def load_wasteheat_potential(self, wasteheat_potential_file):
+        self.type = 'WasteHeat'
+        self.scale = 'Domain'
+        if exists(wasteheat_potential_file):
+            wasteheat_potential = pd.read_csv(wasteheat_potential_file)
+            main_potential_flow_profile = wasteheat_potential.Qdata_kW
+            if sum(wasteheat_potential.Qdata_kW) == 0:
+                return None
+
+            average_return_temperature = self._get_average_temp(wasteheat_potential.Ts_C)
+            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            return self
+        else:
+            return None
+
     def load_geothermal_potential(self, geothermal_potential_file):
         self.type = 'Geothermal'
         self.scale = 'Domain'
         if exists(geothermal_potential_file):
             geothermal_potential = pd.read_csv(geothermal_potential_file)
             main_potential_flow_profile = geothermal_potential.QGHP_kW
-            average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
-            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            if any("GW" in s for s in list_ec):
+                for ec in list_ec:
+                    if 'GW' in ec:
+                        main_energy_carrier = ec
+            else:
+                average_return_temperature = self._get_average_temp(geothermal_potential.Ts_C)
+                main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+
+            self.main_potential.generate('tertiary', 'environment', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None
@@ -137,9 +160,19 @@ class EnergyPotential(object):
         if exists(water_body_potential_file):
             water_body_potential = pd.read_csv(water_body_potential_file)
             main_potential_flow_profile = water_body_potential.QLake_kW
-            average_return_temperature = self._get_average_temp(water_body_potential.Ts_C)
-            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            if sum(water_body_potential.QLake_kW) == 0:
+                return None
+
+            list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            if any("LW" in s for s in list_ec):
+                for ec in list_ec:
+                    if 'LW' in ec:
+                        main_energy_carrier = ec
+            else:
+                average_return_temperature = self._get_average_temp(water_body_potential.Ts_C)
+                main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+
+            self.main_potential.generate('tertiary', 'environment', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None
@@ -150,9 +183,16 @@ class EnergyPotential(object):
         if exists(sewage_potential_file):
             sewage_potential = pd.read_csv(sewage_potential_file)
             main_potential_flow_profile = sewage_potential.Qsw_kW
-            average_return_temperature = self._get_average_temp(sewage_potential.Ts_C)
-            main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
-            self.main_potential.generate('source', 'secondary', main_energy_carrier, main_potential_flow_profile)
+            list_ec = EnergyCarrier.get_thermal_ecs_of_subtype('water sink')
+            if any("SW" in s for s in list_ec):
+                for ec in list_ec:
+                    if 'SW' in ec:
+                        main_energy_carrier = ec
+            else:
+                average_return_temperature = self._get_average_temp(sewage_potential.Ts_C)
+                main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', average_return_temperature)
+
+            self.main_potential.generate('tertiary', 'environment', main_energy_carrier, main_potential_flow_profile)
             return self
         else:
             return None
