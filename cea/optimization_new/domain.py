@@ -340,16 +340,10 @@ class Domain(object):
     @staticmethod
     def _write_system_structure(results_file, supply_system):
         """Summarise supply system structure and write it to the indicated results file"""
-        supply_system_info = [{'Component': component.technology,
-                               'Component_type': component.type,
+        supply_system_info = [{'Component_category': component_category,
+                               'Component_type': component.technology,
                                'Component_code': component_code,
-                               'Category': component_category,
-                               'Capacity_kW': round(component.capacity, 3),
-                               'Main_side': component.main_side,
-                               'Main_energy_carrier': component.main_energy_carrier.describe(),
-                               'Main_energy_carrier_code': component.main_energy_carrier.code,
-                               'Other_inputs': ', '.join([ip.code for ip in component.input_energy_carriers]),
-                               'Other_outputs': ', '.join([op.code for op in component.output_energy_carriers])}
+                               'Capacity_kW': round(component.capacity, 3)}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
