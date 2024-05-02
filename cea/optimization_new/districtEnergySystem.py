@@ -30,7 +30,7 @@ import pandas as pd
 import time
 import multiprocessing
 
-from copy import copy, deepcopy
+from copy import deepcopy
 from deap import algorithms, base, tools
 
 from cea.optimization_new.network import Network
@@ -76,27 +76,6 @@ class DistrictEnergySystem(object):
             self._identifier = new_identifier
         else:
             print("Please set a valid identifier.")
-
-    def __copy__(self):
-        """ Create a copy of the district energy system object. """
-        # Initialize a new object
-        object_copy = DistrictEnergySystem(self.connectivity, self.consumers, self.energy_potentials)
-
-        # Assign the same values to the new object
-        #  First, all attributes that are shared between the original and the new object (same memory address)
-        object_copy.identifier = self.identifier
-        object_copy.stand_alone_buildings = self.stand_alone_buildings
-        object_copy.networks = self.networks
-
-        object_copy.energy_potentials = self.energy_potentials
-        object_copy.distributed_potentials = self.distributed_potentials
-        object_copy.subsystem_demands = self.subsystem_demands
-
-        #  Then, all attributes that are unique to the original object and need to be copied (new memory address)
-        object_copy.supply_systems = {network: [copy(supply_system) for supply_system in supply_systems]
-                                      for network, supply_systems in self.supply_systems.items()}
-
-        return object_copy
 
     @staticmethod
     def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None,
@@ -550,10 +529,9 @@ class DistrictEnergySystem(object):
                                    for system_selection in supply_system_combination}
 
         # create a copy of the general district energy solution (one connectivity + many non-dominated supply systems)
-        definitive_des = copy(self)
+        definitive_des = deepcopy(self)
 
-        # specify the selected SupplySystem for each of the subsystems (one supply system per network &
-        #   per stand-alone building)
+        # specify the selected SupplySystem for each of the subsystems
         for subsystem_id, supsys_index in supply_system_selection.items():
             definitive_des.supply_systems[subsystem_id] = self.supply_systems[subsystem_id][supsys_index]
 
