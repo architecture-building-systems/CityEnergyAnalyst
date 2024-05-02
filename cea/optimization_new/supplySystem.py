@@ -236,6 +236,15 @@ class SupplySystem(object):
         :param demand_dict: dictionary of demand energy flows that need to be met, keys are energy carrier codes
         :type demand_dict: dict of <cea.optimization_new.energyFlow>-EnergyFlow class objects
         """
+        remaining_demand_dict = self._draw_from_potentials(demand_dict, reset=True)
+        required_electricity = None
+        if 'E230AC' in remaining_demand_dict.keys() and self.structure.activation_order[placement]:
+            required_electricity = remaining_demand_dict['E230AC']
+            del remaining_demand_dict['E230AC']
+
+        remaining_demand_dict = self._draw_from_infinite_sources(remaining_demand_dict)
+        if required_electricity is not None:
+            remaining_demand_dict['E230AC'] = required_electricity
 
         for ec_code in demand_dict.keys():
             demand = demand_dict[ec_code]
@@ -267,6 +276,16 @@ class SupplySystem(object):
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
+                    output_list = list(self.component_energy_outputs[placement][component_model].items())[0]
+                    output_code = output_list[0]
+                    output_object = output_list[1]
+                    # Convert the flow in order to obtain the required energy carrier (e.g. from DC output of PV to AC)
+                    if 'PV' in component_model and output_code != main_energy_flow.energy_carrier.code:
+                        auxiliary_component = list(self.structure.max_cap_passive_components[placement][component_model].values())[0]
+                        converted_flow = auxiliary_component.operate(output_object)
+                        self.component_energy_outputs[placement][component_model][converted_flow.energy_carrier.code] = converted_flow
+                        del self.component_energy_outputs[placement][component_model][output_code]
+
                 else:
                     auxiliary_component = list(self.structure.max_cap_passive_components[placement]
                                                [component_model].values())[0]  # TODO: change this to allow all passive components to be activated
@@ -274,6 +293,19 @@ class SupplySystem(object):
 
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
+
+                if 'PV' in component_model or 'SC' in component_model:
+                    demand = demand - self.component_energy_outputs[placement][component_model][ec_code]
+                    del self.component_energy_outputs[placement][component_model][ec_code]
+                else:
+                    demand = demand - main_energy_flow
+
+            if ec_code == 'E230AC' and demand.profile.sum() > 0:
+                leftovers = self._draw_from_infinite_sources({ec_code: demand})
+                if leftovers:
+                    demand.profile = leftovers[ec_code].profile
+                else:
+                    demand.profile = pd.Series([0] * len(demand.profile))
 
             if not isclose(max(demand.profile), 0, abs_tol=1e-09):
                 raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '

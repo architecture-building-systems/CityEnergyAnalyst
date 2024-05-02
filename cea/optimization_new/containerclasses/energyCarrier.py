@@ -296,6 +296,7 @@ class EnergyCarrier(object):
         if not EnergyCarrier._thermal_energy_carriers:
             EnergyCarrier._extract_thermal_energy_carriers()
 
+
         thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
         thermal_ec_mean_quals = pd.to_numeric(thermal_ecs_of_subtype['mean_qual'])
         if not np.isnan(temperature):
@@ -306,6 +307,32 @@ class EnergyCarrier(object):
             print(f'The temperature level of a renewable energy potential was not available. '
                   f'We assume that the following energy carrier is output: '
                   f'{thermal_ecs_of_subtype["description"].iloc[0]}')
+        return energy_carrier_code
+
+    @staticmethod
+    def volt_to_elec_ec(energy_carrier_subtype, potential):
+        """
+        Determine which electrical energy carrier corresponds to a given potential.
+
+        :param energy_carrier_subtype: type of the electrical energy carrier
+        :type energy_carrier_subtype: str
+        :param temperature: potential in V
+        :type temperature: float
+        :return energy_carrier_code: code of the corresponding electrical energy carrier
+        :rtype energy_carrier_code: str
+        """
+        EnergyCarrier._extract_electrical_energy_carriers()
+
+        electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
+        electrical_ec_mean_quals = pd.to_numeric(electrical_ecs_of_subtype['mean_qual'])
+        if not np.isnan(potential):
+            index_closest_mean_temp = (electrical_ec_mean_quals - potential).abs().nsmallest(n=1).index[0]
+            energy_carrier_code = electrical_ecs_of_subtype['code'].loc[index_closest_mean_temp]
+        else:
+            energy_carrier_code = electrical_ecs_of_subtype['code'].iloc[0]
+            print(f'The temperature level of a renewable energy potential was not available. '
+                  f'We assume that the following energy carrier is output: '
+                  f'{electrical_ecs_of_subtype["description"].iloc[0]}')
         return energy_carrier_code
 
     @staticmethod

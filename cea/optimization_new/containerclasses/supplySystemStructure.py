@@ -253,6 +253,10 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
+        for technology in optimisation_config.solar_technologies:
+            active_components_list.append(ActiveComponent.get_subclass(technology))
+            component_types_list.append(ActiveComponent.get_types(technology))
+
         for technology in optimisation_config.heating_components:
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
@@ -321,8 +325,9 @@ class SupplySystemStructure(object):
 
         # Check if any of the input energy flows can be covered by the energy potential flows
         #   (if so, subtract them from demand)
-        remaining_max_primary_energy_flows_in = self._draw_from_potentials(max_primary_energy_flows_in)
-        max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
+        max_secondary_components_demand = self._draw_from_potentials(max_primary_energy_flows_in)
+        if self.user_component_selection:
+            max_secondary_components_demand = self._draw_from_infinite_sources(max_secondary_components_demand)
         max_secondary_components_demand_flow = {ec_code:
                                                     EnergyFlow('secondary', 'primary', ec_code, pd.Series(max_demand))
                                                 for ec_code, max_demand in max_secondary_components_demand.items()}
@@ -343,6 +348,17 @@ class SupplySystemStructure(object):
                                                                                                           'primary')
                                                        for ec_code, max_flow in max_secondary_components_demand.items()}
 
+        if 'E230AC' in viable_secondary_and_passive_components.keys():
+            min = 1000000
+            for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
+                cap = viable_secondary_and_passive_components['E230AC']['active'][i].capacity
+                remaining_demand = max_secondary_components_demand['E230AC'] - cap
+
+                if remaining_demand > 0 and min > cap:
+                    min = cap
+                    max_secondary_components_demand['E230AC'] = cap
+                    max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
+
         # determine dependencies between secondary and primary components
         self._determine_dependencies('secondary', viable_secondary_and_passive_components,
                                      split_by_primary_component['input'])
@@ -353,6 +369,10 @@ class SupplySystemStructure(object):
         split_by_secondary_component = \
             SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
                                                                      viable_secondary_and_passive_components)
+        hot_water_supply = None
+        if 'T100W' in max_secondary_energy_flows_out.keys():
+            hot_water_supply = max_secondary_energy_flows_out['T100W']
+            del max_secondary_energy_flows_out['T100W']
 
         # check if any of the outgoing energy-flows can be absorbed by the environment directly
         max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
@@ -394,6 +414,9 @@ class SupplySystemStructure(object):
                                                                                                     'primary or secondary')
                                                  for ec_code, max_flow in max_tertiary_components_demand.items()}
         # determine dependencies between secondary and primary components
+        if hot_water_supply:
+            max_secondary_energy_flows_out['T100W'] = hot_water_supply
+
         maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
         shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
         split_by_component = SupplySystemStructure._combine_energy_flow_shares('output', maximum_outputs,
@@ -413,6 +436,10 @@ class SupplySystemStructure(object):
         required_external_tertiary_inputs = self._draw_from_potentials(max_tertiary_energy_flows_in)
         unmet_inputs = {**self._draw_from_infinite_sources(required_external_secondary_inputs),
                         **self._draw_from_infinite_sources(required_external_tertiary_inputs)}
+
+        if 'T100W' in max_secondary_energy_flows_out.keys():
+            hot_water_supply = max_secondary_energy_flows_out['T100W']
+            del max_secondary_energy_flows_out['T100W']
 
         unreleasable_outputs = {**self._release_to_grids_or_env(max_secondary_energy_flows_out),
                                 **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
@@ -551,7 +578,16 @@ class SupplySystemStructure(object):
                     if potential is None:
                         continue
                 try:
-                    viable_components_list.append(component(model_code, component_placement, maximum_demand))
+                    if 'PV' in model_code:
+                        PV_potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap = PV_potential.main_potential.profile.max()
+                        viable_components_list.append(component(model_code, component_placement, max_cap))
+                    elif 'SC' in model_code:
+                        SC_potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap = SC_potential.main_potential.profile.max()
+                        viable_components_list.append(component(model_code, component_placement, max_cap))
+                    else:
+                        viable_components_list.append(component(model_code, component_placement, maximum_demand))
                 except ValueError:
                     pass
 
@@ -589,7 +625,8 @@ class SupplySystemStructure(object):
             component_placement,
             maximum_demand,
             required_energy_carrier_code,
-            demand_origin)
+            demand_origin,
+            ecs_with_possible_active_components)
         alternative_active_components = [active_component
                                          for active_component in pot_alternative_active_components
                                          if active_component.code in required_passive_components.keys()]
@@ -618,7 +655,7 @@ class SupplySystemStructure(object):
 
     @staticmethod
     def _fetch_viable_passive_components(active_components_to_feed, active_component_placement, maximum_demand,
-                                         required_energy_carrier_code, demand_origin):
+                                         required_energy_carrier_code, demand_origin, ecs_with_possible_active_components):
         """
         Get the passive components for a list of active components. The premise of this function is that the
         main energy carriers generated/absorbed by the active components can only satisfy the original demand if
@@ -628,12 +665,12 @@ class SupplySystemStructure(object):
                                          for component in active_components_to_feed]))
 
         # find passive components that can provide the energy carriers generated/absorbed by the active components
-        passive_components_for_ec = {alternative_ec:
+        passive_components_for_ec = {required_energy_carrier_code:
                                          {component_class:
                                               component_class.conversion_matrix[alternative_ec][
                                                   required_energy_carrier_code]}
                                      for component_class in PassiveComponent.__subclasses__()
-                                     for alternative_ec in active_component_ecs
+                                     for alternative_ec in ecs_with_possible_active_components
                                      if alternative_ec in component_class.conversion_matrix.columns}
 
         # try to instantiate appropriate passive components for each the active components
@@ -669,9 +706,26 @@ class SupplySystemStructure(object):
                         in passive_components_for_ec[active_component.main_energy_carrier.code].items():
                     for component_model in component_models:
                         try:
-                            passive_component_list.append(
+                            if 'PV' in active_component.code:
+                                max_cap = active_component.capacity
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            max_cap,
+                                                            EnergyCarrier(
+                                                                ecs_with_possible_active_components[0]).mean_qual,
+                                                            mean_qual_after))
+                            elif 'SC' in active_component.code:
+                                max_cap = active_component.capacity
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            max_cap,
+                                                            EnergyCarrier(
+                                                                ecs_with_possible_active_components[0]).mean_qual,
+                                                            mean_qual_after))
+                            else:
+                                passive_component_list.append(
                                 passive_component_class(component_model, placed_before, placed_after, maximum_demand,
-                                                        active_component.main_energy_carrier.mean_qual,
+                                                        EnergyCarrier(ecs_with_possible_active_components[0]).mean_qual,
                                                         mean_qual_after))
                         except ValueError:
                             continue
@@ -736,15 +790,23 @@ class SupplySystemStructure(object):
             necessary_passive_components = viable_active_and_passive_components[main_energy_carrier]['passive']
 
             if necessary_passive_components:
-                passive_component_demand_flows = {active_component_code: passive_component[0].operate(main_flow)
-                                                  for active_component_code, passive_component in
-                                                  necessary_passive_components.items()}
-                input_and_output_energy_flows = {component.code:
-                                                     component.operate(passive_component_demand_flows[component.code])
+                active_component_demand_flow = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
+
+                for active_component_code, passive_component in necessary_passive_components.items():
+                    flow = list(active_component_demand_flow[active_component_code][1].items())
+                    object_flow = flow[0][1]
+                    adjusted_flow = passive_component[0].operate(object_flow)
+                    input = active_component_demand_flow[active_component_code][0]
+                    active_component_demand_flow[active_component_code] = (input, {
+                        adjusted_flow.energy_carrier.code: adjusted_flow})
+
+                input_and_output_energy_flows.update(active_component_demand_flow)
             else:
-                input_and_output_energy_flows = {component.code: component.operate(main_flow)
+                energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
+                input_and_output_energy_flows.update(energy_flows)
+
         return input_and_output_energy_flows
 
     @staticmethod

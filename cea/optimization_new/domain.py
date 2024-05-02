@@ -107,10 +107,10 @@ class Domain(object):
             buildings_in_domain = shp_file.Name
 
         # building-specific potentials
-        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
-        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
-        scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
-        scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
+        # pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
+        # pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
+        # scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
+        # scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
 
         # domain-wide potentials
         geothermal_potential = EnergyPotential().load_geothermal_potential(self.locator.get_geothermal_potential())
@@ -118,7 +118,7 @@ class Domain(object):
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
         wasteheat_potential = EnergyPotential().load_wasteheat_potential(self.locator.get_waste_heat_potential())
 
-        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential, wasteheat_potential]:
+        for potential in [geothermal_potential, water_body_potential, sewage_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 
