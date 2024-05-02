@@ -266,6 +266,58 @@ def get_surrounding_building_sewage(locator):
 
     return surroundings, buffer_m
 
+def get_water_basin(locator):
+    """
+    This script checks whether the zone has a water basin nearby. If it does, it calculates the potential of the
+    water basin to be used as a heat sink for the cooling system. The potential is calculated based on the temperature
+    of the water basin, which is assumed to be the same as the bottom temperature of the lake.
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500 # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    water_tags = {'natural': 'water'}
+
+    try:
+        water_basin = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                               tags=water_tags)
+        water_basin = water_basin.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+        allowed_basins = ['lake', 'reservoir', 'river', 'canal']
+
+        # Select only big water bodies to discharge heat
+        water_filtered = water_basin[water_basin['water'].notna()]
+        # Filter the DataFrame to keep only rows where the 'water' column contains any of the substrings
+        filtered_water_basin = water_filtered[water_filtered['water'].str.contains('|'.join(allowed_basins))]
+        if not filtered_water_basin.empty:
+            tot_area_available = filtered_water_basin.area.sum() / 1e6  # km2
+            check_water_basin = True
+        else:
+            check_water_basin = False
+            tot_area_available = None
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        water_basin.plot(column='water', categorical=True, legend=True, ax=ax)
+        plt.title('Water Features')
+        # plt.show()
+
+    except:
+        print('No water basins found in the area')
+        check_water_basin = False
+        tot_area_available = None
+
+    return check_water_basin, tot_area_available
+
 def main(config):
     """
     Create the surroundings.shp file
