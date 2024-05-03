@@ -52,6 +52,7 @@ class SupplySystem(object):
         self.installed_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_inputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_outputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
+        self.component_ec_profiles = {'primary': {}, 'secondary': {}, 'tertiary': {}}
 
         # set system evaluation parameters
         self.system_energy_demand = {}
@@ -306,8 +307,6 @@ class SupplySystem(object):
                             if diff <= 0:
                                 break
 
-                demand = demand - main_energy_flow
-
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
@@ -330,10 +329,13 @@ class SupplySystem(object):
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
                 if 'PV' in component_model or 'SC' in component_model:
-                    demand = demand - self.component_energy_outputs[placement][component_model][ec_code]
+                    main_energy_flow = self.component_energy_outputs[placement][component_model][ec_code]
+                    demand = demand - main_energy_flow
                     del self.component_energy_outputs[placement][component_model][ec_code]
                 else:
                     demand = demand - main_energy_flow
+
+                self.component_ec_profiles[placement][component_model] = {ec_code: main_energy_flow.profile}
 
             if ec_code == 'E230AC' and demand.profile.sum() > 0:
                 leftovers = self._draw_from_infinite_sources({ec_code: demand})

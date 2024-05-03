@@ -396,6 +396,12 @@ class InputLocator(object):
         des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
         return os.path.join(des_supsys_folder, f'{supply_system_id}_supply_system_structure.csv')
 
+    def get_new_optimization_supply_system_cost(self, district_energy_system_id='DES_000',
+                                                        supply_system_id='N0000_or_B0000'):
+        """Returns the results-file for the supply systems summary of the n-th near-pareto-optimal DES"""
+        des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
+        return os.path.join(des_supsys_folder, f'{supply_system_id}_supply_system_cost.csv')
+
     def get_new_optimization_optimal_supply_systems_summary_file(self, district_energy_system_id='DES_000'):
         """Returns the results-file for the supply systems summary of the n-th near-pareto-optimal DES"""
         des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
@@ -417,12 +423,25 @@ class InputLocator(object):
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, f'{supply_system_id}_operation.csv')
 
+    def get_new_optimization_energy_carrier_detailed_profile(self, district_energy_system_id='DES_000',
+                                                                    supply_system_id='N0000_or_B0000'):
+        """Returns the results-file for the supply systems operation profiles of the n-th near-pareto-optimal DES"""
+        des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
+        return os.path.join(des_details_folder, f'{supply_system_id}_profiles.xlsx')
+
     def get_new_optimization_supply_systems_annual_breakdown_file(self, district_energy_system_id='DES_000',
                                                                      supply_system_id='N0000_or_B0000'):
         """Returns the results-file for the breakdown of a supply systems annual operation (in terms of energy demand,
         cost, GHG- and heat-emissions) in the n-th near-pareto-optimal DES"""
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, f'{supply_system_id}_annual_breakdown.csv')
+
+    def get_new_optimization_supply_systems_ec_annual_profiles(self, district_energy_system_id='DES_000',
+                                                                     supply_system_id='N0000_or_B0000'):
+        """Returns the results-file for the breakdown of a supply systems annual operation (in terms of energy demand,
+        cost, GHG- and heat-emissions) in the n-th near-pareto-optimal DES"""
+        des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
+        return os.path.join(des_details_folder, f'{supply_system_id}_annual_ec_profiles.xlsx')
 
     def get_new_optimization_debugging_folder(self):
         """Returns the debugging-folder, used to store information gathered by the optimisation tracker"""
