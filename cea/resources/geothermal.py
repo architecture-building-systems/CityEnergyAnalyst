@@ -10,7 +10,6 @@ from geopandas import GeoDataFrame as Gdf
 import cea.config
 import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3, PERMEABIL, PIEZ, DIST_PIEZ, HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"

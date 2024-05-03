@@ -38,6 +38,7 @@ from cea.technologies.thermal_network.simplified_thermal_network import calculat
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
+import cea.config
 
 
 class Network(object):
@@ -66,6 +67,7 @@ class Network(object):
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
         self.annual_piping_cost = 0.0
+        self.config = cea.config.Configuration()
 
     def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
         """
@@ -160,7 +162,7 @@ class Network(object):
         pipe_names = self.network_edges.index.values
         thermal_losses_supply_kWh = wnm_results.link['headloss'].copy()
         thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
-        temperature_of_the_ground_K = calculate_ground_temperature(self._domain_locator)
+        temperature_of_the_ground_K = calculate_ground_temperature(self._domain_locator, self.config)
         thermal_coefficient_WperKm = pd.Series(
             np.vectorize(calc_linear_thermal_loss_coefficient)(wnm_pipe_diameters['D_ext_m'],
                                                                wnm_pipe_diameters['D_int_m'],
