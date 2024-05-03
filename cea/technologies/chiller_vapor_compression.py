@@ -230,7 +230,6 @@ class VaporCompressionChiller(object):
         self.g_value = 0.0
         self.scale = scale
         self.locator = locator
-        self.CHILLER_CONFIGURATION = None
         self.setup()
 
     def setup(self):
@@ -242,19 +241,7 @@ class VaporCompressionChiller(object):
         else:
             raise ValueError('scale must be of type "DISTRICT" or "BUILDING"')
         VCC_database = VCC_database[VCC_database['code'] == technology_type]
-        self.max_VCC_capacity = int(VCC_database['cap_max'])
-        self.min_VCC_capacity = int(VCC_database['cap_min'])
-        self.g_value = float(VCC_database['G_VALUE'])
-        self.CHILLER_CONFIGURATION = pd.read_excel(self.locator.get_database_conversion_systems(),
-                                                   sheet_name="CHILLER_CONFIGURATION")
+        self.max_VCC_capacity = int(VCC_database['cap_max'].iloc[0])
+        self.min_VCC_capacity = int(VCC_database['cap_min'].iloc[0])
+        self.g_value = float(VCC_database['G_VALUE'].iloc[0])
 
-    def configuration_values(self, source_type, compressor_type):
-        df = self.CHILLER_CONFIGURATION
-        df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type)]
-
-        filter_plfs = [col for col in df if col.startswith('plf')]
-        filter_qs = [col for col in df if col.startswith('q')]
-
-        plfs = df[filter_plfs].to_dict('records')[0]
-        qs = df[filter_qs].to_dict('records')[0]
-        return {'PLFs': plfs, 'Qs': qs}

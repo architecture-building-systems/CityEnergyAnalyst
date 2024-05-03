@@ -446,7 +446,7 @@ class EnergyCarrier(object):
         """
         Return the unit greenhouse gas emissions of a specific energy carrier and a given timestep from the database.
         """
-        if not energy_carrier_code in EnergyCarrier._feedstock_tab.keys():
+        if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
         tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
@@ -458,7 +458,7 @@ class EnergyCarrier(object):
         """
         Return the unit sell or buy price of a specific energy carrier and a given timestep from the database.
         """
-        if not energy_carrier_code in EnergyCarrier._feedstock_tab.keys():
+        if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
         tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]

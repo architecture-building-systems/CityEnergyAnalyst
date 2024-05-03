@@ -95,7 +95,7 @@ class EnergyFlow(object):
     def profile(self, new_profile):
         if isinstance(new_profile, pd.Series):
             if len(new_profile) == 1:
-                if not new_profile.index[0] in self.time_series.values:
+                if new_profile.index[0] not in self.time_series.values:
                     new_profile = pd.Series(new_profile.values, index=[self.time_series[0]])
             elif len(new_profile) == len(self.time_series):
                 if not all(new_profile.index == self.time_series):
