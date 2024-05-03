@@ -3732,6 +3732,7 @@ get_database_conversion_systems:
               - engine
               - bio-engine
               - furnace
+              - turbine
           description: type of cogeneration plant (given by its combustion component)
           type: string
           unit: 'NA'
@@ -7281,6 +7282,7 @@ get_database_supply_assemblies:
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
+            - HYDROGEN
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
@@ -7363,6 +7365,7 @@ get_database_supply_assemblies:
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
+            - HYDROGEN
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
@@ -7460,6 +7463,7 @@ get_database_supply_assemblies:
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
+            - HYDROGEN
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
@@ -7542,6 +7546,7 @@ get_database_supply_assemblies:
             - WOOD
             - WETBIOMASS
             - DRYBIOMASS
+            - HYDROGEN
           description: feedstock used by the the all in one system (refers to the
             FEEDSTOCK database)
           type: string
