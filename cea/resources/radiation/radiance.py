@@ -73,9 +73,9 @@ class CEADaySim:
         add_rad_mat(self.rad_material_path, building_surface_properties)
 
     def create_radiance_geometry(self, geometry_terrain, building_surface_properties, zone_building_names,
-                                 surroundings_building_names, geometry_pickle_dir):
+                                 surroundings_building_names, geometry_pickle_dir, tree_surfaces):
         create_rad_geometry(self.rad_geometry_path, geometry_terrain, building_surface_properties, zone_building_names,
-                            surroundings_building_names, geometry_pickle_dir)
+                            surroundings_building_names, geometry_pickle_dir, tree_surfaces)
 
     @staticmethod
     def run_cmd(cmd, daysim_dir, daysim_lib):
@@ -424,6 +424,13 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                  "5 0.5360 0.1212 0.0565 0 0"
         write_file.writelines(string + '\n')
 
+        # write material for trees
+        string = "void glass tree_material\n" \
+                 "0\n" \
+                 "0\n" \
+                 "3 0.545168692741 0.545168692741 0.545168692741"
+        write_file.writelines(string + '\n')
+
         written_mat_name_list = set()
         for geo in ageometry_table.index.values:
             # Wall material
@@ -470,11 +477,9 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 write_file.writelines('\n' + string + '\n')
                 written_mat_name_list.add(mat_name)
 
-        write_file.close()
-
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
-                        surroundings_building_names, geometry_pickle_dir):
+                        surroundings_building_names, geometry_pickle_dir, tree_surfaces):
     def terrain_to_radiance(tin_occface_terrain):
         for num, occ_face in enumerate(tin_occface_terrain):
             surface_name = f"terrain_srf{num}"
@@ -518,6 +523,11 @@ def create_rad_geometry(file_path, geometry_terrain, building_surface_properties
             surface_name = f"surrounding_buildings_roof_{name}_{num}"
             yield RadSurface(surface_name, occ_face, "reflectance0.2")
 
+    def tree_to_radiance(tree_id, tree_surface_list):
+        for num, occ_face in enumerate(tree_surface_list):
+            surface_name = f"tree_surface_{tree_id}_{num}"
+            yield RadSurface(surface_name, occ_face, "tree_material")
+
     with open(file_path, "w") as rad_file:
         for terrain_surface in terrain_to_radiance(geometry_terrain):
             rad_file.write(terrain_surface.rad())
@@ -532,3 +542,7 @@ def create_rad_geometry(file_path, geometry_terrain, building_surface_properties
                 os.path.join(geometry_pickle_dir, 'surroundings', building_name))
             for building_surface in surrounding_building_to_radiance(building_geometry):
                 rad_file.write(building_surface.rad())
+
+        for i, tree in enumerate(tree_surfaces):
+            for tree_surface_rad in tree_to_radiance(i, tree):
+                rad_file.write(tree_surface_rad.rad())
