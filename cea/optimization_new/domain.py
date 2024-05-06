@@ -118,7 +118,7 @@ class Domain(object):
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
         wasteheat_potential = EnergyPotential().load_wasteheat_potential(self.locator.get_waste_heat_potential())
 
-        for potential in [geothermal_potential, water_body_potential, sewage_potential]:
+        for potential in [geothermal_potential, water_body_potential, sewage_potential, wasteheat_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 
@@ -564,7 +564,7 @@ class Domain(object):
     @staticmethod
     def _write_profile_breakdown(supply_system, results_file):
         """Write the annual breakdown of the objective functions of a supply system to the indicated csv file."""
-        # break down annual cost, energy demand, GHG and heat-emissions by energy carrier
+        # Print out profile of energy carriers coming from components
         categories = list(supply_system.installed_components.keys())
 
         for cat in categories:
@@ -595,6 +595,20 @@ class Domain(object):
                 else:
                     with pd.ExcelWriter(results_file) as writer:
                         ec_profiles_df.to_excel(writer, sheet_name=f'{cat}_energy_carriers', index=True)
+
+        # Print out profile of carriers from infinite sources or coming from potentials
+        bought_carriers = supply_system.bought_carriers
+        sold_carriers = supply_system.sold_carriers
+        used_potentials = supply_system.used_potentials
+        alternative = [bought_carriers, sold_carriers, used_potentials]
+        alternative_names = ['bought_carriers', 'sold_carriers', 'used_potentials']
+        for i, potentials in enumerate(alternative):
+            if potentials:
+                ec_profiles_df = pd.concat([profile for profile in potentials.values()], axis=1)
+                ec_profiles_df.columns = potentials.keys()
+                ec_profiles_df.index = range(len(ec_profiles_df))
+                with pd.ExcelWriter(results_file, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
+                    ec_profiles_df.to_excel(writer, sheet_name=alternative_names[i], index=True)
 
         return
 

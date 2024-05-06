@@ -911,7 +911,8 @@ class SupplySystemStructure(object):
             for ec_code in remaining_potentials.keys():
                 temp = remaining_potentials[ec_code].energy_carrier.mean_qual
                 type = remaining_potentials[ec_code].energy_carrier.qualifier
-                if temp >= 70 and type == 'temperature':
+                subtype = remaining_potentials[ec_code].energy_carrier.subtype
+                if temp >= 70 and type == 'temperature' and subtype == 'water':
                     new_absorption_feed = ec_code
                     required_energy_flows[ec_code] = required_energy_flows['T100W']
                     del required_energy_flows['T100W']
@@ -925,9 +926,15 @@ class SupplySystemStructure(object):
                                     for ec_code in required_energy_flows.keys()
                                     if insufficient_potential[ec_code]}
 
-        if new_absorption_feed in new_required_energy_flow.keys():
+        # Allow for the use of hot water supply at temperatures between 70 and 100 degrees Celsius
+        if new_absorption_feed and new_absorption_feed in new_required_energy_flow.keys():
             new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+            required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
             del new_required_energy_flow[new_absorption_feed]
+            del required_energy_flows[new_absorption_feed]
+        elif new_absorption_feed:
+            required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
+            del required_energy_flows[new_absorption_feed]
 
         for ec_code in min_potentials.keys():
             if ec_code in self._used_potentials.keys():

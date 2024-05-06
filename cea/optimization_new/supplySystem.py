@@ -47,6 +47,8 @@ class SupplySystem(object):
         # set energy potential parameters
         self.available_potentials = system_structure.available_potentials
         self.used_potentials = {}
+        self.bought_carriers = {}
+        self.sold_carriers = {}
 
         # set system operation parameters
         self.installed_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
@@ -141,7 +143,7 @@ class SupplySystem(object):
         # operate secondary components
         secondary_demand_dict = self._group_component_flows_by_ec('primary', 'in')
         remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
-        remaining_secondary_demand_dict = self._draw_from_infinite_sources(remaining_secondary_demand_dict)
+        # remaining_secondary_demand_dict = self._draw_from_infinite_sources(remaining_secondary_demand_dict)
         self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
         # operate tertiary components
         component_energy_release_dict = self._group_component_flows_by_ec(['primary', 'secondary'], 'out')
@@ -389,7 +391,8 @@ class SupplySystem(object):
                 for ec_code in remaining_potentials.keys():
                     temp = remaining_potentials[ec_code].energy_carrier.mean_qual
                     type = remaining_potentials[ec_code].energy_carrier.qualifier
-                    if temp >= 70 and type == 'temperature':
+                    subtype = remaining_potentials[ec_code].energy_carrier.subtype
+                    if temp >= 70 and type == 'temperature' and subtype == 'water':
                         new_absorption_feed = ec_code
                         required_energy_flows[ec_code] = required_energy_flows['T100W']
                         del required_energy_flows['T100W']
@@ -398,11 +401,17 @@ class SupplySystem(object):
                                 if ec_code in remaining_potentials.keys() else required_energy_flows[ec_code].cap_at(0)
                                 for ec_code in required_energy_flows.keys()}
             new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - usable_potential[ec_code]
-                                        for ec_code in required_energy_flows.keys()}
+                                        for ec_code in required_energy_flows.keys()
+                                        if (required_energy_flows[ec_code] - usable_potential[ec_code]).profile.sum() !=0}
 
-            if new_absorption_feed:
+            if new_absorption_feed and new_absorption_feed in new_required_energy_flow.keys():
                 new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+                required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
                 del new_required_energy_flow[new_absorption_feed]
+                del required_energy_flows[new_absorption_feed]
+            elif new_absorption_feed:
+                required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
+                del required_energy_flows[new_absorption_feed]
 
             for ec_code in usable_potential.keys():
                 if ec_code in self.used_potentials.keys():
@@ -457,8 +466,10 @@ class SupplySystem(object):
             if ec_code in available_system_energy_carriers:
                 if ec_code in self.system_energy_demand.keys():
                     self.system_energy_demand[ec_code] += energy_flow.profile
+                    self.bought_carriers[ec_code] += energy_flow.profile
                 else:
                     self.system_energy_demand[ec_code] = energy_flow.profile
+                    self.bought_carriers[ec_code] = energy_flow.profile
 
         return self.system_energy_demand
 
@@ -471,8 +482,10 @@ class SupplySystem(object):
             if ec_code in available_system_energy_carriers:
                 if ec_code in self.system_energy_demand.keys():
                     self.system_energy_demand[ec_code] -= energy_flow.profile
+                    self.sold_carriers[ec_code] += energy_flow.profile
                 else:
                     self.system_energy_demand[ec_code] = -energy_flow.profile
+                    self.sold_carriers[ec_code] = energy_flow.profile
 
         return self.system_energy_demand
 
