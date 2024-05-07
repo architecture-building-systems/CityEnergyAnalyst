@@ -25,21 +25,18 @@ from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 
 
 class EnergyFlow(object):
-    time_frame = 8760  # TODO: turn this into a variable (i.e. replace by timeframe given by typical days approach)
+    time_series = pd.Series(0)
     allow_negative_flows = False
 
     def __init__(self, input_category=None, output_category=None,
-                 energy_carrier_code=None, energy_flow_profile=pd.Series(0.0, index=np.arange(time_frame))):
+                 energy_carrier_code=None, energy_flow_profile=pd.Series(0.0, index=time_series)):
         if all([input_category is None, output_category is None, energy_carrier_code is None]):
             self._input_category = input_category
             self._output_category = output_category
             self._energy_carrier = energy_carrier_code
             self._profile = energy_flow_profile
             self._identifier = None
-            # self._is_cyclic = bool  # TODO: introduce these variables when more complex component models are added
-            # self._supply_profile = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
-            # self._return_profile = pd.Series(0.0, index=np.arange(EnergyFlow.time_frame))
-        elif not all([input_category is None, output_category is None, energy_carrier_code is None]):
+        elif not any([input_category is None, output_category is None, energy_carrier_code is None]):
             self.input_category = input_category
             self.output_category = output_category
             self.energy_carrier = energy_carrier_code
@@ -96,13 +93,25 @@ class EnergyFlow(object):
 
     @profile.setter
     def profile(self, new_profile):
-        if isinstance(new_profile, pd.Series) and (len(new_profile) in [1, self.time_frame]):
+        if isinstance(new_profile, pd.Series):
+            if len(new_profile) == 1:
+                if new_profile.index[0] not in self.time_series.values:
+                    new_profile = pd.Series(new_profile.values, index=[self.time_series[0]])
+            elif len(new_profile) == len(self.time_series):
+                if not all(new_profile.index == self.time_series):
+                    new_profile = pd.Series(new_profile.values, index=self.time_series)
+            else:
+                raise ValueError('The energy flow profile does not have the correct length. It should either be a '
+                                 'single value or a pd.Series with the same length as the time series '
+                                 f'(i.e. {len(EnergyFlow.time_series)} time steps).')
+
             if new_profile.min() < 0 and not EnergyFlow.allow_negative_flows:
                 new_profile[new_profile < 0] = 0.0
+
             self._profile = new_profile
         else:
-            raise ValueError(f'The energy flow profile does not have the correct format, '
-                             f'i.e. numerical series of {self.time_frame} time steps or single numerical value.')
+            raise ValueError(f'The energy flow profile does not have the correct format. It should be a pd.Series '
+                             f'instead of a {type(new_profile)}.')
 
     def generate(self, input_category, output_category, energy_carrier_code, energy_flow_profile):
         """
@@ -127,6 +136,8 @@ class EnergyFlow(object):
         elif isinstance(energy_flow, list):
             new_profile = self.profile.add(energy_flow)
         elif isinstance(energy_flow, pd.Series):
+            if not all([i in self.time_series.values for i in energy_flow.index]):
+                energy_flow = pd.Series(energy_flow.values, index=self.time_series)
             new_profile = sum([self.profile, energy_flow])
         elif isinstance(energy_flow, EnergyFlow):
             new_profile = sum([self.profile, energy_flow.profile])
@@ -149,6 +160,8 @@ class EnergyFlow(object):
             energy_flow = [-flow for flow in energy_flow]
             new_profile = self.profile.add(energy_flow)
         elif isinstance(energy_flow, pd.Series):
+            if not all([i in self.time_series.values for i in energy_flow.index]):
+                energy_flow = pd.Series(energy_flow.values, index=self.time_series)
             new_profile = sum([self.profile, -energy_flow])
         elif isinstance(energy_flow, EnergyFlow):
             new_profile = sum([self.profile, -energy_flow.profile])

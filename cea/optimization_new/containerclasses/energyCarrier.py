@@ -29,8 +29,10 @@ class EnergyCarrier(object):
     _thermal_energy_carriers = {}
     _electrical_energy_carriers = {}
     _combustible_energy_carriers = {}
-    _unit_ghg_dict = {}
-    _unit_cost_dict = {}
+    _feedstock_tab = {}
+    _daily_ghg_profile = {}             # in kg CO2 eq. per kWh
+    _daily_buy_price_profile = {}       # in USD (2015) per kWh
+    _daily_sell_price_profile = {}      # in USD (2015) per kWh
 
     def __init__(self, code=None):
         self._code = None
@@ -40,8 +42,6 @@ class EnergyCarrier(object):
         self._qualifier = 'e.g. temperature'
         self._qual_unit = 'e.g. °C'
         self._mean_qual = 0.0
-        self._unit_cost = 0.0   # in USD per kWh
-        self._unit_ghg = 0.0    # in kg C02 eq. per kWh
 
         self._set_to(code)
 
@@ -123,28 +123,6 @@ class EnergyCarrier(object):
         else:
             self._mean_qual = new_mean_qual
 
-    @property
-    def unit_cost(self):
-        return self._unit_cost
-
-    @unit_cost.setter
-    def unit_cost(self, new_unit_cost):
-        if not isinstance(new_unit_cost, (int, float)):
-            raise ValueError("Please make sure the unit costs of energy carriers in the data base are numeric.")
-        else:
-            self._unit_cost = new_unit_cost
-
-    @property
-    def unit_ghg(self):
-        return self._unit_ghg
-
-    @unit_ghg.setter
-    def unit_ghg(self, new_unit_ghg):
-        if not isinstance(new_unit_ghg, (int, float)):
-            raise ValueError("Please make sure the unit GHG emissions of energy carriers in the data base are numeric.")
-        else:
-            self._unit_ghg = new_unit_ghg
-
     def _set_to(self, code):
         if code:
             energy_carrier = EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['code'] == code]
@@ -156,8 +134,6 @@ class EnergyCarrier(object):
             self.qualifier = energy_carrier['qualifier'].iloc[0]
             self.qual_unit = energy_carrier['unit_qual'].iloc[0]
             self.mean_qual = energy_carrier['mean_qual'].iloc[0]
-            self.unit_cost = energy_carrier['unit_cost_USD.kWh'].iloc[0]
-            self.unit_ghg = energy_carrier['unit_ghg_kgCO2.kWh'].iloc[0]
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -172,7 +148,35 @@ class EnergyCarrier(object):
 
     @staticmethod
     def _load_energy_carriers(locator):
-        EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_energy_carriers())
+        """ Fetch a complete description of available energy carriers from the FEEDSTOCKS database """
+        # Load the feedstock database
+        feedstock = pd.ExcelFile(locator.get_database_feedstocks())
+        energy_carriers_overview = feedstock.parse('ENERGY_CARRIERS')
+
+        # Correct potential basic format errors if there are any
+        energy_carriers_overview['cost_and_ghg_tab'].fillna('-', inplace=True)
+        energy_carriers_overview['cost_and_ghg_tab'] = \
+            energy_carriers_overview['cost_and_ghg_tab'].astype(str).str.strip().str.upper()
+        EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
+
+        # Check if tab references are valid
+        referenced_tabs = [tab_name for tab_name in list(set(energy_carriers_overview['cost_and_ghg_tab']))
+                           if tab_name != '-']
+        if not all([tab_name in feedstock.sheet_names for tab_name in referenced_tabs]):
+            raise ValueError('The energy carriers data base contains references to tabs that do not exist in the '
+                             'feedstock data base. Please make sure the tabs are named correctly.')
+
+        # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
+        energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
+        for tab_name in referenced_tabs:
+            cost_and_ghg = feedstock.parse(tab_name)
+            EnergyCarrier._daily_ghg_profile[tab_name] = \
+                {hour: ghg_emission * 3.6 for hour, ghg_emission in zip(cost_and_ghg['hour'], cost_and_ghg['GHG_kgCO2MJ'])}
+            EnergyCarrier._daily_buy_price_profile[tab_name] = \
+                {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_buy_USD2015kWh'])}
+            EnergyCarrier._daily_sell_price_profile[tab_name] = \
+                {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_sell_USD2015kWh'])}
+
 
     @staticmethod
     def _extract_thermal_energy_carriers():
@@ -438,35 +442,41 @@ class EnergyCarrier(object):
         return energy_carrier_codes
 
     @staticmethod
-    def get_unit_ghg(energy_carrier_code):
+    def get_ghg_for_timestep(energy_carrier_code, timestep):
         """
-        Return the unit greenhouse gas emissions of a specific energy carrier from the database.
+        Return the unit greenhouse gas emissions of a specific energy carrier and a given timestep from the database.
         """
-        if not EnergyCarrier._unit_ghg_dict:
-            available_energy_carrier_codes = list(EnergyCarrier._available_energy_carriers['code'])
-            EnergyCarrier._unit_ghg_dict = {ec_code:
-                                                EnergyCarrier._available_energy_carriers[
-                                                    EnergyCarrier._available_energy_carriers['code'] == ec_code]
-                                                ['unit_ghg_kgCO2.kWh'].values[0]
-                                            for ec_code in available_energy_carrier_codes}
+        if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
+            EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        unit_ghg = EnergyCarrier._unit_ghg_dict[energy_carrier_code]
+        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        return unit_ghg
+        return EnergyCarrier._daily_ghg_profile[tab_name][timestep.hour]
 
     @staticmethod
-    def get_unit_cost(energy_carrier_code):
+    def get_price_for_timestep(energy_carrier_code, timestep, mode='buy'):
         """
-        Return the unit greenhouse gas emissions of a specific energy carrier from the database.
+        Return the unit sell or buy price of a specific energy carrier and a given timestep from the database.
         """
-        if not EnergyCarrier._unit_cost_dict:
-            available_energy_carrier_codes = list(EnergyCarrier._available_energy_carriers['code'])
-            EnergyCarrier._unit_cost_dict = {ec_code:
-                                                 EnergyCarrier._available_energy_carriers[
-                                                     EnergyCarrier._available_energy_carriers['code'] == ec_code]
-                                                 ['unit_cost_USD.kWh'].values[0]
-                                             for ec_code in available_energy_carrier_codes}
+        if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
+            EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        unit_cost = EnergyCarrier._unit_ghg_dict[energy_carrier_code]
+        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        return unit_cost
+        if mode == 'buy':
+            unit_price = EnergyCarrier._daily_buy_price_profile[tab_name][timestep.hour]
+        elif mode == 'sell':
+            unit_price = EnergyCarrier._daily_sell_price_profile[tab_name][timestep.hour]
+        else:
+            raise ValueError('Please specify whether the energy carrier is sold or bought at the given timestep.')
+
+        return unit_price
+
+    @staticmethod
+    def _bind_feedstock_tab(energy_carrier_code):
+        """
+        Associate the respective tab-name of the feedstock-database to the energy carrier code.
+        """
+        corresponding_feedstock_tab = EnergyCarrier._available_energy_carriers[
+            EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['cost_and_ghg_tab'].values[0]
+        EnergyCarrier._feedstock_tab[energy_carrier_code] = corresponding_feedstock_tab

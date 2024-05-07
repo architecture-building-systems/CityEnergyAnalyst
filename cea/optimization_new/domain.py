@@ -42,6 +42,7 @@ from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
 from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
 from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
@@ -62,8 +63,9 @@ class Domain(object):
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
-        self.weather = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
+        self.weather = epwreader.epw_reader(weather_path)[['date', 'year', 'drybulb_C', 'wetbulb_C',
                                                            'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        EnergyFlow.time_series = self.weather['date']
         return self.weather
 
     def load_buildings(self, buildings_in_domain=None):

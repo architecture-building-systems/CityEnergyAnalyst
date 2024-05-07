@@ -181,7 +181,7 @@ def get_databases(demand, locator):
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
     # get the mean of all values for this
     factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
-                                factors_resources.items()]
+                                factors_resources.items() if name != 'ENERGY_CARRIERS']
     factors_resources_simple = pd.concat([pd.DataFrame(factors_resources_simple,
                                                        columns=['code', 'Opex_var_buy_USD2015kWh']),
                                           pd.DataFrame([{'code': 'NONE'}])],  # append NONE choice with zero values
