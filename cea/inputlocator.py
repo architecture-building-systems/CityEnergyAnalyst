@@ -349,7 +349,7 @@ class InputLocator(object):
     # OPTIMIZATION *NEW*
     def get_new_optimization_results_folder(self):
         """Returns the folder containing the scenario's results for the new optimization script"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization_new')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization', 'centralized')
 
     def get_new_optimization_base_case_folder(self, network_type):
         """Returns the folder containing the base-case energy systems against which optimal systems are compared"""
