@@ -333,7 +333,7 @@ Utilities:
     description: "Migrate older scenario inputs to the latest version.
                   Please consider running this for scenario created before v3.22.
                   NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli]
     module: cea.datamanagement.data_migrator
     parameters: [ 'general:scenario' ]
     input-files:
@@ -365,7 +365,7 @@ Utilities:
   - name: create-mixed-use-type
     label: Create mixed-use type
     description: Creates a new use-type by aggregating values from a list of different use-types
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
     input-files:
@@ -374,14 +374,14 @@ Utilities:
   - name: test
     label: Test CEA
     description: Run some tests on the CEA
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.tests
     parameters: [test]
 
   - name: run-unit-tests
     label: Unit tests
     description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli, dashboard]
+    interfaces: [test, cli]
     module: cea.tests.run_unit_tests
     parameters: []
 
