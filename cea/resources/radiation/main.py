@@ -173,7 +173,9 @@ def main(config):
     cea_daysim.create_radiance_material(building_surface_properties)
     print("Creating radiance geometry file")
     cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
-                                        surroundings_building_names, geometry_staging_location, tree_surfaces)
+                                        surroundings_building_names, geometry_staging_location)
+    print("Creating shading file")
+    cea_daysim.create_radiance_shading(tree_surfaces)
 
     print("Converting files for DAYSIM")
     weather_file = locator.get_weather_file()

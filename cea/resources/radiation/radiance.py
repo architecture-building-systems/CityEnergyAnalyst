@@ -50,6 +50,7 @@ class CEADaySim:
         self.daysim_material_path = os.path.join(self.common_inputs, 'daysim_material.rad')
         self.daysim_geometry_path = os.path.join(self.common_inputs, 'daysim_geometry.rad')
         self.wea_weather_path = os.path.join(self.common_inputs, 'weather_60min.wea')
+        self.daysim_shading_path = os.path.join(self.common_inputs, 'daysim_shading.rad')
 
         # Header Properties
         self.site_info = None
@@ -67,15 +68,33 @@ class CEADaySim:
         """
         return DaySimProject(project_name, self.projects_dir, self.daysim_dir, self.daysim_lib,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
-                             self.site_info)
+                             self.site_info, self.daysim_shading_path)
 
     def create_radiance_material(self, building_surface_properties):
         add_rad_mat(self.rad_material_path, building_surface_properties)
 
     def create_radiance_geometry(self, geometry_terrain, building_surface_properties, zone_building_names,
-                                 surroundings_building_names, geometry_pickle_dir, tree_surfaces):
+                                 surroundings_building_names, geometry_pickle_dir):
         create_rad_geometry(self.rad_geometry_path, geometry_terrain, building_surface_properties, zone_building_names,
-                            surroundings_building_names, geometry_pickle_dir, tree_surfaces)
+                            surroundings_building_names, geometry_pickle_dir)
+
+    def create_radiance_shading(self, tree_surfaces):
+        def tree_to_radiance(tree_id, tree_surface_list):
+            for num, occ_face in enumerate(tree_surface_list):
+                surface_name = f"tree_surface_{tree_id}_{num}"
+                yield RadSurface(surface_name, occ_face, "tree_material")
+
+        with open(self.daysim_shading_path, "w") as rad_file:
+            # # write material for trees
+            string = "void glass tree_material\n" \
+                     "0\n" \
+                     "0\n" \
+                     "3 0.545168692741 0.545168692741 0.545168692741"
+            rad_file.writelines(string + '\n')
+
+            for i, tree in enumerate(tree_surfaces):
+                for tree_surface_rad in tree_to_radiance(i, tree):
+                    rad_file.write(tree_surface_rad.rad())
 
     @staticmethod
     def run_cmd(cmd, daysim_dir, daysim_lib):
@@ -164,7 +183,7 @@ class CEADaySim:
 class DaySimProject(object):
     def __init__(self, project_name, project_directory, daysim_bin_directory, daysim_lib_directory,
                  daysim_material_path, daysim_geometry_path, wea_weather_path,
-                 site_info):
+                 site_info, daysim_shading_path):
 
         # Project info
         self.project_name = project_name
@@ -180,6 +199,7 @@ class DaySimProject(object):
         self.daysim_geometry_path = daysim_geometry_path
         self.wea_weather_path = wea_weather_path
         self.sensor_path = os.path.join(self.project_path, "sensors.pts")
+        self.daysim_shading_path = daysim_shading_path
 
         self.hea_path = os.path.join(self.project_path, f"{project_name}.hea")
         # Header Properties
@@ -306,8 +326,23 @@ class DaySimProject(object):
         """
         dc_file = f"{self.project_name}.dc"
         ill_file = f"{self.project_name}.ill"
+        # Create empty shading file
+        empty_shading_file = "no_shading.rad"
+        with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
+            pass
+
+        # Shading Rad
+        shading_rad = "shading.rad"
+        shutil.copy(self.daysim_shading_path, os.path.join(self.project_path, shading_rad))
+
         with open(self.hea_path, "a") as hea_file:
-            static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
+            # static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
+            static_shading = (f"shading -1\n"
+                              f"{dc_file} {ill_file}\n"
+                              f"tree_shading_group\n"
+                              f"1\n"
+                              f"ManualControl {empty_shading_file}\n"
+                              f"{shading_rad} shading_{dc_file} shading_{ill_file}")
             hea_file.write(static_shading)
 
     def execute_gen_dc(self):
@@ -346,7 +381,7 @@ class DaySimProject(object):
         :return: Numpy array of hourly irradiance results of sensor points
         """
 
-        ill_path = os.path.join(self.project_path, f"{self.project_name}.ill")
+        ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
             data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T
@@ -424,13 +459,6 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                  "5 0.5360 0.1212 0.0565 0 0"
         write_file.writelines(string + '\n')
 
-        # write material for trees
-        string = "void glass tree_material\n" \
-                 "0\n" \
-                 "0\n" \
-                 "3 0.545168692741 0.545168692741 0.545168692741"
-        write_file.writelines(string + '\n')
-
         written_mat_name_list = set()
         for geo in ageometry_table.index.values:
             # Wall material
@@ -479,7 +507,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
-                        surroundings_building_names, geometry_pickle_dir, tree_surfaces):
+                        surroundings_building_names, geometry_pickle_dir):
     def terrain_to_radiance(tin_occface_terrain):
         for num, occ_face in enumerate(tin_occface_terrain):
             surface_name = f"terrain_srf{num}"
@@ -523,11 +551,6 @@ def create_rad_geometry(file_path, geometry_terrain, building_surface_properties
             surface_name = f"surrounding_buildings_roof_{name}_{num}"
             yield RadSurface(surface_name, occ_face, "reflectance0.2")
 
-    def tree_to_radiance(tree_id, tree_surface_list):
-        for num, occ_face in enumerate(tree_surface_list):
-            surface_name = f"tree_surface_{tree_id}_{num}"
-            yield RadSurface(surface_name, occ_face, "tree_material")
-
     with open(file_path, "w") as rad_file:
         for terrain_surface in terrain_to_radiance(geometry_terrain):
             rad_file.write(terrain_surface.rad())
@@ -542,7 +565,3 @@ def create_rad_geometry(file_path, geometry_terrain, building_surface_properties
                 os.path.join(geometry_pickle_dir, 'surroundings', building_name))
             for building_surface in surrounding_building_to_radiance(building_geometry):
                 rad_file.write(building_surface.rad())
-
-        for i, tree in enumerate(tree_surfaces):
-            for tree_surface_rad in tree_to_radiance(i, tree):
-                rad_file.write(tree_surface_rad.rad())
