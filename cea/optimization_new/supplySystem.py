@@ -72,7 +72,7 @@ class SupplySystem(object):
             self._structure = new_structure
 
     def __copy__(self):
-        """ Create a copy of the district energy system object. """
+        """ Create a copy of the supply system object. """
         # Initialize a new object
         object_copy = SupplySystem(self.structure, self.capacity_indicator_vector, self.demand_energy_flow)
 
