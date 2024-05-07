@@ -837,7 +837,7 @@ class SupplySystemStructure(object):
             elif ec_code in self.available_potentials.keys():
                 self._used_potentials[ec_code] = \
                     EnergyFlow('source', 'secondary', ec_code,
-                               pd.Series([min_potentials[ec_code]] * EnergyFlow.time_frame))
+                               pd.Series([min_potentials[ec_code]] * len(EnergyFlow.time_series)))
 
         return new_required_energy_flow
 
