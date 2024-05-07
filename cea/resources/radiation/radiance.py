@@ -331,10 +331,6 @@ class DaySimProject(object):
         with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
             pass
 
-        # Shading Rad
-        shading_rad = "shading.rad"
-        shutil.copy(self.daysim_shading_path, os.path.join(self.project_path, shading_rad))
-
         with open(self.hea_path, "a") as hea_file:
             # static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
             static_shading = (f"shading -1\n"
@@ -342,7 +338,7 @@ class DaySimProject(object):
                               f"tree_shading_group\n"
                               f"1\n"
                               f"ManualControl {empty_shading_file}\n"
-                              f"{shading_rad} shading_{dc_file} shading_{ill_file}")
+                              f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
             hea_file.write(static_shading)
 
     def execute_gen_dc(self):
