@@ -43,6 +43,8 @@ class SupplySystemStructure(object):
     _releasable_grid_based_energy_carriers = []
     _active_component_classes = []
     _full_component_activation_order = ()
+    initial_network_supply_systems = dict()
+    initial_network_supply_systems_composition = {'N1001': {'primary': [], 'secondary': [], 'tertiary': []}}
 
     def __init__(self, max_supply_flow=EnergyFlow(), available_potentials=None, user_component_selection=None):
         self.maximum_supply = max_supply_flow
