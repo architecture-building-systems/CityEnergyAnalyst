@@ -23,7 +23,9 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
+from copy import copy
 from math import isclose
+
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
@@ -68,6 +70,39 @@ class SupplySystem(object):
             raise TypeError("Make sure the indicated supply system structure is of type SupplySystemStructure.")
         else:
             self._structure = new_structure
+
+    def __copy__(self):
+        """ Create a copy of the supply system object. """
+        # Initialize a new object
+        object_copy = SupplySystem(self.structure, self.capacity_indicator_vector, self.demand_energy_flow)
+
+        # Assign the same values to the new object
+        #  First, all attributes that are shared between the original and the new object (same memory address)
+        object_copy.installed_components = self.installed_components
+
+        #  Then, all attributes that are unique to the original object and need to be copied (new memory address)
+        object_copy.component_energy_inputs = {placement: {component: {carrier: copy(flow)
+                                                                       for carrier, flow in component_dict.items()}
+                                                           for component, component_dict in placement_dict.items()}
+                                               for placement, placement_dict in self.component_energy_inputs.items()}
+        object_copy.component_energy_outputs = {placement: {component: {carrier: copy(flow)
+                                                                        for carrier, flow in component_dict.items()}
+                                                            for component, component_dict in placement_dict.items()}
+                                                for placement, placement_dict in self.component_energy_outputs.items()}
+
+        object_copy.used_potentials = {carrier: copy(flow_profile)
+                                       for carrier, flow_profile in self.used_potentials.items()}
+        object_copy.system_energy_demand = {carrier: copy(flow_profile)
+                                            for carrier, flow_profile in self.system_energy_demand.items()}
+        object_copy.heat_rejection = {carrier: copy(flow_profile)
+                                      for carrier, flow_profile in self.heat_rejection.items()}
+        object_copy.greenhouse_gas_emissions = {carrier: copy(flow_profile)
+                                                for carrier, flow_profile in self.greenhouse_gas_emissions.items()}
+
+        object_copy.annual_cost = {carrier: cost for carrier, cost in self.annual_cost.items() }
+        object_copy.overall_fitness = {carrier: fitness for carrier, fitness in self.overall_fitness.items()}
+
+        return object_copy
 
     @staticmethod
     def evaluate_supply_system(capacity_indicators, system_structure, demand_energy_flow, objectives,

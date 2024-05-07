@@ -104,9 +104,8 @@ class Domain(object):
         :return self.energy_potentials: list of energy potentials with the scale they apply to (building or domain)
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
-        shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
