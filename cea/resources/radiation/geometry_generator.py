@@ -576,7 +576,7 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
         raise ValueError('Terrain provided does not cover all building geometries')
 
 
-def tree_geometry_generator(tree_df, terrain_raster, geometry_pickle_dir):
+def tree_geometry_generator(tree_df, terrain_raster):
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
     tree_df = tree_df.to_crs(proj4_str)

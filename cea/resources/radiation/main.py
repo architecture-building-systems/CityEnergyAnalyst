@@ -172,9 +172,10 @@ def main(config):
     trees_path = os.path.join(locator.get_building_geometry_folder(), "trees.shp")
     if os.path.exists(trees_path):
         trees_df = gpd.GeoDataFrame.from_file(trees_path)
-        tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster, geometry_staging_location)
+        tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster)
         print("Creating radiance shading file")
-        cea_daysim.create_radiance_shading(tree_surfaces)
+        tree_lad = trees_df["density"]
+        cea_daysim.create_radiance_shading(tree_surfaces, tree_lad)
 
     print("Converting files for DAYSIM")
     weather_file = locator.get_weather_file()

@@ -78,19 +78,22 @@ class CEADaySim:
         create_rad_geometry(self.rad_geometry_path, geometry_terrain, building_surface_properties, zone_building_names,
                             surroundings_building_names, geometry_pickle_dir)
 
-    def create_radiance_shading(self, tree_surfaces):
+    def create_radiance_shading(self, tree_surfaces, leaf_area_densities):
         def tree_to_radiance(tree_id, tree_surface_list):
             for num, occ_face in enumerate(tree_surface_list):
                 surface_name = f"tree_surface_{tree_id}_{num}"
-                yield RadSurface(surface_name, occ_face, "tree_material")
+                yield RadSurface(surface_name, occ_face, f"tree_material_{tree_id}")
 
         with open(self.daysim_shading_path, "w") as rad_file:
             # # write material for trees
-            string = "void glass tree_material\n" \
-                     "0\n" \
-                     "0\n" \
-                     "3 0.545168692741 0.545168692741 0.545168692741"
-            rad_file.writelines(string + '\n')
+            for i, tree in enumerate(tree_surfaces):
+                # light would pass through at least 2 surfaces so we divide the effect by half
+                transmissivity = math.sqrt(1 - leaf_area_densities[i])
+                string = f"void glass tree_material_{i}\n" \
+                         "0\n" \
+                         "0\n" \
+                         f"3 {transmissivity} {transmissivity} {transmissivity}"
+                rad_file.writelines(string + '\n')
 
             for i, tree in enumerate(tree_surfaces):
                 for tree_surface_rad in tree_to_radiance(i, tree):
