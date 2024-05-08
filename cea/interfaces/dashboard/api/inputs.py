@@ -126,6 +126,8 @@ class AllInputs(Resource):
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
             locator.get_surroundings_geometry())
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(
+            os.path.join(locator.get_building_geometry_folder(), 'trees.shp'))
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
