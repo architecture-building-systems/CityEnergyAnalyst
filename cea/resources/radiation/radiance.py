@@ -378,20 +378,26 @@ class DaySimProject(object):
             # Use static system
             shading_parameters = f"shading 1 static_system {dc_file} {ill_file}\n"
         else:
-            # Create empty shading file for base case
-            empty_shading_file = "no_shading.rad"
-            with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
-                pass
-
-            # Generate shading schedule
-            shading_profile = self.generate_shading_profile()
+            # # Create empty shading file for base case
+            # empty_shading_file = "no_shading.rad"
+            # with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
+            #     pass
+            #
+            # # Generate shading schedule
+            # shading_profile = self.generate_shading_profile()
+            #
+            # shading_parameters = (f"shading -1\n"
+            #                       f"{dc_file} {ill_file}\n"
+            #                       f"tree_shading_group\n"
+            #                       f"1\n"
+            #                       f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
+            #                       f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
 
             shading_parameters = (f"shading -1\n"
                                   f"{dc_file} {ill_file}\n"
                                   f"tree_shading_group\n"
-                                  f"1\n"
-                                  f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
-                                  f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
+                                  f"0\n"
+                                  f"ManualControl {self.daysim_shading_path}\n")
 
         with open(self.hea_path, "a") as hea_file:
             hea_file.write(shading_parameters)
@@ -433,8 +439,8 @@ class DaySimProject(object):
         """
 
         ill_path = os.path.join(self.project_path, f"{self.project_name}.ill")
-        if self.shading_exists:
-            ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
+        # if self.shading_exists:
+        #     ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
             data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T
