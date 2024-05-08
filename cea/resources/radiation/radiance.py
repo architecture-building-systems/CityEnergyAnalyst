@@ -316,6 +316,36 @@ class DaySimProject(object):
 
             hea_file.write(radiance_parameters)
 
+    def generate_shading_profile(self):
+        """
+        The external shading profile should be a comma seperate file with a three line header and the format:
+        month, day, hour, shading fraction [0,1] (0=fully opened;1=fully closed) in each line.
+
+        Creates shading profile in the temp directory of the project.
+        Uses date values found in the weather file for DAYSIM
+        """
+        shading_profile = os.path.join(self.tmp_directory, "shading_profile.csv")
+        with open(self.wea_weather_path) as wea, open(shading_profile, "w") as f:
+            csv_writer = csv.writer(f, delimiter=',')
+            wea_reader = csv.reader(wea, delimiter=' ', )
+
+            # Write headers
+            csv_writer.writerows([
+                ["# Daysim annual blind schdule", "", "", ""],
+                ["# time_step 60", "comment:", "", ""],
+                ["# month", "day", "time", "shading fraction"]
+            ])
+
+            # Skip first 6 rows (headers) in weather file
+            for i in range(6):
+                next(wea_reader)
+
+            for row in wea_reader:
+                date_columns = row[:3]
+                csv_writer.writerow(date_columns + [1])
+
+        return shading_profile
+
     def write_static_shading(self):
         """
         This function writes the static shading into the header file.
@@ -331,13 +361,16 @@ class DaySimProject(object):
         with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
             pass
 
+        # Generate shading schedule
+        shading_profile = self.generate_shading_profile()
+
         with open(self.hea_path, "a") as hea_file:
             # static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
             static_shading = (f"shading -1\n"
                               f"{dc_file} {ill_file}\n"
                               f"tree_shading_group\n"
                               f"1\n"
-                              f"ManualControl {empty_shading_file}\n"
+                              f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
                               f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
             hea_file.write(static_shading)
 
