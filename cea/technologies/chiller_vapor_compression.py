@@ -134,7 +134,7 @@ def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
     Capex_VCC_USD = 0
 
     if Q_nom_W > 0:
-        VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Chiller")
+        VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="VAPOR_COMPRESSION_CHILLERS")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == technology_type]
         max_chiller_size = max(VCC_cost_data['cap_max'].values)
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -222,7 +222,7 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
 
 
 class VaporCompressionChiller(object):
-    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator", "chiller_configuration"]
+    __slots__ = ["max_VCC_capacity", "min_VCC_capacity", "g_value", "scale", "locator", "CHILLER_CONFIGURATION"]
 
     def __init__(self, locator, scale):
         self.max_VCC_capacity = 0
@@ -230,11 +230,10 @@ class VaporCompressionChiller(object):
         self.g_value = 0.0
         self.scale = scale
         self.locator = locator
-        self.chiller_configuration = None
         self.setup()
 
     def setup(self):
-        VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="Chiller")
+        VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="VAPOR_COMPRESSION_CHILLERS")
         if self.scale == 'DISTRICT':
             technology_type = VCC_CODE_CENTRALIZED
         elif self.scale == 'BUILDING':
@@ -242,19 +241,7 @@ class VaporCompressionChiller(object):
         else:
             raise ValueError('scale must be of type "DISTRICT" or "BUILDING"')
         VCC_database = VCC_database[VCC_database['code'] == technology_type]
-        self.max_VCC_capacity = int(VCC_database['cap_max'])
-        self.min_VCC_capacity = int(VCC_database['cap_min'])
-        self.g_value = float(VCC_database['G_VALUE'])
-        self.chiller_configuration = pd.read_excel(self.locator.get_database_conversion_systems(),
-                                                   sheet_name="Chiller_configuration")
+        self.max_VCC_capacity = int(VCC_database['cap_max'].iloc[0])
+        self.min_VCC_capacity = int(VCC_database['cap_min'].iloc[0])
+        self.g_value = float(VCC_database['G_VALUE'].iloc[0])
 
-    def configuration_values(self, source_type, compressor_type):
-        df = self.chiller_configuration
-        df = df[(df['SOURCE'] == source_type) & (df['COMPRESSOR'] == compressor_type)]
-
-        filter_plfs = [col for col in df if col.startswith('plf')]
-        filter_qs = [col for col in df if col.startswith('q')]
-
-        plfs = df[filter_plfs].to_dict('records')[0]
-        qs = df[filter_qs].to_dict('records')[0]
-        return {'PLFs': plfs, 'Qs': qs}

@@ -201,7 +201,7 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEX")
+            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEAT_EXCHANGERS")
             HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
             # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
             # capacity for the corresponding technology from the database
@@ -502,7 +502,7 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray)
-            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEX")
+            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEAT_EXCHANGERS")
             HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
             # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
             # capacity for the corresponding technology from the database
@@ -593,11 +593,11 @@ def calc_generation_costs_capacity_installed_cooling(locator,
 
         # ACH
         Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(Capacity_NG_Trigen_ACH_W,
-                                                                                              supply_systems.Absorption_chiller,
+                                                                                              supply_systems.ABSORPTION_CHILLERS,
                                                                                               ACH_TYPE_DOUBLE)
         # CCGT
         Capex_a_CCGT_USD, Opex_fixed_CCGT_USD, Capex_CCGT_USD = cogeneration.calc_Cinv_CCGT(Capacity_NG_Trigen_el_W,
-                                                                                            supply_systems.CCGT)
+                                                                                            supply_systems.COGENERATION_PLANTS)
 
         Capex_a_Trigen_NG_USD = Capex_a_ACH_USD + Capex_a_CCGT_USD
         Opex_fixed_Trigen_NG_USD = Opex_fixed_ACH_USD + Opex_fixed_CCGT_USD
@@ -801,16 +801,16 @@ def calc_generation_costs_capacity_installed_heating(locator,
 
     thermal_network = master_to_slave_vars.DH_network_summary_individual
     supply_systems = SupplySystemsDatabase(locator)
-    GHP_cost_data = supply_systems.HP
-    BH_cost_data = supply_systems.BH
-    boiler_cost_data = supply_systems.Boiler
+    GHP_cost_data = supply_systems.HEAT_PUMPS
+    BH_cost_data = supply_systems.BORE_HOLES
+    boiler_cost_data = supply_systems.BOILERS
 
     # CCGT
     if master_to_slave_vars.CC_on == 1:
         Capacity_CHP_NG_heat_W = master_to_slave_vars.CCGT_SIZE_W
         Capacity_CHP_NG_el_W = master_to_slave_vars.CCGT_SIZE_electrical_W
         Capex_a_CHP_NG_USD, Opex_fixed_CHP_NG_USD, Capex_CHP_NG_USD = chp.calc_Cinv_CCGT(Capacity_CHP_NG_el_W,
-                                                                                         supply_systems.CCGT)
+                                                                                         supply_systems.COGENERATION_PLANTS)
     else:
         Capacity_CHP_NG_heat_W = 0.0
         Capacity_CHP_NG_el_W = 0.0
