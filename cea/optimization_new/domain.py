@@ -523,6 +523,20 @@ class Domain(object):
             else:
                 with pd.ExcelWriter(results_file) as writer:
                     system_energy_demand_profile_df.to_excel(writer, sheet_name='Energy_demand', index=True)
+        if supply_system.heat_rejected_water.values():
+            heat_rejected_water_profile_df = pd.concat([heat_rejected_water_profile
+                                                       for heat_rejected_water_profile
+                                                       in supply_system.heat_rejected_water.values()],
+                                                      axis=1)
+            heat_rejected_water_profile_df.columns = supply_system.heat_rejected_water.keys()
+            heat_rejected_water_profile_df.index = date_time
+            file_exists = os.path.exists(results_file)
+            if file_exists:
+                with pd.ExcelWriter(results_file, mode = "a", engine = "openpyxl", if_sheet_exists="replace") as writer:
+                    heat_rejected_water_profile_df.to_excel(writer, sheet_name='Heat_rejected_water', index=True)
+            else:
+                with pd.ExcelWriter(results_file) as writer:
+                    heat_rejected_water_profile_df.to_excel(writer, sheet_name='Heat_rejected_water', index=True)
 
         return
 
@@ -572,14 +586,14 @@ class Domain(object):
             input_ec = supply_system.component_energy_inputs[cat]
             output_ec = supply_system.component_energy_outputs[cat]
             if ec_profiles:
-                ec_profiles_dict = {f"{tec_code}_{ec_code}": profile
+                ec_profiles_dict = {f"{tec_code}_{ec_code}_main": e_flow.profile
                                           for tec_code, ec_profile in ec_profiles.items()
-                                          for ec_code, profile in ec_profile.items()}
-                input_ec_dict = {f"{tec_code}_{ec_code}": e_flow.profile
+                                          for ec_code, e_flow in ec_profile.items()}
+                input_ec_dict = {f"{tec_code}_{ec_code}_input": e_flow.profile
                                             for tec_code, ec_profile in input_ec.items()
                                             for ec_code, e_flow in ec_profile.items()}
                 ec_profiles_dict.update(input_ec_dict)
-                output_ec_dict = {f"{tec_code}_{ec_code}": e_flow.profile
+                output_ec_dict = {f"{tec_code}_{ec_code}_output": e_flow.profile
                                             for tec_code, ec_profile in output_ec.items()
                                             for ec_code, e_flow in ec_profile.items()}
                 ec_profiles_dict.update(output_ec_dict)
@@ -599,7 +613,8 @@ class Domain(object):
         # Print out profile of carriers from infinite sources or coming from potentials
         bought_carriers = supply_system.bought_carriers
         sold_carriers = supply_system.sold_carriers
-        used_potentials = supply_system.used_potentials
+        used_potentials = {tec_code: ec_profile.profile
+                            for tec_code, ec_profile in supply_system.used_potentials.items()}
         alternative = [bought_carriers, sold_carriers, used_potentials]
         alternative_names = ['bought_carriers', 'sold_carriers', 'used_potentials']
         for i, potentials in enumerate(alternative):

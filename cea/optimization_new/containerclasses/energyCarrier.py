@@ -26,6 +26,7 @@ import numpy as np
 
 class EnergyCarrier(object):
     _available_energy_carriers = pd.DataFrame
+    _feedstocks = pd.DataFrame
     _thermal_energy_carriers = {}
     _electrical_energy_carriers = {}
     _combustible_energy_carriers = {}
@@ -171,6 +172,7 @@ class EnergyCarrier(object):
         data sets as class variables.
         """
         EnergyCarrier._load_energy_carriers(domain.locator)
+        EnergyCarrier._load_feedstock(domain.locator)
         EnergyCarrier._extract_thermal_energy_carriers()
         EnergyCarrier._extract_electrical_energy_carriers()
         EnergyCarrier._extract_combustible_energy_carriers()
@@ -178,6 +180,9 @@ class EnergyCarrier(object):
     @staticmethod
     def _load_energy_carriers(locator):
         EnergyCarrier._available_energy_carriers = pd.read_excel(locator.get_database_energy_carriers())
+    @staticmethod
+    def _load_feedstock(locator):
+        EnergyCarrier._feedstocks = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
 
     @staticmethod
     def _extract_thermal_energy_carriers():
@@ -502,3 +507,25 @@ class EnergyCarrier(object):
         unit_cost = EnergyCarrier._unit_ghg_dict[energy_carrier_code]
 
         return unit_cost
+
+    @staticmethod
+    def get_feedstock_price(purpose, feedstock_code):
+        """
+        Return the unit greenhouse gas emissions of a specific energy carrier from the database.
+        """
+        carrier = EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['code'] == feedstock_code]
+        description = carrier['description'].values[0]
+        name = ''.join(description.split()).upper()
+        if purpose == 'buy':
+            col = 'Opex_var_buy_USD2015kWh'
+            if feedstock_code == 'E230AC':
+                name = 'GRID'
+        else:
+            col = 'Opex_var_sell_USD2015kWh'
+            if feedstock_code == 'E230AC':
+                name = 'SOLAR'
+
+        fs_price_evolution = EnergyCarrier._feedstocks[name][col]
+
+
+        return fs_price_evolution
