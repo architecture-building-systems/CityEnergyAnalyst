@@ -159,6 +159,7 @@ def main(config):
                                                                                                           architecture_wwr_df,
                                                                                                           geometry_staging_location)
 
+    daysim_staging_location = os.path.join(locator.get_solar_radiation_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
 
     # create radiance input files
