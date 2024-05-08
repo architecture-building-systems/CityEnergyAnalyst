@@ -238,6 +238,10 @@ class DaySimProject(object):
 
             hea_file.write(header)
 
+    @property
+    def shading_exists(self):
+        return os.path.exists(self.daysim_shading_path)
+
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
 
@@ -346,33 +350,51 @@ class DaySimProject(object):
 
         return shading_profile
 
-    def write_static_shading(self):
+    def write_shading_parameters(self):
         """
-        This function writes the static shading into the header file.
+        This function writes the shading properties into the header file.
+        If no shading is found, static shading mode is used.
 
         `shading 1 <descriptive_string> <file_name.dc> <file_name.ill>`
 
         The integer 1 represents static/no shading
+
+        If shading if found, generated required files and load shading geometries
+
+        `shading -n
+        <base_file_name.dc> <base_file_name_no_blinds.ill>
+        [followed by n shading group definitions]
+        <shading_group_1_name>
+        m
+        control_keyword <shading_group_opened.rad> [followed by m lines]
+        <shading_group_1_state1.rad> <shading_group_1_state1.dc> <shading_group_1_state1.ill>`
+
+        with n = 1 or 2 = number of shading groups, m = number of states in shading group
         """
         dc_file = f"{self.project_name}.dc"
         ill_file = f"{self.project_name}.ill"
-        # Create empty shading file
-        empty_shading_file = "no_shading.rad"
-        with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
-            pass
 
-        # Generate shading schedule
-        shading_profile = self.generate_shading_profile()
+        if not self.shading_exists:
+            # Use static system
+            shading_parameters = f"shading 1 static_system {dc_file} {ill_file}\n"
+        else:
+            # Create empty shading file for base case
+            empty_shading_file = "no_shading.rad"
+            with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
+                pass
+
+            # Generate shading schedule
+            shading_profile = self.generate_shading_profile()
+
+            shading_parameters = (f"shading -1\n"
+                                  f"{dc_file} {ill_file}\n"
+                                  f"tree_shading_group\n"
+                                  f"1\n"
+                                  f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
+                                  f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
 
         with open(self.hea_path, "a") as hea_file:
-            # static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
-            static_shading = (f"shading -1\n"
-                              f"{dc_file} {ill_file}\n"
-                              f"tree_shading_group\n"
-                              f"1\n"
-                              f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
-                              f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
-            hea_file.write(static_shading)
+            hea_file.write(shading_parameters)
 
     def execute_gen_dc(self):
         """
@@ -385,7 +407,7 @@ class DaySimProject(object):
         -paste  pastes direct and diffuse daylight coefficient output files into a single complete file
         """
         # write the shading header
-        self.write_static_shading()
+        self.write_shading_parameters()
 
         command1 = f'gen_dc "{self.hea_path}" -dir'
         command2 = f'gen_dc "{self.hea_path}" -dif'
@@ -410,7 +432,9 @@ class DaySimProject(object):
         :return: Numpy array of hourly irradiance results of sensor points
         """
 
-        ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
+        ill_path = os.path.join(self.project_path, f"{self.project_name}.ill")
+        if self.shading_exists:
+            ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
             data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T

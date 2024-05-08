@@ -159,13 +159,6 @@ def main(config):
                                                                                                           architecture_wwr_df,
                                                                                                           geometry_staging_location)
 
-    trees_path = os.path.join(locator.get_building_geometry_folder(), "trees.shp")
-    tree_surfaces = []
-    if os.path.exists(trees_path):
-        trees_df = gpd.GeoDataFrame.from_file(trees_path)
-        tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster, geometry_staging_location)
-
-    daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
     cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
 
     # create radiance input files
@@ -174,8 +167,13 @@ def main(config):
     print("Creating radiance geometry file")
     cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
                                         surroundings_building_names, geometry_staging_location)
-    print("Creating shading file")
-    cea_daysim.create_radiance_shading(tree_surfaces)
+
+    trees_path = os.path.join(locator.get_building_geometry_folder(), "trees.shp")
+    if os.path.exists(trees_path):
+        trees_df = gpd.GeoDataFrame.from_file(trees_path)
+        tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster, geometry_staging_location)
+        print("Creating radiance shading file")
+        cea_daysim.create_radiance_shading(tree_surfaces)
 
     print("Converting files for DAYSIM")
     weather_file = locator.get_weather_file()
