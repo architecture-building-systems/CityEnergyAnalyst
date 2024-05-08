@@ -24,7 +24,6 @@ from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 
 
 class EnergyPotential(object):
-    time_frame = 8760  # placeholder, this will be made variable in the future
 
     def __init__(self):
         self._type = 'e.g. SolarPV'
@@ -164,39 +163,47 @@ class EnergyPotential(object):
         object attributes. In case a temperature column name is indicated, the average temperature (when operating
         the corresponding component at maximum potential) is returned.
         """
+
         # check if there are potential files for any of the buildings
         if not any([exists(file) for file in energy_potential_files]):
             print(f"No {self.type} potentials could be found for the indicated buildings. If you would like to include "
                   f"potentials, consider running potentials scripts and then rerun the optimisation.")
             return None
+
         # initialise necessary variables
         nbr_of_files = len(energy_potential_files)
         average_temps = [np.nan] * nbr_of_files
-        main_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                       columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         if auxiliary_potential_column_name is not None:
-            auxiliary_potential = pd.DataFrame(0.0, index=np.arange(self.time_frame),
+            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
         else:
             auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
         for (file, i) in zip(energy_potential_files, np.arange(nbr_of_files)):
             if exists(file):
-                pvt_potential = pd.read_csv(file)
-                main_potential[building_codes[i]] = pvt_potential[main_potential_column_name]
+                building_potential = pd.read_csv(file)
+                building_potential.set_index(EnergyFlow.time_series, inplace=True)
+                main_potential[building_codes[i]] = building_potential[main_potential_column_name]
                 if temperature_column_name is not None:
-                    average_temps[i] = self._get_average_temp(pvt_potential[temperature_column_name], building_codes[i])
+                    average_temps[i] = self._get_average_temp(building_potential[temperature_column_name],
+                                                              building_codes[i])
                 if auxiliary_potential_column_name is not None:
-                    auxiliary_potential[building_codes[i]] = pvt_potential[auxiliary_potential_column_name]
+                    auxiliary_potential[building_codes[i]] = building_potential[auxiliary_potential_column_name]
+
         # calculate total potential across the domain
         main_potential['domain_potential'] = main_potential[building_codes].sum(axis=1)
         if auxiliary_potential_column_name is not None:
             auxiliary_potential['domain_potential'] = auxiliary_potential[building_codes].sum(axis=1)
+
         # if thermal(!) energy potential: return average return temperature
         if temperature_column_name is not None:
             average_temperature = np.nanmean(average_temps)
         else:
             average_temperature = None
+
         # return potentials and average temperature
         return {'main_profile': main_potential['domain_potential'],
                 'main_building_profiles': main_potential[building_codes],

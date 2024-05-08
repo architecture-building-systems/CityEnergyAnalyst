@@ -131,7 +131,8 @@ def district_cooling_network(locator,
         T_ground_K = weather_features.ground_temp
         daily_storage = Storage_tank_PCM(activation=master_to_slave_variables.Storage_cooling_on,
                                          size_Wh=master_to_slave_variables.Storage_cooling_size_W,
-                                         database_model_parameters= pd.read_excel(locator.get_database_conversion_systems(), sheet_name="TES"),
+                                         database_model_parameters= pd.read_excel(locator.get_database_conversion_systems(),
+                                                                                  sheet_name="THERMAL_ENERGY_STORAGES"),
                                          T_ambient_K = np.average(T_ground_K),
                                          type_storage = config.optimization.cold_storage_type,
                                          debug = master_to_slave_variables.debug
@@ -155,7 +156,7 @@ def district_cooling_network(locator,
 
         # get properties of technology used in this script
         absorption_chiller = AbsorptionChiller(
-            pd.read_excel(locator.get_database_conversion_systems(), sheet_name="Absorption_chiller"), 'double')
+            pd.read_excel(locator.get_database_conversion_systems(), sheet_name="ABSORPTION_CHILLERS"), 'double')
         CCGT_prop = calc_cop_CCGT(master_to_slave_variables.NG_Trigen_ACH_size_W, ACH_T_IN_FROM_CHP_K, "NG")
         VC_chiller = VaporCompressionChiller(locator, scale='DISTRICT')
 
