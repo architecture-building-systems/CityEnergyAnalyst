@@ -330,15 +330,24 @@ class SupplySystem(object):
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
-                if 'PV' in component_model or 'SC' in component_model:
+                if 'PV' in component_model:
                     main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
                     demand_prior_solar = copy(demand)
                     demand = demand - main_energy_flow
+                    # Keep the remaining PV production and send it to the grid
                     if (main_energy_flow - demand_prior_solar).profile.sum() > 0:
                         self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
                                                                                               demand_prior_solar)
                     else:
                         del self.component_energy_outputs[placement][component_model][ec_code]
+
+                elif 'SC' in component_model:
+                    main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
+                    demand = demand - main_energy_flow
+                    # Delete the remaining hot water flow since no thermal storage is considered and the flow is not
+                    # needed
+                    del self.component_energy_outputs[placement][component_model][ec_code]
+
                 else:
                     demand = demand - main_energy_flow
 
@@ -434,19 +443,21 @@ class SupplySystem(object):
         if isinstance(required_energy_flows, EnergyFlow):
             required_energy_flows = {required_energy_flows.energy_carrier.code: required_energy_flows}
 
-        if self.sold_carriers:
-            required_energy_flows_copy = copy(required_energy_flows)
-            required_energy_flows = {ec_code: required_energy_flows[ec_code] - self.sold_carriers[ec_code]
-                                     if ec_code in self.sold_carriers.keys() else required_energy_flows[ec_code]
-                                     for ec_code in required_energy_flows.keys()}
-            self.sold_carriers = {ec_code: (self.sold_carriers[ec_code] - required_energy_flows_copy[ec_code].profile).clip(lower=0)
-                                     for ec_code in self.sold_carriers.keys()}
-
         new_required_energy_flow = {ec_code: flow for ec_code, flow in required_energy_flows.items()
                                     if ec_code not in self.structure.infinite_energy_carriers}
 
         if not for_sizing:
             self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
+
+            if self.sold_carriers:
+                required_energy_flows_copy = copy(required_energy_flows)
+                required_energy_flows = {ec_code: required_energy_flows[ec_code] - self.sold_carriers[ec_code]
+                if ec_code in self.sold_carriers.keys() else required_energy_flows[ec_code]
+                                         for ec_code in required_energy_flows.keys()}
+                self.sold_carriers = {
+                    ec_code: (self.sold_carriers[ec_code] - required_energy_flows_copy[ec_code].profile).clip(lower=0)
+                    for ec_code in self.sold_carriers.keys()}
+
             self._buy_required_energy(required_energy_flows, self.structure.infinite_energy_carriers)
 
         return new_required_energy_flow
