@@ -83,8 +83,6 @@ def calc_h_op_m(Htr_op):
     # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # h_op_m = a_j_m * u_j  # summation
     # This formula in the future should take specific properties of the location of the building into account.
-    # Adiabatic surfaces are currently only considered if `consider_adjacent_buildings` was set to True when the radiation
-    # script was run.
 
     return h_op_m
 
@@ -105,8 +103,6 @@ def calc_h_j_em():
     #h_j_em = (h_em * a_j_m * u_j) / h_op_m
 
     # This formula in the future should take specific properties of the location of the building into account.
-    # Adiabatic surfaces are currently only considered if `consider_adjacent_buildings` was set to True when the radiation
-    # script was run.
 
     return None
 
@@ -116,8 +112,6 @@ def calc_h_ec(Htr_w):
     # (12) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # h_ec = a_j_l * u_j
     # This formula in the future should take specific properties of the location of the building into account.
-    # Adiabatic surfaces are currently only considered if `consider_adjacent_buildings` was set to True when the radiation
-    # script was run.
     # TODO: can incorporate point or linear thermal bridges
 
     h_ec = Htr_w  # h_ec is Htr_w of ISO13790 RC model
@@ -350,8 +344,6 @@ def calc_theta_ec(T_ext):
     # theta_ec = a_j_l * u_j * theta_e_j / h_ec
 
     # This formula in the future should take specific properties of the location of the building into account.
-    # Adiabatic surfaces are currently only considered if `consider_adjacent_buildings` was set to True when the radiation
-    # script was run.
 
     # TODO: theta_e_j is dependent on adjacent space to surface (outdoor, adiabatic, ground, etc.)
 
@@ -368,8 +360,6 @@ def calc_theta_em(T_ext):
     # theta_em = h_j_em * theta_e_j / h_em
 
     # This formula in the future should take specific properties of the location of the building into account.
-    # Adiabatic surfaces are currently only considered if `consider_adjacent_buildings` was set to True when the radiation
-    # script was run.
 
     # TODO: theta_e_j is dependent on adjacent space to surface (outdoor, adiabatic, ground, etc.)
 
