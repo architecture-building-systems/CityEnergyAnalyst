@@ -15,6 +15,9 @@
   parameters:
     databases-path: CH
     databases: [archetypes, assemblies, components]
+- script: archetypes-mapper
+  parameters:
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
@@ -54,12 +57,11 @@
     network-type: DH
     network-model: simplified
 - script: decentralized
-- script: optimization
+- script: optimization-new
   parameters:
-    network-type: DH
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
+    network-type: DC
+    ga-number-of-generations: 2
+    ga-population-size: 5
 - script: multi-criteria-analysis
   parameters:
     generation: 2
@@ -116,12 +118,11 @@
     network-type: DC
     network-model: simplified
 - script: decentralized
-- script: optimization
+- script: optimization-new
   parameters:
     network-type: DC
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
+    ga-number-of-generations: 2
+    ga-population-size: 5
 - script: multi-criteria-analysis
   parameters:
     generation: 2
