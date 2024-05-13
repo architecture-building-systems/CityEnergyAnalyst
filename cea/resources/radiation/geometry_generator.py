@@ -590,7 +590,7 @@ def tree_geometry_generator(tree_df, terrain_raster):
         surfaces = [
             fetch.faces_frm_solid(result) for result in pool.starmap(
                 process_geometries, (
-                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['Z'])
+                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
                 )
             )
         ]

@@ -174,7 +174,7 @@ def main(config):
         trees_df = gpd.GeoDataFrame.from_file(trees_path)
         tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster)
         print("Creating radiance shading file")
-        tree_lad = trees_df["density"]
+        tree_lad = trees_df["density_la"]
         cea_daysim.create_radiance_shading(tree_surfaces, tree_lad)
 
     print("Converting files for DAYSIM")
