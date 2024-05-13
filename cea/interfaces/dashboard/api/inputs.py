@@ -41,7 +41,8 @@ INPUT_DATABASES = [
     ('indoor-comfort', 'get_building_comfort'),
     ('air-conditioning-systems', 'get_building_air_conditioning'),
     ('supply-systems', 'get_building_supply'),
-    ('surroundings', 'get_surroundings_geometry')
+    ('surroundings', 'get_surroundings_geometry'),
+    ('trees', "get_tree_geometry")
 ]
 
 
@@ -61,7 +62,7 @@ def get_input_database_schemas():
 
 INPUTS = get_input_database_schemas()
 INPUT_KEYS = INPUTS.keys()
-GEOJSON_KEYS = ['zone', 'surroundings', 'streets', 'dc', 'dh']
+GEOJSON_KEYS = ['zone', 'surroundings', 'trees', 'streets', 'dc', 'dh']
 NETWORK_KEYS = ['dc', 'dh']
 
 
@@ -126,8 +127,7 @@ class AllInputs(Resource):
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
             locator.get_surroundings_geometry())
-        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(
-            os.path.join(locator.get_building_geometry_folder(), 'trees.shp'))
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
