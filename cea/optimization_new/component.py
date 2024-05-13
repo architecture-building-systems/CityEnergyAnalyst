@@ -27,8 +27,8 @@ import geopandas as gpd
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.analysis.costs.equations import calc_capex_annualized
-from cea.technologies.chiller_vapor_compression import calc_VCC_const
-from cea.technologies.chiller_absorption import calc_ACH_const
+from cea.technologies.chiller_vapor_compression import calc_VCC_const, calc_VCC_variable
+from cea.technologies.chiller_absorption import calc_ACH_const, calc_ACH_variable
 from cea.technologies.direct_expansion_units import calc_AC_const
 from cea.technologies.boiler import calc_boiler_const
 from cea.technologies.cogeneration import calc_cogen_const
@@ -55,6 +55,7 @@ class Component(object):
     _database_tab = None
     code_to_class_mapping = None
     possible_main_ecs = {}
+    component_temperature = {}
 
     def __init__(self, data_base_tab,  model_code, capacity):
         self._model_data = self._extract_model_data(data_base_tab, model_code, capacity)
@@ -243,7 +244,7 @@ class AbsorptionChiller(ActiveComponent):
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
-    def operate(self, cooling_out):
+    def operate(self, cooling_out, temperature_dict):
         """
         Operate the absorption chiller, so that it generates the targeted amount of cooling. The operation is modeled
         according to the overall component general efficiency code complexity.
@@ -265,7 +266,7 @@ class AbsorptionChiller(ActiveComponent):
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
-            heat_in.profile, electricity_in.profile, waste_heat_out.profile = self._constant_efficiency_operation(cooling_out)
+            heat_in.profile, electricity_in.profile, waste_heat_out.profile = self._constant_efficiency_operation(cooling_out, temperature_dict)
         else:
             raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
                              f"implemented for {self.technology}")
@@ -277,11 +278,18 @@ class AbsorptionChiller(ActiveComponent):
 
         return input_energy_flows, output_energy_flows
 
-    def _constant_efficiency_operation(self, cooling_demand):
+    def _constant_efficiency_operation(self, cooling_demand, temperature_dict):
         """ Operate absorption chiller assuming a constant COP. """
-        heat_flow, \
-        electricity_flow, \
-        waste_heat_flow = calc_ACH_const(cooling_demand.profile, self.minimum_COP, self.aux_power_share)
+        if temperature_dict is None:
+            heat_flow, \
+            electricity_flow, \
+            waste_heat_flow = calc_ACH_const(cooling_demand.profile, self.minimum_COP, self.aux_power_share)
+
+        else:
+            heat_flow, \
+            electricity_flow, \
+            waste_heat_flow = calc_ACH_variable(cooling_demand.profile, self.aux_power_share, temperature_dict, self.code)
+
         return heat_flow, electricity_flow, waste_heat_flow
 
     @staticmethod
@@ -294,6 +302,8 @@ class AbsorptionChiller(ActiveComponent):
         AbsorptionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(ach_database,
                                                                                  'T_evap_design',
                                                                                  'water')
+        AbsorptionChiller.component_temperature = {code: ach_database[ach_database['code'] == code]['T_evap_design'].values[0]
+                                                    for code in ach_database['code'].unique()}
 
 
 class VapourCompressionChiller(ActiveComponent):
@@ -313,7 +323,7 @@ class VapourCompressionChiller(ActiveComponent):
         self.output_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
-    def operate(self, cooling_out):
+    def operate(self, cooling_out, temperature_dict):
         """
         Operate the vapor compression chiller, so that it generates the targeted amount of cooling. The operation is
         modeled according to the chosen general component efficiency code complexity.
@@ -334,7 +344,7 @@ class VapourCompressionChiller(ActiveComponent):
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
-            electricity_in.profile, waste_heat_out.profile = self._constant_efficiency_operation(cooling_out)
+            electricity_in.profile, waste_heat_out.profile = self._constant_efficiency_operation(cooling_out, temperature_dict)
         else:
             raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
                              f"implemented for {self.technology}")
@@ -345,9 +355,12 @@ class VapourCompressionChiller(ActiveComponent):
 
         return input_energy_flows, output_energy_flows
 
-    def _constant_efficiency_operation(self, cooling_demand):
+    def _constant_efficiency_operation(self, cooling_demand, temperature_dict):
         """ Operate vapor compression chiller assuming a constant COP. """
-        electricity_flow, waste_heat_flow = calc_VCC_const(cooling_demand.profile, self.minimum_COP)
+        if temperature_dict is None:
+            electricity_flow, waste_heat_flow = calc_VCC_const(cooling_demand.profile, self.minimum_COP)
+        else:
+            electricity_flow, waste_heat_flow = calc_VCC_variable(cooling_demand.profile, temperature_dict, self.code)
         return electricity_flow, waste_heat_flow
 
     @staticmethod
@@ -360,6 +373,8 @@ class VapourCompressionChiller(ActiveComponent):
         VapourCompressionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(vcc_database,
                                                                                          'T_evap_design',
                                                                                          'water')
+        VapourCompressionChiller.component_temperature = {code: vcc_database[vcc_database['code'] == code]['T_evap_design'].values[0]
+                                                            for code in vcc_database['code'].unique()}
 
 
 class AirConditioner(ActiveComponent):
@@ -426,6 +441,8 @@ class AirConditioner(ActiveComponent):
         AirConditioner.possible_main_ecs = Component._create_thermal_ecs_dict(ac_database,
                                                                                'T_air_indoor_rating',
                                                                                'air')
+        AirConditioner.component_temperature = {code: ac_database[ac_database['code'] == code]['T_air_indoor_rating'].values[0]
+                                                for code in ac_database['code'].unique()}
 
 
 class Boiler(ActiveComponent):
@@ -492,6 +509,8 @@ class Boiler(ActiveComponent):
         Boiler.possible_main_ecs = Component._create_thermal_ecs_dict(blr_database,
                                                                        'T_water_out_rating',
                                                                        'water')
+        Boiler.component_temperature = {code: blr_database[blr_database['code'] == code]['T_water_out_rating'].values[0]
+                                          for code in blr_database['code'].unique()}
 
 
 class CogenPlant(ActiveComponent):
@@ -567,6 +586,8 @@ class CogenPlant(ActiveComponent):
         CogenPlant.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
                                                                            'T_water_out_design',
                                                                            'water')
+        CogenPlant.component_temperature = {code: cp_database[cp_database['code'] == code]['T_water_out_design'].values[0]
+                                            for code in cp_database['code'].unique()}
 
 class Solar_PV(ActiveComponent):
 
@@ -681,7 +702,7 @@ class Solar_collector(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
-        self._check_operational_requirements(heating_out)
+        # self._check_operational_requirements(heating_out)
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
@@ -723,6 +744,8 @@ class Solar_collector(ActiveComponent):
         possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
                                   for ec in model_and_ec_code_match['ec'].unique()}
         Solar_collector.possible_main_ecs = possible_main_ecs_dict
+        Solar_collector.component_temperature = {code: ct_database[ct_database['code'] == code]['T_supply_sup'].values[0]
+                                                    for code in ct_database['code'].unique()}
 
     def load_potentials(self):
 
@@ -810,6 +833,8 @@ class HeatPump(ActiveComponent):
         joined_main_ecs_dict.update(air_possible_main_ecs_dict)
 
         HeatPump.possible_main_ecs = joined_main_ecs_dict
+        HeatPump.component_temperature = {code: hp_database[hp_database['code'] == code]['T_cond_design'].values[0]
+                                            for code in hp_database['code'].unique()}
 
 
 class CoolingTower(ActiveComponent):
@@ -881,6 +906,8 @@ class CoolingTower(ActiveComponent):
         possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
                                   for ec in model_and_ec_code_match['ec'].unique()}
         CoolingTower.possible_main_ecs = possible_main_ecs_dict
+        CoolingTower.component_temperature = {code: ct_database[ct_database['code'] == code]['T_water_out_design'].values[0]
+                                                for code in ct_database['code'].unique()}
 
 class HeatSink(ActiveComponent):
     """ This component refers to any condeser for the chillers that releases heat coming from primary and secondary
@@ -900,7 +927,7 @@ class HeatSink(ActiveComponent):
         self.input_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_in_sink'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_out_design'].values[0]))]
         self.water_source = self._model_data['Water_source_code'].values[0]
         self.locator = InputLocator(scenario=Configuration().scenario)
 
@@ -959,6 +986,9 @@ class HeatSink(ActiveComponent):
         possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
                                   for ec in model_and_ec_code_match['ec'].unique()}
         HeatSink.possible_main_ecs = possible_main_ecs_dict
+        HeatSink.component_temperature = {code: ct_database[ct_database['code'] == code]['T_water_out_design'].values[0]
+                                                for code in ct_database['code'].unique()}
+
 
     def load_potentials(self):
         potential_path_dictionary = {'LW': self.locator.get_water_body_potential(),

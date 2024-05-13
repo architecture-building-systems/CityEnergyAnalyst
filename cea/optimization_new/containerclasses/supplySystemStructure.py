@@ -64,6 +64,7 @@ class SupplySystemStructure(object):
         self._max_cap_active_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self._max_cap_passive_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self._dependencies = {'primary': {}, 'secondary': {}, 'tertiary': {}}
+        self.temperature_dict = None
 
         # capacity indicator structure
         self.capacity_indicators = CapacityIndicatorVector()
@@ -297,166 +298,173 @@ class SupplySystemStructure(object):
         """
         # BUILD PRIMARY COMPONENTS
         # get components that can produce the given system demand
-        if self.user_component_selection:
-            viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
-                                                        self._instantiate_components(
-                                                            self.user_component_selection['primary'],
-                                                            self.maximum_supply.energy_carrier.code,
-                                                            self.maximum_supply.profile.max(),
-                                                            'primary', 'consumer')}
-        else:
-            viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
-                                                        self._fetch_viable_components(
-                                                            self.maximum_supply.energy_carrier.code,
-                                                            self.maximum_supply.profile.max(),
-                                                            'primary', 'consumer')}
-
-        # identify dependencies of primary components
-        self._determine_dependencies('primary', viable_primary_and_passive_components,
-                                     upstream_components=None)
-
-        # operate said components and get the required input energy flows and corresponding output energy flows
-        max_primary_demand = {self.maximum_supply.energy_carrier.code: self.maximum_supply}
-        max_primary_energy_flows_in, \
-        max_primary_energy_flows_out, \
-        split_by_primary_component = \
-            SupplySystemStructure._extract_max_required_energy_flows(max_primary_demand,
-                                                                     viable_primary_and_passive_components)
-
-        # Check if any of the input energy flows can be covered by the energy potential flows
-        #   (if so, subtract them from demand)
-        max_secondary_components_demand = self._draw_from_potentials(max_primary_energy_flows_in)
-        if self.user_component_selection:
-            max_secondary_components_demand = self._draw_from_infinite_sources(max_secondary_components_demand)
-        max_secondary_components_demand_flow = {ec_code:
-                                                    EnergyFlow('secondary', 'primary', ec_code, pd.Series(max_demand))
-                                                for ec_code, max_demand in max_secondary_components_demand.items()}
-
-        # BUILD SECONDARY COMPONENTS
-        # get the components that can supply the input energy flows to the primary components
-        if self.user_component_selection:
-            viable_secondary_and_passive_components = {ec_code: self._instantiate_components(
-                                                                    self.user_component_selection['secondary'],
-                                                                    ec_code, max_flow, 'secondary', 'primary')
-                                                       for ec_code, max_flow
-                                                       in max_secondary_components_demand.items()}
-        else:
-            viable_secondary_and_passive_components = {ec_code:
-                                                           SupplySystemStructure._fetch_viable_components(ec_code,
-                                                                                                          max_flow,
-                                                                                                          'secondary',
-                                                                                                          'primary')
-                                                       for ec_code, max_flow in max_secondary_components_demand.items()}
-
-        if 'E230AC' in viable_secondary_and_passive_components.keys():
-            min = 1000000
-            for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
-                cap = viable_secondary_and_passive_components['E230AC']['active'][i].capacity
-                remaining_demand = max_secondary_components_demand['E230AC'] - cap
-
-                if remaining_demand > 0 and min > cap:
-                    min = cap
-                    max_secondary_components_demand['E230AC'] = cap
-                    max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
-
-        # determine dependencies between secondary and primary components
-        self._determine_dependencies('secondary', viable_secondary_and_passive_components,
-                                     split_by_primary_component['input'])
-
-        # operate all secondary components and get the required input energy flows and corresponding output energy flows
-        max_secondary_energy_flows_in, \
-        max_secondary_energy_flows_out, \
-        split_by_secondary_component = \
-            SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
-                                                                     viable_secondary_and_passive_components)
-        hot_water_supply = None
-        if 'T100W' in max_secondary_energy_flows_out.keys():
-            hot_water_supply = max_secondary_energy_flows_out['T100W']
-            del max_secondary_energy_flows_out['T100W']
-
-        # check if any of the outgoing energy-flows can be absorbed by the environment directly
-        max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
-        max_tertiary_demand_from_secondary = self._release_to_grids_or_env(max_secondary_energy_flows_out)
-        all_main_tertiary_ecs = list(set(list(max_tertiary_demand_from_primary.keys()) +
-                                         list(max_tertiary_demand_from_secondary.keys())))
-        max_tertiary_components_demand = {}
-        max_tertiary_demand_flow = {}
-        for ec_code in all_main_tertiary_ecs:
-            if ec_code not in max_tertiary_demand_from_primary.keys():
-                max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_secondary[ec_code]
-                max_tertiary_demand_flow[ec_code] = EnergyFlow('secondary', 'tertiary', ec_code,
-                                                               pd.Series(max_tertiary_demand_from_secondary[ec_code]))
-            elif ec_code not in max_tertiary_demand_from_secondary.keys():
-                max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_primary[ec_code]
-                max_tertiary_demand_flow[ec_code] = EnergyFlow('primary', 'tertiary', ec_code,
-                                                               pd.Series(max_tertiary_demand_from_primary[ec_code]))
+        previous_components = None
+        check_system_structure = True
+        while check_system_structure:
+            if self.user_component_selection:
+                viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
+                                                            self._instantiate_components(
+                                                                self.user_component_selection['primary'],
+                                                                self.maximum_supply.energy_carrier.code,
+                                                                self.maximum_supply.profile.max(),
+                                                                'primary', 'consumer')}
             else:
-                max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_primary[ec_code] + \
-                                                          max_tertiary_demand_from_secondary[ec_code]
-                max_tertiary_demand_flow[ec_code] = EnergyFlow('primary or secondary', 'tertiary', ec_code,
-                                                               pd.Series(max_tertiary_demand_from_primary[ec_code] +
-                                                                         max_tertiary_demand_from_secondary[ec_code]))
+                viable_primary_and_passive_components = {self.maximum_supply.energy_carrier.code:
+                                                            self._fetch_viable_components(
+                                                                self.maximum_supply.energy_carrier.code,
+                                                                self.maximum_supply.profile.max(),
+                                                                'primary', 'consumer')}
 
-        # BUILD TERTIARY COMPONENTS
-        # sum up output energy flows of primary and secondary components and find components that can reject them
-        #   (i.e. tertiary components)
-        if self.user_component_selection:
-            viable_tertiary_and_passive_cmpts = {ec_code: self._instantiate_components(
-                                                            self.user_component_selection['tertiary'],
-                                                            ec_code, max_flow, 'tertiary', 'primary')
-                                                 for ec_code, max_flow
-                                                 in max_tertiary_components_demand.items()}
-        else:
-            viable_tertiary_and_passive_cmpts = {ec_code:
-                                                     SupplySystemStructure._fetch_viable_components(ec_code,
-                                                                                                    max_flow,
-                                                                                                    'tertiary',
-                                                                                                    'primary or secondary')
-                                                 for ec_code, max_flow in max_tertiary_components_demand.items()}
-        # determine dependencies between secondary and primary components
-        if hot_water_supply:
-            max_secondary_energy_flows_out['T100W'] = hot_water_supply
+            # identify dependencies of primary components
+            self._determine_dependencies('primary', viable_primary_and_passive_components,
+                                         upstream_components=None)
 
-        maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
-        shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
-        split_by_component = SupplySystemStructure._combine_energy_flow_shares('output', maximum_outputs,
-                                                                               shares_of_outputs)
-        self._determine_dependencies('tertiary', viable_tertiary_and_passive_cmpts,
-                                     split_by_component['output'])
+            # operate said components and get the required input energy flows and corresponding output energy flows
+            max_primary_demand = {self.maximum_supply.energy_carrier.code: self.maximum_supply}
+            max_primary_energy_flows_in, \
+            max_primary_energy_flows_out, \
+            split_by_primary_component = \
+                SupplySystemStructure._extract_max_required_energy_flows(max_primary_demand,
+                                                                         viable_primary_and_passive_components,
+                                                                         self.temperature_dict)
 
-        # operate said components and get the required input energy flows and corresponding output energy flows
-        max_tertiary_energy_flows_in, \
-        max_tertiary_energy_flows_out, \
-        split_by_tertiary_component = \
-            SupplySystemStructure._extract_max_required_energy_flows(max_tertiary_demand_flow,
-                                                                     viable_tertiary_and_passive_cmpts)
+            # Check if any of the input energy flows can be covered by the energy potential flows
+            #   (if so, subtract them from demand)
+            max_secondary_components_demand = self._draw_from_potentials(max_primary_energy_flows_in)
+            if self.user_component_selection:
+                max_secondary_components_demand = self._draw_from_infinite_sources(max_secondary_components_demand)
+            max_secondary_components_demand_flow = {ec_code:
+                                                        EnergyFlow('secondary', 'primary', ec_code, pd.Series(max_demand))
+                                                    for ec_code, max_demand in max_secondary_components_demand.items()}
 
-        # check if the necessary *infinite* energy sources and sinks are available (e.g. gas & electricity grids, air, water bodies)
-        required_external_secondary_inputs = self._draw_from_potentials(max_secondary_energy_flows_in)
-        required_external_tertiary_inputs = self._draw_from_potentials(max_tertiary_energy_flows_in)
-        unmet_inputs = {**self._draw_from_infinite_sources(required_external_secondary_inputs),
-                        **self._draw_from_infinite_sources(required_external_tertiary_inputs)}
+            # BUILD SECONDARY COMPONENTS
+            # get the components that can supply the input energy flows to the primary components
+            if self.user_component_selection:
+                viable_secondary_and_passive_components = {ec_code: self._instantiate_components(
+                                                                        self.user_component_selection['secondary'],
+                                                                        ec_code, max_flow, 'secondary', 'primary')
+                                                           for ec_code, max_flow
+                                                           in max_secondary_components_demand.items()}
+            else:
+                viable_secondary_and_passive_components = {ec_code:
+                                                               SupplySystemStructure._fetch_viable_components(ec_code,
+                                                                                                              max_flow,
+                                                                                                              'secondary',
+                                                                                                              'primary')
+                                                           for ec_code, max_flow in max_secondary_components_demand.items()}
 
-        if 'T100W' in max_secondary_energy_flows_out.keys():
-            hot_water_supply = max_secondary_energy_flows_out['T100W']
-            del max_secondary_energy_flows_out['T100W']
+            if 'E230AC' in viable_secondary_and_passive_components.keys():
+                min = 1000000
+                for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
+                    cap = viable_secondary_and_passive_components['E230AC']['active'][i].capacity
+                    remaining_demand = max_secondary_components_demand['E230AC'] - cap
 
-        unreleasable_outputs = {**self._release_to_grids_or_env(max_secondary_energy_flows_out),
-                                **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
+                    if remaining_demand > 0 and min > cap:
+                        min = cap
+                        max_secondary_components_demand['E230AC'] = cap
+                        max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
 
-        if unmet_inputs:
-            raise ValueError(f'The following energy carriers could potentially not be supplied to the supply system, '
-                             f'the selected system structure is therefore infeasible: '
-                             f'{list(unmet_inputs.keys())}')
-        elif unreleasable_outputs:
-            raise ValueError(f'The following energy carriers could potentially not be released to a grid or the '
-                             f'environment, the selected system structure is therefore infeasible: '
-                             f'{list(unreleasable_outputs.keys())}')
+            # determine dependencies between secondary and primary components
+            self._determine_dependencies('secondary', viable_secondary_and_passive_components,
+                                         split_by_primary_component['input'])
 
-        # save supply system structure in object variables
-        self._set_system_structure('primary', viable_primary_and_passive_components)
-        self._set_system_structure('secondary', viable_secondary_and_passive_components)
-        self._set_system_structure('tertiary', viable_tertiary_and_passive_cmpts)
+            # operate all secondary components and get the required input energy flows and corresponding output energy flows
+            max_secondary_energy_flows_in, \
+            max_secondary_energy_flows_out, \
+            split_by_secondary_component = \
+                SupplySystemStructure._extract_max_required_energy_flows(max_secondary_components_demand_flow,
+                                                                         viable_secondary_and_passive_components)
+            hot_water_supply = None
+            if 'T100W' in max_secondary_energy_flows_out.keys():
+                hot_water_supply = max_secondary_energy_flows_out['T100W']
+                del max_secondary_energy_flows_out['T100W']
+
+            # check if any of the outgoing energy-flows can be absorbed by the environment directly
+            max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
+            max_tertiary_demand_from_secondary = self._release_to_grids_or_env(max_secondary_energy_flows_out)
+            all_main_tertiary_ecs = list(set(list(max_tertiary_demand_from_primary.keys()) +
+                                             list(max_tertiary_demand_from_secondary.keys())))
+            max_tertiary_components_demand = {}
+            max_tertiary_demand_flow = {}
+            for ec_code in all_main_tertiary_ecs:
+                if ec_code not in max_tertiary_demand_from_primary.keys():
+                    max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_secondary[ec_code]
+                    max_tertiary_demand_flow[ec_code] = EnergyFlow('secondary', 'tertiary', ec_code,
+                                                                   pd.Series(max_tertiary_demand_from_secondary[ec_code]))
+                elif ec_code not in max_tertiary_demand_from_secondary.keys():
+                    max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_primary[ec_code]
+                    max_tertiary_demand_flow[ec_code] = EnergyFlow('primary', 'tertiary', ec_code,
+                                                                   pd.Series(max_tertiary_demand_from_primary[ec_code]))
+                else:
+                    max_tertiary_components_demand[ec_code] = max_tertiary_demand_from_primary[ec_code] + \
+                                                              max_tertiary_demand_from_secondary[ec_code]
+                    max_tertiary_demand_flow[ec_code] = EnergyFlow('primary or secondary', 'tertiary', ec_code,
+                                                                   pd.Series(max_tertiary_demand_from_primary[ec_code] +
+                                                                             max_tertiary_demand_from_secondary[ec_code]))
+
+            # BUILD TERTIARY COMPONENTS
+            # sum up output energy flows of primary and secondary components and find components that can reject them
+            #   (i.e. tertiary components)
+            if self.user_component_selection:
+                viable_tertiary_and_passive_cmpts = {ec_code: self._instantiate_components(
+                                                                self.user_component_selection['tertiary'],
+                                                                ec_code, max_flow, 'tertiary', 'primary')
+                                                     for ec_code, max_flow
+                                                     in max_tertiary_components_demand.items()}
+            else:
+                viable_tertiary_and_passive_cmpts = {ec_code:
+                                                         SupplySystemStructure._fetch_viable_components(ec_code,
+                                                                                                        max_flow,
+                                                                                                        'tertiary',
+                                                                                                        'primary or secondary')
+                                                     for ec_code, max_flow in max_tertiary_components_demand.items()}
+            # determine dependencies between secondary and primary components
+            if hot_water_supply:
+                max_secondary_energy_flows_out['T100W'] = hot_water_supply
+
+            maximum_outputs = (max_primary_energy_flows_out, max_secondary_energy_flows_out)
+            shares_of_outputs = (split_by_primary_component, split_by_secondary_component)
+            split_by_component = SupplySystemStructure._combine_energy_flow_shares('output', maximum_outputs,
+                                                                                   shares_of_outputs)
+            self._determine_dependencies('tertiary', viable_tertiary_and_passive_cmpts,
+                                         split_by_component['output'])
+
+            # operate said components and get the required input energy flows and corresponding output energy flows
+            max_tertiary_energy_flows_in, \
+            max_tertiary_energy_flows_out, \
+            split_by_tertiary_component = \
+                SupplySystemStructure._extract_max_required_energy_flows(max_tertiary_demand_flow,
+                                                                         viable_tertiary_and_passive_cmpts)
+
+            # check if the necessary *infinite* energy sources and sinks are available (e.g. gas & electricity grids, air, water bodies)
+            required_external_secondary_inputs = self._draw_from_potentials(max_secondary_energy_flows_in)
+            required_external_tertiary_inputs = self._draw_from_potentials(max_tertiary_energy_flows_in)
+            unmet_inputs = {**self._draw_from_infinite_sources(required_external_secondary_inputs),
+                            **self._draw_from_infinite_sources(required_external_tertiary_inputs)}
+
+            if 'T100W' in max_secondary_energy_flows_out.keys():
+                hot_water_supply = max_secondary_energy_flows_out['T100W']
+                del max_secondary_energy_flows_out['T100W']
+
+            unreleasable_outputs = {**self._release_to_grids_or_env(max_secondary_energy_flows_out),
+                                    **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
+
+            if unmet_inputs:
+                raise ValueError(f'The following energy carriers could potentially not be supplied to the supply system, '
+                                 f'the selected system structure is therefore infeasible: '
+                                 f'{list(unmet_inputs.keys())}')
+            elif unreleasable_outputs:
+                raise ValueError(f'The following energy carriers could potentially not be released to a grid or the '
+                                 f'environment, the selected system structure is therefore infeasible: '
+                                 f'{list(unreleasable_outputs.keys())}')
+
+            # save supply system structure in object variables
+            self._set_system_structure('primary', viable_primary_and_passive_components)
+            self._set_system_structure('secondary', viable_secondary_and_passive_components)
+            self._set_system_structure('tertiary', viable_tertiary_and_passive_cmpts)
+
+            self.temperature_dict, check_system_structure, previous_components = self._re_evaluate_system_structure(
+                previous_components)
 
         # create capacity indicator vector structure
         component_categories = [category for category, components in self.max_cap_active_components.items()
@@ -734,14 +742,15 @@ class SupplySystemStructure(object):
         return required_passive_components
 
     @staticmethod
-    def _extract_max_required_energy_flows(maximum_energy_flows, viable_active_and_passive_components):
+    def _extract_max_required_energy_flows(maximum_energy_flows, viable_active_and_passive_components, temperature_dict = None):
         """
         Operate each component in the list of viable component-objects to output (or absorb) the given main energy flow
         and return the maximum necessary input energy flows and maximum resulting output energy flows.
         (example of component-object - <cea.optimization_new.component.AbsorptionChiller>)
         """
         input_and_output_energy_flows = SupplySystemStructure._operate_components(maximum_energy_flows,
-                                                                                  viable_active_and_passive_components)
+                                                                                  viable_active_and_passive_components,
+                                                                                  temperature_dict)
 
         # separate input and output energy flows
         input_energy_flow_dicts = {component_code: {ef_code: ef.profile if isinstance(ef, EnergyFlow) else ef
@@ -780,7 +789,7 @@ class SupplySystemStructure(object):
         return input_energy_flow_requirements, output_energy_flow_requirements, split_by_component
 
     @staticmethod
-    def _operate_components(maximum_energy_flows, viable_active_and_passive_components):
+    def _operate_components(maximum_energy_flows, viable_active_and_passive_components, temperature_dict):
 
         input_and_output_energy_flows = {}
 
@@ -803,7 +812,11 @@ class SupplySystemStructure(object):
 
                 input_and_output_energy_flows.update(active_component_demand_flow)
             else:
-                energy_flows = {component.code: component.operate(main_flow)
+                if list(viable_active_and_passive_components.keys())[0] == 'T10W':
+                    energy_flows = {component.code: component.operate(main_flow, temperature_dict)
+                                    for component in viable_active_components}
+                else:
+                    energy_flows = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
                 input_and_output_energy_flows.update(energy_flows)
 
@@ -1003,6 +1016,33 @@ class SupplySystemStructure(object):
                                                       self._max_cap_active_components[component_category].keys()
                                                       if code == component_type]
         return
+
+
+    def _re_evaluate_system_structure(self, previous_components):
+
+        available_components = [code for component in list(self.activation_order.values()) for code in component if code]
+
+        temperature_dict = {placement : {component: active_components.component_temperature[component]
+                              for active_components in self.active_component_classes
+                              for i in range(len(list(active_components.possible_main_ecs.values())))
+                              for component in list(active_components.possible_main_ecs.values())[i]
+                              if component in self.activation_order[placement] and 'PV' not in component} for placement in self.activation_order.keys()}
+
+        if self._used_potentials:
+            for ec_code, flow in self._used_potentials.items():
+                temperature_dict[flow.output_category]['potential'] = flow.energy_carrier.mean_qual
+
+        if previous_components is None:
+            check_system_structure = True
+            previous_components = available_components
+        else:
+            if previous_components == available_components:
+                check_system_structure = False
+            else:
+                check_system_structure = True
+                previous_components = available_components
+
+        return temperature_dict, check_system_structure, previous_components
 
     @staticmethod
     def initialize_class_variables(domain):

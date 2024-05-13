@@ -46,6 +46,26 @@ def calc_ACH_const(q_chw_load_Wh, COP, p_aux_share):
     q_cw_out_Wh = q_supply_Wh + p_aux_supply_Wh + q_chw_load_Wh
     return q_supply_Wh, p_aux_supply_Wh, q_cw_out_Wh
 
+def calc_ACH_variable(q_chw_load_Wh, p_aux_share, temperature_dict, code):
+
+    COP = calc_COP_absorption_chiller(q_chw_load_Wh, temperature_dict, code)
+    q_supply_Wh = q_chw_load_Wh / COP
+    p_aux_supply_Wh = q_chw_load_Wh * p_aux_share
+    q_cw_out_Wh = q_supply_Wh + p_aux_supply_Wh + q_chw_load_Wh
+    return q_supply_Wh, p_aux_supply_Wh, q_cw_out_Wh
+
+
+def calc_COP_absorption_chiller(q_load_Wh, temperature_dict, code):
+    tin_gen = np.mean(list(temperature_dict['secondary'].values())) + 273.15
+    tin_cond = np.mean(list(temperature_dict['tertiary'].values())) + 273.15
+    tout_evap = temperature_dict['primary'][code] + 273.15
+
+    COP = 1 / ((tin_cond - tout_evap) * tin_gen / ((tin_gen - tin_cond) * tout_evap) + tin_gen / (q_load_Wh * (tin_gen - tin_cond))
+           * (2160 - 2430 * tin_cond / tin_gen))
+
+    return COP
+
+
 
 def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, absorption_chiller):
     """

@@ -45,6 +45,25 @@ def calc_VCC_const(q_chw_load_Wh, COP):
     return p_supply_Wh, q_cw_out_Wh
 
 
+def calc_VCC_variable(q_chw_load_Wh, temperature_dict, code):
+    COP = calc_COP_compression_chiller(temperature_dict, code)
+    p_supply_Wh = q_chw_load_Wh / COP
+    q_cw_out_Wh = p_supply_Wh + q_chw_load_Wh
+
+    return p_supply_Wh, q_cw_out_Wh
+
+def calc_COP_compression_chiller(temperature_dict, code):
+
+    T_source = np.mean(list(temperature_dict['tertiary'].values()))
+    T_supply = temperature_dict['primary'][code]
+
+    delta_T = T_source - T_supply
+
+    COP = (8.77 - 0.15 * delta_T + 0.000734 * delta_T ** 2)
+
+    return COP
+
+
 def calc_VCC(q_chw_load_Wh, T_chw_sup_K, T_chw_re_K, T_cw_in_K, VC_chiller):
     """
     For the operation of a vapor compression chiller between a district cooling network and a condenser with fresh water

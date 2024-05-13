@@ -310,8 +310,13 @@ class SupplySystem(object):
                                 break
 
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:
-                    self.component_energy_inputs[placement][component_model], \
-                    self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
+                    if ec_code == 'T10W':
+                        self.component_energy_inputs[placement][component_model], \
+                        self.component_energy_outputs[placement][component_model] = (
+                            component.operate(main_energy_flow, self.structure.temperature_dict))
+                    else:
+                        self.component_energy_inputs[placement][component_model], \
+                        self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
                     output_list = list(self.component_energy_outputs[placement][component_model].items())[0]
                     output_code = output_list[0]
                     output_object = output_list[1]
