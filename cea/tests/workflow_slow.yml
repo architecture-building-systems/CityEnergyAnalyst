@@ -18,48 +18,51 @@
 - script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
-#- script: weather-helper
-#  parameters:
-#    weather: Zug-inducity_1990_2010_TMY
-#- script: radiation
-#  parameters:
-#    consider-intersections: false
-#- script: schedule-maker
-#- script: demand
-#- script: emissions
-#- script: system-costs
-#- script: water-body-potential
-#- script: sewage-potential
-#- script: shallow-geothermal-potential
-#- script: photovoltaic
-#- script: solar-collector
-#  parameters:
-#    type-scpanel: FP
-#- script: solar-collector
-#  parameters:
-#    type-scpanel: ET
-#- script: photovoltaic-thermal
-#  parameters:
-#    type-scpanel: FP
-#- script: photovoltaic-thermal
-#  parameters:
-#    type-scpanel: ET
-#- script: network-layout
-#  parameters:
-#    network-type: DH
-#- script: thermal-network
-#  parameters:
-#    network-type: DH
-#    network-model: detailed
-#    stop-t: 744 # run for one month
-#- script: thermal-network
-#  parameters:
-#    network-type: DH
-#    network-model: simplified
+- script: surroundings-helper
+- script: streets-helper
+- script: terrain-helper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
+- script: radiation
+  parameters:
+    consider-intersections: false
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DH
+- script: thermal-network
+  parameters:
+    network-type: DH
+    network-model: detailed
+    stop-t: 744 # run for one month
+- script: thermal-network
+  parameters:
+    network-type: DH
+    network-model: simplified
 - script: decentralized
 - script: optimization-new
   parameters:
-    network-type: DC
+    network-type: DH
     ga-number-of-generations: 2
     ga-population-size: 5
 #- script: multi-criteria-analysis
@@ -69,7 +72,7 @@
 #  parameters:
 #    network-type: DH
 #    network-name: ""
-#
+
 ## COOLING CASE (SG)
 - script: data-initializer
   parameters:
@@ -78,45 +81,48 @@
 - script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
+#- script: surroundings-helper
+#- script: streets-helper
+#- script: terrain-helper
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
-#- script: radiation
-#  parameters:
-#    consider-intersections: false
-#- script: schedule-maker
-#- script: demand
-#- script: emissions
-#- script: system-costs
-#- script: water-body-potential
-#- script: sewage-potential
-#- script: shallow-geothermal-potential
-#- script: photovoltaic
-#- script: solar-collector
-#  parameters:
-#    type-scpanel: FP
-#- script: solar-collector
-#  parameters:
-#    type-scpanel: ET
-#- script: photovoltaic-thermal
-#  parameters:
-#    type-scpanel: FP
-#- script: photovoltaic-thermal
-#  parameters:
-#    type-scpanel: ET
-#- script: network-layout
-#  parameters:
-#    network-type: DC
-#    consider-only-buildings-with-demand: off
-#- script: thermal-network
-#  parameters:
-#    network-type: DC
-#    network-model: detailed
-#    stop-t: 744 # run for one month
-#- script: thermal-network
-#  parameters:
-#    network-type: DC
-#    network-model: simplified
+- script: radiation
+  parameters:
+    consider-intersections: false
+- script: schedule-maker
+- script: demand
+- script: emissions
+- script: system-costs
+- script: water-body-potential
+- script: sewage-potential
+- script: shallow-geothermal-potential
+- script: photovoltaic
+- script: solar-collector
+  parameters:
+    type-scpanel: FP
+- script: solar-collector
+  parameters:
+    type-scpanel: ET
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: FP
+- script: photovoltaic-thermal
+  parameters:
+    type-scpanel: ET
+- script: network-layout
+  parameters:
+    network-type: DC
+    consider-only-buildings-with-demand: off
+- script: thermal-network
+  parameters:
+    network-type: DC
+    network-model: detailed
+    stop-t: 744 # run for one month
+- script: thermal-network
+  parameters:
+    network-type: DC
+    network-model: simplified
 - script: decentralized
 - script: optimization-new
   parameters:
@@ -128,6 +134,6 @@
 #    generation: 2
 #- script: run-all-plots
 #  parameters:
-#    plant-node: NODE41
+##    plant-node: NODE41
 #    network-type: DC
 #    network-name: ""

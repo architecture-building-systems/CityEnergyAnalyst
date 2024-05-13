@@ -65,14 +65,13 @@
     network-type: DH
     ga-number-of-generations: 2
     ga-population-size: 5
-
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
-- script: run-all-plots
-  parameters:
-    network-type: DH
-    network-name: ""
+#- script: multi-criteria-analysis
+#  parameters:
+#    generation: 2
+#- script: run-all-plots
+#  parameters:
+#    network-type: DH
+#    network-name: ""
 
 # COOLING CASE (SG)
 - script: data-initializer
@@ -129,11 +128,11 @@
     network-type: DC
     ga-number-of-generations: 2
     ga-population-size: 5
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
-- script: run-all-plots
-  parameters:
-    plant-node: NODE41
-    network-type: DC
-    network-name: ""
+#- script: multi-criteria-analysis
+#  parameters:
+#    generation: 2
+#- script: run-all-plots
+#  parameters:
+#    plant-node: NODE41
+#    network-type: DC
+#    network-name: ""
