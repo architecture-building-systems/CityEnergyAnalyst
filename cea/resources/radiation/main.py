@@ -169,7 +169,7 @@ def main(config):
     cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
                                         surroundings_building_names, geometry_staging_location)
 
-    trees_path = os.path.join(locator.get_building_geometry_folder(), "trees.shp")
+    trees_path = locator.get_tree_geometry()
     if os.path.exists(trees_path):
         trees_df = gpd.GeoDataFrame.from_file(trees_path)
         tree_surfaces = geometry_generator.tree_geometry_generator(trees_df, terrain_raster)
