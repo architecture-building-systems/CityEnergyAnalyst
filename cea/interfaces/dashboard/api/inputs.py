@@ -330,6 +330,9 @@ def df_to_json(file_location):
             lat, lon = get_lat_lon_projected_shapefile(table_df)
             crs = get_projected_coordinate_system(lat, lon)
 
+        if "Name" in table_df.columns:
+            table_df['Name'] = table_df['Name'].astype('str')
+
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())
         out = json.loads(out.to_json())
