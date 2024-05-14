@@ -470,7 +470,7 @@ class InputLocator(object):
 
     def get_weather_names(self):
         """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path) if f.endswith('.epw')]
         return weather_names
 
     def get_weather_folder(self):
