@@ -14365,7 +14365,8 @@ get_surroundings_geometry:
   used_by:
   - radiation
 get_tree_geometry:
-  created_by: []
+  created_by:
+    - tree_helper
   file_path: inputs/tree-geometry/trees.shp
   file_type: shp
   schema:
