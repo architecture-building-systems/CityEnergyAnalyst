@@ -30,7 +30,7 @@
       buildings: []
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -108,7 +108,7 @@
       buildings: []
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions

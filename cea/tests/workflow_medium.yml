@@ -24,7 +24,7 @@
       buildings: []
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -86,7 +86,7 @@
     weather: Singapore-Changi_1990_2010_TMY
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions
