@@ -900,7 +900,7 @@ class HeatSink(ActiveComponent):
         self.input_energy_carriers = \
             [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_in_sink'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_out_design'].values[0]))]
         self.water_source = self._model_data['Water_source_code'].values[0]
         self.locator = InputLocator(scenario=Configuration().scenario)
 

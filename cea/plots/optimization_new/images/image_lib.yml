@@ -60,6 +60,34 @@ Components:
     TES1:
       icon: "storage_icon.png"
       color: "purple_lighter"
+    PV1:
+      icon: "pv_panel_icon.png"
+      color: "yellow_lighter"
+    PV2:
+        icon: "pv_panel_icon.png"
+        color: "yellow_lighter"
+    PV3:
+        icon: "pv_panel_icon.png"
+        color: "yellow_lighter"
+    SC1:
+      icon: "solar_collector_icon.png"
+      color: "yellow"
+    SC2:
+        icon: "solar_collector_icon.png"
+        color: "yellow"
+    HEXSW:
+      icon: "heat_exchanger_icon.png"
+      color: "green"
+    HEXGW:
+      icon: "heat_exchanger_icon.png"
+      color: "green"
+    HEXLW:
+        icon: "heat_exchanger_icon.png"
+        color: "green"
+    IN1:
+      icon: "inverter_icon.png"
+      color: "grey"
+
 
 
 Consumers:
@@ -70,6 +98,8 @@ Consumers:
 SinksAndSources:
     IconFiles:
       river: "river_icon.png"
+      ground: "groundwater_icon.png"
+      sewage: "sewage_icon.png"
       wind: "wind_icon.png"
       grid: "grid_icon.png"
       wood: "wood_icon.png"
@@ -80,14 +110,18 @@ SinksAndSources:
       biogas: "biogas_icon.png"
       hydrogen: "hydrogen_icon.png"
       sunlight: "sunlight_icon.png"
+      wasteheat: "datacenter_icon.png"
 
     EnergyCarrierToIconCode:
       Sinks:
-        T_W: "river"
         T_A: "wind"
         E_AC: "grid"
+        T_SW: "sewage"
+        T_GW: "ground"
+        T_LW: "river"
+
       Sources:
-        T_W: "river"
+        T_W: "wasteheat"
         T_A: "wind"
         E_AC: "grid"
         Cwod: "wood"
@@ -120,12 +154,24 @@ EnergyCarriers:
     T100W:
       color: "blue"
       hue: "red"
+    T70W:
+      color: "blue"
+      hue: "orange_lighter"
     T60W:
       color: "blue"
       hue: "red_light"
     T30W:
       color: "blue"
       hue: "red_lighter"
+    T28SW:
+      color: "blue"
+      hue: "orange_light"
+    T27GW:
+      color: "blue"
+      hue: "blue"
+    T27LW:
+      color: "blue"
+      hue: "blue_light"
     T20W:
       color: "blue"
       hue: "orange"
@@ -135,6 +181,9 @@ EnergyCarriers:
     T0W:
       color: "blue"
       hue: "blue_light"
+    E30DC:
+      color: "grey"
+      hue: "red"
     E230AC:
       color: "black"
       hue: "yellow_lighter"

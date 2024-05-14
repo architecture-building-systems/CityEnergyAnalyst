@@ -355,6 +355,12 @@ class Domain(object):
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
+        for dict in supply_system_info:
+            if 'PV' in dict['Component_type']:
+                dict['Other_inputs'] = 'Rsun'
+            if 'SC' in dict['Component_type']:
+                dict['Other_inputs'] = 'Rsun'
+
         supply_system_costs = [{'Component': component.technology,
                                'Component_type': component.type,
                                'Component_code': component_code,
@@ -365,6 +371,37 @@ class Domain(object):
                                'O&M_cost_$': component.om_fix_cost_annual}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
+
+        passive_components_info = [{'Component': components_passive[0].technology,
+                                    'Component_type': components_passive[0].type,
+                                    'Component_code': components_passive[0].code,
+                                    'Category': component_category,
+                                    'Capacity_kW': round(components_passive[0].capacity, 3),
+                                    'Main_side': None,
+                                   'Main_energy_carrier': components_passive[0].main_energy_carrier.describe(),
+                                   'Main_energy_carrier_code': components_passive[0].main_energy_carrier.code,
+                                   'Other_inputs': components_passive[0].main_energy_carrier.code,
+                                   'Other_outputs': supply_system.installed_components[component_category][component_code].main_energy_carrier.code}
+                                   for component_code, components_passive in
+                                   supply_system.structure.passive_component_selection.items()
+                                   for component_category, components in supply_system.installed_components.items()
+                                   if component_code in components]
+
+        passive_components_cost = [{'Component': components_passive[0].technology,
+                               'Component_type': components_passive[0].type,
+                               'Component_code': components_passive[0].code,
+                               'Category': component_category,
+                               'Capacity_kW': round(components_passive[0].capacity, 3),
+                               'Investment_cost_$': components_passive[0].inv_cost,
+                               'Annualized_investment_$': components_passive[0].inv_cost_annual,
+                               'O&M_cost_$': components_passive[0].om_fix_cost_annual}
+                              for component_code, components_passive in supply_system.structure.passive_component_selection.items()
+                              for component_category, components in supply_system.installed_components.items()
+                              if component_code in components]
+        if passive_components_cost:
+            for i, comp in enumerate(passive_components_info):
+                supply_system_costs.append(passive_components_cost[i])
+                supply_system_info.append(passive_components_info[i])
 
         # Write supply system structure to file
         pd.DataFrame(supply_system_info).to_csv(results_file, index=False)
