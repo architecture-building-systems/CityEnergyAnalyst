@@ -7,7 +7,6 @@ Implements the substation model.
 import pandas as pd
 import time
 import numpy as np
-import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
@@ -651,7 +650,7 @@ def calc_plate_HEX(NTU, cr):
     :return:
         eff: efficiency of heat exchange
     '''
-    eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
+    eff = 1 - np.exp((1 / cr) * (NTU ** 0.22) * (np.exp(-cr * (NTU) ** 0.78) - 1))
     return eff
 
 
@@ -666,7 +665,7 @@ def calc_shell_HEX(NTU, cr):
         eff: efficiency of heat exchange
     '''
     eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-            (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
+            (1 + np.exp(-(NTU) * (1 + cr ** 2))) / (1 - np.exp(-(NTU) * (1 + cr ** 2))))) ** -1
     return eff
 
 
@@ -786,7 +785,7 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     if dT1 == dT2:
         dTm = dT1
     else:
-        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+        dTm = (dT1 - dT2) / np.log(dT1 / dT2)
     return abs(dTm.real)
 
 

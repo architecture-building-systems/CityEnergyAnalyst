@@ -26,7 +26,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
-                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE)
+                                        Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.decentralized_buildings_heating import get_unique_keys_from_dicts
 from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
@@ -79,8 +79,8 @@ def disconnected_buildings_cooling_main(locator, building_names, total_demand, c
 
 
 def disconnected_cooling_for_building(building_name, supply_systems, lca, locator, prices, total_demand):
-    chiller_prop = supply_systems.Absorption_chiller
-    boiler_cost_data = supply_systems.Boiler
+    chiller_prop = supply_systems.ABSORPTION_CHILLERS
+    boiler_cost_data = supply_systems.BOILERS
 
     scale = 'BUILDING'
     VCC_chiller = chiller_vapor_compression.VaporCompressionChiller(locator, scale)
@@ -407,7 +407,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     Opex_a_fixed_USD[0][0] = Opex_fixed_DX_USD
     # 1: VCC + CT
     Capex_a_VCC_USD, Opex_fixed_VCC_USD, Capex_VCC_USD = chiller_vapor_compression.calc_Cinv_VCC(
-        Qc_nom_AHU_ARU_SCU_W, locator, 'CH3')
+        Qc_nom_AHU_ARU_SCU_W, locator, VCC_CODE_DECENTRALIZED)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_VCC_to_AHU_ARU_SCU_W, locator, 'CT1')
     # add costs
@@ -416,7 +416,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     Opex_a_fixed_USD[1][0] = Opex_fixed_CT_USD + Opex_fixed_VCC_USD
     # 2: single effect ACH + CT + Boiler + SC_FP
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.ABSORPTION_CHILLERS, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
@@ -427,7 +427,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         0] = Opex_fixed_CT_USD + Opex_fixed_ACH_USD + Opex_fixed_boiler_USD + Opex_SC_FP_USD
     # 3: double effect ACH + CT + Boiler + SC_ET
     Capex_a_ACH_USD, Opex_fixed_ACH_USD, Capex_ACH_USD = chiller_absorption.calc_Cinv_ACH(
-        Qc_nom_AHU_ARU_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
+        Qc_nom_AHU_ARU_SCU_W, supply_systems.ABSORPTION_CHILLERS, ACH_TYPE_SINGLE)
     Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
         Q_nom_CT_ET_to_single_ACH_to_AHU_ARU_SCU_W, locator, 'CT1')
     Capex_a_burner_USD, Opex_fixed_burner_USD, Capex_burner_USD = burner.calc_Cinv_burner(
@@ -440,9 +440,9 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     if Qc_nom_SCU_W > 0.0:
         # 4: VCC (AHU + ARU) + VCC (SCU) + CT
         Capex_a_VCC_AA_USD, Opex_VCC_AA_USD, Capex_VCC_AA_USD = chiller_vapor_compression.calc_Cinv_VCC(
-            Qc_nom_AHU_ARU_W, locator, 'CH3')
+            Qc_nom_AHU_ARU_W, locator, VCC_CODE_DECENTRALIZED)
         Capex_a_VCC_S_USD, Opex_VCC_S_USD, Capex_VCC_S_USD = chiller_vapor_compression.calc_Cinv_VCC(
-            Qc_nom_SCU_W, locator, 'CH3')
+            Qc_nom_SCU_W, locator, VCC_CODE_DECENTRALIZED)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, locator, 'CT1')
         Capex_a_USD[4][0] = Capex_a_CT_USD + Capex_a_VCC_AA_USD + Capex_a_VCC_S_USD
@@ -451,7 +451,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
 
         # 5: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_S_USD, Opex_fixed_ACH_S_USD, Capex_ACH_S_USD = chiller_absorption.calc_Cinv_ACH(
-            Qc_nom_SCU_W, supply_systems.Absorption_chiller, ACH_TYPE_SINGLE)
+            Qc_nom_SCU_W, supply_systems.ABSORPTION_CHILLERS, ACH_TYPE_SINGLE)
         Capex_a_CT_USD, Opex_fixed_CT_USD, Capex_CT_USD = cooling_tower.calc_Cinv_CT(
             Q_nom_CT_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, locator, 'CT1')
         Capex_a_boiler_USD, Opex_fixed_boiler_USD, Capex_boiler_USD = boiler.calc_Cinv_boiler(
