@@ -328,7 +328,7 @@ class InputLocator(object):
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
         Substation results for decentralized buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "substations")
+        return self._ensure_folder(self.get_optimization_results_folder(), "decentralized", "substations")
 
     def get_optimization_substations_results_file(self, building, network_type, district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building}_result.csv"""
@@ -470,7 +470,7 @@ class InputLocator(object):
 
     def get_weather_names(self):
         """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path) if f.endswith('.epw')]
         return weather_names
 
     def get_weather_folder(self):
