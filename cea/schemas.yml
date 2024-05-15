@@ -14364,7 +14364,44 @@ get_surroundings_geometry:
         nullable: true
   used_by:
   - radiation
-  - schedule_maker
+get_tree_geometry:
+  created_by:
+    - tree_helper
+  file_path: inputs/tree-geometry/trees.shp
+  file_type: shp
+  schema:
+    columns:
+      Name:
+        description: Unique tree ID.
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      height_tc:
+        description: Tree canopy height above ground.
+        min: 0
+        type: float
+        unit: '[m]'
+        values: '{0...n}'
+      density_la:
+        description: Leaf area density.
+        min: 0
+        max: 1
+        type: float
+        unit: 'NA'
+        values: '{0...1}'
+      geometry:
+        description: Shapefile POLYGON
+        type: Polygon
+        unit: 'NA'
+        values: 'NA'
+      REFERENCE:
+        description: Reference to data (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+  used_by:
+  - radiation
 get_terrain:
   created_by: []
   file_path: inputs/topography/terrain.tif
