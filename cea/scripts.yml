@@ -170,7 +170,7 @@ Energy potentials:
     parameters: ['general:scenario', water-body]
 
   - name: photovoltaic-thermal
-    label: Photovoltaic-thermal Panels
+    label: Photovoltaic-thermal panels
     description: Calculate electricity & heat production from photovoltaic / thermal technologies
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
