@@ -15,12 +15,18 @@
   parameters:
     databases-path: CH
     databases: [archetypes, assemblies, components]
+- script: archetypes-mapper
+  parameters:
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
+- script: surroundings-helper
+- script: streets-helper
+- script: terrain-helper
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -54,21 +60,20 @@
     network-type: DH
     network-model: simplified
 - script: decentralized
-- script: optimization
+- script: optimization-new
   parameters:
     network-type: DH
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
-- script: run-all-plots
-  parameters:
-    network-type: DH
-    network-name: ""
+    ga-number-of-generations: 2
+    ga-population-size: 5
+#- script: multi-criteria-analysis
+#  parameters:
+#    generation: 2
+#- script: run-all-plots
+#  parameters:
+#    network-type: DH
+#    network-name: ""
 
-# COOLING CASE (SG)
+## COOLING CASE (SG)
 - script: data-initializer
   parameters:
     databases-path: SG
@@ -76,12 +81,15 @@
 - script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
+#- script: surroundings-helper
+#- script: streets-helper
+#- script: terrain-helper
 - script: weather-helper
   parameters:
     weather: Singapore-Changi_1990_2010_TMY
 - script: radiation
   parameters:
-    consider-intersections: false
+    neglect-adjacent-buildings: false
 - script: schedule-maker
 - script: demand
 - script: emissions
@@ -116,17 +124,16 @@
     network-type: DC
     network-model: simplified
 - script: decentralized
-- script: optimization
-  parameters:
-    network-type: DC
-    number-of-generations: 2
-    population-size: 5
-    random-seed: 100
-- script: multi-criteria-analysis
-  parameters:
-    generation: 2
-- script: run-all-plots
-  parameters:
-    plant-node: NODE41
-    network-type: DC
-    network-name: ""
+#- script: optimization-new
+#  parameters:
+#    network-type: DC
+#    ga-number-of-generations: 2
+#    ga-population-size: 5
+#- script: multi-criteria-analysis
+#  parameters:
+#    generation: 2
+#- script: run-all-plots
+#  parameters:
+##    plant-node: NODE41
+#    network-type: DC
+#    network-name: ""

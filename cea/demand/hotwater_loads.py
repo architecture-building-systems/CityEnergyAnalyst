@@ -5,7 +5,6 @@ Hotwater load (it also calculates fresh water needs)
 import math
 
 import numpy as np
-import scipy
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.constants import HOURS_IN_YEAR
@@ -296,7 +295,7 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y):
         if TR > 3600:
             TR = 3600
         try:
-            exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
+            exponential = np.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
         except ZeroDivisionError:
             print('twws: {twws:.2f}, tamb: {tamb:.2f}, p: {p:.2f}, cpw: {cpw:.2f}, V: {V:.2f}'.format(
                 twws=twws, tamb=tamb, p=P_WATER, cpw=CP_KJPERKGK, V=V))
