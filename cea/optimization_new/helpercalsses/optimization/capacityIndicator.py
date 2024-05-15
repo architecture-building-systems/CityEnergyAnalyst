@@ -112,6 +112,7 @@ class CapacityIndicatorVector(object):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         else:
             self._capacity_indicators = new_capacity_indicators
+            # Limit the total capacity of the available solar components, due to limited area availability for solar installation
             new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
             self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
@@ -316,6 +317,10 @@ class CapacityIndicatorVector(object):
         return upper_bound_breached
 
     def _solar_capacity_control(self, capacity_indicator_values):
+        """
+        Check the capacity indicators of solar technologies, with the goal of limiting the total capacity in order to respect
+        the area constraints for solar installations. If oversized, reduce the capacity so that total capacity is less or equal to 1
+        """
 
         non_zero_ci_values_in_solar = {self.capacity_indicators[i].code: ci_value.value
                                        for i, ci_value in enumerate(capacity_indicator_values)

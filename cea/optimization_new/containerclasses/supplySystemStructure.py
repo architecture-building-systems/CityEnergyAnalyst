@@ -261,7 +261,7 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
-        # Prioritise the environment heat sinks over the cooling towers
+        # Prioritise the water-based heat sinks over the cooling towers in the priority order
 
         if ('heat_sink' in optimisation_config.heat_rejection_components and
                 optimisation_config.heat_rejection_components.index('heat_sink') != 0):
@@ -347,17 +347,6 @@ class SupplySystemStructure(object):
                                                                                                           'secondary',
                                                                                                           'primary')
                                                        for ec_code, max_flow in max_secondary_components_demand.items()}
-
-        if 'E230AC' in viable_secondary_and_passive_components.keys():
-            min = 1000000
-            for i in range(0, len(viable_secondary_and_passive_components['E230AC']['active'])):
-                cap = viable_secondary_and_passive_components['E230AC']['active'][i].capacity
-                remaining_demand = max_secondary_components_demand['E230AC'] - cap
-
-                if remaining_demand > 0 and min > cap:
-                    min = cap
-                    max_secondary_components_demand['E230AC'] = cap
-                    max_secondary_components_demand_flow['E230AC'].profile = pd.Series([cap])
 
         # determine dependencies between secondary and primary components
         self._determine_dependencies('secondary', viable_secondary_and_passive_components,
@@ -578,6 +567,7 @@ class SupplySystemStructure(object):
                     if potential is None:
                         continue
                 try:
+                    # For solar components, limit the capacity based on radiation availability istead of maximum required demand
                     if 'PV' in model_code:
                         PV_potential = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap = PV_potential.main_potential.profile.max()
@@ -706,6 +696,8 @@ class SupplySystemStructure(object):
                         in passive_components_for_ec[active_component.main_energy_carrier.code].items():
                     for component_model in component_models:
                         try:
+                            # For solar systems, dimension the passive components based on the maximum available capacity which is
+                            # dependent on the radiation level, rather than on maximum demand of the energy carrier
                             if 'PV' in active_component.code:
                                 max_cap = active_component.capacity
                                 passive_component_list.append(
@@ -793,6 +785,8 @@ class SupplySystemStructure(object):
                 active_component_demand_flow = {component.code: component.operate(main_flow)
                                                  for component in viable_active_components}
 
+                # Operates passive components which are positioned after active components in order to convert the energy carrier
+                # into a usable type
                 for active_component_code, passive_component in necessary_passive_components.items():
                     flow = list(active_component_demand_flow[active_component_code][1].items())
                     object_flow = flow[0][1]
@@ -907,6 +901,9 @@ class SupplySystemStructure(object):
                                 for ec_code in self.available_potentials.keys()}
 
         new_absorption_feed = None
+        # For absorption chillers, water temperature between 70 and 100 can be used, thus included lower water temperatures
+        # from potentials in the next lines
+        
         if 'T100W' in required_energy_flows.keys():
             for ec_code in remaining_potentials.keys():
                 temp = remaining_potentials[ec_code].energy_carrier.mean_qual

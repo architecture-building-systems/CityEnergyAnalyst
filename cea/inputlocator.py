@@ -438,8 +438,8 @@ class InputLocator(object):
 
     def get_new_optimization_supply_systems_ec_annual_profiles(self, district_energy_system_id='DES_000',
                                                                      supply_system_id='N0000_or_B0000'):
-        """Returns the results-file for the breakdown of a supply systems annual operation (in terms of energy demand,
-        cost, GHG- and heat-emissions) in the n-th near-pareto-optimal DES"""
+        """Returns the results-file for the operation energy carriers profiles of a supply systems annual operation 
+        in the n-th near-pareto-optimal DES"""
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, f'{supply_system_id}_annual_ec_profiles.xlsx')
 

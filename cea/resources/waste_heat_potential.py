@@ -3,9 +3,6 @@
 Waste heat potential calculation
 """
 
-
-
-
 import pandas as pd
 import math
 from geopandas import GeoDataFrame as Gdf
@@ -27,11 +24,13 @@ __status__ = "Production"
 
 
 def calc_wasteheat_potential(locator):
-    """
-    Main function for the calculation of the waste heat potential in the area. The function calculates the total area of
-    the industries in the area and then calculates the waste heat potential (from the data centers) in the area.
 
     """
+    Main function for the calculation of the waste heat potential in the area under analysis. The function identifies industries, 
+    extracts the total area and then calculates the waste heat potential. Only waste heat from data centers is implemented.
+
+    """
+
     # local variables
     avg_max_it_capacity = 13 * 1e6  # [W]
     utilization_rate = 0.3  # utilization rate of the data center
@@ -44,7 +43,8 @@ def calc_wasteheat_potential(locator):
         if check:
             tot_area = calculate_industry_total_area(industries)
 
-    # If datacenters or industries are found, calculate the waste heat potential
+    # If datacenters or industries are found, calculate the waste heat potential. The temperature is assumed and constant
+
     if check:
         Qh_waste = datacenter_wasteheat_equation(tot_area, avg_max_it_capacity * utilization_rate) / 1e3  # [kW]
         T_source = 70  # °C
@@ -64,12 +64,19 @@ def datacenter_wasteheat_equation(area, it_load_power):
     # for Data Centers.”
 
     Qhdata = (1.07 * it_load_power + 0.04 * P_UPS + 0.01 * P_D + 14.32 * area + 100 * E)  # [W]
+
     # Cooling of the components is assumed to be obtained from the use of a on-chip two phase hybrid cooling system
     # As such, the waste heat is obtained at around 70°C (assuming no losses)
 
     return Qhdata
 
 def update_ec(locator, temperature):
+
+    ''' 
+    This function calls the energy carrier database and adds the new energy carrier based on the temperature calculated.
+    In this way, a different lake analysis can easily be updated.
+    '''
+
     water_temp = math.trunc(temperature)
     e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
@@ -87,9 +94,10 @@ def update_ec(locator, temperature):
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
 def calculate_industry_total_area(industries):
+
     """
-    This function calculates the total area of the industries in the area, in case it is needed for the waste heat
-    calculation.
+    This function calculates the total area of the industries in the area under analysis.
+
     """
     import matplotlib.pyplot as plt
 
@@ -117,6 +125,10 @@ def calculate_industry_total_area(industries):
 
 
 def find_datacenters_inzone(locator):
+    
+    '''
+    This function uses OSM database to search for industries in the immediate surroundings, in order to extract waste heat
+    '''
     building_typology_df = dbf_to_dataframe(locator.get_building_typology())
     building_type = building_typology_df.set_index(building_typology_df['Name'])
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())

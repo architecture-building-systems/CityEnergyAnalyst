@@ -106,12 +106,6 @@ class Domain(object):
         if buildings_in_domain is None:
             buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
-        # building-specific potentials
-        # pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
-        # pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
-        # scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
-        # scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
-
         # domain-wide potentials
         geothermal_potential = EnergyPotential().load_geothermal_potential(self.locator.get_geothermal_potential())
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
@@ -341,7 +335,8 @@ class Domain(object):
 
     @staticmethod
     def _write_system_structure(results_file, supply_system, cost_file):
-        """Summarise supply system structure and write it to the indicated results file"""
+        """Summarise supply system structure and cost and write it to the indicated results file.
+        Passive components are also included"""
         supply_system_info = [{'Component': component.technology,
                                'Component_type': component.type,
                                'Component_code': component_code,
@@ -403,7 +398,7 @@ class Domain(object):
                 supply_system_costs.append(passive_components_cost[i])
                 supply_system_info.append(passive_components_info[i])
 
-        # Write supply system structure to file
+        # Write supply system structure and cost to file
         pd.DataFrame(supply_system_info).to_csv(results_file, index=False)
         pd.DataFrame(supply_system_costs).to_csv(cost_file, index=False)
 
@@ -519,7 +514,7 @@ class Domain(object):
 
     @staticmethod
     def _write_detailed_objective_function_profiles(date_time, supply_system, results_file):
-        """Write the central objective function profiles of a supply system to the indicated csv file."""
+        """ Write detailed central objective function profiles of a supply system """
 
         if supply_system.heat_rejection.values():
             heat_rejection_profiles_df = pd.concat([heat_rejection_profile
@@ -614,7 +609,9 @@ class Domain(object):
 
     @staticmethod
     def _write_profile_breakdown(supply_system, results_file):
-        """Write the annual breakdown of the objective functions of a supply system to the indicated csv file."""
+        """
+        Write the annual breakdown of energy flows in and out of every component, as well as infinite resources and potentials
+        """
         # Print out profile of energy carriers coming from components
         categories = list(supply_system.installed_components.keys())
 

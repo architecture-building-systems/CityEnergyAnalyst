@@ -14,7 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.surroundings_helper import get_surrounding_building_sewage
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Giuseppe Nappi"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
@@ -26,7 +26,7 @@ __status__ = "Production"
 
 def calc_sewage_heat_exchanger(locator, config):
     """
-    Calaculate the heat extracted from the sewage HEX.
+    Calculate the heat extracted from the sewage HEX.
 
     :param locator: an InputLocator instance set to the scenario to work on
     :param Length_HEX_available: HEX length available
@@ -40,6 +40,8 @@ def calc_sewage_heat_exchanger(locator, config):
     twaste = []
     mXt = []
     counter = 0
+
+    # Configuration variables
     names = pd.read_csv(locator.get_total_demand()).Name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
@@ -250,7 +252,13 @@ def update_ec(locator, sewage_temperature):
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
 def filter_buildings(buffer_buildings, locator):
-    # Include buildings with large water consumption
+    
+    ''' 
+    This function calls the energy carrier database and adds the new energy carrier based on the temperature calculated.
+    In this way, a different lake analysis can easily be updated.
+    '''
+
+    # Include buildings with large water consumption only
     included_buildings = {'residential': 'MULTI_RES', 'industrial': 'INDUSTRIAL', 'house': 'SINGLE_RES',
                           'apartment': 'MULTI_RES', 'hospital': 'HOSPITAL', 'hotel': 'HOTEL'}
     selected_buildings = buffer_buildings[buffer_buildings['building'].isin(included_buildings.keys())]

@@ -295,6 +295,9 @@ class SupplySystem(object):
                 component = self.installed_components[placement][component_model]
                 main_energy_flow = demand.cap_at(component.capacity)
 
+                # Limit the amount of heat discharged in water-based heat sinks, added a maximum for environmental reason
+                # Iterate over the values to avoid discharging in some hours when the limit is reached
+                
                 if component.code in ['HEXLW', 'HEXSW', 'HEXGW']:
                     tot_dischargeable = sum(component.load_potentials().main_potential.profile)
                     if tot_dischargeable < sum(main_energy_flow.profile):
@@ -315,7 +318,8 @@ class SupplySystem(object):
                     output_list = list(self.component_energy_outputs[placement][component_model].items())[0]
                     output_code = output_list[0]
                     output_object = output_list[1]
-                    # Convert the flow in order to obtain the required energy carrier (e.g. from DC output of PV to AC)
+                    # Convert the flow in order to obtain the required energy carrier (e.g. from DC output of PV to AC) by
+                    # using passive components. Passive component is used after the active component is this case
                     if 'PV' in component_model and output_code != main_energy_flow.energy_carrier.code:
                         auxiliary_component = list(self.structure.max_cap_passive_components[placement][component_model].values())[0]
                         converted_flow = auxiliary_component.operate(output_object)
@@ -323,6 +327,7 @@ class SupplySystem(object):
                         del self.component_energy_outputs[placement][component_model][output_code]
 
                 else:
+                    # Passive component is used before the active component in this case
                     auxiliary_component = list(self.structure.max_cap_passive_components[placement]
                                                [component_model].values())[0]  # TODO: change this to allow all passive components to be activated
                     converted_energy_flow = auxiliary_component.operate(main_energy_flow)
@@ -331,6 +336,7 @@ class SupplySystem(object):
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
                 if 'PV' in component_model:
+                    # Take the solar profile in case PV is used and calculate the unsed energy to be sold on the grid
                     main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
                     demand_prior_solar = copy(demand)
                     demand = demand - main_energy_flow
@@ -342,6 +348,7 @@ class SupplySystem(object):
                         del self.component_energy_outputs[placement][component_model][ec_code]
 
                 elif 'SC' in component_model:
+                    # Take the solar profile in case SC is used
                     main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
                     demand = demand - main_energy_flow
                     # Delete the remaining hot water flow since no thermal storage is considered and the flow is not
@@ -354,6 +361,8 @@ class SupplySystem(object):
                 self.component_ec_profiles[placement][component_model] = {ec_code: copy(main_energy_flow)}
 
             if ec_code == 'E230AC' and demand.profile.sum() > 0:
+                # When PV is used, need to draw electricity from the grid once the production is too low in order to satisfy the 
+                # demand
                 leftovers = self._draw_from_infinite_sources({ec_code: demand})
                 if leftovers:
                     demand.profile = leftovers[ec_code].profile
@@ -401,6 +410,8 @@ class SupplySystem(object):
                         EnergyFlow('source', 'secondary', ec_code,
                                    pd.Series([min_potentials[ec_code]] * EnergyFlow.time_frame))
         else:
+            # For absorption chillers, water temperature between 70 and 100 can be used, thus included lower water temperatures
+            # from potentials in the next lines
             new_absorption_feed = None
             if 'T100W' in required_energy_flows.keys():
                 for ec_code in remaining_potentials.keys():
@@ -419,6 +430,7 @@ class SupplySystem(object):
                                         for ec_code in required_energy_flows.keys()
                                         if (required_energy_flows[ec_code] - usable_potential[ec_code]).profile.sum() !=0}
 
+            # Use the T100W as energy flow code when flows are exchanged between components for consistency
             if new_absorption_feed and new_absorption_feed in new_required_energy_flow.keys():
                 new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
                 required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
@@ -449,6 +461,7 @@ class SupplySystem(object):
         if not for_sizing:
             self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
 
+            # If energy carriers are being produced and sold (e.g. electricity), use them to satisfy upcoming demand
             if self.sold_carriers:
                 required_energy_flows_copy = copy(required_energy_flows)
                 required_energy_flows = {ec_code: required_energy_flows[ec_code] - self.sold_carriers[ec_code]
@@ -488,8 +501,6 @@ class SupplySystem(object):
     def _add_to_system_energy_demand(self, energy_flow_dict, available_system_energy_carriers):
         """
         Add energy flows to the 'system energy demand' if they consist of one of the available system energy carriers.
-        Also add the energy flows to the 'bought carriers' dictionary, to cumulate the energy flows that are bought
-        from external sources.
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
@@ -505,8 +516,6 @@ class SupplySystem(object):
         """
         Remove energy flows from the 'system energy demand'. This is meant to be used to take into account unused
         energy generation of the supply system (e.g. electricity generation of cogen components).
-        Also add the energy flows to the 'sold carriers' dictionary, to cumulate the energy flows that are sold to
-        external sources.
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
@@ -520,8 +529,7 @@ class SupplySystem(object):
 
     def _buy_required_energy(self, energy_flow_dict, available_system_energy_carriers):
         """
-        Add energy flows to the 'system energy demand' if they consist of one of the available system energy carriers.
-        Also add the energy flows to the 'bought carriers' dictionary, to cumulate the energy flows that are bought
+        Add the energy flows to the 'bought carriers' dictionary, to cumulate the energy flows that are bought
         from external sources.
         """
         for ec_code, energy_flow in energy_flow_dict.items():
@@ -536,9 +544,7 @@ class SupplySystem(object):
 
     def _sell_excess_energy(self, energy_flow_dict, available_system_energy_carriers):
         """
-        Remove energy flows from the 'system energy demand'. This is meant to be used to take into account unused
-        energy generation of the supply system (e.g. electricity generation of cogen components).
-        Also add the energy flows to the 'sold carriers' dictionary, to cumulate the energy flows that are sold to
+        Add the energy flows to the 'sold carriers' dictionary, to cumulate the energy flows that are sold to
         external sources.
         """
         for ec_code, energy_flow in energy_flow_dict.items():
@@ -554,7 +560,7 @@ class SupplySystem(object):
     def _add_to_heat_rejection(self, energy_flow_dict, releasable_energy_carriers):
         """
         Add energy flows to the system heat rejection if they consist of one of the releasable energy carriers.
-        Exclude water sinks from the heat rejection, since heat is not released in atmosphere.
+        Exclude water sinks from the heat rejection, since heat is not released in atmosphere, this will be stored separately
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in releasable_energy_carriers:

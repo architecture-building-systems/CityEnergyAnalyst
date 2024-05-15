@@ -13,7 +13,7 @@ from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, Mixed
 from cea.resources.geothermal import calc_temperature_underground
 from cea.datamanagement.surroundings_helper import get_water_basin
 
-__author__ = "Sreepathi Bhargava Krishna"
+__author__ = "Giuseppe Nappi"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
@@ -24,52 +24,29 @@ __status__ = "Production"
 
 
 def calc_lake_potential(locator, config):
+
     """
-    Quick calculation of lake potential. This does not refer to CEA original publication.
+    Calculation of lake potential. This does not refer to CEA original publication.
     In that case, the implementation of the lake potential algorithm was carried out with another tool and then
     the result was implemented in CEA for a specific case study.
-    # TODO: create proper lake potential model
     """
-    # local variables
-    conductivity_water = 0.6  # W/mK
-    heat_capacity_water = HEAT_CAPACITY_OF_WATER_JPERKGK  # JkgK
-    density_water = P_WATER_KGPERM3  # kg.m3
-    depth_m = 0.1  # m #just calibrated variable
-
-    V_max_m3h = config.water_body.max_water_volume_withdrawal  # in m3h
-    AT_max_K = config.water_body.max_delta_temperature_withdrawal + 273  # to Kelvin
-    T_max_K = config.water_body.temperature_max + 273  # to kelvin
-    T_min_K = config.water_body.temperature_min + 273  # to kelvin
-
-    T_amplitude_K = abs((T_max_K - T_min_K))
-    T_avg_K = (T_max_K + T_min_K) / 2
-    t_source = calc_temperature_underground(T_amplitude_K, T_avg_K, conductivity_water, density_water, depth_m,
-                                            heat_capacity_water)
-    # convert back to degrees C
-    t_source_final = [x - 273.0 for x in t_source]
-
-    Q_max_kwh = (V_max_m3h * P_WATER_KGPERM3 / 3600) * heat_capacity_water / 1000 * AT_max_K  # in kW
-
-    # export
-    lake_gen = locator.get_water_body_potential()
-    pd.DataFrame({"Ts_C": t_source_final, "QLake_kW": Q_max_kwh}).to_csv(lake_gen, index=False, float_format='%.3f')
-
-def calc_lake_potential_new(locator, config):
-    """
-    Calculation of lake potential. This refers to CEA original publication.
-    """
+    
     # local variables
     heat_capacity_water = HEAT_CAPACITY_OF_WATER_JPERKGK  # JkgK
     AT_max_K = config.water_body.max_delta_temperature_withdrawal  # K
     V_max_m3 = config.water_body.water_volume * 1e9 # m3
     avg_depth = config.water_body.average_depth # m
 
+    # Calculation of heat released in the water
     Q_max_kwh = (V_max_m3 * P_WATER_KGPERM3 / 3600) * heat_capacity_water / 1000 * AT_max_K / 8760 # in kW
+
     # Max heat dischargeable in the lake to obtain an increase of 0.5 K in one year, which does not cause substantial
     # changes in the lake ecosystem
 
     Z = [] # depth in meters
     T = [] # temperature in kelvin
+
+    # Check whether there is a water basin in the area under analysis or in the immediate proximity
     check, area = check_presence_water_basin(locator)
 
     if check:
@@ -93,15 +70,17 @@ def calc_lake_potential_new(locator, config):
     update_ec(locator, T[-1])
 
 def model_temperature_variation(z, avg_depth):
+
     """
-    Calculation of temperature of the lake at a chosen depth z
+    Calculation of temperature of the lake at a chosen depth z, knowing the top and bottom temperature
     """
+    
     measurement_depth = avg_depth
     heat_capacity_water = HEAT_CAPACITY_OF_WATER_JPERKGK  # JkgK
     drag = 0.002 # surface drag coefficient
-    alpha_T = 1.6509e-5 #1/K
-    g = 9.81 #m/s2
-    wind_vel = 2.026 #m/s
+    alpha_T = 1.6509e-5 # 1/K
+    g = 9.81 # m/s2
+    wind_vel = 2.026 # m/s
     # Karthikeya, B. R. “Wind Resource Assessment for Urban Renewable Energy Application in Singapore.”
 
     T_superficial_K = T_sup + 273  # to kelvin
@@ -113,12 +92,13 @@ def model_temperature_variation(z, avg_depth):
     C_3 = np.sqrt(-(g * alpha_T * (T_bottom_K - T_superficial_K)) / (measurement_depth - Mixed_Layer_Depth))
     C_4 = np.sqrt((density_water_sup * drag * wind_vel ** 2) / (density_water_bot * heat_capacity_water))
     C_1 = 0.5 #(0.3 * 0.03 * C_4 ** 2) / ((measurement_depth - Mixed_Layer_Depth) ** 2 * C_3)
-    # Approximated value for C_1 taken from the paper, since measured profile is available
+    # Approximated value for C_1 taken from literature for a linear underwater profile
     C_2 = (z - Mixed_Layer_Depth) / (measurement_depth - Mixed_Layer_Depth)
 
     shape_function = (40 / 3 * C_1 - 20 / 3) * C_2 + (18 - 30 * C_1) * C_2 ** 2 + (20 * C_1 - 12) * C_2 ** 3 + (
                 5 / 3 - 10 / 3 * C_1) * C_2 ** 4
 
+    # Water temperature selection based on depth
     if 0 <= z <= Mixed_Layer_Depth:
         T_water = T_superficial_K
 
@@ -132,6 +112,12 @@ def model_temperature_variation(z, avg_depth):
     return T_water
 
 def update_ec(locator, Water_temperature):
+
+    ''' 
+    This function calls the energy carrier database and adds the new energy carrier based on the temperature calculated.
+    In this way, a different lake analysis can easily be updated.
+    '''
+
     T_water = math.trunc(Water_temperature)
     e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
@@ -149,9 +135,11 @@ def update_ec(locator, Water_temperature):
     e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
 
 def check_presence_water_basin(locator):
+
     """
-    Check if the water basin is present in the database
+    Check if the water basin is present in the area under the analysis.
     """
+
     water_basin_check, area_tot = get_water_basin(locator)
 
     return water_basin_check, area_tot
@@ -159,8 +147,7 @@ def check_presence_water_basin(locator):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    calc_lake_potential_new(locator=locator, config=config)
-    #calc_lake_potential(locator=locator, config=config)
+    calc_lake_potential(locator=locator, config=config)
 
 
 if __name__ == '__main__':

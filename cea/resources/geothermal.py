@@ -64,6 +64,10 @@ def calc_geothermal_potential(locator, config):
 
 
 def calc_area_buildings(locator, buildings_list):
+    '''
+    Calculates the available area under the buildings that can be used to exctract underground water or to install geothermal 
+    equipment
+    '''
     # initialize value
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
@@ -103,6 +107,9 @@ def calc_ground_temperature(T_ground_water, T_ambient_C, depth_m):
 
 
 def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, density_soil, depth_m, heat_capacity_soil):
+    '''
+    Calculates underground temperature variation throughout the year given the soil properties
+    '''
     diffusivity = conductivity_soil / (density_soil * heat_capacity_soil)  # in m2/s
     wave_lenght = (math.pi * 2 / HOURS_IN_YEAR)
     hour_with_minimum = 1
@@ -114,12 +121,22 @@ def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, densit
 
 def calc_groundwater_flow(permeability, water_level_piezometers, dist_piezometers):
 
+    '''
+    Calculates maximum extractable ground water flow given the properties of the ground
+    '''
+
     flow_L_s = (math.pi * permeability * (water_level_piezometers[1] ** 2 - water_level_piezometers[0] ** 2) /
                 math.log(dist_piezometers[1] / dist_piezometers[0])) * 1000  # L/s
 
     return flow_L_s
 
 def update_ec(locator, groundwater_temperature):
+
+    ''' 
+    This function calls the energy carrier database and adds the new energy carrier based on the temperature calculated.
+    In this way, a different lake analysis can easily be updated.
+    '''
+    
     water_temp = math.trunc(groundwater_temperature)
     e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()

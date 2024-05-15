@@ -587,9 +587,8 @@ class Solar_PV(ActiveComponent):
 
     def operate(self, heating_out):
         """
-        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
-        The electrical output is simply given by that operating point. The operation is modeled according to
-        the chosen general component efficiency code complexity.
+        Operate the solar PV. The electrical output is simply given by the solar production profile evaluated in the solar potential
+        script, and scale down depending on the assigned capacity. The capacity is capped at the maximum area coverage for solar installations.
 
         :param heating_out: Targeted heat produced by the cogeneration plant
         :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
@@ -620,17 +619,10 @@ class Solar_PV(ActiveComponent):
 
         return input_energy_flows, output_energy_flows
 
-    def _constant_efficiency_operation(self, heating_load):
-        """ Operate cogeneration plant assuming constant thermal and electrical efficiency ratings. """
-        fuel_flow, \
-        electricity_flow, \
-        waste_heat_flow = calc_cogen_const(heating_load.profile, self.electrical_eff)
-        return fuel_flow, electricity_flow, waste_heat_flow
-
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of cogeneration plants from the database and save a dictionary, indicating
+        Fetch possible main energy carriers of PV panels from the database and save a dictionary, indicating
         which component models can provide each of the energy carriers, as a new class variable.
         """
         ct_database = components_database[Solar_PV._database_tab]
@@ -643,7 +635,9 @@ class Solar_PV(ActiveComponent):
         Solar_PV.possible_main_ecs = possible_main_ecs_dict
 
     def load_potentials(self):
-
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         building_list = shp_file['Name']
         PV_potential = EnergyPotential().load_PV_potential(self.locator, building_list)
@@ -669,9 +663,10 @@ class Solar_collector(ActiveComponent):
 
     def operate(self, heating_out):
         """
-        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
-        The electrical output is simply given by that operating point. The operation is modeled according to
-        the chosen general component efficiency code complexity.
+        Operate the solar collector. The hot water output is simply given by the solar production profile evaluated in the solar 
+        potential script, and scale down depending on the assigned capacity. 
+        The capacity is capped at the maximum area coverage for solar installations.
+
 
         :param heating_out: Targeted heat produced by the cogeneration plant
         :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
@@ -683,7 +678,7 @@ class Solar_collector(ActiveComponent):
         """
         self._check_operational_requirements(heating_out)
 
-        # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
+        # load potentials from solar resources and calculate the maximum area used, capacity and profile
         chosen_cap = self.capacity
         solar_collector_potential = self.load_potentials()
         thermal_flow = solar_collector_potential.main_potential
@@ -702,17 +697,10 @@ class Solar_collector(ActiveComponent):
 
         return input_energy_flows, output_energy_flows
 
-    def _constant_efficiency_operation(self, heating_load):
-        """ Operate cogeneration plant assuming constant thermal and electrical efficiency ratings. """
-        fuel_flow, \
-        electricity_flow, \
-        waste_heat_flow = calc_cogen_const(heating_load.profile, self.electrical_eff)
-        return fuel_flow, electricity_flow, waste_heat_flow
-
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of cogeneration plants from the database and save a dictionary, indicating
+        Fetch possible main energy carriers of solar collectors from the database and save a dictionary, indicating
         which component models can provide each of the energy carriers, as a new class variable.
         """
         ct_database = components_database[Solar_collector._database_tab]
@@ -725,6 +713,9 @@ class Solar_collector(ActiveComponent):
         Solar_collector.possible_main_ecs = possible_main_ecs_dict
 
     def load_potentials(self):
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
 
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         building_list = shp_file['Name']
@@ -947,7 +938,7 @@ class HeatSink(ActiveComponent):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
+        Fetch possible main energy carriers of heat sinks from the database and save the list as a new class
         variable.
         """
         ct_database = components_database[HeatSink._database_tab]
@@ -961,6 +952,9 @@ class HeatSink(ActiveComponent):
         HeatSink.possible_main_ecs = possible_main_ecs_dict
 
     def load_potentials(self):
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
         potential_path_dictionary = {'LW': self.locator.get_water_body_potential(),
                                      'SW': self.locator.get_sewage_heat_potential(),
                                      'GW': self.locator.get_geothermal_potential()}
@@ -1124,15 +1118,13 @@ class Inverter(PassiveComponent):
 
         self._set_energy_carriers(voltage_before, voltage_after)
 
-    def operate(self, power_transfer, new_voltage=None):
+    def operate(self, power_transfer):
         """
-        Operate the inverter, so that it transfers the targeted amount of power. The operation is modeled
-        assuming there are no losses in the transfer.
+        Operate the inverter, so that it converts the targeted amount of power. The operation is modeled
+        assuming there are no losses in the conversion.
 
         :param power_transfer: Targeted power transfer through the inverter (into or out of the inverter)
         :type power_transfer: <cea.optimization_new.energyFlow>-EnergyFlow object
-        :param new_voltage: Voltage level to which the power should be transferred
-        :type new_voltage: int, float
 
         :return input_energy_flows: Electrical energy flow into the power inverter
         :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
@@ -1167,8 +1159,8 @@ class Inverter(PassiveComponent):
     @staticmethod
     def _constant_efficiency_operation(power_transfer):
         """
-        Operate power transformer assuming constant operating conditions, i.e. power_in = power_out.
-        (Since we assume that power transformers incur negligible losses)
+        Operate inverter assuming constant operating conditions, i.e. power_in = power_out.
+        (Since we assume that inverters incur negligible losses)
         """
 
         return power_transfer.profile
@@ -1203,7 +1195,7 @@ class Inverter(PassiveComponent):
     @staticmethod
     def initialize_subclass_variables(components_database):
         """
-        Fetch possible power transformer models that can convert a given electrical input energy carrier into a
+        Fetch possible inverter models that can convert a given electrical input energy carrier into a
         different electrical output energy carrier (either in step-up or step-down method) and save the result in a
         pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
         """
