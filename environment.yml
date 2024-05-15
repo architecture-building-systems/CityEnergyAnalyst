@@ -41,7 +41,7 @@ dependencies:
 - xlwt
 - pyarrow
 - git
-- yarn
+- yarn=4 # Use latest version of yarn
 - pip:
   - staticmap
   - wntr==0.2.3
