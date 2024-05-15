@@ -372,11 +372,14 @@ class AbsorptionChiller(object):
         self.e_g = chiller_prop['e_g'].values[0]
 
     def update_data(self, chiller_prop):
-        """Due to how AbsorptionChiller is currently used (FIXME: can we fix this?), we somedimes need to update
-        the instance variables from the databaframe chiller_prop.
         """
-        if self.code != chiller_prop['code'].values[0]:
-            # only update if new code...
+        Due to how AbsorptionChiller is currently used , we sometimes need to update
+        the instance variables from the dataframe chiller_prop. FIXME: can we fix this?
+        """
+        if self.code != chiller_prop['code'].values[0] \
+            or self.m_cw_kgpers != chiller_prop['m_cw'].values[0] \
+            or self.m_hw_kgpers != chiller_prop['m_hw'].values[0]:
+            # only update if the type or size-category of chiller changes ...
             # print("Updating chiller_prop data! old code: {0}, new code: {1}".format(self.code, chiller_prop['code'].values[0]))
             self.code = chiller_prop['code'].values[0]
             self.m_cw_kgpers = chiller_prop['m_cw'].values[0]
