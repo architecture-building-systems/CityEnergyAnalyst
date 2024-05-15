@@ -39,14 +39,14 @@ def verify_tree_properties(tree_df):
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    trees_df = gpd.read_file(config.tree_helper.trees)
+    trees_df = gpd.read_file(config.trees_helper.trees)
     terrain_raster = gdal.Open(locator.get_terrain())
 
     verify_tree_properties(trees_df)
     check_terrain_bounds(trees_df.geometry, terrain_raster)
 
     os.makedirs(locator.get_tree_geometry_folder(), exist_ok=True)
-    shutil.copy(config.tree_helper.trees, locator.get_tree_geometry())
+    shutil.copy(config.trees_helper.trees, locator.get_tree_geometry())
 
 
 if __name__ == '__main__':
