@@ -50,7 +50,7 @@ Data management:
     description: Import tree geometries to scenario
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
-    parameters: [ 'general:scenario', tree-helper ]
+    parameters: [ 'general:scenario', trees-helper ]
 
 Demand forecasting:
   - name: radiation
