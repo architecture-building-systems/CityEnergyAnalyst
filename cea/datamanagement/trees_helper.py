@@ -46,7 +46,7 @@ def main(config):
     check_terrain_bounds(trees_df.geometry, terrain_raster)
 
     os.makedirs(locator.get_tree_geometry_folder(), exist_ok=True)
-    shutil.copy(config.trees_helper.trees, locator.get_tree_geometry())
+    trees_df.to_file(locator.get_tree_geometry())
 
 
 if __name__ == '__main__':
