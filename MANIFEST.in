@@ -6,6 +6,7 @@ include cea/scripts.yml
 include cea/workflows/*.yml
 
 recursive-include cea/databases *.xlsx *.xls *.txt *.csv *.epw
+recursive-include cea/interfaces/dashboard/plots/templates *.html
 recursive-include cea/lib *.so *.dylib
 recursive-include cea/plots *.html
 recursive-include cea/tests *.config *.yml

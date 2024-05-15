@@ -34,10 +34,6 @@ FROM mambaorg/micromamba as cea-build
 COPY --from=daysim-build /Daysim_build /Daysim
 
 USER root
-# install git required to install from git repository and clean apt cache
-RUN apt update  \
-    && DEBIAN_FRONTEND="noninteractive" apt install -y git \
-    && rm -rf /var/lib/apt/lists/*
 
 # create directory for projects and set MAMBA_USER as owner of the project directory
 RUN mkdir -p /project

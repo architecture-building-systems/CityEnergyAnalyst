@@ -35,6 +35,7 @@ class Building(object):
         self._demand_flow = EnergyFlow()
         self._footprint = None
         self._location = None
+        self._initial_connectivity_state = 'stand_alone'
         self._stand_alone_supply_system_code = None
         self._stand_alone_supply_system_composition = {'primary': [], 'secondary': [], 'tertiary': []}
 
@@ -76,6 +77,18 @@ class Building(object):
         else:
             raise ValueError("Please only assign a point to the building location. "
                              "Try using the load_building_location method for assigning building locations.")
+
+    @property
+    def initial_connectivity_state(self):
+        return self._initial_connectivity_state
+
+    @initial_connectivity_state.setter
+    def initial_connectivity_state(self, new_base_connectivity):
+        if new_base_connectivity in ['stand_alone', 'network'] \
+                or (new_base_connectivity.startswith('N') and new_base_connectivity[1:].isdigit()):
+            self._initial_connectivity_state = new_base_connectivity
+        else:
+            raise ValueError("Please only assign 'stand_alone' or 'network_i' to the base connectivity of the building.")
 
     def load_demand_profile(self, energy_system_type='DH'):
         """
@@ -133,7 +146,7 @@ class Building(object):
 
         # load the 'assemblies'-supply systems database as a class variable
         if Building._supply_system_database.empty:
-            supply_systems_database_file = pd.ExcelFile(file_locator.get_database_supply_assemblies_new())
+            supply_systems_database_file = pd.ExcelFile(file_locator.get_database_supply_assemblies())
             if energy_system_type == 'DH':
                 Building._supply_system_database = pd.read_excel(supply_systems_database_file, 'HEATING')
             elif energy_system_type == 'DC':
@@ -142,15 +155,65 @@ class Building(object):
                 raise ValueError(f"'{energy_system_type}' is not a valid energy system type. No appropriate "
                                  f"'assemblies'-supply system database could therefore be loaded.")
 
-        # fetch the system composition (primary, secondary & tertiary components) for the building
+        # fetch the supply system composition for the building or it's associated district energy system
+        self.fetch_supply_system_composition()
+
+        return
+
+    def fetch_supply_system_composition(self):
+        """
+        Identify if the building is connected to a district heating or cooling network or has a stand-alone system.
+        Depending on the case, fetch the system composition (primary, secondary & tertiary components) for the building
+        or complete the system composition for the district energy system the building is connected to.
+
+        To establish a default stand-alone supply system in the event of a building's disconnection from a district
+        energy system, it's assumed that the supply system composition of the respective networks is directly applied to
+        the building's stand-alone supply system.
+        """
+        # register if the building is connected to a district heating or cooling network or has a stand-alone system
         system_details = Building._supply_system_database[Building._supply_system_database['code']
                                                           == self._stand_alone_supply_system_code]
+        energy_system_scale = system_details['scale'].values[0].replace(" ", "").lower()
+
+        if energy_system_scale in ['', '-', 'building']:
+            self.initial_connectivity_state = 'stand_alone'
+        elif energy_system_scale == 'district':
+            self.initial_connectivity_state = 'network'
+
+        # fetch the system composition (primary, secondary & tertiary components)
+        # ... for the stand-alone supply system
         for category in ['primary', 'secondary', 'tertiary']:
             category_components = system_details[category + '_components'].values[0].replace(" ", "")
+
             if category_components == '-':
                 self._stand_alone_supply_system_composition[category] = []
             else:
                 self._stand_alone_supply_system_composition[category] = category_components.split(',')
+
+        # ... or for the network supply system
+        if self.initial_connectivity_state == 'network':
+
+            if system_details['code'].values[0] not in SupplySystemStructure.initial_network_supply_systems.keys():
+                network_id = f'N{len(SupplySystemStructure.initial_network_supply_systems) + 1001}'
+                SupplySystemStructure.initial_network_supply_systems[system_details['code'].values[0]] = network_id
+                SupplySystemStructure.initial_network_supply_systems_composition[network_id] = {'primary': [],
+                                                                                                'secondary': [],
+                                                                                                'tertiary': []}
+
+                for category in ['primary', 'secondary', 'tertiary']:
+                    category_components = system_details[category + '_components'].values[0].replace(" ", "")
+
+                    if category_components == '-':
+                        SupplySystemStructure.initial_network_supply_systems_composition[network_id][category] = []
+                    else:
+                        SupplySystemStructure.initial_network_supply_systems_composition[network_id][category] = \
+                            category_components.split(',')
+
+            else:
+                network_id = SupplySystemStructure.initial_network_supply_systems[system_details['code'].values[0]]
+
+            self.initial_connectivity_state = network_id
+
         return
 
     def calculate_supply_system(self, available_potentials):

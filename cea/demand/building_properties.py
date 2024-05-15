@@ -241,7 +241,6 @@ class BuildingProperties(object):
         Htr_w        1.403374e+03   (thermal transmission coefficient for windows and glazing in [W/K])
         =========    ============   ================================================================================================
 
-        FIXME: rename Awall_all to something more sane...
         """
 
         # calculate building geometry

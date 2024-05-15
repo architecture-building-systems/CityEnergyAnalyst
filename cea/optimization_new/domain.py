@@ -42,6 +42,7 @@ from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
+from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
 from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
 from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
@@ -56,14 +57,16 @@ class Domain(object):
         self.weather = self._load_weather(locator)
         self.buildings = []
         self.energy_potentials = []
+        self.initial_energy_system = None
         self.optimal_energy_systems = []
 
         self._initialise_domain_descriptor_classes()
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
-        self.weather = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
+        self.weather = epwreader.epw_reader(weather_path)[['date', 'year', 'drybulb_C', 'wetbulb_C',
                                                            'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        EnergyFlow.time_series = self.weather['date']
         return self.weather
 
     def load_buildings(self, buildings_in_domain=None):
@@ -102,9 +105,8 @@ class Domain(object):
         :return self.energy_potentials: list of energy potentials with the scale they apply to (building or domain)
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
-        shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
@@ -138,11 +140,12 @@ class Domain(object):
         print("\nInitializing domain:")
         self._initialize_energy_system_descriptor_classes()
 
-        # Calculate base-case supply systems for all buildings
-        print("\nCalculating operation of buildings' base-supply systems...")
+        # Calculate base-case supply systems for all buildings (i.e. initial state as per the input editor)
+        print("\nCalculating operation of districts' initial supply systems...")
         building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in self.buildings]
+        self.model_initial_energy_system()
 
         # Optimise district energy systems
         print("Starting optimisation of district energy systems (i.e. networks + supply systems)...")
@@ -225,6 +228,25 @@ class Domain(object):
 
         return self.optimal_energy_systems
 
+    def model_initial_energy_system(self):
+        """
+        Model the energy system currently installed in the domain, i.e.:
+        - reconstruct a network linking all buildings that are currently connected to a district energy system
+        - determine the supply system for each network and each of the stand-alone buildings
+        """
+        # Determine buildings connected to a district energy system
+        connection_list = [Connection(0, building.identifier) if building.initial_connectivity_state == 'stand_alone'
+                           else Connection(int(building.initial_connectivity_state[1:]) - 1000, building.identifier)
+                           for building in self.buildings]
+
+        # Create a network of connected buildings
+        self.initial_energy_system = DistrictEnergySystem(ConnectivityVector(connection_list), self.buildings,
+                                                          self.energy_potentials)
+        self.initial_energy_system.evaluate(component_selection=
+                                            SupplySystemStructure.initial_network_supply_systems_composition)
+
+        return self.initial_energy_system
+
     def _select_final_optimal_systems(self, last_population, min_final_selection_size):
         """
         Each solution in the last population of the 'outer' optimisation algorithm consists of:
@@ -267,15 +289,14 @@ class Domain(object):
         of .xlsx-files to summarise the most important information about the near-pareto-optimal district energy systems
         and their corresponding supply systems.
         """
+        # save the current energy system's network layouts and supply systems
+        self._write_network_layouts_to_geojson(self.initial_energy_system, 'current_DES')
+        self._write_supply_systems_to_csv(self.initial_energy_system, 'current_DES')
+
         # save the results for near-pareto-optimal district energy systems one-by-one
         for des in self.optimal_energy_systems:
             # first save network layouts
-            for ntw_ind, network in enumerate(des.networks):
-                network_layout_file = self.locator.get_new_optimization_optimal_network_layout_file(des.identifier,
-                                                                                                    network.identifier)
-                network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
-                network_layout = network_layout.to_crs(get_geographic_coordinate_system())
-                network_layout.to_file(network_layout_file, driver='GeoJSON')
+            self._write_network_layouts_to_geojson(des)
 
             # then save all information about the selected supply systems
             self._write_supply_systems_to_csv(des)
@@ -286,13 +307,41 @@ class Domain(object):
 
         return
 
-    def _write_supply_systems_to_csv(self, district_energy_system):
+    def _write_network_layouts_to_geojson(self, district_energy_system, system_name=None):
         """
-        Writes information on supply systems of subsystems of a near-pareto-optimal district energy system into
-        csv files. Information on each of the supply systems is written in a separate file.
+        Writes the network layout of a given district energy system into a geojson file.
+
+        :param network: selected network
+        :type network: Network-class object
+        :param system_name: name of the district energy system
+        :type system_name: str
+        """
+        if not system_name:
+            system_name = district_energy_system.identifier
+
+        for ntw_ind, network in enumerate(district_energy_system.networks):
+            network_layout_file = self.locator.get_new_optimization_optimal_network_layout_file(system_name,
+                                                                                                network.identifier)
+            network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
+            network_layout = network_layout.to_crs(get_geographic_coordinate_system())
+            network_layout.to_file(network_layout_file, driver='GeoJSON')
+
+        return
+
+    def _write_supply_systems_to_csv(self, district_energy_system, system_name=None):
+        """
+        Writes information on supply systems of subsystems of a given district energy system into csv files. Information
+        on each of the supply systems is written in a separate file.
+
+        :param district_energy_system: selected district energy system
+        :type district_energy_system: DistrictEnergySystem-class object
+        :param system_name: name of the district energy system
+        :type system_name: str
         """
         # Create general values
-        des_id = district_energy_system.identifier
+        if not system_name:
+            system_name = district_energy_system.identifier
+
         supply_system_summary = {'Supply_System': [],
                                  'Heat_Emissions_kWh': [],
                                  'System_Energy_Demand_kWh': [],
@@ -307,7 +356,7 @@ class Domain(object):
             supply_system = building.stand_alone_supply_system
 
             # Summarise structure of the supply system & print to file
-            building_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, supply_system_id)
+            building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
             Domain._write_system_structure(building_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -317,7 +366,7 @@ class Domain(object):
         # FOR NETWORKS
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
-            network_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, network_id)
+            network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
             Domain._write_system_structure(network_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -331,7 +380,7 @@ class Domain(object):
         supply_system_summary['GHG_Emissions_kgCO2'] += [sum(supply_system_summary['GHG_Emissions_kgCO2'])]
         supply_system_summary['Cost_USD'] += [sum(supply_system_summary['Cost_USD'])]
 
-        summary_file = self.locator.get_new_optimization_optimal_supply_systems_summary_file(des_id)
+        summary_file = self.locator.get_new_optimization_optimal_supply_systems_summary_file(system_name)
         pd.DataFrame(supply_system_summary).to_csv(summary_file, index=False)
 
         return

@@ -68,7 +68,7 @@ class Component(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
-        Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems_new(), None)
+        Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems(), None)
         Component._model_complexity = domain.config.optimization_new.component_efficiency_model_complexity
         Component.code_to_class_mapping = Component.create_code_mapping(Component._components_database)
         AbsorptionChiller.initialize_subclass_variables(Component._components_database)
@@ -218,7 +218,7 @@ class PassiveComponent(Component):
 
 class AbsorptionChiller(ActiveComponent):
 
-    _database_tab = 'absorption_chillers'
+    _database_tab = 'ABSORPTION_CHILLERS'
 
     def __init__(self, ach_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -290,7 +290,7 @@ class AbsorptionChiller(ActiveComponent):
 
 class VapourCompressionChiller(ActiveComponent):
 
-    _database_tab = 'vapor_compression_chillers'
+    _database_tab = 'VAPOR_COMPRESSION_CHILLERS'
 
     def __init__(self, vcc_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -356,7 +356,7 @@ class VapourCompressionChiller(ActiveComponent):
 
 class AirConditioner(ActiveComponent):
 
-    _database_tab = 'unitary_air_conditioners'
+    _database_tab = 'UNITARY_AIR_CONDITIONERS'
 
     def __init__(self, ac_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -422,7 +422,7 @@ class AirConditioner(ActiveComponent):
 
 class Boiler(ActiveComponent):
 
-    _database_tab = 'boilers'
+    _database_tab = 'BOILERS'
 
     def __init__(self, boiler_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -488,7 +488,7 @@ class Boiler(ActiveComponent):
 
 class CogenPlant(ActiveComponent):
 
-    _database_tab = 'cogeneration_plants'
+    _database_tab = 'COGENERATION_PLANTS'
 
     def __init__(self, cogen_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -523,8 +523,8 @@ class CogenPlant(ActiveComponent):
 
         # initialize energy flows
         fuel_in = EnergyFlow('source', self.placement, self.input_energy_carriers[0].code)
-        electricity_out = EnergyFlow(self.placement, 'primary', self.input_energy_carriers[0].code)
-        waste_heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[0].code)
+        electricity_out = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
+        waste_heat_out = EnergyFlow(self.placement, 'environment', self.output_energy_carriers[1].code)
 
         # run operational/efficiency code
         if Component._model_complexity == 'constant':
@@ -563,7 +563,7 @@ class CogenPlant(ActiveComponent):
 
 class HeatPump(ActiveComponent):
 
-    _database_tab = 'heat_pumps'
+    _database_tab = 'HEAT_PUMPS'
 
     def __init__(self, hp_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -644,7 +644,7 @@ class HeatPump(ActiveComponent):
 class CoolingTower(ActiveComponent):
 
     main_side = 'input'
-    _database_tab = 'cooling_towers'
+    _database_tab = 'COOLING_TOWERS'
 
     def __init__(self, ct_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -714,7 +714,7 @@ class CoolingTower(ActiveComponent):
 
 class PowerTransformer(PassiveComponent):
 
-    _database_tab = 'power_transformers'
+    _database_tab = 'POWER_TRANSFORMERS'
 
     def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
         # initialise parent-class attributes
@@ -847,7 +847,7 @@ class PowerTransformer(PassiveComponent):
 
 class HeatExchanger(PassiveComponent):
 
-    _database_tab = 'heat_exchangers'
+    _database_tab = 'HEAT_EXCHANGERS'
 
     def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after):
         # initialise parent-class attributes

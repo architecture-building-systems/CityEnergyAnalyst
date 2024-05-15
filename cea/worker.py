@@ -145,10 +145,10 @@ def worker(config, jobid, server):
         post_started(jobid, server)
         run_job(config, job, server)
         post_success(jobid, server)
-    except Exception:
+    except Exception as e:
         exc = traceback.format_exc()
         print(exc, file=sys.stderr)
-        post_error(exc, jobid, server)
+        post_error(str(e), jobid, server)
     finally:
         sys.stdout.close()
         sys.stderr.close()

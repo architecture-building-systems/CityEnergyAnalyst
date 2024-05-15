@@ -21,7 +21,6 @@ Installation
 ~~~~~~~~~~~~
 Fresh installation
 _________________________
-.. note:: (*Experimental*) We have a script that can automate the process below. Just open a Terminal console and enter ``/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/install/mac_installation.sh)"`` Continue on the next section to find out how to interact with CEA.
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
@@ -35,8 +34,8 @@ _________________________
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Install Yarn by typing ``brew install yarn`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
-    #. Type ``yarn package`` and press ENTER.
-    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+    #. Type ``yarn electron:build`` and press ENTER.
+    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
 .. attention:: In order to run CEA on Mac, you will need to select the correct Daysim binaries:
 
@@ -60,8 +59,8 @@ These steps would only work if your current installation is installed using the 
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
-    #. Type ``yarn package`` and press ENTER.
-    #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+    #. Type ``yarn electron:build`` and press ENTER.
+    #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
 Interfaces
 ~~~~~~~~~~

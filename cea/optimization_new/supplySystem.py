@@ -23,7 +23,9 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
+from copy import copy
 from math import isclose
+
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
@@ -69,6 +71,39 @@ class SupplySystem(object):
         else:
             self._structure = new_structure
 
+    def __copy__(self):
+        """ Create a copy of the supply system object. """
+        # Initialize a new object
+        object_copy = SupplySystem(self.structure, self.capacity_indicator_vector, self.demand_energy_flow)
+
+        # Assign the same values to the new object
+        #  First, all attributes that are shared between the original and the new object (same memory address)
+        object_copy.installed_components = self.installed_components
+
+        #  Then, all attributes that are unique to the original object and need to be copied (new memory address)
+        object_copy.component_energy_inputs = {placement: {component: {carrier: copy(flow)
+                                                                       for carrier, flow in component_dict.items()}
+                                                           for component, component_dict in placement_dict.items()}
+                                               for placement, placement_dict in self.component_energy_inputs.items()}
+        object_copy.component_energy_outputs = {placement: {component: {carrier: copy(flow)
+                                                                        for carrier, flow in component_dict.items()}
+                                                            for component, component_dict in placement_dict.items()}
+                                                for placement, placement_dict in self.component_energy_outputs.items()}
+
+        object_copy.used_potentials = {carrier: copy(flow_profile)
+                                       for carrier, flow_profile in self.used_potentials.items()}
+        object_copy.system_energy_demand = {carrier: copy(flow_profile)
+                                            for carrier, flow_profile in self.system_energy_demand.items()}
+        object_copy.heat_rejection = {carrier: copy(flow_profile)
+                                      for carrier, flow_profile in self.heat_rejection.items()}
+        object_copy.greenhouse_gas_emissions = {carrier: copy(flow_profile)
+                                                for carrier, flow_profile in self.greenhouse_gas_emissions.items()}
+
+        object_copy.annual_cost = {carrier: cost for carrier, cost in self.annual_cost.items() }
+        object_copy.overall_fitness = {carrier: fitness for carrier, fitness in self.overall_fitness.items()}
+
+        return object_copy
+
     @staticmethod
     def evaluate_supply_system(capacity_indicators, system_structure, demand_energy_flow, objectives,
                                process_memory=None):
@@ -99,10 +134,14 @@ class SupplySystem(object):
         self.installed_components = self._build_supply_system()
         # operate primary components
         primary_demand_dict = {self.structure.main_final_energy_carrier.code: self.demand_energy_flow}
-        self._perform_water_filling_principle('primary', primary_demand_dict)
+        remaining_primary_demand_dict = self._draw_from_potentials(primary_demand_dict, reset=True)
+        remaining_primary_demand_dict = self._draw_from_infinite_sources(remaining_primary_demand_dict)
+        self._perform_water_filling_principle('primary', remaining_primary_demand_dict)
         # operate secondary components
         secondary_demand_dict = self._group_component_flows_by_ec('primary', 'in')
-        self._perform_water_filling_principle('secondary', secondary_demand_dict)
+        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
+        remaining_secondary_demand_dict = self._draw_from_infinite_sources(remaining_secondary_demand_dict)
+        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
         # operate tertiary components
         component_energy_release_dict = self._group_component_flows_by_ec(['primary', 'secondary'], 'out')
         tertiary_demand_dict = self._release_to_grids_or_env(component_energy_release_dict)
@@ -232,11 +271,9 @@ class SupplySystem(object):
         :param demand_dict: dictionary of demand energy flows that need to be met, keys are energy carrier codes
         :type demand_dict: dict of <cea.optimization_new.energyFlow>-EnergyFlow class objects
         """
-        remaining_demand_dict = self._draw_from_potentials(demand_dict, reset=True)
-        remaining_demand_dict = self._draw_from_infinite_sources(remaining_demand_dict)
 
-        for ec_code in remaining_demand_dict.keys():
-            demand = remaining_demand_dict[ec_code]
+        for ec_code in demand_dict.keys():
+            demand = demand_dict[ec_code]
 
             for component_model in self.structure.activation_order[placement]:
                 if not ((component_model in self.structure.component_selection_by_ec[placement][ec_code]) and
@@ -267,7 +304,7 @@ class SupplySystem(object):
 
         return self.component_energy_inputs, self.component_energy_outputs
 
-    def _draw_from_potentials(self, required_energy_flows, for_sizing=False, reset=False):
+    def _draw_from_potentials(self, required_energy_flows, reset=False):
         """
         Check if there are available local energy potentials that can provide the required energy flow.
         """
@@ -281,37 +318,21 @@ class SupplySystem(object):
                                 if ec_code in self.used_potentials.keys() else self.available_potentials[ec_code]
                                 for ec_code in self.available_potentials.keys()}
 
-        if for_sizing:
-            min_potentials = {ec_code: remaining_potentials[ec_code].profile.min()
-                              if ec_code in remaining_potentials.keys() else 0.0
-                              for ec_code in required_energy_flows.keys()}
-            insufficient_potential = {ec_code: min_potentials[ec_code] < required_energy_flows[ec_code]
-                                      for ec_code in min_potentials.keys()}
-            new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - min_potentials[ec_code]
-                                        for ec_code in required_energy_flows.keys()
-                                        if insufficient_potential}
-            for ec_code in min_potentials.keys():
-                if ec_code in self.used_potentials.keys():
-                    self.used_potentials[ec_code] += min_potentials[ec_code]
-                elif ec_code in self.available_potentials.keys():
-                    self.used_potentials[ec_code] = \
-                        EnergyFlow('source', 'secondary', ec_code,
-                                   pd.Series([min_potentials[ec_code]] * EnergyFlow.time_frame))
-        else:
-            usable_potential = {ec_code: remaining_potentials[ec_code].cap_at(required_energy_flows[ec_code].profile)
-                                if ec_code in remaining_potentials.keys() else required_energy_flows[ec_code].cap_at(0)
-                                for ec_code in required_energy_flows.keys()}
-            new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - usable_potential[ec_code]
-                                        for ec_code in required_energy_flows.keys()}
-            for ec_code in usable_potential.keys():
-                if ec_code in self.used_potentials.keys():
-                    self.used_potentials[ec_code] += usable_potential[ec_code]
-                elif ec_code in self.available_potentials.keys():
-                    self.used_potentials[ec_code] = usable_potential[ec_code]
+        usable_potential = {ec_code: remaining_potentials[ec_code].cap_at(required_energy_flows[ec_code].profile)
+                                     if ec_code in remaining_potentials.keys()
+                                     else required_energy_flows[ec_code].cap_at(0)
+                            for ec_code in required_energy_flows.keys()}
+        new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - usable_potential[ec_code]
+                                    for ec_code in required_energy_flows.keys()}
+        for ec_code in usable_potential.keys():
+            if ec_code in self.used_potentials.keys():
+                self.used_potentials[ec_code] += usable_potential[ec_code]
+            elif ec_code in self.available_potentials.keys():
+                self.used_potentials[ec_code] = usable_potential[ec_code]
 
         return new_required_energy_flow
 
-    def _draw_from_infinite_sources(self, required_energy_flows, for_sizing=False):
+    def _draw_from_infinite_sources(self, required_energy_flows):
         """
         Check if there are available external energy sources (e.g. power or gas grid) that can provide the required
         energy flow. If so, remove the respective flows from the dataframe of required energy flows.
@@ -322,12 +343,11 @@ class SupplySystem(object):
         new_required_energy_flow = {ec_code: flow for ec_code, flow in required_energy_flows.items()
                                     if ec_code not in self.structure.infinite_energy_carriers}
 
-        if not for_sizing:
-            self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
+        self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
 
         return new_required_energy_flow
 
-    def _release_to_grids_or_env(self, energy_flows_to_release, for_sizing=False):
+    def _release_to_grids_or_env(self, energy_flows_to_release):
         """
         Check if the energy flow that needs to be released to the environment or the relevant grids can sensibly be
         released.
@@ -338,14 +358,13 @@ class SupplySystem(object):
         remaining_energy_flows_to_release = {ec_code: flow for ec_code, flow in energy_flows_to_release.items()
                                              if ec_code not in self.structure.releasable_energy_carriers}
 
-        if not for_sizing:
-            if not SupplySystem._ec_releases_to_env:
-                SupplySystem._ec_releases_to_env = SupplySystemStructure().releasable_environmental_energy_carriers
-            if not SupplySystem._ec_releases_to_grids:
-                SupplySystem._ec_releases_to_grids = SupplySystemStructure().releasable_grid_based_energy_carriers
+        if not SupplySystem._ec_releases_to_env:
+            SupplySystem._ec_releases_to_env = SupplySystemStructure().releasable_environmental_energy_carriers
+        if not SupplySystem._ec_releases_to_grids:
+            SupplySystem._ec_releases_to_grids = SupplySystemStructure().releasable_grid_based_energy_carriers
 
-            self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
-            self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
+        self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
+        self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
 
         return remaining_energy_flows_to_release
 
@@ -394,9 +413,12 @@ class SupplySystem(object):
         Calculate green house gas emissions of all system energy demand flows.
         """
 
-        self.greenhouse_gas_emissions = {ec_code: energy_flow.replace(list(energy_flow[energy_flow<0]), 0)
-                                                  * EnergyCarrier.get_unit_ghg(ec_code)
-                                         for ec_code, energy_flow in self.system_energy_demand.items()}
+        self.greenhouse_gas_emissions = \
+            {ec_code: pd.Series((energy * EnergyCarrier.get_ghg_for_timestep(ec_code, timestep)
+                                 for timestep, energy
+                                 in energy_flow.replace(list(energy_flow[energy_flow<0]), 0).items()),
+                                index=EnergyFlow.time_series)
+             for ec_code, energy_flow in self.system_energy_demand.items()}
 
         return self.greenhouse_gas_emissions
 
@@ -414,8 +436,11 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = {ec_code: max(sum(energy_flow), 0) * EnergyCarrier.get_unit_cost(ec_code)
-                                     for ec_code, energy_flow in self.system_energy_demand.items()}
+        annual_energy_supply_cost = \
+            {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy') if energy > 0
+                          else - energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
+                          for timestep, energy in energy_flow.items())
+             for ec_code, energy_flow in self.system_energy_demand.items()}
 
         self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}
 
