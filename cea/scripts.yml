@@ -45,11 +45,11 @@ Data management:
     input-files:
       - [get_surroundings_geometry]
 
-  - name: tree-helper
-    label: Tree helper
+  - name: trees-helper
+    label: Trees helper
     description: Import tree geometries to scenario
     interfaces: [ cli, dashboard ]
-    module: cea.datamanagement.tree_helper
+    module: cea.datamanagement.trees_helper
     parameters: [ 'general:scenario', tree-helper ]
 
 Demand forecasting:
