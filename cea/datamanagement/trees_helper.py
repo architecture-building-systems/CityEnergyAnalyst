@@ -2,6 +2,7 @@ import os
 import shutil
 import warnings
 
+import fiona
 import geopandas as gpd
 from osgeo import gdal, osr
 
@@ -41,6 +42,11 @@ def main(config):
 
     trees_df = gpd.read_file(config.trees_helper.trees)
     terrain_raster = gdal.Open(locator.get_terrain())
+
+    # Set trees to zone crs
+    with fiona.open(locator.get_zone_geometry(), 'r') as f:
+        zone_crs = f.crs
+    trees_df.to_crs(zone_crs, inplace=True)
 
     verify_tree_properties(trees_df)
     check_terrain_bounds(trees_df.geometry, terrain_raster)
