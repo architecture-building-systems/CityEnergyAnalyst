@@ -171,6 +171,9 @@ class Domain(object):
             pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
             toolbox.register("map", pool.map)
 
+        building_coordinates = [building.location for building in self.buildings]
+
+        # Register genetic operators
         toolbox.register("generate", ConnectivityVector.generate)
         toolbox.register("individual", tools.initIterate, ConnectivityVector, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -178,8 +181,9 @@ class Domain(object):
         toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
                          energy_potentials=self.energy_potentials, optimization_tracker=tracker,
                          process_memory=main_process_memory)
-        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
-        toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
+        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm, connection_points=building_coordinates)
+        toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm,
+                         connection_points=building_coordinates)
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
                          optimization_tracker=tracker)
 
