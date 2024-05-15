@@ -51,6 +51,8 @@ Data management:
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
     parameters: [ 'general:scenario', trees-helper ]
+    input-files:
+      - [ get_terrain ]
 
 Demand forecasting:
   - name: radiation
