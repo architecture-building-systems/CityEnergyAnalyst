@@ -41,7 +41,8 @@ INPUT_DATABASES = [
     ('indoor-comfort', 'get_building_comfort'),
     ('air-conditioning-systems', 'get_building_air_conditioning'),
     ('supply-systems', 'get_building_supply'),
-    ('surroundings', 'get_surroundings_geometry')
+    ('surroundings', 'get_surroundings_geometry'),
+    ('trees', "get_tree_geometry")
 ]
 
 
@@ -61,7 +62,7 @@ def get_input_database_schemas():
 
 INPUTS = get_input_database_schemas()
 INPUT_KEYS = INPUTS.keys()
-GEOJSON_KEYS = ['zone', 'surroundings', 'streets', 'dc', 'dh']
+GEOJSON_KEYS = ['zone', 'surroundings', 'trees', 'streets', 'dc', 'dh']
 NETWORK_KEYS = ['dc', 'dh']
 
 
@@ -99,7 +100,7 @@ class InputGeojson(Resource):
             location = getattr(locator, db_info['location'])()
             if db_info['file_type'] != 'shp':
                 abort(500, 'Invalid database for geojson: %s' % location)
-            return df_to_json(location, bbox=True)[0]
+            return df_to_json(location)[0]
         elif kind in NETWORK_KEYS:
             return get_network(config, kind)[0]
         elif kind == 'streets':
@@ -123,9 +124,10 @@ class AllInputs(Resource):
         store['geojsons'] = {}
         store['connected_buildings'] = {}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), bbox=True)
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-            locator.get_surroundings_geometry(), bbox=True)
+            locator.get_surroundings_geometry())
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
@@ -152,12 +154,14 @@ class AllInputs(Resource):
             location = getattr(locator, db_info['location'])()
             file_type = db_info['file_type']
 
-            if len(tables[db]) != 0:
+            if tables.get(db) is None:  # ignore if table does not exist
+                continue
+
+            if len(tables[db]):
                 if file_type == 'shp':
-                    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
-                    out['geojsons'][db] = json.loads(table_df.to_json(show_bbox=True))
+                    out['geojsons'][db] = json.loads(table_df.to_json())
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
@@ -173,15 +177,22 @@ class AllInputs(Resource):
                     cea.utilities.dbf.dataframe_to_dbf(table_df, location)
                     out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
 
-            else:  # delete file if empty
-                out['tables'][db] = {}
-                if os.path.isfile(location):
+            else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)
+                if db == "surroundings":
+                    table_df = geopandas.GeoDataFrame(columns=["Name", "height_ag", "floors_ag"], geometry=[],
+                                                      crs=get_geographic_coordinate_system())
+                    table_df.to_file(location)
+
+                    out['tables'][db] = []
+
+                elif os.path.isfile(location):
                     if file_type == 'shp':
                         import glob
                         for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
                             os.remove(filepath)
                     elif file_type == 'dbf':
                         os.remove(location)
+
                 if file_type == 'shp':
                     out['geojsons'][db] = {}
 
@@ -258,8 +269,8 @@ def get_building_properties():
 
         except (IOError, DriverError, ValueError) as e:
             print(e)
-            store['tables'][db] = {}
-            store['columns'][db] = {}
+            store['tables'][db] = None
+            store['columns'][db] = None
 
     return store
 
@@ -306,17 +317,25 @@ def get_network(config, network_type):
         return None, [], None
 
 
-def df_to_json(file_location, bbox=False):
+def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
-        lat, lon = get_lat_lon_projected_shapefile(table_df)
-        crs = get_projected_coordinate_system(lat, lon)
+        if table_df.empty:
+            # Set crs to generic projection if empty
+            crs = table_df.crs.to_proj4()
+        else:
+            lat, lon = get_lat_lon_projected_shapefile(table_df)
+            crs = get_projected_coordinate_system(lat, lon)
+
+        if "Name" in table_df.columns:
+            table_df['Name'] = table_df['Name'].astype('str')
+
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())
-        out = json.loads(out.to_json(show_bbox=bbox))
+        out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError) as e:
         print(e)

@@ -13,9 +13,8 @@ Choose the one that suits your needs!
 
 Prerequisites
 ~~~~~~~~~~~~~
-* Download and install `Homebrew <https://brew.sh/>`__. Upon finishing installing Homebrew, pay attention to the message reverted. You may also have to execute ``brew install node``.
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__. Upon finishing installing Micromamba, pay attention to the message reverted.
+* Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
 
 Installation
 ~~~~~~~~~~~~
@@ -32,7 +31,7 @@ _________________________
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
-    #. Install Yarn by typing ``brew install yarn`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn electron:build`` and press ENTER.
     #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
@@ -58,6 +57,7 @@ These steps would only work if your current installation is installed using the 
 #. Update the CEA Dashboard:
     #. Type ``cd ~/Documents/GitHub/CityEnergyAnalyst-GUI`` and press ENTER.
     #. Type ``git pull`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn electron:build`` and press ENTER.
     #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
@@ -83,7 +83,7 @@ In order to launch the CEA dashboard, you will need to do the following **each t
 #. Type ``micromamba activate cea`` and press ENTER.
 #. Type ``cea dashboard`` and press ENTER.
 #. Wait for ``start socketio.run`` to appear (This might 3 min the first time)
-#. Navigate your Finer to this location (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``)
+#. Navigate your Finer to this location (``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``)
 #. Double click on the CEA Icon (CityEnergyAnalyst-GUI.app)
 #. Wait for the CEA Dashboard to launch
 
@@ -119,8 +119,8 @@ This method is suitable for users, but not developers. For developers, please re
 	#. If you only plan to run CEA from the command line interface, you're done!
 #. If you would like to use the CEA dashboard, you will need to download and build it manually:
 	#. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-	#. Download and install `Miniconda(64-bit) for Python 3.8 <https://conda.io/miniconda.html>`__.
-	#. Download and install `Homebrew <https://brew.sh/>`__.
+	#. Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
+	#. Download and install `Yarn <https://yarnpkg.com/getting-started/install>`__.
 	#. Clone the CEA GUI repository:
 		#. Press ``Cmd+Shift+O`` (clone repository) and select the URL tab.
 		#. Paste the CEA GUI GitHub address: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
@@ -131,7 +131,7 @@ This method is suitable for users, but not developers. For developers, please re
         #. Install Yarn by typing ``brew install yarn`` and press ENTER.
         #. Type ``yarn`` and press ENTER.
         #. Type ``yarn package`` and press ENTER.
-        #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/CityEnergyAnalyst-GUI-darwin-*``
+        #. You will find the CEA application in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 #. Running CEA:
     * You can run CEA a couple of different ways (see `Docker Interfaces`_ below).
     * If you are familiar with running CEA on a Windows computer, **please note that there are a few additional steps when running the dashboard on a Mac!**

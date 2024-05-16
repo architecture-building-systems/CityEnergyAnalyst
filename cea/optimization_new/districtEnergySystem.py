@@ -30,7 +30,7 @@ import pandas as pd
 import time
 import multiprocessing
 
-from copy import deepcopy
+from copy import copy
 from deap import algorithms, base, tools
 
 from cea.optimization_new.network import Network
@@ -77,6 +77,27 @@ class DistrictEnergySystem(object):
         else:
             print("Please set a valid identifier.")
 
+    def __copy__(self):
+        """ Create a copy of the district energy system object. """
+        # Initialize a new object
+        object_copy = DistrictEnergySystem(self.connectivity, self.consumers, self.energy_potentials)
+
+        # Assign the same values to the new object
+        #  First, all attributes that are shared between the original and the new object (same memory address)
+        object_copy.identifier = self.identifier
+        object_copy.stand_alone_buildings = self.stand_alone_buildings
+        object_copy.networks = self.networks
+
+        object_copy.energy_potentials = self.energy_potentials
+        object_copy.distributed_potentials = self.distributed_potentials
+        object_copy.subsystem_demands = self.subsystem_demands
+
+        #  Then, all attributes that are unique to the original object and need to be copied (new memory address)
+        object_copy.supply_systems = {network: [copy(supply_system) for supply_system in supply_systems]
+                                      for network, supply_systems in self.supply_systems.items()}
+
+        return object_copy
+
     @staticmethod
     def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None,
                                process_memory=None):
@@ -122,7 +143,7 @@ class DistrictEnergySystem(object):
 
         return non_dominated_systems, process_memory, optimization_tracker
 
-    def evaluate(self, optimization_tracker=None, return_full_des=False):
+    def evaluate(self, optimization_tracker=None, return_full_des=False, component_selection=None):
         """
         Evaluate the possible district energy system configurations (based on buildings, potentials and connectivity) by:
 
@@ -148,7 +169,12 @@ class DistrictEnergySystem(object):
         self.aggregate_demand()
         self.distribute_potentials()
 
-        # optimise supply systems for each network
+        # apply user-designated supply systems for each network ...
+        if component_selection:
+            self.apply_designated_supply_systems(component_selection)
+            return
+
+        # ... or find the optimal supply systems for each network
         self.generate_optimal_supply_systems()
 
         # aggregate objective functions for all subsystems across the entire district energy system
@@ -212,7 +238,7 @@ class DistrictEnergySystem(object):
         network_ids = [network.identifier for network in self.networks]
         self.subsystem_demands = dict([(network_id,
                                         EnergyFlow('primary', 'consumer', energy_carrier,
-                                                   pd.Series(0.0, index=np.arange(EnergyFlow.time_frame)))
+                                                   pd.Series(0.0, index=EnergyFlow.time_series))
                                         )
                                        for network_id in network_ids])
 
@@ -221,7 +247,7 @@ class DistrictEnergySystem(object):
                                      if building.identifier in network.connected_buildings]
             aggregated_demand = EnergyFlow.aggregate(building_demand_flows)[0]
             # subtract network losses (losses are negative, therefore subtracting them increases the demand requirement)
-            aggregated_demand.profile -= network.network_losses
+            aggregated_demand -= network.network_losses
             self.subsystem_demands[network.identifier] = aggregated_demand
 
         return self.subsystem_demands
@@ -292,6 +318,30 @@ class DistrictEnergySystem(object):
                             self.distributed_potentials[network_id][aux_energy_carrier] = aux_network_pot_flow
 
         return self.distributed_potentials
+
+    def apply_designated_supply_systems(self, designated_supply_system_components):
+        """
+        Apply designated supply systems to the district energy system.
+
+        :param dict designated_supply_system_components: component selection for the supply systems for each of the
+                                                         networks in the district energy system.
+        """
+        for network in self.networks:
+            # use the SupplySystemStructure methods to dimension each of the system's designated components
+            system_structure = SupplySystemStructure(max_supply_flow=self.subsystem_demands[network.identifier],
+                                                     available_potentials=self.distributed_potentials[network.identifier],
+                                                     user_component_selection=
+                                                     designated_supply_system_components[network.identifier])
+            system_structure.build()
+
+            # create a SupplySystem-instance and operate the system to meet the yearly demand profile.
+            designated_supply_system = SupplySystem(system_structure,
+                                                    system_structure.capacity_indicators,
+                                                    self.subsystem_demands[network.identifier])
+            designated_supply_system.evaluate()
+            self.supply_systems[network.identifier] = designated_supply_system
+
+        return self.supply_systems
 
     def generate_optimal_supply_systems(self):
         """
@@ -529,9 +579,10 @@ class DistrictEnergySystem(object):
                                    for system_selection in supply_system_combination}
 
         # create a copy of the general district energy solution (one connectivity + many non-dominated supply systems)
-        definitive_des = deepcopy(self)
+        definitive_des = copy(self)
 
-        # specify the selected SupplySystem for each of the subsystems
+        # specify the selected SupplySystem for each of the subsystems (one supply system per network &
+        #   per stand-alone building)
         for subsystem_id, supsys_index in supply_system_selection.items():
             definitive_des.supply_systems[subsystem_id] = self.supply_systems[subsystem_id][supsys_index]
 

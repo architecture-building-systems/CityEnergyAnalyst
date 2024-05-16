@@ -45,6 +45,15 @@ Data management:
     input-files:
       - [get_surroundings_geometry]
 
+  - name: trees-helper
+    label: Trees helper
+    description: Import tree geometries to scenario
+    interfaces: [ cli, dashboard ]
+    module: cea.datamanagement.trees_helper
+    parameters: [ 'general:scenario', trees-helper ]
+    input-files:
+      - [ get_zone_geometry ]
+      - [ get_terrain ]
 
 Demand forecasting:
   - name: radiation
@@ -161,7 +170,7 @@ Energy potentials:
     parameters: ['general:scenario', water-body]
 
   - name: photovoltaic-thermal
-    label: Photovoltaic-thermal Panels
+    label: Photovoltaic-thermal panels
     description: Calculate electricity & heat production from photovoltaic / thermal technologies
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
@@ -274,21 +283,21 @@ Optimization:
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
 
-  - name: optimization
-    label: Supply system Part II (centralized)
-    description: Run optimization for centralized operation
-    interfaces: [cli, dashboard]
-    module: cea.optimization.optimization_main
-    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
-    input-files:
-      - [get_street_network]
-      - [get_total_demand]
-      - [get_water_body_potential]
-      - [get_sewage_heat_potential]
-      - [get_geothermal_potential]
+#  - name: optimization
+#    label: Supply system Part II (centralized)
+#    description: Run optimization for centralized operation
+#    interfaces: [cli, dashboard]
+#    module: cea.optimization.optimization_main
+#    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
+#    input-files:
+#      - [get_street_network]
+#      - [get_total_demand]
+#      - [get_water_body_potential]
+#      - [get_sewage_heat_potential]
+#      - [get_geothermal_potential]
 
   - name: optimization-new
-    label: Supply system part II (centralized, beta)
+    label: Supply system part II (centralized)
     description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -322,7 +331,7 @@ Utilities:
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
   - name: batch-process-workflow
-    label: Batch process Workflow (beta)
+    label: Batch process Workflow
     description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
@@ -333,7 +342,7 @@ Utilities:
     description: "Migrate older scenario inputs to the latest version.
                   Please consider running this for scenario created before v3.22.
                   NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli]
     module: cea.datamanagement.data_migrator
     parameters: [ 'general:scenario' ]
     input-files:
@@ -365,7 +374,7 @@ Utilities:
   - name: create-mixed-use-type
     label: Create mixed-use type
     description: Creates a new use-type by aggregating values from a list of different use-types
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
     input-files:
@@ -374,14 +383,14 @@ Utilities:
   - name: test
     label: Test CEA
     description: Run some tests on the CEA
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.tests
     parameters: [test]
 
   - name: run-unit-tests
     label: Unit tests
     description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli, dashboard]
+    interfaces: [test, cli]
     module: cea.tests.run_unit_tests
     parameters: []
 
