@@ -61,7 +61,7 @@ jobs:
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
       - name: Package CEA GUI
-        shell: bash
+        shell: bash -el {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -128,7 +128,7 @@ jobs:
           echo -n $APPLE_API_KEY_BASE64 | base64 -d -o ${{ github.workspace }}/gui/api_key.p8
 
       - name: Package CEA GUI
-        shell: bash
+        shell: bash -el {0}
         env:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ github.workspace }}/gui/api_key.p8
