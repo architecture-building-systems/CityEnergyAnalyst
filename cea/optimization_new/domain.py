@@ -352,8 +352,8 @@ class Domain(object):
             supply_system = building.stand_alone_supply_system
 
             # Summarise structure of the supply system & print to file
-            building_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, supply_system_id)
-            building_file_cost = self.locator.get_new_optimization_supply_system_cost(des_id, supply_system_id)
+            building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
+            building_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, supply_system_id)
             Domain._write_system_structure(building_file, supply_system, building_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -363,8 +363,8 @@ class Domain(object):
         # FOR NETWORKS
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
-            network_file = self.locator.get_new_optimization_optimal_supply_system_file(des_id, network_id)
-            network_file_cost = self.locator.get_new_optimization_supply_system_cost(des_id, network_id)
+            network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
+            network_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, network_id)
             Domain._write_system_structure(network_file, supply_system, network_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
