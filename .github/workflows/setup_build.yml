@@ -127,8 +127,15 @@ jobs:
         run: |
           echo -n $APPLE_API_KEY_BASE64 | base64 -d -o ${{ github.workspace }}/gui/api_key.p8
 
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
       - name: Package CEA GUI
-        shell: bash -el {0}
         env:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ github.workspace }}/gui/api_key.p8
