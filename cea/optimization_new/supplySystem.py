@@ -593,7 +593,7 @@ class SupplySystem(object):
              for ec_code, energy_flow in self.bought_carriers.items()}
         annual_energy_supply_sold = {ec_code: - sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
                           for timestep, energy in energy_flow.items())
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+             for ec_code, energy_flow in self.sold_carriers.items()}
 
         for key in set(annual_energy_supply_cost) | set(annual_energy_supply_sold):
             annual_energy_supply[key] = annual_energy_supply_cost.get(key, 0) + annual_energy_supply_sold.get(key, 0)

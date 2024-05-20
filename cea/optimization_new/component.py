@@ -570,7 +570,7 @@ class CogenPlant(ActiveComponent):
 
 class Solar_PV(ActiveComponent):
 
-    _database_tab = 'photovoltaic_panels'
+    _database_tab = 'PHOTOVOLTAIC_PANELS'
 
     def __init__(self, pv_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -646,7 +646,7 @@ class Solar_PV(ActiveComponent):
 
 class Solar_collector(ActiveComponent):
 
-    _database_tab = 'solar_thermal_panels'
+    _database_tab = 'SOLAR_THERMAL_PANELS'
 
     def __init__(self, sc_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -878,7 +878,7 @@ class HeatSink(ActiveComponent):
     components through water loops, if any of the potentials (water basin, sewage, geothermal) are available  """
 
     main_side = 'input'
-    _database_tab = 'heat_sink'
+    _database_tab = 'HEAT_SINK'
 
     def __init__(self, ct_model_code, placement, capacity):
         # initialise parent-class attributes
@@ -1103,7 +1103,7 @@ class PowerTransformer(PassiveComponent):
 
 class Inverter(PassiveComponent):
 
-    _database_tab = 'inverters'
+    _database_tab = 'INVERTERS'
 
     def __init__(self, in_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
         # initialise parent-class attributes

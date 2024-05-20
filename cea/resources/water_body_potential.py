@@ -119,7 +119,7 @@ def update_ec(locator, Water_temperature):
     '''
 
     T_water = math.trunc(Water_temperature)
-    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    e_carriers = pd.read_excel(locator.get_database_feedstocks(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
     row_copy['mean_qual'] = T_water
     row_copy['code'] = f'T{T_water}LW'
@@ -132,7 +132,9 @@ def update_ec(locator, Water_temperature):
     else:
         e_carriers = pd.concat([e_carriers, row_copy], axis=0)
 
-    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+    with pd.ExcelWriter(locator.get_database_feedstocks(), mode="a", engine="openpyxl",
+                        if_sheet_exists="replace") as writer:
+        e_carriers.to_excel(writer, sheet_name='ENERGY_CARRIERS', index=False)
 
 def check_presence_water_basin(locator):
 

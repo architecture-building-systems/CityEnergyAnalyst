@@ -57,6 +57,8 @@ def calc_wasteheat_potential(locator):
     # export
     waste_gen = locator.get_wasteheat_potential()
     pd.DataFrame({"Ts_C": T_source, "Qdata_kW": Qh_waste_list}).to_csv(waste_gen, index=False, float_format='%.3f')
+    if T_source == 0:
+        return
     update_ec(locator, T_source)
 
 def datacenter_wasteheat_equation(area, it_load_power):
@@ -78,7 +80,7 @@ def update_ec(locator, temperature):
     '''
 
     water_temp = math.trunc(temperature)
-    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    e_carriers = pd.read_excel(locator.get_database_feedstocks(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
     row_copy['mean_qual'] = water_temp
     row_copy['code'] = f'T{water_temp}W'
@@ -91,7 +93,9 @@ def update_ec(locator, temperature):
     else:
         e_carriers = pd.concat([e_carriers, row_copy], axis=0)
 
-    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+    with pd.ExcelWriter(locator.get_database_feedstocks(), mode="a", engine="openpyxl",
+                        if_sheet_exists="replace") as writer:
+        e_carriers.to_excel(writer, sheet_name='ENERGY_CARRIERS', index=False)
 
 def calculate_industry_total_area(industries):
 

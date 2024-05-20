@@ -236,7 +236,7 @@ def calculate_external_sewage_flow(buffer_buildings, locator, water_consumption)
 
 def update_ec(locator, sewage_temperature):
     water_temp = math.trunc(sewage_temperature)
-    e_carriers = pd.read_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS')
+    e_carriers = pd.read_excel(locator.get_database_feedstocks(), sheet_name='ENERGY_CARRIERS')
     row_copy = e_carriers.loc[e_carriers['description'] == 'Fresh water'].copy()
     row_copy['mean_qual'] = water_temp
     row_copy['code'] = f'T{water_temp}SW'
@@ -249,7 +249,9 @@ def update_ec(locator, sewage_temperature):
     else:
         e_carriers = pd.concat([e_carriers, row_copy], axis=0)
 
-    e_carriers.to_excel(locator.get_database_energy_carriers(), sheet_name='ENERGY_CARRIERS', index=False)
+    with pd.ExcelWriter(locator.get_database_feedstocks(), mode="a", engine="openpyxl",
+                        if_sheet_exists="replace") as writer:
+        e_carriers.to_excel(writer, sheet_name='ENERGY_CARRIERS', index=False)
 
 def filter_buildings(buffer_buildings, locator):
     

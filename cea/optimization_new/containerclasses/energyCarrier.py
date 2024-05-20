@@ -148,7 +148,6 @@ class EnergyCarrier(object):
         data sets as class variables.
         """
         EnergyCarrier._load_energy_carriers(domain.locator)
-        EnergyCarrier._load_feedstock(domain.locator)
         EnergyCarrier._extract_thermal_energy_carriers()
         EnergyCarrier._extract_electrical_energy_carriers()
         EnergyCarrier._extract_combustible_energy_carriers()
