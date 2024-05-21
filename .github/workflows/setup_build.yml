@@ -2,6 +2,8 @@ name: Build CEA Setup
 
 on:
   workflow_dispatch
+permissions:
+  contents: write
 
 jobs:
   build_win_setup:
