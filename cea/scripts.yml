@@ -469,13 +469,6 @@ default:
     module: cea.interfaces.cli.shapefile_to_excel
     parameters: [shapefile-tools]
 
-  - name: trace-inputlocator
-    label: trace-inputlocator
-    description: trace all calls to the InputLocator for a script
-    interfaces: [cli]
-    module: cea.tests.trace_inputlocator
-    parameters: ['general:scenario', trace-inputlocator]
-
   - name: workflow
     label: Workflow
     description: Run a workflow.yml file from start to end
