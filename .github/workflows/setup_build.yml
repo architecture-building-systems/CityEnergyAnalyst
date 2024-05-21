@@ -98,6 +98,17 @@ jobs:
         with:
           path: cea
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Install CEA to python environment
+        run: pip install .
+
+      - name: Get CEA version
+        shell: bash
+        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           path: gui
@@ -106,17 +117,6 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           micromamba-binary-path: gui/dependencies/micromamba
-          environment-name: cea
-          create-args: >-
-            python=3.8
-
-      - name: Install CEA to environment
-        shell: bash -el {0}
-        run: pip install ./cea
-
-      - name: Get CEA version
-        shell: bash -el {0}
-        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
       - name: Save Apple API Key secret to file
         env:
