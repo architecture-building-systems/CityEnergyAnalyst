@@ -63,7 +63,7 @@ jobs:
       - name: Package CEA GUI
         shell: bash -el {0}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
@@ -141,7 +141,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd gui
           yarn
