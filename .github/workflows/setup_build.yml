@@ -4,6 +4,7 @@ on:
   workflow_dispatch
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build_win_setup:
