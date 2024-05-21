@@ -380,28 +380,6 @@ Utilities:
     input-files:
       - [get_database_use_types_properties]
 
-  - name: test
-    label: Test CEA
-    description: Run some tests on the CEA
-    interfaces: [cli]
-    module: cea.tests
-    parameters: [test]
-
-  - name: run-unit-tests
-    label: Unit tests
-    description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli]
-    module: cea.tests.run_unit_tests
-    parameters: []
-
-  - name: run-all-plots
-    label: Run all plots
-    description: Run all the plots for test purposes
-    interfaces: [test, cli]
-    module: cea.tests.run_all_plots
-    parameters: ["general:project", "general:scenario", "plots", "plots-comparisons", "plots-optimization",
-                 "plots-supply-system"]
-
 default:
 
   - name: multi-criteria-analysis
