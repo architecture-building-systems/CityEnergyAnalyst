@@ -2619,8 +2619,7 @@ get_database_air_conditioning_systems:
             system
           type: float
           unit: '[C]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
     HOT_WATER:
       columns:
         Description:
