@@ -16084,13 +16084,13 @@ get_zone_geometry:
         values: alphanumeric
         nullable: true
       house_name:
-        description: House number (if any)
+        description: House name (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
         nullable: true
       resi_type:
-        description: Residential type, e.g. HDB for Singapore (if any)
+        description: Residential type, if Singapore's HDB or not (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
@@ -16102,7 +16102,7 @@ get_zone_geometry:
         values: alphanumeric
         nullable: true
       country:
-        description: Country 2-digit code in the address (if any)
+        description: Country (2-digit) code in the address (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
