@@ -112,8 +112,11 @@ class CapacityIndicatorVector(object):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         else:
             self._capacity_indicators = new_capacity_indicators
-            # Limit the total capacity of the available solar components, due to limited area availability for solar installation
+            # Limit the total capacity of the available solar components,
+            # due to limited area availability for solar installation
             new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
+            # Size the storage technology in order to enhance integration of renewables
+            new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
             self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
                 self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
@@ -309,7 +312,8 @@ class CapacityIndicatorVector(object):
                                    if (self.capacity_indicators[i].category == category) and
                                    (self.capacity_indicators[i].main_energy_carrier == energy_carrier)
                                    and ('PV' not in self.capacity_indicators[i].code)
-                                   and ('SC' not in self.capacity_indicators[i].code)])
+                                   and ('SC' not in self.capacity_indicators[i].code)
+                                   and ('TES' not in self.capacity_indicators[i].code)])
 
         upper_bound_breached = round(cumulated_ci_values, 2) > \
                                round(upper_bound * CapacityIndicatorVector._overdimensioning_factor, 2)
@@ -389,6 +393,17 @@ class CapacityIndicatorVector(object):
 
         return capacity_indicator_values
 
+    def _dimension_storage_system(self, capacity_indicator_values):
+        # Size the thermal storage capacity as the capacity of the solar collector
+
+        for i, ci_value in enumerate(capacity_indicator_values):
+            if 'TES' in capacity_indicator_values[i].code:
+                SC_cap = max([CI.value if 'SC' in self.capacity_indicators[j].code else 0
+                              for j, CI in enumerate(capacity_indicator_values)])
+                capacity_indicator_values[i].value = SC_cap
+
+        return capacity_indicator_values
+
     def _get_upper_bound(self, category, energy_carrier, capacity_indicator_values):
         """
         Calculate the upper bound of cumulated capacity indicator values for a given category and
@@ -445,7 +460,8 @@ class CapacityIndicatorVector(object):
                                                    if (self.capacity_indicators[i].category == group['category']) and
                                                    (self.capacity_indicators[i].main_energy_carrier == group['main_ec'])
                                                    and (ci_value > 0) and ('PV' not in self.capacity_indicators[i].code)
-                                                   and ('SC' not in self.capacity_indicators[i].code)}
+                                                   and ('SC' not in self.capacity_indicators[i].code) and
+                                                   ('TES' not in self.capacity_indicators[i].code)}
 
                     lowest_ci_components = [component for component, value in non_zero_ci_values_in_group.items()
                                             if value == min(non_zero_ci_values_in_group.values())]

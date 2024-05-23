@@ -88,6 +88,7 @@ class Component(object):
         HeatSink.initialize_subclass_variables(Component._components_database)
         Solar_PV.initialize_subclass_variables(Component._components_database)
         Solar_collector.initialize_subclass_variables(Component._components_database)
+        ThermalStorage.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -722,6 +723,78 @@ class Solar_collector(ActiveComponent):
         thermal_potential = EnergyPotential().load_SCET_potential(self.locator, building_list)
 
         return thermal_potential
+
+class ThermalStorage(ActiveComponent):
+
+    _database_tab = 'THERMAL_ENERGY_STORAGES'
+
+    def __init__(self, storage_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(ThermalStorage._database_tab, storage_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.round_trip = self._model_data['round-trip efficiency'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))]
+
+    def operate(self, heating_out, demand = None):
+        """
+        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
+        The electrical output is simply given by that operating point. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        # self._check_operational_requirements(heating_out)
+
+        # initialize energy flows
+        input_thermal_flow = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+        input_thermal_flow.profile = heating_out.profile
+        output_thermal_flow = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
+        output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
+
+        # Operate thermal energy storage
+        for i in range(len(input_thermal_flow.profile) - 1):
+            if output_thermal_flow.profile[i] + input_thermal_flow.profile[i] > self.capacity:
+                output_thermal_flow.profile[i+1] = self.capacity - demand.profile[i]
+                demand.profile[i] = 0
+            else:
+                output_thermal_flow.profile[i+1] = max(self.round_trip * (output_thermal_flow.profile[i] +
+                                                        input_thermal_flow.profile[i]) - demand.profile[i], 0)
+                if output_thermal_flow.profile[i+1] > 0:
+                    demand.profile[i] = 0
+                else:
+                    demand.profile[i] = demand.profile[i] - self.round_trip * (output_thermal_flow.profile[i] +
+                                                                               input_thermal_flow.profile[i])
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {self.output_energy_carriers[0].code: output_thermal_flow}
+
+        return input_energy_flows, output_energy_flows, demand
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of thermal energy storage tech from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        Only the heating energy carriers are considered for thermal storage.
+        """
+        cp_database = components_database[ThermalStorage._database_tab]
+        cp_database = cp_database[cp_database['type'] == 'HEATING']
+        ThermalStorage.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
+                                                                           'water_temperature',
+                                                                           'water')
 
 class HeatPump(ActiveComponent):
 
