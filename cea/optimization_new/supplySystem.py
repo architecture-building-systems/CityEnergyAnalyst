@@ -279,6 +279,9 @@ class SupplySystem(object):
                 if not ((component_model in self.structure.component_selection_by_ec[placement][ec_code]) and
                         (component_model in self.installed_components[placement].keys())):
                     continue
+                # Operate storage component only when renewables are operated
+                if 'TES' in component_model:
+                    continue
 
                 component = self.installed_components[placement][component_model]
                 main_energy_flow = demand.cap_at(component.capacity)
@@ -294,6 +297,55 @@ class SupplySystem(object):
 
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
+
+                if 'PV' in component_model:
+                    # Take the solar profile in case PV is used and calculate the unsed energy to be sold on the grid
+                    main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
+                    demand_prior_PV = copy(demand)
+                    demand = demand - main_energy_flow
+                    # Keep the remaining PV production and send it to the grid
+                    if (main_energy_flow - demand_prior_PV).profile.sum() > 0:
+                        self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
+                                                                                              demand_prior_PV)
+                    else:
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+
+                elif 'SC' in component_model:
+                    # Take the solar profile in case SC is used
+                    main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
+                    demand_prior_SC = copy(demand)
+                    demand = demand - main_energy_flow
+                    # Keep the remaining SC production and send it to the thermal storage
+                    if (main_energy_flow - demand_prior_SC).profile.sum() > 0:
+                        self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
+                                                                                              demand_prior_SC)
+
+                        # Use a thermal storage to store the remaining energy and use it in different timesteps
+                        thermal_storage = [tech for comp_code, tech in self.installed_components[placement].items() if 'TES' in comp_code]
+                        self.component_energy_inputs[placement][thermal_storage[0].code], \
+                            self.component_energy_outputs[placement][thermal_storage[0].code], demand = (
+                            thermal_storage[0].operate(self.component_energy_outputs[placement][component_model][ec_code], demand))
+
+                        self.component_ec_profiles[placement][thermal_storage[0].code] = \
+                                copy(self.component_energy_outputs[placement][thermal_storage[0].code])
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+                        del self.component_energy_outputs[placement][thermal_storage[0].code][ec_code]
+
+                    else:
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+                else:
+                    demand = demand - main_energy_flow
+
+                self.component_ec_profiles[placement][component_model] = {ec_code: copy(main_energy_flow)}
+
+            if ec_code == 'E230AC' and demand.profile.sum() > 0:
+                # When PV is used, need to draw electricity from the grid once the production is too low in order to satisfy the 
+                # demand
+                leftovers = self._draw_from_infinite_sources({ec_code: demand})
+                if leftovers:
+                    demand.profile = leftovers[ec_code].profile
+                else:
+                    demand.profile = pd.Series([0] * len(demand.profile))
 
             if not isclose(max(demand.profile), 0, abs_tol=1e-09):
                 raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '

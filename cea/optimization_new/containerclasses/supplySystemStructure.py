@@ -254,6 +254,14 @@ class SupplySystemStructure(object):
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
 
+        for technology in optimisation_config.solar_technologies:
+            active_components_list.append(ActiveComponent.get_subclass(technology))
+            component_types_list.append(ActiveComponent.get_types(technology))
+
+        for technology in optimisation_config.storage_technologies:
+            active_components_list.append(ActiveComponent.get_subclass(technology))
+            component_types_list.append(ActiveComponent.get_types(technology))
+
         for technology in optimisation_config.heating_components:
             active_components_list.append(ActiveComponent.get_subclass(technology))
             component_types_list.append(ActiveComponent.get_types(technology))
@@ -529,7 +537,20 @@ class SupplySystemStructure(object):
         for component, component_models in viable_component_models:
             for model_code in component_models:
                 try:
-                    viable_components_list.append(component(model_code, component_placement, maximum_demand))
+                    # For solar components, limit the capacity based on radiation availability istead of maximum required demand
+                    if 'PV' in model_code:
+                        PV_potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap_PV = PV_potential.main_potential.profile.max()
+                        viable_components_list.append(component(model_code, component_placement, max_cap_PV))
+                    elif 'SC' in model_code:
+                        SC_potential = component(model_code, component_placement, maximum_demand).load_potentials()
+                        max_cap_SC = SC_potential.main_potential.profile.max()
+                        viable_components_list.append(component(model_code, component_placement, max_cap_SC))
+                    elif 'TES' in model_code and 'SC' in [thermal_component.code for thermal_component in viable_components_list][0]:
+                        # Initialise thermal storage at same capacity of the solar collector
+                        viable_components_list.append(component(model_code, component_placement, max_cap_SC))
+                    else:
+                        viable_components_list.append(component(model_code, component_placement, maximum_demand))
                 except ValueError:
                     pass
 
@@ -721,8 +742,9 @@ class SupplySystemStructure(object):
                                                      component.operate(passive_component_demand_flows[component.code])
                                                  for component in viable_active_components}
             else:
-                input_and_output_energy_flows = {component.code: component.operate(main_flow)
-                                                 for component in viable_active_components}
+                energy_flows = {component.code: component.operate(main_flow)
+                        for component in viable_active_components if component.technology != 'Thermal Energy Storages'}
+                input_and_output_energy_flows.update(energy_flows)
 
         return input_and_output_energy_flows
 
