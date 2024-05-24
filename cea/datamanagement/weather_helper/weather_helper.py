@@ -23,7 +23,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-WEATHER_DATA_LOCATION = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'weather.geojson')
+from cea.datamanagement.weather_helper.generate_weather_data_sources import WEATHER_DATA_LOCATION
 
 
 def fetch_weather_data(zone_file: str):
