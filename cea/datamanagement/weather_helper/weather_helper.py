@@ -26,7 +26,7 @@ __status__ = "Production"
 from cea.datamanagement.weather_helper.generate_weather_data_sources import WEATHER_DATA_LOCATION
 
 
-def fetch_weather_data(zone_file: str):
+def fetch_weather_data(weather_file: str, zone_file: str):
     """
     Fetch weather data from Climate.OneBuilding based on zone location
 
@@ -38,6 +38,7 @@ def fetch_weather_data(zone_file: str):
     centroid = zone_gdf.dissolve().centroid.to_crs(weather_data.crs)[0]
     index = weather_data.sindex.nearest(centroid)[1][0]
     url = f"https://climate.onebuilding.org/{weather_data.iloc[index]['url']}"
+    data_source_url = "https://climate.onebuilding.org/sources/default.html"
 
     print(f"Downloading weather data: {url}")
     r = requests.get(url)
@@ -45,9 +46,14 @@ def fetch_weather_data(zone_file: str):
         for file_info in z.infolist():
             if file_info.filename.endswith('.epw'):
                 z.extract(file_info, tmpdir)
-                shutil.copyfile(os.path.join(tmpdir, file_info.filename),
-                                cea.inputlocator.InputLocator(cea.config.Configuration().scenario).get_weather_file())
-    print("For more information about TMYx weather files, visit https://climate.onebuilding.org/sources/default.html")
+                shutil.copyfile(os.path.join(tmpdir, file_info.filename), weather_file)
+    print(f"For more information about TMYx weather files, visit {data_source_url}")
+
+    with open(os.path.join(os.path.dirname(weather_file), "reference.txt"), "w") as f:
+        f.write(
+            f"Weather file downloaded from {url}\n\n"
+            f"Data source information: {data_source_url}"
+        )
 
 
 def copy_weather_file(source_weather_file, locator):
@@ -81,7 +87,7 @@ def main(config):
 
     if config.weather_helper.weather == "":
         print("No weather provided, fetching from online sources.")
-        fetch_weather_data(locator.get_zone_geometry())
+        fetch_weather_data(locator.get_weather_file(), locator.get_zone_geometry())
     else:
         copy_weather_file(weather, locator)
 
