@@ -766,16 +766,14 @@ class ThermalStorage(ActiveComponent):
         # Operate thermal energy storage
         for i in range(len(input_thermal_flow.profile) - 1):
             if output_thermal_flow.profile[i] + input_thermal_flow.profile[i] > self.capacity:
-                output_thermal_flow.profile[i+1] = self.capacity - demand.profile[i]
-                demand.profile[i] = 0
+                output_thermal_flow.profile[i+1] = self.capacity - demand.profile[i] / self.round_trip
+                demand.profile[i] = max(demand.profile[i] - self.round_trip * self.capacity, 0)
             else:
-                output_thermal_flow.profile[i+1] = max(self.round_trip * (output_thermal_flow.profile[i] +
-                                                        input_thermal_flow.profile[i]) - demand.profile[i], 0)
-                if output_thermal_flow.profile[i+1] > 0:
-                    demand.profile[i] = 0
-                else:
-                    demand.profile[i] = demand.profile[i] - self.round_trip * (output_thermal_flow.profile[i] +
-                                                                               input_thermal_flow.profile[i])
+                output_thermal_flow.profile[i+1] = max(output_thermal_flow.profile[i] +
+                                                        input_thermal_flow.profile[i] -
+                                                       demand.profile[i] / self.round_trip , 0)
+                demand.profile[i] = max(demand.profile[i] - self.round_trip * (output_thermal_flow.profile[i] +
+                                                                            input_thermal_flow.profile[i]), 0)
 
         # reformat outputs to dicts
         input_energy_flows = {}
