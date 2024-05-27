@@ -153,7 +153,7 @@ class Domain(object):
 
         algorithm = DistrictEnergySystem.optimisation_algorithm
         if self.config.general.debug:
-            nbr_networks = self.config.optimization_new.maximum_number_of_networks
+            nbr_networks = self.config.optimization_new.buildings_to_networks_ratio // len(self.buildings) + 1
             building_ids = [building.identifier for building in self.buildings]
             tracker = optimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
         else:

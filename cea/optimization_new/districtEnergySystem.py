@@ -44,7 +44,6 @@ from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import M
 
 
 class DistrictEnergySystem(object):
-    _max_nbr_networks = 0
     _number_of_selected_DES = 0
     _network_type = ""
     _civ_memory = CapacityIndicatorVectorMemory()
@@ -597,7 +596,6 @@ class DistrictEnergySystem(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Store maximum number of networks and optimisation algorithm parameters in class variables. """
-        DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
         DistrictEnergySystem._network_type = domain.config.optimization_new.network_type
 
         # set district energy system optimisation parameters
