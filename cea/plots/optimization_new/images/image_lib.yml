@@ -57,9 +57,6 @@ Components:
     CCGT1:
       icon: "gasTurbine_icon.png"
       color: "grey"
-    TES1:
-      icon: "storage_icon.png"
-      color: "purple_lighter"
     PV1:
       icon: "pv_panel_icon.png"
       color: "yellow_lighter"
@@ -87,6 +84,9 @@ Components:
     IN1:
       icon: "inverter_icon.png"
       color: "grey"
+    TES1:
+      icon: "water_tank_icon.png"
+      color: "purple_lighter"
 
 
 
