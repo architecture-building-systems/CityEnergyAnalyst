@@ -20,7 +20,7 @@ from sklearn.cluster import HDBSCAN
 
 class Clustering(object):
 
-    def __init__(self, building_centroids:list, min_samples:int=5, grid_size:float=300, subdivision_threshold:int=10):
+    def __init__(self, building_centroids:list, min_samples:int=5, grid_size:float=300, subdivision_threshold:int=5):
         """
         :param building_centroids: list of building centroids
         :type building_centroids: list of shapely.geometry.point.Point objects
@@ -54,7 +54,7 @@ class Clustering(object):
         Subdivides clusters if they are too large.
         :return: list of cluster indexes
         """
-        if max(self.cluster_indexes) < 0 or self.area_small or self.number_of_small:
+        if max(self.cluster_indexes) < 0 or self.area_small() or self.nbr_points_small():
            return self.cluster_indexes
 
         # assign points to grid cells
@@ -75,10 +75,10 @@ class Clustering(object):
 
         return x_range + y_range < 4 * self.grid_size
 
-    def number_of_small(self):
-        """ Check if the number of clusters is too small to do subdivision. """
+    def nbr_points_small(self):
+        """ Check if the number of building centroids is too small to do subdivision. """
 
-        return len(self.points) < 10 * self.subdivision_threshold
+        return len(self.points) < 4 * self.subdivision_threshold
 
     def points_to_grid(self):
         """
@@ -115,16 +115,39 @@ class Clustering(object):
         # count points per subdivision (i.e. points in the same cluster and the same grid cell)
         points_per_subdivision = self.count_points_per_subdivision()
 
-        # split up clusters around their most populous grid cell if the latter surpasses the chosen threshold
-        for cluster_index, points_per_grid_cell in points_per_subdivision.items():
-            most_dense_cell = max(points_per_grid_cell.keys(), key=(lambda key: points_per_subdivision[-1][key]))
+        # split up clusters around their most populous grid cell until none of them can be split up further
+        nbr_clusters = len(points_per_subdivision.keys())
+        unsplitable_clusters = [-1] if -1 in points_per_subdivision.keys() else []
 
-            # if the most dense cell does not surpass the threshold, do not subdivide
-            if points_per_grid_cell[most_dense_cell] < self.subdivision_threshold:
-                continue
-            else:
-                new_cluster_index = self.split_off_new_cluster(cluster_index, most_dense_cell, points_per_subdivision)
-                self.recount_points_after_division(cluster_index, new_cluster_index, )
+        while len(unsplitable_clusters) < nbr_clusters:
+            # determine which clusters have yet to be checked for splitting and...
+            clusters_to_check = [cluster_index for cluster_index in points_per_subdivision.keys()
+                                 if cluster_index not in unsplitable_clusters]
+            # determine how many points they hold per grid subdivision
+            points_per_subdivision = {cluster_index: points_per_grid_cell for cluster_index, points_per_grid_cell in
+                                      points_per_subdivision.items() if cluster_index in clusters_to_check}
+
+            # for each cluster, find the most dense grid cell and split the cluster around it
+            for cluster_index, points_per_grid_cell in points_per_subdivision.items():
+                most_dense_cell = max(points_per_grid_cell, key=points_per_grid_cell.get)
+
+                # if the most dense cell does not surpass the threshold, do not subdivide...
+                if points_per_grid_cell[most_dense_cell] < self.subdivision_threshold:
+                    unsplitable_clusters.append(cluster_index)
+                else:
+                    # if it does, split the cluster towards the side that holds the most points (N, S, E or W)
+                    new_cluster_index = self.split_off_new_cluster(cluster_index, most_dense_cell, points_per_subdivision)
+                    # and recount the points per subdivision for the new cluster
+                    points_per_subdivision = self.recount_points_after_division(cluster_index, new_cluster_index,
+                                                                                points_per_subdivision)
+                    # if the new cluster has been added successfully, break off the for loop and start anew
+                    if len(points_per_subdivision.keys()) > nbr_clusters:
+                        nbr_clusters = len(points_per_subdivision.keys())
+                        break
+                    else:
+                        # in the cases where the cluster could not be split (e.g. none of the sides had enough points)
+                        # add the cluster to the list of unsplitable clusters
+                        unsplitable_clusters.append(cluster_index)
 
         return self.cluster_indexes
 
@@ -180,18 +203,21 @@ class Clustering(object):
 
         return new_cluster_index
 
-    def recount_points_after_division(self, old_cluster:int, new_cluster:int, points_per_subdivion:dict):
+    def recount_points_after_division(self, old_cluster:int, new_cluster:int, points_per_subdivision:dict):
         """
         Recounts the points per subdivision after a cluster has been split.
         """
-        points_per_subdivion[new_cluster] = {}
-        relevant_grid_cells = list(points_per_subdivion[old_cluster].keys())
+        if not new_cluster:
+            return points_per_subdivision
+
+        points_per_subdivision[new_cluster] = {}
+        relevant_grid_cells = list(points_per_subdivision[old_cluster].keys())
 
         for grid_cell_index in relevant_grid_cells:
             points_in_new_cluster = self.grid_cell_indexes[self.cluster_indexes == new_cluster].count(grid_cell_index)
             if points_in_new_cluster > 0:
-                points_per_subdivion[new_cluster][grid_cell_index] = points_in_new_cluster
-                del points_per_subdivion[old_cluster][grid_cell_index]
+                points_per_subdivision[new_cluster][grid_cell_index] = points_in_new_cluster
+                del points_per_subdivision[old_cluster][grid_cell_index]
 
-        return points_per_subdivion
+        return points_per_subdivision
 
