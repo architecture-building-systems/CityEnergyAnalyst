@@ -112,12 +112,15 @@ class CapacityIndicatorVector(object):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         else:
             self._capacity_indicators = new_capacity_indicators
-            # Limit the total capacity of the available solar components,
-            # due to limited area availability for solar installation
-            new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
-            # Size the storage technology in order to enhance integration of renewables
-            new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
-            self._capacity_indicators = new_capacity_indicators
+            solar_capacity = sum([component.value for i, component in enumerate(self._capacity_indicators)
+                                  if 'PV' in component.code or 'SC' in component.code])
+            if solar_capacity > 1:
+                # Limit the total capacity of the available solar components,
+                # due to limited area availability for solar installation
+                new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
+                # Size the storage technology in order to enhance integration of renewables
+                new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
+                self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
                 self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
 
@@ -345,6 +348,16 @@ class CapacityIndicatorVector(object):
                                                 (self.capacity_indicators[i].code != PV_component) else ci_value.value
                                              for i, ci_value in enumerate(capacity_indicator_values)]
 
+            # Use the random number to scale the capacity of the selected PV component and allow the optimizer to use
+            # the capacities of the solar components which are smaller than the maximum capacity
+
+            random_number = random.random()
+
+            new_capacity_indicator_values = [ci_value.value
+                                             if (self.capacity_indicators[i].code != PV_component)
+                                             else ci_value.value * random_number
+                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
+
             for i, ci_value in enumerate(capacity_indicator_values):
                 ci_value.value = new_capacity_indicator_values[i]
 
@@ -357,6 +370,13 @@ class CapacityIndicatorVector(object):
                                              if (self.capacity_indicators[i].code in SC_components) and
                                                 (self.capacity_indicators[i].code != SC_component) else ci_value.value
                                              for i, ci_value in enumerate(capacity_indicator_values)]
+
+            random_number = random.random()
+
+            new_capacity_indicator_values = [ci_value.value
+                                             if (self.capacity_indicators[i].code != SC_component)
+                                             else ci_value.value * random_number
+                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
 
             for i, ci_value in enumerate(capacity_indicator_values):
                 ci_value.value = new_capacity_indicator_values[i]
@@ -380,13 +400,18 @@ class CapacityIndicatorVector(object):
 
         while ((non_zero_ci_values_in_solar[PV_component] + non_zero_ci_values_in_solar[SC_component]) >
                upper_bound + tolerance):
-            component_to_resize = random.choice(solar_components)
 
-            non_zero_ci_values_in_solar[component_to_resize] = non_zero_ci_values_in_solar[component_to_resize] - 0.1
-            new_capacity_indicator_values = [ci_value
-                                             if not self.capacity_indicators[i].code == component_to_resize
-                                             else round(max(non_zero_ci_values_in_solar[component_to_resize], 0), 2)
-                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
+            random_number_PV = round(random.random(), 2)
+            random_number_SC = round(random.random(), 2)
+
+            non_zero_ci_values_in_solar[PV_component] = non_zero_ci_values_in_solar[PV_component] * random_number_PV
+            non_zero_ci_values_in_solar[SC_component] = non_zero_ci_values_in_solar[SC_component] * random_number_SC
+
+            for i, ci_value in enumerate(new_capacity_indicator_values):
+                if self.capacity_indicators[i].code == PV_component:
+                    new_capacity_indicator_values[i] = non_zero_ci_values_in_solar[PV_component]
+                elif self.capacity_indicators[i].code == SC_component:
+                    new_capacity_indicator_values[i] = non_zero_ci_values_in_solar[SC_component]
 
         for i, ci_value in enumerate(capacity_indicator_values):
             ci_value.value = new_capacity_indicator_values[i]
