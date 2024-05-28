@@ -386,7 +386,7 @@ if __name__ == '__main__':
     from cea.plots.variable_naming import COLOR, NAMING
 
     # select one tank to test
-    type_storage = "TES6"
+    type_storage = "TES1"
 
     # test tank based in unittests (Check the unittests to see how this works)
     from cea.tests.test_technologies import TestColdPcmThermalStorage
@@ -396,15 +396,15 @@ if __name__ == '__main__':
 
     # the test returns a. results of the checkResults, b. the data, c. a description of the tank.
     # the first is used as reference parameter of the checkResults. The B and C are used to make a plot as follows.
-    results, data, description = test.test_cold_pcm_thermal_storage(checkResults=True)
+    results, data, description = test.test_cold_pcm_thermal_storage(checkResults=False)
     print(results)
 
     # here is the second test about volume and costs of the storage
-    results = test.test_cold_pcm_thermal_storage_costs(checkResults=True)
+    results = test.test_cold_pcm_thermal_storage_costs(checkResults=False)
     print(results)
 
     # plot results
-    analysis_fields = ["Q_DailyStorage_gen_directload_W", "Q_DailyStorage_to_storage_W"]
+    analysis_fields = ["Q_DailyStorage_gen_directLoad_W", "Q_DailyStorage_to_storage_W"]
     traces = []
     fig = go.Figure()
     for field in analysis_fields:
