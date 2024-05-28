@@ -8,10 +8,7 @@ Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows sy
 Prerequisites
 ~~~~~~~~~~~~~
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
-* Download and Install `Mamba <https://mamba.readthedocs.io/en/latest/installation.html>`__.
-* Download and Install `Git <https://mamba.readthedocs.io/en/latest/installation.html>`__.
-* Download and Install `Node <https://nodejs.org/en/download>`__.
-* Download and Install `Yarn <https://github.com/yarnpkg/yarn/releases/download/v1.22.4/yarn-1.22.4.msi>`__.
+* Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
 
 Installation
 ~~~~~~~~~~~~
@@ -20,16 +17,18 @@ Installation
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
 #. Install CEA backend:
-    #. Open a Miniforge Prompt console (you find it in your start menu)
+    #. Open a Powershell console (you can search for it in your start menu)
     #. Type ``cd Documents/GitHub/CityEnergyAnalyst`` and press ENTER.
-    #. Type ``mamba env create -f environment.yml`` and press ENTER.
-    #. Type ``mamba activate cea`` and press ENTER.
+    #. Type ``micromamba env remove -n cea`` and press ENTER.
+    #. Type ``micromamba env create -n cea -f conda-lock.yml`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``pip install -e .`` and press ENTER *(mind the dot '.'!)*.
 #. Build the CEA dashboard:
     #. Type ``cd ..`` and press ENTER, then type ``cd CityEnergyAnalyst-GUI`` and press ENTER.
+    #. Type ``micromamba activate cea`` and press ENTER.
     #. Type ``yarn`` and press ENTER.
     #. Type ``yarn electron:build`` and press ENTER.
-    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/win-unpacked/``
+    #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/win-unpacked/CityEnergyAnalyst-GUI.exe``
 
 Interfaces
 ~~~~~~~~~~

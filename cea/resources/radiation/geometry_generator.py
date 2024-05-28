@@ -576,6 +576,28 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
         raise ValueError('Terrain provided does not cover all building geometries')
 
 
+def tree_geometry_generator(tree_df, terrain_raster):
+    terrian_projection = terrain_raster.GetProjection()
+    proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
+    tree_df = tree_df.to_crs(proj4_str)
+
+    elevation_map = ElevationMap.read_raster(terrain_raster)
+
+    from multiprocessing.pool import Pool
+    from multiprocessing import cpu_count
+
+    with Pool(cpu_count() - 1) as pool:
+        surfaces = [
+            fetch.faces_frm_solid(result) for result in pool.starmap(
+                process_geometries, (
+                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
+                )
+            )
+        ]
+
+    return surfaces
+
+
 def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster)
