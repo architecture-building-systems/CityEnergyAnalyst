@@ -61,13 +61,13 @@ jobs:
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
       - name: Package CEA GUI
-        shell: bash
+        shell: bash -el {0}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
-          yarn version --new-version $CEA_VERSION --no-git-tag-version
+          yarn version $CEA_VERSION
           yarn electron:release
           mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 
@@ -92,14 +92,22 @@ jobs:
           compression-level: 0 
 
   build_mac_dmg:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ["macos-12", "macos-14"]
+    runs-on: "macos-12"
     steps:
       - uses: actions/checkout@v4
         with:
           path: cea
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Install CEA to python environment
+        run: pip install ${{ github.workspace }}/cea
+
+      - name: Get CEA version
+        shell: bash
+        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
         with:
@@ -109,36 +117,30 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           micromamba-binary-path: gui/dependencies/micromamba
-          environment-name: cea
-          create-args: >-
-            python=3.8
-
-      - name: Install CEA to environment
-        shell: bash -el {0}
-        run: pip install ./cea
-
-      - name: Get CEA version
-        shell: bash -el {0}
-        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
       - name: Save Apple API Key secret to file
         env:
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
         run: |
           echo -n $APPLE_API_KEY_BASE64 | base64 -d -o ${{ github.workspace }}/gui/api_key.p8
+  
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+  
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Package CEA GUI
-        shell: bash
         env:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ github.workspace }}/gui/api_key.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd gui
           yarn
-          yarn version --new-version $CEA_VERSION --no-git-tag-version
-          yarn electron:release
-
+          yarn version $CEA_VERSION
+          yarn electron:release --arm64 --x64

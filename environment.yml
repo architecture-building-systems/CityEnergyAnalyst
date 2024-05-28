@@ -1,52 +1,47 @@
 name: cea
 channels:
 - conda-forge
-- defaults
 dependencies:
+- cvxopt # For wntr
 - deap
 - ephem
+- fiona
 - flask
 - flask-cors
-- flask-restx
-- werkzeug==2.0.*
-- gevent
-- gevent-websocket
-- ipykernel
-- ipython
+- flask-restx>=1.3.0 # Support for Flask >= 2.0
+- flask-socketio
+- geopandas=0.13 # Due to python3.8 support
+- gevent # Required for flask-socketio, requires wheel building
+- gevent-websocket # Required for flask-socketio
+- libpysal
+- networkx=2.8
+- numba=0.57
+- numpy=1.24 # Due to python3.8 support
+- numpy-financial
+- osmnx=1.8
+- pip
+- pillow # Make sure that Pillow is installed instead of PIL for staticmap
+- psutil
+- pvlib-python
+- python=3.8 # Held back by wntr version
+- pythonocc-core==7.7.0 # Avoid deprecation warnings
+- pytz # Not required from 3.9
+- pyyaml
+- salib
+- scipy=1.10 # Due to python3.8 support
+- shapely=2
+- timezonefinder
+- matplotlib
 - notebook
 - openpyxl
 - plotly
-- sphinx
-- sympy
 - utm
-- wntr=0.2.2.1
-- blosc <=1.21.0
-- fiona
-- geopandas<0.14
-- matplotlib-base
-- networkx<3
-- numba
-- numpy<1.24
-- numpy-financial
-- osmnx<1.4
-- pandas<2
-- pip
-- psutil
-- pysal=2.1.0
-- python>=3.7
-- pythonocc-core=7.4.1
-- pytz
-- pvlib-python
-- scikit-learn=1.3.2
-- scipy
-- setuptools
-- shapely<2
-- pyyaml
-- timezonefinder
-- python-cufflinks
+- xlrd
+- xlwt
+- pyarrow
+- git
+- yarn=4 # Use latest version of yarn
 - pip:
-  - xlrd
-  - xlwt
   - staticmap
-  - py4design-cea
-  - pyarrow
+  - wntr==0.2.3
+  - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
