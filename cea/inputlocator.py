@@ -550,6 +550,12 @@ class InputLocator(object):
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
 
+    def get_tree_geometry_folder(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry')
+
+    def get_tree_geometry(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry', 'trees.shp')
+
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         shapefile_path = os.path.join(self.get_building_geometry_folder(), 'zone.shp')

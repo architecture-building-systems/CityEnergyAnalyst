@@ -18,6 +18,7 @@ import json
 import cea.inputlocator
 import cea.api
 import cea.config
+from cea.plots.colors import color_to_rgb
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 api = Namespace('Project', description='Current project for CEA')
@@ -296,12 +297,12 @@ class ScenarioImage(Resource):
                         zone_df = zone_df.to_crs(get_geographic_coordinate_system())
                         polygons = zone_df['geometry']
 
-                        m = StaticMap(256, 160)
+                        m = StaticMap(256, 160, url_template='http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png')
                         if len(polygons) <= building_limit:
                             polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in
                                         range(polygons.shape[0])]
                             for polygon in polygons:
-                                out = Polygon(polygon, 'blue', 'black', False)
+                                out = Polygon(polygon, color_to_rgb('purple'), 'black', False)
                                 m.add_polygon(out)
                         else:
                             print(f'Number of buildings({len(polygons)}) exceed building limit({building_limit}): '
@@ -309,7 +310,7 @@ class ScenarioImage(Resource):
                             # Generate only the shape outline of the zone area
                             convex_hull = polygons.unary_union.convex_hull
                             polygon = convex_hull.exterior.coords
-                            out = Polygon(polygon, None, 'blue', False)
+                            out = Polygon(polygon, None, color_to_rgb('purple'), False)
                             m.add_polygon(out)
 
                         image = m.render()

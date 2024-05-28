@@ -1,7 +1,7 @@
 How to Cite
 ===========
 
-The CEA Team. (2024). City Energy Analyst (v3.35.5). Zenodo. https://doi.org/10.5281/zenodo.10847779
+The CEA Team. (2024). City Energy Analyst (v3.36.0). Zenodo. https://doi.org/10.5281/zenodo.10950383
 
 The CEA team
 ============
@@ -11,6 +11,46 @@ and split into the categories of developers, product owner, project sponsor and 
 
 
 <!-- credits -->
+- Version 3.36.0 - May 2024
+
+    Developers:
+    * [Amr Elesawy](https://cityenergyanalyst.com/people)
+    * [Jimeno A. Fonseca](https://cityenergyanalyst.com/people)
+    * [Gabriel Happle](https://cityenergyanalyst.com/people)
+    * [Shanshan Hsieh](https://cityenergyanalyst.com/people)
+    * [Reynold Mok](https://cityenergyanalyst.com/people)
+    * [Martín Mosteiro Romero](https://cityenergyanalyst.com/people)
+    * [Mathias Niffeler](https://cityenergyanalyst.com/people)
+    * [Anastasiya Popova](https://cityenergyanalyst.com/people)
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+    * [Luis Santos](https://cityenergyanalyst.com/people)
+    * [Bhargava Krishna Sreepathi](https://cityenergyanalyst.com/people)
+    * [Daren Thomas](https://cityenergyanalyst.com/people)
+
+    Product lead:
+    * [Zhongming Shi](https://cityenergyanalyst.com/people)
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+    * [Toni Piëch Foundation](https://www.tonipiechfoundation.org/)
+
+    Collaborators:
+    * Jose Bello
+    * Kian Wee Chen
+    * Jack Hawthorne
+    * Fazel Khayatian
+    * Victor Marty
+    * Rowan Molony
+    * Paul Neitzel
+    * Thuy-An Nguyen
+    * Bo Lie Ong
+    * Emanuel Riegelbauer
+    * Lennart Rogenhofer
+    * Toivo Säwén
+    * Sebastian Troiztsch
+    * Tim Vollrath
+
+
 - Version 3.35.5 - March 2024
 
     Developers:
