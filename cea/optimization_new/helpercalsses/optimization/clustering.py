@@ -128,7 +128,8 @@ class Clustering(object):
                                       points_per_subdivision.items() if cluster_index in clusters_to_check}
 
             # for each cluster, find the most dense grid cell and split the cluster around it
-            for cluster_index, points_per_grid_cell in points_per_subdivision.items():
+            for cluster_index in clusters_to_check:
+                points_per_grid_cell = points_per_subdivision[cluster_index]
                 most_dense_cell = max(points_per_grid_cell, key=points_per_grid_cell.get)
 
                 # if the most dense cell does not surpass the threshold, do not subdivide...
@@ -199,7 +200,11 @@ class Clustering(object):
             direction = max(nbr_points.keys(), key=(lambda key: nbr_points[key]))
             new_cluster_index = max(self.cluster_indexes) + 1
             for cell_index in cell_indexes[direction]:
-                self.cluster_indexes[self.grid_cell_indexes == cell_index] = new_cluster_index
+                self.cluster_indexes = [new_cluster_index
+                                        if self.grid_cell_indexes[i] == cell_index
+                                           and self.cluster_indexes[i] == cluster_index
+                                        else c_id
+                                        for i, c_id in enumerate(self.cluster_indexes)]
 
         return new_cluster_index
 
@@ -214,7 +219,8 @@ class Clustering(object):
         relevant_grid_cells = list(points_per_subdivision[old_cluster].keys())
 
         for grid_cell_index in relevant_grid_cells:
-            points_in_new_cluster = self.grid_cell_indexes[self.cluster_indexes == new_cluster].count(grid_cell_index)
+            points_in_new_cluster = [cell_index for i, cell_index in enumerate(self.grid_cell_indexes)
+                                     if self.cluster_indexes[i] == new_cluster].count(grid_cell_index)
             if points_in_new_cluster > 0:
                 points_per_subdivision[new_cluster][grid_cell_index] = points_in_new_cluster
                 del points_per_subdivision[old_cluster][grid_cell_index]
