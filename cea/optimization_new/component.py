@@ -37,6 +37,7 @@ from cea.technologies.heatpumps import calc_HP_const
 from cea.technologies.cooling_tower import calc_CT_const
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.technologies.storage_tank_pcm import Storage_tank_PCM
+from cea.technologies.batteries import Battery
 from cea.inputlocator import InputLocator
 from cea.config import Configuration
 
@@ -91,6 +92,7 @@ class Component(object):
         Solar_PV.initialize_subclass_variables(Component._components_database)
         Solar_collector.initialize_subclass_variables(Component._components_database)
         ThermalStorage.initialize_subclass_variables(Component._components_database)
+        Batteries.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -734,14 +736,15 @@ class Batteries(ActiveComponent):
         # initialise parent-class attributes
         super().__init__(Batteries._database_tab, storage_model_code, capacity, placement)
         # initialise subclass attributes
+        self.storage_properties = pd.DataFrame(self._model_data)
         self.round_trip = self._model_data['round-trip efficiency'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['output_voltage'].values[0]))
+            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['input_voltage'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['output_voltage'].values[0]))]
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))]
 
     def operate(self, heating_out, demand = None):
         """
@@ -761,24 +764,67 @@ class Batteries(ActiveComponent):
 
         # initialize energy flows
         input_thermal_flow = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
-        input_thermal_flow.profile = heating_out.profile
-        output_thermal_flow = EnergyFlow(self.placement, 'secondary', self.output_energy_carriers[0].code)
+        input_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
+
+        output_thermal_flow = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
         output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
 
-        # Operate thermal energy storage
-        for i in range(len(input_thermal_flow.profile) - 1):
-            if output_thermal_flow.profile[i] + input_thermal_flow.profile[i] > self.capacity:
-                output_thermal_flow.profile[i+1] = self.capacity - demand.profile[i] / self.round_trip
-                demand.profile[i] = max(demand.profile[i] - self.round_trip * self.capacity, 0)
+        # initialize tank
+        battery = Battery(size_Wh=self.capacity,
+                                database_model_parameters=self.storage_properties,
+                                type_storage=self.code)
+
+        # prepare dataframe for testing
+        hours_to_test = len(heating_out.profile)
+        data = pd.DataFrame({"E_DailyStorage_gen_directLoad_W": np.zeros(hours_to_test),
+                             "E_DailyStorage_to_storage_W": np.zeros(hours_to_test),
+                             "E_DailyStorage_content_W": np.zeros(hours_to_test),
+                             })
+
+        # and input boundary conditions for the tank
+        hours = list(range(hours_to_test))
+        load = list(heating_out.profile)
+        unload = list(demand.profile)
+        schedule = []
+
+        for i in range(hours_to_test):
+            if unload[i] > 0:
+                schedule.append("discharge")
+            elif load[i] > 0:
+                schedule.append("charge")
             else:
-                output_thermal_flow.profile[i+1] = max(output_thermal_flow.profile[i] +
-                                                        input_thermal_flow.profile[i] -
-                                                       demand.profile[i] / self.round_trip , 0)
-                demand.profile[i] = max(demand.profile[i] - self.round_trip * (output_thermal_flow.profile[i] +
-                                                                            input_thermal_flow.profile[i]), 0)
+                schedule.append("balance")
+
+        # run simulation
+        for hour, x, y, z in zip(hours, load, unload, schedule):
+            load_proposed_to_storage_Wh = x
+            load_proposed_from_storage_Wh = y
+            operation_mode = z
+            if operation_mode == "charge":
+                load_to_storage_Wh, new_storage_capacity_wh = battery.charge_storage(load_proposed_to_storage_Wh)
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = load_to_storage_Wh
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+            elif operation_mode == "discharge":
+                load_from_storage_Wh, new_storage_capacity_wh = battery.discharge_storage(
+                    load_proposed_from_storage_Wh)
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = load_from_storage_Wh
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+            else:
+                new_storage_capacity_wh = battery.balance_storage()
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+
+            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "E_DailyStorage_gen_directLoad_W"], 0)
+            input_thermal_flow.profile[hour] = heating_out.profile[hour] - data.loc[hour, "E_DailyStorage_to_storage_W"]
+
+        # calculate results to assert
+        output_thermal_flow.profile = data['E_DailyStorage_content_W']
 
         # reformat outputs to dicts
-        input_energy_flows = {}
+        input_energy_flows = {self.input_energy_carriers[0].code: input_thermal_flow}
         output_energy_flows = {self.output_energy_carriers[0].code: output_thermal_flow}
 
         return input_energy_flows, output_energy_flows, demand
@@ -790,11 +836,15 @@ class Batteries(ActiveComponent):
         which component models can provide each of the energy carriers, as a new class variable.
         Only the heating energy carriers are considered for thermal storage.
         """
-        cp_database = components_database[Batteries._database_tab]
-        cp_database = cp_database[cp_database['type'] == 'HEATING']
-        Batteries.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
-                                                                           'water_temperature',
-                                                                           'water')
+
+        ct_database = components_database[Batteries._database_tab]
+        voltage_levels = ct_database['input_voltage'].unique()
+        electric_ecs = {volt: EnergyCarrier.volt_to_elec_ec('DC', volt) for volt in voltage_levels}
+        ec_code_series = pd.Series([electric_ecs[volt] for volt in ct_database['input_voltage']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        Batteries.possible_main_ecs = possible_main_ecs_dict
 
 class ThermalStorage(ActiveComponent):
 

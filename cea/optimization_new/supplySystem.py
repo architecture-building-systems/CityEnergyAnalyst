@@ -150,20 +150,20 @@ class SupplySystem(object):
         remaining_primary_demand_dict = self._draw_from_potentials(primary_demand_dict, reset=True)
         remaining_primary_demand_dict = self._draw_from_infinite_sources(remaining_primary_demand_dict)
         self._perform_water_filling_principle('primary', remaining_primary_demand_dict)
-        # operate secondary components
-        secondary_demand_dict = self._group_component_flows_by_ec('primary', 'in')
-        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
-        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
         # operate tertiary components
-        component_energy_release_dict = self._group_component_flows_by_ec(['primary', 'secondary'], 'out')
+        component_energy_release_dict = self._group_component_flows_by_ec(['primary'], 'out')
         tertiary_demand_dict = self._release_to_grids_or_env(component_energy_release_dict)
         self._perform_water_filling_principle('tertiary', tertiary_demand_dict)
+        # operate secondary components
+        secondary_demand_dict = self._group_component_flows_by_ec(['primary','tertiary'], 'in')
+        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
+        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
 
-        system_energy_flows_in = self._group_component_flows_by_ec(['secondary', 'tertiary'], 'in')
+        system_energy_flows_in = self._group_component_flows_by_ec(['secondary'], 'in')
         remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
         unavailable_system_energy_flows_in = self._draw_from_infinite_sources(remaining_system_energy_flows_in)
 
-        system_energy_flows_out = self._group_component_flows_by_ec('tertiary', 'out')
+        system_energy_flows_out = self._group_component_flows_by_ec(['tertiary','secondary'], 'out')
         unreleasable_system_energy_flows_out = self._release_to_grids_or_env(system_energy_flows_out)
 
         self._calculate_greenhouse_gas_emissions()
@@ -293,7 +293,7 @@ class SupplySystem(object):
                         (component_model in self.installed_components[placement].keys())):
                     continue
                 # Operate storage component only when renewables are operated
-                if 'TES' in component_model:
+                if 'TES' in component_model or 'BT' in component_model:
                     continue
 
                 component = self.installed_components[placement][component_model]
@@ -348,6 +348,25 @@ class SupplySystem(object):
                     if (main_energy_flow - demand_prior_PV).profile.sum() > 0:
                         self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
                                                                                               demand_prior_PV)
+
+                        # Use a battery storage to store the remaining energy and use it in different timesteps
+                        electric_storage = [tech for comp_code, tech in self.installed_components[placement].items() if
+                                           'BT' in comp_code]
+                        if electric_storage:
+                            self.component_energy_inputs[placement][electric_storage[0].code], \
+                                self.component_energy_outputs[placement][electric_storage[0].code], demand = (
+                                electric_storage[0].operate(
+                                    self.component_energy_outputs[placement][component_model][ec_code], demand))
+
+                            self.component_ec_profiles[placement][electric_storage[0].code] = \
+                                copy(self.component_energy_outputs[placement][electric_storage[0].code])
+
+                            self.component_energy_outputs[placement][component_model][ec_code] = (
+                                self.component_energy_inputs)[placement][electric_storage[0].code][ec_code]
+
+                            del self.component_energy_outputs[placement][electric_storage[0].code][ec_code]
+                            del self.component_energy_inputs[placement][electric_storage[0].code][ec_code]
+
                     else:
                         del self.component_energy_outputs[placement][component_model][ec_code]
 
@@ -463,6 +482,7 @@ class SupplySystem(object):
 
         self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
 
+        '''        
         # If energy carriers are being produced and sold (e.g. electricity), use them to satisfy upcoming demand
         if self.sold_carriers:
             required_energy_flows_copy = copy(required_energy_flows)
@@ -472,6 +492,7 @@ class SupplySystem(object):
             self.sold_carriers = {
                 ec_code: (self.sold_carriers[ec_code] - required_energy_flows_copy[ec_code].profile).clip(lower=0)
                 for ec_code in self.sold_carriers.keys()}
+        '''
 
         self._buy_required_energy(required_energy_flows, self.structure.infinite_energy_carriers)
 

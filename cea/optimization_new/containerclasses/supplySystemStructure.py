@@ -585,6 +585,9 @@ class SupplySystemStructure(object):
                     elif 'TES' in model_code and 'SC' in [thermal_component.code for thermal_component in viable_components_list][0]:
                         # Initialise thermal storage at same capacity of the solar collector
                         viable_components_list.append(component(model_code, component_placement, max_cap_SC))
+                    elif 'BT' in model_code and 'PV' in [elect_component.code for elect_component in viable_components_list][0]:
+                        # Initialise battery storage at same capacity of the PV
+                        viable_components_list.append(component(model_code, component_placement, max_cap_PV))
                     else:
                         viable_components_list.append(component(model_code, component_placement, maximum_demand))
                 except ValueError:
@@ -792,11 +795,14 @@ class SupplySystemStructure(object):
 
             if necessary_passive_components:
                 active_component_demand_flow = {component.code: component.operate(main_flow)
-                                                 for component in viable_active_components}
+                                                 for component in viable_active_components if 'BT' not in component.code}
 
                 # Operates passive components which are positioned after active components in order to convert the energy carrier
                 # into a usable type
                 for active_component_code, passive_component in necessary_passive_components.items():
+                    if 'BT' in active_component_code:
+                        continue
+
                     flow = list(active_component_demand_flow[active_component_code][1].items())
                     object_flow = flow[0][1]
                     adjusted_flow = passive_component[0].operate(object_flow)

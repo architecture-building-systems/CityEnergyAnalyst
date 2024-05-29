@@ -3,7 +3,7 @@ Water / Ice / PCM short-term thermal storage (for daily operation)
 """
 
 import numpy as np
-from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_gain
+from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_gain, calc_hot_tank_heat_loss
 from math import log
 from cea.analysis.costs.equations import calc_capex_annualized
 
@@ -62,7 +62,7 @@ class Storage_tank_PCM(object):
         self.T_tank_K = self.T_tank_fully_discharged_K
         self.current_phase = 1  # "1=liquid, 2=phasechange, 3=solid"
         self.current_storage_capacity_Wh = 0.0  
-        self.hourly_thermal_gain_Wh = 0.0
+        self.hourly_thermal_loss_Wh = 0.0
         self.current_thermal_gain_Wh = 0.0
         if self.debug:
             print("...initializing the storage...")
@@ -86,17 +86,17 @@ class Storage_tank_PCM(object):
             if self.debug:
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
-            self.current_thermal_gain_Wh = self.hourly_thermal_gain_Wh * (self.hour - self.hour_of_last_activation)
+            self.current_thermal_gain_Wh = self.hourly_thermal_loss_Wh * (self.hour - self.hour_of_last_activation)
             new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, self.current_thermal_gain_Wh) # Since the third argument is the "load difference", thermal gains should be input as negative load differences TODO: Check this with Jimeno
-            new_thermal_loss_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+            new_thermal_loss_Wh = calc_hot_tank_heat_loss(self.Area_tank_surface_m2,
                                                            (new_T_tank_K + self.T_tank_K) / 2,
                                                            self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.hourly_thermal_gain_Wh = new_thermal_loss_Wh
+            self.hourly_thermal_loss_Wh = new_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_wh
             self.hour_of_last_activation = self.hour
@@ -191,7 +191,7 @@ class Storage_tank_PCM(object):
     def charge_storage(self, load_to_storage_Wh):
         if self.activated:
             # calculate passive thermal gain since last activation
-            self.current_thermal_gain_Wh = self.hourly_thermal_gain_Wh * (self.hour - self.hour_of_last_activation)
+            self.current_thermal_gain_Wh = self.hourly_thermal_loss_Wh * (self.hour - self.hour_of_last_activation)
 
             if self.debug:
                 print("...charging...")
@@ -241,13 +241,13 @@ class Storage_tank_PCM(object):
 
             # recalculate the storage capacity after losses
             final_load_to_storage_Wh = effective_load_to_storage_Wh / self.charging_efficiency
-            new_hourly_thermal_gain_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+            new_hourly_thermal_loss_Wh = calc_hot_tank_heat_loss(self.Area_tank_surface_m2,
                                                            (new_T_tank_K + self.T_tank_K) / 2,
                                                            self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.hourly_thermal_gain_Wh = new_hourly_thermal_gain_Wh
+            self.hourly_thermal_loss_Wh = new_hourly_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_Wh
             self.hour_of_last_activation = self.hour
@@ -264,7 +264,7 @@ class Storage_tank_PCM(object):
     def discharge_storage(self, load_from_storage_Wh):
         if self.activated:
             # calculate passive thermal gain since last activation
-            self.current_thermal_gain_Wh = self.hourly_thermal_gain_Wh * (self.hour - self.hour_of_last_activation)
+            self.current_thermal_gain_Wh = self.hourly_thermal_loss_Wh * (self.hour - self.hour_of_last_activation)
             
             if self.debug:
                 print("...discharging...")
@@ -307,13 +307,13 @@ class Storage_tank_PCM(object):
 
             # recalculate the storage capacity after losses
             final_load_from_storage_Wh = effective_load_from_storage_Wh * self.discharging_efficiency
-            new_hourly_thermal_gain_Wh = calc_cold_tank_heat_gain(self.Area_tank_surface_m2,
+            new_hourly_thermal_loss_Wh = calc_hot_tank_heat_loss(self.Area_tank_surface_m2,
                                                            (new_T_tank_K + self.T_tank_K) / 2,
                                                            self.T_ambient_K)
 
             # finally update all variables
             self.current_phase = new_phase
-            self.hourly_thermal_gain_Wh = new_hourly_thermal_gain_Wh
+            self.hourly_thermal_loss_Wh = new_hourly_thermal_loss_Wh
             self.T_tank_K = new_T_tank_K
             self.current_storage_capacity_Wh = new_storage_capacity_Wh
             self.hour_of_last_activation = self.hour

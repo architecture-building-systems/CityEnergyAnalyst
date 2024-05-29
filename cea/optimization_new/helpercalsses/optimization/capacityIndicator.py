@@ -118,9 +118,10 @@ class CapacityIndicatorVector(object):
                 # Limit the total capacity of the available solar components,
                 # due to limited area availability for solar installation
                 new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
-                # Size the storage technology in order to enhance integration of renewables
-                new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
-                self._capacity_indicators = new_capacity_indicators
+
+            # Size the storage technology to the capacity of renewables in order to enhance integration
+            new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
+            self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
                 self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
 
@@ -316,7 +317,8 @@ class CapacityIndicatorVector(object):
                                    (self.capacity_indicators[i].main_energy_carrier == energy_carrier)
                                    and ('PV' not in self.capacity_indicators[i].code)
                                    and ('SC' not in self.capacity_indicators[i].code)
-                                   and ('TES' not in self.capacity_indicators[i].code)])
+                                   and ('TES' not in self.capacity_indicators[i].code)
+                                   and ('BT' not in self.capacity_indicators[i].code)])
 
         upper_bound_breached = round(cumulated_ci_values, 2) > \
                                round(upper_bound * CapacityIndicatorVector._overdimensioning_factor, 2)
@@ -353,9 +355,9 @@ class CapacityIndicatorVector(object):
 
             random_number = random.random()
 
-            new_capacity_indicator_values = [ci_value.value
+            new_capacity_indicator_values = [ci_value
                                              if (self.capacity_indicators[i].code != PV_component)
-                                             else ci_value.value * random_number
+                                             else ci_value * random_number
                                              for i, ci_value in enumerate(new_capacity_indicator_values)]
 
             for i, ci_value in enumerate(capacity_indicator_values):
@@ -373,9 +375,9 @@ class CapacityIndicatorVector(object):
 
             random_number = random.random()
 
-            new_capacity_indicator_values = [ci_value.value
+            new_capacity_indicator_values = [ci_value
                                              if (self.capacity_indicators[i].code != SC_component)
-                                             else ci_value.value * random_number
+                                             else ci_value * random_number
                                              for i, ci_value in enumerate(new_capacity_indicator_values)]
 
             for i, ci_value in enumerate(capacity_indicator_values):
@@ -426,6 +428,10 @@ class CapacityIndicatorVector(object):
                 SC_cap = max([CI.value if 'SC' in self.capacity_indicators[j].code else 0
                               for j, CI in enumerate(capacity_indicator_values)])
                 capacity_indicator_values[i].value = SC_cap
+            elif 'BT' in capacity_indicator_values[i].code:
+                PV_cap = max([CI.value if 'PV' in self.capacity_indicators[j].code else 0
+                              for j, CI in enumerate(capacity_indicator_values)])
+                capacity_indicator_values[i].value = PV_cap
 
         return capacity_indicator_values
 
@@ -485,8 +491,9 @@ class CapacityIndicatorVector(object):
                                                    if (self.capacity_indicators[i].category == group['category']) and
                                                    (self.capacity_indicators[i].main_energy_carrier == group['main_ec'])
                                                    and (ci_value > 0) and ('PV' not in self.capacity_indicators[i].code)
-                                                   and ('SC' not in self.capacity_indicators[i].code) and
-                                                   ('TES' not in self.capacity_indicators[i].code)}
+                                                   and ('SC' not in self.capacity_indicators[i].code)
+                                                   and ('TES' not in self.capacity_indicators[i].code)
+                                                   and ('BT' not in self.capacity_indicators[i].code)}
 
                     lowest_ci_components = [component for component, value in non_zero_ci_values_in_group.items()
                                             if value == min(non_zero_ci_values_in_group.values())]
