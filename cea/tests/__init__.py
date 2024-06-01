@@ -23,7 +23,7 @@ from cea.tests.test_workflow import TestWorkflows
 def main(config):
     test_type = config.test.type
 
-    if test_type == "unittests":
+    if test_type == "unittest":
         test_suite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
         result = unittest.TextTestRunner().run(test_suite)
 
