@@ -43,7 +43,8 @@ def schemas(plugins: Optional[List] = None) -> Dict:
 
     if key not in __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=yaml.CLoader)
+        with open(schemas_yml, "r") as f:
+            schemas_dict = yaml.load(f, Loader=yaml.CLoader)
         __schemas[key] = schemas_dict
 
         # add the plugins - these don't use caches as their schemas.yml are (probably) much shorter
