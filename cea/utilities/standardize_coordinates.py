@@ -48,17 +48,18 @@ def raster_to_WSG_and_UTM(raster_path, lat, lon):
 
 
 def get_geographic_coordinate_system():
-    return "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    return "EPSG:4326"
 
 
 def get_projected_coordinate_system(lat, lon):
     easting, northing, zone_number, zone_letter = utm.from_latlon(lat, lon)
-    if zone_letter in "NPQRSTUVWXX":
-        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    elif zone_letter in "CDEFGHJKLM":
-        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
+
+    if lon >= 0:
+        hemisphere = 'N'
     else:
-        Exception('The projected coordinate system is unknown, lon{}, lat{}').format(lat, lon)
+        hemisphere = 'S'
+
+    return f"EPSG:326{zone_number}" if hemisphere == 'N' else f"EPSG:327{zone_number}"
 
 
 def get_lat_lon_projected_shapefile(data):
