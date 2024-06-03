@@ -343,24 +343,33 @@ class CapacityIndicatorVector(object):
                                        if 'SC' in component]
         absorption_tech_capacity_indicator_value = (
             sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'ACH' in cap.code))
+        vapor_tech_capacity_indicator_value = (
+            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'CH' in cap.code))
 
         if PV_components and not SC_components:
-            PV_component = random.choice(PV_components)
 
-            new_capacity_indicator_values = [0
-                                             if (self.capacity_indicators[i].code in PV_components) and
-                                                (self.capacity_indicators[i].code != PV_component) else ci_value.value
-                                             for i, ci_value in enumerate(capacity_indicator_values)]
+            if vapor_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+            else:
+                PV_component = random.choice(PV_components)
 
-            # Use the random number to scale the capacity of the selected PV component and allow the optimizer to use
-            # the capacities of the solar components which are smaller than the maximum capacity
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components) and
+                                                    (self.capacity_indicators[i].code != PV_component) else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
 
-            random_number = random.random()
+                # Use the random number to scale the capacity of the selected PV component and allow the optimizer to use
+                # the capacities of the solar components which are smaller than the maximum capacity
 
-            new_capacity_indicator_values = [ci_value
-                                             if (self.capacity_indicators[i].code != PV_component)
-                                             else ci_value * random_number
-                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
+                random_number = random.random()
+
+                new_capacity_indicator_values = [ci_value
+                                                 if (self.capacity_indicators[i].code != PV_component)
+                                                 else ci_value * random_number
+                                                 for i, ci_value in enumerate(new_capacity_indicator_values)]
 
             for i, ci_value in enumerate(capacity_indicator_values):
                 ci_value.value = new_capacity_indicator_values[i]
@@ -408,6 +417,13 @@ class CapacityIndicatorVector(object):
                                                  if (self.capacity_indicators[i].code in SC_components)
                                                  else ci_value.value
                                                  for i, ci_value in enumerate(capacity_indicator_values)]
+                
+            elif vapor_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+
             else:
 
                 new_capacity_indicator_values = [0
