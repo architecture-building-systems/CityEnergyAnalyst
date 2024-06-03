@@ -341,6 +341,8 @@ class CapacityIndicatorVector(object):
                                     if 'PV' in component]
         SC_components = [component for component, value in non_zero_ci_values_in_solar.items()
                                        if 'SC' in component]
+        absorption_tech_capacity_indicator_value = (
+            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'ACH' in cap.code))
 
         if PV_components and not SC_components:
             PV_component = random.choice(PV_components)
@@ -366,19 +368,26 @@ class CapacityIndicatorVector(object):
             return capacity_indicator_values
 
         elif SC_components and not PV_components:
-            SC_component = random.choice(SC_components)
 
-            new_capacity_indicator_values = [0
-                                             if (self.capacity_indicators[i].code in SC_components) and
-                                                (self.capacity_indicators[i].code != SC_component) else ci_value.value
-                                             for i, ci_value in enumerate(capacity_indicator_values)]
+            if absorption_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+            else:
+                SC_component = random.choice(SC_components)
 
-            random_number = random.random()
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components) and
+                                                    (self.capacity_indicators[i].code != SC_component) else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
 
-            new_capacity_indicator_values = [ci_value
-                                             if (self.capacity_indicators[i].code != SC_component)
-                                             else ci_value * random_number
-                                             for i, ci_value in enumerate(new_capacity_indicator_values)]
+                random_number = random.random()
+
+                new_capacity_indicator_values = [ci_value
+                                                 if (self.capacity_indicators[i].code != SC_component)
+                                                 else ci_value * random_number
+                                                 for i, ci_value in enumerate(new_capacity_indicator_values)]
 
             for i, ci_value in enumerate(capacity_indicator_values):
                 ci_value.value = new_capacity_indicator_values[i]
@@ -393,10 +402,18 @@ class CapacityIndicatorVector(object):
             PV_component = random.choice(PV_components)
             SC_component = random.choice(SC_components)
             solar_components = [PV_component, SC_component]
-            new_capacity_indicator_values = [0
-                                         if (self.capacity_indicators[i].code in non_zero_ci_values_in_solar) and
-                                            (self.capacity_indicators[i].code not in solar_components) else ci_value.value
-                                         for i, ci_value in enumerate(capacity_indicator_values)]
+
+            if absorption_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+            else:
+
+                new_capacity_indicator_values = [0
+                                             if (self.capacity_indicators[i].code in non_zero_ci_values_in_solar) and
+                                                (self.capacity_indicators[i].code not in solar_components) else ci_value.value
+                                             for i, ci_value in enumerate(capacity_indicator_values)]
 
         tolerance = 0.05
 

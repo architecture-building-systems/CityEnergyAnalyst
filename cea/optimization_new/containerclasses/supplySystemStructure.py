@@ -577,10 +577,16 @@ class SupplySystemStructure(object):
                     if 'PV' in model_code:
                         PV_potential = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap_PV = PV_potential.main_potential.profile.max()
+                        if max_cap_PV / maximum_demand >= 5:
+                            max_cap_PV = maximum_demand * 5
+
                         viable_components_list.append(component(model_code, component_placement, max_cap_PV))
                     elif 'SC' in model_code:
                         SC_potential = component(model_code, component_placement, maximum_demand).load_potentials()
                         max_cap_SC = SC_potential.main_potential.profile.max()
+                        if max_cap_SC / maximum_demand >= 5:
+                            max_cap_SC = maximum_demand * 5
+
                         viable_components_list.append(component(model_code, component_placement, max_cap_SC))
                     elif 'TES' in model_code and 'SC' in [thermal_component.code for thermal_component in viable_components_list][0]:
                         # Initialise thermal storage at same capacity of the solar collector
@@ -711,21 +717,15 @@ class SupplySystemStructure(object):
                             # For solar systems, dimension the passive components based on the maximum available capacity which is
                             # dependent on the radiation level, rather than on maximum demand of the energy carrier
                             if 'PV' in active_component.code:
-                                max_cap = active_component.capacity
+                                max_cap = active_component.capacity + 0.05  # Add tolerance due to rounding issues
                                 passive_component_list.append(
                                     passive_component_class(component_model, placed_before, placed_after,
                                                             max_cap,
                                                             EnergyCarrier(
                                                                 ecs_with_possible_active_components[0]).mean_qual,
                                                             mean_qual_after))
-                            elif 'SC' in active_component.code:
-                                max_cap = active_component.capacity
-                                passive_component_list.append(
-                                    passive_component_class(component_model, placed_before, placed_after,
-                                                            max_cap,
-                                                            EnergyCarrier(
-                                                                ecs_with_possible_active_components[0]).mean_qual,
-                                                            mean_qual_after))
+                            elif 'BT' in active_component.code:
+                                continue # Install only one inverter for the solar PV and not for the battery as well
                             else:
                                 passive_component_list.append(
                                 passive_component_class(component_model, placed_before, placed_after, maximum_demand,

@@ -63,7 +63,7 @@ for context in context_analysis:
     directory = os.path.join(folder, context)
     scenarios = os.listdir(directory)[1:]
     scenarios.remove('dashboard.yml')
-    scenarios.remove('High rise commercial')  # TODO: Remove this line after the issue is fixed
+    scenarios.remove('Commercial high-rise')  # TODO: Remove this line after the issue is fixed
 
     for scenario in scenarios:
 

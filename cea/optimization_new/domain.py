@@ -429,6 +429,7 @@ class Domain(object):
                                    'Other_outputs': supply_system.installed_components[component_category][component_code].main_energy_carrier.code}
                                    for component_code, components_passive in
                                    supply_system.structure.passive_component_selection.items()
+                                   if components_passive
                                    for component_category, components in supply_system.installed_components.items()
                                    if component_code in components]
 
@@ -440,7 +441,9 @@ class Domain(object):
                                'Investment_cost_$': components_passive[0].inv_cost,
                                'Annualized_investment_$': components_passive[0].inv_cost_annual,
                                'O&M_cost_$': components_passive[0].om_fix_cost_annual}
-                              for component_code, components_passive in supply_system.structure.passive_component_selection.items()
+                              for component_code, components_passive in
+                               supply_system.structure.passive_component_selection.items()
+                                if components_passive
                               for component_category, components in supply_system.installed_components.items()
                               if component_code in components]
         if passive_components_cost:
