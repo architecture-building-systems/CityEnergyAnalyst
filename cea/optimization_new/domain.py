@@ -493,7 +493,7 @@ class Domain(object):
             combined_system_energy_demand_profile = pd.Series(0, index=range(len(date_time)))
 
         # combine the profiles into one data frame and write to file
-        combined_objective_function_timelines = pd.concat([date_time.to_series(index=range(len(date_time))),
+        combined_objective_function_timelines = pd.concat([date_time.to_series(index=date_time),
                                                            combined_system_energy_demand_profile,
                                                            combined_heat_rejection_profile,
                                                            combined_ghg_emission_profile],
