@@ -263,6 +263,8 @@ def get_building_properties():
                     columns[column_name]['regex'] = column['regex']
                     if 'example' in column:
                         columns[column_name]['example'] = column['example']
+                if 'nullable' in column:
+                    columns[column_name]['nullable'] = column['nullable']
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
