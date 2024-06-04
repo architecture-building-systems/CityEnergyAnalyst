@@ -282,7 +282,7 @@ CH database.
 
 ### SUPPLY
 
-The heat technologies were adopted from CEA and adjusted according to the KEA technical catalog [^KEA] assuming that the following formula is still used in CEA:Investment costs = Investment costs per kW * efficiency of heat technology * thermal performance. The heating technologies were categorized into three different power classes (10 kW, 50 kW, 100 kW). These are intended to reflect the capacities of a single-family house, a smaller, and a larger multi-family house. The selected capacity can be verified by calculating the heat demand in CEA. Contrary to the parameter labels, the costs are plotted in Euros for the reference year 2023!
+The heat technologies were adopted from CEA and adjusted according to the KEA technical catalog [^KEA] assuming that the following formula is still used in CEA:Investment costs = Investment costs per kW * efficiency of heat technology * thermal performance. The heating technologies were categorized into different power classes (10 kW, 50 kW, 100 kW). These are intended to reflect the capacities of a single-family house, a smaller, and a larger multi-family house. The selected capacity can be verified by calculating the heat demand in CEA. Contrary to the parameter labels, the costs are plotted in Euros for the reference year 2023!
 
 The hot water and heating technologies types in CONSTRUCTION STANDARDS were assigned to TABULA standards with user assumptions consistently to the specified technology type in the TABULA webtool.
 
@@ -353,7 +353,7 @@ The parameters have not been changed and correspond to the standard values from 
 
 ### CONVERSION
 
-Assumption of standard values from CH database
+Added all necessary BOILER and HEATPUMP components defined in the TABULA standards with the [^KEA] dataset and converted to USD 2015 from EUR 2022. 
 
 ### DISTRIBUTION
 
