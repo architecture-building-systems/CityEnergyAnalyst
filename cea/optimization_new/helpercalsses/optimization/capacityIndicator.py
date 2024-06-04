@@ -344,7 +344,7 @@ class CapacityIndicatorVector(object):
         absorption_tech_capacity_indicator_value = (
             sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'ACH' in cap.code))
         vapor_tech_capacity_indicator_value = (
-            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'CH' in cap.code))
+            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if cap.code in ['CH1','CH2']))
 
         if PV_components and not SC_components:
 
