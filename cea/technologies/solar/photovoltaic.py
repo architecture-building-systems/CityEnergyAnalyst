@@ -6,7 +6,7 @@ import os
 import time
 from itertools import repeat
 from math import radians, degrees, asin, sin, acos, cos, exp, tan, atan, ceil, log
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 
 import numpy as np
 import pandas as pd
@@ -761,21 +761,22 @@ def aggregate_results_func(args):
     return aggregate_results(args[0], args[1])
 
 
-def write_aggregate_results(config, locator, building_names, num_process=1):
+def write_aggregate_results(config, locator, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
     aggregated_annual_results = pd.DataFrame()
     panel_type = config.solar.type_PVpanel
 
-    pool = Pool(processes=num_process)
-    args = [(locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
-    for i, x in enumerate(pool.map(aggregate_results_func, args)):
-        hourly_results_df, annual_results = x
-        if i == 0:
-            aggregated_hourly_results_df = hourly_results_df
-            aggregated_annual_results = annual_results
-        else:
-            aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_df
-            aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
+    num_process = 4
+    with Pool(processes=num_process) as pool:
+        args = [(locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
+        for i, x in enumerate(pool.map(aggregate_results_func, args)):
+            hourly_results_df, annual_results = x
+            if i == 0:
+                aggregated_hourly_results_df = hourly_results_df
+                aggregated_annual_results = annual_results
+            else:
+                aggregated_hourly_results_df = aggregated_hourly_results_df + hourly_results_df
+                aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
 
     # save hourly results
     aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=panel_type), index=True, float_format='%.2f', na_rep='nan')
@@ -821,7 +822,7 @@ def main(config):
                                                            building_names)
 
     # aggregate results from all buildings
-    write_aggregate_results(config, locator, building_names, num_process)
+    write_aggregate_results(config, locator, building_names)
 
 
 if __name__ == '__main__':
