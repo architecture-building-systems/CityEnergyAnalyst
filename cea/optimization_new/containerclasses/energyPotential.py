@@ -32,6 +32,8 @@ class EnergyPotential(object):
         self.auxiliary_potential = EnergyFlow()
         self.main_building_profiles = pd.DataFrame()
         self.auxiliary_building_profiles = pd.DataFrame()
+        self.area_typology = ['roofs_top_m2', 'walls_east_m2', 'walls_north_m2', 'walls_west_m2', 'walls_south_m2']
+        self.area_usage = pd.DataFrame()
 
     @property
     def type(self):
@@ -62,9 +64,9 @@ class EnergyPotential(object):
     def load_PV_potential(self, locator, building_codes):
         self.type = 'SolarPV'
         self.scale = 'Building'
-        tech_code = 'PV'
         pv_potential_files = np.vectorize(locator.PV_results)(building_codes)
-        potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
+        potentials, area = self._get_building_potentials(pv_potential_files, building_codes,
+                                                         'E_PV_gen_kWh')
         if potentials:
             main_energy_carrier = 'E30DC'
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
@@ -77,7 +79,7 @@ class EnergyPotential(object):
         self.type = 'SolarPVT'
         self.scale = 'Building'
         pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes)
-        potentials = self._get_building_potentials(pvt_potential_files, building_codes,
+        potentials, area = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:
             main_energy_carrier = 'E230AC'
@@ -93,11 +95,17 @@ class EnergyPotential(object):
     def load_SCET_potential(self, locator, building_codes):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
+        tech_code = 'SC_ET'
+        area_used = []
+        for area in self.area_typology:
+            tech_area = tech_code + '_' + area
+            area_used.append(tech_area)
         scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
-        potentials = self._get_building_potentials(scet_potential_files, building_codes,
-                                                                   'Q_SC_gen_kWh', 'T_SC_re_C')
+        potentials, area = self._get_building_potentials(scet_potential_files, building_codes,
+                                                                   'Q_SC_gen_kWh', 'T_SC_re_C', area_usage=area_used)
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
+            self.area_usage = area
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
             self.main_building_profiles = potentials['main_building_profiles']
             return self
@@ -108,7 +116,7 @@ class EnergyPotential(object):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
         scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
-        potentials = self._get_building_potentials(scfp_potential_files, building_codes,
+        potentials, area = self._get_building_potentials(scfp_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
@@ -198,7 +206,7 @@ class EnergyPotential(object):
             return None
 
     def _get_building_potentials(self, energy_potential_files, building_codes, main_potential_column_name,
-                                 temperature_column_name=None, auxiliary_potential_column_name=None):
+                                 temperature_column_name=None, auxiliary_potential_column_name=None, area_usage=None):
         """
         Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
         object attributes. In case a temperature column name is indicated, the average temperature (when operating
@@ -216,6 +224,9 @@ class EnergyPotential(object):
         average_temps = [np.nan] * nbr_of_files
         main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                       columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        if area_usage is not None:
+            area_tech = pd.DataFrame(0.0, index=pd.concat([building_codes, pd.Series('Total')]),
+                                     columns=area_usage)
         if auxiliary_potential_column_name is not None:
             auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
                                                columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
@@ -228,6 +239,8 @@ class EnergyPotential(object):
                 building_potential = pd.read_csv(file)
                 building_potential.set_index(EnergyFlow.time_series, inplace=True)
                 main_potential[building_codes[i]] = building_potential[main_potential_column_name]
+                if area_usage is not None:
+                    area_tech.loc[building_codes[i]] = building_potential[area_usage].values[0]
                 if temperature_column_name is not None:
                     average_temps[i] = self._get_average_temp(building_potential[temperature_column_name],
                                                               building_codes[i])
@@ -252,7 +265,11 @@ class EnergyPotential(object):
                             'auxiliary_building_profiles': auxiliary_potential[building_codes],
                             'average_temp': average_temperature}
 
-        return potential_dict
+        if area_usage is not None:
+            area_tech.loc['Total'] = area_tech.iloc[0:-1].sum()
+            area_usage = area_tech
+
+        return potential_dict, area_usage
 
     def _get_average_temp(self, temperature_series, building_code=None):
         average_temp = np.mean(temperature_series)

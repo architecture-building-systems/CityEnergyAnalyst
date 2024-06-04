@@ -185,6 +185,7 @@ class Component(object):
     def calculate_cost(self):
         """ placeholder for subclass investment cost functions """
         capacity_W = self.capacity * 1000
+
         if capacity_W <= 0:
             capex_USD = 0
         else:
@@ -658,6 +659,7 @@ class Solar_collector(ActiveComponent):
         super().__init__(Solar_collector._database_tab, sc_model_code, capacity, placement)
         # initialise subclass attributes
         self.electrical_eff = self._model_data['n0'].values[0]
+
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))
@@ -665,6 +667,13 @@ class Solar_collector(ActiveComponent):
         self.output_energy_carriers = [(
             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0])))]
         self.locator = InputLocator(scenario=Configuration().scenario)
+
+        # Calculate area used to install solar collectors and total capacity
+        self.solar_collector_potential = self.load_potentials()
+        self.max_capacity = max(self.solar_collector_potential.main_potential.profile)
+        self.capacity_ratio = self.capacity / self.max_capacity
+        self.total_area_installed = sum(self.solar_collector_potential.area_usage.loc['Total'] * self.capacity_ratio)
+        self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost_with_m2()
 
     def operate(self, heating_out):
         """
@@ -684,17 +693,11 @@ class Solar_collector(ActiveComponent):
         self._check_operational_requirements(heating_out)
 
         # load potentials from solar resources and calculate the maximum area used, capacity and profile
-        chosen_cap = self.capacity
-        solar_collector_potential = self.load_potentials()
-        thermal_flow = solar_collector_potential.main_potential
-        max_cap = max(thermal_flow.profile)
-
-        # Resize the used area based on the chosen capacity
-        ratio = chosen_cap / max_cap
+        thermal_flow = self.solar_collector_potential.main_potential
 
         # initialize energy flows
         thermal_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
-        thermal_out.profile = thermal_flow.profile * ratio
+        thermal_out.profile = thermal_flow.profile * self.capacity_ratio
 
         # reformat outputs to dicts
         input_energy_flows = {}
@@ -727,6 +730,22 @@ class Solar_collector(ActiveComponent):
         thermal_potential = EnergyPotential().load_SCET_potential(self.locator, building_list)
 
         return thermal_potential
+
+    def calculate_cost_with_m2(self):
+        """ placeholder for subclass investment cost functions """
+        area_installed = self.total_area_installed
+
+        if area_installed <= 0:
+            capex_USD = 0
+        else:
+            capex_USD = self._cost_params['a'] + \
+                        self._cost_params['b'] * area_installed ** self._cost_params['c'] + \
+                        (self._cost_params['d'] + self._cost_params['e'] * area_installed) * log(area_installed)
+
+        capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
+        opex_a_fix_USD = capex_USD * self._cost_params['om_share']
+
+        return capex_USD, capex_a_USD, opex_a_fix_USD
 
 class Batteries(ActiveComponent):
 
