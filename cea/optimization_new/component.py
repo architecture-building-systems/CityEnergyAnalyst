@@ -819,6 +819,7 @@ class Batteries(ActiveComponent):
             load_proposed_to_storage_Wh = x
             load_proposed_from_storage_Wh = y
             operation_mode = z
+            battery.hour = hour
             if operation_mode == "charge":
                 load_to_storage_Wh, new_storage_capacity_wh = battery.charge_storage(load_proposed_to_storage_Wh)
                 data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = 0.0
@@ -936,6 +937,7 @@ class ThermalStorage(ActiveComponent):
             load_proposed_to_storage_Wh = x
             load_proposed_from_storage_Wh = y
             operation_mode = z
+            tank.hour = hour
             if operation_mode == "charge":
                 load_to_storage_Wh, new_storage_capacity_wh = tank.charge_storage(load_proposed_to_storage_Wh)
                 data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] = 0.0
