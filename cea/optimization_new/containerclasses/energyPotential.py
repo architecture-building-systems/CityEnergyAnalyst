@@ -104,6 +104,8 @@ class EnergyPotential(object):
         potentials, area = self._get_building_potentials(scet_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C', area_usage=area_used)
         if potentials:
+            # Take the second highest value of the main profile as the maximum potential to avoid oversize due to outliers
+            potentials['main_profile'] = potentials['main_profile'].clip(upper=potentials['main_profile'].nlargest(2)[1])
             main_energy_carrier = EnergyCarrier.temp_to_thermal_ec('water', potentials['average_temp'])
             self.area_usage = area
             self.main_potential.generate('source', 'secondary', main_energy_carrier, potentials['main_profile'])
