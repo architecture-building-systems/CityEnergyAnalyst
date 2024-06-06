@@ -13,7 +13,7 @@ from scipy.integrate import odeint
 
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
 from cea.demand.constants import TWW_SETPOINT, B_F
-from cea.technologies.constants import U_DHWTANK
+from cea.technologies.constants import U_TESTANK
 from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
 from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, calc_dTm_HEX
 
@@ -89,7 +89,7 @@ def calc_dhw_tank_heat_balance(T_int_C, T_ext_C, T_tank_C, V_tank_m3, q_tank_dis
 
 
 def calc_hot_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
-    q_loss_W = U_DHWTANK * Area_tank_surface_m2 * (T_tank_C - tamb)  # tank heat loss to the room in [Wh]
+    q_loss_W = U_TESTANK * Area_tank_surface_m2 * (T_tank_C - tamb)  # tank heat loss to the room in [Wh]
     return q_loss_W
 
 
@@ -98,7 +98,7 @@ def calc_cold_tank_heat_gain(Area_tank_surface_m2, T_tank_C, T_ambient_C):
     if T_tank_C >= T_ambient_C:
         q_gain_W = 0.0
     else:
-        q_gain_W = U_DHWTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
+        q_gain_W = U_TESTANK * Area_tank_surface_m2 * (T_ambient_C - T_tank_C)  # tank heat gain from the room in [Wh]
     return q_gain_W
 
 
