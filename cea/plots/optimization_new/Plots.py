@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import re
 
 
 def load_data_from_directories(main_directory, filename):
@@ -51,23 +52,58 @@ def generate_and_save_plots(dataframes, plots_path):
             plt.savefig(plot_file_path)
             plt.close()
 
+def process_files(main_directory, filename):
+    # Create an empty DataFrame to hold the results
+    combined_df = pd.DataFrame()
+    columns_to_analyse = ['Component', 'Component_type', 'Component_code', 'Capacity_kW']
+    # Loop through each subdirectory in the main directory
+    for subdir in os.listdir(main_directory):
+        if subdir == 'current_DES' or subdir == 'debugging':
+            continue
+        subdir_path = os.path.join(main_directory, subdir)
+
+        # Check if it is a directory
+        if os.path.isdir(subdir_path):
+            file_path = os.path.join(subdir_path, filename)
+
+            # Check if the file exists in the subdirectory
+            if os.path.isfile(file_path):
+                # Read the file into a DataFrame
+                df = pd.read_csv(file_path)
+                df = df[columns_to_analyse]
+                # Extract the numerical part of the folder name
+                match = re.search(r'\d+', subdir)
+                if match:
+                    num_part = match.group(0)
+
+                    # Rename the columns by appending the numerical part
+                    df.columns = [f"{col}_{num_part}" if col != 'Supply_System' else col for col in df.columns]
+
+                # Append the DataFrame to the combined DataFrame
+                combined_df = pd.concat([combined_df, df], axis=1)
+
+    return combined_df
+
+                                                    ### MAIN ###
 
 # Define the main directory and the filename
-context_analysis = ['THESIS TEST CASES RENEWABLES', 'THESIS TEST CASES BASE']
+context_analysis = ['THESIS_TEST_CASES_RENEWABLES'] # 'THESIS_TEST_CASES_BASE'
 folder = "D:/CEATesting/"
-save_directory = "D:/CEATesting/THESIS TEST CASES PLOTS/"
+save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/"
 directory_to_file = "/outputs/data/optimization/centralized/"
 filename = "Supply_systems/Supply_systems_summary.csv"
+filename_structure = 'Supply_systems/N1001_supply_system_structure.csv'
 
 for context in context_analysis:
     directory = os.path.join(folder, context)
     scenarios = os.listdir(directory)[1:]
     scenarios.remove('dashboard.yml')
-    scenarios.remove('Commercial high-rise')  # TODO: Remove this line after the issue is fixed
+    scenarios.remove('Commercial_High_Rise')  # TODO: Remove this line after the issue is fixed
 
     for scenario in scenarios:
 
         main_directory = os.path.join(directory, scenario) + directory_to_file
+        dataframe_structure = process_files(main_directory, filename_structure)
         dataframes = load_data_from_directories(main_directory, filename)
         dataframes['Supply_System'] = dataframes.index
 
@@ -77,9 +113,11 @@ for context in context_analysis:
 
         # Define the file path to save the DataFrame
         save_file_path = os.path.join(save_path, "Objective_functions_analysis.csv")
+        save_file_path_structure = os.path.join(save_path, "System_structure_solutions.csv")
 
         # Save the DataFrame to a CSV file
         dataframes.to_csv(save_file_path, index=False)
+        dataframe_structure.to_csv(save_file_path_structure, index=False)
 
         # Create the directory for plots
         plots_path = os.path.join(save_directory, context, scenario, "objective_functions_plots")
