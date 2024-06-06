@@ -789,7 +789,7 @@ class Batteries(ActiveComponent):
         output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
 
         # initialize tank
-        battery = Battery(size_Wh=self.capacity,
+        battery = Battery(size_Wh=self.capacity * 1000,
                                 database_model_parameters=self.storage_properties,
                                 type_storage=self.code)
 
@@ -816,8 +816,8 @@ class Batteries(ActiveComponent):
 
         # run simulation
         for hour, x, y, z in zip(hours, load, unload, schedule):
-            load_proposed_to_storage_Wh = x
-            load_proposed_from_storage_Wh = y
+            load_proposed_to_storage_Wh = x * 1000
+            load_proposed_from_storage_Wh = y * 1000
             operation_mode = z
             battery.hour = hour
             if operation_mode == "charge":
@@ -837,11 +837,11 @@ class Batteries(ActiveComponent):
                 data.loc[hour, "E_DailyStorage_to_storage_W"] = 0.0
                 data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
 
-            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "E_DailyStorage_gen_directLoad_W"], 0)
-            input_thermal_flow.profile[hour] = heating_out.profile[hour] - data.loc[hour, "E_DailyStorage_to_storage_W"]
+            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "E_DailyStorage_gen_directLoad_W"] / 1000, 0)
+            input_thermal_flow.profile[hour] = heating_out.profile[hour] - data.loc[hour, "E_DailyStorage_to_storage_W"] / 1000
 
         # calculate results to assert
-        output_thermal_flow.profile = data['E_DailyStorage_content_W']
+        output_thermal_flow.profile = data['E_DailyStorage_content_W'] / 1000
 
         # reformat outputs to dicts
         input_energy_flows = {self.input_energy_carriers[0].code: input_thermal_flow}
@@ -905,7 +905,7 @@ class ThermalStorage(ActiveComponent):
         output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
 
         # initialize tank
-        tank = Storage_tank_PCM(size_Wh=self.capacity,
+        tank = Storage_tank_PCM(size_Wh=self.capacity * 1000,
                                 database_model_parameters=self.storage_properties,
                                 T_ambient_K=303,
                                 type_storage=self.code)
@@ -934,8 +934,8 @@ class ThermalStorage(ActiveComponent):
 
         # run simulation
         for hour, x, y, z in zip(hours, load, unload, schedule):
-            load_proposed_to_storage_Wh = x
-            load_proposed_from_storage_Wh = y
+            load_proposed_to_storage_Wh = x * 1000
+            load_proposed_from_storage_Wh = y * 1000
             operation_mode = z
             tank.hour = hour
             if operation_mode == "charge":
@@ -956,39 +956,14 @@ class ThermalStorage(ActiveComponent):
                 data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
 
             data.loc[hour, "T_DailyStorage_C"] = tank.T_tank_K - 273.0
-            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "Q_DailyStorage_gen_directLoad_W"], 0)
+            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] / 1000, 0)
 
         # calculate results to assert
-        output_thermal_flow.profile = data['Q_DailyStorage_content_W']
+        output_thermal_flow.profile = data['Q_DailyStorage_content_W'] / 1000
 
         # reformat outputs to dicts
         input_energy_flows = {}
         output_energy_flows = {self.output_energy_carriers[0].code: output_thermal_flow}
-        '''
-        import plotly.graph_objs as go
-        from cea.plots.variable_naming import COLOR, NAMING
-        fig = go.Figure()
-        analysis_fields = ["Q_DailyStorage_gen_directLoad_W", "Q_DailyStorage_to_storage_W"]
-        for field in analysis_fields:
-            y = data[field].values / 1E3  # to kWh
-            name = NAMING[field]
-            fig.add_trace(go.Bar(x=data.index, y=y, name=name, marker=dict(color=COLOR[field]), yaxis='y'))
-
-        fig.add_trace(go.Line(x=data.index, y=data["Q_DailyStorage_content_W"] / 1000, yaxis='y',
-                              name=NAMING["Q_DailyStorage_content_W"], line_shape='spline'))
-        fig.add_trace(go.Line(x=data.index, y=data["T_DailyStorage_C"], yaxis='y2', name=NAMING["T_DailyStorage_C"],
-                              line_shape='spline'))
-        fig.update_layout(title=tank.description,
-                          yaxis=dict(title='Load [kWh]'),
-                          yaxis2=dict(title='Tank Temperature [C]', overlaying='y', side='right', range=[-1, 14]))
-        fig.update_layout(legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
-        ))
-        fig.show()
-        '''
 
         return input_energy_flows, output_energy_flows, demand
 
