@@ -32,7 +32,7 @@ def run(config, script, **kwargs):
 
 def run_with_trace(config, script, **kwargs):
     """Same as run, but use the trace-inputlocator functionality to capture InputLocator calls"""
-    from cea.tests.trace_inputlocator import create_trace_function, update_trace_data, meta_to_yaml
+    from cea.utilities.trace_inputlocator.trace_inputlocator import create_trace_function, update_trace_data, meta_to_yaml
 
     if "multiprocessing" in kwargs:
         # we can only trace single processes

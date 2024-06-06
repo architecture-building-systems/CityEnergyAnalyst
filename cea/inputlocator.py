@@ -1,7 +1,7 @@
 """
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
-
+import atexit
 import os
 import cea.schemas
 import shutil
@@ -34,10 +34,8 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
-        self._temp_directory = tempfile.TemporaryDirectory()
-
-    def __del__(self):
-        self._temp_directory.cleanup()
+        self._temp_directory = tempfile.mkdtemp()
+        atexit.register(self._cleanup_temp_directory)
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -58,6 +56,14 @@ class InputLocator(object):
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
         self._temp_directory = state["_temp_directory"]
+
+    def __del__(self):
+        self._cleanup_temp_directory()
+
+    def _cleanup_temp_directory(self):
+        # Cleanup the temporary directory when the object is destroyed
+        if os.path.exists(self._temp_directory):
+            shutil.rmtree(self._temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -328,7 +334,7 @@ class InputLocator(object):
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
         Substation results for decentralized buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "substations")
+        return self._ensure_folder(self.get_optimization_results_folder(), "decentralized", "substations")
 
     def get_optimization_substations_results_file(self, building, network_type, district_network_barcode):
         """scenario/outputs/data/optimization/substations/${building}_result.csv"""
@@ -470,7 +476,7 @@ class InputLocator(object):
 
     def get_weather_names(self):
         """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path) if f.endswith('.epw')]
         return weather_names
 
     def get_weather_folder(self):
@@ -535,6 +541,12 @@ class InputLocator(object):
 
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
+
+    def get_tree_geometry_folder(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry')
+
+    def get_tree_geometry(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry', 'trees.shp')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
@@ -1145,7 +1157,7 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return self._temp_directory.name
+        return self._temp_directory
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""

@@ -50,6 +50,7 @@ class CEADaySim:
         self.daysim_material_path = os.path.join(self.common_inputs, 'daysim_material.rad')
         self.daysim_geometry_path = os.path.join(self.common_inputs, 'daysim_geometry.rad')
         self.wea_weather_path = os.path.join(self.common_inputs, 'weather_60min.wea')
+        self.daysim_shading_path = os.path.join(self.common_inputs, 'daysim_shading.rad')
 
         # Header Properties
         self.site_info = None
@@ -67,7 +68,7 @@ class CEADaySim:
         """
         return DaySimProject(project_name, self.projects_dir, self.daysim_dir, self.daysim_lib,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
-                             self.site_info)
+                             self.site_info, self.daysim_shading_path)
 
     def create_radiance_material(self, building_surface_properties):
         add_rad_mat(self.rad_material_path, building_surface_properties)
@@ -76,6 +77,27 @@ class CEADaySim:
                                  surroundings_building_names, geometry_pickle_dir):
         create_rad_geometry(self.rad_geometry_path, geometry_terrain, building_surface_properties, zone_building_names,
                             surroundings_building_names, geometry_pickle_dir)
+
+    def create_radiance_shading(self, tree_surfaces, leaf_area_densities):
+        def tree_to_radiance(tree_id, tree_surface_list):
+            for num, occ_face in enumerate(tree_surface_list):
+                surface_name = f"tree_surface_{tree_id}_{num}"
+                yield RadSurface(surface_name, occ_face, f"tree_material_{tree_id}")
+
+        with open(self.daysim_shading_path, "w") as rad_file:
+            # # write material for trees
+            for i, tree in enumerate(tree_surfaces):
+                # light would pass through at least 2 surfaces so we divide the effect by half
+                transmissivity = math.sqrt(1 - leaf_area_densities[i])
+                string = f"void glass tree_material_{i}\n" \
+                         "0\n" \
+                         "0\n" \
+                         f"3 {transmissivity} {transmissivity} {transmissivity}"
+                rad_file.writelines(string + '\n')
+
+            for i, tree in enumerate(tree_surfaces):
+                for tree_surface_rad in tree_to_radiance(i, tree):
+                    rad_file.write(tree_surface_rad.rad())
 
     @staticmethod
     def run_cmd(cmd, daysim_dir, daysim_lib):
@@ -164,7 +186,7 @@ class CEADaySim:
 class DaySimProject(object):
     def __init__(self, project_name, project_directory, daysim_bin_directory, daysim_lib_directory,
                  daysim_material_path, daysim_geometry_path, wea_weather_path,
-                 site_info):
+                 site_info, daysim_shading_path):
 
         # Project info
         self.project_name = project_name
@@ -180,6 +202,7 @@ class DaySimProject(object):
         self.daysim_geometry_path = daysim_geometry_path
         self.wea_weather_path = wea_weather_path
         self.sensor_path = os.path.join(self.project_path, "sensors.pts")
+        self.daysim_shading_path = daysim_shading_path
 
         self.hea_path = os.path.join(self.project_path, f"{project_name}.hea")
         # Header Properties
@@ -217,6 +240,10 @@ class DaySimProject(object):
                      f"{geometry_header}\n"
 
             hea_file.write(header)
+
+    @property
+    def shading_exists(self):
+        return os.path.exists(self.daysim_shading_path)
 
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
@@ -296,19 +323,87 @@ class DaySimProject(object):
 
             hea_file.write(radiance_parameters)
 
-    def write_static_shading(self):
+    def generate_shading_profile(self):
         """
-        This function writes the static shading into the header file.
+        The external shading profile should be a comma seperate file with a three line header and the format:
+        month, day, hour, shading fraction [0,1] (0=fully opened;1=fully closed) in each line.
+
+        Creates shading profile in the temp directory of the project.
+        Uses date values found in the weather file for DAYSIM
+        """
+        shading_profile = os.path.join(self.tmp_directory, "shading_profile.csv")
+        with open(self.wea_weather_path) as wea, open(shading_profile, "w") as f:
+            csv_writer = csv.writer(f, delimiter=',')
+            wea_reader = csv.reader(wea, delimiter=' ', )
+
+            # Write headers
+            csv_writer.writerows([
+                ["# Daysim annual blind schdule", "", "", ""],
+                ["# time_step 60", "comment:", "", ""],
+                ["# month", "day", "time", "shading fraction"]
+            ])
+
+            # Skip first 6 rows (headers) in weather file
+            for i in range(6):
+                next(wea_reader)
+
+            for row in wea_reader:
+                date_columns = row[:3]
+                csv_writer.writerow(date_columns + [1])
+
+        return shading_profile
+
+    def write_shading_parameters(self):
+        """
+        This function writes the shading properties into the header file.
+        If no shading is found, static shading mode is used.
 
         `shading 1 <descriptive_string> <file_name.dc> <file_name.ill>`
 
         The integer 1 represents static/no shading
+
+        If shading if found, generated required files and load shading geometries
+
+        `shading -n
+        <base_file_name.dc> <base_file_name_no_blinds.ill>
+        [followed by n shading group definitions]
+        <shading_group_1_name>
+        m
+        control_keyword <shading_group_opened.rad> [followed by m lines]
+        <shading_group_1_state1.rad> <shading_group_1_state1.dc> <shading_group_1_state1.ill>`
+
+        with n = 1 or 2 = number of shading groups, m = number of states in shading group
         """
         dc_file = f"{self.project_name}.dc"
         ill_file = f"{self.project_name}.ill"
+
+        if not self.shading_exists:
+            # Use static system
+            shading_parameters = f"shading 1 static_system {dc_file} {ill_file}\n"
+        else:
+            # # Create empty shading file for base case
+            # empty_shading_file = "no_shading.rad"
+            # with open(os.path.join(self.project_path, empty_shading_file), 'w') as f:
+            #     pass
+            #
+            # # Generate shading schedule
+            # shading_profile = self.generate_shading_profile()
+            #
+            # shading_parameters = (f"shading -1\n"
+            #                       f"{dc_file} {ill_file}\n"
+            #                       f"tree_shading_group\n"
+            #                       f"1\n"
+            #                       f"AnnualShadingSchedule {shading_profile} {empty_shading_file}\n"
+            #                       f"{self.daysim_shading_path} shading_{dc_file} shading_{ill_file}")
+
+            shading_parameters = (f"shading -1\n"
+                                  f"{dc_file} {ill_file}\n"
+                                  f"tree_shading_group\n"
+                                  f"0\n"
+                                  f"ManualControl {self.daysim_shading_path}\n")
+
         with open(self.hea_path, "a") as hea_file:
-            static_shading = f"shading 1 static_system {dc_file} {ill_file}\n"
-            hea_file.write(static_shading)
+            hea_file.write(shading_parameters)
 
     def execute_gen_dc(self):
         """
@@ -321,7 +416,7 @@ class DaySimProject(object):
         -paste  pastes direct and diffuse daylight coefficient output files into a single complete file
         """
         # write the shading header
-        self.write_static_shading()
+        self.write_shading_parameters()
 
         command1 = f'gen_dc "{self.hea_path}" -dir'
         command2 = f'gen_dc "{self.hea_path}" -dif'
@@ -347,6 +442,8 @@ class DaySimProject(object):
         """
 
         ill_path = os.path.join(self.project_path, f"{self.project_name}.ill")
+        # if self.shading_exists:
+        #     ill_path = os.path.join(self.project_path, f"shading_{self.project_name}.ill")
         with open(ill_path) as f:
             reader = csv.reader(f, delimiter=' ')
             data = np.array([np.array(row[4:], dtype=np.float32) for row in reader]).T
@@ -469,8 +566,6 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                          f"5 {mat_value1} {mat_value2} {mat_value3} {mat_value4} {mat_value5}"
                 write_file.writelines('\n' + string + '\n')
                 written_mat_name_list.add(mat_name)
-
-        write_file.close()
 
 
 def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,

@@ -82,8 +82,7 @@ def calc_h_op_m(Htr_op):
 
     # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # h_op_m = a_j_m * u_j  # summation
-    # TODO: this formula in the future should take specific properties of the location of the building into account
-    # e.g. adiabatic building elements with U = 0
+    # This formula in the future should take specific properties of the location of the building into account.
 
     return h_op_m
 
@@ -103,8 +102,7 @@ def calc_h_j_em():
     # (11) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     #h_j_em = (h_em * a_j_m * u_j) / h_op_m
 
-    # TODO: this formula in the future should take specific properties of the location of the building into account
-    # e.g. adiabatic building elements with U = 0
+    # This formula in the future should take specific properties of the location of the building into account.
 
     return None
 
@@ -113,8 +111,7 @@ def calc_h_ec(Htr_w):
 
     # (12) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # h_ec = a_j_l * u_j
-    # TODO: this formula in the future should take specific properties of the location of the building into account
-    # e.g. adiabatic building elements with U = 0
+    # This formula in the future should take specific properties of the location of the building into account.
     # TODO: can incorporate point or linear thermal bridges
 
     h_ec = Htr_w  # h_ec is Htr_w of ISO13790 RC model
@@ -346,10 +343,9 @@ def calc_theta_ec(T_ext):
 
     # theta_ec = a_j_l * u_j * theta_e_j / h_ec
 
-    # TODO: this formula in the future should take specific properties of the location of the building into account
-    # e.g. adiabatic building elements with U = 0
+    # This formula in the future should take specific properties of the location of the building into account.
 
-    # TODO: theta_e_j is depending on adjacent space to surface (outdoor, adiabatic, ground, etc.)
+    # TODO: theta_e_j is dependent on adjacent space to surface (outdoor, adiabatic, ground, etc.)
 
     return theta_ec
 
@@ -363,10 +359,9 @@ def calc_theta_em(T_ext):
 
     # theta_em = h_j_em * theta_e_j / h_em
 
-    # TODO: this formula in the future should take specific properties of the location of the building into account
-    # e.g. adiabatic building elements with U = 0
+    # This formula in the future should take specific properties of the location of the building into account.
 
-    # TODO: theta_e_j is depending on adjacent space to surface (outdoor, adiabatic, ground, etc.)
+    # TODO: theta_e_j is dependent on adjacent space to surface (outdoor, adiabatic, ground, etc.)
 
     return theta_em
 

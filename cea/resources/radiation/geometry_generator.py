@@ -169,7 +169,7 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     num_processes = config.get_number_of_processes()
     zone_simplification = config.radiation.zone_geometry
     surroundings_simplification = config.radiation.surrounding_geometry
-    consider_intersections = config.radiation.consider_intersections
+    neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
 
     print('Calculating terrain intersection of building geometries')
     zone_buildings_df = zone_df.set_index('Name')
@@ -194,7 +194,7 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
                                                                           num_processes,
                                                                           on_complete=print_progress)
 
-    if consider_intersections:
+    if not neglect_adjacent_buildings:
         all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
     else:
         all_building_solid_list = []
@@ -203,7 +203,7 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
                                                           repeat(all_building_solid_list, n),
                                                           repeat(architecture_wwr_df, n),
                                                           repeat(geometry_pickle_dir, n),
-                                                          repeat(consider_intersections, n))
+                                                          repeat(neglect_adjacent_buildings, n))
     return geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -260,7 +260,7 @@ class BuildingGeometry(object):
 
 
 def calc_building_geometry_zone(name, building_solid, all_building_solid_list, architecture_wwr_df,
-                                geometry_pickle_dir, consider_intersections):
+                                geometry_pickle_dir, neglect_adjacent_buildings):
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
     wall_list = []
@@ -272,7 +272,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
 
     # check if buildings are close together and it merits to check the intersection
     potentially_intersecting_solids = []
-    if consider_intersections:
+    if not neglect_adjacent_buildings:
         box = calculate.get_bounding_box(building_solid)
         x, y = box[0], box[1]
         for solid in all_building_solid_list:
@@ -574,6 +574,28 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
 
     if minx > geometry_bounds[0] or miny > geometry_bounds[1] or maxx < geometry_bounds[2] or maxy < geometry_bounds[3]:
         raise ValueError('Terrain provided does not cover all building geometries')
+
+
+def tree_geometry_generator(tree_df, terrain_raster):
+    terrian_projection = terrain_raster.GetProjection()
+    proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
+    tree_df = tree_df.to_crs(proj4_str)
+
+    elevation_map = ElevationMap.read_raster(terrain_raster)
+
+    from multiprocessing.pool import Pool
+    from multiprocessing import cpu_count
+
+    with Pool(cpu_count() - 1) as pool:
+        surfaces = [
+            fetch.faces_frm_solid(result) for result in pool.starmap(
+                process_geometries, (
+                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
+                )
+            )
+        ]
+
+    return surfaces
 
 
 def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
