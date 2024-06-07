@@ -141,7 +141,7 @@ def calc_floor_to_floor_height(building_height, number_of_floors):
 def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
     elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
     # burn buildings footprint into the terrain and return the location of the new face
-    face_footprint = burn_buildings(geometry, elevation_map_for_geometry)
+    face_footprint = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
     building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
@@ -359,7 +359,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     return name
 
 
-def burn_buildings(geometry, elevation_map):
+def burn_buildings(geometry, elevation_map, tolerance):
     if geometry.has_z:
         # remove elevation - we'll add it back later by intersecting with the topography
         point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
@@ -372,7 +372,7 @@ def burn_buildings(geometry, elevation_map):
     # get the midpt of the face
     face_midpt = calculate.face_midpt(face)
 
-    terrain_tin = elevation_map.generate_tin()
+    terrain_tin = elevation_map.generate_tin(tolerance)
     # make shell out of tin_occface_list and create OCC object
     terrain_shell = construct.make_shell(terrain_tin)
 
@@ -532,7 +532,7 @@ class ElevationMap(object):
 
         return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
 
-    def generate_tin(self):
+    def generate_tin(self, tolerance=1e-6):
         # Ignore no data values from raster
         y_index, x_index = np.nonzero(self.elevation_map != self.nodata)
         _x_coords = self.x_coords[x_index]
@@ -540,7 +540,7 @@ class ElevationMap(object):
 
         raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
 
-        tin_occface_list = construct.delaunay3d(raster_points)
+        tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
 
         return tin_occface_list
 
