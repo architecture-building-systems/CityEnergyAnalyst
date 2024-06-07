@@ -74,17 +74,18 @@ def identify_surfaces_type(occface_list):
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
 
-def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
+def calc_intersection(surface, edges_coords, edges_dir, tolerance):
     """
     This script calculates the intersection of the building edges to the terrain,
-    :param terrain_intersection_curves:
-    :param edges_coords:
-    :param edges_dir:
-    :return: intersecting points, intersecting faces
     """
-    building_line = gp_Lin(gp_Ax1(gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2]),
-                                  gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])))
-    terrain_intersection_curves.PerformNearest(building_line, 0.0, float("+inf"))
+    point = gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2])
+    direction = gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])
+    line = gp_Lin(gp_Ax1(point, direction))
+
+    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+    terrain_intersection_curves.Load(surface, tolerance)
+    terrain_intersection_curves.PerformNearest(line, float("-inf"), float("+inf"))
+
     if terrain_intersection_curves.IsDone():
         npts = terrain_intersection_curves.NbPnt()
         if npts != 0:
@@ -374,11 +375,9 @@ def burn_buildings(geometry, elevation_map):
     terrain_tin = elevation_map.generate_tin()
     # make shell out of tin_occface_list and create OCC object
     terrain_shell = construct.make_shell(terrain_tin)
-    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-    terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
     # project the face_midpt to the terrain and get the elevation
-    inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
+    inter_pt, inter_face = calc_intersection(terrain_shell, face_midpt, (0, 0, 1), tolerance)
 
     # reconstruct the footprint with the elevation
     loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
@@ -492,29 +491,27 @@ def calc_intersection_face_solid(potentially_intersecting_solid, point):
 
 
 class ElevationMap(object):
-    __slots__ = ['elevation_map', 'x_coords', 'y_coords']
+    __slots__ = ['elevation_map', 'x_coords', 'y_coords', 'nodata']
 
-    def __init__(self, elevation_map, x_coords, y_coords):
+    def __init__(self, elevation_map, x_coords, y_coords, nodata=None):
         self.elevation_map = elevation_map
         self.x_coords = x_coords
         self.y_coords = y_coords
+        self.nodata = nodata
 
     @classmethod
     def read_raster(cls, raster, raise_above_sea_level=True):
         band = raster.GetRasterBand(1)
+        nodata = band.GetNoDataValue()
+
         a = band.ReadAsArray()
-        if raise_above_sea_level and (a < 0).any():
-            print('Warning: Some heights are below sea level')
-            # if height is below sea level, the entire case study is lifted to the lowest point is at altitude 0
-            print('Adjusting elevation map to above sea level')
-            a -= a.min()
 
         (y, x) = np.shape(a)
         (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
         x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
         y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
-        return cls(a, x_coords, y_coords)
+        return cls(a, x_coords, y_coords, nodata)
 
     def get_elevation_map_from_geometry(self, geometry, extra_points=5):
         minx, miny, maxx, maxy = geometry.bounds
@@ -536,7 +533,8 @@ class ElevationMap(object):
         return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
 
     def generate_tin(self):
-        (y_index, x_index) = np.nonzero(self.elevation_map >= 0)
+        # Ignore no data values from raster
+        y_index, x_index = np.nonzero(self.elevation_map != self.nodata)
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
 
