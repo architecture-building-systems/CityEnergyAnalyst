@@ -540,7 +540,7 @@ class ElevationMap(object):
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
 
-        raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index])]
+        raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
 
         tin_occface_list = construct.delaunay3d(raster_points)
 
