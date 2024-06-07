@@ -500,7 +500,7 @@ class ElevationMap(object):
         self.nodata = nodata
 
     @classmethod
-    def read_raster(cls, raster, raise_above_sea_level=True):
+    def read_raster(cls, raster):
         band = raster.GetRasterBand(1)
         nodata = band.GetNoDataValue()
 
