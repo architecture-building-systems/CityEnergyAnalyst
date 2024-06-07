@@ -13,6 +13,7 @@ import time
 from itertools import repeat
 
 import numpy as np
+import pandas as pd
 import py4design.py3dmodel.calculate as calculate
 import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
@@ -557,16 +558,12 @@ def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
 
 
 def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
-    # minx, miny, maxx, maxy
-    zone_bounds = zone_df.geometry.total_bounds
-    if len(surroundings_df):
-        surroundings_bounds = surroundings_df.geometry.total_bounds
-    else:  # set bounds to zone if no surroundings
-        surroundings_bounds = zone_bounds
-    geometry_bounds = (min(zone_bounds[0], surroundings_bounds[0]), min(zone_bounds[1], surroundings_bounds[1]),
-                       max(zone_bounds[2], surroundings_bounds[2]), max(zone_bounds[3], surroundings_bounds[3]))
+    total_df = pd.concat([zone_df, surroundings_df])
 
-    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = terrain_raster.GetGeoTransform()
+    # minx, miny, maxx, maxy
+    geometry_bounds = total_df.total_bounds
+
+    upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size = terrain_raster.GetGeoTransform()
     minx = upper_left_x
     maxy = upper_left_y
     maxx = minx + x_size * terrain_raster.RasterXSize
