@@ -524,15 +524,16 @@ class ElevationMap(object):
     def get_elevation_map_from_geometry(self, geometry, extra_points=5):
         minx, miny, maxx, maxy = geometry.bounds
 
-        x_start = np.where(minx > self.x_coords - self.x_size)[0]
-        x_end = np.where(maxx < self.x_coords + self.x_size)[0]
-        y_start = np.where(maxy < self.y_coords - self.y_size)[0]
-        y_end = np.where(miny > self.y_coords + self.y_size)[0]
+        x_start = np.searchsorted(self.x_coords - self.x_size, minx, side='left') - 1
+        x_end = np.searchsorted(self.x_coords + self.x_size, maxx, side='right')
+        y_start = len(self.y_coords) - np.searchsorted((self.y_coords - self.y_size)[::-1], maxy, side='left') - 1
+        y_end = len(self.y_coords) - np.searchsorted((self.y_coords + self.y_size)[::-1], miny, side='right')
 
-        x_start = max(x_start[-1] - extra_points, 0)
-        x_end = min(x_end[0] + extra_points, len(self.x_coords))
-        y_start = max(y_start[-1] - extra_points, 0)
-        y_end = min(y_end[0] + extra_points, len(self.y_coords))
+        # Consider extra points
+        x_start = max(x_start - extra_points, 0)
+        x_end = min(x_end + extra_points, len(self.x_coords))
+        y_start = max(y_start - extra_points, 0)
+        y_end = min(y_end + extra_points, len(self.y_coords))
 
         new_elevation_map = self.elevation_map[y_start:y_end + 1, x_start:x_end + 1]
         new_x_coords = self.x_coords[x_start:x_end + 1]
