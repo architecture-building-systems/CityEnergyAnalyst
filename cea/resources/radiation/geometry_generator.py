@@ -524,6 +524,11 @@ class ElevationMap(object):
     def get_elevation_map_from_geometry(self, geometry, extra_points=5):
         minx, miny, maxx, maxy = geometry.bounds
 
+        # Ensure geometry bounds is within elevation map
+        if (minx < self.x_coords[0] - self.x_size or maxx > self.x_coords[-1] + self.x_size
+                or miny < self.y_coords[-1] + self.y_size or maxy > self.y_coords[0] - self.y_size):
+            raise ValueError("Geometry bounds in not within the elevation map.")
+
         x_start = np.searchsorted(self.x_coords - self.x_size, minx, side='left') - 1
         x_end = np.searchsorted(self.x_coords + self.x_size, maxx, side='right')
         y_start = len(self.y_coords) - np.searchsorted((self.y_coords - self.y_size)[::-1], maxy, side='left') - 1
