@@ -242,7 +242,7 @@ def get_surrounding_building_sewage(locator):
     """
     import matplotlib.pyplot as plt
     # local variables:
-    buffer_m = 500  # meters
+    buffer_m = 750  # meters
     zone = gdf.from_file(locator.get_zone_geometry())
 
     # transform zone file to geographic coordinates

@@ -217,13 +217,14 @@ def calculate_external_sewage_flow(buffer_buildings, locator, water_consumption)
     # Extract the number of floors of the buildings
     list_floors_nr = selected_buildings['building:levels'].values
     floor_nr = []
+    average_floors_in_zone = math.ceil(np.mean([int(x) for x in list_floors_nr if x != 'nan' and not math.isnan(float(x))]))
     for item in list_floors_nr:
         x = float(item)
 
         if not math.isnan(x):
             floor_nr.append(int(x))
         else:
-            floor_nr.append(1)
+            floor_nr.append(average_floors_in_zone)
 
     # Extract the area of the buildings
     buildings_area = selected_buildings.area
