@@ -21,7 +21,7 @@ import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
 from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
-from osgeo import osr
+from osgeo import osr, gdal
 from py4design import urbangeom
 
 import cea
@@ -37,6 +37,8 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 
 def identify_surfaces_type(occface_list):
@@ -560,13 +562,21 @@ class ElevationMap(object):
 
 
 def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
-    # Get projection of terrain and apply to zone and surroundings
-    terrian_projection = terrain_raster.GetProjection()
-    proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
-    zone_df = zone_df.to_crs(proj4_str)
-    surroundings_df = surroundings_df.to_crs(proj4_str)
+    # Change all to projected cr (to meters)
+    lat, lon = get_lat_lon_projected_shapefile(zone_df)
+    crs = get_projected_coordinate_system(lat, lon)
 
-    return zone_df, surroundings_df, terrain_raster
+    reprojected_zone_df = zone_df.to_crs(crs)
+    reprojected_surroundings_df = surroundings_df.to_crs(crs)
+
+    reprojected_terrain = gdal.Warp(
+        '',  # Empty string as the output file path means in-memory
+        terrain_raster,
+        format='VRT',  # Use VRT format for in-memory operation
+        dstSRS=crs
+    )
+
+    return reprojected_zone_df, reprojected_surroundings_df, reprojected_terrain
 
 
 def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
