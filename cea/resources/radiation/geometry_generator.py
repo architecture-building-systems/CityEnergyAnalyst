@@ -38,7 +38,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
+                                                   crs_to_epsg)
 
 
 def identify_surfaces_type(occface_list):
@@ -575,6 +576,7 @@ def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
         dstSRS=crs
     )
 
+    print(f"Reprojected scene to `EPSG:{crs_to_epsg(crs)}`")
     return reprojected_zone_df, reprojected_surroundings_df, reprojected_terrain
 
 
