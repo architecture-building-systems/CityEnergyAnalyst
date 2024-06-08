@@ -118,8 +118,7 @@ def calc_building_solids(buildings_df, geometry_simplification, elevation_map, n
     nfloor_col_name = "floors_ag"
 
     # simplify geometry for buildings of interest
-    geometries = buildings_df.geometry.map(
-        lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
+    geometries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
 
     height = buildings_df[height_col_name].astype(float)
     nfloors = buildings_df[nfloor_col_name].astype(int)
