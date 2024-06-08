@@ -491,12 +491,16 @@ def calc_intersection_face_solid(potentially_intersecting_solid, point):
 
 
 class ElevationMap(object):
-    __slots__ = ['elevation_map', 'x_coords', 'y_coords', 'nodata']
+    __slots__ = ['elevation_map', 'x_coords', 'y_coords', 'x_size', 'y_size', 'nodata']
 
-    def __init__(self, elevation_map, x_coords, y_coords, nodata=None):
+    def __init__(self, elevation_map, x_coords, y_coords, x_size, y_size, nodata=None):
         self.elevation_map = elevation_map
         self.x_coords = x_coords
         self.y_coords = y_coords
+
+        self.x_size = x_size
+        self.y_size = y_size
+
         self.nodata = nodata
 
     @classmethod
@@ -506,20 +510,24 @@ class ElevationMap(object):
 
         a = band.ReadAsArray()
 
-        (y, x) = np.shape(a)
-        (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
+        y, x = np.shape(a)
+        upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size = raster.GetGeoTransform()
+
+        if x_rotation != 0 or y_rotation != 0:
+            raise ValueError("Rotation in raster is not supported.")
+
         x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
         y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
-        return cls(a, x_coords, y_coords, nodata)
+        return cls(a, x_coords, y_coords, x_size, y_size, nodata)
 
     def get_elevation_map_from_geometry(self, geometry, extra_points=5):
         minx, miny, maxx, maxy = geometry.bounds
 
-        x_start = np.where(minx > self.x_coords)[0]
-        x_end = np.where(maxx < self.x_coords)[0]
-        y_start = np.where(maxy < self.y_coords)[0]
-        y_end = np.where(miny > self.y_coords)[0]
+        x_start = np.where(minx > self.x_coords - self.x_size)[0]
+        x_end = np.where(maxx < self.x_coords + self.x_size)[0]
+        y_start = np.where(maxy < self.y_coords - self.y_size)[0]
+        y_end = np.where(miny > self.y_coords + self.y_size)[0]
 
         x_start = max(x_start[-1] - extra_points, 0)
         x_end = min(x_end[0] + extra_points, len(self.x_coords))
@@ -530,7 +538,7 @@ class ElevationMap(object):
         new_x_coords = self.x_coords[x_start:x_end + 1]
         new_y_coords = self.y_coords[y_start:y_end + 1]
 
-        return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
+        return ElevationMap(new_elevation_map, new_x_coords, new_y_coords, self.x_size, self.y_size, self.nodata)
 
     def generate_tin(self, tolerance=1e-6):
         # Ignore no data values from raster
