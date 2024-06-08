@@ -521,7 +521,7 @@ class ElevationMap(object):
 
         return cls(a, x_coords, y_coords, x_size, y_size, nodata)
 
-    def get_elevation_map_from_geometry(self, geometry, extra_points=5):
+    def get_elevation_map_from_geometry(self, geometry, extra_points=3):
         minx, miny, maxx, maxy = geometry.bounds
 
         # Ensure geometry bounds is within elevation map
