@@ -132,24 +132,31 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
     return dst_array, transform, new_meta
 
 
-def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12,
+               src_crs: Union[CRS, dict] = DEFAULT_CRS) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+    """
+    Fetch raster data array based on bounds in the given source CRS (Default: lat, lon).
+    The resulting raster data would also be in the given source CRS.
+    """
 
-    tile_numbers = get_all_tile_numbers(min_x, min_y, max_x, max_y, zoom)
+    bounding_box = gpd.GeoDataFrame(geometry=[box(min_x, min_y, max_x, max_y)], crs=src_crs)
+
+    # Fetch tile numbers based on lat lon bounds
+    reprojected_bounds = bounding_box.to_crs(DEFAULT_CRS).total_bounds
+    tile_numbers = get_all_tile_numbers(*reprojected_bounds, zoom)
 
     # Get merged raster array
     dest, transform, meta = merge_raster_tiles(URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers)
 
     # Reproject raster array to bounds crs
-    dest, transform, meta = reproject_raster_array(dest, transform, meta, DEFAULT_CRS)
+    dest, transform, meta = reproject_raster_array(dest, transform, meta, src_crs)
 
     # Crop raster based on bounds
     with MemoryFile() as memfile:
         with memfile.open(**meta) as dataset:
             dataset.write(dest)
 
-            bounding_box = box(min_x, min_y, max_x, max_y)
-
-            out_dest, out_transform = mask(dataset, [bounding_box], crop=True)
+            out_dest, out_transform = mask(dataset, bounding_box.geometry, crop=True)
             out_meta = dataset.meta.copy()
             out_meta.update({
                 "height": out_dest.shape[1],
@@ -166,10 +173,18 @@ def main(config):
     # Get total bounds
     zone_df = gpd.read_file(locator.get_zone_geometry())
     surroundings_df = gpd.read_file(locator.get_surroundings_geometry()).to_crs(zone_df.crs)
-    total_df = pd.concat([zone_df, surroundings_df])
-    total_bounds = total_df.to_crs(DEFAULT_CRS).total_bounds
+    total_df = gpd.GeoDataFrame(pd.concat([zone_df.geometry, surroundings_df.geometry]))
+    total_bounds = total_df.total_bounds
 
-    dest, transform, meta = fetch_tiff(*total_bounds)
+    # Add buffer to bounds in meters (using projected crs), to ensure overlap
+    buffer = 30
+    projected_crs = total_df.estimate_utm_crs()
+    reprojected_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
+    buffer_df = reprojected_df.buffer(buffer)
+    min_x, min_y, max_x, max_y = buffer_df.total_bounds
+
+    # Fetch tiff data
+    dest, transform, meta = fetch_tiff(min_x, min_y, max_x, max_y, src_crs=buffer_df.crs)
 
     # Write to disk
     os.makedirs(os.path.dirname(locator.get_terrain()), exist_ok=True)
