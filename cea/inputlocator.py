@@ -1,7 +1,7 @@
 """
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
-
+import atexit
 import os
 import cea.schemas
 import shutil
@@ -34,10 +34,8 @@ class InputLocator(object):
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
 
-        self._temp_directory = tempfile.TemporaryDirectory()
-
-    def __del__(self):
-        self._temp_directory.cleanup()
+        self._temp_directory = tempfile.mkdtemp()
+        atexit.register(self._cleanup_temp_directory)
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -58,6 +56,14 @@ class InputLocator(object):
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
         self._temp_directory = state["_temp_directory"]
+
+    def __del__(self):
+        self._cleanup_temp_directory()
+
+    def _cleanup_temp_directory(self):
+        # Cleanup the temporary directory when the object is destroyed
+        if os.path.exists(self._temp_directory):
+            shutil.rmtree(self._temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -1151,7 +1157,7 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return self._temp_directory.name
+        return self._temp_directory
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
