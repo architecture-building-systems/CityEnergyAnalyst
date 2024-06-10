@@ -1,145 +1,167 @@
-"""
-This script extracts terrain elevation from NASA - SRTM
-https://www2.jpl.nasa.gov/srtm/
-"""
-
-
-
-
+import math
 import os
+from typing import Iterable, Tuple
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import requests
-from geopandas import GeoDataFrame as Gdf
-from osgeo import gdal, ogr, osr
-from shapely.geometry import Polygon
+import rasterio
+from rasterio import MemoryFile
+from rasterio.mask import mask
+from rasterio.merge import merge
+from rasterio.warp import calculate_default_transform, Resampling, reproject
+from shapely import box
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.surroundings_helper import get_zone_and_surr_in_projected_crs
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
-__author__ = "Jimeno Fonseca"
-__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno Fonseca"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+URL_FORMAT = "https://s3.amazonaws.com/elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif"
 
 
-def request_elevation(lon, lat):
-    # script for returning elevation from lat, long, based on open elevation data
-    # which in turn is based on SRTM
-    query = ('https://api.open-elevation.com/api/v1/lookup?locations=' + str(lat) + ',' + str(lon))
-    r = requests.get(query).json()  # json object, various ways you can extract value
-    # one approach is to use pandas json functionality:
-    elevation = pd.io.json.json_normalize(r, 'results')['elevation'].values[0]
-    return elevation
-
-
-def calc_bounding_box_projected_coordinates(locator):
-    # connect both files and avoid repetition
-    data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
-    data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
-    data = pd.concat([
-        data_zone.to_crs(get_geographic_coordinate_system()),
-        data_dis.to_crs(get_geographic_coordinate_system())
-    ], ignore_index=True, sort=True)
-    lon = data.geometry[0].centroid.coords.xy[0][0]
-    lat = data.geometry[0].centroid.coords.xy[1][0]
-    crs = get_projected_coordinate_system(float(lat), float(lon))
-    data = data.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-    result = data.total_bounds
-    result = [np.float32(x) for x in result]  # in float32 so the raster works
-    return result, crs, lon, lat
-
-
-def terrain_elevation_extractor(locator, config):
-    """this is where the action happens if it is more than a few lines in ``main``.
-    NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (how)
-    NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
+def get_tile_number(lat: float, lon: float, zoom: int) -> Tuple[int, int]:
     """
+    Converts latitude and longitude to slippy map tile coordinates.
+    Reference: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+    """
+    lat_rad = math.radians(lat)
 
-    # local variables:
-    elevation = config.terrain_helper.elevation
-    grid_size = config.terrain_helper.grid_size
-    extra_border = np.float32(30)  # adding extra 30 m to avoid errors of no data
-    raster_path = locator.get_terrain()
-    locator.ensure_parent_folder_exists(raster_path)
-
-    # get the bounding box coordinates
-    assert os.path.exists(
-        locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where' \
-                                          ' to extract the terrain from in the next format: lon_min, lat_min, lon_max, lat_max'
-    print("generating terrain from Surroundings area")
-    bounding_box_surroundings_file, crs, lon, lat = calc_bounding_box_projected_coordinates(locator)
-    x_min = bounding_box_surroundings_file[0] - extra_border
-    y_min = bounding_box_surroundings_file[1] - extra_border
-    x_max = bounding_box_surroundings_file[2] + extra_border
-    y_max = bounding_box_surroundings_file[3] + extra_border
-
-    # make sure output is a whole number when min-max is divided by grid size
-    x_extra = grid_size - ((x_max - x_min) % grid_size)/2
-    y_extra = grid_size - ((y_max - y_min) % grid_size)/2
-    x_min -= x_extra
-    y_min -= y_extra
-    x_max += x_extra
-    y_max += y_extra
-
-    ##TODO: get the elevation from satellite data. Open-elevation was working, but the project is dying.
-    # if elevation is None:
-    #     print('extracting elevation from satellite data, this needs connection to the internet')
-    #     elevation = request_elevation(lon, lat)
-    #     print("Proceeding to calculate terrain file with fixed elevation in m of ", elevation)
-    # else:
-    #     print("Proceeding to calculate terrain file with fixed elevation in m of ",elevation)
-
-    print("Proceeding to calculate terrain file with fixed elevation in m of ", elevation)
-
-    # now calculate the raster with the fixed elevation
-    calc_raster_terrain_fixed_elevation(crs, elevation, grid_size, raster_path, locator,
-                                        x_max, x_min, y_max, y_min)
+    n = 2.0 ** zoom
+    x_tile = int((lon + 180.0) / 360.0 * n)
+    y_tile = int((1.0 - math.log(math.tan(lat_rad) + 1.0 / math.cos(lat_rad)) / math.pi) / 2.0 * n)
+    return x_tile, y_tile
 
 
-def calc_raster_terrain_fixed_elevation(crs, elevation, grid_size, raster_path, locator, x_max, x_min, y_max,
-                                        y_min):
-    # local variables:
-    temp_shapefile = locator.get_temporary_file("terrain.shp")
-    cols = int((x_max - x_min) / grid_size)
-    rows = int((y_max - y_min) / grid_size)
-    shapes = Polygon([[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max], [x_min, y_min]])
-    geodataframe = Gdf(index=[0], crs=crs, geometry=[shapes])
-    geodataframe.to_file(temp_shapefile)
-    # 1) opening the shapefile
-    source_ds = ogr.Open(temp_shapefile)
-    source_layer = source_ds.GetLayer()
-    target_ds = gdal.GetDriverByName('GTiff').Create(raster_path, cols, rows, 1, gdal.GDT_Float32)  ##COMMENT 2
-    target_ds.SetGeoTransform((x_min, grid_size, 0, y_max, 0, -grid_size))  ##COMMENT 3
-    # 5) Adding a spatial reference ##COMMENT 4
-    target_dsSRS = osr.SpatialReference()
-    target_dsSRS.ImportFromProj4(crs)
-    target_ds.SetProjection(target_dsSRS.ExportToWkt())
-    band = target_ds.GetRasterBand(1)
-    band.SetNoDataValue(-9999)  ##COMMENT 5
-    gdal.RasterizeLayer(target_ds, [1], source_layer, burn_values=[elevation])  ##COMMENT 6
-    target_ds = None  # closing the file
+def get_all_tile_numbers(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int) -> Iterable[Tuple[int, int]]:
+    """
+    Gets tile numbers based on given bounds.
+    """
+    # Get tile numbers of bounds
+    tile_numbers = {get_tile_number(min_y, min_x, zoom),
+                    get_tile_number(min_y, max_x, zoom),
+                    get_tile_number(max_y, max_x, zoom),
+                    get_tile_number(max_y, min_x, zoom)}
+
+    # Get max and min of tile numbers
+    min_x_tile, min_y_tile, max_x_tile, max_y_tile = (None, None, None, None)
+    for i, tile_number in enumerate(tile_numbers):
+        if i == 0:
+            min_x_tile = tile_number[0]
+            max_x_tile = tile_number[0]
+
+            min_y_tile = tile_number[1]
+            max_y_tile = tile_number[1]
+
+        min_x_tile = min(min_x_tile, tile_number[0])
+        max_x_tile = max(max_x_tile, tile_number[0])
+
+        min_y_tile = min(min_y_tile, tile_number[1])
+        max_y_tile = max(max_y_tile, tile_number[1])
+
+    # Generate all required tile numbers
+    all_tile_numbers = []
+    for x in range(min_x_tile, max_x_tile + 1):
+        for y in range(min_y_tile, max_y_tile + 1):
+            all_tile_numbers.append((x, y))
+
+    return all_tile_numbers
+
+
+def merge_raster_tiles(tile_urls: Iterable[str]):
+    rasters = []
+    try:
+        for tile_url in tile_urls:
+            rasters.append(rasterio.open(tile_url))
+
+        # Merge rasters
+        dest, transform = merge(rasters)
+        meta = rasters[0].meta.copy()
+        meta.update({
+            "driver": "GTiff",
+            "height": dest.shape[1],
+            "width": dest.shape[2],
+            "transform": transform,
+        })
+    finally:
+        for raster in rasters:
+            raster.close()
+
+    return dest, transform, meta
+
+
+def reproject_raster_array(src_array, src_transform, meta, dst_crs):
+    # Get bounds from transform
+    minx, miny = src_transform * (0, src_array.shape[2])
+    maxx, maxy = src_transform * (src_array.shape[1], 0)
+
+    transform, width, height = calculate_default_transform(
+        meta["crs"], dst_crs, src_array.shape[2], src_array.shape[1],
+        minx, miny, maxx, maxy
+    )
+
+    new_meta = meta.copy()
+    new_meta.update({
+        'crs': dst_crs,
+        'transform': transform,
+        'width': width,
+        'height': height
+    })
+
+    dst_array = np.empty((src_array.shape[0], height, width), dtype=src_array.dtype)
+    for i in range(src_array.shape[0]):
+        reproject(
+            source=src_array[i],
+            destination=dst_array[i],
+            src_transform=src_transform,
+            src_crs=meta["crs"],
+            dst_transform=transform,
+            dst_crs=dst_crs,
+            resampling=Resampling.nearest
+        )
+
+    return dst_array, transform, new_meta
+
+
+def fetch_tiff(min_x, min_y, max_x, max_y, zoom=12):
+    tile_numbers = get_all_tile_numbers(min_x, min_y, max_x, max_y, zoom)
+
+    # Get merged raster array
+    dest, transform, meta = merge_raster_tiles(URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers)
+
+    # Reproject raster array to bounds crs
+    dest, transform, meta = reproject_raster_array(dest, transform, meta, 'EPSG:4326')
+
+    with MemoryFile() as memfile:
+        with memfile.open(**meta) as dataset:
+            dataset.write(dest)
+
+            bounding_box = box(min_x, min_y, max_x, max_y)
+
+            out_dest, out_transform = mask(dataset, [bounding_box], crop=True)
+            out_meta = dataset.meta.copy()
+            out_meta.update({
+                "height": out_dest.shape[1],
+                "width": out_dest.shape[2],
+                "transform": out_transform
+            })
+
+    return out_dest, out_transform, out_meta
 
 
 def main(config):
-    """
-    Create the terrain.tif file
-
-    :param config:
-    :type config: cea.config.Configuration
-    :return:
-    """
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    terrain_elevation_extractor(locator, config)
+    # Get total bounds
+    zone_df = gpd.read_file(locator.get_zone_geometry())
+    surroundings_df = gpd.read_file(locator.get_surroundings_geometry())
+    total_df = pd.concat([zone_df, surroundings_df])
+    total_bounds = total_df.to_crs("EPSG:4326").total_bounds
+
+    dest, transform, meta = fetch_tiff(*total_bounds)
+
+    # Write to disk
+    os.makedirs(os.path.dirname(locator.get_terrain()), exist_ok=True)
+    with rasterio.open(locator.get_terrain(), "w", **meta) as f:
+        f.write(dest)
 
 
 if __name__ == '__main__':
