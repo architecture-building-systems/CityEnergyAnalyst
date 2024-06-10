@@ -1,11 +1,12 @@
 import math
 import os
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Dict, Union
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
+from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio.mask import mask
 from rasterio.merge import merge
@@ -66,7 +67,10 @@ def get_all_tile_numbers(min_x: float, min_y: float, max_x: float, max_y: float,
     return all_tile_numbers
 
 
-def merge_raster_tiles(tile_urls: Iterable[str]):
+def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+    """
+    Merge raster files from tile urls into a single raster.
+    """
     rasters = []
     try:
         for tile_url in tile_urls:
@@ -88,7 +92,10 @@ def merge_raster_tiles(tile_urls: Iterable[str]):
     return dest, transform, meta
 
 
-def reproject_raster_array(src_array, src_transform, meta, dst_crs):
+def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict, dst_crs: Union[CRS, dict]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+    """
+    Reproject raster array to specified CRS.
+    """
     # Get bounds from transform
     minx, miny = src_transform * (0, src_array.shape[2])
     maxx, maxy = src_transform * (src_array.shape[1], 0)
@@ -121,14 +128,14 @@ def reproject_raster_array(src_array, src_transform, meta, dst_crs):
     return dst_array, transform, new_meta
 
 
-def fetch_tiff(min_x, min_y, max_x, max_y, zoom=12):
+def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
     tile_numbers = get_all_tile_numbers(min_x, min_y, max_x, max_y, zoom)
 
     # Get merged raster array
     dest, transform, meta = merge_raster_tiles(URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers)
 
     # Reproject raster array to bounds crs
-    dest, transform, meta = reproject_raster_array(dest, transform, meta, 'EPSG:4326')
+    dest, transform, meta = reproject_raster_array(dest, transform, meta, CRS.from_string('EPSG:4326'))
 
     with MemoryFile() as memfile:
         with memfile.open(**meta) as dataset:
