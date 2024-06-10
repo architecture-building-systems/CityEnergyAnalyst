@@ -17,6 +17,8 @@ import cea.config
 import cea.inputlocator
 
 URL_FORMAT = "https://s3.amazonaws.com/elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif"
+TILE_CRS = CRS.from_epsg(3857)
+DEFAULT_CRS = CRS.from_epsg(4326)
 
 
 def get_tile_number(lat: float, lon: float, zoom: int) -> Tuple[int, int]:
@@ -32,7 +34,8 @@ def get_tile_number(lat: float, lon: float, zoom: int) -> Tuple[int, int]:
     return x_tile, y_tile
 
 
-def get_all_tile_numbers(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int) -> Iterable[Tuple[int, int]]:
+def get_all_tile_numbers(min_x: float, min_y: float, max_x: float, max_y: float,
+                         zoom: int) -> Iterable[Tuple[int, int]]:
     """
     Gets tile numbers based on given bounds.
     """
@@ -92,7 +95,8 @@ def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.A
     return dest, transform, meta
 
 
-def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict, dst_crs: Union[CRS, dict]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
+                           dst_crs: Union[CRS, dict]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
     """
     Reproject raster array to specified CRS.
     """
@@ -129,14 +133,16 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict, dst
 
 
 def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+
     tile_numbers = get_all_tile_numbers(min_x, min_y, max_x, max_y, zoom)
 
     # Get merged raster array
     dest, transform, meta = merge_raster_tiles(URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers)
 
     # Reproject raster array to bounds crs
-    dest, transform, meta = reproject_raster_array(dest, transform, meta, CRS.from_string('EPSG:4326'))
+    dest, transform, meta = reproject_raster_array(dest, transform, meta, DEFAULT_CRS)
 
+    # Crop raster based on bounds
     with MemoryFile() as memfile:
         with memfile.open(**meta) as dataset:
             dataset.write(dest)
@@ -159,9 +165,9 @@ def main(config):
 
     # Get total bounds
     zone_df = gpd.read_file(locator.get_zone_geometry())
-    surroundings_df = gpd.read_file(locator.get_surroundings_geometry())
+    surroundings_df = gpd.read_file(locator.get_surroundings_geometry()).to_crs(zone_df.crs)
     total_df = pd.concat([zone_df, surroundings_df])
-    total_bounds = total_df.to_crs("EPSG:4326").total_bounds
+    total_bounds = total_df.to_crs(DEFAULT_CRS).total_bounds
 
     dest, transform, meta = fetch_tiff(*total_bounds)
 
