@@ -28,7 +28,7 @@ Data management:
 
   - name: terrain-helper
     label: Terrain helper
-    description: Query topography with a fixed elevation
+    description: Query topography data from third party sources
     interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
