@@ -1,3 +1,4 @@
+import datetime
 import math
 import os
 from typing import Iterable, Tuple, Dict, Union
@@ -6,6 +7,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
+import requests
 from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio.mask import mask
@@ -19,6 +21,30 @@ import cea.inputlocator
 URL_FORMAT = "https://s3.amazonaws.com/elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif"
 TILE_CRS = CRS.from_epsg(3857)
 DEFAULT_CRS = CRS.from_epsg(4326)
+
+DATA_SOURCE_URL = "https://github.com/tilezen/joerd/blob/master/docs/data-sources.md"
+ATTRIBUTION_URL = "https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
+
+ATTRIBUTION = """
+* ArcticDEM terrain data DEM(s) were created from DigitalGlobe, Inc., imagery and
+  funded under National Science Foundation awards 1043681, 1559691, and 1542736;
+* Australia terrain data © Commonwealth of Australia (Geoscience Australia) 2017;
+* Austria terrain data © offene Daten Österreichs – Digitales Geländemodell (DGM)
+  Österreich;
+* Canada terrain data contains information licensed under the Open Government
+  Licence – Canada;
+* Europe terrain data produced using Copernicus data and information funded by the
+  European Union - EU-DEM layers;
+* Global ETOPO1 terrain data U.S. National Oceanic and Atmospheric Administration
+* Mexico terrain data source: INEGI, Continental relief, 2016;
+* New Zealand terrain data Copyright 2011 Crown copyright (c) Land Information New
+  Zealand and the New Zealand Government (All rights reserved);
+* Norway terrain data © Kartverket;
+* United Kingdom terrain data © Environment Agency copyright and/or database right
+  2015. All rights reserved;
+* United States 3DEP (formerly NED) and global GMTED2010 and SRTM terrain data
+  courtesy of the U.S. Geological Survey.
+"""
 
 
 def get_tile_number(lat: float, lon: float, zoom: int) -> Tuple[int, int]:
@@ -77,7 +103,8 @@ def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.A
     rasters = []
     try:
         for tile_url in tile_urls:
-            rasters.append(rasterio.open(tile_url))
+            raster = rasterio.open(tile_url)
+            rasters.append(raster)
 
         # Merge rasters
         dest, transform = merge(rasters)
@@ -140,13 +167,15 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
     """
 
     bounding_box = gpd.GeoDataFrame(geometry=[box(min_x, min_y, max_x, max_y)], crs=src_crs)
+    print(f"Generating raster based on bounds: ({min_x}, {min_y}, {max_x}, {max_y}), {src_crs}")
 
     # Fetch tile numbers based on lat lon bounds
     reprojected_bounds = bounding_box.to_crs(DEFAULT_CRS).total_bounds
     tile_numbers = get_all_tile_numbers(*reprojected_bounds, zoom)
 
     # Get merged raster array
-    dest, transform, meta = merge_raster_tiles(URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers)
+    tile_urls = [URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers]
+    dest, transform, meta = merge_raster_tiles(tile_urls)
 
     # Reproject raster array to bounds crs
     dest, transform, meta = reproject_raster_array(dest, transform, meta, src_crs)
@@ -186,8 +215,25 @@ def main(config):
     # Fetch tiff data
     dest, transform, meta = fetch_tiff(min_x, min_y, max_x, max_y, src_crs=buffer_df.crs)
 
-    # Write to disk
     os.makedirs(os.path.dirname(locator.get_terrain()), exist_ok=True)
+    # Write reference file
+    reference_file = os.path.join(os.path.dirname(locator.get_terrain()), "reference.txt")
+    content = (f"\nCitation:\n"
+               f"Terrain Tiles was accessed on {datetime.datetime.now().date()} "
+               f"from https://registry.opendata.aws/terrain-tiles.\n"
+               f"\nAcknowledgement of Data Sources:"
+               f"{ATTRIBUTION}\n"
+               f"For more information about the data:\n"
+               f"Data sources: {DATA_SOURCE_URL}\n"
+               f"Attribution: {ATTRIBUTION_URL}\n"
+               f"")
+
+    with open(reference_file, "w") as f:
+        f.write(content)
+    print(content)
+    print(f"Reference file is written to: {reference_file}")
+
+    # Write to disk
     with rasterio.open(locator.get_terrain(), "w", **meta) as f:
         f.write(dest)
 
