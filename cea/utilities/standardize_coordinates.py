@@ -12,6 +12,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from pyproj import CRS
+
 
 def shapefile_to_WSG_and_UTM(shapefile_path):
 
@@ -48,17 +50,18 @@ def raster_to_WSG_and_UTM(raster_path, lat, lon):
 
 
 def get_geographic_coordinate_system():
-    return "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    return CRS.from_epsg(4326).to_wkt()
 
 
 def get_projected_coordinate_system(lat, lon):
     easting, northing, zone_number, zone_letter = utm.from_latlon(lat, lon)
-    if zone_letter in "NPQRSTUVWXX":
-        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    elif zone_letter in "CDEFGHJKLM":
-        return "+proj=utm +zone=" + str(zone_number) + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +south"
-    else:
-        Exception('The projected coordinate system is unknown, lon{}, lat{}').format(lat, lon)
+    epsg = f"326{zone_number}" if lon >= 0 else f"327{zone_number}"
+
+    return CRS.from_epsg(int(epsg)).to_wkt()
+
+
+def crs_to_epsg(crs: str) -> int:
+    return CRS.from_string(crs).to_epsg()
 
 
 def get_lat_lon_projected_shapefile(data):
