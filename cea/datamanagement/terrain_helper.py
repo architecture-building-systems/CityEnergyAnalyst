@@ -1,12 +1,14 @@
 import datetime
+import io
 import math
 import os
-from typing import Iterable, Tuple, Dict, Union
+from typing import Iterable, Tuple, Dict, Union, List
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
+import requests
 from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio.mask import mask
@@ -95,15 +97,27 @@ def get_all_tile_numbers(min_x: float, min_y: float, max_x: float, max_y: float,
     return all_tile_numbers
 
 
-def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.Affine, Dict, List[Dict]]:
     """
     Merge raster files from tile urls into a single raster.
     """
     rasters = []
+    tile_info = []
     try:
         for tile_url in tile_urls:
-            raster = rasterio.open(tile_url)
+            with requests.get(tile_url, stream=True) as r:
+                r.raise_for_status()
+                data = io.BytesIO(r.content)
+
+            # Load raster data using rasterio
+            raster = rasterio.open(data)
             rasters.append(raster)
+
+            # Store tile info
+            tile_info.append({
+                "url": tile_url,
+                "headers": r.headers
+            })
 
         # Merge rasters
         dest, transform = merge(rasters)
@@ -118,7 +132,7 @@ def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.A
         for raster in rasters:
             raster.close()
 
-    return dest, transform, meta
+    return dest, transform, meta, tile_info
 
 
 def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
@@ -159,10 +173,11 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
 
 
 def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12,
-               src_crs: Union[CRS, dict] = DEFAULT_CRS) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+               src_crs: Union[CRS, dict] = DEFAULT_CRS) -> Tuple[np.ndarray, rasterio.Affine, Dict, List[Dict]]:
     """
     Fetch raster data array based on bounds in the given source CRS (Default: lat, lon).
     The resulting raster data would also be in the given source CRS.
+    Also returns the info of the tile that were fetched.
     """
 
     bounding_box = gpd.GeoDataFrame(geometry=[box(min_x, min_y, max_x, max_y)], crs=src_crs)
@@ -174,7 +189,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
 
     # Get merged raster array
     tile_urls = [URL_FORMAT.format(zoom=zoom, x=x, y=y) for x, y in tile_numbers]
-    dest, transform, meta = merge_raster_tiles(tile_urls)
+    dest, transform, meta, tile_info = merge_raster_tiles(tile_urls)
 
     # Reproject raster array to bounds crs
     dest, transform, meta = reproject_raster_array(dest, transform, meta, src_crs)
@@ -192,7 +207,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
                 "transform": out_transform
             })
 
-    return out_dest, out_transform, out_meta
+    return out_dest, out_transform, out_meta, tile_info
 
 
 def main(config):
@@ -212,20 +227,27 @@ def main(config):
     min_x, min_y, max_x, max_y = buffer_df.total_bounds
 
     # Fetch tiff data
-    dest, transform, meta = fetch_tiff(min_x, min_y, max_x, max_y, src_crs=buffer_df.crs)
+    dest, transform, meta, tile_info = fetch_tiff(min_x, min_y, max_x, max_y, src_crs=buffer_df.crs)
 
     os.makedirs(os.path.dirname(locator.get_terrain()), exist_ok=True)
     # Write reference file
     reference_file = os.path.join(os.path.dirname(locator.get_terrain()), "reference.txt")
-    content = (f"\nCitation:\n"
+    tile_info_string = '\n'.join([
+        f"url: {info['url']}\n"
+        f"data sources: {info['headers']['x-amz-meta-x-imagery-sources']}\n"
+        f"last modified: {info['headers']['Last-Modified']}\n" for info in tile_info
+    ])
+    content = (f"Citation:\n"
                f"Terrain Tiles was accessed on {datetime.datetime.now().date()} "
                f"from https://registry.opendata.aws/terrain-tiles.\n"
-               f"\nAcknowledgement of Data Sources:"
+               f"\n"
+               f"Information of tiles used:\n"
+               f"{tile_info_string}\n"
+               f"Acknowledgement of Data Sources:"
                f"{ATTRIBUTION}\n"
                f"For more information about the data:\n"
                f"Data sources: {DATA_SOURCE_URL}\n"
-               f"Attribution: {ATTRIBUTION_URL}\n"
-               f"")
+               f"Attribution: {ATTRIBUTION_URL}\n")
 
     with open(reference_file, "w") as f:
         f.write(content)
