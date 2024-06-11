@@ -136,7 +136,7 @@ def merge_raster_tiles(tile_urls: Iterable[str]) -> Tuple[np.ndarray, rasterio.A
 
 
 def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
-                           dst_crs: Union[CRS, dict]) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
+                           dst_crs: Union[CRS, dict], grid_size: int) -> Tuple[np.ndarray, rasterio.Affine, Dict]:
     """
     Reproject raster array to specified CRS.
     """
@@ -146,7 +146,8 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
 
     transform, width, height = calculate_default_transform(
         meta["crs"], dst_crs, src_array.shape[2], src_array.shape[1],
-        minx, miny, maxx, maxy
+        minx, miny, maxx, maxy,
+        resolution=(grid_size, grid_size)
     )
 
     new_meta = meta.copy()
@@ -172,7 +173,7 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
     return dst_array, transform, new_meta
 
 
-def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12,
+def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int = 12, grid_size: int = 30,
                src_crs: Union[CRS, dict] = DEFAULT_CRS) -> Tuple[np.ndarray, rasterio.Affine, Dict, List[Dict]]:
     """
     Fetch raster data array based on bounds in the given source CRS (Default: lat, lon).
@@ -192,7 +193,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
     dest, transform, meta, tile_info = merge_raster_tiles(tile_urls)
 
     # Reproject raster array to bounds crs
-    dest, transform, meta = reproject_raster_array(dest, transform, meta, src_crs)
+    dest, transform, meta = reproject_raster_array(dest, transform, meta, src_crs, grid_size)
 
     # Crop raster based on bounds
     with MemoryFile() as memfile:
@@ -211,6 +212,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
 
 
 def main(config):
+    grid_size = config.terrain_helper.grid_size
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # Get total bounds
@@ -227,7 +229,8 @@ def main(config):
     min_x, min_y, max_x, max_y = buffer_df.total_bounds
 
     # Fetch tiff data
-    dest, transform, meta, tile_info = fetch_tiff(min_x, min_y, max_x, max_y, src_crs=buffer_df.crs)
+    dest, transform, meta, tile_info = fetch_tiff(min_x, min_y, max_x, max_y,
+                                                  grid_size=grid_size, src_crs=buffer_df.crs)
 
     os.makedirs(os.path.dirname(locator.get_terrain()), exist_ok=True)
     # Write reference file
