@@ -47,7 +47,7 @@ Data management:
 
   - name: trees-helper
     label: Trees helper
-    description: Import tree geometries to scenario
+    description: Import tree geometries to scenario. Check CEA Learning Camp Lesson cea-a-02 for details.
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
     parameters: [ 'general:scenario', trees-helper ]
