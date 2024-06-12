@@ -14381,8 +14381,8 @@ get_tree_geometry:
         type: float
         unit: '[m]'
         values: '{0...n}'
-      density_la:
-        description: Leaf area density.
+      density_tc:
+        description: Tree canopy density. It is the proportion of ground area covered by the vertical projection of tree canopies. It is a measure of how much of the sky is obscured by the canopy when viewed from below.
         min: 0
         max: 1
         type: float
