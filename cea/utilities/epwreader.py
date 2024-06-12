@@ -72,6 +72,7 @@ def calc_skytemp(Tdrybulb, Tdewpoint, N):
     """
     Documentation e.g. here:
     https://www.energyplus.net/sites/default/files/docs/site_v8.3.0/EngineeringReference/05-Climate/index.html
+    https://energyplus.net/assets/nrel_custom/pdfs/pdfs_v24.1.0/EngineeringReference.pdf
     or:
     https://bigladdersoftware.com/epx/docs/8-6/engineering-reference/climate-calculations.html
 
