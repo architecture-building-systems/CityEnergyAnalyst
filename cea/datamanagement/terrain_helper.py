@@ -218,7 +218,10 @@ def main(config):
     # Get total bounds
     zone_df = gpd.read_file(locator.get_zone_geometry())
     surroundings_df = gpd.read_file(locator.get_surroundings_geometry()).to_crs(zone_df.crs)
-    total_df = gpd.GeoDataFrame(pd.concat([zone_df.geometry, surroundings_df.geometry]))
+    trees_df = gpd.read_file(locator.get_tree_geometry()).to_crs(zone_df.crs) if (
+        os.path.exists(locator.get_tree_geometry())
+    ) else gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
+    total_df = gpd.GeoDataFrame(pd.concat([zone_df.geometry, surroundings_df.geometry, trees_df.geometry]))
     total_bounds = total_df.total_bounds
 
     # Add buffer to bounds in meters (using projected crs), to ensure overlap
