@@ -145,7 +145,7 @@ def main(config):
         print(f"trees: {trees_path}")
         trees_df = gpd.GeoDataFrame.from_file(trees_path)
     else:
-        print(f"trees: None")
+        print("trees: None")
         # Create empty area if it does not exist
         trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
 
