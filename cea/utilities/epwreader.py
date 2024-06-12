@@ -63,7 +63,8 @@ def epw_reader(weather_path):
     epw_data['ratio_diffhout'] = epw_data['difhorrad_Whm2'] / epw_data['glohorrad_Whm2']
     epw_data['ratio_diffhout'] = epw_data['ratio_diffhout'].replace(np.inf, np.nan)
     epw_data['wetbulb_C'] = np.vectorize(calc_wetbulb)(epw_data['drybulb_C'], epw_data['relhum_percent'])
-    epw_data['skytemp_C'] = np.vectorize(calc_skytemp)(epw_data['drybulb_C'], epw_data['dewpoint_C'],
+    epw_data['skytemp_C'] = np.vectorize(calc_skytemp)(epw_data['horirsky_Whm2'],
+                                                       epw_data['drybulb_C'], epw_data['dewpoint_C'],
                                                        epw_data['opaqskycvr_tenths'])
 
     return epw_data
