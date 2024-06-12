@@ -2,8 +2,6 @@
 Energyplus file reader
 """
 
-
-
 import pandas as pd
 import math
 import cea.inputlocator
@@ -21,6 +19,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.utilities.date import get_date_range_hours_from_year
+
+
+HOR_IR_SKY_NO_VALUE = 9999
 
 
 def epw_to_dataframe(weather_path):
@@ -68,23 +69,42 @@ def epw_reader(weather_path):
     return epw_data
 
 
-def calc_skytemp(Tdrybulb, Tdewpoint, N):
+def calc_horirsky(Tdrybulb, Tdewpoint, N):
+    """
+    Based on the equation found here:
+    https://energyplus.net/assets/nrel_custom/pdfs/pdfs_v24.1.0/EngineeringReference.pdf (Section 5.1.2)
+
+    :param Tdrybulb: Dry bulb temperature [C]
+    :param Tdewpoint: Wet bulb temperature [C]
+    :param N: opaque skycover in [tenths], minimum is 0, maximum is 10 see: http://glossary.ametsoc.org/wiki/Sky_cover
+    :return: horizontal infrared radiation intensity [Whm2]
+    """
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (
+            1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
+    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_OFFSET) ** 4
+
+    return hor_IR
+
+
+def calc_skytemp(hor_IR_Whm2, Tdrybulb, Tdewpoint, N):
     """
     Documentation e.g. here:
     https://www.energyplus.net/sites/default/files/docs/site_v8.3.0/EngineeringReference/05-Climate/index.html
-    https://energyplus.net/assets/nrel_custom/pdfs/pdfs_v24.1.0/EngineeringReference.pdf
+    https://energyplus.net/assets/nrel_custom/pdfs/pdfs_v24.1.0/EngineeringReference.pdf (Section 5.1.3)
     or:
     https://bigladdersoftware.com/epx/docs/8-6/engineering-reference/climate-calculations.html
 
+    :param hor_IR_Whm2: horizontal infrared radiation intensity [Whm2]
     :param Tdrybulb: Dry bulb temperature [C]
     :param Tdewpoint: Wet bulb temperature [C]
     :param N: opaque skycover in [tenths], minimum is 0, maximum is 10 see: http://glossary.ametsoc.org/wiki/Sky_cover
     :return: sky temperature [C]
     """
 
-    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (
-            1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
-    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_OFFSET) ** 4
+    hor_IR = hor_IR_Whm2
+    if hor_IR == HOR_IR_SKY_NO_VALUE:
+        hor_IR = calc_horirsky(Tdrybulb, Tdewpoint, N)
+
     sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - KELVIN_OFFSET
 
     return sky_T  # sky temperature in C
