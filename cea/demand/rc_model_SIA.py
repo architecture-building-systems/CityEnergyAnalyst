@@ -618,8 +618,8 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t, config):
                             "If it is an expected behavior, consider turning off over-heating warning in the "
                             "advanced parameters to continue the simulation.\n"
                             "If it is not expected, check building geometry and internal loads.\n" 
-                            "Building might be too small in size or architecture parameter Hs_ag = {} might be too"
-                            "small for this geometry. Current bounds of range for RC-model temperatures are"
+                            "Building might be too small in size or architecture parameter Hs_ag = {} might be too "
+                            "small for this geometry. Current bounds of range for RC-model temperatures are "
                             "between {} and {}.".format(bpr.name, t, round(T_int, 2), round(theta_c, 2),  round(theta_m, 2),
                                                          bpr.architecture.Hs_ag, T_WARNING_LOW, T_WARNING_HIGH))
 

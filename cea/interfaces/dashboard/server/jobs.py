@@ -101,6 +101,7 @@ class NewJob(Resource):
 
 @api.route("/list")
 class ListJobs(Resource):
+    @api.marshal_with(job_info_model, as_list=True)
     def get(self):
         return [asdict(job) for job in jobs.values()]
 

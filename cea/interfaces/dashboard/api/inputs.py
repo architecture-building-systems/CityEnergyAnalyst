@@ -41,7 +41,8 @@ INPUT_DATABASES = [
     ('indoor-comfort', 'get_building_comfort'),
     ('air-conditioning-systems', 'get_building_air_conditioning'),
     ('supply-systems', 'get_building_supply'),
-    ('surroundings', 'get_surroundings_geometry')
+    ('surroundings', 'get_surroundings_geometry'),
+    ('trees', "get_tree_geometry")
 ]
 
 
@@ -61,7 +62,7 @@ def get_input_database_schemas():
 
 INPUTS = get_input_database_schemas()
 INPUT_KEYS = INPUTS.keys()
-GEOJSON_KEYS = ['zone', 'surroundings', 'streets', 'dc', 'dh']
+GEOJSON_KEYS = ['zone', 'surroundings', 'trees', 'streets', 'dc', 'dh']
 NETWORK_KEYS = ['dc', 'dh']
 
 
@@ -126,6 +127,7 @@ class AllInputs(Resource):
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
             locator.get_surroundings_geometry())
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
         store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
@@ -261,6 +263,8 @@ def get_building_properties():
                     columns[column_name]['regex'] = column['regex']
                     if 'example' in column:
                         columns[column_name]['example'] = column['example']
+                if 'nullable' in column:
+                    columns[column_name]['nullable'] = column['nullable']
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = columns
@@ -327,6 +331,9 @@ def df_to_json(file_location):
         else:
             lat, lon = get_lat_lon_projected_shapefile(table_df)
             crs = get_projected_coordinate_system(lat, lon)
+
+        if "Name" in table_df.columns:
+            table_df['Name'] = table_df['Name'].astype('str')
 
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())

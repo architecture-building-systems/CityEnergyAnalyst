@@ -2619,8 +2619,7 @@ get_database_air_conditioning_systems:
             system
           type: float
           unit: '[C]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{n...n}'
     HOT_WATER:
       columns:
         Description:
@@ -14364,7 +14363,44 @@ get_surroundings_geometry:
         nullable: true
   used_by:
   - radiation
-  - schedule_maker
+get_tree_geometry:
+  created_by:
+    - tree_helper
+  file_path: inputs/tree-geometry/trees.shp
+  file_type: shp
+  schema:
+    columns:
+      Name:
+        description: Unique tree ID.
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      height_tc:
+        description: Tree canopy height above ground.
+        min: 0
+        type: float
+        unit: '[m]'
+        values: '{0...n}'
+      density_tc:
+        description: Tree canopy density. It is the proportion of ground area covered by the vertical projection of tree canopies. It is a measure of how much of the sky is obscured by the canopy when viewed from below.
+        min: 0
+        max: 1
+        type: float
+        unit: 'NA'
+        values: '{0...1}'
+      geometry:
+        description: Shapefile POLYGON
+        type: Polygon
+        unit: 'NA'
+        values: 'NA'
+      REFERENCE:
+        description: Reference to data (if any)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+        nullable: true
+  used_by:
+  - radiation
 get_terrain:
   created_by: []
   file_path: inputs/topography/terrain.tif
@@ -16047,13 +16083,13 @@ get_zone_geometry:
         values: alphanumeric
         nullable: true
       house_name:
-        description: House number (if any)
+        description: House name (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
         nullable: true
       resi_type:
-        description: Residential type, e.g. HDB for Singapore (if any)
+        description: Residential type, if Singapore's HDB or not (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
@@ -16065,7 +16101,7 @@ get_zone_geometry:
         values: alphanumeric
         nullable: true
       country:
-        description: Country 2-digit code in the address (if any)
+        description: Country (2-digit) code in the address (if any)
         type: string
         unit: 'NA'
         values: alphanumeric
