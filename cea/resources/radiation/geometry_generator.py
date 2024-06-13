@@ -529,7 +529,7 @@ class ElevationMap(object):
         # Ensure geometry bounds is within elevation map
         if (minx < self.x_coords[0] - self.x_size or maxx > self.x_coords[-1] + self.x_size
                 or miny < self.y_coords[-1] + self.y_size or maxy > self.y_coords[0] - self.y_size):
-            raise ValueError("Geometry bounds in not within the elevation map.")
+            raise ValueError("Geometry bounds not within the elevation map.")
 
         x_start = np.searchsorted(self.x_coords - self.x_size, minx, side='left') - 1
         x_end = np.searchsorted(self.x_coords + self.x_size, maxx, side='right')
@@ -561,13 +561,14 @@ class ElevationMap(object):
         return tin_occface_list
 
 
-def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
+def standardize_coordinate_systems(zone_df, surroundings_df, trees_df, terrain_raster):
     # Change all to projected cr (to meters)
     lat, lon = get_lat_lon_projected_shapefile(zone_df)
     crs = get_projected_coordinate_system(lat, lon)
 
     reprojected_zone_df = zone_df.to_crs(crs)
     reprojected_surroundings_df = surroundings_df.to_crs(crs)
+    reprojected_trees_df = trees_df.to_crs(crs)
 
     reprojected_terrain = gdal.Warp(
         '',  # Empty string as the output file path means in-memory
@@ -577,11 +578,11 @@ def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
     )
 
     print(f"Reprojected scene to `EPSG:{crs_to_epsg(crs)}`")
-    return reprojected_zone_df, reprojected_surroundings_df, reprojected_terrain
+    return reprojected_zone_df, reprojected_surroundings_df, reprojected_trees_df, reprojected_terrain
 
 
-def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
-    total_df = pd.concat([zone_df, surroundings_df])
+def check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster):
+    total_df = pd.concat([zone_df, surroundings_df, trees_df])
 
     # minx, miny, maxx, maxy
     geometry_bounds = total_df.total_bounds
@@ -593,7 +594,8 @@ def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
     miny = maxy + y_size * terrain_raster.RasterYSize
 
     if minx > geometry_bounds[0] or miny > geometry_bounds[1] or maxx < geometry_bounds[2] or maxy < geometry_bounds[3]:
-        raise ValueError('Terrain provided does not cover all building geometries')
+        raise ValueError('Terrain provided does not cover all geometries. '
+                         'Bounds of terrain must be larger than the total bounds of the scene.')
 
 
 def tree_geometry_generator(tree_df, terrain_raster):
@@ -618,15 +620,16 @@ def tree_geometry_generator(tree_df, terrain_raster):
     return surfaces
 
 
-def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
+def geometry_main(config, zone_df, surroundings_df, trees_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
     print("Standardizing coordinate systems")
-    zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster)
+    zone_df, surroundings_df, trees_df, terrain_raster = standardize_coordinate_systems(
+        zone_df, surroundings_df, trees_df, terrain_raster)
 
     # clear in case there are repeated buildings from zone in surroundings file
     filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
     surroundings_df = surroundings_df[filter_surrounding_buildings]
 
-    check_terrain_bounds(zone_df, surroundings_df, terrain_raster)
+    check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster)
 
     # Create a triangulated irregular network of terrain from raster
     print("Reading terrain geometry")
@@ -639,7 +642,12 @@ def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df,
                                                                    elevation_map, config, geometry_pickle_dir)
 
-    return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
+    tree_surfaces = []
+    if len(trees_df.geometry) > 0:
+        print("Creating tree surfaces")
+        tree_surfaces = tree_geometry_generator(trees_df, terrain_raster)
+
+    return terrain_tin, geometry_3D_zone, geometry_3D_surroundings, tree_surfaces
 
 
 if __name__ == '__main__':
