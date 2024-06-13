@@ -12,7 +12,7 @@ file).
 
 import yaml
 import cea.config
-from cea.tests.trace_inputlocator import create_graphviz_output
+from cea.utilities.trace_inputlocator.trace_inputlocator import create_graphviz_output
 
 def main(config):
     with open(config.trace_inputlocator.yaml_output_file, 'r') as f:

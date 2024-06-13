@@ -1,3 +1,5 @@
+- 2024-05-27 - 3.36.0 - #3586 Add nullable info for column schema
+- 2024-05-21 - 3.36.0 - #3584 Release 3.36.0
 - 2024-05-16 - 3.35.6 - #3583 Use MKL for Windows to solve memory errors
 - 2024-05-15 - 3.35.6 - #3574 Add trees as shading for radiation script
 - 2024-05-14 - 3.35.6 - #3576 Consider adjacent walls by default
