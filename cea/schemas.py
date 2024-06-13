@@ -5,7 +5,7 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 """
 
 import os
-import pickle
+from typing import List, Optional, Dict
 
 import pandas as pd
 import yaml
@@ -28,41 +28,23 @@ __status__ = "Production"
 __schemas = {}
 
 
-def schemas(plugins):
+def schemas(plugins: Optional[List] = None) -> Dict:
     """Return the contents of the schemas.yml file
     :parameter plugins: the list of plugins to generate the schemas for. Use ``config.plugins`` for this.
     :type plugins: List[cea.plugin.CeaPlugin]
     """
+    if plugins is None:
+        plugins = []
+
     # loading schemas.yml is quite expensive - try to avoid it as much as possible by
     # maintaining a cache of the schemas - using the plugin list as a key
     global __schemas
     key = ":".join(str(p) for p in plugins)
 
     if key not in __schemas:
-        # load schemas.yml from disk - here again we use a cache: a pickled version is stored in the user folder.
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        schemas_pickle = os.path.expanduser("~/schemas.yml.pickle")
-
-        def load_schemas_dict_from_yaml():
-            schemas_dict = yaml.load(open(schemas_yml, "rb"), Loader=yaml.CLoader)
-            # ... so write out a pickle for next time
-            with open(schemas_pickle, "wb") as schemas_pickle_fp:
-                pickle.dump(schemas_dict, schemas_pickle_fp)
-            return schemas_dict
-
-        # compare the dates of the two files - use the pickle if it's newer
-        schemas_dict = None
-        if os.path.exists(schemas_pickle) and os.path.getmtime(schemas_pickle) > os.path.getmtime(schemas_yml):
-            with open(schemas_pickle, "r") as schemas_pickle_fp:
-                try:
-                    schemas_dict = pickle.load(schemas_pickle_fp)
-                except Exception:
-                    schemas_dict = None
-
-        if not schemas_dict:
-            # ok. this will take a while to read...
-            schemas_dict = load_schemas_dict_from_yaml()
-
+        with open(schemas_yml, "r") as f:
+            schemas_dict = yaml.load(f, Loader=yaml.CLoader)
         __schemas[key] = schemas_dict
 
         # add the plugins - these don't use caches as their schemas.yml are (probably) much shorter

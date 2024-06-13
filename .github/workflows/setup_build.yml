@@ -114,9 +114,13 @@ jobs:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
-      - uses: mamba-org/setup-micromamba@v1
-        with:
-          micromamba-binary-path: gui/dependencies/micromamba
+      - name: Fetch micromamba
+        run: |
+          cd gui
+          mkdir -p ./dependencies/arm64
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-arm64/latest | tar -xvj -C ./dependencies/arm64 --strip-components=1 bin/micromamba
+          mkdir -p ./dependencies/x64
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/latest | tar -xvj -C ./dependencies/x64 --strip-components=1 bin/micromamba 
 
       - name: Save Apple API Key secret to file
         env:

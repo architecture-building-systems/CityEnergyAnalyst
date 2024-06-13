@@ -2,16 +2,11 @@
 Run the CEA scripts and unit tests as part of our CI efforts (cf. The Jenkins)
 """
 
-
-
-
-
 import os
-import shutil
-import tempfile
+import unittest
+
 import cea.config
 import cea.inputlocator
-import cea.workflows.workflow
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -22,21 +17,24 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.tests.test_workflow import TestWorkflows
+
 
 def main(config):
-    workflow_yml = os.path.join(os.path.dirname(__file__), "workflow_{workflow}.yml".format(workflow=config.test.workflow))
+    test_type = config.test.type
 
-    default_config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    default_config.project = os.path.join(tempfile.gettempdir(), "reference-case-open")
-    default_config.workflow.workflow = workflow_yml
-    default_config.workflow.resume = False
-    default_config.workflow.resume_file = os.path.join(tempfile.gettempdir(), "resume.yml")  # force resume file to be temporary
+    if test_type == "unittest":
+        test_suite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
+        result = unittest.TextTestRunner().run(test_suite)
 
-    if os.path.exists(default_config.project):
-        # make sure we're working on a clean slate
-        shutil.rmtree(default_config.project)
+        if not result.wasSuccessful():
+            raise AssertionError("Unittests failed.")
 
-    cea.workflows.workflow.main(default_config)
+    elif test_type == "integration":
+        TestWorkflows()._test_workflows()
+
+    else:
+        raise Exception(f"Test type '{test_type}' not supported")
 
 
 if __name__ == '__main__':

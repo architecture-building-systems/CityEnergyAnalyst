@@ -10,6 +10,7 @@ import osmnx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from geopandas.tools import sjoin as spatial_join
+from shapely import MultiPolygon
 
 import cea.config
 import cea.inputlocator
@@ -35,7 +36,11 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     :param float buffer_m: Buffer to add to zone building geometries
     :return: Surrounding area GeoDataFrame
     """
-    surrounding_area = gdf(geometry=[zone_gdf.geometry.buffer(buffer_m).unary_union], crs=zone_gdf.crs)
+    merged_zone = zone_gdf.geometry.unary_union
+    if isinstance(merged_zone, MultiPolygon):
+        merged_zone = merged_zone.convex_hull
+
+    surrounding_area = gdf(geometry=[merged_zone.buffer(buffer_m)], crs=zone_gdf.crs)
     return surrounding_area
 
 
@@ -135,7 +140,6 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
     :return: GeoDataFrame with surrounding buildings
     """
     buffer_polygon = area_with_buffer.to_crs(zone.crs).geometry.values[0]
-    zone_area = gdf(geometry=[zone.geometry.unary_union], crs=zone.crs)
 
     within_buffer = all_surroundings.geometry.intersects(buffer_polygon)
     surroundings = all_surroundings[within_buffer]
@@ -144,7 +148,7 @@ def erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer):
                                    if not any([s_building_footprint.intersects(z_building_footprint)
                                                for z_building_footprint in zone.geometry])]
     footprints_gdf = gdf(geometry=footprints_without_overlaps, crs=surroundings.crs)
-    relevant_surroundings = spatial_join(surroundings, footprints_gdf, op='within')
+    relevant_surroundings = spatial_join(surroundings, footprints_gdf, predicate='within')
 
     return relevant_surroundings.copy()
 
@@ -175,8 +179,7 @@ def geometry_extractor_osm(locator, config):
     # get footprints of all the surroundings
     print("Getting building footprints")
     area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
-    all_surroundings = osmnx.geometries.geometries_from_polygon(polygon=area_with_buffer_polygon,
-                                                                tags={"building": True})
+    all_surroundings = osmnx.features_from_polygon(polygon=area_with_buffer_polygon, tags={"building": True})
     all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # erase overlapping area
