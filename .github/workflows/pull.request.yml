@@ -66,4 +66,6 @@ jobs:
 
       - name: Run tests
         shell: bash -l {0}
-        run: cea test --workflow quick
+        run: |
+          cea test --type unittest
+          cea test --type integration

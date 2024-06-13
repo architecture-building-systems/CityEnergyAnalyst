@@ -225,7 +225,6 @@ def assign_attributes_additional(shapefile):
     return shapefile
 
 
-
 def fix_overlapping_geoms(buildings, zone):
     """
     This function eliminates overlapping geometries. To decide which portions of two overlapping geometries to
@@ -274,7 +273,7 @@ def fix_overlapping_geoms(buildings, zone):
 
     # FIX OVERLAYS IN THE BUILDING GEOMETRIES
     # overlay the grid with the zone polygon, retaining the overlapping grid cells, and ...
-    grid = zone.overlay(grid, how="intersection")
+    grid = zone.to_crs(grid.crs).overlay(grid, how="intersection")
 
     # iterate through the grid cells, overlaying them with the buildings, retaining the buildings
     for cell_index in range(grid.geometry.size):
@@ -500,12 +499,12 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-    shapefile = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
+    shapefile = osmnx.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
         try:
             # get all footprints in the district tagged as 'building' or 'building:part' in OSM
-            building_parts = osmnx.features.features_from_polygon(polygon=poly['geometry'].values[0],
-                                                                  tags={"building": ["part"]})
+            building_parts = osmnx.features_from_polygon(polygon=poly['geometry'].values[0],
+                                                         tags={"building": ["part"]})
             shapefile = pd.concat([shapefile, building_parts], ignore_index=True)
             # using building:part tags requires fixing overlapping polygons
             if not fix_overlapping:
@@ -572,7 +571,7 @@ def flatten_geometries(gdf):
     DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
 
     # Explode MultiPolygons and GeometryCollections
-    gdf = gdf.explode()
+    gdf = gdf.explode(index_parts=True)
     # Drop geometry types that cannot be processed by CEA
     gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
     # Process individual geometries in MultiPolygon and GeometryCollection data types
