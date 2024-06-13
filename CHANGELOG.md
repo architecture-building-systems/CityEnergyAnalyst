@@ -1,3 +1,10 @@
+- 2024-06-13 - 3.36.1 - #3608 Fix high internal temperatures during demand calculation
+- 2024-06-13 - 3.36.1 - #3609 updating a wrong term for trees helper
+- 2024-06-13 - 3.36.1 - #3601 DE database supply technolgies fix
+- 2024-06-11 - 3.36.1 - #3598 fixing operation result files
+- 2024-06-04 - 3.36.1 - #3602 Fixes datetime not JSON serializable error
+- 2024-06-04 - 3.36.1 - #3599 Run tests in parallel
+- 2024-05-29 - 3.36.1 - #3595 Release 3.36.1
 - 2024-05-27 - 3.36.0 - #3586 Add nullable info for column schema
 - 2024-05-21 - 3.36.0 - #3584 Release 3.36.0
 - 2024-05-16 - 3.35.6 - #3583 Use MKL for Windows to solve memory errors
