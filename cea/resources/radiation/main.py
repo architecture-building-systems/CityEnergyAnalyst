@@ -185,7 +185,7 @@ def main(config):
 
     if len(tree_surfaces) > 0:
         print("Creating radiance shading file")
-        tree_lad = trees_df["density_la"]
+        tree_lad = trees_df["density_tc"]
         cea_daysim.create_radiance_shading(tree_surfaces, tree_lad)
 
     print("Converting files for DAYSIM")

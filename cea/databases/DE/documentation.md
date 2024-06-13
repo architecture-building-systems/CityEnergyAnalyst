@@ -129,7 +129,7 @@ Heating starting and ending dates are assumed all year and no cooling demands (h
 
 #### SUPPLY_ASSEMBLIES
 
-The categories defined in SUPPLY are mapped to the construction standards in the SUPPLY_ASSEMBLIES file.
+The categories defined in SUPPLY are mapped to the construction standards in the SUPPLY_ASSEMBLIES file. The technologies were assigned manually with a corresponding TABULA technology specified in the TABULA webtool (https://webtool.building-typology.eu/#bm)[https://webtool.building-typology.eu/#bm]. The efficiencies are not consistent with reported TABULA values, especially for the hot water supply.
 
 | Parameter   | Description   | Method  |
 |---   |---   |---  |
@@ -137,6 +137,15 @@ The categories defined in SUPPLY are mapped to the construction standards in the
 | `type_hs` |  Type of heating supply assembly (refers to “code” in SUPPLY assemblies) |  Selection is made based on the defined standards for the respective construction or renovation year |
 | `type_dhw` |  Type of hot water supply assembly (refers to “code” in SUPPLY assemblies) |  Selection is made based on the defined standards for the respective construction or renovation year |
 | `type_el` |  Type of electrical supply assembly (refers to “code” in SUPPLY assemblies) |  Selection is made based on the defined standards for the respective construction or renovation year |
+
+#### MFH, MFH-EAST, AB, AB-EAST, SFH, TH
+
+The advanced renovation scenarios are assumed to be only high efficiency gas boilers + solar thermal flatplate collectors instead of gas boilers in combination with solar thermal (solar fractioin from 40 (NR) to 60% (AR)), heat recovery systems and sometimes micro-CHPs. Currently, only one hotwater supply technology can be selected - it was assumed to be solar thermal flatplate collectors if specified in the TABULA scenarios independently of the solar fraction.
+
+#### NWG
+
+Categories A and B of all types assumed to be low temperature gas boilers. Age C buildings are assumed to have condensing gas boilers. 
+
 
 ### use_types
 
@@ -273,7 +282,10 @@ CH database.
 
 ### SUPPLY
 
-The heat technologies were adopted from CEA and adjusted according to the KEA technical catalog [^KEA] assuming that the following formula is still used in CEA:Investment costs = Investment costs per kW * efficiency of heat technology * thermal performance.The heating technologies were categorized into three different power classes (10 kW, 50 kW, 100 kW). These are intended to reflect the capacities of a single-family house, a smaller, and a larger multi-family house. The selected capacity can be verified by calculating the heat demand in CEA. Contrary to the parameter labels, the costs are plotted in Euros for the reference year 2023!
+The heat technologies were adopted from CEA and adjusted according to the KEA technical catalog [^KEA] assuming that the following formula is still used in CEA:Investment costs = Investment costs per kW * efficiency of heat technology * thermal performance. The heating technologies were categorized into different power classes (10 kW, 50 kW, 100 kW). These are intended to reflect the capacities of a single-family house, a smaller, and a larger multi-family house. The selected capacity can be verified by calculating the heat demand in CEA. Contrary to the parameter labels, the costs are plotted in Euros for the reference year 2023!
+
+The hot water and heating technologies types in CONSTRUCTION STANDARDS were assigned to TABULA standards with user assumptions consistently to the specified technology type in the TABULA webtool.
+
 
 #### ELECTRICITY
 
@@ -341,7 +353,7 @@ The parameters have not been changed and correspond to the standard values from 
 
 ### CONVERSION
 
-Assumption of standard values from CH database
+Added all necessary BOILER and HEATPUMP components defined in the TABULA standards with the [^KEA] dataset and converted to USD 2015 from EUR 2022. 
 
 ### DISTRIBUTION
 
