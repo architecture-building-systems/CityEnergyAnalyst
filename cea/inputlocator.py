@@ -35,7 +35,7 @@ class InputLocator(object):
         self.plugins = plugins
 
         self._temp_directory = tempfile.mkdtemp()
-        atexit.register(lambda: shutil.rmtree(self._temp_directory))
+        atexit.register(self._cleanup_temp_directory)
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -56,6 +56,11 @@ class InputLocator(object):
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
         self._temp_directory = state["_temp_directory"]
+
+    def _cleanup_temp_directory(self):
+        # Cleanup the temporary directory when the object is destroyed
+        if os.path.exists(self._temp_directory):
+            shutil.rmtree(self._temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
