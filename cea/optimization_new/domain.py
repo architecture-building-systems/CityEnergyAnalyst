@@ -556,14 +556,13 @@ class Domain(object):
             combined_system_energy_demand_profile = pd.Series(0, index=date_time)
 
         # combine the profiles into one data frame and write to file
-
         combined_objective_function_timelines = pd.concat([date_time.to_series(index=date_time),
                                                            combined_system_energy_demand_profile,
                                                            combined_heat_rejection_profile,
                                                            combined_ghg_emission_profile],
                                                           axis=1)
-        combined_objective_function_timelines.to_csv(results_file, index=True,
-                                                     header=['System_energy_demand_kWh', 'Heat_rejection_kWh',
+        combined_objective_function_timelines.to_csv(results_file, index=False,
+                                                     header=['Date', 'System_energy_demand_kWh', 'Heat_rejection_kWh',
                                                              'GHG_emissions_kgCO2'])
 
         return
