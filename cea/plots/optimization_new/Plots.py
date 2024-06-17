@@ -1,10 +1,13 @@
 
-import plotly.graph_objects as go
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 import pandas as pd
 import re
+import numpy as np
+import seaborn as sns
+from pandas.plotting import parallel_coordinates
+from sklearn.preprocessing import MinMaxScaler
+from IPython.display import display
 
 
 def load_data_from_directories(main_directory, filename):
@@ -89,13 +92,95 @@ def process_files(main_directory, filename):
 
     return combined_df
 
+# Normalization function
+def normalize_dataframe(df):
+    scaler = MinMaxScaler()
+    df_normalized = df.copy()
+    df_normalized.iloc[:, 1:] = scaler.fit_transform(df.iloc[:, 1:])
+    return df_normalized
+
+def parallel_coordinates_plot(df, path):
+    df_normalized = normalize_dataframe(df)
+    labels = df_normalized['Supply_System']
+    plt.figure()
+    parallel_coordinates(df_normalized, 'Supply_System')
+    plt.title('Parallel Coordinates Plot', pad=40)
+    plt.xticks(rotation=0)
+    plt.legend(labels=labels, loc='lower center', bbox_to_anchor=(0.5, 1), ncol=len(labels))
+    plot_file_path = os.path.join(path, "Parallel_coordinates_plot.png")
+    plt.savefig(plot_file_path)
+
+def radar_chart(df, path):
+    df_normalized = normalize_dataframe(df)
+    labels = df.columns[1:]
+    solutions = df_normalized.set_index('Supply_System').T.to_dict('list')
+
+    num_vars = len(labels)
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(subplot_kw=dict(polar=True))
+
+    for solution, values in solutions.items():
+        values += values[:1]
+        ax.plot(angles, values, label=solution)
+        ax.fill(angles, values, alpha=0.25)
+
+    ax.set_yticklabels([])
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels)
+
+    plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
+    plt.title('Radar Chart')
+    plt.xticks(rotation=45)
+    plot_file_path = os.path.join(path, "Radar_chart_plot.png")
+    plt.savefig(plot_file_path)
+
+def scatter_plot_matrix(df, path):
+    df_normalized = normalize_dataframe(df)
+    sns.pairplot(df_normalized.drop(columns=['Supply_System']))
+    plt.suptitle('Scatter Plot Matrix', y=1.02)  # Adjust title position
+    plt.xticks(rotation=45)
+    plot_file_path = os.path.join(path, "Scatter_plot_matrix.png")
+    plt.savefig(plot_file_path)
+
+def heatmap(df, path):
+    df_normalized = normalize_dataframe(df)
+    plt.figure()
+    sns.heatmap(df_normalized.set_index('Supply_System'), annot=True, cmap='viridis')
+    plt.title('Heatmap')
+    plt.xticks(rotation=0)
+    plot_file_path = os.path.join(path, "Heatmap_plot.png")
+    plt.savefig(plot_file_path)
+
+def generate_multi_objective_plots(dataframes, path):
+    dataframes_for_plot = dataframes.copy()
+    dataframes_for_plot = dataframes_for_plot.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                                                            'System_Energy_Demand_kWh': 'Energy_Demand',
+                                                            'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                                                            'Cost_USD': 'Cost'})
+    # Set the global figure size
+    plt.rcParams['figure.figsize'] = (12, 8)  # Adjust the size as needed
+
+    # Set the global font size for x and y axis labels
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
+
+    parallel_coordinates_plot(dataframes_for_plot, path)
+    radar_chart(dataframes_for_plot, path)
+    scatter_plot_matrix(dataframes_for_plot, path)
+    heatmap(dataframes_for_plot, path)
+
+    # Close all figures at once
+    plt.close('all')
+
                                                     ### MAIN ###
 
 # Define the main directory and the filename
 context_analysis = ['THESIS_TEST_CASES_BASE', 'THESIS_TEST_CASES_RENEWABLES'] #
 folder = "D:/CEATesting/"
 save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/"
-components_available = ['centralized', 'centralized_ALL']
+components_available = ['centralized', 'centralized_ALL'] #
 directory_to_file = "/outputs/data/optimization/"
 filename = "Supply_systems/Supply_systems_summary.csv"
 filename_structure = 'Supply_systems/N1001_supply_system_structure.csv'
@@ -142,3 +227,4 @@ for context in context_analysis:
 
             # Generate and save bar plots
             generate_and_save_plots(dataframes, plots_path)
+            generate_multi_objective_plots(dataframes, plots_path)
