@@ -89,6 +89,8 @@ class Storage_tank_PCM(object):
                     self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
             self.current_thermal_gain_Wh = self.hourly_thermal_loss_Wh * (self.hour - self.hour_of_last_activation)
             new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
+            if new_storage_capacity_wh <= 0.0:  # check so we do not get negative storage capacities.
+                new_storage_capacity_wh = 0.0
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
             new_T_tank_K = self.new_temperature_tank(new_phase, new_storage_capacity_wh, self.current_thermal_gain_Wh) # Since the third argument is the "load difference", thermal gains should be input as negative load differences TODO: Check this with Jimeno
             new_thermal_loss_Wh = calc_hot_tank_heat_loss(self.Area_tank_surface_m2,
