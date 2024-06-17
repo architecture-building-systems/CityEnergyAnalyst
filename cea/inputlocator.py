@@ -57,9 +57,6 @@ class InputLocator(object):
         self._wrap_locator_methods(self.plugins)
         self._temp_directory = state["_temp_directory"]
 
-    def __del__(self):
-        self._cleanup_temp_directory()
-
     def _cleanup_temp_directory(self):
         # Cleanup the temporary directory when the object is destroyed
         if os.path.exists(self._temp_directory):
