@@ -55,7 +55,8 @@ def generate_and_save_plots(dataframes, plots_path):
 def process_files(main_directory, filename):
     # Create an empty DataFrame to hold the results
     combined_df = pd.DataFrame()
-    columns_to_analyse = ['Component', 'Component_type', 'Component_code', 'Capacity_kW']
+    columns_to_analyse_ren = ['Component', 'Component_type', 'Component_code', 'Capacity_kW']
+    columns_to_analyse_base = ['Component_category', 'Component_type', 'Component_code', 'Capacity_kW']
     # Loop through each subdirectory in the main directory
     for subdir in os.listdir(main_directory):
         if subdir == 'current_DES' or subdir == 'debugging':
@@ -70,7 +71,11 @@ def process_files(main_directory, filename):
             if os.path.isfile(file_path):
                 # Read the file into a DataFrame
                 df = pd.read_csv(file_path)
-                df = df[columns_to_analyse]
+                if 'THESIS_TEST_CASES_RENEWABLES' in main_directory:
+                    df = df[columns_to_analyse_ren]
+                else:
+                    df = df[columns_to_analyse_base]
+
                 # Extract the numerical part of the folder name
                 match = re.search(r'\d+', subdir)
                 if match:
@@ -87,10 +92,11 @@ def process_files(main_directory, filename):
                                                     ### MAIN ###
 
 # Define the main directory and the filename
-context_analysis = ['THESIS_TEST_CASES_RENEWABLES'] # 'THESIS_TEST_CASES_BASE'
+context_analysis = ['THESIS_TEST_CASES_BASE', 'THESIS_TEST_CASES_RENEWABLES'] #
 folder = "D:/CEATesting/"
 save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/"
-directory_to_file = "/outputs/data/optimization/centralized/"
+components_available = ['centralized', 'centralized_ALL']
+directory_to_file = "/outputs/data/optimization/"
 filename = "Supply_systems/Supply_systems_summary.csv"
 filename_structure = 'Supply_systems/N1001_supply_system_structure.csv'
 
@@ -101,27 +107,38 @@ for context in context_analysis:
     scenarios.remove('Commercial_High_Rise')  # TODO: Remove this line after the issue is fixed
 
     for scenario in scenarios:
+        for availability in components_available:
+            main_directory = os.path.join(directory, scenario) + directory_to_file + availability
 
-        main_directory = os.path.join(directory, scenario) + directory_to_file
-        dataframe_structure = process_files(main_directory, filename_structure)
-        dataframes = load_data_from_directories(main_directory, filename)
-        dataframes['Supply_System'] = dataframes.index
+            # Load the data from the directories
+            try:
+                dataframe_structure = process_files(main_directory, filename_structure)
+            except:
+                continue
+            dataframes = load_data_from_directories(main_directory, filename)
+            dataframes['Supply_System'] = dataframes.index
 
-        # Create the scenario directory and the nested directory
-        save_path = os.path.join(save_directory, context, scenario, "objective_function_analysis")
-        os.makedirs(save_path, exist_ok=True)
+            # Create the scenario directory and the nested directory
+            if availability == 'centralized_ALL':
+                save_path = os.path.join(save_directory, context, scenario, "objective_function_analysis_ALL")
+            else:
+                save_path = os.path.join(save_directory, context, scenario, "objective_function_analysis")
+            os.makedirs(save_path, exist_ok=True)
 
-        # Define the file path to save the DataFrame
-        save_file_path = os.path.join(save_path, "Objective_functions_analysis.csv")
-        save_file_path_structure = os.path.join(save_path, "System_structure_solutions.csv")
+            # Define the file path to save the DataFrame
+            save_file_path = os.path.join(save_path, "Objective_functions_analysis.csv")
+            save_file_path_structure = os.path.join(save_path, "System_structure_solutions.csv")
 
-        # Save the DataFrame to a CSV file
-        dataframes.to_csv(save_file_path, index=False)
-        dataframe_structure.to_csv(save_file_path_structure, index=False)
+            # Save the DataFrame to a CSV file
+            dataframes.to_csv(save_file_path, index=False)
+            dataframe_structure.to_csv(save_file_path_structure, index=False)
 
-        # Create the directory for plots
-        plots_path = os.path.join(save_directory, context, scenario, "objective_functions_plots")
-        os.makedirs(plots_path, exist_ok=True)
+            # Create the directory for plots
+            if availability == 'centralized_ALL':
+                plots_path = os.path.join(save_directory, context, scenario, "objective_functions_plots_ALL")
+            else:
+                plots_path = os.path.join(save_directory, context, scenario, "objective_functions_plots")
+            os.makedirs(plots_path, exist_ok=True)
 
-        # Generate and save bar plots
-        generate_and_save_plots(dataframes, plots_path)
+            # Generate and save bar plots
+            generate_and_save_plots(dataframes, plots_path)
