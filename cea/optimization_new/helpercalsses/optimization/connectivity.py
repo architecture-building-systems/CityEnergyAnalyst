@@ -113,6 +113,14 @@ class ConnectivityVector(object):
                                   if connection.network_connection in values_appearing_once}
                 for index, corrected_value in changed_values.items():
                     new_connections[index].network_connection = corrected_value
+                new_values = [new_connection.network_connection for new_connection in new_connections]
+
+            # Stabilise the vector, this ensures no duplicate network connectivity states are evaluated
+            stable_values = ConnectivityVector.stabilise_vector(new_values)
+            changed_values = {i: connection for i, connection in enumerate(stable_values)
+                              if connection != new_values[i]}
+            for index, corrected_value in changed_values.items():
+                new_connections[index].network_connection = corrected_value
 
             # Set the connectivity vector
             self._connections = new_connections
@@ -134,6 +142,9 @@ class ConnectivityVector(object):
             # ... if so set them to 0 (network with only one building = stand-alone building)
             if values_appearing_once:
                 new_values = [0 if i in values_appearing_once else i for i in new_values]
+
+            # Stabilise the vector, this ensures no duplicate network connectivity states are evaluated
+            new_values = ConnectivityVector.stabilise_vector(new_values)
 
             # Set the new values
             for i in range(len(self)):
@@ -210,6 +221,64 @@ class ConnectivityVector(object):
             connectivity_bytes = ' '.join(map(str, self.values)).encode()
             connectivity_str = hashlib.sha256(connectivity_bytes).hexdigest()
         return connectivity_str
+
+    @staticmethod
+    def stabilise_vector(connectivity_vector):
+        """
+        Stabilise the connectivity vector by ensuring that identical network connections in a district are encoded with
+        the same connectivity vector. This prevents duplicate evaluations of the same network configuration.
+
+        This operation consists of two steps:
+        1. Ensure the set of network connection values used is the lowest they can be
+            e.g. possible_connections = 4 and set(vector) = {0, 1, 2, 4}
+                 -> set(stabilised_vector) = {0, 1, 2, 3}
+        2. Ensure that the network connection values are ordered in ascending order by number of connections
+            e.g. vector = [0, 1, 3, 3, 3, 0, 1, 2, 3, 1, 2]
+                 -> stabilised_vector = [0, 2, 1, 1, 1, 0, 2, 3, 1, 2, 3]
+        3. If certain values appear equally often, ensure that the lowest value appears first in the list
+            e.g. vector = [0, 1, 1, 3, 2, 3, 2, 0, 1, 1, 0]
+                    -> stabilised_vector = [0, 1, 1, 2, 3, 2, 3, 0, 1, 1, 0]
+
+        :param connectivity_vector: List of network connection values
+        :return: Stabilised list of network connection values
+        """
+        # Step 0: Copy the vector to avoid changing the original list and add the stand-alone building value
+        base_vector = connectivity_vector.copy()
+        base_vector.append(0)
+
+        # Step 1: Ensure the set of network connection values used is the lowest they can be
+        connectivity_values = list(set(base_vector))
+        new_connectivity_values = list(range(len(connectivity_values)))
+
+        if not connectivity_values == new_connectivity_values:
+            rebasing_dict = {connectivity_values[i]: new_connectivity_values[i] for i in
+                             range(len(connectivity_values))}
+            connectivity_vector = [rebasing_dict[value] for value in connectivity_vector]
+
+        # Step 2: Ensure that the network connection values are ordered in ascending order by number of connections
+        values_count = {value: connectivity_vector.count(value) for value in new_connectivity_values if value != 0}
+
+        if not all([values_count[i] >= values_count[i+1] for i in range(1,len(values_count))]):
+            sorted_values = sorted(values_count, key=values_count.get)
+            reordering_dict = {sorted_values[i]: len(sorted_values) - i for i in range(len(sorted_values))}
+            connectivity_vector = [reordering_dict[value] if value != 0 else 0 for value in connectivity_vector]
+
+        # Step 3: If certain values appear equally often, ensure that the lowest value appears first in the list
+        values_count = {value: connectivity_vector.count(value) for value in new_connectivity_values if value != 0}
+
+        for count in set(values_count.values()):
+            values_with_count = [value for value in values_count if values_count[value] == count]
+            # Check if there are multiple values with the same count
+            if len(values_with_count) >= 2:
+                first_appearance = {connectivity_vector.index(value): value for value in values_with_count}
+                values_by_appearance = [first_appearance[i] for i in sorted(first_appearance.keys())]
+                # Check if the values need to be swapped
+                if values_by_appearance != values_with_count:
+                    swapping_dict = {value: values_by_appearance[i] for i, value in enumerate(set(values_with_count))}
+                    connectivity_vector = [swapping_dict[value] if value in swapping_dict.keys() else value\
+                                           for value in connectivity_vector]
+
+        return connectivity_vector
 
     @staticmethod
     def generate(method='random'):
