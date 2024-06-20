@@ -1,29 +1,27 @@
+import re
 
-
-
-from flask import Blueprint, render_template, current_app, make_response
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 import cea.inputlocator
 import cea.plots
 import cea.plots.categories
-
-import re
-
 import cea.schemas
 from cea import MissingInputDataException
+from cea.interfaces.dashboard.dashboard import CEAConfig
+from cea.plots.cache import MemoryPlotCache
 
-blueprint = Blueprint(
-    'plots_blueprint',
-    __name__,
-    url_prefix='/plots',
-    template_folder='templates',
-)
+router = APIRouter()
+
+templates = Jinja2Templates(directory="templates")
 
 
 def script_suggestions(locator_names):
     """Return a list of CeaScript objects that produce the output for each locator name"""
     import cea.scripts
-    plugins = current_app.cea_config.plugins
+    # TODO: Load plugins from config
+    plugins = []
     schemas = cea.schemas.schemas(plugins=plugins)
     script_names = []
     for name in locator_names:
@@ -31,30 +29,46 @@ def script_suggestions(locator_names):
     return [cea.scripts.by_name(n, plugins=plugins) for n in sorted(set(script_names))]
 
 
-def load_plot(dashboard, plot_index):
+def load_plot(config, dashboard, plot_index):
     """Load a plot from the dashboard_yml"""
-    cea_config = current_app.cea_config
-    dashboards = cea.plots.read_dashboards(cea_config, current_app.plot_cache)
+    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
     dashboard = dashboards[dashboard]
     plot = dashboard.plots[plot_index]
     return plot
 
 
-def render_missing_data(missing_files):
-    return render_template('missing_input_files.html',
-                           missing_input_files=[lm(*args) for lm, args in missing_files],
-                           script_suggestions=script_suggestions(lm.__name__ for lm, _ in missing_files)), 404
+def render_missing_data(request, missing_files):
+    return templates.TemplateResponse(
+        request=request,
+        name='missing_input_files.html',
+        context={
+            "missing_input_files": [lm(*args) for lm, args in missing_files],
+            "script_suggestions": script_suggestions(lm.__name__ for lm, _ in missing_files)
+        }
+    )
 
-@blueprint.route('/div/<int:dashboard_index>/<int:plot_index>')
-def route_div(dashboard_index, plot_index):
+
+def render_plot(request, plot_div, plot_title):
+    return templates.TemplateResponse(
+        request=request,
+        name='plot.html',
+        context={
+            "plot_div": plot_div,
+            "plot_title": plot_title
+        }
+    )
+
+
+@router.get('/div/{dashboard_index}/{plot_index}', response_class=HTMLResponse)
+async def route_div(config: CEAConfig, request: Request, dashboard_index: int, plot_index: int):
     """Return the plot as a div to be used in an AJAX call"""
-    plot = load_plot(dashboard_index, plot_index)
+    plot = load_plot(config, dashboard_index, plot_index)
     try:
         plot_div = plot.plot_div()
     except MissingInputDataException:
-        return render_missing_data(plot.missing_input_files())
+        return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
-        return make_response('<p>{message}</p>'.format(message=str(e)), 404)
+        return HTMLResponse(f'<p>{e}</p>', 404)
     # Remove parent <div> if exists due to plotly v4
     if plot_div.startswith("<div>"):
         plot_div = plot_div[5:-5].strip()
@@ -64,26 +78,25 @@ def route_div(dashboard_index, plot_index):
         div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
         plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
             div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
-    return make_response(plot_div, 200)
+    return HTMLResponse(plot_div, 200)
 
 
-@blueprint.route('/plot/<int:dashboard_index>/<int:plot_index>')
-def route_plot(dashboard_index, plot_index):
-    plot = load_plot(dashboard_index, plot_index)
+@router.get('/plot/{dashboard_index}/{plot_index}', response_class=HTMLResponse)
+async def route_plot(config: CEAConfig, request: Request, dashboard_index: int, plot_index: int):
+    plot = load_plot(config, dashboard_index, plot_index)
     plot_title = plot.title
     if 'scenario-name' in plot.parameters:
         plot_title += ' - {}'.format(plot.parameters['scenario-name'])
     try:
         plot_div = plot.plot_div()
     except MissingInputDataException:
-        return render_missing_data(plot.missing_input_files())
+        return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
-        return make_response('<p>{message}</p>'.format(message=str(e)), 404)
-    return render_template('plot.html', plot_div=plot_div, plot_title=plot_title)
+        return HTMLResponse(f'<p>{e}</p>', 404)
+    return render_plot(request, plot_div, plot_title)
 
-
-@blueprint.app_errorhandler(500)
-def internal_error(error):
-    import traceback
-    error_trace = traceback.format_exc()
-    return error_trace, 500
+# @blueprint.app_errorhandler(500)
+# def internal_error(error):
+#     import traceback
+#     error_trace = traceback.format_exc()
+#     return error_trace, 500

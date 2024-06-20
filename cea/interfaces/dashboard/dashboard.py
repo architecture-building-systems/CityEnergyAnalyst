@@ -1,55 +1,62 @@
-import webbrowser
+import sys
 
-from flask import Flask
-from flask_cors import CORS
-from flask_socketio import SocketIO
+import uvicorn
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from typing_extensions import Annotated
 
 import cea.config
-import cea.plots
-import cea.plots.cache
+
+
+def get_cea_config():
+    config = cea.config.Configuration()
+    return config
+
+
+CEAConfig = Annotated[dict, Depends(get_cea_config)]
+
+
+def create_app():
+    origins = [
+        "http://localhost",
+        "http://localhost:5173",
+        "http://localhost:5050",
+    ]
+
+    app = FastAPI()
+
+    # Setup CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Mount socketio app
+    from cea.interfaces.dashboard.server.socketio import socket_app
+    app.mount("/socket.io", socket_app, "socketio")
+
+    # Import other routers
+    import cea.interfaces.dashboard.api as api
+    import cea.interfaces.dashboard.plots.routes as plots
+    import cea.interfaces.dashboard.server as server
+
+    app.include_router(api.router, prefix='/api')
+    app.include_router(plots.router, prefix='/plots')
+    app.include_router(server.router, prefix='/server')
+
+    return app
 
 
 def main(config):
-    config.restricted_to = None  # allow access to the whole config file
-    plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__)
-    CORS(app)
-    app.config.from_mapping({'SECRET_KEY': 'secret'})
-    socketio = SocketIO(app, cors_allowed_origins="*")
-
-    if config.server.browser:
-        from cea.interfaces.dashboard.frontend import blueprint as frontend
-        app.register_blueprint(frontend)
-
-    from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
-    from cea.interfaces.dashboard.server import blueprint as server_blueprint, shutdown_server
-    from cea.interfaces.dashboard.api import blueprint as api_blueprint
-
-    app.register_blueprint(plots_blueprint)
-    app.register_blueprint(api_blueprint)
-    app.register_blueprint(server_blueprint)
-
-    # keep a copy of the configuration we're using
-    app.cea_config = config
-    app.plot_cache = plot_cache
-    app.socketio = socketio
-
-    print("start CEA dashboard server")
-    
-    if config.server.browser:
-        url = f"http://{config.server.host}:{config.server.port}"
-        print(f"Open {url} in your browser to access the GUI")
-        webbrowser.open(url)
-
-    print("Press Ctrl+C to stop server")
+    app = create_app()
     try:
-        socketio.run(app, host=config.server.host, port=config.server.port)
+        uvicorn.run(app, host="127.0.0.1", port=5050)
     except KeyboardInterrupt:
-        with app.app_context():
-            shutdown_server()
-
-    print("server exited")
+        sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(cea.config.Configuration())

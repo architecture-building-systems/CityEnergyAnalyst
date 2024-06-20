@@ -1,16 +1,14 @@
-
-
-
 import os
 from collections import OrderedDict
 
-from flask_restx import Namespace, Resource, abort
 import pandas as pd
+from fastapi import APIRouter, HTTPException, status
 
 from cea.databases import get_regions, get_database_tree, databases_folder_path
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
-api = Namespace("Databases", description="Database data for technologies in CEA")
+router = APIRouter()
+
 
 DATABASES_SCHEMA_KEYS = {
     "CONSTRUCTION_STANDARD": ["get_database_construction_standards"],
@@ -65,32 +63,40 @@ def read_all_databases(database_path):
     return out
 
 
-@api.route("/region")
-class DatabaseRegions(Resource):
-    def get(self):
-        return {'regions': get_regions()}
+@router.get("/region")
+async def get_database_regions():
+    return {'regions': get_regions()}
 
 
-@api.route("/region/<string:region>")
-class DatabaseRegion(Resource):
-    def get(self, region):
-        regions = get_regions()
-        if region not in regions:
-            abort(400, "Could not find '{}' region. Try instead {}".format(region, ", ".join(regions)))
-        return {"categories": get_database_tree(os.path.join(databases_folder_path, region))['categories']}
+@router.get("/region/{region}")
+async def get_database_region(region: str):
+    regions = get_regions()
+    if region not in regions:
+        _regions = ", ".join(regions)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not find '{region}' region. Try instead {_regions}",
+        )
+    return {"categories": get_database_tree(os.path.join(databases_folder_path, region))['categories']}
 
 
-@api.route("/region/<string:region>/databases")
-class DatabaseData(Resource):
-    def get(self, region):
-        regions = get_regions()
-        if region not in regions:
-            abort(400, "Could not find '{}' region. Try instead {}".format(region, ", ".join(regions)))
-        try:
-            return read_all_databases(os.path.join(databases_folder_path, region))
-        except IOError as e:
-            print(e)
-            abort(500, str(e))
+@router.get("/region/{region}/databases")
+async def get_database_region_data(region: str):
+    regions = get_regions()
+    if region not in regions:
+        _regions = ", ".join(regions)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not find '{region}' region. Try instead {_regions}",
+        )
+    try:
+        return read_all_databases(os.path.join(databases_folder_path, region))
+    except IOError as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
 
 
 def convert_path_to_name(schema_dict):
@@ -105,17 +111,17 @@ def convert_path_to_name(schema_dict):
     return schema_dict
 
 
-@api.route("/schema")
-class DatabaseSchema(Resource):
-    def get(self):
-        import cea.scripts
-        schemas = cea.schemas.schemas(plugins=[])
-        out = {}
-        for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
-            out[db_name] = {}
-            for db_schema_key in db_schema_keys:
-                try:
-                    out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
-                except KeyError as ex:
-                    raise KeyError(f"Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex}")
-        return out
+@router.get("/schema")
+async def get_database_schema():
+    import cea.schemas
+
+    schemas = cea.schemas.schemas(plugins=[])
+    out = {}
+    for db_name, db_schema_keys in DATABASES_SCHEMA_KEYS.items():
+        out[db_name] = {}
+        for db_schema_key in db_schema_keys:
+            try:
+                out[db_name].update(convert_path_to_name(schemas[db_schema_key]['schema']))
+            except KeyError as ex:
+                raise KeyError(f"Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex}")
+    return out

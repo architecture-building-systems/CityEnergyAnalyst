@@ -1,27 +1,17 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
-
 import subprocess
-from dataclasses import dataclass, asdict
 from datetime import datetime
+from typing import Dict, Any
 
 import psutil
+from fastapi import APIRouter
+from pydantic import BaseModel
 
-from flask_restx import Namespace, Resource, fields, reqparse
-from flask import request, current_app
+from cea.interfaces.dashboard.server.socketio import sio
 
-__author__ = "Daren Thomas"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
-
-
-api = Namespace('Jobs', description='A job server for cea-worker processes')
+router = APIRouter()
 
 # Job states
 JOB_STATE_PENDING = 0
@@ -30,39 +20,40 @@ JOB_STATE_SUCCESS = 2
 JOB_STATE_ERROR = 3
 JOB_STATE_CANCELED = 4
 
-job_info_model = api.model('JobInfo', {
-    'id': fields.Integer,
-    'script': fields.String,
-    'state': fields.Integer,
-    'error': fields.String,
-    'parameters': fields.Raw,
-    'start_time': fields.DateTime,
-    'end_time': fields.DateTime,
-})
-
-job_info_request_parser = reqparse.RequestParser()
-job_info_request_parser.add_argument("id", type=int, location="json")
-job_info_request_parser.add_argument("script", type=str, required=True, location="json")
-job_info_request_parser.add_argument("state", location="json")
-job_info_request_parser.add_argument("error", location="json")
-job_info_request_parser.add_argument("parameters", type=dict, location="json")
+# job_info_model = api.model('JobInfo', {
+#     'id': fields.Integer,
+#     'script': fields.String,
+#     'state': fields.Integer,
+#     'error': fields.String,
+#     'parameters': fields.Raw,
+#     'start_time': fields.DateTime,
+#     'end_time': fields.DateTime,
+# })
+#
+# job_info_request_parser = reqparse.RequestParser()
+# job_info_request_parser.add_argument("id", type=int, location="json")
+# job_info_request_parser.add_argument("script", type=str, required=True, location="json")
+# job_info_request_parser.add_argument("state", location="json")
+# job_info_request_parser.add_argument("error", location="json")
+# job_info_request_parser.add_argument("parameters", type=dict, location="json")
 
 
 worker_processes = {}  # jobid -> subprocess.Popen
 
 
 def next_id():
-    """FIXME: replace with better solution"""
+    """
+    FIXME: replace with better solution
+    """
     try:
-        return max(jobs.keys()) + 1
+        return str(len(jobs.keys()) + 1)
     except ValueError:
         # this is the first job...
-        return 1
+        return str(1)
 
 
 # FIXME: replace with database or similar solution
-@dataclass
-class JobInfo:
+class JobInfo(BaseModel):
     """Store all the information required to run a job"""
     id: str
     script: str
@@ -78,93 +69,78 @@ jobs = {
 }
 
 
-@api.route("/<int:jobid>")
-class Job(Resource):
-    @api.marshal_with(job_info_model)
-    def get(self, jobid):
-        """Return a JobInfo by id"""
-        return jobs[jobid]
+@router.get("/{job_id}")
+async def get_job_info(job_id: str):
+    """Return a JobInfo by id"""
+    return jobs[job_id]
 
 
-@api.route("/new")
-class NewJob(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self):
-        """Post a new job to the list of jobs to complete"""
-        args = job_info_request_parser.parse_args()
-        print("NewJob: args={args}".format(**locals()))
-        job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
-        jobs[job.id] = job
-        current_app.socketio.emit("cea-job-created", api.marshal(job, job_info_model))
-        return job
+@router.post("/new")
+async def create_new_job(payload: Dict[str, Any]):
+    """Post a new job to the list of jobs to complete"""
+    args = payload
+    print("NewJob: args={args}".format(**locals()))
+    job = JobInfo(id=next_id(), script=args["script"], parameters=args["parameters"])
+    jobs[job.id] = job
+    await sio.emit("cea-job-created", job.model_dump(mode='json'))
+    return job
 
 
-@api.route("/list")
-class ListJobs(Resource):
-    @api.marshal_with(job_info_model, as_list=True)
-    def get(self):
-        return [asdict(job) for job in jobs.values()]
+@router.get("/")
+async def get_jobs():
+    return [job.dict() for job in jobs.values()]
 
 
-@api.route("/started/<int:jobid>")
-class JobStarted(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_STARTED
-        job.start_time = datetime.now()
-        current_app.socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
-        return job
+@router.post("/started/{job_id}")
+async def set_job_started(job_id: str) -> JobInfo:
+    job = jobs[job_id]
+    job.state = JOB_STATE_STARTED
+    job.start_time = datetime.now()
+    await sio.emit("cea-worker-started", job.model_dump(mode='json'))
+    return job
 
 
-@api.route("/success/<int:jobid>")
-class JobSuccess(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_SUCCESS
-        job.error = None
-        job.end_time = datetime.now()
-        if job.id in worker_processes:
-            del worker_processes[job.id]
-        current_app.socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
-        return job
+@router.post("/success/{job_id}")
+async def set_job_success(job_id: str) -> JobInfo:
+    job = jobs[job_id]
+    job.state = JOB_STATE_SUCCESS
+    job.error = None
+    job.end_time = datetime.now()
+    if job.id in worker_processes:
+        del worker_processes[job.id]
+    await sio.emit("cea-worker-success", job.model_dump(mode='json'))
+    return job
 
 
-@api.route("/error/<int:jobid>")
-class JobError(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_ERROR
-        job.error = request.data.decode()
-        job.end_time = datetime.now()
-        if job.id in worker_processes:
-            del worker_processes[job.id]
-        current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
-        return job
+@router.post("/error/{job_id}")
+async def set_job_error(job_id: str, error: str) -> JobInfo:
+    job = jobs[job_id]
+    job.state = JOB_STATE_ERROR
+    job.error = error
+    job.end_time = datetime.now()
+    if job.id in worker_processes:
+        del worker_processes[job.id]
+    await sio.emit("cea-worker-error", job.model_dump(mode='json'))
+    return job
 
 
-@api.route('/start/<int:jobid>')
-class JobStart(Resource):
-    def post(self, jobid):
-        """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
-        print("tools/route_start: {jobid}".format(**locals()))
-        worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", "{jobid}".format(jobid=jobid)])
-        return jobid
+@router.post('/start/{job_id}')
+async def start_job(job_id: str):
+    """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+    print("tools/route_start: {job_id}".format(**locals()))
+    worker_processes[job_id] = subprocess.Popen(["python", "-m", "cea.worker", f"{job_id}"])
+    return job_id
 
 
-@api.route("/cancel/<int:jobid>")
-class JobCanceled(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_CANCELED
-        job.error = "Canceled by user"
-        job.end_time = datetime.now()
-        kill_job(jobid)
-        current_app.socketio.emit("cea-worker-canceled", api.marshal(job, job_info_model))
-        return job
+@router.post("/cancel/{job_id}")
+async def cancel_job(job_id: str) -> JobInfo:
+    job = jobs[job_id]
+    job.state = JOB_STATE_CANCELED
+    job.error = "Canceled by user"
+    job.end_time = datetime.now()
+    kill_job(job_id)
+    await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
+    return job
 
 
 def kill_job(jobid):

@@ -1,24 +1,18 @@
 import os.path
 from dataclasses import dataclass, asdict
 from enum import Enum
-from pathlib import Path
 from typing import Optional, List
 
-from flask import current_app
-from flask_restx import Namespace, Resource
+from fastapi import APIRouter, HTTPException, status
 
-api = Namespace('Contents', description='Local path file contents')
+from cea.interfaces.dashboard.dashboard import CEAConfig
+
+router = APIRouter()
 
 
 class ContentType(Enum):
     directory = 'directory'
     file = 'file'
-
-
-contents_parser = api.parser()
-contents_parser.add_argument('type', type=ContentType, required=True, location='args')
-contents_parser.add_argument('show_hidden', type=bool, default=False, location='args')
-contents_parser.add_argument('root', type=str, default=None, location='args')
 
 
 class ContentPathNotFound(Exception):
@@ -68,7 +62,7 @@ def get_content_info(root_path: str, content_path: str, content_type: ContentTyp
             for item in os.listdir(full_path) if not item.startswith(".") or show_hidden
         ]
         contents = [get_content_info(root_path, os.path.join(content_path, _path).replace("\\", "/"), _type,
-                                  depth - 1, show_hidden)
+                                     depth - 1, show_hidden)
                     for _path, _type in _contents]
 
     size = None
@@ -85,29 +79,29 @@ def get_content_info(root_path: str, content_path: str, content_type: ContentTyp
     )
 
 
-@api.route('/', defaults={'content_path': ''})
-@api.route('/<path:content_path>')
-@api.expect(contents_parser)
-class Contents(Resource):
-    def get(self, content_path: str):
-        """
-        Get information of the content path provided
-        """
-        args = contents_parser.parse_args()
-        content_type: ContentType = args["type"]
-        show_hidden: bool = args["show_hidden"]
-        root: Path = args["root"]
+@router.get('/')
+@router.get('/{content_path}')
+async def get_contents(config: CEAConfig, type: ContentType, root: str,
+                       content_path: str = "", show_hidden: bool = False):
+    """
+    Get information of the content path provided
+    """
+    content_type = type
 
-        if root is None:
-            config = current_app.cea_config
-            root_path = config.server.project_root
-        else:
-            root_path = root
-
-        try:
-            content_info = get_content_info(root_path, content_path, content_type, show_hidden=show_hidden)
-            return content_info.as_dict()
-        except ContentPathNotFound:
-            return {"message": f"Path `{content_path}` does not exist"}, 404
-        except ContentTypeInvalid:
-            return {"message": f"Path `{content_path}` is not of type `{content_type.value}`"}, 400
+    if root is None:
+        root_path = config.server.project_root
+    else:
+        root_path = root
+    try:
+        content_info = get_content_info(root_path, content_path, content_type, show_hidden=show_hidden)
+        return content_info.as_dict()
+    except ContentPathNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Path `{content_path}` does not exist",
+        )
+    except ContentTypeInvalid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Path `{content_path}` is not of type `{content_type.value}`",
+        )
