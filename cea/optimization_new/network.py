@@ -38,7 +38,8 @@ from cea.technologies.thermal_network.simplified_thermal_network import calculat
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
-
+from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
+from cea.optimization_new.building import Building
 
 class Network(object):
     _coordinate_reference_system = None
@@ -57,8 +58,7 @@ class Network(object):
                               'peak_load_percentage': 0.0,
                               'network_lifetime_yrs': 20}
 
-    def __init__(self, domain_connectivity, network_id, connected_buildings):
-        self.connectivity = domain_connectivity
+    def __init__(self,  connected_buildings, network_id, domain_connectivity=None):
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.network_edges = Gdf()
@@ -66,8 +66,146 @@ class Network(object):
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
         self.annual_piping_cost = 0.0
+        self.connectivity = domain_connectivity
 
-    def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None):
+    @property
+    def connected_buildings(self):
+        return self._connected_buildings
+
+    @connected_buildings.setter
+    def connected_buildings(self, new_connected_buildings:list):
+        """
+        Sets the connected buildings for the network.
+
+        param connected_buildings: list of building names or list of <Building>-objects
+        """
+        if all(isinstance(building, str) for building in new_connected_buildings):
+            self._connected_buildings = new_connected_buildings
+        elif all(isinstance(building, Building) for building in new_connected_buildings):
+            self._connected_buildings = [building.identifier for building in new_connected_buildings]
+        else:
+            raise ValueError("connected_buildings must be a list of building names or Building-objects")
+
+    @property
+    def connectivity(self):
+        return self._connectivity
+
+    @connectivity.setter
+    def connectivity(self, new_connectivity:ConnectivityVector):
+        """
+        Sets the connectivity of the domain that the network finds itself in.
+
+        param new_connectivity: <ConnectivityVector>-object
+        """
+        if new_connectivity is None:
+            self._connectivity = self.derive_connectivity_from_buildings()
+        elif isinstance(new_connectivity, ConnectivityVector):
+            self._connectivity = new_connectivity
+        else:
+            raise ValueError("connectivity must be a ConnectivityVector-object or None")
+
+    def derive_connectivity_from_buildings(self):
+        """
+        Derives the connectivity of the network from the connected buildings.
+        """
+        connections_list = [Connection(1, building_id) if building_id in self.connected_buildings
+                            else Connection(0, building_id)
+                            for building_id in self._domain_potential_network_terminals_df['building']]
+        self.connectivity = ConnectivityVector(connections_list)
+
+        return self.connectivity
+
+    def generate_condensed_graph(self, method:str='remove_connector_nodes'):
+        """
+        Generates a graph object with fewer intermediary nodes between the building nodes. The method dictates how
+        the simplified graph is derived exactly.
+
+        If 'method' = 'remove_connector_nodes':
+            Nodes that are not part of the building nodes and have exactly two edges attached to them are removed from
+            the network. The two edges are replaced by a single one, connecting the original nodes neighbours.
+            This reduces node density in certain areas of the network while keeping the network structure intact.
+
+        If 'method' = 'shortest_path_between_buildings':
+            All connecting nodes are removed from the network and only the building nodes retained. Edges connect each
+            building node in the domain to each other building node in the domain. Edge weights are equal to the
+            shortest path between the two nodes in the detailed network.
+            This removes all "unnecessary" nodes from the network, but also massively reduces information about the
+            network structure.
+
+        param method: str, method to simplify the network graph
+        """
+        # Generate the shortest network connecting the specified buildings, this network includes all relevant nodes of
+        # the potential network graph (i.e. typically crossings in the roads network of the domain)
+        detailed_network = self.run_steiner_tree_optimisation(return_graph=True)
+
+        if method == 'remove_connector_nodes':
+
+            condensed_graph = detailed_network.copy()
+
+            # Remove all nodes with degree 2 from the detailed network
+            while any(degree == 2 for _, degree in condensed_graph.degree):
+
+                # Create a copy of the network that can be modified while iterating over the nodes
+                # simply changing condensed_network itself would cause error `dictionary changed size during iteration`
+                modifiable_grpah = condensed_graph.copy()
+                for node, degree in condensed_graph.degree():
+
+                    if degree == 2:
+                        # Get the two edges connected to the node
+                        adjacent_edges = condensed_graph.edges(node)
+                        adjacent_edges = list(adjacent_edges.__iter__())
+                        node_0a, node_0b = adjacent_edges[0]
+                        node_1a, node_1b = adjacent_edges[1]
+
+                        # Get the nodes that are not the current node
+                        node_0 = node_0a if node_0a != node else node_0b
+                        node_1 = node_1a if node_1a != node else node_1b
+
+                        # Calculate the new edge weight
+                        edge_weight = condensed_graph[node][node_0]['weight'] \
+                                      + condensed_graph[node][node_1]['weight']
+
+                        # Remove the node and add the new edge
+                        modifiable_grpah.remove_node(node)
+                        modifiable_grpah.add_edge(node_0, node_1, weight=edge_weight)
+
+                condensed_graph = modifiable_grpah
+
+        elif method == 'shortest_path_between_buildings':
+            # Calculate the shortest paths between all nodes in the detailed network
+            shortest_paths = dict(nx.all_pairs_dijkstra_path_length(detailed_network, weight='weight'))
+
+            # Convert the shortest paths dictionary to a matrix
+            nodes = [node for building, node
+                    in zip(self._domain_potential_network_terminals_df['building'],
+                           self._domain_potential_network_terminals_df['coordinates'])
+                     if building in self.connected_buildings]
+            node_labels = {node: i for i, node in enumerate(nodes)}
+            shortest_path_matrix = np.zeros((len(nodes), len(nodes)))
+
+            for i, start_node in enumerate(nodes):
+                for j, end_node in enumerate(nodes):
+                    shortest_path_matrix[i, j] = shortest_paths[start_node][end_node]
+
+            # Generate a graph object from the shortest path matrix, this network only includes the relevant building nodes
+            condensed_graph = nx.from_numpy_matrix(shortest_path_matrix)
+            nx.relabel_nodes(condensed_graph, node_labels, copy=False)
+        else:
+            raise ValueError("method for condensing the network structure must be either 'remove_connector_nodes' or "
+                             "'shortest_path_between_buildings'")
+
+        # Add the building names as labels to the nodes
+        building_codes = self._domain_potential_network_terminals_df['building']
+        building_coordinates = self._domain_potential_network_terminals_df['coordinates']
+        building_nodes = {node: building_code for node, building_code in zip(building_coordinates, building_codes)}
+        labels = {node: building_nodes[node] if node in building_nodes.keys() else 'connector'
+                  for node in list(condensed_graph.nodes)}
+        nx.set_node_attributes(condensed_graph, labels, 'label')
+
+        return condensed_graph
+
+
+    def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None, return_graph=False):
         """
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
@@ -76,6 +214,8 @@ class Network(object):
         :type allow_looped_networks: bool
         :param plant_terminal: building name where plant should be built, plant is built next to the largest consumer otherwise
         :type plant_terminal: str (e.g. 'B1082')
+        :param return_graph: indicator for whether the complete network graph object should be returned
+        :type return_graph: bool
         """
         is_connected = self._domain_potential_network_terminals_df['building'].isin(self.connected_buildings).to_list()
         connected_terminals = self._domain_potential_network_terminals_df[is_connected]
@@ -95,6 +235,10 @@ class Network(object):
                              'the Steiner tree does not support disconnected graphs. '
                              'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
                              'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
+
+        # return unprocessed network graph, if requested
+        if return_graph:
+            return network_graph
 
         # build edge and node dataframes
         domain_buildings_list = self._domain_potential_network_terminals_df['building'].to_list()

@@ -170,7 +170,9 @@ class Domain(object):
             pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
             toolbox.register("map", pool.map)
 
-        building_coordinates = [building.location for building in self.buildings]
+        # Generate fully connected network as basis for the clustering algorithm
+        full_network = Network(self.buildings, 'Nfull')
+        full_network_graph = full_network.generate_condensed_graph()
 
         # Register genetic operators
         toolbox.register("generate", ConnectivityVector.generate)
@@ -180,9 +182,9 @@ class Domain(object):
         toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
                          energy_potentials=self.energy_potentials, optimization_tracker=tracker,
                          process_memory=main_process_memory)
-        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm, connection_points=building_coordinates)
+        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm, domain_network_graph=full_network_graph)
         toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm,
-                         connection_points=building_coordinates)
+                         domain_network_graph=full_network_graph)
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
                          optimization_tracker=tracker)
 
