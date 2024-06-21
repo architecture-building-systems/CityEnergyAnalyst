@@ -15,15 +15,16 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
-
+import networkx as nx
 from sklearn.cluster import HDBSCAN
+from community import community_louvain
 
 class Clustering(object):
 
-    def __init__(self, building_centroids:list, min_samples:int=5, grid_size:float=300, subdivision_threshold:int=5):
+    def __init__(self, domain_network_graph:nx.Graph, min_samples:int=5, grid_size:float=300, subdivision_threshold:int=5):
         """
-        :param building_centroids: list of building centroids
-        :type building_centroids: list of shapely.geometry.point.Point objects
+        :param domain_network_graph: graph of the thermal network connecting all buildings in the domain (nodes)
+        :type domain_network_graph: nx.Graph
         :param min_samples: min_samples value for DBSCAN
         :type min_samples: int
         :param grid_size: size of the grid in meters
@@ -31,23 +32,60 @@ class Clustering(object):
         :param subdivision_threshold: threshold for the number of points in a cluster before subdivision
         :type subdivision_threshold: int
         """
-        self.points = [(point.x, point.y) for point in building_centroids]
+        self.domain_network_graph = domain_network_graph
+        self.points = [point for point, data in dict(domain_network_graph.nodes(data=True)).items()
+                       if data['label'] != 'connector']
         self.min_samples = min_samples
         self.grid_size = grid_size
         self.subdivision_threshold = subdivision_threshold
         self.cluster_indexes:list = []
         self.grid_cell_indexes:list = []
 
-    def cluster(self):
+    def cluster(self, method:str='louvain'):
         """
-        Performs the clustering of the building centroids using the HDBSCAN algorithm.
+        Performs the clustering of the building centroids using the HDBSCAN algorithm or Louvain method for community
+        detection.
         :return: list of cluster indexes
         """
-        clustering_algorithm = HDBSCAN(min_samples=self.min_samples)
-        clusters = clustering_algorithm.fit(self.points)
-        self.cluster_indexes = list(clusters.labels_)
+        if method == 'louvain':
+            communities = community_louvain.best_partition(self.domain_network_graph)
+            self.cluster_indexes = self.derive_cluster_indexes(communities)
+        elif method == 'hdbscan':
+            clustering_algorithm = HDBSCAN(min_samples=self.min_samples)
+            clusters = clustering_algorithm.fit(self.points)
+            self.cluster_indexes = list(clusters.labels_)
+        else:
+            raise ValueError(f"Clustering method {method} not supported.")
+
         self.subdivide_with_grid()
+
         return self.cluster_indexes
+
+    def derive_cluster_indexes(self, communities:dict):
+        """
+        Derive cluster indexes from the communities dictionary.
+        :param communities: dictionary of communities
+        :type communities: dict
+        :return: list of cluster indexes
+        """
+        # Extract community indexes of the building nodes
+        building_community_indexes = [communities[node]
+                                      for node ,data in dict(self.domain_network_graph.nodes(data=True)).items()
+                                      if data['label'] != 'connector']
+
+        # Map community indexes to clusters and mark all buildings that are alone in their communities as outliers
+        community_indexes = set(building_community_indexes)
+        mapping = {}
+        cluster_index = 1
+
+        for i, index in enumerate(community_indexes):
+            if building_community_indexes.count(index) > 1:
+                mapping[index] = cluster_index
+                cluster_index += 1
+
+        cluster_indexes = [mapping[index] if index in mapping else -1 for index in building_community_indexes]
+
+        return cluster_indexes
 
     def subdivide_with_grid(self):
         """

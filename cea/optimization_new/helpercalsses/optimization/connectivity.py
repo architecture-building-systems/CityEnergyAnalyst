@@ -25,6 +25,7 @@ __status__ = "Production"
 import random
 from deap import tools
 import hashlib
+import networkx as nx
 
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 from cea.optimization_new.helpercalsses.optimization.clustering import Clustering
@@ -295,12 +296,12 @@ class ConnectivityVector(object):
         return connections_list
 
     @staticmethod
-    def mutate(cv, algorithm=None, connection_points:list=None):
+    def mutate(cv, algorithm=None, domain_network_graph:nx.Graph=None):
         """
         Mutate the connectivity vector (inplace) according to the defined mutation algorithm.
         :param cv: ConnectivityVector object to be mutated
         :param algorithm: Genetic algorithm settings to be used
-        :param connection_points: List of connection points (needed for the ClusterSwitch mutation)
+        :param domain_network_graph: Network graph of the domain (needed for the ClusterSwitch mutation)
         """
         if algorithm.mutation == 'ShuffleIndexes':
             mutated_cv = tools.mutShuffleIndexes(cv, algorithm.mut_prob)
@@ -309,7 +310,7 @@ class ConnectivityVector(object):
             mutated_cv = tools.mutUniformInt(cv, low=0, up=nbr_of_networks, indpb=algorithm.mut_prob)
         elif algorithm.mutation == 'ClusterSwitch':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             mutated_cv = ConnectivityVector.mutClusterSwitch(cv, algorithm.mut_prob)
         else:
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
@@ -352,13 +353,13 @@ class ConnectivityVector(object):
         return cv,
 
     @staticmethod
-    def mate(cv_1, cv_2, algorithm=None, connection_points:list=None):
+    def mate(cv_1, cv_2, algorithm=None, domain_network_graph:nx.Graph=None):
         """
         Recombine two connectivity vectors (inplace) according to the defined crossover algorithm.
         :param cv_1: First connectivity vector
         :param cv_2: Second connectivity vector
         :param algorithm: Algorithm object containing the crossover method and probability
-        :param connection_points: List of all connection points in the network
+        :param domain_network_graph: NetworkX graph object of the thermal network connecting the full domain
         """
         if algorithm.crossover == 'OnePoint':
             recombined_cvs = tools.cxOnePoint(cv_1, cv_2)
@@ -368,11 +369,11 @@ class ConnectivityVector(object):
             recombined_cvs = tools.cxUniform(cv_1, cv_2, algorithm.cx_prob)
         elif algorithm.crossover == 'ClusterSwap':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             recombined_cvs = ConnectivityVector.cxClusterSwap(cv_1, cv_2, algorithm.cx_prob)
         elif algorithm.crossover == 'ClusterAlignment':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             recombined_cvs = ConnectivityVector.cxClusterAlignment(cv_1, cv_2, algorithm.cx_prob)
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "

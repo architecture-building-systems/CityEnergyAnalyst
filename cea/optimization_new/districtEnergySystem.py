@@ -212,7 +212,7 @@ class DistrictEnergySystem(object):
                                        in zip(building_ids, buildings_are_connected_to_network)
                                        if is_connected]
                 full_network_identifier = 'N' + str(1000 + network_id)
-                network = Network(self.connectivity, full_network_identifier, connected_buildings)
+                network = Network(connected_buildings, full_network_identifier, domain_connectivity=self.connectivity)
                 network.run_steiner_tree_optimisation()
                 network.calculate_operational_conditions()
                 self.networks.append(network)
