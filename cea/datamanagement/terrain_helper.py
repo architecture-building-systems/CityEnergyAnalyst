@@ -257,7 +257,7 @@ def main(config):
 
     with open(reference_file, "w") as f:
         f.write(content)
-    print(content)
+    print(f"\n{content}")
     print(f"Reference file is written to: {reference_file}")
 
     # Write to disk
