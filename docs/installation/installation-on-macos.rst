@@ -16,10 +16,10 @@ Install CEA Developer Version if you intend to use the Pycharm Interface and/or 
 
 Step 2 (NON-Developer version): Download and install CEA.
 ~~~~~~~~~~
-#. `Download the latest version of CEA in here`_.
+#. `Download the latest version of CEA here`_.
 #. Open the installer and drag the APP into Applications.
 
-.. _`Download the latest version of CEA in here`: https://www.cityenergyanalyst.com/#downloads
+.. _`Download the latest version of CEA here`: https://www.cityenergyanalyst.com/#downloads
 
 
 Step 2 (Developer version): Download and install CEA.
