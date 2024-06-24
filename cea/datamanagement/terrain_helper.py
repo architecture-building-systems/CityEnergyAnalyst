@@ -147,7 +147,7 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
     transform, width, height = calculate_default_transform(
         meta["crs"], dst_crs, src_array.shape[2], src_array.shape[1],
         minx, miny, maxx, maxy,
-        resolution=(grid_size, grid_size)
+        resolution=grid_size
     )
 
     new_meta = meta.copy()
