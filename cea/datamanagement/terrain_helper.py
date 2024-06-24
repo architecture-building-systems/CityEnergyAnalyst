@@ -167,7 +167,9 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
             src_crs=meta["crs"],
             dst_transform=transform,
             dst_crs=dst_crs,
-            resampling=Resampling.nearest
+            resampling=Resampling.nearest,
+            src_nodata=meta["nodata"],
+            dst_nodata=meta["nodata"],
         )
 
     return dst_array, transform, new_meta
