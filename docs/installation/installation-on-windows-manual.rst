@@ -3,7 +3,8 @@
 Installation guide for Windows (Manual) - not recommended
 ==============================================
 
-.. attention:: Manual installation if NOT RECOMMENDED for any CEA interfaces on Windows system. All CEA users should try using CEA Installer for Windows first.
+.. attention:: Manual installation is NOT RECOMMENDED for any CEA interface on Windows.
+All CEA users should try using the CEA Installer for Windows first.
 Follow these instructions to install the CityEnergyAnalyst (CEA) on a Windows system (tested with Windows 10) manually.
 
 Prerequisites
