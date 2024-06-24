@@ -1,19 +1,17 @@
 Installation guide for Windows
 ==============================
 
-Step 1: Determine the interface that you want to interact with CEA.
-~~~~~~~~~~
-
-There mainly 3 ways or interfaces.
+There are 3 ways to use CEA.
 
 #. CEA Dashboard: This a graphical user interface to CEA, open source and developed by the CEA Team using web-based technology.
 #. CEA Command Line: This is the command line to all the commands of CEA from your computer terminal.
 #. The Pycharm Interface: this interface provides access to all the source code of CEA.
 
-Install CEA Developer Version if you intend to use the Pycharm Interface. CEA Developer Version also includes CEA Dashboard and CEA Command Line
+Both Non-Developer and Developer versions support the CEA Dashboard interface.
 
+If you intend to use the Pycharm Interface and/or CEA Command Line, install the Developer version.
 
-Step 2: Download and install CEA.
+Step 1: Download and install CEA.
 ~~~~~~~~~~
 Follow these instructions to install CEA on a Windows system (tested with Windows 10).
 
@@ -27,7 +25,7 @@ Follow these instructions to install CEA on a Windows system (tested with Window
 .. note:: (not recommended) Alternatively, you can install CEA from the source check :doc:`installation-on-windows-manual`
 
 
-Step 3: Run CEA Dashboard.
+Step 2: Run CEA Dashboard.
 ~~~~~~~~~~
 
 #. Locate the CEA icon (usually on desktop) and double click on it
@@ -36,7 +34,7 @@ Step 3: Run CEA Dashboard.
 Here you can find a series of tutorials at `CEA Learning Camp <https://www.cityenergyanalyst.com/learning-camp>`__ to help you get started!
 
 
-Step 4 (Developer Version): Access CEA using the Pycharm Interface.
+Step 3 (Developer Version): Access CEA using the Pycharm Interface.
 ~~~~~~~~~~
 
 In order to access and work on the source code of CEA from pycharm, do:

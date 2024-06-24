@@ -1,8 +1,7 @@
 Installation guide for macOS
 ==============================
 
-
-There mainly 3 ways or interfaces.
+There are 3 ways to use CEA.
 
 #. CEA Dashboard: This a graphical user interface to CEA, open source and developed by the CEA Team using web-based technology.
 #. CEA Command Line: This is the command line to all the commands of CEA from your computer terminal.
