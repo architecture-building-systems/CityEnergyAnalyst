@@ -213,6 +213,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
 
 def main(config):
     grid_size = config.terrain_helper.grid_size
+    buffer = config.terrain_helper.buffer
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # Get total bounds
@@ -225,10 +226,9 @@ def main(config):
     total_bounds = total_df.total_bounds
 
     # Add buffer to bounds in meters (using projected crs), to ensure overlap
-    buffer = 30
     projected_crs = total_df.estimate_utm_crs()
-    reprojected_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
-    buffer_df = reprojected_df.buffer(buffer)
+    reprojected_bounds_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
+    buffer_df = reprojected_bounds_df.buffer(buffer)
     min_x, min_y, max_x, max_y = buffer_df.total_bounds
 
     # Fetch tiff data
