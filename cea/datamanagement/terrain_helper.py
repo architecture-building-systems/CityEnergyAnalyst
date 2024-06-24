@@ -13,6 +13,7 @@ from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio.mask import mask
 from rasterio.merge import merge
+from rasterio.transform import array_bounds
 from rasterio.warp import calculate_default_transform, Resampling, reproject
 from shapely import box
 
@@ -141,8 +142,7 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
     Reproject raster array to specified CRS.
     """
     # Get bounds from transform
-    minx, miny = src_transform * (0, src_array.shape[2])
-    maxx, maxy = src_transform * (src_array.shape[1], 0)
+    minx, miny, maxx, maxy = array_bounds(src_array.shape[1], src_array.shape[2], src_transform)
 
     transform, width, height = calculate_default_transform(
         meta["crs"], dst_crs, src_array.shape[2], src_array.shape[1],
