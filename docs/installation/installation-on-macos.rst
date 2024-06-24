@@ -2,33 +2,45 @@ Installation guide for macOS
 ==============================
 
 
-Step 1: Determine the interface that you want to interact with CEA.
-~~~~~~~~~~
-
 There mainly 3 ways or interfaces.
 
 #. CEA Dashboard: This a graphical user interface to CEA, open source and developed by the CEA Team using web-based technology.
 #. CEA Command Line: This is the command line to all the commands of CEA from your computer terminal.
 #. The Pycharm Interface: this interface provides access to all the source code of CEA.
 
-Install CEA Developer Version if you intend to use the Pycharm Interface and/or CEA Command Line. CEA Developer Version also includes CEA Dashboard.
+Both Non-Developer and Developer versions support the CEA Dashboard interface.
+
+If you intend to use the Pycharm Interface and/or CEA Command Line, install the Developer version.
 
 
-Step 2 (NON-Developer version): Download and install CEA.
+Non-Developer version
+~~~~~~~~~~
+
+Step 1: Download and install CEA.
 ~~~~~~~~~~
 #. `Download the latest version of CEA here`_.
 #. Open the installer and drag the APP into Applications.
 
 .. _`Download the latest version of CEA here`: https://www.cityenergyanalyst.com/#downloads
 
+Step 2: Run CEA Dashboard.
+~~~~~~~~~~
 
-Step 2 (Developer version): Download and install CEA.
+#. Locate the CEA application in the Applications folder or Launchpad and double click on it
+#. Start using CEA Dashboard
+
+Here you can find a series of tutorials at `CEA Learning Camp <https://www.cityenergyanalyst.com/learning-camp>`__ to help you get started!
+
+
+Developer version
+~~~~~~~~~~
+Step 1: Download and install CEA.
 ~~~~~~~~~~
 
 * Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 * Download and Install `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
 
-Fresh installation
+a) Fresh installation
 _________________________
 #. Open GitHub Desktop from the start menu.
 #. Clone the CEA repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst
@@ -46,7 +58,7 @@ _________________________
     #. Type ``yarn electron:build`` and press ENTER.
     #. You will find the CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
-Update existing installation
+b) Update existing installation
 _________________________
 These steps would only work if your current installation is installed using the steps above.
 
@@ -68,15 +80,7 @@ These steps would only work if your current installation is installed using the 
     #. You will find the new CEA dashboard in the folder ``/Users/your_name/Documents/GitHub/CityEnergyAnalyst-GUI/out/mac-*/CityEnergyAnalyst-GUI.app``
 
 
-Step 3 (NON-Developer Version): Run CEA Dashboard.
-~~~~~~~~~~
-
-#. Locate the CEA icon (usually on desktop) and double click on it
-#. Start using CEA Dashboard
-
-Here you can find a series of tutorials at `CEA Learning Camp <https://www.cityenergyanalyst.com/learning-camp>`__ to help you get started!
-
-Step 3 (Developer Version): Run CEA Dashboard.
+Step 3: Run CEA Dashboard.
 ~~~~~~~~~~
 
 In order to launch the CEA dashboard, you will need to do the following **each time**:
@@ -92,7 +96,7 @@ In order to launch the CEA dashboard, you will need to do the following **each t
 Here you can find a series of tutorials at `CEA Learning Camp <https://www.cityenergyanalyst.com/learning-camp>`__ to help you get started!
 
 
-Step 4 (Developer Version): Access CEA using the Pycharm Interface.
+Step 4: Access CEA using the Pycharm Interface.
 ~~~~~~~~~~
 
 In order to access and work on the source code of CEA from pycharm, do:
