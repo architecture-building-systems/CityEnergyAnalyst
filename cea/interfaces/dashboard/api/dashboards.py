@@ -5,9 +5,8 @@ from fastapi import APIRouter
 
 import cea.config
 import cea.plots
-from cea.plots.cache import MemoryPlotCache
 from .utils import deconstruct_parameters
-from ..dashboard import CEAConfig
+from ..dashboard import CEAConfig, CEAPlotCache
 
 router = APIRouter()
 
@@ -68,11 +67,11 @@ def get_parameters_from_plot_class(config, plot_class, scenario_name=None):
 
 
 @router.get('/')
-async def get_dashboards(config: CEAConfig):
+async def get_dashboards(config: CEAConfig, plot_cache: CEAPlotCache):
     """
     Get list of Dashboards
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     out = []
     for d in dashboards:
@@ -82,7 +81,7 @@ async def get_dashboards(config: CEAConfig):
 
 
 @router.post('/')
-async def create_dashboard(config: CEAConfig, payload: Dict[str, Any], ):
+async def create_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, payload: Dict[str, Any], ):
     """
     Create Dashboard
     """
@@ -91,29 +90,39 @@ async def create_dashboard(config: CEAConfig, payload: Dict[str, Any], ):
     if 'grid' in form['layout']:
         types = [[2] + [1] * 4, [1] * 6, [1] * 3 + [3], [2, 1] * 2]
         grid_width = types[int(form['layout'].split('-')[-1]) - 1]
-        dashboard_index = cea.plots.new_dashboard(config, MemoryPlotCache(config.project), form['name'], 'grid',
+        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], 'grid',
                                                   grid_width=grid_width)
     else:
-        dashboard_index = cea.plots.new_dashboard(config, MemoryPlotCache(config.project), form['name'], form['layout'])
+        dashboard_index = cea.plots.new_dashboard(config, plot_cache, form['name'], form['layout'])
 
     return {'new_dashboard_index': dashboard_index}
 
 
+@router.get('/plot-categories')
+async def get_plot_categories(config: CEAConfig):
+    return get_categories(config.plugins)
+
+
+@router.get('/plot-categories/{category_name}/plots/{plot_id>}/parameters')
+async def get_plot_category_parameters(config: CEAConfig, category_name: str, plot_id: str, scenario: str = None):
+    plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
+    return get_parameters_from_plot_class(config, plot_class, scenario)
+
+
 @router.post('/duplicate')
-async def duplicate_dashboard(config: CEAConfig, payload: Dict[str, Any]):
+async def duplicate_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, payload: Dict[str, Any]):
     form = payload
-    dashboard_index = cea.plots.duplicate_dashboard(config, MemoryPlotCache(config.project), form['name'],
-                                                    form['dashboard_index'])
+    dashboard_index = cea.plots.duplicate_dashboard(config, plot_cache, form['name'], form['dashboard_index'])
 
     return {'new_dashboard_index': dashboard_index}
 
 
 @router.get('/{dashboard_index}')
-async def get_dashboard(config: CEAConfig, dashboard_index: int):
+async def get_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index: int):
     """
     Get Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     return dashboard_to_dict(dashboards[dashboard_index])
 
@@ -129,12 +138,12 @@ async def delete_dashboard(config: CEAConfig, dashboard_index: int):
 
 
 @router.patch('/{dashboard_index}')
-async def update_dashboard(config: CEAConfig, dashboard_index: int, payload: Dict[str, Any]):
+async def update_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index: int, payload: Dict[str, Any]):
     """
     Update Dashboard properties
     """
     form = payload
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     dashboard = dashboards[dashboard_index]
     dashboard.set_scenario(form['scenario'])
@@ -143,29 +152,19 @@ async def update_dashboard(config: CEAConfig, dashboard_index: int, payload: Dic
     return {'new_dashboard_index': dashboard_index}
 
 
-@router.get('/plot-categories')
-async def get_plot_categories():
-    return get_categories(None)
-
-
-@router.get('/plot-categories/{category_name}/plots/{plot_id>}/parameters')
-async def get_plot_category_parameters(config: CEAConfig, category_name: str, plot_id: str, scenario: str = None):
-    plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
-    return get_parameters_from_plot_class(config, plot_class, scenario)
-
-
 @router.get('/{dashboard_index}/plots/{plot_index}>')
-async def get_plot(config: CEAConfig, dashboard_index: int, plot_index: int):
+async def get_plot(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index: int, plot_index: int):
     """
     Get Dashboard Plot
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
 
 @router.put('/{dashboard_index}/plots/{plot_index}>')
-async def create_plot_at_index(config: CEAConfig, dashboard_index: int, plot_index: int, payload: Dict[str, Any]):
+async def create_plot_at_index(config: CEAConfig, plot_cache: CEAPlotCache,
+                               dashboard_index: int, plot_index: int, payload: Dict[str, Any]):
     """
     Create/Replace a new Plot at specified index
     """
@@ -173,7 +172,7 @@ async def create_plot_at_index(config: CEAConfig, dashboard_index: int, plot_ind
 
     # avoid overwriting original config.scenario for plot
     temp_config = cea.config.Configuration()
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
     dashboard = dashboards[dashboard_index]
 
     if 'category' in form and 'plot_id' in form:
@@ -199,11 +198,11 @@ async def create_plot_at_index(config: CEAConfig, dashboard_index: int, plot_ind
 
 
 @router.delete('/{dashboard_index}/plots/{plot_index}>')
-async def delete_plot(config: CEAConfig, dashboard_index: int, plot_index: int):
+async def delete_plot(config: CEAConfig, plot_cache: CEAPlotCache,  dashboard_index: int, plot_index: int):
     """
     Delete Plot from Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     dashboard = dashboards[dashboard_index]
     dashboard.remove_plot(plot_index)
@@ -213,11 +212,12 @@ async def delete_plot(config: CEAConfig, dashboard_index: int, plot_index: int):
 
 
 @router.get('/{dashboard_index}/plots/{plot_index}/parameters')
-async def get_plot_parameters(config: CEAConfig, dashboard_index: int, plot_index: int, scenario: str = None):
+async def get_plot_parameters(config: CEAConfig, plot_cache: CEAPlotCache,
+                              dashboard_index: int, plot_index: int, scenario: str = None):
     """
     Get Plot Form Parameters of Plot in Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]
@@ -226,11 +226,11 @@ async def get_plot_parameters(config: CEAConfig, dashboard_index: int, plot_inde
 
 
 @router.get('/{dashboard_index}/plots/{plot_index}/input-files')
-async def get_plot_input_files(config: CEAConfig, dashboard_index: int, plot_index: int):
+async def get_plot_input_files(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index: int, plot_index: int):
     """
     Get input files of Plot
     """
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
 
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]

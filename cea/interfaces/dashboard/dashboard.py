@@ -6,14 +6,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing_extensions import Annotated
 
 import cea.config
+from cea.plots.cache import MemoryPlotCache
+
+_config = cea.config.Configuration()
+_mem_cache = MemoryPlotCache(_config.project)
 
 
 def get_cea_config():
-    config = cea.config.Configuration()
-    return config
+    return _config
+
+
+def get_plot_cache():
+    return _mem_cache
 
 
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
+CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 
 
 def create_app():

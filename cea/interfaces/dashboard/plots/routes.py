@@ -9,8 +9,7 @@ import cea.plots
 import cea.plots.categories
 import cea.schemas
 from cea import MissingInputDataException
-from cea.interfaces.dashboard.dashboard import CEAConfig
-from cea.plots.cache import MemoryPlotCache
+from cea.interfaces.dashboard.dashboard import CEAConfig, CEAPlotCache
 
 router = APIRouter()
 
@@ -29,9 +28,9 @@ def script_suggestions(locator_names):
     return [cea.scripts.by_name(n, plugins=plugins) for n in sorted(set(script_names))]
 
 
-def load_plot(config, dashboard, plot_index):
+def load_plot(config, plot_cache, dashboard, plot_index):
     """Load a plot from the dashboard_yml"""
-    dashboards = cea.plots.read_dashboards(config, MemoryPlotCache(config.project))
+    dashboards = cea.plots.read_dashboards(config, plot_cache)
     dashboard = dashboards[dashboard]
     plot = dashboard.plots[plot_index]
     return plot
@@ -60,9 +59,10 @@ def render_plot(request, plot_div, plot_title):
 
 
 @router.get('/div/{dashboard_index}/{plot_index}', response_class=HTMLResponse)
-async def route_div(config: CEAConfig, request: Request, dashboard_index: int, plot_index: int):
+async def route_div(config: CEAConfig, plot_cache: CEAPlotCache,
+                    request: Request, dashboard_index: int, plot_index: int):
     """Return the plot as a div to be used in an AJAX call"""
-    plot = load_plot(config, dashboard_index, plot_index)
+    plot = load_plot(config, plot_cache, dashboard_index, plot_index)
     try:
         plot_div = plot.plot_div()
     except MissingInputDataException:
@@ -82,8 +82,9 @@ async def route_div(config: CEAConfig, request: Request, dashboard_index: int, p
 
 
 @router.get('/plot/{dashboard_index}/{plot_index}', response_class=HTMLResponse)
-async def route_plot(config: CEAConfig, request: Request, dashboard_index: int, plot_index: int):
-    plot = load_plot(config, dashboard_index, plot_index)
+async def route_plot(config: CEAConfig, plot_cache: CEAPlotCache,
+                     request: Request, dashboard_index: int, plot_index: int):
+    plot = load_plot(config, plot_cache, dashboard_index, plot_index)
     plot_title = plot.title
     if 'scenario-name' in plot.parameters:
         plot_title += ' - {}'.format(plot.parameters['scenario-name'])
