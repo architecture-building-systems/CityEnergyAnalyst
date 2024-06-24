@@ -13,6 +13,7 @@ from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio.mask import mask
 from rasterio.merge import merge
+from rasterio.transform import array_bounds
 from rasterio.warp import calculate_default_transform, Resampling, reproject
 from shapely import box
 
@@ -141,13 +142,12 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
     Reproject raster array to specified CRS.
     """
     # Get bounds from transform
-    minx, miny = src_transform * (0, src_array.shape[2])
-    maxx, maxy = src_transform * (src_array.shape[1], 0)
+    minx, miny, maxx, maxy = array_bounds(src_array.shape[1], src_array.shape[2], src_transform)
 
     transform, width, height = calculate_default_transform(
         meta["crs"], dst_crs, src_array.shape[2], src_array.shape[1],
         minx, miny, maxx, maxy,
-        resolution=(grid_size, grid_size)
+        resolution=grid_size
     )
 
     new_meta = meta.copy()
@@ -167,7 +167,9 @@ def reproject_raster_array(src_array: np.ndarray, src_transform, meta: Dict,
             src_crs=meta["crs"],
             dst_transform=transform,
             dst_crs=dst_crs,
-            resampling=Resampling.nearest
+            resampling=Resampling.nearest,
+            src_nodata=meta["nodata"],
+            dst_nodata=meta["nodata"],
         )
 
     return dst_array, transform, new_meta
@@ -213,6 +215,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
 
 def main(config):
     grid_size = config.terrain_helper.grid_size
+    buffer = config.terrain_helper.buffer
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # Get total bounds
@@ -225,10 +228,9 @@ def main(config):
     total_bounds = total_df.total_bounds
 
     # Add buffer to bounds in meters (using projected crs), to ensure overlap
-    buffer = 30
     projected_crs = total_df.estimate_utm_crs()
-    reprojected_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
-    buffer_df = reprojected_df.buffer(buffer)
+    reprojected_bounds_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
+    buffer_df = reprojected_bounds_df.buffer(buffer)
     min_x, min_y, max_x, max_y = buffer_df.total_bounds
 
     # Fetch tiff data
@@ -257,7 +259,7 @@ def main(config):
 
     with open(reference_file, "w") as f:
         f.write(content)
-    print(content)
+    print(f"\n{content}")
     print(f"Reference file is written to: {reference_file}")
 
     # Write to disk
