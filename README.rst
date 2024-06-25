@@ -1,4 +1,4 @@
-|license| |repo_size| |lines_of_code| |zenodo|
+|license| |repo_size| |zenodo|
 
 .. |license| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :alt: GitHub license
