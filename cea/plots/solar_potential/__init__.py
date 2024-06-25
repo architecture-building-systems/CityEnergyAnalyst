@@ -107,7 +107,12 @@ class SolarPotentialPlotBase(PlotBase):
         """This is the data all the solar-potential plots are based on."""
         # get extra data of weather and date
         input_data_aggregated_kW = functools.reduce(self.add_solar_fields,
-                                                    (pd.read_csv(self.locator.get_radiation_building(building))
+                                                    (pd.read_csv(self.locator.get_radiation_building(building), parse_dates=["Date"])
                                                      for building in self.buildings)).set_index('Date')
+
+        # Fix for TMY weather
+        if len(input_data_aggregated_kW.index.year.unique() > 1):
+            year = input_data_aggregated_kW.index[0].year
+            input_data_aggregated_kW.index = input_data_aggregated_kW.index.map(lambda dt: dt.replace(year=year))
 
         return input_data_aggregated_kW

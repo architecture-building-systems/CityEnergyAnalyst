@@ -13,6 +13,7 @@ import time
 from itertools import repeat
 
 import numpy as np
+import pandas as pd
 import py4design.py3dmodel.calculate as calculate
 import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
@@ -20,7 +21,7 @@ import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
 from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
-from osgeo import osr
+from osgeo import osr, gdal
 from py4design import urbangeom
 
 import cea
@@ -36,6 +37,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
+                                                   crs_to_epsg)
 
 
 def identify_surfaces_type(occface_list):
@@ -73,17 +77,18 @@ def identify_surfaces_type(occface_list):
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
 
-def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
+def calc_intersection(surface, edges_coords, edges_dir, tolerance):
     """
     This script calculates the intersection of the building edges to the terrain,
-    :param terrain_intersection_curves:
-    :param edges_coords:
-    :param edges_dir:
-    :return: intersecting points, intersecting faces
     """
-    building_line = gp_Lin(gp_Ax1(gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2]),
-                                  gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])))
-    terrain_intersection_curves.PerformNearest(building_line, 0.0, float("+inf"))
+    point = gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2])
+    direction = gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])
+    line = gp_Lin(gp_Ax1(point, direction))
+
+    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+    terrain_intersection_curves.Load(surface, tolerance)
+    terrain_intersection_curves.PerformNearest(line, float("-inf"), float("+inf"))
+
     if terrain_intersection_curves.IsDone():
         npts = terrain_intersection_curves.NbPnt()
         if npts != 0:
@@ -114,8 +119,7 @@ def calc_building_solids(buildings_df, geometry_simplification, elevation_map, n
     nfloor_col_name = "floors_ag"
 
     # simplify geometry for buildings of interest
-    geometries = buildings_df.geometry.map(
-        lambda geometry: geometry.simplify(geometry_simplification, preserve_topology=True))
+    geometries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
 
     height = buildings_df[height_col_name].astype(float)
     nfloors = buildings_df[nfloor_col_name].astype(int)
@@ -139,7 +143,7 @@ def calc_floor_to_floor_height(building_height, number_of_floors):
 def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
     elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
     # burn buildings footprint into the terrain and return the location of the new face
-    face_footprint = burn_buildings(geometry, elevation_map_for_geometry)
+    face_footprint = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
     building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
@@ -357,7 +361,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     return name
 
 
-def burn_buildings(geometry, elevation_map):
+def burn_buildings(geometry, elevation_map, tolerance):
     if geometry.has_z:
         # remove elevation - we'll add it back later by intersecting with the topography
         point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
@@ -370,14 +374,12 @@ def burn_buildings(geometry, elevation_map):
     # get the midpt of the face
     face_midpt = calculate.face_midpt(face)
 
-    terrain_tin = elevation_map.generate_tin()
+    terrain_tin = elevation_map.generate_tin(tolerance)
     # make shell out of tin_occface_list and create OCC object
     terrain_shell = construct.make_shell(terrain_tin)
-    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-    terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
     # project the face_midpt to the terrain and get the elevation
-    inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
+    inter_pt, inter_face = calc_intersection(terrain_shell, face_midpt, (0, 0, 1), tolerance)
 
     # reconstruct the footprint with the elevation
     loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
@@ -491,89 +493,109 @@ def calc_intersection_face_solid(potentially_intersecting_solid, point):
 
 
 class ElevationMap(object):
-    __slots__ = ['elevation_map', 'x_coords', 'y_coords']
+    __slots__ = ['elevation_map', 'x_coords', 'y_coords', 'x_size', 'y_size', 'nodata']
 
-    def __init__(self, elevation_map, x_coords, y_coords):
+    def __init__(self, elevation_map, x_coords, y_coords, x_size, y_size, nodata=None):
         self.elevation_map = elevation_map
         self.x_coords = x_coords
         self.y_coords = y_coords
 
-    @classmethod
-    def read_raster(cls, raster, raise_above_sea_level=True):
-        band = raster.GetRasterBand(1)
-        a = band.ReadAsArray()
-        if raise_above_sea_level and (a < 0).any():
-            print('Warning: Some heights are below sea level')
-            # if height is below sea level, the entire case study is lifted to the lowest point is at altitude 0
-            print('Adjusting elevation map to above sea level')
-            a -= a.min()
+        self.x_size = x_size
+        self.y_size = y_size
 
-        (y, x) = np.shape(a)
-        (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster.GetGeoTransform()
+        self.nodata = nodata
+
+    @classmethod
+    def read_raster(cls, raster):
+        band = raster.GetRasterBand(1)
+        nodata = band.GetNoDataValue()
+
+        a = band.ReadAsArray()
+
+        y, x = np.shape(a)
+        upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size = raster.GetGeoTransform()
+
+        if x_rotation != 0 or y_rotation != 0:
+            raise ValueError("Rotation in raster is not supported.")
+
         x_coords = np.arange(start=0, stop=x) * x_size + upper_left_x + (x_size / 2)  # add half the cell size
         y_coords = np.arange(start=0, stop=y) * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
-        return cls(a, x_coords, y_coords)
+        return cls(a, x_coords, y_coords, x_size, y_size, nodata)
 
-    def get_elevation_map_from_geometry(self, geometry, extra_points=5):
+    def get_elevation_map_from_geometry(self, geometry, extra_points=3):
         minx, miny, maxx, maxy = geometry.bounds
 
-        x_start = np.where(minx > self.x_coords)[0]
-        x_end = np.where(maxx < self.x_coords)[0]
-        y_start = np.where(maxy < self.y_coords)[0]
-        y_end = np.where(miny > self.y_coords)[0]
+        # Ensure geometry bounds is within elevation map
+        if (minx < self.x_coords[0] - self.x_size or maxx > self.x_coords[-1] + self.x_size
+                or miny < self.y_coords[-1] + self.y_size or maxy > self.y_coords[0] - self.y_size):
+            raise ValueError("Geometry bounds not within the elevation map.")
 
-        x_start = max(x_start[-1] - extra_points, 0)
-        x_end = min(x_end[0] + extra_points, len(self.x_coords))
-        y_start = max(y_start[-1] - extra_points, 0)
-        y_end = min(y_end[0] + extra_points, len(self.y_coords))
+        x_start = np.searchsorted(self.x_coords - self.x_size, minx, side='left') - 1
+        x_end = np.searchsorted(self.x_coords + self.x_size, maxx, side='right')
+        y_start = len(self.y_coords) - np.searchsorted((self.y_coords - self.y_size)[::-1], maxy, side='left') - 1
+        y_end = len(self.y_coords) - np.searchsorted((self.y_coords + self.y_size)[::-1], miny, side='right')
+
+        # Consider extra points
+        x_start = max(x_start - extra_points, 0)
+        x_end = min(x_end + extra_points, len(self.x_coords))
+        y_start = max(y_start - extra_points, 0)
+        y_end = min(y_end + extra_points, len(self.y_coords))
 
         new_elevation_map = self.elevation_map[y_start:y_end + 1, x_start:x_end + 1]
         new_x_coords = self.x_coords[x_start:x_end + 1]
         new_y_coords = self.y_coords[y_start:y_end + 1]
 
-        return ElevationMap(new_elevation_map, new_x_coords, new_y_coords)
+        return ElevationMap(new_elevation_map, new_x_coords, new_y_coords, self.x_size, self.y_size, self.nodata)
 
-    def generate_tin(self):
-        (y_index, x_index) = np.nonzero(self.elevation_map >= 0)
+    def generate_tin(self, tolerance=1e-6):
+        # Ignore no data values from raster
+        y_index, x_index = np.nonzero(self.elevation_map != self.nodata)
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
 
-        raster_points = [(x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index])]
+        raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
 
-        tin_occface_list = construct.delaunay3d(raster_points)
+        tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
 
         return tin_occface_list
 
 
-def standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster):
-    # Get projection of terrain and apply to zone and surroundings
-    terrian_projection = terrain_raster.GetProjection()
-    proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
-    zone_df = zone_df.to_crs(proj4_str)
-    surroundings_df = surroundings_df.to_crs(proj4_str)
+def standardize_coordinate_systems(zone_df, surroundings_df, trees_df, terrain_raster):
+    # Change all to projected cr (to meters)
+    lat, lon = get_lat_lon_projected_shapefile(zone_df)
+    crs = get_projected_coordinate_system(lat, lon)
 
-    return zone_df, surroundings_df, terrain_raster
+    reprojected_zone_df = zone_df.to_crs(crs)
+    reprojected_surroundings_df = surroundings_df.to_crs(crs)
+    reprojected_trees_df = trees_df.to_crs(crs)
+
+    reprojected_terrain = gdal.Warp(
+        '',  # Empty string as the output file path means in-memory
+        terrain_raster,
+        format='VRT',  # Use VRT format for in-memory operation
+        dstSRS=crs
+    )
+
+    print(f"Reprojected scene to `EPSG:{crs_to_epsg(crs)}`")
+    return reprojected_zone_df, reprojected_surroundings_df, reprojected_trees_df, reprojected_terrain
 
 
-def check_terrain_bounds(zone_df, surroundings_df, terrain_raster):
+def check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster):
+    total_df = pd.concat([zone_df, surroundings_df, trees_df])
+
     # minx, miny, maxx, maxy
-    zone_bounds = zone_df.geometry.total_bounds
-    if len(surroundings_df):
-        surroundings_bounds = surroundings_df.geometry.total_bounds
-    else:  # set bounds to zone if no surroundings
-        surroundings_bounds = zone_bounds
-    geometry_bounds = (min(zone_bounds[0], surroundings_bounds[0]), min(zone_bounds[1], surroundings_bounds[1]),
-                       max(zone_bounds[2], surroundings_bounds[2]), max(zone_bounds[3], surroundings_bounds[3]))
+    geometry_bounds = total_df.total_bounds
 
-    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = terrain_raster.GetGeoTransform()
+    upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size = terrain_raster.GetGeoTransform()
     minx = upper_left_x
     maxy = upper_left_y
     maxx = minx + x_size * terrain_raster.RasterXSize
     miny = maxy + y_size * terrain_raster.RasterYSize
 
     if minx > geometry_bounds[0] or miny > geometry_bounds[1] or maxx < geometry_bounds[2] or maxy < geometry_bounds[3]:
-        raise ValueError('Terrain provided does not cover all building geometries')
+        raise ValueError('Terrain provided does not cover all geometries. '
+                         'Bounds of terrain must be larger than the total bounds of the scene.')
 
 
 def tree_geometry_generator(tree_df, terrain_raster):
@@ -598,15 +620,16 @@ def tree_geometry_generator(tree_df, terrain_raster):
     return surfaces
 
 
-def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
+def geometry_main(config, zone_df, surroundings_df, trees_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
     print("Standardizing coordinate systems")
-    zone_df, surroundings_df, terrain_raster = standardize_coordinate_systems(zone_df, surroundings_df, terrain_raster)
+    zone_df, surroundings_df, trees_df, terrain_raster = standardize_coordinate_systems(
+        zone_df, surroundings_df, trees_df, terrain_raster)
 
     # clear in case there are repeated buildings from zone in surroundings file
     filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
     surroundings_df = surroundings_df[filter_surrounding_buildings]
 
-    check_terrain_bounds(zone_df, surroundings_df, terrain_raster)
+    check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster)
 
     # Create a triangulated irregular network of terrain from raster
     print("Reading terrain geometry")
@@ -619,7 +642,12 @@ def geometry_main(config, zone_df, surroundings_df, terrain_raster, architecture
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df,
                                                                    elevation_map, config, geometry_pickle_dir)
 
-    return terrain_tin, geometry_3D_zone, geometry_3D_surroundings
+    tree_surfaces = []
+    if len(trees_df.geometry) > 0:
+        print("Creating tree surfaces")
+        tree_surfaces = tree_geometry_generator(trees_df, terrain_raster)
+
+    return terrain_tin, geometry_3D_zone, geometry_3D_surroundings, tree_surfaces
 
 
 if __name__ == '__main__':

@@ -27,6 +27,9 @@ def deconstruct_parameters(p: cea.config.Parameter):
     elif isinstance(p, cea.config.DatabasePathParameter):
         params['choices'] = p._choices
 
+    if hasattr(p, "_extensions") or hasattr(p, "extensions"):
+        params["extensions"] = getattr(p, "_extensions", None) or getattr(p, "extensions")
+
     try:
         params["nullable"] = p.nullable
     except AttributeError as e:
