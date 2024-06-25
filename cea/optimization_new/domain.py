@@ -306,12 +306,8 @@ class Domain(object):
             # then save all information about the selected supply systems
             self._write_supply_systems_to_csv(des)
 
-            # generate anthropogenic heat emission data for selected sampling dates
-            # TODO: import these dates from a configuration file
-            from datetime import datetime # declared here to avoid compatibility issues with the multiprocessing module
-            sampling_date_strings = ['01-01-2005', '29-08-2005', '08-10-2005']
-            sampling_dates = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_date_strings]
-            self._write_ah_emission_profiles_to_geojson(des, sampling_dates)
+            # generate anthropogenic heat emission profiles
+            self._write_ah_emission_profiles_to_geojson(des)
 
             # if prompted, generate detailed outputs
             if self.config.optimization_new.generate_detailed_outputs:
@@ -397,15 +393,22 @@ class Domain(object):
 
         return
 
-    def _write_ah_emission_profiles_to_geojson(self, district_energy_system, sampling_dates):
+    def _write_ah_emission_profiles_to_geojson(self, district_energy_system):
         """
         Writes anthropogenic heat emission profiles for the selected sampling dates to geojson files
         (one heat source per network + one for each stand-alone building).
         """
-        district_ah_features = {}
+        # Fetch the sampling dates from the configuration and identify the corresponding time steps
+        from datetime import datetime  # declared here to avoid compatibility issues with the multiprocessing module
+        sampling_date_strings = self.config.optimization_new.ah_sampling_dates
+        sampling_dates = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_date_strings]
         sampling_time_steps = self._identify_time_steps(sampling_dates)
+
+        # Prepare the feature collection for the AH-geojson files
+        district_ah_features = {}
         indexed_buildings = {building.identifier: building for building in self.buildings}
 
+        # Extract the anthropogenic heat emissions for each network and stand-alone building
         for date in sampling_dates:
             ah_features = []
 
