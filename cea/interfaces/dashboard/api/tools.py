@@ -5,7 +5,7 @@ from fastapi import APIRouter
 import cea.config
 import cea.scripts
 from .utils import deconstruct_parameters
-from ..dashboard import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig
 
 router = APIRouter()
 

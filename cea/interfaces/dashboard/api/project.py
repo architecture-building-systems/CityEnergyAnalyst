@@ -13,7 +13,7 @@ from staticmap import StaticMap, Polygon
 
 import cea.api
 import cea.inputlocator
-from cea.interfaces.dashboard.dashboard import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.plots.colors import color_to_rgb
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 

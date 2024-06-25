@@ -5,7 +5,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, status
 
-from cea.interfaces.dashboard.dashboard import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig
 
 router = APIRouter()
 

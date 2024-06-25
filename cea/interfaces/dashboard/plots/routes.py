@@ -9,7 +9,7 @@ import cea.plots
 import cea.plots.categories
 import cea.schemas
 from cea import MissingInputDataException
-from cea.interfaces.dashboard.dashboard import CEAConfig, CEAPlotCache
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
 
 router = APIRouter()
 

@@ -6,7 +6,7 @@ from fastapi import APIRouter
 import cea.config
 import cea.plots
 from .utils import deconstruct_parameters
-from ..dashboard import CEAConfig, CEAPlotCache
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
 
 router = APIRouter()
 

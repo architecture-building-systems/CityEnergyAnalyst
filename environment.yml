@@ -6,8 +6,9 @@ dependencies:
 - deap
 - ephem
 - fiona
+- aiocache
 - fastapi
-- uvicorn
+- uvicorn-standard
 - jinja2
 - python-socketio
 - geopandas=0.13 # Due to python3.8 support
