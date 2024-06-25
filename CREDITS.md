@@ -11,6 +11,25 @@ and split into the categories of developers, product owner, project sponsor and 
 
 
 <!-- credits -->
+- Version 3.37.1 - June 2024
+
+    Developers:
+    * Reynold Mok
+    * Martín Mosteiro Romero
+    * Mathias Niffeler
+    * Zhongming Shi
+
+    Product lead:
+    * Zhongming Shi
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+    * [Toni Piëch Foundation](https://www.tonipiechfoundation.org/)
+
+    Past Collaborators:
+    * https://cityenergyanalyst.com/people
+
+
 - Version 3.37.0 - June 2024
 
     Developers:

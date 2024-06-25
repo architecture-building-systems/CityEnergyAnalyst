@@ -1,3 +1,6 @@
+- 2024-06-25 - 3.37.0 - #3620 Update documentation 3.37.x
+- 2024-06-24 - 3.37.0 - #3618 Fix terrain bounds error after using terrain-helper
+- 2024-06-14 - 3.37.0 - #3611 Release 3.37.0
 - 2024-06-13 - 3.36.1 - #3608 Fix high internal temperatures during demand calculation
 - 2024-06-13 - 3.36.1 - #3609 updating a wrong term for trees helper
 - 2024-06-13 - 3.36.1 - #3601 DE database supply technolgies fix
