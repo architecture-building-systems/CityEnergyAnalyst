@@ -19,26 +19,26 @@ class HeatEmissionsProfile:
         return self._profile
 
     @profile.setter
-    def profile(self, profile):
+    def profile(self, new_profile):
         """Method to make sure the emissions profile is passed in the right format and to set it correspondingly."""
         # Check if the profile is a numpy array and convert it to a list
-        if isinstance(profile, np.ndarray):
-            profile = profile.tolist()
+        if isinstance(new_profile, np.ndarray):
+            new_profile = new_profile.tolist()
 
         # Check if the profile is a list of numerical values
-        if not isinstance(profile, list) or not all([isinstance(i, numbers.Number) for i in profile]):
+        if not isinstance(new_profile, list) or not all([isinstance(i, numbers.Number) for i in new_profile]):
             print (f'The indicated profile is non-numeric. It will be converted to a list of 0s.')
             self._profile = [0.0] * self.time_steps
 
        # Check if the profile is too long or too short
-        if len(profile) == self.time_steps:
-            self._profile = profile
-        elif len(profile) > self.time_steps:
-            print(f'The indicated heat emissions profile is too long ({len(profile)} elements). '
+        if len(new_profile) == self.time_steps:
+            self._profile = new_profile
+        elif len(new_profile) > self.time_steps:
+            print(f'The indicated heat emissions profile is too long ({len(new_profile)} elements). '
                   f'It will be truncated to {self.time_steps} time steps.')
-            self._profile = profile[:self.time_steps]
+            self._profile = new_profile[:self.time_steps]
         else:
-            raise ValueError(f'The indicated heat emissions profile is too short ({len(profile)} elements). '
+            raise ValueError(f'The indicated heat emissions profile is too short ({len(new_profile)} elements). '
                              f'It should be {self.time_steps} time steps long.')
 
     def set_profile_length(self, nbr_time_steps):
@@ -54,9 +54,14 @@ class AnthropogenicHeatEmissions:
 
     def extract_heat_emission_profiles(self, time_series_data):
         """ Method to extract the heat emissions profile from the time series data for the selected dates."""
-        self.heat_emissions = {date: HeatEmissionsProfile([x + y for x, y in
-                                                           zip(list(time_series_data['E_cs'][time_steps]),
-                                                               list(time_series_data['Qcs_sys'][time_steps]))])
+        self.heat_emissions = {date:
+                                   {"thermal_energy_system":
+                                        HeatEmissionsProfile([x + y for x, y in
+                                                              zip(list(time_series_data['E_cs'][time_steps]),
+                                                                  list(time_series_data['Qcs_sys'][time_steps]))]),
+                                    "industrial_processes":
+                                        HeatEmissionsProfile([x for x in
+                                                              list(time_series_data['Qcdata_sys'][time_steps])])}
                                for date, time_steps in self.sampling_time_steps.items()}
         return self.heat_emissions
 

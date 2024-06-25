@@ -212,10 +212,12 @@ class AnthropogenicHeatWriter(object):
         Extract and reorganize the anthropogenic heat emissions for each building to form a FeatureCollection
         for each sampling date.
         """
-        building_ah_features = {}
+        building_ah_features_thermal_energy_system = {}
+        building_ah_features_industrial_processes = {}
 
         for date in self.sampling_dates:
-            ah_features = []
+            ah_features_thermal_energy_system = []
+            ah_features_industrial_processes = []
 
             for building in self.building_names:
                 # Extract the anthropogenic heat emissions for the building on the date
@@ -224,16 +226,31 @@ class AnthropogenicHeatWriter(object):
                 if building_ah_emissions is None:
                     print(f"No anthropogenic heat emissions for {building}")
                     continue
-                building_ah_on_date = building_ah_emissions.heat_emissions[date]
-                # Construct properties of feature
-                properties = {f"AH_{time_step}:MW": round(building_ah_on_date.profile[time_step] / 1e6, 6)
-                              for time_step in range(building_ah_on_date.time_steps)}
-                properties["building_name"] = building
-                # Create the feature
-                ah_features.append(Feature(geometry=self.building_locations[building], properties=properties))
+                building_tes_ah_on_date = building_ah_emissions.heat_emissions[date]['thermal_energy_system']
+                building_ip_ah_on_date = building_ah_emissions.heat_emissions[date]['industrial_processes']
+                # Construct properties of feature for heat emissions from the building's thermal energy system
+                if sum(building_tes_ah_on_date.profile) > 0:
+                    tes_properties = {f"AH_{time_step}:MW": round(building_tes_ah_on_date.profile[time_step] / 1e6, 6)
+                                      for time_step in range(building_tes_ah_on_date.time_steps)}
+                    tes_properties["building_name"] = building
+                    # Create the feature
+                    ah_features_thermal_energy_system.append(
+                        Feature(geometry=self.building_locations[building], properties=tes_properties))
+                # Construct properties of feature for heat emissions from the building's industrial processes
+                if sum(building_ip_ah_on_date.profile) > 0:
+                    ip_properties = {f"AH_{time_step}:MW": round(building_ip_ah_on_date.profile[time_step] / 1e6, 6)
+                                  for time_step in range(building_ip_ah_on_date.time_steps)}
+                    ip_properties["building_name"] = building
+                    # Create the feature
+                    ah_features_industrial_processes.append(
+                        Feature(geometry=self.building_locations[building], properties=ip_properties))
 
             # Consolidate the features for the date into a FeatureCollection
-            building_ah_features[date] = FeatureCollection(ah_features)
+            building_ah_features_thermal_energy_system[date] = FeatureCollection(ah_features_thermal_energy_system)
+            building_ah_features_industrial_processes[date] = FeatureCollection(ah_features_industrial_processes)
+
+        building_ah_features = {'thermal_energy_system': building_ah_features_thermal_energy_system,
+                                'industrial_processes': building_ah_features_industrial_processes}
 
         return building_ah_features
 
@@ -243,5 +260,10 @@ class AnthropogenicHeatWriter(object):
             dates = self.sampling_dates
 
         for date in dates:
-            with open(self._locator.get_ah_emission_results_file(date), 'w') as file:
-                file.write(str(self.building_ah_features[date]))
+            if len(self.building_ah_features['thermal_energy_system'][date].features) > 0:
+                with open(self._locator.get_ah_emission_results_file(date, solution='base_TES'), 'w') as file:
+                    file.write(str(self.building_ah_features['thermal_energy_system'][date]))
+
+            if len(self.building_ah_features['industrial_processes'][date].features) > 0:
+                with open(self._locator.get_ah_emission_results_file(date, solution='base_IP'), 'w') as file:
+                    file.write(str(self.building_ah_features['industrial_processes'][date]))

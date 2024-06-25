@@ -76,7 +76,7 @@ def demand_calculation(locator, config):
     # create date range for the calculation year
     date_range = get_date_range_hours_from_year(year)
     # set sampling dates for the anthropogenic heat emissions
-    sampling_dates = ['01-01-2005', '29-08-2005', '08-10-2005']
+    sampling_dates = config.demand.ah_sampling_dates
     sampling_date_datetimes = [datetime.strptime(date, '%d-%m-%Y').date() for date in sampling_dates]
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
