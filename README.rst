@@ -4,8 +4,8 @@
     :alt: GitHub license
 .. |repo_size| image:: https://img.shields.io/github/repo-size/architecture-building-systems/CityEnergyAnalyst
     :alt: Repo Size
-.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.11382063.svg
-   :target: https://doi.org/10.5281/zenodo.11382063
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.11642386.svg
+   :target: https://doi.org/10.5281/zenodo.11642386
 
 .. image:: cea_logo.png
     :scale: 25 %
@@ -31,4 +31,4 @@ We invite all CEA users to get acquainted with the CEA Dashboard and CEA Console
 Cite us:
 --------
 
-The CEA Team. (2024). City Energy Analyst (v3.36.1). Zenodo. https://doi.org/10.5281/zenodo.11382063
+The CEA Team. (2024). City Energy Analyst (v3.37.0). Zenodo. https://doi.org/10.5281/zenodo.11642386
