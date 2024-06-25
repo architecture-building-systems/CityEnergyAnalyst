@@ -12,7 +12,9 @@ Data management:
 
   - name: weather-helper
     label: Weather helper
-    description: Sets the weather file to use for simulation for a scenario
+    description: |
+      Sets the weather file to use for simulation for a scenario. 
+      Fetches data from third party sources if no file is provided by the user.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
@@ -28,7 +30,7 @@ Data management:
 
   - name: terrain-helper
     label: Terrain helper
-    description: Query topography with a fixed elevation
+    description: Query topography data from third party sources
     interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
@@ -73,7 +75,10 @@ Demand forecasting:
 
   - name: radiation-simplified
     label: Building solar radiation (simplified, beta)
-    description: This is a faster alternative to the original radiation script. It uses Daysim to calculate solar radiation from a sample of buildings in a scenario. Please be noted that the accuarcy of the results for facades is reduced.   
+    description: |
+      This is a faster alternative to the original radiation script. 
+      It uses DAYSIM to calculate solar radiation from a sample of buildings in a scenario. 
+      Please note that the accuracy of the results for facades is reduced.
     interfaces: [ cli, dashboard ]
     module: cea.resources.radiation.simplified.main
     parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
@@ -332,7 +337,9 @@ Utilities:
 
   - name: batch-process-workflow
     label: Batch process Workflow
-    description: "Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. Change the default settings under the respective tool tabs and Save to Config."
+    description: |
+      Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. 
+      Change the default settings under the respective tool tabs and Save to Config.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]

@@ -60,6 +60,10 @@ def get_projected_coordinate_system(lat, lon):
     return CRS.from_epsg(int(epsg)).to_wkt()
 
 
+def crs_to_epsg(crs: str) -> int:
+    return CRS.from_string(crs).to_epsg()
+
+
 def get_lat_lon_projected_shapefile(data):
     data = data.to_crs(get_geographic_coordinate_system())
     lon = data.geometry[0].centroid.coords.xy[0][0]
