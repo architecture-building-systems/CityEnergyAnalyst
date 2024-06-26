@@ -77,8 +77,8 @@ class Connection(object):
 
     @staticmethod
     def initialize_class_variables(domain):
-        Connection.possible_connections = range(domain.config.optimization_new.buildings_to_networks_ratio
-                                                // len(domain.buildings) + 2)
+        Connection.possible_connections = range(len(domain.buildings)
+                                                // domain.config.optimization_new.buildings_to_networks_ratio + 2)
         Connection.possible_building_codes = [building.identifier for building in domain.buildings]
         Connection.zero_demand_buildings = [building.identifier for building in domain.buildings
                                             if all(building.demand_flow.profile == 0)]
