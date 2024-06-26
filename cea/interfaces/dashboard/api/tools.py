@@ -5,7 +5,7 @@ from fastapi import APIRouter
 import cea.config
 import cea.scripts
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAConfigSaveFunc
 
 router = APIRouter()
 
@@ -58,7 +58,7 @@ async def get_tool_properties(config: CEAConfig, tool_name: str):
 
 
 @router.post('/{tool_name}/default')
-async def restore_default_config(config: CEAConfig, tool_name: str):
+async def restore_default_config(config: CEAConfig, save_func: CEAConfigSaveFunc, tool_name: str):
     """Restore the default configuration values for the CEA"""
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
 
@@ -66,6 +66,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
         if parameter.name != 'scenario':
             parameter.set(
                 default_config.sections[parameter.section.name].parameters[parameter.name].get())
+    await save_func(config)
     config.save()
     return 'Success'
 

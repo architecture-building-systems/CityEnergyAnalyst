@@ -252,7 +252,7 @@ async def get(scenario: str):
 
 
 @router.put('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
-async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
+async def put(config: CEAConfig, save_func: CEAConfigSaveFunc, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
     scenario_path = os.path.join(config.project, scenario)
     new_scenario_name = payload.get('name')
@@ -262,6 +262,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
+                await save_func(config)
                 config.save()
             return {'name': new_scenario_name}
     except OSError:
