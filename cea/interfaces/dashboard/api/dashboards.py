@@ -128,7 +128,7 @@ async def get_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_i
     return dashboard_to_dict(dashboards[dashboard_index])
 
 
-@router.get('/{dashboard_index}')
+@router.delete('/{dashboard_index}')
 async def delete_dashboard(config: CEAConfig, dashboard_index: int):
     """
     Delete Dashboard
