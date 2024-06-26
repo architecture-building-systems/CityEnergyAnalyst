@@ -2,6 +2,7 @@ import hashlib
 from typing import Dict, Any
 
 from fastapi import APIRouter
+from fastapi.concurrency import run_in_threadpool
 
 import cea.config
 import cea.plots
@@ -71,7 +72,7 @@ async def get_dashboards(config: CEAConfig, plot_cache: CEAPlotCache):
     """
     Get list of Dashboards
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     out = []
     for d in dashboards:
@@ -122,7 +123,7 @@ async def get_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_i
     """
     Get Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     return dashboard_to_dict(dashboards[dashboard_index])
 
@@ -143,7 +144,7 @@ async def update_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboar
     Update Dashboard properties
     """
     form = payload
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     dashboard = dashboards[dashboard_index]
     dashboard.set_scenario(form['scenario'])
@@ -157,7 +158,7 @@ async def get_plot(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index:
     """
     Get Dashboard Plot
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
@@ -202,7 +203,7 @@ async def delete_plot(config: CEAConfig, plot_cache: CEAPlotCache,  dashboard_in
     """
     Delete Plot from Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     dashboard = dashboards[dashboard_index]
     dashboard.remove_plot(plot_index)
@@ -217,7 +218,7 @@ async def get_plot_parameters(config: CEAConfig, plot_cache: CEAPlotCache,
     """
     Get Plot Form Parameters of Plot in Dashboard
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]
@@ -230,7 +231,7 @@ async def get_plot_input_files(config: CEAConfig, plot_cache: CEAPlotCache, dash
     """
     Get input files of Plot
     """
-    dashboards = cea.plots.read_dashboards(config, plot_cache)
+    dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     dashboard = dashboards[dashboard_index]
     plot = dashboard.plots[plot_index]

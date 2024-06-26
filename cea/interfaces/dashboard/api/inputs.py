@@ -9,6 +9,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, status
 from fiona.errors import DriverError
 from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
 
 import cea.inputlocator
 import cea.schemas
@@ -122,21 +123,24 @@ async def get_all_inputs(config: CEAConfig):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # FIXME: Find a better way, current used to test for Input Editor
-    store = get_building_properties(config)
-    store['geojsons'] = {}
-    store['connected_buildings'] = {}
-    store['crs'] = {}
-    store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
-    store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-        locator.get_surroundings_geometry())
-    store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
-    store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
-    store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
-    store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
-    store['colors'] = COLORS
-    store['schedules'] = {}
+    def fn():
+        store = get_building_properties(config)
+        store['geojsons'] = {}
+        store['connected_buildings'] = {}
+        store['crs'] = {}
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
+        store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
+            locator.get_surroundings_geometry())
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
+        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
+        store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
+        store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
+        store['colors'] = COLORS
+        store['schedules'] = {}
 
-    return store
+        return store
+
+    return await run_in_threadpool(fn)
 
 
 class InputForm(BaseModel):
@@ -155,72 +159,76 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
     crs = form.crs
     schedules = form.schedules
 
-    out = {'tables': {}, 'geojsons': {}}
+    def fn():
+        out = {'tables': {}, 'geojsons': {}}
 
-    # TODO: Maybe save the files to temp location in case something fails
-    for db in INPUTS:
-        db_info = INPUTS[db]
-        location = getattr(locator, db_info['location'])()
-        file_type = db_info['file_type']
+        # TODO: Maybe save the files to temp location in case something fails
+        for db in INPUTS:
+            db_info = INPUTS[db]
+            location = getattr(locator, db_info['location'])()
+            file_type = db_info['file_type']
 
-        if tables.get(db) is None:  # ignore if table does not exist
-            continue
+            if tables.get(db) is None:  # ignore if table does not exist
+                continue
 
-        if len(tables[db]):
-            if file_type == 'shp':
-                table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
-                                                                crs=get_geographic_coordinate_system())
-                out['geojsons'][db] = json.loads(table_df.to_json())
-                table_df = table_df.to_crs(crs[db])
-                table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
-
-                table_df = pd.DataFrame(table_df.drop(columns='geometry'))
-                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
-            elif file_type == 'dbf':
-                table_df = pd.read_json(json.dumps(tables[db]), orient='index')
-
-                # Make sure index name is 'Name;
-                table_df.index.name = 'Name'
-                table_df = table_df.reset_index()
-
-                cea.utilities.dbf.dataframe_to_dbf(table_df, location)
-                out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
-
-        else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)
-            if db == "surroundings":
-                table_df = geopandas.GeoDataFrame(columns=["Name", "height_ag", "floors_ag"], geometry=[],
-                                                  crs=get_geographic_coordinate_system())
-                table_df.to_file(location)
-
-                out['tables'][db] = []
-
-            elif os.path.isfile(location):
+            if len(tables[db]):
                 if file_type == 'shp':
-                    import glob
-                    for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
-                        os.remove(filepath)
+                    table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
+                                                                    crs=get_geographic_coordinate_system())
+                    out['geojsons'][db] = json.loads(table_df.to_json())
+                    table_df = table_df.to_crs(crs[db])
+                    table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
+
+                    table_df = pd.DataFrame(table_df.drop(columns='geometry'))
+                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
                 elif file_type == 'dbf':
-                    os.remove(location)
+                    table_df = pd.read_json(json.dumps(tables[db]), orient='index')
 
-            if file_type == 'shp':
-                out['geojsons'][db] = {}
+                    # Make sure index name is 'Name;
+                    table_df.index.name = 'Name'
+                    table_df = table_df.reset_index()
 
-    if schedules:
-        for building in schedules:
-            schedule_dict = schedules[building]
-            schedule_path = locator.get_building_weekly_schedules(building)
-            schedule_data = schedule_dict['SCHEDULES']
-            schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
-                                           'METADATA': schedule_dict['METADATA']}
-            data = pd.DataFrame()
-            for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
-                df = pd.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
-                for schedule_type, schedule in schedule_data.items():
-                    df[schedule_type] = schedule[day]
-                data = pd.concat([df, data], ignore_index=True)
-            save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
-            print('Schedule file written to {}'.format(schedule_path))
-    return out
+                    cea.utilities.dbf.dataframe_to_dbf(table_df, location)
+                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+
+            else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)
+                if db == "surroundings":
+                    table_df = geopandas.GeoDataFrame(columns=["Name", "height_ag", "floors_ag"], geometry=[],
+                                                      crs=get_geographic_coordinate_system())
+                    table_df.to_file(location)
+
+                    out['tables'][db] = []
+
+                elif os.path.isfile(location):
+                    if file_type == 'shp':
+                        import glob
+                        for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                            os.remove(filepath)
+                    elif file_type == 'dbf':
+                        os.remove(location)
+
+                if file_type == 'shp':
+                    out['geojsons'][db] = {}
+
+        if schedules:
+            for building in schedules:
+                schedule_dict = schedules[building]
+                schedule_path = locator.get_building_weekly_schedules(building)
+                schedule_data = schedule_dict['SCHEDULES']
+                schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                                               'METADATA': schedule_dict['METADATA']}
+                data = pd.DataFrame()
+                for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
+                    df = pd.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
+                    for schedule_type, schedule in schedule_data.items():
+                        df[schedule_type] = schedule[day]
+                    data = pd.concat([df, data], ignore_index=True)
+                save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+                print('Schedule file written to {}'.format(schedule_path))
+
+        return out
+
+    return await run_in_threadpool(fn)
 
 
 def get_building_properties(config):
@@ -376,7 +384,7 @@ async def get_building_schedule(config: CEAConfig, building: str):
 async def get_input_database_data(config: CEAConfig):
     locator = cea.inputlocator.InputLocator(config.scenario)
     try:
-        return read_all_databases(locator.get_databases_folder())
+        return await run_in_threadpool(lambda: read_all_databases(locator.get_databases_folder()))
     except IOError as e:
         print(e)
         raise HTTPException(
