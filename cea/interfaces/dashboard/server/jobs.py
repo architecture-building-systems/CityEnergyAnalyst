@@ -54,7 +54,6 @@ class JobInfo(BaseModel):
     end_time: datetime = None
 
 
-
 @router.get("/{job_id}")
 async def get_job_info(jobs: CEAJobs, job_id: str):
     """Return a JobInfo by id"""
