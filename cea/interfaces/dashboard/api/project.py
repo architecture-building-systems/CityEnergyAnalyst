@@ -12,9 +12,10 @@ from shapely.geometry import shape
 from fastapi.concurrency import run_in_threadpool
 from staticmap import StaticMap, Polygon
 
+import cea.config
 import cea.api
 import cea.inputlocator
-from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAConfigSaveFunc
 from cea.plots.colors import color_to_rgb
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -96,7 +97,7 @@ async def create_new_project(new_project: NewProject):
 
 
 @router.put('/')
-async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
+async def update_project(config: CEAConfig, save_func: CEAConfigSaveFunc, scenario_path: ScenarioPath):
     """
     Update Project info in config
     """
@@ -108,6 +109,7 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
+            await save_func(config)
             config.save()
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
@@ -333,15 +335,12 @@ def generate_scenario_image(config, scenario: str, image_path: str, building_lim
 
 @router.get('/scenario/{scenario}/image')
 async def get_scenario_image(config: CEAConfig, project: str, scenario: str):
-    if project is None:
-        config = config
-    else:
+    if project is not None:
         if not os.path.exists(project):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f'Project path: "{project}" does not exist',
             )
-        config = config
         config.project = project
 
     choices = list_scenario_names_for_project(config)
