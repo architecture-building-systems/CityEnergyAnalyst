@@ -82,7 +82,10 @@ class CapacityIndicator(object):
             warnings.warn("There was an attempt to apply a value smaller than 0 to a capacity indicator. "
                           "This is not allowed. The value is set to 0.")
         else:
-            self._value = round(new_value, 2)
+            if new_value == 0 or new_value == 1:
+                self._value = int(new_value)
+            else:
+                self._value = round(new_value, 2)
 
 
 class CapacityIndicatorVector(object):
