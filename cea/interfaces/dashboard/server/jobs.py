@@ -57,7 +57,7 @@ class JobInfo(BaseModel):
 @router.get("/{job_id}")
 async def get_job_info(jobs: CEAJobs, job_id: str):
     """Return a JobInfo by id"""
-    return jobs[job_id]
+    return await jobs.get(job_id)
 
 
 @router.post("/new")
@@ -66,30 +66,30 @@ async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
     args = payload
     print("NewJob: args={args}".format(**locals()))
 
-    def next_id():
+    async def next_id():
         """
         FIXME: replace with better solution
         """
         try:
-            return str(len(jobs.keys()) + 1)
+            return str(len(await jobs.keys()) + 1)
         except ValueError:
             # this is the first job...
             return str(1)
 
-    job = JobInfo(id=next_id(), script=args["script"], parameters=args["parameters"])
-    jobs[job.id] = job
+    job = JobInfo(id=await next_id(), script=args["script"], parameters=args["parameters"])
+    await jobs.set(job.id, job)
     await sio.emit("cea-job-created", job.model_dump(mode='json'))
     return job
 
 
 @router.get("/")
 async def get_jobs(jobs: CEAJobs):
-    return [job.dict() for job in jobs.values()]
+    return [job.dict() for job in await jobs.values()]
 
 
 @router.post("/started/{job_id}")
 async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
-    job = jobs[job_id]
+    job = await jobs.get(job_id)
     job.state = JOB_STATE_STARTED
     job.start_time = datetime.now()
     await sio.emit("cea-worker-started", job.model_dump(mode='json'))
@@ -98,7 +98,7 @@ async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
 
 @router.post("/success/{job_id}")
 async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
-    job = jobs[job_id]
+    job = await jobs.get(job_id)
     job.state = JOB_STATE_SUCCESS
     job.error = None
     job.end_time = datetime.now()
@@ -110,7 +110,7 @@ async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
 
 @router.post("/error/{job_id}")
 async def set_job_error(jobs: CEAJobs, job_id: str, error: str) -> JobInfo:
-    job = jobs[job_id]
+    job = await jobs.get(job_id)
     job.state = JOB_STATE_ERROR
     job.error = error
     job.end_time = datetime.now()
@@ -130,7 +130,7 @@ async def start_job(jobs: CEAJobs, job_id: str):
 
 @router.post("/cancel/{job_id}")
 async def cancel_job(jobs: CEAJobs, job_id: str) -> JobInfo:
-    job = jobs[job_id]
+    job = await jobs.get(job_id)
     job.state = JOB_STATE_CANCELED
     job.error = "Canceled by user"
     job.end_time = datetime.now()

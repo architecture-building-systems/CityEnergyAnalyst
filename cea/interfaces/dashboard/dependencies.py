@@ -1,3 +1,5 @@
+import asyncio
+
 from aiocache import caches, Cache
 from aiocache.serializers import PickleSerializer
 from fastapi import Depends
@@ -15,6 +17,40 @@ caches.set_config({
         }
     }
 })
+
+
+class JobStoreCache:
+    def __init__(self, cache, key):
+        self._loop = asyncio.get_event_loop()
+        self._cache = cache
+        self._key = key
+
+    async def get(self, job_id):
+        jobs = await self._cache.get(self._key)
+
+        if jobs is None:
+            jobs = {}
+
+        return jobs[job_id]
+
+    async def set(self, job_id, value):
+        jobs = await self._cache.get(self._key)
+
+        if jobs is None:
+            jobs = {}
+
+        jobs[job_id] = value
+        await self._cache.set(self._key, jobs)
+
+        return value
+
+    async def values(self):
+        jobs = await self._cache.get(self._key)
+        return jobs.values()
+
+    async def keys(self):
+        jobs = await self._cache.get(self._key)
+        return jobs.keys()
 
 
 async def get_cea_config():
@@ -49,7 +85,8 @@ async def get_jobs():
     if jobs is None:
         jobs = dict()
         await _cache.set("jobs", jobs)
-    return jobs
+
+    return JobStoreCache(_cache, "jobs")
 
 
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
