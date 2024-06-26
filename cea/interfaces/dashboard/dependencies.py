@@ -41,5 +41,18 @@ async def get_plot_cache():
     return plot_cache
 
 
+async def get_jobs():
+    _cache = caches.get(CACHE_NAME)
+    jobs = await _cache.get("jobs")
+
+    if jobs is None:
+        jobs = dict()
+        await _cache.set("jobs", jobs)
+
+    print(jobs)
+    return jobs
+
+
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
+CEAJobs = Annotated[dict, Depends(get_jobs)]

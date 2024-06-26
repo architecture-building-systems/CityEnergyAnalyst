@@ -9,6 +9,7 @@ import psutil
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from cea.interfaces.dashboard.dependencies import CEAJobs
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
@@ -41,17 +42,6 @@ JOB_STATE_CANCELED = 4
 worker_processes = {}  # jobid -> subprocess.Popen
 
 
-def next_id():
-    """
-    FIXME: replace with better solution
-    """
-    try:
-        return str(len(jobs.keys()) + 1)
-    except ValueError:
-        # this is the first job...
-        return str(1)
-
-
 # FIXME: replace with database or similar solution
 class JobInfo(BaseModel):
     """Store all the information required to run a job"""
@@ -64,22 +54,29 @@ class JobInfo(BaseModel):
     end_time: datetime = None
 
 
-jobs = {
-    # jobid -> JobInfo
-}
-
 
 @router.get("/{job_id}")
-async def get_job_info(job_id: str):
+async def get_job_info(jobs: CEAJobs, job_id: str):
     """Return a JobInfo by id"""
     return jobs[job_id]
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any]):
+async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
     """Post a new job to the list of jobs to complete"""
     args = payload
     print("NewJob: args={args}".format(**locals()))
+
+    def next_id():
+        """
+        FIXME: replace with better solution
+        """
+        try:
+            return str(len(jobs.keys()) + 1)
+        except ValueError:
+            # this is the first job...
+            return str(1)
+
     job = JobInfo(id=next_id(), script=args["script"], parameters=args["parameters"])
     jobs[job.id] = job
     await sio.emit("cea-job-created", job.model_dump(mode='json'))
@@ -87,12 +84,12 @@ async def create_new_job(payload: Dict[str, Any]):
 
 
 @router.get("/")
-async def get_jobs():
+async def get_jobs(jobs: CEAJobs):
     return [job.dict() for job in jobs.values()]
 
 
 @router.post("/started/{job_id}")
-async def set_job_started(job_id: str) -> JobInfo:
+async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = jobs[job_id]
     job.state = JOB_STATE_STARTED
     job.start_time = datetime.now()
@@ -101,7 +98,7 @@ async def set_job_started(job_id: str) -> JobInfo:
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(job_id: str) -> JobInfo:
+async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = jobs[job_id]
     job.state = JOB_STATE_SUCCESS
     job.error = None
@@ -113,7 +110,7 @@ async def set_job_success(job_id: str) -> JobInfo:
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(job_id: str, error: str) -> JobInfo:
+async def set_job_error(jobs: CEAJobs, job_id: str, error: str) -> JobInfo:
     job = jobs[job_id]
     job.state = JOB_STATE_ERROR
     job.error = error
@@ -125,7 +122,7 @@ async def set_job_error(job_id: str, error: str) -> JobInfo:
 
 
 @router.post('/start/{job_id}')
-async def start_job(job_id: str):
+async def start_job(jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
     worker_processes[job_id] = subprocess.Popen(["python", "-m", "cea.worker", f"{job_id}"])
@@ -133,7 +130,7 @@ async def start_job(job_id: str):
 
 
 @router.post("/cancel/{job_id}")
-async def cancel_job(job_id: str) -> JobInfo:
+async def cancel_job(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = jobs[job_id]
     job.state = JOB_STATE_CANCELED
     job.error = "Canceled by user"
