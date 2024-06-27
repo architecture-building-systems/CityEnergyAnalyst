@@ -54,6 +54,12 @@ class JobInfo(BaseModel):
     end_time: datetime = None
 
 
+@router.get("/")
+@router.get("/list")
+async def get_jobs(jobs: CEAJobs):
+    return [job.dict() for job in await jobs.values()]
+
+
 @router.get("/{job_id}")
 async def get_job_info(jobs: CEAJobs, job_id: str):
     """Return a JobInfo by id"""
@@ -80,11 +86,6 @@ async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
     await jobs.set(job.id, job)
     await sio.emit("cea-job-created", job.model_dump(mode='json'))
     return job
-
-
-@router.get("/")
-async def get_jobs(jobs: CEAJobs):
-    return [job.dict() for job in await jobs.values()]
 
 
 @router.post("/started/{job_id}")
