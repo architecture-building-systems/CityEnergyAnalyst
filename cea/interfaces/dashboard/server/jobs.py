@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 import psutil
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from cea.interfaces.dashboard.dependencies import CEAJobs
@@ -109,7 +109,10 @@ async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(jobs: CEAJobs, job_id: str, error: str) -> JobInfo:
+async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo:
+    body = await request.body()
+    error = body.decode("utf-8")
+
     job = await jobs.get(job_id)
     job.state = JOB_STATE_ERROR
     job.error = error
