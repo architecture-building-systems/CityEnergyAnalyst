@@ -82,7 +82,7 @@ def read_objective_values_from_file(file_paths):
 
         # Get the DCS-solution code from the file path and use it as a key to store the objective function values
         objective_function_values_df = \
-            pd.concat([objective_function_values_df, pd.DataFrame([file_path.split('\\')[-3]] + values).T],
+            pd.concat([objective_function_values_df, pd.DataFrame([file_path.split(os.sep)[-3]] + values).T],
                       axis=0, sort=False,  ignore_index=False)
 
     # Rename the columns of the dataframe and reset the indexes
@@ -97,7 +97,7 @@ def read_network_costs_from_file(file_paths):
     """
     # Read the supply system code and the network costs from the optimization results files
     network_lifetime = 20 # Todo: properly implement the network lifetime
-    system_id = [file_path.split('\\')[-3] for file_path in file_paths]
+    system_id = [file_path.split(os.sep)[-3] for file_path in file_paths]
     network_costs = [read_network_costs(file_path)/network_lifetime for file_path in file_paths]
 
     # Create a dataframe with the supply system code and the network costs
