@@ -16,6 +16,7 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 from os.path import exists
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -359,7 +360,8 @@ class Domain(object):
 
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
-            Domain._write_system_structure(building_file, supply_system)
+            building_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, supply_system_id)
+            Domain._write_system_structure(building_file, supply_system, building_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
             supply_system_summary = Domain._add_to_systems_summary(supply_system_id, supply_system,
@@ -369,7 +371,8 @@ class Domain(object):
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
             network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
-            Domain._write_system_structure(network_file, supply_system)
+            network_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, network_id)
+            Domain._write_system_structure(network_file, supply_system, network_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
             supply_system_summary = Domain._add_to_systems_summary(network_id, supply_system,
@@ -388,17 +391,77 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_system_structure(results_file, supply_system):
-        """Summarise supply system structure and write it to the indicated results file"""
-        supply_system_info = [{'Component_category': component_category,
-                               'Component_type': component.technology,
+    def _write_system_structure(results_file, supply_system, cost_file):
+        """Summarise supply system structure and cost and write it to the indicated results file.
+        Passive components are also included"""
+        supply_system_info = [{'Component': component.technology,
+                               'Component_type': component.type,
                                'Component_code': component_code,
-                               'Capacity_kW': round(component.capacity, 3)}
+                               'Category': component_category,
+                               'Capacity_kW': round(component.capacity, 3),
+                               'Main_side': component.main_side,
+                               'Main_energy_carrier': component.main_energy_carrier.describe(),
+                               'Main_energy_carrier_code': component.main_energy_carrier.code,
+                               'Other_inputs': ', '.join([ip.code for ip in component.input_energy_carriers]),
+                               'Other_outputs': ', '.join([op.code for op in component.output_energy_carriers])}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
-        # Write supply system structure to file
+        for dict in supply_system_info:
+            if 'PV' in dict['Component_type']:
+                dict['Other_inputs'] = 'Rsun'
+            if 'SC' in dict['Component_code']:
+                dict['Other_inputs'] = 'Rsun'
+
+        supply_system_costs = [{'Component': component.technology,
+                               'Component_type': component.type,
+                               'Component_code': component_code,
+                               'Category': component_category,
+                               'Capacity_kW': round(component.capacity, 3),
+                               'Investment_cost_$': component.inv_cost,
+                               'Annualized_investment_$': component.inv_cost_annual,
+                               'O&M_cost_$': component.om_fix_cost_annual}
+                              for component_category, components in supply_system.installed_components.items()
+                              for component_code, component in components.items()]
+
+        passive_components_info = [{'Component': components_passive[0].technology,
+                                    'Component_type': components_passive[0].type,
+                                    'Component_code': components_passive[0].code,
+                                    'Category': component_category,
+                                    'Capacity_kW': round(components_passive[0].capacity, 3),
+                                    'Main_side': None,
+                                   'Main_energy_carrier': components_passive[0].main_energy_carrier.describe(),
+                                   'Main_energy_carrier_code': components_passive[0].main_energy_carrier.code,
+                                   'Other_inputs': components_passive[0].main_energy_carrier.code,
+                                   'Other_outputs': supply_system.installed_components[component_category][component_code].main_energy_carrier.code}
+                                   for component_code, components_passive in
+                                   supply_system.structure.passive_component_selection.items()
+                                   if components_passive
+                                   for component_category, components in supply_system.installed_components.items()
+                                   if component_code in components]
+
+        passive_components_cost = [{'Component': components_passive[0].technology,
+                               'Component_type': components_passive[0].type,
+                               'Component_code': components_passive[0].code,
+                               'Category': component_category,
+                               'Capacity_kW': round(components_passive[0].capacity, 3),
+                               'Investment_cost_$': components_passive[0].inv_cost,
+                               'Annualized_investment_$': components_passive[0].inv_cost_annual,
+                               'O&M_cost_$': components_passive[0].om_fix_cost_annual}
+                              for component_code, components_passive in
+                               supply_system.structure.passive_component_selection.items()
+                                if components_passive
+                              for component_category, components in supply_system.installed_components.items()
+                              if component_code in components]
+
+        if passive_components_cost:
+            for i, comp in enumerate(passive_components_info):
+                supply_system_costs.append(passive_components_cost[i])
+                supply_system_info.append(passive_components_info[i])
+
+        # Write supply system structure and cost to file
         pd.DataFrame(supply_system_info).to_csv(results_file, index=False)
+        pd.DataFrame(supply_system_costs).to_csv(cost_file, index=False)
 
         return
 
@@ -445,10 +508,14 @@ class Domain(object):
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
             network_file = self.locator.get_new_optimization_supply_systems_detailed_operation_file(des_id, network_id)
+            network_file_ec = self.locator.get_new_optimization_energy_carrier_detailed_profile(des_id, network_id)
             Domain._write_combined_objective_function_profiles(date_range, supply_system, network_file)
+            Domain._write_detailed_objective_function_profiles(date_range, supply_system, network_file_ec)
             # Create a breakdown of annual energy demand, cost, GHG- and heat-emissions and print to file
             breakdown_file = self.locator.get_new_optimization_supply_systems_annual_breakdown_file(des_id, network_id)
+            breakdown_file_profile = self.locator.get_new_optimization_supply_systems_ec_annual_profiles(des_id, network_id)
             Domain._write_annual_breakdown(supply_system, breakdown_file)
+            Domain._write_profile_breakdown(supply_system, breakdown_file_profile)
 
         # FOR DES AS A WHOLE
         # Summarise performance metrics of the networks and print to file
@@ -507,6 +574,52 @@ class Domain(object):
         return
 
     @staticmethod
+    def _write_detailed_objective_function_profiles(date_time, supply_system, results_file):
+        """ Write detailed central objective function profiles of a supply system """
+
+        if supply_system.heat_rejection.values():
+            heat_rejection_profiles_df = pd.concat([heat_rejection_profile
+                                                    for heat_rejection_profile
+                                                    in supply_system.heat_rejection.values()],
+                                                   axis=1)
+            heat_rejection_profiles_df.columns = supply_system.heat_rejection.keys()
+            heat_rejection_profiles_df.index = date_time
+            with pd.ExcelWriter(results_file) as writer:
+                heat_rejection_profiles_df.to_excel(writer, sheet_name='Heat_rejection', index=True)
+
+        if supply_system.greenhouse_gas_emissions.values():
+            ghg_emission_profile_df = pd.concat([ghg_emission_profile
+                                                 for ghg_emission_profile
+                                                 in supply_system.greenhouse_gas_emissions.values()],
+                                                axis=1)
+            ghg_emission_profile_df.columns = supply_system.greenhouse_gas_emissions.keys()
+            ghg_emission_profile_df.index = date_time
+            file_exists = os.path.exists(results_file)
+            if file_exists:
+                with pd.ExcelWriter(results_file, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
+                    ghg_emission_profile_df.to_excel(writer, sheet_name='Ghg_emissions', index=True)
+            else:
+                with pd.ExcelWriter(results_file) as writer:
+                    ghg_emission_profile_df.to_excel(writer, sheet_name='Ghg_emissions', index=True)
+
+        if supply_system.system_energy_demand.values():
+            system_energy_demand_profile_df = pd.concat([system_demand_profile
+                                                         for system_demand_profile
+                                                         in supply_system.system_energy_demand.values()],
+                                                        axis=1)
+            system_energy_demand_profile_df.columns = supply_system.system_energy_demand.keys()
+            system_energy_demand_profile_df.index = date_time
+            file_exists = os.path.exists(results_file)
+            if file_exists:
+                with pd.ExcelWriter(results_file, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
+                    system_energy_demand_profile_df.to_excel(writer, sheet_name='Energy_demand', index=True)
+            else:
+                with pd.ExcelWriter(results_file) as writer:
+                    system_energy_demand_profile_df.to_excel(writer, sheet_name='Energy_demand', index=True)
+
+        return
+
+    @staticmethod
     def _write_annual_breakdown(supply_system, results_file):
         """Write the annual breakdown of the objective functions of a supply system to the indicated csv file."""
         # break down annual cost, energy demand, GHG and heat-emissions by energy carrier
@@ -538,6 +651,60 @@ class Domain(object):
 
         # write to file
         annual_breakdown.to_csv(results_file)
+
+        return
+
+    @staticmethod
+    def _write_profile_breakdown(supply_system, results_file):
+        """
+        Write the annual breakdown of energy flows in and out of every component, as well as infinite resources and potentials
+        """
+        # Print out profile of energy carriers coming from components
+        categories = list(supply_system.installed_components.keys())
+
+        for cat in categories:
+            ec_profiles = supply_system.component_ec_profiles[cat]
+            input_ec = supply_system.component_energy_inputs[cat]
+            output_ec = supply_system.component_energy_outputs[cat]
+            if ec_profiles:
+                ec_profiles_dict = {f"{tec_code}_{ec_code}_main": e_flow.profile
+                                    for tec_code, ec_profile in ec_profiles.items()
+                                    for ec_code, e_flow in ec_profile.items()}
+                input_ec_dict = {f"{tec_code}_{ec_code}_input": e_flow.profile
+                                 for tec_code, ec_profile in input_ec.items()
+                                 for ec_code, e_flow in ec_profile.items()}
+                ec_profiles_dict.update(input_ec_dict)
+                output_ec_dict = {f"{tec_code}_{ec_code}_output": e_flow.profile
+                                  for tec_code, ec_profile in output_ec.items()
+                                  for ec_code, e_flow in ec_profile.items()}
+                ec_profiles_dict.update(output_ec_dict)
+
+                ec_profiles_df = pd.concat([profile for profile in ec_profiles_dict.values()], axis=1)
+                ec_profiles_df.columns = ec_profiles_dict.keys()
+                ec_profiles_df.index = range(len(ec_profiles_df))
+
+                file_exists = os.path.exists(results_file)
+                if file_exists:
+                    with pd.ExcelWriter(results_file, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
+                        ec_profiles_df.to_excel(writer, sheet_name=f'{cat}_energy_carriers', index=True)
+                else:
+                    with pd.ExcelWriter(results_file) as writer:
+                        ec_profiles_df.to_excel(writer, sheet_name=f'{cat}_energy_carriers', index=True)
+
+        # Print out profile of carriers from infinite sources or coming from potentials
+        bought_carriers = supply_system.bought_carriers
+        sold_carriers = supply_system.sold_carriers
+        used_potentials = {tec_code: ec_profile.profile
+                           for tec_code, ec_profile in supply_system.used_potentials.items()}
+        alternative = [bought_carriers, sold_carriers, used_potentials]
+        alternative_names = ['bought_carriers', 'sold_carriers', 'used_potentials']
+        for i, potentials in enumerate(alternative):
+            if potentials:
+                ec_profiles_df = pd.concat([profile for profile in potentials.values()], axis=1)
+                ec_profiles_df.columns = potentials.keys()
+                ec_profiles_df.index = range(len(ec_profiles_df))
+                with pd.ExcelWriter(results_file, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
+                    ec_profiles_df.to_excel(writer, sheet_name=alternative_names[i], index=True)
 
         return
 

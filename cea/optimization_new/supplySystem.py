@@ -47,11 +47,14 @@ class SupplySystem(object):
         # set energy potential parameters
         self.available_potentials = system_structure.available_potentials
         self.used_potentials = {}
+        self.bought_carriers = {}
+        self.sold_carriers = {}
 
         # set system operation parameters
         self.installed_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_inputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_outputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
+        self.component_ec_profiles = {'primary': {}, 'secondary': {}, 'tertiary': {}}
 
         # set system evaluation parameters
         self.system_energy_demand = {}
@@ -89,11 +92,18 @@ class SupplySystem(object):
                                                                         for carrier, flow in component_dict.items()}
                                                             for component, component_dict in placement_dict.items()}
                                                 for placement, placement_dict in self.component_energy_outputs.items()}
-
+        object_copy.component_ec_profiles = {placement: {component: {carrier: copy(flow)
+                                                                     for carrier, flow in component_dict.items()}
+                                                         for component, component_dict in placement_dict.items()}
+                                             for placement, placement_dict in self.component_ec_profiles.items()}
         object_copy.used_potentials = {carrier: copy(flow_profile)
                                        for carrier, flow_profile in self.used_potentials.items()}
         object_copy.system_energy_demand = {carrier: copy(flow_profile)
                                             for carrier, flow_profile in self.system_energy_demand.items()}
+        object_copy.bought_carriers = {carrier: copy(flow_profile)
+                                        for carrier, flow_profile in self.bought_carriers.items()}
+        object_copy.sold_carriers = {carrier: copy(flow_profile)
+                                        for carrier, flow_profile in self.sold_carriers.items()}
         object_copy.heat_rejection = {carrier: copy(flow_profile)
                                       for carrier, flow_profile in self.heat_rejection.items()}
         object_copy.greenhouse_gas_emissions = {carrier: copy(flow_profile)
@@ -295,6 +305,8 @@ class SupplySystem(object):
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
 
+                self.component_ec_profiles[placement][component_model] = {ec_code: copy(main_energy_flow)}
+
             if not isclose(max(demand.profile), 0, abs_tol=1e-09):
                 raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '
                                  f'An additional {max(demand.profile)} kW of capacity to produce '
@@ -344,6 +356,7 @@ class SupplySystem(object):
                                     if ec_code not in self.structure.infinite_energy_carriers}
 
         self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
+        self._buy_required_energy(required_energy_flows, self.structure.infinite_energy_carriers)
 
         return new_required_energy_flow
 
@@ -365,6 +378,7 @@ class SupplySystem(object):
 
         self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
         self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
+        self._sell_excess_energy(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
 
         return remaining_energy_flows_to_release
 
@@ -395,6 +409,36 @@ class SupplySystem(object):
 
         return self.system_energy_demand
 
+    def _buy_required_energy(self, energy_flow_dict, available_system_energy_carriers):
+        """
+        Add the energy flows to the 'bought carriers' dictionary, to cumulate the energy flows that are bought
+        from external sources.
+        """
+        for ec_code, energy_flow in energy_flow_dict.items():
+            if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
+                if ec_code in self.bought_carriers.keys():
+                    self.bought_carriers[ec_code] += profile_copy
+                else:
+                    self.bought_carriers[ec_code] = profile_copy
+
+        return self.bought_carriers
+
+    def _sell_excess_energy(self, energy_flow_dict, available_system_energy_carriers):
+        """
+        Add the energy flows to the 'sold carriers' dictionary, to cumulate the energy flows that are sold to
+        external sources.
+        """
+        for ec_code, energy_flow in energy_flow_dict.items():
+            if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
+                if ec_code in self.sold_carriers.keys():
+                    self.sold_carriers[ec_code] += profile_copy
+                else:
+                    self.sold_carriers[ec_code] = profile_copy
+
+        return self.sold_carriers
+
     def _add_to_heat_rejection(self, energy_flow_dict, releasable_energy_carriers):
         """
         Add energy flows to the system heat rejection if they consist of one of the releasable energy carriers.
@@ -418,7 +462,7 @@ class SupplySystem(object):
                                  for timestep, energy
                                  in energy_flow.replace(list(energy_flow[energy_flow<0]), 0).items()),
                                 index=EnergyFlow.time_series)
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+             for ec_code, energy_flow in self.bought_carriers.items()}
 
         return self.greenhouse_gas_emissions
 
@@ -436,13 +480,18 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = \
-            {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy') if energy > 0
-                          else - energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
+        annual_energy_supply = {}
+        annual_energy_supply_cost = {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy')
                           for timestep, energy in energy_flow.items())
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+             for ec_code, energy_flow in self.bought_carriers.items()}
+        annual_energy_supply_sold = {ec_code: - sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
+                          for timestep, energy in energy_flow.items())
+             for ec_code, energy_flow in self.sold_carriers.items()}
 
-        self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}
+        for key in set(annual_energy_supply_cost) | set(annual_energy_supply_sold):
+            annual_energy_supply[key] = annual_energy_supply_cost.get(key, 0) + annual_energy_supply_sold.get(key, 0)
+
+        self.annual_cost = {**annual_component_cost, **annual_energy_supply}
 
         return self.annual_cost
 
