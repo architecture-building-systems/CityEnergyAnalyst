@@ -6,7 +6,8 @@ import pandas as pd
 from kmedoids_clustering import (kmedoids_clustering, test_different_cluster_numbers, data_preprocessing,
                                  convert_medoids_to_original_scale)
 from directories_files_handler import load_data_from_directories, process_files, process_energy_system_data
-from multi_objective_plots import plot_clusters, generate_and_save_plots, heatmap, stacked_bar_chart, scatter_plot, line_graph_plot
+from multi_objective_plots import (plot_clusters, generate_and_save_plots, heatmap, stacked_bar_chart, scatter_plot,
+                                   line_graph_plot, yearly_profile_plot)
 
                                  ### MAIN ###
 
@@ -84,6 +85,7 @@ for context in context_analysis:
             generate_and_save_plots(dataframes, plots_path)
             systems = selected_systems['Supply_System'].tolist()
             line_graph_plot(main_directory, carriers_profile, systems, plots_path, scenario, dict_availabilities[availability])
+            yearly_profile_plot(main_directory, carriers_profile, systems, plots_path, scenario, dict_availabilities[availability])
 
             # In the percentage change Dataframe, keep only the energy systems that are in the selected systems DataFrame
             percentage_change = percentage_change[percentage_change['Supply_System'].isin(selected_systems['Supply_System'])].reset_index(drop=True)

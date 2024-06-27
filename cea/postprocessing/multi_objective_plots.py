@@ -6,8 +6,10 @@ import seaborn as sns
 from pandas.plotting import parallel_coordinates
 import pandas as pd
 import math
+import re
 
-from directories_files_handler import calculate_percentage_change
+from directories_files_handler import (calculate_percentage_change, line_plot_dataframe_preprocessing,
+                                       combine_excel_sheets, compute_mean_and_std)
 
                                                 ### Generate plots and save ###
 def generate_and_save_plots_separated(dataframes, plots_path):
@@ -123,6 +125,7 @@ def stacked_bar_chart(df, path, scenario):
 
     # Track the labels to avoid duplicates in the legend
     legend_labels = {}
+    hatch_patterns = ['/', '\\', '', '-', '|', '/', '\\', '', '-', '|', '/', '\\', '', '-', '|']
 
     # Plot the stacked bar chart
     bottom_values = np.zeros(len(numeric_values.columns))
@@ -132,7 +135,7 @@ def stacked_bar_chart(df, path, scenario):
             code = label.split('_')[0]
             bar = ax.bar(code, numeric_values[label][j], bottom=bottom_values[i],
                          label=multi_line_labels[j] if multi_line_labels[j] not in legend_labels else "",
-                         color=colors[j], edgecolor='black')
+                         color=colors[j], edgecolor='black', hatch=hatch_patterns[j])
             bottom_values[i] += numeric_values[label][j]
             # Add label to legend_labels if it's not already there
             if multi_line_labels[j] not in legend_labels:
@@ -223,6 +226,7 @@ def scatter_plot(df_base, df_what_if, path, scenario):
 
     # Define the custom order for 'Criteria' column
     custom_order = ['No_renewables', 'All_renewables', 'Elec_renewables']
+    marker_shape = {custom_order[0]: '*', custom_order[1]: 'x', custom_order[2]: '^'}
 
     # Convert 'Criteria' column to categorical data type with custom order
     scenario_selection_what_if['Availability'] = pd.Categorical(scenario_selection_what_if['Availability'],
@@ -246,7 +250,8 @@ def scatter_plot(df_base, df_what_if, path, scenario):
         ax.scatter(0, scenario_selection_base[column], s=100, color='blue', label='Base Case')
         for j in range(len(scenario_selection_what_if[column])):
             ax.scatter(scenario_selection_what_if.index[j] + 1, scenario_selection_what_if[column][j],
-                       s=100, color=colors[j], label=multi_line_labels[j])
+                       s=100, color=colors[j], label=multi_line_labels[j],
+                       marker=marker_shape[scenario_selection_what_if['Availability'][j]])
 
         ax.set_xlabel('Index')
         ax.set_ylabel(column)
@@ -320,58 +325,93 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
         'cooling': 'T10W',
         'electricity': 'E230AC',
         'heat_release': ['T100A', 'T25A', 'T30W', 'T27LW', 'T27GW', 'T27SW'],
-        'hot_water': 'T100W'
+        'heat_production': 'T100W'
+    }
+
+    # Define a color dictionary for specific labels
+    color_dict = {
+        'CH': 'blue', 'ACH': 'red', 'HEXSW': 'green', 'HEXGW': 'green',
+        'HEXLW': 'green', 'TES': 'purple', 'PV': 'darkorange', 'SC': 'brown',
+        'BT': 'darkred', 'FU': 'gray', 'OEHR': 'gray', 'CCGT': 'gray',
+        'BO': 'black', 'CT': 'cyan', 'demand': 'lime', 'bought': 'olive',
+        'sold': 'darkslateblue'
     }
 
     for system in systems:
         file_path = os.path.join(base_path, system, carriers_directory)
-        combined_df = pd.DataFrame()
 
         # Check if the path exists
         if not os.path.exists(file_path):
             print(f"Path {file_path} does not exist.")
             return
 
-        excel_data = pd.read_excel(file_path, sheet_name=None)
+        combined_df = combine_excel_sheets(file_path)
 
-        # Combine all sheets into one DataFrame
-        for sheet_name, sheet_data in excel_data.items():
-            sheet_data = sheet_data.iloc[:, 1:]  # Drop the indexing column
-            if sheet_name == 'bought_carriers' or sheet_name == 'sold_carriers':
-                sheet_data = sheet_data.rename(columns={col: f'{col}_{sheet_name}' for col in sheet_data.columns})
-            combined_df = pd.concat([combined_df, sheet_data], axis=1)
-        if 'PV1_E230AC_output' in combined_df.columns:
-            combined_df = combined_df.drop(columns='PV1_E230AC_output')
-        if 'PV2_E230AC_output' in combined_df.columns:
-            combined_df = combined_df.drop(columns='PV2_E230AC_output')
-        if 'PV3_E230AC_output' in combined_df.columns:
-            combined_df = combined_df.drop(columns='PV3_E230AC_output')
-
-        if combined_df.empty:
-            print("No data found.")
-            return
+        # Preprocessing of data before plotting
+        carriers_to_plot = line_plot_dataframe_preprocessing(combined_df, hours_to_plot=24)
 
         # Plotting the data
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         axes = axes.flatten()
         i = 0
 
-        # Take samples from the combined_df for representation and clean up the data
-        carriers_to_plot = combined_df.iloc[:25, :]
-        columns_to_drop = carriers_to_plot.columns[(carriers_to_plot < 0.5).all()]
-        carriers_to_plot = carriers_to_plot.drop(columns=columns_to_drop)
-
         for cat, carrier in categories.items():
+            plot_with_info = False
             ax = axes[i]
-            for column in carriers_to_plot.columns:
-                for car in carrier if isinstance(carrier, list) else [carrier]:
-                    if car in column:
-                        ax.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2)
-            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
-            ax.set_title(f'{cat.capitalize()} profiles')
-            ax.set_xlabel('Hours')
-            if i == 0:
+
+            if availability == 'Elec_renewables' and cat == 'heat_production':
+                ax.axis('off')  # Turn off the axis for the unused subplot
+            else:
+                has_secondary_y_axis = False
+
+                for column in carriers_to_plot.columns:
+                    for car in carrier if isinstance(carrier, list) else [carrier]:
+                        if car in column:
+                            plot_with_info = True
+                            parts = column.split('_')
+                            if parts[0] == 'E230AC':
+                                code = re.sub(r'\d+', '', parts[1])
+                            else:
+                                code = re.sub(r'\d+', '', parts[0])
+
+                            if 'BT' in column or 'TES' in column:
+                                ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
+                                has_secondary_y_axis = True
+                                ax2.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                            else:
+                                if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
+                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                else:
+                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, color= color_dict[code])
+
+                if not plot_with_info:
+                    ax.axis('off')
+                    continue
+
+                # Set y-limits to match both y-axes
+                if has_secondary_y_axis:
+                    # Get y-limits of both axes
+                    y_limits = ax.get_ylim()
+                    y2_limits = ax2.get_ylim()
+                    # Determine the new y-limits based on the maximum range
+                    new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
+                    # Set new y-limits for both axes
+                    ax.set_ylim(new_y_limits)
+                    ax2.set_ylim(new_y_limits)
+
+                # Add legends
+                if has_secondary_y_axis:
+                    lines, labels = ax.get_legend_handles_labels()
+                    lines2, labels2 = ax2.get_legend_handles_labels()
+                    ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
+                    ax2.set_ylabel('Storage State of Charge [kWh]')
+                else:
+                    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
+
+                ax.set_title(f'{cat.capitalize()} profiles')
+                ax.set_xlabel('Hours')
                 ax.set_ylabel('Demand and production [kWh]')
+
             i += 1
 
         # Centered title
@@ -384,6 +424,113 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
             os.makedirs(output_path)
         plot_file_path = os.path.join(output_path, f'Line_plot_{system}_{scenario}.png')
         plt.savefig(plot_file_path)
+
+def yearly_profile_plot(base_path, carriers_directory, systems, output_path, scenario, availability):
+    categories = {
+        'cooling': 'T10W',
+        'electricity': 'E230AC',
+        'heat_release': ['T100A', 'T25A', 'T30W', 'T27LW', 'T27GW', 'T27SW'],
+        'heat_production': 'T100W'
+    }
+
+    color_dict = {
+        'CH': 'blue', 'ACH': 'red', 'HEXSW': 'green', 'HEXGW': 'green',
+        'HEXLW': 'green', 'TES': 'purple', 'PV': 'darkorange', 'SC': 'brown',
+        'BT': 'darkred', 'FU': 'gray', 'OEHR': 'gray', 'CCGT': 'gray',
+        'BO': 'black', 'CT': 'cyan', 'demand': 'lime', 'bought': 'olive',
+        'sold': 'darkslateblue'
+    }
+
+    for system in systems:
+        file_path = os.path.join(base_path, system, carriers_directory)
+
+        # Check if the path exists
+        if not os.path.exists(file_path):
+            print(f"Path {file_path} does not exist.")
+            return
+
+        combined_df = combine_excel_sheets(file_path)
+        # Preprocessing of data before plotting
+        combined_df = line_plot_dataframe_preprocessing(combined_df, hours_to_plot=8760)
+
+        daily_means, daily_stds = compute_mean_and_std(combined_df)
+
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        axes = axes.flatten()
+        i = 0
+
+        for cat, carrier in categories.items():
+            ax = axes[i]
+            plot_with_info = False
+
+            if availability == 'Elec_renewables' and cat == 'heat_production':
+                ax.axis('off')  # Turn off the axis for the unused subplot
+            else:
+                has_secondary_y_axis = False
+
+                for column in combined_df.columns:
+                    for car in carrier if isinstance(carrier, list) else [carrier]:
+                        if car in column:
+                            plot_with_info = True
+                            parts = column.split('_')
+                            if parts[0] == 'E230AC':
+                                code = re.sub(r'\d+', '', parts[1])
+                            else:
+                                code = re.sub(r'\d+', '', parts[0])
+
+                            if 'BT' in column or 'TES' in column:
+                                ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
+                                has_secondary_y_axis = True
+                                ax2.plot(range(24), daily_means[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                            else:
+                                if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
+                                    ax.plot(range(24), daily_means[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                else:
+                                    ax.plot(range(24), daily_means[column], label=column, linewidth=2, color=color_dict[code])
+
+                            ax.fill_between(range(24), (daily_means[column] - daily_stds[column]).clip(lower=0),
+                                            daily_means[column] + daily_stds[column], color=color_dict[code], alpha=0.3)
+
+                if not plot_with_info:
+                    ax.axis('off')
+                    continue
+
+                # Set y-limits to match both y-axes
+                if has_secondary_y_axis:
+                    # Get y-limits of both axes
+                    y_limits = ax.get_ylim()
+                    y2_limits = ax2.get_ylim()
+                    # Determine the new y-limits based on the maximum range
+                    new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
+                    # Set new y-limits for both axes
+                    ax.set_ylim(new_y_limits)
+                    ax2.set_ylim(new_y_limits)
+
+                # Add legends
+                if has_secondary_y_axis:
+                    lines, labels = ax.get_legend_handles_labels()
+                    lines2, labels2 = ax2.get_legend_handles_labels()
+                    ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1),
+                              ncol=3, fontsize='small', frameon=False)
+                    ax2.set_ylabel('Storage State of Charge [kWh]')
+                else:
+                    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small',
+                              frameon=False)
+
+                ax.set_title(f'{cat.capitalize()} profiles')
+                ax.set_xlabel('Hours')
+                ax.set_ylabel('Demand and production [kWh]')
+            i += 1
+
+        fig.suptitle(f'Mean and Standard deviation Profile Analysis for {system} in scenario {scenario}', fontsize=16)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        fig.subplots_adjust(top=0.9, bottom=0.15)
+
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        plot_file_path = os.path.join(output_path, f'Mean_Std_{system}_{scenario}.png')
+        plt.savefig(plot_file_path)
+        plt.close('all')
 
 def plot_clusters(X_scaled, labels, medoids, path):
 
