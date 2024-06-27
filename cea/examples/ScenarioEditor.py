@@ -3,6 +3,7 @@ import os
 import shutil
 import re
 
+
 def create_folders_with_format(source_folder1, source_folder2, destination_path, R_range, year_range, sia_range, s_values,
                                total_folders,SubFolderName1,SubFolderName2):
     folders_created = 0
@@ -89,25 +90,21 @@ def copy_typology_files(source_folder, destination_path, R_range, year_range, s_
             print(f"Skipping file: {filename} as it does not meet the criteria.")
 
 
-def copy_f(source_folder, destination_path, FolderName, year, sia):
-    # Find all folders in the source folder
-    for root, dirs, files in os.walk(source_folder):
-        # Check if the current folder matches the FolderName
-        if os.path.basename(root) == FolderName:
-            # Check if the year and sia match the input
-            if str(year) in root and str(sia) in root:
-                # Find corresponding destination folder based on year and sia
-                dest_folder_name = os.path.basename(root)
-                dest_folder_path = os.path.join(destination_path, dest_folder_name)
-
-                # Create subfolder "input" and copy contents
-                input_folder = os.path.join(dest_folder_path, "input", FolderName)
-                os.makedirs(input_folder, exist_ok=True)
-                for file in files:
-                    src_file = os.path.join(root, file)
-                    dest_file = os.path.join(input_folder, file)
-                    shutil.copy(src_file, dest_file)
-                print(f"Files copied to {input_folder}")
+def copy_database(source_folder, destination_path, year, total_folders, SubFolderName5):
+    folders_created = 0
+    for folder_name in os.listdir(destination_path):
+        folder_path = os.path.join(destination_path, folder_name)
+        if os.path.isdir(folder_path) and str(year) in folder_name:
+            destination_subfolder = os.path.join(folder_path, "input", SubFolderName5)
+            os.makedirs(destination_subfolder, exist_ok=True)
+            for filename in os.listdir(source_folder):
+                if str(year) in filename and "sia" in filename:
+                    source_file = os.path.join(source_folder, filename)
+                    destination_file = os.path.join(destination_subfolder, os.path.basename(filename))
+                    shutil.copy(source_file, destination_file)
+                    folders_created += 1
+                    if folders_created >= total_folders:
+                        return
 
 
 
@@ -124,7 +121,7 @@ source_Geo = r"C:\Users\mmeshkin\Documents\Speed2Zero\Code_Input_Output\Python_A
 source_Terrain= r"C:\Users\mmeshkin\Documents\Speed2Zero\Code_Input_Output\Python_Automated_inputs\inputs\topography"
 source_Weather= r"C:\Users\mmeshkin\Documents\Speed2Zero\Code_Input_Output\Python_Automated_inputs\inputs\weather"
 source_typology= r"C:\Users\mmeshkin\Documents\Speed2Zero\Code_Input_Output\Python_Automated_inputs\Typology_AllRates"
-source_technology= r"C:\Users\mmeshkin\Documents\CEA_Dataset_pool"
+source_technology= r"C:\Users\mmeshkin\Documents\CEA_Dataset_pool\New_CH_2040_SIA380"
 
 SubFolderName1= "building-geometry"
 SubFolderName2= "topography"
@@ -139,7 +136,4 @@ SubFolderName5 = "technology"
 
 # copy_weather_files(source_Weather, destination_path, 2040, total_folders, SubFolderName4) # Repeat this code for each year seperatly
 
-copy_f(source_technology, destination_path, Database_Folder, 2040, 380)
-
-
-
+copy_database(source_technology, destination_path, 2040, total_folders, SubFolderName5)
