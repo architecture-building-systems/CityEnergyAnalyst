@@ -24,24 +24,6 @@ router = APIRouter()
 # PATH_REGEX = r'(^[a-zA-Z]:\\[\\\S|*\S]?.*$)|(^(/[^/ ]*)+/?$)'
 
 
-# PROJECT_PATH_MODEL = api.model('Project Path', {
-#     'project': fields.String(description='Path of Project'),
-# })
-#
-# SCENARIO_PATH_MODEL = api.inherit('Scenario Path', PROJECT_PATH_MODEL, {
-#     'scenario_name': fields.String(description='Name of Scenario')
-# })
-#
-# PROJECT_MODEL = api.inherit('Project', SCENARIO_PATH_MODEL, {
-#     'project_name': fields.String(description='Name of Project'),
-#     'scenarios_list': fields.List(fields.String, description='List of Scenarios found in Project')
-# })
-#
-# NEW_PROJECT_MODEL = api.model('New Project', {
-#     'project_name': fields.String(description='Name of Project'),
-#     'project_root': fields.String(description='Root path of Project')
-# })
-
 class ScenarioPath(BaseModel):
     project: str
     scenario_name: str

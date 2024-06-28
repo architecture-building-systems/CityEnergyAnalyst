@@ -1,6 +1,9 @@
-from typing import Dict, Any
+from collections import defaultdict
+from itertools import groupby
+from typing import Dict, Any, List
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 import cea.config
 import cea.scripts
@@ -10,49 +13,51 @@ from cea.interfaces.dashboard.dependencies import CEAConfig
 router = APIRouter()
 
 
-# TOOL_DESCRIPTION_MODEL = api.model('Tool', {
-#     'label': fields.String(description='Name of tool'),
-#     'description': fields.String(description='Description of tool')
-# })
-#
-# TOOL_LIST = api.model('ToolList', {'tools': fields.List})
+class ToolDescription(BaseModel):
+    name: str
+    label: str
+    description: str
+
+
+class ToolProperties(ToolDescription):
+    category: str
+    categorical_parameters: Dict[str, List[Dict]]
+    parameters: List[Dict]
 
 
 @router.get('/')
-async def get_tool_list(config: CEAConfig):
-    from itertools import groupby
-
+async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
     tools = cea.scripts.for_interface('dashboard', plugins=config.plugins)
     result = dict()
     for category, group in groupby(tools, lambda t: t.category):
         result[category] = [
-            {'name': t.name, 'label': t.label, 'description': t.description} for t in group]
-
+            ToolDescription(name=t.name, label=t.label, description=t.description) for t in group
+        ]
     return result
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str):
+async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
     parameters = []
-    categories = {}
+    categories = defaultdict(list)
     for _, parameter in config.matching_parameters(script.parameters):
-        if parameter.category:
-            if parameter.category not in categories:
-                categories[parameter.category] = []
-            categories[parameter.category].append(
-                deconstruct_parameters(parameter, config))
-        else:
-            parameters.append(deconstruct_parameters(parameter, config))
+        parameter_dict = deconstruct_parameters(parameter, config)
 
-    out = {
-        'category': script.category,
-        'label': script.label,
-        'description': script.description,
-        'parameters': parameters,
-        'categorical_parameters': categories,
-    }
+        if parameter.category:
+            categories[parameter.category].append(parameter_dict)
+        else:
+            parameters.append(parameter_dict)
+
+    out = ToolProperties(
+        name=tool_name,
+        label=script.label,
+        description=script.description,
+        category=script.category,
+        categorical_parameters=categories,
+        parameters=parameters,
+    )
 
     return out
 
