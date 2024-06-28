@@ -15,7 +15,7 @@ from staticmap import StaticMap, Polygon
 import cea.config
 import cea.api
 import cea.inputlocator
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAConfigSaveFunc
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.plots.colors import color_to_rgb
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -97,7 +97,7 @@ async def create_new_project(new_project: NewProject):
 
 
 @router.put('/')
-async def update_project(config: CEAConfig, save_func: CEAConfigSaveFunc, scenario_path: ScenarioPath):
+async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
     """
@@ -109,8 +109,7 @@ async def update_project(config: CEAConfig, save_func: CEAConfigSaveFunc, scenar
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
-            await save_func(config)
-            config.save()
+            await config.save()
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
             raise HTTPException(
@@ -252,7 +251,7 @@ async def get(scenario: str):
 
 
 @router.put('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
-async def put(config: CEAConfig, save_func: CEAConfigSaveFunc, scenario: str, payload: Dict[str, Any]):
+async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
     scenario_path = os.path.join(config.project, scenario)
     new_scenario_name = payload.get('name')
@@ -262,8 +261,7 @@ async def put(config: CEAConfig, save_func: CEAConfigSaveFunc, scenario: str, pa
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
-                await save_func(config)
-                config.save()
+                await config.save()
             return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(
