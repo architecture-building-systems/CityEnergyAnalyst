@@ -1,5 +1,4 @@
 import os
-from collections import OrderedDict
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
@@ -22,34 +21,33 @@ DATABASES_SCHEMA_KEYS = {
 }
 
 
-# FIXME: Using OrderedDict here due to Python2 unordered dict insertion, change when using Python3
 def database_to_dict(db_path):
-    out = OrderedDict()
+    out = dict()
     xls = pd.ExcelFile(db_path)
     for sheet in xls.sheet_names:
         df = xls.parse(sheet, keep_default_na=False)
-        out[sheet] = df.to_dict(orient='records', into=OrderedDict)
+        out[sheet] = df.to_dict(orient='records')
     return out
 
 
 def schedule_to_dict(schedule_path):
-    out = OrderedDict()
+    out = dict()
     schedule_df = schedule_to_dataframe(schedule_path)
     for df_name, df in schedule_df.items():
-        out[df_name] = df.to_dict(orient='records', into=OrderedDict)
+        out[df_name] = df.to_dict(orient='records')
     return out
 
 
 def read_all_databases(database_path):
-    out = OrderedDict()
+    out = dict()
     db_info = get_database_tree(database_path)
     for category in db_info['categories'].keys():
-        out[category] = OrderedDict()
+        out[category] = dict()
         for db_name in db_info['categories'][category]['databases']:
             db_files = db_info['databases'][db_name]['files']
             if db_name == 'USE_TYPES':
-                out[category][db_name] = OrderedDict()
-                out[category][db_name]['SCHEDULES'] = OrderedDict()
+                out[category][db_name] = dict()
+                out[category][db_name]['SCHEDULES'] = dict()
                 for db_file in db_files:
                     # Use type property file
                     if db_file['name'] == 'USE_TYPE_PROPERTIES':
