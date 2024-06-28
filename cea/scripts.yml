@@ -102,10 +102,8 @@ Demand forecasting:
                  'general:debug',
                  schedule-maker]
     input-files:
-      - [get_database_envelope_systems]
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_terrain]
       - [get_weather_file]
 
   - name: demand
