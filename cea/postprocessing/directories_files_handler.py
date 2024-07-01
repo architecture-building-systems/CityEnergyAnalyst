@@ -144,6 +144,7 @@ def process_energy_system_data(main_directory, selected_systems, filename_struct
                 temp_df['Availability'] = 'No_renewables'
 
         # Create a DataFrame with the components as columns and the system name as the index
+        temp_df = merge_pv_columns(temp_df)
         if selected_systems_structure.empty:
             selected_systems_structure = temp_df
         else:
@@ -218,3 +219,16 @@ def compute_mean_and_std(df):
         std_df[column] = daily_profiles_df.std(ddof=0, axis=1)
 
     return mean_df, std_df
+
+def merge_pv_columns(df):
+    # Check if PV1, PV2, PV3 columns exist
+    pv_columns = ['PV1_Photovoltaic Panels', 'PV2_Photovoltaic Panels', 'PV3_Photovoltaic Panels']
+    existing_pv_columns = [col for col in pv_columns if col in df.columns]
+
+    # Create a new column 'PV' with summed capacities
+    df['PV_Photovoltaic Panels'] = df[existing_pv_columns].sum(axis=1)
+
+    # Drop the old PV columns
+    df = df.drop(columns=existing_pv_columns)
+
+    return df

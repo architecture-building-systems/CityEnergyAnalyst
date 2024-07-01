@@ -28,12 +28,20 @@ def generate_and_save_plots_separated(dataframes, plots_path):
             plt.close()
 
 def generate_and_save_plots(dataframes, plots_path):
+
+    dataframes = dataframes.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                                                              'System_Energy_Demand_kWh': 'Energy_Demand',
+                                                              'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                                                              'Cost_USD': 'Cost'})
+
     # Determine the number of columns to plot (excluding 'Supply_System')
     columns_to_plot = [col for col in dataframes.columns if col != 'Supply_System']
     df_percentage = calculate_percentage_change(dataframes)
 
     # Create a 2x2 grid for subplots
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 10))
+
+    unit_dict = {'Heat_Emissions': 'GWh', 'Energy_Demand': 'GWh', 'GHG_Emissions': 'ktonCO2', 'Cost': 'Mln USD'}
 
     # Flatten the axes array for easy indexing
     axes = axes.flatten()
@@ -46,8 +54,8 @@ def generate_and_save_plots(dataframes, plots_path):
 
     for idx, column in enumerate(columns_to_plot):
         ax = axes[idx]
-        base_value = base_case[column]
-        values = dataframes[column]
+        base_value = base_case[column] / 1e6
+        values = dataframes[column] / 1e6
         font_size = 10 - len(values) * 0.3
 
         # Plot the base part of each bar
@@ -65,7 +73,7 @@ def generate_and_save_plots(dataframes, plots_path):
             elif value < 0:
                 ax.text(i, 0, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=font_size)
 
-        ax.set_ylabel(column)
+        ax.set_ylabel(f'{column} [{unit_dict[column]}]')
         ax.set_xlabel('Supply System')
         ax.set_title(column)
         ax.set_xticks(range(len(dataframes.index)))
@@ -76,6 +84,7 @@ def generate_and_save_plots(dataframes, plots_path):
         fig.delaxes(axes[idx])
 
     plt.tight_layout()
+    plt.title('Comparison of Objective Functions')
 
     # Save the combined plot
     plot_file_path = os.path.join(plots_path, "combined_plots.png")
@@ -161,6 +170,75 @@ def stacked_bar_chart(df, path, scenario):
     # Close all figures at once
     plt.close('all')
 
+def stellar_chart(df, path, scenario):
+    df = df.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                            'System_Energy_Demand_kWh': 'Energy_Demand',
+                            'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                            'Cost_USD': 'Cost'})
+
+    # Set the global figure size
+    plt.rcParams['figure.figsize'] = (12, 8)
+
+    # Set the global font size for x and y axis labels
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
+
+    selection = df[df['Scenario'] == scenario]
+
+    scenario_selection = selection.loc[:, (selection != 0).any(axis=0)]
+    labels = scenario_selection.columns[3:].tolist()
+    for label in labels:
+        parts = label.split('_')
+        labels[labels.index(label)] = parts[0]
+    numeric_values = scenario_selection.iloc[:, 3:] / 1000  # Scale down from kW to MW
+    num_vars = len(labels)
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    angles += angles[:1]
+
+    for availability in selection['Availability'].unique():
+        scenario_avail_selection = scenario_selection[scenario_selection['Availability'] == availability]
+
+        for i in range(len(scenario_avail_selection)):
+            fig, ax = plt.subplots(subplot_kw=dict(polar=True))
+
+            values = numeric_values.iloc[i].values.flatten().tolist()
+            values += values[:1]
+
+            max_value = max(values[:-1])  # Exclude the repeated first point
+            max_limit = max_value * 1.15  # Slightly higher than the highest value
+
+            # Adjust radial limits
+            ax.set_ylim(-max_value * 0.15, max_limit)
+
+            ax.set_yticklabels([])
+            ax.set_xticks(angles[:-1])
+            ax.set_xticklabels(labels, weight='bold')
+
+            for j, (angle, value) in enumerate(zip(angles, values)):
+                if j < len(values) - 1:  # Exclude the repeated first point
+                    ax.plot([angle - angles[1] / 2, angle], [0, value], color='red', linewidth=2)
+                    ax.plot([angle + angles[1] / 2, angle], [0, value], color='red', linewidth=2)
+                    ax.fill_between([angle - angles[1] / 2, angle, angle + angles[1] / 2], [0, value, 0], color='red', alpha=0.25)
+                    if value != 0:
+                        ax.text(angle, value, f'{value:.2f}', horizontalalignment='center', size=9, color='white',
+                                weight='semibold', backgroundcolor='black',
+                                bbox=dict(boxstyle="circle,pad=0.1", edgecolor='none', facecolor='darkred'))
+                    else:
+                        ax.text(angle, value, '0', horizontalalignment='center', size=5, color='white',
+                                weight='semibold', backgroundcolor='white',
+                                bbox=dict(boxstyle="circle,pad=0.1", edgecolor='red', facecolor='white'))
+            system_name = scenario_avail_selection.iloc[i]['System_name']
+            plt.title(f'Stellar Chart {system_name} - {scenario} - {availability}\nValues expressed in MW', pad=30)
+            plt.xticks(rotation=0)
+
+            plot_file_path = os.path.join(path, scenario, 'Stellar_charts_systems')
+            if not os.path.exists(plot_file_path):
+                os.makedirs(plot_file_path)
+            plt.savefig(os.path.join(plot_file_path, f"Stellar_chart_{availability}_{system_name}.png"))
+
+            # Close the figure to avoid memory issues
+            plt.close(fig)
+
 def radar_chart(df, path, scenario):
 
     df = df.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
@@ -212,6 +290,15 @@ def radar_chart(df, path, scenario):
 def scatter_plot(df_base, df_what_if, path, scenario):
 
     # Assuming the 4 columns of interest are named consistently in both dataframes
+    df_base = df_base.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                                                              'System_Energy_Demand_kWh': 'Energy_Demand',
+                                                              'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                                                              'Cost_USD': 'Cost'})
+    df_what_if = df_what_if.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                                                              'System_Energy_Demand_kWh': 'Energy_Demand',
+                                                              'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                                                              'Cost_USD': 'Cost'})
+    Unit_dict = {'Heat_Emissions': 'GWh', 'Energy_Demand': 'GWh', 'GHG_Emissions': 'ktonCO2', 'Cost': 'Mln USD'}
     objective_columns = df_base.columns[2:]
 
     # Set the global figure size
@@ -247,14 +334,14 @@ def scatter_plot(df_base, df_what_if, path, scenario):
 
     for i, column in enumerate(objective_columns):
         ax = axes[i // 2, i % 2]
-        ax.scatter(0, scenario_selection_base[column], s=100, color='blue', label='Base Case')
+        ax.scatter(0, scenario_selection_base[column]/1e6, s=100, color='blue', label='Base Case')
         for j in range(len(scenario_selection_what_if[column])):
-            ax.scatter(scenario_selection_what_if.index[j] + 1, scenario_selection_what_if[column][j],
+            ax.scatter(scenario_selection_what_if.index[j] + 1, scenario_selection_what_if[column][j] / 1e6,
                        s=100, color=colors[j], label=multi_line_labels[j],
                        marker=marker_shape[scenario_selection_what_if['Availability'][j]])
 
         ax.set_xlabel('Index')
-        ax.set_ylabel(column)
+        ax.set_ylabel(f'{column} [{Unit_dict[column]}]')
         ax.set_title(f'Scatter Plot of {column}')
 
         # Collect handles and labels
@@ -303,7 +390,8 @@ def heatmap(df, path, scenario):
     plt.figure()
     scenario_selection = df[df['Scenario'] == scenario]
     numeric_values = scenario_selection.iloc[:, 3:]
-    multi_line_labels = [f'{scena}\n{aval}' for aval, scena in zip(scenario_selection['Availability'], scenario_selection['Supply_System'])]
+    multi_line_labels = [f'{scena}\n{aval}' for aval, scena in
+                         zip(scenario_selection['Availability'], scenario_selection['Supply_System'])]
     annot = numeric_values.applymap(lambda x: f'{x:.1f}%')
     sns.heatmap(numeric_values, annot=annot, fmt='', cmap='viridis', cbar=True)
 
@@ -377,12 +465,12 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
                             if 'BT' in column or 'TES' in column:
                                 ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
                                 has_secondary_y_axis = True
-                                ax2.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                ax2.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                             else:
                                 if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
-                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                                 else:
-                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column], label=column, linewidth=2, color= color_dict[code])
+                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, color= color_dict[code])
 
                 if not plot_with_info:
                     ax.axis('off')
@@ -404,13 +492,13 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
                     lines, labels = ax.get_legend_handles_labels()
                     lines2, labels2 = ax2.get_legend_handles_labels()
                     ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
-                    ax2.set_ylabel('Storage State of Charge [kWh]')
+                    ax2.set_ylabel('Storage State of Charge [MWh]')
                 else:
                     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
 
                 ax.set_title(f'{cat.capitalize()} profiles')
                 ax.set_xlabel('Hours')
-                ax.set_ylabel('Demand and production [kWh]')
+                ax.set_ylabel('Energy Carriers Daily profile [MWh]')
 
             i += 1
 
@@ -481,15 +569,15 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
                             if 'BT' in column or 'TES' in column:
                                 ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
                                 has_secondary_y_axis = True
-                                ax2.plot(range(24), daily_means[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                ax2.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                             else:
                                 if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
-                                    ax.plot(range(24), daily_means[column], label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                                    ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                                 else:
-                                    ax.plot(range(24), daily_means[column], label=column, linewidth=2, color=color_dict[code])
+                                    ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, color=color_dict[code])
 
-                            ax.fill_between(range(24), (daily_means[column] - daily_stds[column]).clip(lower=0),
-                                            daily_means[column] + daily_stds[column], color=color_dict[code], alpha=0.3)
+                            ax.fill_between(range(24), ((daily_means[column] - daily_stds[column]) / 1000).clip(lower=0),
+                                            (daily_means[column] + daily_stds[column]) / 1000, color=color_dict[code], alpha=0.3)
 
                 if not plot_with_info:
                     ax.axis('off')
