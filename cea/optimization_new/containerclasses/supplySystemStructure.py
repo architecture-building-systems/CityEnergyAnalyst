@@ -269,14 +269,14 @@ class SupplySystemStructure(object):
 
         # Prioritise the water-based heat sinks over the cooling towers in the priority order
 
-        if ('heat_sink' in optimisation_config.heat_rejection_components and
-                optimisation_config.heat_rejection_components.index('heat_sink') != 0):
+        if ('HEAT_SINK' in optimisation_config.heat_rejection_components and
+                optimisation_config.heat_rejection_components.index('HEAT_SINK') != 0):
 
             technology_list = optimisation_config.heat_rejection_components.copy()
             # Remove 'heat_sink' from its current position
-            technology_list.remove('heat_sink')
+            technology_list.remove('HEAT_SINK')
             # Insert 'heat_sink' at the beginning of the list
-            technology_list.insert(0, 'heat_sink')
+            technology_list.insert(0, 'HEAT_SINK')
 
             for technology in technology_list:
                 active_components_list.append(ActiveComponent.get_subclass(technology))
