@@ -333,8 +333,8 @@ class CapacityIndicatorVector(object):
 
         non_zero_ci_values_in_solar = {self.capacity_indicators[i].code: ci_value.value
                                        for i, ci_value in enumerate(capacity_indicator_values)
-                                       if ('PV' in self.capacity_indicators[i].code) or
-                                       ('SC' in self.capacity_indicators[i].code) and (ci_value.value > 0)}
+                                       if (('PV' in self.capacity_indicators[i].code) or
+                                       ('SC' in self.capacity_indicators[i].code)) and (ci_value.value > 0)}
         upper_bound = 1
 
         PV_components = [component for component, value in non_zero_ci_values_in_solar.items()
@@ -364,7 +364,7 @@ class CapacityIndicatorVector(object):
                 # Use the random number to scale the capacity of the selected PV component and allow the optimizer to use
                 # the capacities of the solar components which are smaller than the maximum capacity
 
-                random_number = random.uniform(0.7, 0.9)
+                random_number = round(random.uniform(0.7, 0.9), 2)
 
                 new_capacity_indicator_values = [ci_value
                                                  if (self.capacity_indicators[i].code != PV_component)
@@ -394,7 +394,7 @@ class CapacityIndicatorVector(object):
                 # In case one of the two technologies are alone, scale up in order to have a higher exploitation of
                 # solar power
 
-                random_number = random.uniform(0.7, 0.9)
+                random_number = round(random.uniform(0.7, 0.9), 2)
 
                 new_capacity_indicator_values = [ci_value
                                                  if (self.capacity_indicators[i].code != SC_component)
@@ -421,7 +421,7 @@ class CapacityIndicatorVector(object):
                                                  else ci_value.value
                                                  for i, ci_value in enumerate(capacity_indicator_values)]
 
-                random_number = random.uniform(0.7, 0.9)
+                random_number = round(random.uniform(0.7, 0.9), 2)
                 for i, ci_value in enumerate(new_capacity_indicator_values):
                     if self.capacity_indicators[i].code == PV_component:
                         new_capacity_indicator_values[i] = random_number
@@ -432,7 +432,7 @@ class CapacityIndicatorVector(object):
                                                  else ci_value.value
                                                  for i, ci_value in enumerate(capacity_indicator_values)]
 
-                random_number = random.uniform(0.7, 0.9)
+                random_number = round(random.uniform(0.7, 0.9), 2)
                 for i, ci_value in enumerate(new_capacity_indicator_values):
                     if self.capacity_indicators[i].code == SC_component:
                         new_capacity_indicator_values[i] = random_number
