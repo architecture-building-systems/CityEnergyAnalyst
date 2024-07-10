@@ -60,6 +60,13 @@ jobs:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Package CEA GUI
         shell: bash -el {0}
         env:
