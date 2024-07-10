@@ -188,10 +188,12 @@ class Domain(object):
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = set(toolbox.population(n=algorithm.population))
+        population = set(toolbox.population(n = algorithm.population - 1))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
+        optimal_supply_system_combinations[self.initial_energy_system.connectivity.as_str()] = \
+            self.initial_energy_system.best_supsys_combinations
 
         # Consolidate certain objects in the child processes' memory and make them available to the main process
         for non_dominated_front in non_dominated_fronts:

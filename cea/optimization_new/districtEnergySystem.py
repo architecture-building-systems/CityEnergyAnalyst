@@ -340,6 +340,8 @@ class DistrictEnergySystem(object):
             designated_supply_system.evaluate()
             self.supply_systems[network.identifier] = designated_supply_system
 
+        self.combine_supply_systems_and_networks()
+
         return self.supply_systems
 
     def generate_optimal_supply_systems(self):
