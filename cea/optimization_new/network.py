@@ -28,6 +28,7 @@ import networkx as nx
 from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely.geometry import LineString, Point
 import wntr
+import random
 
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
@@ -38,7 +39,6 @@ from cea.technologies.thermal_network.simplified_thermal_network import calculat
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
-from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
 from cea.optimization_new.building import Building
 
 class Network(object):
@@ -58,15 +58,16 @@ class Network(object):
                               'peak_load_percentage': 0.0,
                               'network_lifetime_yrs': 20}
 
-    def __init__(self,  connected_buildings, network_id, domain_connectivity=None):
+    def __init__(self,  connected_buildings, network_id):
         self.identifier = network_id
         self.connected_buildings = connected_buildings
+        self.plant_terminal = None
+        self.network_graph = nx.Graph()
         self.network_edges = Gdf()
         self.network_nodes = Gdf()
         self.network_piping = pd.DataFrame()
         self.network_losses = pd.Series()
         self.annual_piping_cost = 0.0
-        self.connectivity = domain_connectivity
 
     @property
     def connected_buildings(self):
@@ -86,34 +87,42 @@ class Network(object):
         else:
             raise ValueError("connected_buildings must be a list of building names or Building-objects")
 
-    @property
-    def connectivity(self):
-        return self._connectivity
-
-    @connectivity.setter
-    def connectivity(self, new_connectivity:ConnectivityVector):
+    @staticmethod
+    def build_network(network_id, building_ids, connectivity, return_graph=False, generate_dataframes=False):
         """
-        Sets the connectivity of the domain that the network finds itself in.
+        Build a network for a given network_id and connectivity of the domain. This means creating a graph that connects
+        all buildings in a designated network in the most efficient possible manner (i.e. Steiner tree).
 
-        param new_connectivity: <ConnectivityVector>-object
+        :param network_id: ID of the network to be built
+        :type network_id: int
+        :building_ids: list of building identifiers in the domain
+        :type building_ids: list of str
+        :connectivity: connectivity vector holding information about the network connections of the buildings
+        :type connectivity: <ConnectivityVector>-object or list of <Connection>-objects
+        :return_graph: boolean indicator for whether the network graph should be returned
+        :type return_graph: bool
+        :generate_dataframes: boolean indicator for whether dataframes with explicit information about graph nodes and
+                              edges should be created
+        :type generate_dataframes: bool
         """
-        if new_connectivity is None:
-            self._connectivity = self.derive_connectivity_from_buildings()
-        elif isinstance(new_connectivity, ConnectivityVector):
-            self._connectivity = new_connectivity
+        # identify the buildings in the domain that are connected to the network
+        if isinstance(connectivity, list):
+            buildings_are_connected_to_network = [connection.network_connection == network_id
+                                                  for connection in connectivity]
         else:
-            raise ValueError("connectivity must be a ConnectivityVector-object or None")
+            buildings_are_connected_to_network = [connection == network_id for connection in connectivity]
+        connected_buildings = [building_id for [building_id, is_connected]
+                               in zip(building_ids, buildings_are_connected_to_network)
+                               if is_connected]
 
-    def derive_connectivity_from_buildings(self):
-        """
-        Derives the connectivity of the network from the connected buildings.
-        """
-        connections_list = [Connection(1, building_id) if building_id in self.connected_buildings
-                            else Connection(0, building_id)
-                            for building_id in self._domain_potential_network_terminals_df['building']]
-        self.connectivity = ConnectivityVector(connections_list)
+        # create a network identifier
+        full_network_identifier = 'N' + str(1000 + network_id)
 
-        return self.connectivity
+        # create the network object
+        network = Network(connected_buildings, full_network_identifier)
+        network.run_steiner_tree_optimisation(return_graph=return_graph, generate_graph_dataframes=generate_dataframes)
+
+        return network.network_graph if return_graph else network
 
     def generate_condensed_graph(self, method:str='remove_connector_nodes'):
         """
@@ -136,7 +145,7 @@ class Network(object):
         """
         # Generate the shortest network connecting the specified buildings, this network includes all relevant nodes of
         # the potential network graph (i.e. typically crossings in the roads network of the domain)
-        detailed_network = self.run_steiner_tree_optimisation(return_graph=True)
+        detailed_network = self.run_steiner_tree_optimisation(generate_graph_dataframes=False, return_graph=True)
 
         if method == 'remove_connector_nodes':
 
@@ -147,7 +156,7 @@ class Network(object):
 
                 # Create a copy of the network that can be modified while iterating over the nodes
                 # simply changing condensed_network itself would cause error `dictionary changed size during iteration`
-                modifiable_grpah = condensed_graph.copy()
+                modifiable_graph = condensed_graph.copy()
                 for node, degree in condensed_graph.degree():
 
                     if degree == 2:
@@ -166,10 +175,10 @@ class Network(object):
                                       + condensed_graph[node][node_1]['weight']
 
                         # Remove the node and add the new edge
-                        modifiable_grpah.remove_node(node)
-                        modifiable_grpah.add_edge(node_0, node_1, weight=edge_weight)
+                        modifiable_graph.remove_node(node)
+                        modifiable_graph.add_edge(node_0, node_1, weight=edge_weight)
 
-                condensed_graph = modifiable_grpah
+                condensed_graph = modifiable_graph
 
         elif method == 'shortest_path_between_buildings':
             # Calculate the shortest paths between all nodes in the detailed network
@@ -205,15 +214,13 @@ class Network(object):
         return condensed_graph
 
 
-    def run_steiner_tree_optimisation(self, allow_looped_networks=False, plant_terminal=None, return_graph=False):
+    def run_steiner_tree_optimisation(self, generate_graph_dataframes=True, return_graph=False):
         """
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
 
-        :param allow_looped_networks: indicator for whether looped networks can be built
-        :type allow_looped_networks: bool
-        :param plant_terminal: building name where plant should be built, plant is built next to the largest consumer otherwise
-        :type plant_terminal: str (e.g. 'B1082')
+        :param generate_graph_dataframes: indicator for whether the network graph dataframes should be generated
+        :type generate_graph_dataframes: bool
         :param return_graph: indicator for whether the complete network graph object should be returned
         :type return_graph: bool
         """
@@ -223,11 +230,11 @@ class Network(object):
 
         # calculate steiner spanning tree of undirected potential_network_graph
         try:
-            network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
+            self.network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
             self.network_edges = Gdf([[LineString([edge_start, edge_end]), data.get('weight')]
-                                      for edge_start, edge_end, data in network_graph.edges(data=True)],
+                                      for edge_start, edge_end, data in self.network_graph.edges(data=True)],
                                      columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
-            self.network_nodes = Gdf([Point(node) for node in network_graph.nodes()],
+            self.network_nodes = Gdf([Point(node) for node in self.network_graph.nodes()],
                                      columns=['geometry'], crs=Network._coordinate_reference_system)
         except Exception:
             raise ValueError('There was an error while creating the Steiner tree. '
@@ -236,9 +243,25 @@ class Network(object):
                              'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
                              'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
 
+        # complete edge and node dataframes with connected terminals and domain buildings
+        if generate_graph_dataframes:
+            self.complete_graph_dataframes(connected_terminals)
+
         # return unprocessed network graph, if requested
         if return_graph:
-            return network_graph
+            return self.network_graph
+
+    def complete_graph_dataframes(self,  connected_terminals, allow_looped_networks=False):
+        """
+        Completes the edge and node dataframes with the connected terminals and domain buildings.
+
+        :param connected_terminals: dataframe containing all connected terminals (buildings and plants)
+        :type connected_terminals: pd.DataFrame
+        :param allow_looped_networks: indicator for whether the network should close loops back where possible
+        :type allow_looped_networks: bool
+        """
+        # extract the coordinates of the connected terminals (i.e. building nodes)
+        connected_terminal_coord = connected_terminals['coordinates'].tolist()
 
         # build edge and node dataframes
         domain_buildings_list = self._domain_potential_network_terminals_df['building'].to_list()
@@ -246,17 +269,17 @@ class Network(object):
         self._complete_graph_dataframes(connected_terminal_coord,
                                         domain_buildings_list,
                                         domain_buildings_coordinates_list)
-        if plant_terminal is None:
+        if self.plant_terminal is None:
             max_demand = connected_terminals['demand'].max()
             building_anchor = connected_terminals['building'][connected_terminals['demand'] == max_demand].iloc[0]
         else:
-            building_anchor = plant_terminal
+            building_anchor = self.plant_terminal
         self._set_plant_next_to_building(building_anchor)
 
         if allow_looped_networks:
             # add loops to the network by connecting None nodes that exist in the potential network
             self.network_edges, self.network_nodes = add_loops_to_network(self._domain_potential_network_graph,
-                                                                          network_graph,
+                                                                          self.network_graph,
                                                                           self.network_edges,
                                                                           self.network_nodes,
                                                                           TYPE_MAT_DEFAULT,
@@ -265,7 +288,7 @@ class Network(object):
 
         return self.network_nodes, self.network_edges
 
-    def calculate_operational_conditions(self):
+    def calculate_operational_conditions(self, connectivity_string_for_files):
         """
         Calculate operational conditions for the network, i.e. mass flow rates for the network edges, pressure and
         thermal losses and derive the corresponding pipe types that need to be installed.
@@ -279,7 +302,7 @@ class Network(object):
         :return self.network_piping: aggregated length each pipe type installed in the network
         :rtype self.network_piping: pd.DataFrame
         """
-        wnm_results, wnm_pipe_diameters = self._run_water_network_model()
+        wnm_results, wnm_pipe_diameters = self._run_water_network_model(connectivity_string_for_files)
 
         # read pressure/hear losses per time-step for each pipe...
         # ...at the pipes
@@ -408,6 +431,110 @@ class Network(object):
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
 
         return Network._domain_potential_network_graph
+
+    @staticmethod
+    def identify_overlapping_networks(network_graphs):
+        """
+        Identify overlapping networks from a given set of network graphs.
+
+        :param network_graphs: A dictionary of network graphs.
+        :type network_graphs: dict of networkx.Graph objects with network IDs as keys.
+        """
+        overlapping_networks = {}
+        for network_id_1, network_graph_1 in network_graphs.items():
+            overlaps = {}
+            for network_id_2, network_graph_2 in network_graphs.items():
+                if network_id_1 != network_id_2:
+                    overlapping_nodes = set(network_graph_1.nodes()).intersection(
+                        set(network_graph_2.nodes()))
+                    if overlapping_nodes:
+                        overlaps[network_id_2] = overlapping_nodes
+            if overlaps:
+                overlapping_networks[network_id_1] = overlaps
+        return overlapping_networks
+
+    @staticmethod
+    def merge_networks(network_graphs, network_to_retain, networks_to_merge):
+        """
+        Merge networks into a single network. This method is set up for overlapping networks only and would
+        need to be modified for merging non-overlapping networks.
+
+        :param network_graphs: A dictionary of network graphs.
+        :type network_graphs: dict of networkx.Graph objects with network IDs as keys.
+        :param network_to_retain: The network ID to retain after merging.
+        :type network_to_retain: str
+        :param networks_to_merge: The network IDs to merge into the retained network.
+        :type networks_to_merge: list of str
+        """
+        for network_to_merge in networks_to_merge:
+            merged_network_graph = nx.compose(network_graphs[network_to_retain],
+                                              network_graphs[network_to_merge])
+            network_graphs[network_to_retain] = merged_network_graph
+            network_graphs.pop(network_to_merge)
+
+        return network_graphs
+
+    @staticmethod
+    def delete_networks(network_graphs, networks_to_delete):
+        """
+        Delete networks from a dictionary of network graphs.
+
+        :param network_graphs: A dictionary of network graphs.
+        :type network_graphs: dict of networkx.Graph objects with network IDs as keys.
+        :param networks_to_delete: The network IDs to delete.
+        :type networks_to_delete: list of str
+        """
+        for network_to_delete in networks_to_delete:
+            network_graphs.pop(network_to_delete)
+
+        return network_graphs
+
+    @staticmethod
+    def cut_networks_on_overlap(network_graphs, overlapping_networks, network_to_retain, building_nodes):
+        """
+        Based on a given group of network-graphs, cut all but the designated network wherever they overlap with the
+        designated network. After the cuts have been done select a random subgraph from the cut networks to retain.
+
+        Before the selection of subgraphs, if a given subgraph contains none or only a single building node, the
+        subgraph is preemptively discarded.
+
+        :param network_graphs: A dictionary of network graphs.
+        :type network_graphs: dict of networkx.Graph objects with network IDs as keys.
+        :param overlapping_networks: A dictionary listing which networks overlap with which and in which nodes.
+        :type overlapping_networks: dict of dicts - {network_id: {network_id: [overlapping_nodes]}}
+        :param network_to_retain: The network ID to retain after cutting.
+        :type network_to_retain: str
+        :param building_nodes: A dictionary of building nodes.
+        :type building_nodes: dict of {node_id: building_id}
+        """
+        # Identify the networks that need to be cut
+        networks_to_cut = list(overlapping_networks[network_to_retain].keys())
+
+        # For each network to cut:
+        for network_to_cut in networks_to_cut:
+            network_graph_copy = network_graphs[network_to_cut].copy()
+
+            # i. remove the overlapping nodes
+            network_graph_copy.remove_nodes_from(overlapping_networks[network_to_retain][network_to_cut])
+
+            # ii. identify the subgraphs that remain after the cut
+            components = nx.connected_components(network_graph_copy)
+            subgraphs = []
+            for component in components:
+                subgraph = network_graphs[network_to_cut].subgraph(component).copy()
+                building_nodes_in_subgraph = set(building_nodes.keys()).intersection(
+                    set(subgraph.nodes()))
+                # iii. eliminate subgraphs with no or only one building node
+                if len(building_nodes_in_subgraph) >= 2:
+                    subgraphs.append(subgraph)
+
+            # and iv. select a random subgraph to retain
+            if subgraphs:
+                network_graphs[network_to_cut] = random.choice(subgraphs)
+            else:
+                network_graphs.pop(network_to_cut)
+
+        return network_graphs
 
     @staticmethod
     def _configure_network_defaults(domain):
@@ -609,7 +736,7 @@ class Network(object):
                                crs=Network._coordinate_reference_system)
         self.network_edges = pd.concat([self.network_edges, plant_to_network])
 
-    def _run_water_network_model(self):
+    def _run_water_network_model(self, connectivity_string_for_files):
         """
         Run an epanet simulation by:
         I.  Use the information on the network's edges, nodes and required flow rates to set up an epanet water network.
@@ -628,7 +755,7 @@ class Network(object):
         thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            _file_location = os.path.join(tmpdir, f"{self.connectivity.as_str(for_filename=True)}_{self.identifier}")
+            _file_location = os.path.join(tmpdir, f"{connectivity_string_for_files}_{self.identifier}")
 
             # Create empty .inp file for WaterNetworkModel
             inp_file = f"{_file_location}.inp"

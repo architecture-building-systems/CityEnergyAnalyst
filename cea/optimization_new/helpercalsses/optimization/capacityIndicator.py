@@ -572,6 +572,8 @@ class CapacityIndicatorVectorMemory(object):
 
         :param max_system_demand: maximum supply system energy demand for any given time step
         :type max_system_demand: float
+        :param current_civ: the current capacity indicator vector
+        :type current_civ: <CapacityIndicatorVector>-object
         """
         diff_with_bracket_medians = [abs(max_system_demand - bracket_median)
                                      for bracket_median in self.best_capacity_indicator_vectors.keys()]

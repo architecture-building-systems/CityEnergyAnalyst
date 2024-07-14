@@ -207,15 +207,10 @@ class DistrictEnergySystem(object):
                                               in zip(building_ids, buildings_are_disconnected)
                                               if is_disconnected]
             else:
-                buildings_are_connected_to_network = [connection == network_id for connection in self.connectivity]
-                connected_buildings = [building_id for [building_id, is_connected]
-                                       in zip(building_ids, buildings_are_connected_to_network)
-                                       if is_connected]
-                full_network_identifier = 'N' + str(1000 + network_id)
-                network = Network(connected_buildings, full_network_identifier, domain_connectivity=self.connectivity)
-                network.run_steiner_tree_optimisation()
-                network.calculate_operational_conditions()
+                network = Network.build_network(network_id, building_ids, self.connectivity, generate_dataframes=True)
+                network.calculate_operational_conditions(self.connectivity.as_str(for_filename=True))
                 self.networks.append(network)
+
         return self.networks
 
     def aggregate_demand(self):
@@ -606,6 +601,7 @@ class DistrictEnergySystem(object):
         selection_algorithm = domain.config.optimization_new.networks_algorithm
         mutation_method = domain.config.optimization_new.networks_mutation_method
         crossover_method = domain.config.optimization_new.networks_crossover_method
+        oc_method = domain.config.optimization_new.networks_overlap_correction_method
         population_size = domain.config.optimization_new.ga_population_size
         number_of_generations = domain.config.optimization_new.ga_number_of_generations
         mut_prob = domain.config.optimization_new.ga_mutation_prob
@@ -620,4 +616,5 @@ class DistrictEnergySystem(object):
                                                                        number_of_generations=number_of_generations,
                                                                        mut_probability=mut_prob, cx_probability=cx_prob,
                                                                        mut_eta=mut_eta, parallelize=parallelize,
-                                                                       cores=cores)
+                                                                       cores=cores,
+                                                                       overlap_correction=oc_method)
