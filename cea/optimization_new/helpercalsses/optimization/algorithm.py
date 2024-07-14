@@ -25,13 +25,14 @@ class Algorithm(object):
 
 class GeneticAlgorithm(Algorithm):
 
-    def __init__(self, selection=None, mutation='UniformBounded', crossover='TwoPoint', population_size=None,
-                 number_of_generations=None, mut_probability=0.1, cx_probability=0.3, mut_eta=0.5, parallelize=True,
-                 cores=1):
+    def __init__(self, selection=None, mutation='UniformBounded', crossover='TwoPoint', overlap_correction=None,
+                 population_size=None, number_of_generations=None, mut_probability=0.1, cx_probability=0.3, mut_eta=0.5,
+                 parallelize=True, cores=1):
         self.nbr_objectives = len(Algorithm.objectives)
         self.selection = selection
         self.mutation = mutation
         self.crossover = crossover
+        self.overlap_correction = overlap_correction
 
         self.population = population_size
         self.generations_networks = number_of_generations
@@ -48,6 +49,20 @@ class GeneticAlgorithm(Algorithm):
         self.parallel_cores = cores
 
     @property
+    def overlap_correction(self):
+        return self._overlap_correction
+
+    @overlap_correction.setter
+    def overlap_correction(self, new_overlap_correction):
+        """
+        Make sure that if overlap correction is set to 'None' it is set to None and not a string
+        """
+        if new_overlap_correction == 'None':
+            self._overlap_correction = None
+        else:
+            self._overlap_correction = new_overlap_correction
+
+    @property
     def population(self):
         return self._population
 
@@ -59,10 +74,12 @@ class GeneticAlgorithm(Algorithm):
         if new_population_size:
             population = new_population_size
         elif self.selection == 'NSGAIII':
-            NOBJ = self.nbr_objectives
-            P = 12
-            H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
-            population = int(H + (4 - H % 4))
+            # Set population to be equal to the number of reference points suggested in the original NSGAIII paper
+            #   (Deb & Jain, 2016)
+            n_obj = self.nbr_objectives
+            p = 12
+            h = factorial(n_obj + p - 1) / (factorial(p) * factorial(n_obj - 1))
+            population = int(h + (4 - h % 4))
         elif not self.selection:
             population = 1
         else:

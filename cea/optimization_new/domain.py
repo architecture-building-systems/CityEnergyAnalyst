@@ -45,7 +45,7 @@ from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
 from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
-from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
+from cea.optimization_new.helpercalsses.optimization.tracker import OptimizationTracker
 from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
 from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
 
@@ -154,7 +154,7 @@ class Domain(object):
         if self.config.general.debug:
             nbr_networks = self.config.optimization_new.maximum_number_of_networks
             building_ids = [building.identifier for building in self.buildings]
-            tracker = optimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
+            tracker = OptimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
         else:
             tracker = None
 
@@ -173,6 +173,10 @@ class Domain(object):
         # Generate fully connected network as basis for the clustering algorithm
         full_network = Network(self.buildings, 'Nfull')
         full_network_graph = full_network.generate_condensed_graph()
+
+        # Set up overlapping network correction if necessary
+        if algorithm.overlap_correction:
+            ConnectivityVector.setup_overlap_correction(algorithm.overlap_correction, self.buildings)
 
         # Register genetic operators
         toolbox.register("generate", ConnectivityVector.generate)

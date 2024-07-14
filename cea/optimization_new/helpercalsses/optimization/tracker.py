@@ -20,7 +20,7 @@ __status__ = "Production"
 import pandas as pd
 
 
-class optimizationTracker(object):
+class OptimizationTracker(object):
 
     def __init__(self, objectives, nbr_networks, buildings_in_domain, debug_locator):
         self.objectives = objectives
