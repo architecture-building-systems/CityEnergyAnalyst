@@ -38,9 +38,9 @@ from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
-from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
+from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class DistrictEnergySystem(object):
@@ -601,7 +601,6 @@ class DistrictEnergySystem(object):
         selection_algorithm = domain.config.optimization_new.networks_algorithm
         mutation_method = domain.config.optimization_new.networks_mutation_method
         crossover_method = domain.config.optimization_new.networks_crossover_method
-        oc_method = domain.config.optimization_new.networks_overlap_correction_method
         population_size = domain.config.optimization_new.ga_population_size
         number_of_generations = domain.config.optimization_new.ga_number_of_generations
         mut_prob = domain.config.optimization_new.ga_mutation_prob
@@ -616,5 +615,4 @@ class DistrictEnergySystem(object):
                                                                        number_of_generations=number_of_generations,
                                                                        mut_probability=mut_prob, cx_probability=cx_prob,
                                                                        mut_eta=mut_eta, parallelize=parallelize,
-                                                                       cores=cores,
-                                                                       overlap_correction=oc_method)
+                                                                       cores=cores)

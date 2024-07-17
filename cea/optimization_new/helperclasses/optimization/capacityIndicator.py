@@ -31,7 +31,7 @@ import numpy as np
 
 from deap import tools
 
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
 
 
 class CapacityIndicator(object):

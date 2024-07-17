@@ -43,11 +43,12 @@ from cea.optimization_new.containerclasses.supplySystemStructure import SupplySy
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
-from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
-from cea.optimization_new.helpercalsses.optimization.tracker import OptimizationTracker
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
-from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.helperclasses.optimization.connectivity import Connection, ConnectivityVector
+from cea.optimization_new.helperclasses.optimization.algorithm import Algorithm
+from cea.optimization_new.helperclasses.optimization.tracker import OptimizationTracker
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.clustering import Clustering
+from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class Domain(object):
@@ -60,7 +61,7 @@ class Domain(object):
         self.initial_energy_system = None
         self.optimal_energy_systems = []
 
-        self._initialise_domain_descriptor_classes()
+        self._initialize_domain_descriptor_classes()
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
@@ -137,6 +138,9 @@ class Domain(object):
             ii. Aggregate demands of the buildings connected to each network and use a second genetic algorithm to find
                 supply system configurations that are near-pareto optimal for the respective networks.
         """
+        print("\nSetting up optimisation algorithm:")
+        self._initialize_algorithm_helper_classes()
+
         print("\nInitializing domain:")
         self._initialize_energy_system_descriptor_classes()
 
@@ -173,10 +177,6 @@ class Domain(object):
         # Generate fully connected network as basis for the clustering algorithm
         full_network = Network(self.buildings, 'Nfull')
         full_network_graph = full_network.generate_condensed_graph()
-
-        # Set up overlapping network correction if necessary
-        if algorithm.overlap_correction:
-            ConnectivityVector.setup_overlap_correction(algorithm.overlap_correction, self.buildings)
 
         # Register genetic operators
         toolbox.register("generate", ConnectivityVector.generate)
@@ -588,7 +588,7 @@ class Domain(object):
         return
 
 
-    def _initialise_domain_descriptor_classes(self):
+    def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
         Fitness.initialize_class_variables(self)
@@ -605,6 +605,12 @@ class Domain(object):
         print("4. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
+    def _initialize_algorithm_helper_classes(self):
+        """
+        initialise network specific helpers for overlap correction and clustering
+        """
+        ConnectivityVector.initialize_class_variables(self)
+        Clustering.initialize_class_variables(self)
 
 def main(config):
     """
