@@ -93,6 +93,8 @@ async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = await jobs.get(job_id)
     job.state = JOB_STATE_STARTED
     job.start_time = datetime.now()
+    await jobs.set(job.id, job)
+
     await sio.emit("cea-worker-started", job.model_dump(mode='json'))
     return job
 
@@ -103,6 +105,8 @@ async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
     job.state = JOB_STATE_SUCCESS
     job.error = None
     job.end_time = datetime.now()
+    await jobs.set(job.id, job)
+
     if job.id in worker_processes:
         del worker_processes[job.id]
     await sio.emit("cea-worker-success", job.model_dump(mode='json'))
@@ -118,6 +122,8 @@ async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo
     job.state = JOB_STATE_ERROR
     job.error = error
     job.end_time = datetime.now()
+    await jobs.set(job.id, job)
+
     if job.id in worker_processes:
         del worker_processes[job.id]
     await sio.emit("cea-worker-error", job.model_dump(mode='json'))
@@ -138,6 +144,8 @@ async def cancel_job(jobs: CEAJobs, job_id: str) -> JobInfo:
     job.state = JOB_STATE_CANCELED
     job.error = "Canceled by user"
     job.end_time = datetime.now()
+    await jobs.set(job.id, job)
+
     kill_job(job_id)
     await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
     return job
