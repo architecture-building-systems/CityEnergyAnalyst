@@ -29,8 +29,8 @@ import networkx as nx
 
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.optimization_new.network import Network
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
-from cea.optimization_new.helpercalsses.optimization.clustering import Clustering
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.clustering import Clustering
 
 
 class Connection(object):
@@ -669,20 +669,19 @@ class ConnectivityVector(object):
         return new_population
 
     @staticmethod
-    def setup_overlap_correction(overlap_correction_method, domain_buildings):
+    def initialize_class_variables(domain):
         """
         Set up parameters necessary for correcting overlapping networks that result from a given connectivity vector.
 
-        :param domain_buildings: list of buildings in the domain
-        :type domain_buildings: list of <cea.optimization_new.building>-class objects
-        :param overlap_correction_method: method to be used for correcting overlapping networks
+        :param domain: description of the complete domain including all configurations of the run
+        :type domain: <Domain>-class object
         """
         # create a list of tuples that contain the connectivity vectors that are to be corrected
-        ConnectivityVector._overlap_correction_method = overlap_correction_method
+        ConnectivityVector._overlap_correction_method = domain.config.optimization_new.networks_overlap_correction_method
 
         # create a dictionary that associates the building's location to the building's identifier
-        if overlap_correction_method:
+        if ConnectivityVector._overlap_correction_method:
             ConnectivityVector._building_nodes = {(round(building.location.x, SHAPEFILE_TOLERANCE),
                                                    round(building.location.y, SHAPEFILE_TOLERANCE)): building.identifier
-                                                  for building in domain_buildings}
+                                                  for building in domain.buildings}
 

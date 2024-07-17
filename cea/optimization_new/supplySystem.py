@@ -29,8 +29,8 @@ from math import isclose
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector
 
 
 class SupplySystem(object):

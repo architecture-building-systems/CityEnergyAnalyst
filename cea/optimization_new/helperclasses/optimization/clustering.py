@@ -20,6 +20,7 @@ from sklearn.cluster import HDBSCAN
 from community import community_louvain
 
 class Clustering(object):
+    _method = None
 
     def __init__(self, domain_network_graph:nx.Graph, min_samples:int=5, grid_size:float=300, subdivision_threshold:int=5):
         """
@@ -41,21 +42,21 @@ class Clustering(object):
         self.cluster_indexes:list = []
         self.grid_cell_indexes:list = []
 
-    def cluster(self, method:str='louvain'):
+    def cluster(self):
         """
         Performs the clustering of the building centroids using the HDBSCAN algorithm or Louvain method for community
         detection.
         :return: list of cluster indexes
         """
-        if method == 'louvain':
+        if Clustering._method == 'Louvain':
             communities = community_louvain.best_partition(self.domain_network_graph)
             self.cluster_indexes = self.derive_cluster_indexes(communities)
-        elif method == 'hdbscan':
+        elif Clustering._method == 'HDBSCAN':
             clustering_algorithm = HDBSCAN(min_samples=self.min_samples)
             clusters = clustering_algorithm.fit(self.points)
             self.cluster_indexes = list(clusters.labels_)
         else:
-            raise ValueError(f"Clustering method {method} not supported.")
+            raise ValueError(f"Clustering method {Clustering._method} not supported.")
 
         self.subdivide_with_grid()
 
@@ -264,4 +265,11 @@ class Clustering(object):
                 del points_per_subdivision[old_cluster][grid_cell_index]
 
         return points_per_subdivision
+
+    @staticmethod
+    def initialize_class_variables(domain):
+        """
+        Initializes the class variables that are used to store the cluster indexes and grid cell indexes.
+        """
+        Clustering._method = domain.config.optimization_new.building_clustering_method
 
