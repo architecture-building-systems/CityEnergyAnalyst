@@ -2,7 +2,7 @@ name: cea
 channels:
 - conda-forge
 dependencies:
-- cvxopt
+- cvxopt # For wntr
 - deap
 - ephem
 - fiona
