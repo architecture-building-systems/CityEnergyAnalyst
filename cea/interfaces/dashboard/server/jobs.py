@@ -21,24 +21,6 @@ JOB_STATE_SUCCESS = 2
 JOB_STATE_ERROR = 3
 JOB_STATE_CANCELED = 4
 
-# job_info_model = api.model('JobInfo', {
-#     'id': fields.Integer,
-#     'script': fields.String,
-#     'state': fields.Integer,
-#     'error': fields.String,
-#     'parameters': fields.Raw,
-#     'start_time': fields.DateTime,
-#     'end_time': fields.DateTime,
-# })
-#
-# job_info_request_parser = reqparse.RequestParser()
-# job_info_request_parser.add_argument("id", type=int, location="json")
-# job_info_request_parser.add_argument("script", type=str, required=True, location="json")
-# job_info_request_parser.add_argument("state", location="json")
-# job_info_request_parser.add_argument("error", location="json")
-# job_info_request_parser.add_argument("parameters", type=dict, location="json")
-
-
 worker_processes = {}  # jobid -> subprocess.Popen
 
 
