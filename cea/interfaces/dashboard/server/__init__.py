@@ -18,12 +18,3 @@ def shutdown_worker_processes():
 @router.get("/alive")
 async def get_health_check():
     return {'success': True}
-
-
-@router.post("/shutdown")
-async def shutdown():
-    print("Shutting down server...")
-    shutdown_worker_processes()
-    # current_app.socketio.stop()
-
-    return {'message': 'Shutting down...'}

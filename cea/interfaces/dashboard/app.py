@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +10,14 @@ import cea.interfaces.dashboard.plots.routes as plots
 import cea.interfaces.dashboard.server as server
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    print("Shutting down server...")
+    # Shutdown all worker processes on exit
+    server.shutdown_worker_processes()
+
+app = FastAPI(lifespan=lifespan)
 
 # Setup CORS
 app.add_middleware(
