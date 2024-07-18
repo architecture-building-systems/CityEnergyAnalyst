@@ -48,20 +48,6 @@ class GeneticAlgorithm(Algorithm):
         self.parallel_cores = cores
 
     @property
-    def overlap_correction(self):
-        return self._overlap_correction
-
-    @overlap_correction.setter
-    def overlap_correction(self, new_overlap_correction):
-        """
-        Make sure that if overlap correction is set to 'None' it is set to None and not a string
-        """
-        if new_overlap_correction == 'None':
-            self._overlap_correction = None
-        else:
-            self._overlap_correction = new_overlap_correction
-
-    @property
     def population(self):
         return self._population
 
