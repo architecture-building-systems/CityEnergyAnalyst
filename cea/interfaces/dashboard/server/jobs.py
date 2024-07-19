@@ -3,6 +3,7 @@ jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
 from datetime import datetime
+from enum import IntEnum
 from typing import Dict, Any
 
 import psutil
@@ -14,12 +15,15 @@ from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
 
-# Job states
-JOB_STATE_PENDING = 0
-JOB_STATE_STARTED = 1
-JOB_STATE_SUCCESS = 2
-JOB_STATE_ERROR = 3
-JOB_STATE_CANCELED = 4
+
+class JobState(IntEnum):
+    # Job states
+    PENDING = 0
+    STARTED = 1
+    SUCCESS = 2
+    ERROR = 3
+    CANCELED = 4
+
 
 worker_processes = {}  # jobid -> subprocess.Popen
 
@@ -30,7 +34,7 @@ class JobInfo(BaseModel):
     id: str
     script: str
     parameters: dict
-    state: int = JOB_STATE_PENDING
+    state: JobState = JobState.PENDING
     error: str = None
     start_time: datetime = None
     end_time: datetime = None
@@ -73,7 +77,7 @@ async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
 @router.post("/started/{job_id}")
 async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = await jobs.get(job_id)
-    job.state = JOB_STATE_STARTED
+    job.state = JobState.STARTED
     job.start_time = datetime.now()
     await jobs.set(job.id, job)
 
@@ -84,7 +88,7 @@ async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
 @router.post("/success/{job_id}")
 async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = await jobs.get(job_id)
-    job.state = JOB_STATE_SUCCESS
+    job.state = JobState.SUCCESS
     job.error = None
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
@@ -101,7 +105,7 @@ async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo
     error = body.decode("utf-8")
 
     job = await jobs.get(job_id)
-    job.state = JOB_STATE_ERROR
+    job.state = JobState.ERROR
     job.error = error
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
@@ -123,7 +127,7 @@ async def start_job(jobs: CEAJobs, job_id: str):
 @router.post("/cancel/{job_id}")
 async def cancel_job(jobs: CEAJobs, job_id: str) -> JobInfo:
     job = await jobs.get(job_id)
-    job.state = JOB_STATE_CANCELED
+    job.state = JobState.CANCELED
     job.error = "Canceled by user"
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
