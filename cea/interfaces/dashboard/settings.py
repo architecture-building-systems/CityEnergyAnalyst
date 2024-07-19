@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     host: Optional[str] = None
     port: Optional[int] = None
-    cors_origins: List[str] = ["*"]
+    cors_origin: str = "*"
     worker_url: Optional[str] = None
 
 

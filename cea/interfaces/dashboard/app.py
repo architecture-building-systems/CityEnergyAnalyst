@@ -18,12 +18,18 @@ async def lifespan(_: FastAPI):
     # Shutdown all worker processes on exit
     server.shutdown_worker_processes()
 
+
+def get_cors_origins():
+    origin = get_settings().cors_origin
+    return [origin]
+
+
 app = FastAPI(lifespan=lifespan)
 
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_settings().cors_origins,
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
