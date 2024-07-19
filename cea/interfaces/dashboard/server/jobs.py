@@ -10,7 +10,7 @@ import psutil
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from cea.interfaces.dashboard.dependencies import CEAJobs
+from cea.interfaces.dashboard.dependencies import CEAJobs, CEAWorkerUrl
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
@@ -117,10 +117,13 @@ async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo
 
 
 @router.post('/start/{job_id}')
-async def start_job(jobs: CEAJobs, job_id: str):
+async def start_job(worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
-    worker_processes[job_id] = subprocess.Popen(["python", "-m", "cea.worker", f"{job_id}"])
+    worker_processes[job_id] = subprocess.Popen([
+        "python", "-m", "cea.worker", f"{job_id}",
+        "--url", f"{worker_url}"
+    ])
     return job_id
 
 

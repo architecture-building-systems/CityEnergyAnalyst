@@ -5,6 +5,7 @@ from typing_extensions import Annotated
 
 import cea.config
 from cea.config import CEA_CONFIG
+from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
 CACHE_NAME = 'default'
@@ -95,6 +96,11 @@ async def get_jobs():
     return JobStoreCache(_cache, "jobs")
 
 
+def get_worker_url():
+    return get_settings().worker_url
+
+
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAJobs = Annotated[dict, Depends(get_jobs)]
+CEAWorkerUrl = Annotated[dict, Depends(get_worker_url)]

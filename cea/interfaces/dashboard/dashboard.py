@@ -16,6 +16,9 @@ def main(config):
     if settings.port is None:
         settings.port = config.server.port
 
+    if settings.worker_url is None:
+        settings.worker_url = config.worker.url
+
     print(f"Using settings: {settings}")
 
     try:

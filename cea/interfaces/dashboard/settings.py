@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     host: Optional[str] = None
     port: Optional[int] = None
     cors_origins: List[str] = ["*"]
+    worker_url: Optional[str] = None
 
 
 @lru_cache
