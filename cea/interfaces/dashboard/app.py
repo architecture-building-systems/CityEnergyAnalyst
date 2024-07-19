@@ -8,6 +8,7 @@ from cea.interfaces.dashboard.server.socketio import socket_app
 import cea.interfaces.dashboard.api as api
 import cea.interfaces.dashboard.plots.routes as plots
 import cea.interfaces.dashboard.server as server
+from cea.interfaces.dashboard.settings import get_settings
 
 
 @asynccontextmanager
@@ -22,7 +23,7 @@ app = FastAPI(lifespan=lifespan)
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=get_settings().cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

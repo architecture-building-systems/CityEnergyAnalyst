@@ -2,10 +2,25 @@ import sys
 
 import uvicorn
 
+from cea.interfaces.dashboard.settings import get_settings
+
 
 def main(config):
+    # Try loading settings from env vars first
+    settings = get_settings()
+
+    # Load from config if not found in env vars
+    if settings.host is None:
+        settings.host = config.server.host
+
+    if settings.port is None:
+        settings.port = config.server.port
+
+    print(f"Using settings: {settings}")
+
     try:
-        uvicorn.run("cea.interfaces.dashboard.app:app", host="127.0.0.1", port=5050)
+        uvicorn.run("cea.interfaces.dashboard.app:app",
+                    host=settings.host, port=settings.port)
     except KeyboardInterrupt:
         sys.exit(0)
 

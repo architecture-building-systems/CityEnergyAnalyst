@@ -8,6 +8,7 @@ dependencies:
 - fiona
 - aiocache
 - fastapi
+- pydantic-settings
 - uvicorn-standard
 - jinja2
 - python-socketio
