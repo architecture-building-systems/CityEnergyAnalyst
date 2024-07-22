@@ -604,7 +604,6 @@ class Solar_PV(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
-        self._check_operational_requirements(heating_out)
 
         # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
         chosen_cap = self.capacity
@@ -690,7 +689,6 @@ class Solar_collector(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
-        self._check_operational_requirements(heating_out)
 
         # load potentials from solar resources and calculate the maximum area used, capacity and profile
         thermal_flow = self.solar_collector_potential.main_potential
