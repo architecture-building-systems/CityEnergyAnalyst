@@ -19,8 +19,6 @@ caches.set_config({
 })
 
 
-
-
 class CEAConfigCache(cea.config.Configuration):
     _cache = caches.get(CACHE_NAME)
     _cache_key = "cea_config"
@@ -42,23 +40,20 @@ class AsyncDictCache:
         self._cache_key = cache_key
 
     async def get(self, item_id):
-        _dict = await self._cache.get(self._cache_key)
-
-        if _dict is None:
-            _dict = {}
-
+        _dict = await self._cache.get(self._cache_key, dict())
         return _dict[item_id]
 
     async def set(self, item_id, value):
-        _dict = await self._cache.get(self._cache_key)
-
-        if _dict is None:
-            _dict = {}
-
+        _dict = await self._cache.get(self._cache_key, dict())
         _dict[item_id] = value
-        await self._cache.set(self._cache_key, item_id)
+        await self._cache.set(self._cache_key, _dict)
 
         return value
+
+    async def delete(self, item_id):
+        _dict = await self._cache.get(self._cache_key, dict())
+        del _dict[item_id]
+        await self._cache.set(self._cache_key, _dict)
 
     async def values(self):
         _dict = await self._cache.get(self._cache_key)
