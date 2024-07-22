@@ -84,6 +84,8 @@ def main(config):
     print("verifying geometry files")
     zone_path = locator.get_zone_geometry()
     surroundings_path = locator.get_surroundings_geometry()
+    trees_path = locator.get_tree_geometry()
+
     print(f"zone: {zone_path}")
     print(f"surroundings: {surroundings_path}")
 
@@ -98,6 +100,14 @@ def main(config):
     verify_input_geometry_zone(zone_df)
     verify_input_geometry_surroundings(surroundings_df)
 
+    if os.path.exists(trees_path):
+        print(f"trees: {trees_path}")
+        trees_df = gpd.GeoDataFrame.from_file(trees_path)
+    else:
+        print("trees: None")
+        # Create empty area if it does not exist
+        trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
+
     # import material properties of buildings
     print("Getting geometry materials")
     building_surface_properties = read_surface_properties(locator)
@@ -111,12 +121,16 @@ def main(config):
     terrain_raster = gdal.Open(locator.get_terrain())
     architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('Name')
 
-    geometry_terrain, zone_building_names, surroundings_building_names = geometry_generator.geometry_main(config,
-                                                                                                          zone_df,
-                                                                                                          surroundings_df,
-                                                                                                          terrain_raster,
-                                                                                                          architecture_wwr_df,
-                                                                                                          geometry_staging_location)
+    (geometry_terrain,
+     zone_building_names,
+     surroundings_building_names,
+     tree_surfaces) = geometry_generator.geometry_main(config,
+                                                       zone_df,
+                                                       surroundings_df,
+                                                       trees_df,
+                                                       terrain_raster,
+                                                       architecture_wwr_df,
+                                                       geometry_staging_location)
     # Fetch simulation buildings based on proximity to sample buildings
     simulation_buildings = fetch_simulation_buildings(sample_buildings, zone_df, buffer_m)
 
@@ -129,6 +143,11 @@ def main(config):
     print("Creating radiance geometry file")
     cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, simulation_buildings,
                                         surroundings_building_names, geometry_staging_location)
+
+    if len(tree_surfaces) > 0:
+        print("Creating radiance shading file")
+        tree_lad = trees_df["density_tc"]
+        cea_daysim.create_radiance_shading(tree_surfaces, tree_lad)
 
     print("Converting files for DAYSIM")
     weather_file = locator.get_weather_file()
