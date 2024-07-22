@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+import os
 
 import cea.config
 import cea.inputlocator
@@ -48,15 +49,29 @@ def calc_lake_potential(locator, config):
 
     # Check whether there is a water basin in the area under analysis or in the immediate proximity
     check, area = check_presence_water_basin(locator)
-
+    plot_save_path = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\scenario_representations'
     if check:
         for z in np.arange(0, avg_depth, 0.1):
             Water_temperature = model_temperature_variation(z, avg_depth) - 273 #°C
             Z.append(z)
             T.append(Water_temperature)
+
+        # Calculate the mean of T
+        T_mean = np.mean(T)
+        plt.figure(figsize=(10, 6))
         plt.plot(T, Z)
         plt.gca().invert_yaxis()
-        # plt.show()
+        plt.title(f'Temperature evolution of Kranji reservoir model')
+        plt.xlabel('Temperature')
+        plt.ylabel('Depth')
+        plt.axhline(y=1, color='black', linestyle='--', linewidth=1)  # Add a dotted line at y=1
+        plt.text(T_mean, 0.5, 'Mixed-layer', ha='center', va='bottom', fontsize=10, color='black', weight='bold')
+        plt.text(T_mean, 1.5, 'Thermocline', ha='center', va='top', fontsize=10, color='black', weight='bold')
+
+        plot_path = os.path.join(plot_save_path, 'lake_temperature_evolution.png')
+        plt.savefig(plot_path, bbox_inches='tight')
+        plt.close()
+
         q_yearly = [Q_max_kwh] * 8760
     else:
         q_yearly = [0] * 8760
