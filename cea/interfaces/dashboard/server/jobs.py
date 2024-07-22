@@ -10,7 +10,7 @@ import psutil
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from cea.interfaces.dashboard.dependencies import CEAJobs, CEAWorkerUrl
+from cea.interfaces.dashboard.dependencies import CEAJobs, CEAWorkerUrl, CEAWorkerProcesses, get_worker_processes
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
@@ -23,9 +23,6 @@ class JobState(IntEnum):
     SUCCESS = 2
     ERROR = 3
     CANCELED = 4
-
-
-worker_processes = {}  # jobid -> subprocess.Popen
 
 
 # FIXME: replace with database or similar solution
@@ -86,21 +83,21 @@ async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(jobs: CEAJobs, job_id: str) -> JobInfo:
+async def set_job_success(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
     job = await jobs.get(job_id)
     job.state = JobState.SUCCESS
     job.error = None
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
 
-    if job.id in worker_processes:
-        del worker_processes[job.id]
+    if job.id in await worker_processes.values():
+        await worker_processes.delete(job.id)
     await sio.emit("cea-worker-success", job.model_dump(mode='json'))
     return job
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo:
+async def set_job_error(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses, request: Request) -> JobInfo:
     body = await request.body()
     error = body.decode("utf-8")
 
@@ -110,14 +107,14 @@ async def set_job_error(jobs: CEAJobs, job_id: str, request: Request) -> JobInfo
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
 
-    if job.id in worker_processes:
-        del worker_processes[job.id]
+    if job.id in await worker_processes.values():
+        await worker_processes.delete(job.id)
     await sio.emit("cea-worker-error", job.model_dump(mode='json'))
     return job
 
 
 @router.post('/start/{job_id}')
-async def start_job(worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
+async def start_job(worker_processes: CEAWorkerProcesses, worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
     worker_processes[job_id] = subprocess.Popen([
@@ -128,24 +125,24 @@ async def start_job(worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
 
 
 @router.post("/cancel/{job_id}")
-async def cancel_job(jobs: CEAJobs, job_id: str) -> JobInfo:
+async def cancel_job(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
     job = await jobs.get(job_id)
     job.state = JobState.CANCELED
     job.error = "Canceled by user"
     job.end_time = datetime.now()
     await jobs.set(job.id, job)
 
-    kill_job(job_id)
+    await kill_job(job_id, worker_processes)
     await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
     return job
 
 
-def kill_job(jobid):
+async def kill_job(jobid, worker_processes):
     """Kill the processes associated with a jobid"""
-    if jobid not in worker_processes:
+    if jobid not in await worker_processes.values():
         return
 
-    popen = worker_processes[jobid]
+    popen = await worker_processes.get(jobid)
     # using code from here: https://stackoverflow.com/a/4229404/2260
     # to terminate child processes too
     print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
@@ -158,4 +155,4 @@ def kill_job(jobid):
         print("-- killing child {pid}".format(pid=child.pid))
         child.kill()
     process.kill()
-    del worker_processes[jobid]
+    await worker_processes.delete(jobid)

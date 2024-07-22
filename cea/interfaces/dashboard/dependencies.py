@@ -93,6 +93,17 @@ async def get_jobs():
     return AsyncDictCache(_cache, "jobs")
 
 
+async def get_worker_processes():
+    _cache = caches.get(CACHE_NAME)
+    worker_processes = await _cache.get("worker_processes")
+
+    if worker_processes is None:
+        worker_processes = dict()
+        await _cache.set("worker_processes", worker_processes)
+
+    return AsyncDictCache(_cache, "worker_processes")
+
+
 def get_worker_url():
     return get_settings().worker_url
 
@@ -100,4 +111,5 @@ def get_worker_url():
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAJobs = Annotated[dict, Depends(get_jobs)]
+CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAWorkerUrl = Annotated[dict, Depends(get_worker_url)]
