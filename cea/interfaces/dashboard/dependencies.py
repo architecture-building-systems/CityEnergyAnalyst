@@ -19,6 +19,8 @@ caches.set_config({
 })
 
 
+
+
 class CEAConfigCache(cea.config.Configuration):
     _cache = caches.get(CACHE_NAME)
     _cache_key = "cea_config"
@@ -34,37 +36,37 @@ class CEAConfigCache(cea.config.Configuration):
         super().save(config_file)
 
 
-class JobStoreCache:
+class AsyncDictCache:
     def __init__(self, cache: BaseCache, cache_key: str):
         self._cache = cache
         self._cache_key = cache_key
 
-    async def get(self, job_id):
-        jobs = await self._cache.get(self._cache_key)
+    async def get(self, item_id):
+        _dict = await self._cache.get(self._cache_key)
 
-        if jobs is None:
-            jobs = {}
+        if _dict is None:
+            _dict = {}
 
-        return jobs[job_id]
+        return _dict[item_id]
 
-    async def set(self, job_id, value):
-        jobs = await self._cache.get(self._cache_key)
+    async def set(self, item_id, value):
+        _dict = await self._cache.get(self._cache_key)
 
-        if jobs is None:
-            jobs = {}
+        if _dict is None:
+            _dict = {}
 
-        jobs[job_id] = value
-        await self._cache.set(self._cache_key, jobs)
+        _dict[item_id] = value
+        await self._cache.set(self._cache_key, item_id)
 
         return value
 
     async def values(self):
-        jobs = await self._cache.get(self._cache_key)
-        return jobs.values()
+        _dict = await self._cache.get(self._cache_key)
+        return _dict.values()
 
     async def keys(self):
-        jobs = await self._cache.get(self._cache_key)
-        return jobs.keys()
+        _dict = await self._cache.get(self._cache_key)
+        return _dict.keys()
 
 
 async def get_cea_config():
@@ -93,7 +95,7 @@ async def get_jobs():
         jobs = dict()
         await _cache.set("jobs", jobs)
 
-    return JobStoreCache(_cache, "jobs")
+    return AsyncDictCache(_cache, "jobs")
 
 
 def get_worker_url():
