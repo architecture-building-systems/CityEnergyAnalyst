@@ -10,7 +10,7 @@ import psutil
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from cea.interfaces.dashboard.dependencies import CEAJobs, CEAWorkerUrl, CEAWorkerProcesses, get_worker_processes
+from cea.interfaces.dashboard.dependencies import CEAJobs, CEAWorkerUrl, CEAWorkerProcesses
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
