@@ -16,6 +16,7 @@ import cea.config
 import cea.api
 import cea.inputlocator
 from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.colors import color_to_rgb
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -40,6 +41,7 @@ async def get_project_info(config: CEAConfig, project: str = None):
     if project is None:
         scenario_name = config.scenario_name
     else:
+        project = secure_path(project)
         if not os.path.exists(project):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -61,7 +63,7 @@ async def create_new_project(new_project: NewProject):
     project_root = new_project.project_root
 
     if project_name and project_root:
-        project = os.path.join(project_root, project_name)
+        project = secure_path(os.path.join(project_root, project_name))
         try:
             os.makedirs(project, exist_ok=True)
         except OSError as e:
@@ -83,7 +85,7 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
     """
-    project = scenario_path.project
+    project = secure_path(scenario_path.project)
     scenario_name = scenario_path.scenario_name
 
     if project and scenario_name:
@@ -110,7 +112,7 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
     """
     Create new scenario
     """
-    project = payload.get('project')
+    project = secure_path(payload.get('project'))
     scenario_name = payload.get('scenario_name')
     if scenario_name is None:
         raise HTTPException(
@@ -118,7 +120,7 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
             detail='scenario_name parameter cannot be empty',
         )
 
-    databases_path = payload.get('databases_path')
+    databases_path = secure_path(payload.get('databases_path'))
     input_data = payload.get('input_data')
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -155,7 +157,7 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
 
         elif input_data == 'copy':
             source_scenario_name = payload.get('copy_scenario')
-            source_scenario = os.path.join(_project, source_scenario_name)
+            source_scenario = secure_path(os.path.join(_project, source_scenario_name))
             os.makedirs(locator.get_input_folder(), exist_ok=True)
             shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
                             locator.get_input_folder())
@@ -188,7 +190,7 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
                     raise Exception(f'{tool}_helper: {e}') from e
 
         # Move temp scenario to correct path
-        new_scenario_path = os.path.join(_project, str(scenario_name).strip())
+        new_scenario_path = secure_path(os.path.join(_project, str(scenario_name).strip()))
         print(f"Moving from {config.scenario} to {new_scenario_path}")
         shutil.move(config.scenario, new_scenario_path)
 
@@ -235,11 +237,11 @@ async def get(scenario: str):
 @router.put('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
 async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
-    scenario_path = os.path.join(config.project, scenario)
-    new_scenario_name = payload.get('name')
+    scenario_path = secure_path(os.path.join(config.project, scenario))
+    new_scenario_name: str = payload.get('name')
     try:
         if new_scenario_name is not None:
-            new_path = os.path.join(config.project, new_scenario_name)
+            new_path = secure_path(os.path.join(config.project, new_scenario_name))
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
@@ -256,7 +258,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
 @router.delete('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
 async def delete(config: CEAConfig, scenario: str):
     """Delete scenario from project"""
-    scenario_path = os.path.join(config.project, scenario)
+    scenario_path = secure_path(os.path.join(config.project, scenario))
     try:
         shutil.rmtree(scenario_path)
         return {'scenarios': list_scenario_names_for_project(config)}
@@ -317,6 +319,7 @@ def generate_scenario_image(config, scenario: str, image_path: str, building_lim
 @router.get('/scenario/{scenario}/image')
 async def get_scenario_image(config: CEAConfig, project: str, scenario: str):
     if project is not None:
+        project = secure_path(project)
         if not os.path.exists(project):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

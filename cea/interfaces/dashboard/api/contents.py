@@ -6,6 +6,7 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, status
 
 from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.utils import secure_path, InvalidPathError
 
 router = APIRouter()
 
@@ -93,9 +94,11 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
     else:
         root_path = root
     try:
+        # Check path first
+        secure_path(os.path.join(root_path, content_path))
         content_info = get_content_info(root_path, content_path, content_type, show_hidden=show_hidden)
         return content_info.as_dict()
-    except ContentPathNotFound:
+    except (ContentPathNotFound, InvalidPathError):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Path `{content_path}` does not exist",

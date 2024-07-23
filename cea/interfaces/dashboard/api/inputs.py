@@ -19,6 +19,7 @@ import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
@@ -427,6 +428,7 @@ class DatabasePath(BaseModel):
 async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
+    copy_path = secure_path(os.path.join(database_path.path, database_path.name))
     if os.path.exists(copy_path):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
