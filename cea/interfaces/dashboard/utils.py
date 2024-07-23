@@ -13,9 +13,9 @@ def secure_path(path: str) -> str:
     """
     project_root = get_settings().project_root
     real_path = os.path.realpath(path)
-    rel_path = os.path.relpath(real_path, project_root)
+    prefix = os.path.commonpath((project_root, real_path))
 
-    if ".." in rel_path:
+    if project_root != prefix:
         raise InvalidPathError("Path is outside of project root")
 
     return real_path
