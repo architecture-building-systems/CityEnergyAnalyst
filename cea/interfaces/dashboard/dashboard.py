@@ -19,6 +19,9 @@ def main(config):
     if settings.worker_url is None:
         settings.worker_url = config.worker.url
 
+    if settings.project_root is None:
+        settings.project_root = config.project_root
+
     print(f"Using settings: {settings}")
 
     try:
