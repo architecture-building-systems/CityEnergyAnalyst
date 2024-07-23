@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import shutil
 import traceback
 from typing import Dict, Any
@@ -417,25 +418,23 @@ async def put_input_database_data(config: CEAConfig, payload: Dict[str, Any]):
     return payload
 
 
+class DatabasePath(BaseModel):
+    path: pathlib.Path
+    name: str
+
+
 @router.put('/databases/copy')
-async def copy_input_database(config: CEAConfig, payload: Dict[str, Any]):
+async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    if payload and 'path' in payload and 'name' in payload:
-        copy_path = os.path.join(payload['path'], payload['name'])
-        if os.path.exists(copy_path):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f'Copy path {copy_path} already exists. Choose a different path/name.',
-            )
-        locator.ensure_parent_folder_exists(copy_path)
-        shutil.copytree(locator.get_databases_folder(), copy_path)
-        return {'message': 'Database copied to {}'.format(copy_path)}
-    else:
+    if os.path.exists(copy_path):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="'path' and 'name' required",
+            detail=f'Copy path {copy_path} already exists. Choose a different path/name.',
         )
+    locator.ensure_parent_folder_exists(copy_path)
+    shutil.copytree(locator.get_databases_folder(), copy_path)
+    return {'message': 'Database copied to {}'.format(copy_path)}
 
 
 @router.get('/databases/check')
