@@ -20,7 +20,7 @@ def main(config):
         settings.worker_url = config.worker.url
 
     if settings.project_root is None:
-        settings.project_root = config.project_root
+        settings.project_root = config.server.project_root
 
     print(f"Using settings: {settings}")
 
