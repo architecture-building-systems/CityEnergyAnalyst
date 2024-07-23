@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 import cea.interfaces.dashboard.server.jobs as jobs
 import cea.interfaces.dashboard.server.streams as streams
+from cea.interfaces.dashboard.dependencies import get_worker_processes
 
 router = APIRouter()
 
@@ -9,10 +10,11 @@ router.include_router(jobs.router, prefix='/jobs')
 router.include_router(streams.router, prefix='/streams')
 
 
-def shutdown_worker_processes():
+async def shutdown_worker_processes():
     """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
-    for jobid in jobs.worker_processes.keys():
-        jobs.kill_job(jobid)
+    worker_processes = await get_worker_processes()
+    for jobid in await worker_processes.keys():
+        await jobs.kill_job(jobid, worker_processes)
 
 
 @router.get("/alive")

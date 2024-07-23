@@ -16,7 +16,7 @@ async def lifespan(_: FastAPI):
     yield
     print("Shutting down server...")
     # Shutdown all worker processes on exit
-    server.shutdown_worker_processes()
+    await server.shutdown_worker_processes()
 
 
 def get_cors_origins():
