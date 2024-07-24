@@ -366,7 +366,7 @@ def df_to_json(file_location):
 async def get_building_schedule(config: CEAConfig, building: str):
     locator = cea.inputlocator.InputLocator(config.scenario)
     try:
-        schedule_path = locator.get_building_weekly_schedules(building)
+        schedule_path = secure_path(locator.get_building_weekly_schedules(building))
         schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
         df = pd.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
         out = {'SCHEDULES': {

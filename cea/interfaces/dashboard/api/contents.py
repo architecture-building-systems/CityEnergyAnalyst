@@ -93,6 +93,7 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
         root_path = config.server.project_root
     else:
         root_path = root
+
     try:
         # Check path first
         secure_path(os.path.join(root_path, content_path))
