@@ -87,8 +87,16 @@ async def get_database_region_data(region: str):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Could not find '{region}' region. Try instead {_regions}",
         )
+
+    db_path = os.path.normpath(os.path.join(databases_folder_path, region))
+    if not db_path.startswith(databases_folder_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid database region.",
+        )
+
     try:
-        return read_all_databases(os.path.join(databases_folder_path, region))
+        return read_all_databases(db_path)
     except IOError as e:
         print(e)
         raise HTTPException(
