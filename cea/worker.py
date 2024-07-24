@@ -166,7 +166,7 @@ def main(config=None):
 def parse_arguments(default_url):
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("jobid", type=int, help="Job id to run - use 0 to run the next job", default=0)
+    parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job", default=0)
     parser.add_argument("-u", "--url", type=str, help="URL of the CEA server api", default=default_url)
     args = parser.parse_args()
     return args

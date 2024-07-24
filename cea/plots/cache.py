@@ -3,11 +3,6 @@ Implements a cache for plot data at the project level. Cached plot data has a "p
 and dependencies (a list of files that are used to produce that data) as well as the parameters used in that data.
 The cache object is passed to the `calc_graph` method and the plot is responsible for retrieving data from the cache.
 """
-
-
-
-
-
 import functools
 import hashlib
 import json
@@ -15,6 +10,7 @@ import os
 import time
 
 import pandas as pd
+
 
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
