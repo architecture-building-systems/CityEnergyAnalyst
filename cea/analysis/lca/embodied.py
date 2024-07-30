@@ -113,7 +113,7 @@ def lca_embodied(year_to_calculate, locator):
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
     surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
 
-    system_database_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
+
 
     # query data
     df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -154,14 +154,12 @@ def lca_embodied(year_to_calculate, locator):
                                           on='Name').merge(df6[fields12],
                                           on='Name')
 
-    df_sys = air_conditioning_df.merge(system_database_heating, left_on='type_hs', right_on='code')
-    fields13 = ['Name', "GHG_TECHNICAL_SYSTEMS_kgCO2m2"]
-    system_properties = df_sys[fields13]
+
 
     # DataFrame with joined data for all categories
-    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties,
-                                                                on='Name').merge(architecture_df,on='Name').merge(system_properties,on='Name')
-    # merge(air_conditioning_df)
+    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df,on='Name')
+
+
     # calculate building geometry
     ## total window area
     average_wwr = [np.mean([a, b, c, d]) for a, b, c, d in
@@ -270,10 +268,8 @@ def calculate_contributions(df, year_to_calculate):
     df[Embodied_roof]/=1000
 
 
-# df[total_column] += (((df['floor_area_ag'] + df['floor_area_bg']) * df['GHG_TECHNICAL_SYSTEMS_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
-
-    # df[total_column] += (((df['floor_area_ag'] + df[
-    #     'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
+    df[total_column] += (((df['floor_area_ag'] + df[
+         'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
 
     # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
 

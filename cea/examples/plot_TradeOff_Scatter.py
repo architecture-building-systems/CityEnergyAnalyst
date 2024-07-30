@@ -21,7 +21,7 @@ def filter_retrofit(emission_type, typology, standard):
     # Joining tables
     return pd.merge(emission_type, filtered_typology, how='inner')
 
-# Applying filter function
+# Applying filter function based on archetype (Standard)
 standard = 'STANDARD10'
 filtered_uptake = filter_retrofit(embodied_results_uptake, typology, standard)
 filtered_fossil = filter_retrofit(embodied_results_fossil, typology, standard)
