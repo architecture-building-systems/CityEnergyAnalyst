@@ -190,18 +190,18 @@ def stellar_chart(df, path, scenario):
 
     selection = df[df['Scenario'] == scenario]
 
-    scenario_selection = selection.loc[:, (selection != 0).any(axis=0)]
+    scenario_selection = selection.loc[:, (selection != 0).any(axis=0)].reset_index(drop=True)
     labels = scenario_selection.columns[3:].tolist()
     for label in labels:
         parts = label.split('_')
         labels[labels.index(label)] = parts[0]
-    numeric_values = scenario_selection.iloc[:, 3:] / 1000  # Scale down from kW to MW
     num_vars = len(labels)
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
     angles += angles[:1]
 
     for availability in selection['Availability'].unique():
-        scenario_avail_selection = scenario_selection[scenario_selection['Availability'] == availability]
+        scenario_avail_selection = scenario_selection[scenario_selection['Availability'] == availability].reset_index(drop=True)
+        numeric_values = scenario_avail_selection.iloc[:, 3:].reset_index(drop=True) / 1000  # Convert unit from kW to MW
 
         for i in range(len(scenario_avail_selection)):
             fig, ax = plt.subplots(subplot_kw=dict(polar=True))
@@ -385,24 +385,33 @@ def heatmap(df, path, scenario):
                                                               'GHG_Emissions_kgCO2': 'GHG_Emissions',
                                                               'Cost_USD': 'Cost'})
 
-    # Set the global figure size
-    plt.rcParams['figure.figsize'] = (12, 8)
-
-    # Set the global font size for x and y axis labels
-    plt.rcParams['xtick.labelsize'] = 12
-    plt.rcParams['ytick.labelsize'] = 12
-
-    plt.figure()
     scenario_selection = df[df['Scenario'] == scenario]
     numeric_values = scenario_selection.iloc[:, 3:]
-    multi_line_labels = [f'{scena}\n{aval}' for aval, scena in
-                         zip(scenario_selection['Availability'], scenario_selection['Supply_System'])]
+
+    # Calculate the number of rows and columns
+    num_rows, num_cols = numeric_values.shape
+
+    # Determine figure size based on the number of rows and columns
+    fig_width = max(8, num_cols * 1.1)  # Width depends on the number of columns
+    fig_height = max(6, num_rows * 0.5)  # Height depends on the number of rows
+
+    # Scaling factors for font sizes
+    base_fontsize = 9
+    font_scaling_factor = min(fig_width / 8, fig_height / 6)
+
+    plt.figure(figsize=(fig_width, fig_height))
     annot = numeric_values.applymap(lambda x: f'{x:.1f}%')
-    sns.heatmap(numeric_values, annot=annot, fmt='', cmap='viridis', cbar=True)
+    sns.heatmap(numeric_values, annot=annot, fmt='', cmap='viridis', cbar=True, linewidths=0.5, linecolor='black',
+                annot_kws={"fontsize": base_fontsize * font_scaling_factor, "fontweight": "bold"})
 
     # Customise plot features
-    plt.yticks(ticks=np.arange(0.5, len(numeric_values) + 0.5, 1), labels=multi_line_labels, rotation=0)
-    plt.title(f'Heatmap_{scenario}')
+    multi_line_labels = [f'{scena}\n{aval}' for aval, scena in
+                         zip(scenario_selection['Availability'], scenario_selection['Supply_System'])]
+    plt.yticks(ticks=np.arange(0.5, len(numeric_values) + 0.5, 1), labels=multi_line_labels, rotation=0,
+               fontsize=base_fontsize * font_scaling_factor)
+    plt.title(f'Heatmap_{scenario}', fontsize=base_fontsize * font_scaling_factor)
+    # Adjust the subplot parameters to move the plot to the right
+    plt.subplots_adjust(left=0.2, right=1, top=0.9, bottom=0.1)
     plt.xticks(rotation=0)
     plot_file_path = os.path.join(path, scenario)
     if not os.path.exists(plot_file_path):
@@ -418,7 +427,7 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
         'cooling': 'T10W',
         'electricity': 'E230AC',
         'heat_release': ['T100A', 'T25A', 'T30W', 'T27LW', 'T27GW', 'T27SW'],
-        'heat_production': 'T100W'
+        'heat_production': ['T100W', 'T70W']
     }
 
     # Define a color dictionary for specific labels
@@ -427,7 +436,7 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
         'HEXLW': 'green', 'TES': 'purple', 'PV': 'darkorange', 'SC': 'brown',
         'BT': 'darkred', 'FU': 'gray', 'OEHR': 'gray', 'CCGT': 'gray',
         'BO': 'black', 'CT': 'cyan', 'demand': 'lime', 'bought': 'olive',
-        'sold': 'darkslateblue'
+        'sold': 'darkslateblue', 'TW':'magenta'
     }
 
     for system in systems:
@@ -474,33 +483,33 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
                             else:
                                 ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, color= color_dict[code])
 
-                if not plot_with_info:
-                    ax.axis('off')
-                    continue
+            if not plot_with_info:
+                ax.axis('off')
+                continue
 
-                # Set y-limits to match both y-axes
-                if has_secondary_y_axis:
-                    # Get y-limits of both axes
-                    y_limits = ax.get_ylim()
-                    y2_limits = ax2.get_ylim()
-                    # Determine the new y-limits based on the maximum range
-                    new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
-                    # Set new y-limits for both axes
-                    ax.set_ylim(new_y_limits)
-                    ax2.set_ylim(new_y_limits)
+            # Set y-limits to match both y-axes
+            if has_secondary_y_axis:
+                # Get y-limits of both axes
+                y_limits = ax.get_ylim()
+                y2_limits = ax2.get_ylim()
+                # Determine the new y-limits based on the maximum range
+                new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
+                # Set new y-limits for both axes
+                ax.set_ylim(new_y_limits)
+                ax2.set_ylim(new_y_limits)
 
-                # Add legends
-                if has_secondary_y_axis:
-                    lines, labels = ax.get_legend_handles_labels()
-                    lines2, labels2 = ax2.get_legend_handles_labels()
-                    ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
-                    ax2.set_ylabel('Storage State of Charge [MWh]')
-                else:
-                    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
+            # Add legends
+            if has_secondary_y_axis:
+                lines, labels = ax.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
+                ax2.set_ylabel('Storage State of Charge [MWh]')
+            else:
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small', frameon=False)
 
-                ax.set_title(f'{cat.capitalize()} profiles')
-                ax.set_xlabel('Hours')
-                ax.set_ylabel('Energy Carriers Daily profile [MWh]')
+            ax.set_title(f'{cat.capitalize()} profiles')
+            ax.set_xlabel('Hours')
+            ax.set_ylabel('Energy Carriers Daily profile [MW]')
 
             i += 1
 
@@ -520,7 +529,7 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
         'cooling': 'T10W',
         'electricity': 'E230AC',
         'heat_release': ['T100A', 'T25A', 'T30W', 'T27LW', 'T27GW', 'T27SW'],
-        'heat_production': 'T100W'
+        'heat_production': ['T100W', 'T70W']
     }
 
     color_dict = {
@@ -528,7 +537,7 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
         'HEXLW': 'green', 'TES': 'purple', 'PV': 'darkorange', 'SC': 'brown',
         'BT': 'darkred', 'FU': 'gray', 'OEHR': 'gray', 'CCGT': 'gray',
         'BO': 'black', 'CT': 'cyan', 'demand': 'lime', 'bought': 'olive',
-        'sold': 'darkslateblue'
+        'sold': 'darkslateblue', 'TW':'magenta'
     }
 
     for system in systems:
@@ -578,35 +587,35 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
                         ax.fill_between(range(24), ((daily_means[column] - daily_stds[column]) / 1000).clip(lower=0),
                                         (daily_means[column] + daily_stds[column]) / 1000, color=color_dict[code], alpha=0.3)
 
-                if not plot_with_info:
-                    ax.axis('off')
-                    continue
+            if not plot_with_info:
+                ax.axis('off')
+                continue
 
-                # Set y-limits to match both y-axes
-                if has_secondary_y_axis:
-                    # Get y-limits of both axes
-                    y_limits = ax.get_ylim()
-                    y2_limits = ax2.get_ylim()
-                    # Determine the new y-limits based on the maximum range
-                    new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
-                    # Set new y-limits for both axes
-                    ax.set_ylim(new_y_limits)
-                    ax2.set_ylim(new_y_limits)
+            # Set y-limits to match both y-axes
+            if has_secondary_y_axis:
+                # Get y-limits of both axes
+                y_limits = ax.get_ylim()
+                y2_limits = ax2.get_ylim()
+                # Determine the new y-limits based on the maximum range
+                new_y_limits = (min(y_limits[0], y2_limits[0]), max(y_limits[1], y2_limits[1]))
+                # Set new y-limits for both axes
+                ax.set_ylim(new_y_limits)
+                ax2.set_ylim(new_y_limits)
 
-                # Add legends
-                if has_secondary_y_axis:
-                    lines, labels = ax.get_legend_handles_labels()
-                    lines2, labels2 = ax2.get_legend_handles_labels()
-                    ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1),
-                              ncol=3, fontsize='small', frameon=False)
-                    ax2.set_ylabel('Storage State of Charge [kWh]')
-                else:
-                    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small',
-                              frameon=False)
+            # Add legends
+            if has_secondary_y_axis:
+                lines, labels = ax.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax.legend(lines + lines2, labels + labels2, loc='upper center', bbox_to_anchor=(0.5, -0.1),
+                          ncol=3, fontsize='small', frameon=False)
+                ax2.set_ylabel('Storage State of Charge [MWh]')
+            else:
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize='small',
+                          frameon=False)
 
-                ax.set_title(f'{cat.capitalize()} profiles')
-                ax.set_xlabel('Hours')
-                ax.set_ylabel('Demand and production [kWh]')
+            ax.set_title(f'{cat.capitalize()} profiles')
+            ax.set_xlabel('Hours')
+            ax.set_ylabel('Demand and production [MW]')
             i += 1
 
         fig.suptitle(f'Mean and Standard deviation Profile Analysis for {system} in scenario {scenario}', fontsize=16)

@@ -11,7 +11,6 @@ from multi_objective_plots import (plot_clusters, generate_and_save_plots, heatm
                                    line_graph_plot, yearly_profile_plot, stellar_chart, plot_connectivity)
 
                                  ### MAIN ###
-# TODO: Uncomment plots that are needed for the final analysis
 # Define the main directory and the filename
 context_analysis = ['THESIS_TEST_CASES_BASE', 'THESIS_TEST_CASES_RENEWABLES'] #
 folder = "D:/CEATesting/"
