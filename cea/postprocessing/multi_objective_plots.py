@@ -1,12 +1,14 @@
 
 import matplotlib.pyplot as plt
-import os
 import numpy as np
+import os
 import seaborn as sns
 from pandas.plotting import parallel_coordinates
 import pandas as pd
 import math
 import re
+import matplotlib.colors as mcolors
+from matplotlib.lines import Line2D
 
 from directories_files_handler import (calculate_percentage_change, line_plot_dataframe_preprocessing,
                                        combine_excel_sheets, compute_mean_and_std)
@@ -84,7 +86,10 @@ def generate_and_save_plots(dataframes, plots_path):
         fig.delaxes(axes[idx])
 
     plt.tight_layout()
-    plt.title('Comparison of Objective Functions')
+    fig.suptitle('Comparison of Objective Functions', x=0.5, y=0.99, fontsize=16, fontweight='bold')
+
+    # Adjust the layout again to account for the title
+    fig.subplots_adjust(top=0.93)
 
     # Save the combined plot
     plot_file_path = os.path.join(plots_path, "combined_plots.png")
@@ -312,8 +317,8 @@ def scatter_plot(df_base, df_what_if, path, scenario):
     scenario_selection_what_if = df_what_if[df_what_if['Scenario'] == scenario].reset_index(drop=True)
 
     # Define the custom order for 'Criteria' column
-    custom_order = ['No_renewables', 'All_renewables', 'Elec_renewables']
-    marker_shape = {custom_order[0]: '*', custom_order[1]: 'x', custom_order[2]: '^'}
+    custom_order = ['No_renewables', 'All_renewables']
+    marker_shape = {custom_order[0]: '*', custom_order[1]: 'x'}
 
     # Convert 'Criteria' column to categorical data type with custom order
     scenario_selection_what_if['Availability'] = pd.Categorical(scenario_selection_what_if['Availability'],
@@ -407,7 +412,7 @@ def heatmap(df, path, scenario):
     # Close all figures at once
     plt.close('all')
 
-def line_graph_plot(base_path, carriers_directory, systems, output_path, scenario, availability):
+def line_graph_plot(base_path, carriers_directory, systems, output_path, scenario):
 
     categories = {
         'cooling': 'T10W',
@@ -447,30 +452,27 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
             plot_with_info = False
             ax = axes[i]
 
-            if availability == 'Elec_renewables' and cat == 'heat_production':
-                ax.axis('off')  # Turn off the axis for the unused subplot
-            else:
-                has_secondary_y_axis = False
+            has_secondary_y_axis = False
 
-                for column in carriers_to_plot.columns:
-                    for car in carrier if isinstance(carrier, list) else [carrier]:
-                        if car in column:
-                            plot_with_info = True
-                            parts = column.split('_')
-                            if parts[0] == 'E230AC':
-                                code = re.sub(r'\d+', '', parts[1])
-                            else:
-                                code = re.sub(r'\d+', '', parts[0])
+            for column in carriers_to_plot.columns:
+                for car in carrier if isinstance(carrier, list) else [carrier]:
+                    if car in column:
+                        plot_with_info = True
+                        parts = column.split('_')
+                        if parts[0] == 'E230AC':
+                            code = re.sub(r'\d+', '', parts[1])
+                        else:
+                            code = re.sub(r'\d+', '', parts[0])
 
-                            if 'BT' in column or 'TES' in column:
-                                ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
-                                has_secondary_y_axis = True
-                                ax2.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                        if 'BT' in column or 'TES' in column:
+                            ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
+                            has_secondary_y_axis = True
+                            ax2.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                        else:
+                            if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
+                                ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                             else:
-                                if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
-                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
-                                else:
-                                    ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, color= color_dict[code])
+                                ax.plot(carriers_to_plot.index, carriers_to_plot[column] / 1000, label=column, linewidth=2, color= color_dict[code])
 
                 if not plot_with_info:
                     ax.axis('off')
@@ -513,7 +515,7 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
         plot_file_path = os.path.join(output_path, f'Line_plot_{system}_{scenario}.png')
         plt.savefig(plot_file_path)
 
-def yearly_profile_plot(base_path, carriers_directory, systems, output_path, scenario, availability):
+def yearly_profile_plot(base_path, carriers_directory, systems, output_path, scenario):
     categories = {
         'cooling': 'T10W',
         'electricity': 'E230AC',
@@ -551,33 +553,30 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
             ax = axes[i]
             plot_with_info = False
 
-            if availability == 'Elec_renewables' and cat == 'heat_production':
-                ax.axis('off')  # Turn off the axis for the unused subplot
-            else:
-                has_secondary_y_axis = False
+            has_secondary_y_axis = False
 
-                for column in combined_df.columns:
-                    for car in carrier if isinstance(carrier, list) else [carrier]:
-                        if car in column:
-                            plot_with_info = True
-                            parts = column.split('_')
-                            if parts[0] == 'E230AC':
-                                code = re.sub(r'\d+', '', parts[1])
+            for column in combined_df.columns:
+                for car in carrier if isinstance(carrier, list) else [carrier]:
+                    if car in column:
+                        plot_with_info = True
+                        parts = column.split('_')
+                        if parts[0] == 'E230AC':
+                            code = re.sub(r'\d+', '', parts[1])
+                        else:
+                            code = re.sub(r'\d+', '', parts[0])
+
+                        if 'BT' in column or 'TES' in column:
+                            ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
+                            has_secondary_y_axis = True
+                            ax2.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
+                        else:
+                            if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
+                                ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
                             else:
-                                code = re.sub(r'\d+', '', parts[0])
+                                ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, color=color_dict[code])
 
-                            if 'BT' in column or 'TES' in column:
-                                ax2 = ax.twinx()  # Create a secondary y-axis if it doesn't exist
-                                has_secondary_y_axis = True
-                                ax2.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
-                            else:
-                                if (carrier == 'E230AC' and ('demand' in column or 'sold' in column)) or (cat == 'heat_release' and not 'CH' in column) or (cat == 'heat_production' and 'input' in column):
-                                    ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, linestyle='--', color= color_dict[code])
-                                else:
-                                    ax.plot(range(24), daily_means[column] / 1000, label=column, linewidth=2, color=color_dict[code])
-
-                            ax.fill_between(range(24), ((daily_means[column] - daily_stds[column]) / 1000).clip(lower=0),
-                                            (daily_means[column] + daily_stds[column]) / 1000, color=color_dict[code], alpha=0.3)
+                        ax.fill_between(range(24), ((daily_means[column] - daily_stds[column]) / 1000).clip(lower=0),
+                                        (daily_means[column] + daily_stds[column]) / 1000, color=color_dict[code], alpha=0.3)
 
                 if not plot_with_info:
                     ax.axis('off')
@@ -635,3 +634,71 @@ def plot_clusters(X_scaled, labels, medoids, path):
     plt.ylabel('Feature 2')
     plt.legend()
     plt.savefig(os.path.join(path, 'kmedoids_clusters.png'))
+
+def plot_connectivity(connectivity, scenario_name, plot_save_path):
+
+    results = connectivity[connectivity['scenario'] == scenario_name].reset_index(drop=True)
+    district_buildings = results[results['availability']=='No_renewables']['district_buildings'][0]
+    # Calculate figure size based on the amount of data
+    fig_width = max(12, np.ceil(len(district_buildings)*0.5))  # Width depends on the number of buildings
+    fig_height = max(8, len(results))  # Height depends on the number of results
+
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+
+    # Scaling factors for font sizes
+    base_fontsize = 12  # Base font size
+    font_scaling_factor = fig_width / 20  # Scale font size based on figure width
+
+    # Calculate bbox_to_anchor dynamically based on figure height
+    legend_y_position = 1 + (fig_height / 8 * 0.2)
+
+    # Prepare the grid data
+    grid_data = np.zeros((len(results), len(district_buildings)))
+    for i, result in results.iterrows():
+        connected_buildings = result['connected_buildings']
+        for j, building in enumerate(district_buildings):
+            if building in connected_buildings:
+                grid_data[i, j] = 1  # Green for connected, 1 means connected, 0 means not connected
+
+    # Create the grid plot with green and red colors
+    cmap = mcolors.ListedColormap(['red', 'green'])
+    bounds = [0, 0.5, 1]
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+
+    # Use pcolor to create the plot with grid lines
+    cax = ax.pcolor(grid_data, cmap=cmap, norm=norm, edgecolors='k', linewidths=1)
+
+    # Set aspect ratio to equal to maintain square cells
+    ax.set_aspect('equal')
+
+    # Set x-axis labels (district buildings)
+    ax.set_xticks(np.arange(len(district_buildings)) + 0.5, minor=False)
+    ax.set_xticklabels(district_buildings, rotation=90, fontsize=base_fontsize * font_scaling_factor)
+
+    # Set y-axis labels (availability cases)
+    multi_line_labels = [f'{availability}\n({result})' for availability, result in zip(results['availability'], results['system'])]
+    ax.set_yticks(np.arange(len(multi_line_labels)) + 0.5, minor=False)
+    ax.set_yticklabels(multi_line_labels, fontsize=base_fontsize * font_scaling_factor)
+
+    # Annotate the percentage of connection
+    for i, result in results.iterrows():
+        percentage_connected = result['connected_percentage']
+        ax.text(len(district_buildings)+0.1, i + 0.5, f'{percentage_connected:.1f}%', va='center', ha='left',
+                fontsize=base_fontsize * font_scaling_factor)
+    '''
+    # Add a legend
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='green', markersize=10, label='Connected'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Disconnected')]
+    ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, legend_y_position), ncol=2,
+              fontsize=base_fontsize * font_scaling_factor, frameon=False)
+    '''
+    # Set title
+    ax.set_title(f'Network Connection for {scenario_name}', pad=20, fontsize=base_fontsize * font_scaling_factor)
+    plt.tight_layout()
+
+    # Save the plot
+    plot_path = os.path.join(plot_save_path, scenario_name, f'{scenario_name}_connectivity_plot.png')
+    plt.savefig(plot_path, bbox_inches='tight')
+    plt.close()

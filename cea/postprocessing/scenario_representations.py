@@ -30,7 +30,11 @@ def calculate_occupation_density(base_path, carriers_directory, directory_to_sur
     dict: A dictionary containing the total building area, total district area, and density of occupation.
     """
     area_analysis = pd.DataFrame(index=scenarios, columns=['total_building_area', 'total_district_area', 'density_of_occupation'])
-    for scenario in scenarios:
+    # Create a single figure with 8 subplots (2 columns x 4 rows)
+    fig, axes = plt.subplots(4, 2, figsize=(20, 20))
+    axes = axes.flatten()  # Flatten the 2D array of axes for easy iteration
+
+    for i, scenario in enumerate(scenarios):
         shapefile_path = os.path.join(base_path, scenario, carriers_directory)
         surrounding_path = os.path.join(base_path, scenario, directory_to_surrounding)
 
@@ -62,40 +66,45 @@ def calculate_occupation_density(base_path, carriers_directory, directory_to_sur
         area_analysis.loc[scenario, 'total_district_area'] = total_district_area
         area_analysis.loc[scenario, 'density_of_occupation'] = density_of_occupation
 
-        # Plot the buildings and the convex hull
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+        ax = axes[i]
+
         # Plot district buildings in blue
         district_gdf.plot(ax=ax, color='blue', edgecolor='black', alpha=0.5, label='District Buildings')
 
         # Plot surrounding buildings in green
         surrounding_gdf.plot(ax=ax, color='green', edgecolor='black', alpha=0.5, label='Surrounding Buildings')
 
-        gpd.GeoSeries(convex_hull).plot(ax=ax, color='none', edgecolor='red', linewidth=2, label= 'Convex Hull')
+        gpd.GeoSeries(convex_hull).plot(ax=ax, color='none', edgecolor='red', linewidth=2, label='Convex Hull')
 
-        plt.title(f'Convex Hull for scenario {scenario}', pad=20)
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
+        ax.set_title(f'{scenario}', pad=15, fontsize=13)
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
 
-        # Create custom legend elements
-        legend_elements = [
-            Line2D([0], [0], marker='o', color='w', label='District Buildings', markersize=10, markerfacecolor='blue',
-                   alpha=0.5, markeredgecolor='black'),
-            Line2D([0], [0], marker='o', color='w', label='Surrounding Buildings', markersize=10,
-                   markerfacecolor='green', alpha=0.5, markeredgecolor='black'),
-            Line2D([0], [0], color='red', label='Convex Hull', linewidth=2)]
+        # Adjust the font size of x and y tick labels
+        ax.tick_params(axis='both', which='major', labelsize=6)
 
-        # Add the legend to the plot
-        ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 1), ncol=3)
+    # Create custom legend elements
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label='District Buildings', markersize=10,
+               markerfacecolor='blue',
+               alpha=0.5, markeredgecolor='black'),
+        Line2D([0], [0], marker='o', color='w', label='Surrounding Buildings', markersize=10,
+               markerfacecolor='green', alpha=0.5, markeredgecolor='black'),
+        Line2D([0], [0], color='red', label='Convex Hull', linewidth=2)]
 
-        plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.suptitle('District Buildings and Surroundings with Convex Hull', fontsize=16)
 
-        # Save the plot
-        output_path = os.path.join(save_directory, 'Scenarios_with_buffer_plotted')
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-        plot_file_path = os.path.join(output_path, f'{scenario}.png')
-        plt.savefig(plot_file_path)
-        plt.close(fig)
+    # Add the legend to the plot
+    fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.95), ncol=1, prop={'size': 15})
+
+    # Save the combined plot
+    output_path = os.path.join(save_directory, 'Scenarios_with_buffer_plotted')
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    plot_file_path = os.path.join(output_path, 'combined_scenarios.png')
+    plt.savefig(plot_file_path)
+    plt.close()
 
     # Return the results as a dictionary
     return area_analysis
@@ -250,16 +259,16 @@ def scenarios_irradiation(area_analysis, base_path, irradiation_directory, scena
             radiation = pd.read_csv(radiation_file_path, index_col=0)
             # Use radiation specific to area to compare scenarios with different amount of buildings and areas
             tot_radiation = radiation['total_rad_Whm2']
-            tot_radiation = sum(tot_radiation) / 1e9 # Convert to GWh
+            tot_radiation = np.mean(tot_radiation) / 1e6 # Take the average and convert to MWh
             tot_radiation_per_building.append(tot_radiation)
 
-        radiation_per_scenario[f'{scenario}'][0] = sum(tot_radiation_per_building)
+        radiation_per_scenario[f'{scenario}'][0] = np.mean(tot_radiation_per_building)
 
     # Plotting the radiation_per_scenario DataFrame
     fig, ax = plt.subplots(figsize=(10, 8))
     radiation_per_scenario = radiation_per_scenario.T  # Transpose for better plotting
     radiation_per_scenario.plot(kind='bar', legend=False, color='orange', ax=ax, edgecolor= 'black')
-    ax.set_ylabel('Radiation (GWh/m2)', fontsize=12)
+    ax.set_ylabel('Radiation (MWh/m2)', fontsize=12)
     ax.set_title('Total Yearly Radiation per Scenario', fontsize=14, pad=20)
     ax.set_xticklabels(radiation_per_scenario.index, rotation=45) # Rotate x-labels
     ylim = ax.get_ylim()
@@ -282,7 +291,7 @@ def scenarios_irradiation(area_analysis, base_path, irradiation_directory, scena
     plt.savefig(plot_file_path)
     plt.close('all')
 
-# Example usage
+# MAIN
 scenarios = os.listdir(main_directory)[1:]
 scenarios.remove('dashboard.yml')
 

@@ -2,7 +2,8 @@
 import os
 import pandas as pd
 import re
-import numpy as np
+import json
+
                                             ### Directories and files ###
 def load_data_from_directories(main_directory, filename):
 
@@ -37,8 +38,7 @@ def load_data_from_directories(main_directory, filename):
 def process_files(main_directory, filename):
     # Create an empty DataFrame to hold the results
     combined_df = pd.DataFrame()
-    columns_to_analyse_ren = ['Component', 'Component_type', 'Component_code', 'Capacity_kW']
-    columns_to_analyse_base = ['Component_category', 'Component_type', 'Component_code', 'Capacity_kW']
+    columns_to_analyse = ['Component', 'Component_type', 'Component_code', 'Capacity_kW']
     # Loop through each subdirectory in the main directory
     for subdir in os.listdir(main_directory):
         if subdir == 'current_DES' or subdir == 'debugging':
@@ -53,10 +53,7 @@ def process_files(main_directory, filename):
             if os.path.isfile(file_path):
                 # Read the file into a DataFrame
                 df = pd.read_csv(file_path)
-                if 'THESIS_TEST_CASES_RENEWABLES' in main_directory:
-                    df = df[columns_to_analyse_ren]
-                else:
-                    df = df[columns_to_analyse_base]
+                df = df[columns_to_analyse]
 
                 # Extract the numerical part of the folder name
                 match = re.search(r'\d+', subdir)
@@ -88,7 +85,7 @@ def combine_selected_system_with_structure(selected_systems, structure_df):
 
     return combined_df
 
-def process_energy_system_data(main_directory, selected_systems, filename_structure, selected_systems_structure, context, scenario, availability, dict_availabilities):
+def process_energy_system_data(main_directory, selected_systems, filename_structure, selected_systems_structure, context, scenario, dict_availabilities):
     """
     Process energy system data from CSV files and update the growing DataFrame.
 
@@ -113,11 +110,7 @@ def process_energy_system_data(main_directory, selected_systems, filename_struct
         df = pd.read_csv(file_path)
 
         # Extract relevant columns
-        if context == 'THESIS_TEST_CASES_RENEWABLES':
-            components = df['Component']
-        else:
-            components = df['Component_type']
-
+        components = df['Component']
         capacities = df['Capacity_kW'].values
         codes = df['Component_code']
         combined_components_code = [f"{code}_{component}" for code, component in zip(codes, components)]
@@ -131,17 +124,12 @@ def process_energy_system_data(main_directory, selected_systems, filename_struct
         if 'System_name' not in temp_df.columns:
             temp_df.insert(0, 'System_name', name)
             temp_df.insert(1, 'Scenario', scenario)
-            if context == 'THESIS_TEST_CASES_RENEWABLES':
-                temp_df.insert(2, 'Availability', dict_availabilities[availability])
-            else:
-                temp_df.insert(2, 'Availability', 'No_renewables')
+            temp_df.insert(2, 'Availability', dict_availabilities[context])
+
         else:
             temp_df['System_name'] = name
             temp_df['Scenario'] = scenario
-            if context == 'THESIS_TEST_CASES_RENEWABLES':
-                temp_df['Availability'] = dict_availabilities[availability]
-            else:
-                temp_df['Availability'] = 'No_renewables'
+            temp_df['Availability'] = dict_availabilities[context]
 
         # Create a DataFrame with the components as columns and the system name as the index
         temp_df = merge_pv_columns(temp_df)
@@ -232,3 +220,93 @@ def merge_pv_columns(df):
     df = df.drop(columns=existing_pv_columns)
 
     return df
+def get_connected_buildings(geojson_path):
+    # Load the GeoJSON file
+    with open(geojson_path, 'r') as file:
+        data = json.load(file)
+
+    # Extract building names from the GeoJSON file
+    buildings = []
+    for feature in data['features']:
+        if 'properties' in feature and 'Building' in feature['properties']:
+            building_id = feature['properties']['Building']
+            if building_id != None and building_id.startswith('B10'):
+                buildings.append(building_id)
+    buildings = sorted(set(buildings))
+
+    return buildings
+
+
+def get_district_buildings(demand_folder_path):
+    # List all files in the demand folder
+    demand_files = os.listdir(demand_folder_path)
+
+    # Extract building names from the filenames
+    buildings = []
+    for filename in demand_files:
+        if filename.startswith('B'):
+            building_name = filename.split('.')[0]
+            buildings.append(building_name)
+
+    # Get unique and sorted building names
+    buildings = sorted(set(buildings))
+
+    return buildings
+
+def process_scenario(connectivity_df, folder, directory_to_file, geojson, demand, df_scenarios, scenario_name):
+
+    # Filter the dataframe for the given scenario
+    filtered_df = df_scenarios[df_scenarios['Scenario'] == scenario_name]
+
+    # Create a list of system names from the filtered dataframe
+    system_names = filtered_df['Supply_System'].tolist()
+
+    # Create a list of components availability from the filtered dataframe
+    availabilities = filtered_df['Availability'].tolist()
+
+    # Initialize a list to store results
+    results = []
+
+    # Construct the path to the demand folder
+    demand_folder_path = os.path.join(folder, 'THESIS_TEST_CASES_BASE', scenario_name, demand)
+
+    # Get the list of buildings in the district
+    district_buildings = get_district_buildings(demand_folder_path)
+
+    # Iterate over each system
+    for j, system in enumerate(system_names):
+        # Get the availability context
+        if availabilities[j] == 'No_renewables':
+            context = 'THESIS_TEST_CASES_BASE'
+        else:
+            context = 'THESIS_TEST_CASES_RENEWABLES'
+
+        # Construct the path to the geojson file
+        base_path = os.path.join(folder, context, scenario_name)
+        geojson_path =  base_path + directory_to_file + '/' + system + '/' + geojson
+
+        # Get the list of connected buildings
+        connected_buildings = get_connected_buildings(geojson_path)
+
+        # Calculate the percentage of connected buildings
+        connected_count = len(set(connected_buildings) & set(district_buildings))
+        total_buildings = len(district_buildings)
+        percentage_connected = (connected_count / total_buildings) * 100 if total_buildings > 0 else 0
+
+        # Store the result in a dataframe
+        results.append({
+            'scenario': scenario_name,
+            'system': system,
+            'availability': availabilities[j],
+            'connected_percentage': percentage_connected,
+            'connected_buildings': connected_buildings,
+            'district_buildings': district_buildings
+        })
+
+    # Convert results to a dataframe
+    if connectivity_df.empty:
+        connectivity_df = pd.DataFrame(results)
+    else:
+        connectivity_df = pd.concat([connectivity_df, pd.DataFrame(results)])
+
+    return connectivity_df
