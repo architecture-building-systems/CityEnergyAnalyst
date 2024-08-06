@@ -59,10 +59,12 @@ class GeneticAlgorithm(Algorithm):
         if new_population_size:
             population = new_population_size
         elif self.selection == 'NSGAIII':
-            NOBJ = self.nbr_objectives
-            P = 12
-            H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
-            population = int(H + (4 - H % 4))
+            # Set population to be equal to the number of reference points suggested in the original NSGAIII paper
+            #   (Deb & Jain, 2016)
+            n_obj = self.nbr_objectives
+            p = 12
+            h = factorial(n_obj + p - 1) / (factorial(p) * factorial(n_obj - 1))
+            population = int(h + (4 - h % 4))
         elif not self.selection:
             population = 1
         else:
