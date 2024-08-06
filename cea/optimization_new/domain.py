@@ -62,7 +62,7 @@ class Domain(object):
         self.optimal_energy_systems = []
 
         self._setup_save_directory()
-        self._initialise_domain_descriptor_classes()
+        self._initialize_domain_descriptor_classes()
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
