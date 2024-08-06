@@ -61,6 +61,7 @@ class Domain(object):
         self.initial_energy_system = None
         self.optimal_energy_systems = []
 
+        self._setup_save_directory()
         self._initialize_domain_descriptor_classes()
 
     def _load_weather(self, locator):
@@ -587,6 +588,12 @@ class Domain(object):
 
         return
 
+    def _setup_save_directory(self):
+        """Setup the directory for saving the results."""
+        if self.config.optimization_new.retain_run_results:
+            self.locator.register_centralized_optimization_run_id()
+        else:
+            self.locator.clear_centralized_optimization_results_folder()
 
     def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
