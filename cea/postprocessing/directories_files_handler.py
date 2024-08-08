@@ -78,6 +78,23 @@ def calculate_percentage_change(df):
 
     return percentage_df
 
+def heat_sinks_analysis(df, df_structure):
+
+    components = ['CT', 'HEX']
+    df_structure = df_structure.rename(columns={'System_name':'Supply_System'})
+    # Step 2: Filter df2 to include only rows that match 'A' and 'B' values from df1_sorted
+    df2_filtered = df_structure.merge(df[['Scenario', 'Supply_System']], on=['Scenario', 'Supply_System'])
+
+    # Step 3: Reorder df2_filtered based on the sorted order of df1_sorted
+    df2_reordered = df2_filtered.set_index(['Scenario', 'Supply_System']).loc[df.set_index(['Scenario', 'Supply_System']).index].reset_index()
+    columns_to_keep = [col for col in df2_reordered.columns if any(component in col for component in components)]
+    df2_numerical = df2_reordered.iloc[:, 3:]
+    df2_metadata = df2_reordered.iloc[:, :3]
+    condensers = df2_numerical[columns_to_keep]
+    df2_final = pd.concat([df2_metadata, condensers], axis=1)
+
+    return df2_final
+
 def combine_selected_system_with_structure(selected_systems, structure_df):
     # Combine the selected systems with the structure DataFrame
     selected_systems_df = pd.DataFrame(selected_systems, columns=structure_df.columns)
@@ -141,14 +158,6 @@ def process_energy_system_data(main_directory, selected_systems, filename_struct
     return selected_systems_structure
 
 def line_plot_dataframe_preprocessing(combined_df, hours_to_plot):
-
-    # Clean up not useful columns
-    if 'PV1_E230AC_output' in combined_df.columns:
-        combined_df = combined_df.drop(columns='PV1_E230AC_output')
-    if 'PV2_E230AC_output' in combined_df.columns:
-        combined_df = combined_df.drop(columns='PV2_E230AC_output')
-    if 'PV3_E230AC_output' in combined_df.columns:
-        combined_df = combined_df.drop(columns='PV3_E230AC_output')
 
     # Select only 24 hours of operation and exclude insignificant values
     carriers_to_plot = combined_df.iloc[:hours_to_plot, :]
@@ -310,3 +319,97 @@ def process_scenario(connectivity_df, folder, directory_to_file, geojson, demand
         connectivity_df = pd.concat([connectivity_df, pd.DataFrame(results)])
 
     return connectivity_df
+
+def calculate_self_solar(df):
+    """
+    This function takes a DataFrame and a list of substrings, selects columns whose names contain
+    any of the substrings, calculates the sum of each selected column, computes the percentages
+    by dividing these sums, and returns the resulting DataFrame.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+    substrings (list): A list of substrings to match in the column names.
+
+    Returns:
+    pd.DataFrame: A DataFrame with the sums and percentages of the selected columns.
+    """
+
+    # Select columns whose names contain any of the substrings
+    substrings = ['E230AC', 'PV']
+    selected_columns = [col for col in df.columns if any(substring in col for substring in substrings)]
+    df_selected = df.loc[:, selected_columns].copy()
+
+    # Sum columns containing the string 'input'
+    input_columns = [col for col in selected_columns if 'input' in col]
+    if input_columns:
+        df_selected['Demand'] = df_selected[input_columns].sum(axis=1)
+        df_selected.drop(columns=input_columns, inplace=True)
+
+    # Exclude columns containing the string 'output'
+    output_columns = [col for col in selected_columns if 'output' in col]
+    BT_columns = [col for col in df_selected.columns if 'BT' in col]
+    if output_columns:
+        df_selected.drop(columns=output_columns, inplace=True)
+    if BT_columns:
+        df_selected.drop(columns=BT_columns, inplace=True)
+
+    # Sum columns containing the string 'PV'
+    PV_columns = [col for col in df_selected.columns if 'PV' in col]
+    if PV_columns:
+        df_selected['Production'] = df_selected[PV_columns].sum(axis=1).copy()
+        df_selected.drop(columns=PV_columns, inplace=True)
+
+    # Rename columns as specified
+    df_selected.rename(columns={'E230AC_bought':'Bought', 'E230AC_sold':'Sold'}, inplace=True)
+
+    if 'Sold' not in df_selected.columns:
+        df_selected['Sold'] = 0
+
+    # Calculate the sum of each selected column
+    sum_series = df_selected.sum()
+
+    # Calculate self factors
+    self_sufficiency = (sum_series['Demand'] - sum_series['Bought']) / sum_series['Demand'] * 100
+    self_consumption = (sum_series['Production'] - sum_series['Sold']) / sum_series['Production'] * 100
+
+    # Hold the results in Dataframe
+    sum_series['Self_sufficiency'] = self_sufficiency
+    sum_series['Self_consumption'] = self_consumption
+
+    return sum_series
+
+def drop_similar_rows(df, threshold=5):
+    """
+    Drop rows in a DataFrame that have all values within a specified threshold of another row.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+    threshold (int): The threshold value to compare the differences. Default is 5.
+
+    Returns:
+    pd.DataFrame: The DataFrame with similar rows dropped.
+    """
+    df.reset_index(drop=True, inplace=True)
+    # Create a list to keep track of rows to drop
+    rows_to_drop = set()
+
+    # Iterate over each row in the DataFrame
+    for i in range(len(df)):
+        if i in rows_to_drop:
+            continue
+        row_i = df.iloc[i, 3:]
+
+        # Compare row_i with all subsequent rows
+        for j in range(i + 1, len(df)):
+            if j in rows_to_drop:
+                continue
+            row_j = df.iloc[j, 3:]
+
+            # Check if all values are within the threshold
+            if all(abs(row_i - row_j) < threshold):
+                rows_to_drop.add(j)
+
+    # Drop the rows from the DataFrame
+    df_dropped = df.drop(rows_to_drop).reset_index(drop=True)
+
+    return df_dropped

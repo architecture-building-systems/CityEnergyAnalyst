@@ -7,12 +7,12 @@ from kmedoids_clustering import (kmedoids_clustering, test_different_cluster_num
                                  convert_medoids_to_original_scale)
 from directories_files_handler import (load_data_from_directories, process_files, process_energy_system_data,
                                        process_scenario)
-from multi_objective_plots import (plot_clusters, generate_and_save_plots, heatmap, scatter_plot,
+from multi_objective_plots import (plot_clusters, generate_and_save_plots, heatmap, scatter_plot, scatter_plot_self,
                                    line_graph_plot, yearly_profile_plot, stellar_chart, plot_connectivity)
 
                                  ### MAIN ###
 # Define the main directory and the filename
-context_analysis = ['THESIS_TEST_CASES_BASE', 'THESIS_TEST_CASES_RENEWABLES'] #
+context_analysis = ['THESIS_TEST_CASES_RENEWABLES', 'THESIS_TEST_CASES_BASE'] #
 folder = "D:/CEATesting/"
 save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/"
 directory_to_file = "/outputs/data/optimization/centralized"
@@ -24,6 +24,7 @@ selected_systems_structure = pd.DataFrame()
 connectivity_df = pd.DataFrame()
 percentage_variation = pd.DataFrame()
 current_DES = pd.DataFrame()
+solar_consumption = pd.DataFrame()
 dict_availabilities = {'THESIS_TEST_CASES_BASE': 'No_renewables', 'THESIS_TEST_CASES_RENEWABLES': 'All_renewables'}
 carriers_profile = 'Supply_system_operation_details/N1001_annual_ec_profiles.xlsx'
 geojson = 'networks/N1001_layout.geojson'
@@ -91,8 +92,7 @@ for context in context_analysis:
         generate_and_save_plots(dataframes, plots_path)
         systems = selected_systems['Supply_System'].tolist()
         line_graph_plot(main_directory, carriers_profile, systems, plots_path, scenario)
-        yearly_profile_plot(main_directory, carriers_profile, systems, plots_path, scenario)
-
+        solar_consumption = yearly_profile_plot(main_directory, carriers_profile, systems, plots_path, scenario, solar_consumption)
         # In the percentage change Dataframe, keep only the energy systems that are in the selected systems DataFrame
         percentage_change = percentage_change[percentage_change['Supply_System'].isin(selected_systems['Supply_System'])].reset_index(drop=True)
 
@@ -151,9 +151,11 @@ selected_systems_structure = selected_systems_structure.fillna(0)
 
 for scenario in scenarios:
     heatmap(percentage_variation, plots_path_combined, scenario)
-    scatter_plot(current_DES, selected_systems_combined, plots_path_combined, scenario)
+    # scatter_plot(current_DES, selected_systems_combined, plots_path_combined, scenario)
     stellar_chart(selected_systems_structure, plots_path_combined, scenario)
     plot_connectivity(connectivity_df, scenario, plots_path_combined)
+
+scatter_plot_self(solar_consumption, save_directory)
 
 # Sort the DataFrames by Scenario and Availability and save them to a CSV file
 current_DES = current_DES.set_index('Scenario')
@@ -165,3 +167,4 @@ selected_systems_structure.to_csv(path_document_combined + '/Selected_systems_st
 percentage_variation = percentage_variation.sort_values(by=['Scenario', 'Availability']).reset_index(drop=True)
 percentage_variation.to_csv(path_document_combined + "/Percentage_variation.csv", index=False)
 connectivity_df.to_csv(path_document_combined + '/connectivity_analysis.csv', index=False)
+solar_consumption.to_csv(path_document_combined + '/self_parameters_solar.csv', index=False)

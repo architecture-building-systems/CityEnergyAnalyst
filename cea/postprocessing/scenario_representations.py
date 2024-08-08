@@ -6,6 +6,8 @@ import numpy as np
 import seaborn as sns
 from matplotlib.lines import Line2D
 
+from directories_files_handler import drop_similar_rows, heat_sinks_analysis
+
 # Define the main directory and the filename
 main_directory = "D:/CEATesting/THESIS_TEST_CASES_BASE/"
 main_directory_ren = "D:/CEATesting/THESIS_TEST_CASES_RENEWABLES/"
@@ -14,12 +16,12 @@ directory_to_surrounding = "inputs/building-geometry/surroundings.shp"
 save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/scenario_representations/"
 folder_combined = 'combined_analysis'
 selected_systems_combined = pd.DataFrame()
-selected_systems_structure = pd.DataFrame()
-percentage_variation = pd.DataFrame()
 current_DES = pd.DataFrame()
 singapore_shapefile_path = 'D:/CEATesting/THESIS_TEST_CASES_PLOTS/combined_analysis/Singapore_shapefile/SGP_adm0.shp'
 irradiation_plot = 'outputs/data/potentials/solar'
-
+combined_analysis = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Percentage_variation.csv'
+selected_systems = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Selected_systems.csv'
+selected_systems_structure = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Selected_systems_structure.csv'
 
 def calculate_occupation_density(base_path, carriers_directory, directory_to_surrounding, scenarios, save_directory):
     """
@@ -291,11 +293,161 @@ def scenarios_irradiation(area_analysis, base_path, irradiation_directory, scena
     plt.savefig(plot_file_path)
     plt.close('all')
 
+def heatmap_combined(df, scenarios, path):
+
+    df = df.rename(columns={'Heat_Emissions_kWh': 'Heat Emissions',
+                                                              'System_Energy_Demand_kWh': 'Energy Demand',
+                                                              'GHG_Emissions_kgCO2': 'GHG Emissions',
+                                                              'Cost_USD': 'Cost'})
+
+    availabilities = ['All_renewables', 'No_renewables']
+    # Create a color dictionary for scenarios
+    scenario_colors = {scenario: plt.cm.tab10(i) for i, scenario in enumerate(scenarios)}
+
+    for availability in availabilities:
+        scenario_selection = pd.DataFrame()
+        availability_selection = df[df['Availability'] == availability]
+        for scenario in scenarios:
+            selection = availability_selection[availability_selection['Scenario'] == scenario]
+            cleaned_df = drop_similar_rows(selection, threshold=5)
+            scenario_selection = pd.concat([scenario_selection, cleaned_df], axis=0, ignore_index=True)
+        scenario_selection = scenario_selection.drop('Heat Emissions', axis=1)
+        numeric_values = scenario_selection.iloc[:, 3:]
+
+        # Calculate the number of rows and columns
+        num_rows, num_cols = numeric_values.shape
+
+        # Determine figure size based on the number of rows and columns
+        fig_width = max(8, num_cols * 1.1)  # Width depends on the number of columns
+        fig_height = max(6, num_rows * 0.5)  # Height depends on the number of rows
+
+        # Scaling factors for font sizes
+        base_fontsize = 9
+        font_scaling_factor = min(fig_width / 8, fig_height / 6)
+
+        plt.figure(figsize=(fig_width, fig_height))
+        annot = numeric_values.applymap(lambda x: f'{x:.1f}%')
+        sns.heatmap(numeric_values, annot=annot, fmt='', cmap='viridis', cbar=True, linewidths=0.5, linecolor='black',
+                    annot_kws={"fontsize": base_fontsize * font_scaling_factor, "fontweight": "bold"})
+
+        # Customise plot features
+        multi_line_labels = [f'{scena}\n{sys}' for scena, sys in
+                             zip(scenario_selection['Scenario'], scenario_selection['Supply_System'])]
+
+        plt.title(f'Heatmap {availability}', fontsize=base_fontsize * font_scaling_factor)
+        # Adjust the subplot parameters to move the plot to the right
+        plt.subplots_adjust(left=0.25, right=1, top=0.9, bottom=0.1)
+        plt.xticks(rotation=0)
+
+        ax = plt.gca()
+        ax.set_yticks(np.arange(0.5, len(numeric_values) + 0.5, 1))
+        ax.set_yticklabels([])
+
+        # Add colored y-axis labels
+        for idx, label in enumerate(multi_line_labels):
+            scena, sys = label.split('\n')
+            ax.text(-0.05, idx + 0.2, scena, color=scenario_colors[scena], va='center', ha='right',
+                    fontsize=base_fontsize * font_scaling_factor, weight='bold')
+            ax.text(-0.05, idx + 0.6, sys, color='black', va='center', ha='right',
+                    fontsize=base_fontsize * font_scaling_factor)
+
+        plt.savefig(path + f"Heatmap_{availability}.png")
+
+        # Close all figures at once
+        plt.close('all')
+
+def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
+
+    percentage_variation = percentage_variation.rename(columns={'Heat_Emissions_kWh': 'Heat_Emissions',
+                            'System_Energy_Demand_kWh': 'Energy_Demand',
+                            'GHG_Emissions_kgCO2': 'GHG_Emissions',
+                            'Cost_USD': 'Cost'})
+
+    availabilities = ['All_renewables', 'No_renewables']
+    scenario_colors = {scenario: plt.cm.tab10(i) for i, scenario in enumerate(scenarios)}
+
+    for availability in availabilities:
+        scenario_selection_percentage = pd.DataFrame()
+
+        for scenario in scenarios:
+
+            selection_percentage = percentage_variation[percentage_variation['Scenario'] == scenario]
+            cleaned_df_percentage = drop_similar_rows(selection_percentage, threshold=5)
+            scenario_selection_percentage = pd.concat([scenario_selection_percentage, cleaned_df_percentage], axis=0,
+                                                      ignore_index=True)
+
+        percentage = scenario_selection_percentage.drop(['GHG_Emissions', 'Energy_Demand', 'Cost'], axis=1)
+
+        df_percentage = percentage[percentage['Availability'] == availability].sort_values(by='Heat_Emissions')
+        df_percentage.reset_index(drop=True)
+
+        if availability == 'All_renewables':
+            df_structure_filtered = df_structure[df_structure['Availability'] == availability]
+            heat_sinks = heat_sinks_analysis(df_percentage, df_structure_filtered)
+            heat_sinks.to_csv(os.path.join(plots_path, f"heat_sinks_{availability}.csv"), index=False)
+
+        # Plot hashed bar comparison
+        fig, ax = plt.subplots(figsize=(12, 10))
+        unit_dict = {'Heat_Emissions': 'GWh'}
+
+        # Colors for the bars
+        colors = plt.cm.viridis(np.linspace(0, 1, len(df_percentage)))
+
+        base_value = 100
+        values = df_percentage['Heat_Emissions']
+        font_size = 12
+
+        # Plot the base part of each bar
+        for i, value in enumerate(values):
+            plt.bar(i, base_value, color=colors[i])
+            diff_percentage = values.iloc[i]
+
+            # Plot the difference part of each bar
+            if value > 0:
+                plt.bar(i, value, bottom=base_value, color='red', hatch='//')  # Above base value
+                plt.text(i, base_value + value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=font_size)
+            elif value <= 0:
+                plt.bar(i, -value, bottom=base_value + value, color='green', hatch='\\\\')  # Below base value
+                plt.text(i, base_value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=font_size)
+
+        plt.ylabel(f'Heat Emissions [{unit_dict["Heat_Emissions"]}]')
+        plt.xlabel('Supply System')
+        plt.title(f'Heat Emissions - {availability}')
+
+        # Customise plot features
+        x_tick_labels = [f'{scena}\n{sys}' for scena, sys in
+                         zip(df_percentage['Scenario'], df_percentage['Supply_System'])]
+
+        # Set x-ticks
+        ax.set_xticks(range(len(df_percentage.index)))
+        ax.set_xticklabels([])  # Clear default labels
+
+        # Add colored x-axis labels with rotation
+        for i, label in enumerate(x_tick_labels):
+            scena, sys = label.split('\n')
+            ax.text(i - 0.8, -18, scena, color=scenario_colors[scena], va='center', ha='center',
+                    fontsize=font_size, weight='bold', rotation=45)
+            ax.text(i - 0.5, -20, sys, color='black', va='center', ha='center',
+                    fontsize=font_size, rotation=45)
+
+        plt.tight_layout()
+        plt.subplots_adjust(left=0.2, right=0.95, top=0.9, bottom=0.2)
+
+        # Save the combined plot
+        plot_file_path = os.path.join(plots_path, f"hashed_bar_{availability}.png")
+        plt.savefig(plot_file_path)
+        plt.close('all')
+
 # MAIN
 scenarios = os.listdir(main_directory)[1:]
 scenarios.remove('dashboard.yml')
+percentage_variation = pd.read_csv(combined_analysis)
+systems = pd.read_csv(selected_systems)
+df_structure = pd.read_csv(selected_systems_structure)
 
-area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding, scenarios, save_directory)
-plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
-scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
-plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
+#area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding, scenarios, save_directory)
+#plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
+#scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
+#plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
+# heatmap_combined(percentage_variation, scenarios, save_directory)
+hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)

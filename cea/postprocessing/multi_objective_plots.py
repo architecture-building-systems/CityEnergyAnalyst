@@ -11,7 +11,7 @@ import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
 
 from directories_files_handler import (calculate_percentage_change, line_plot_dataframe_preprocessing,
-                                       combine_excel_sheets, compute_mean_and_std)
+                                       combine_excel_sheets, compute_mean_and_std, calculate_self_solar)
 
                                                 ### Generate plots and save ###
 def generate_and_save_plots_separated(dataframes, plots_path):
@@ -524,7 +524,7 @@ def line_graph_plot(base_path, carriers_directory, systems, output_path, scenari
         plot_file_path = os.path.join(output_path, f'Line_plot_{system}_{scenario}.png')
         plt.savefig(plot_file_path)
 
-def yearly_profile_plot(base_path, carriers_directory, systems, output_path, scenario):
+def yearly_profile_plot(base_path, carriers_directory, systems, output_path, scenario, solar_consumption):
     categories = {
         'cooling': 'T10W',
         'electricity': 'E230AC',
@@ -539,6 +539,7 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
         'BO': 'black', 'CT': 'cyan', 'demand': 'lime', 'bought': 'olive',
         'sold': 'darkslateblue', 'TW':'magenta'
     }
+    self_consumption = []
 
     for system in systems:
         file_path = os.path.join(base_path, system, carriers_directory)
@@ -550,6 +551,12 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
 
         combined_df = combine_excel_sheets(file_path)
         # Preprocessing of data before plotting
+        if 'THESIS_TEST_CASES_RENEWABLES' in file_path:
+            self_consumption = calculate_self_solar(combined_df)
+            self_consumption['System'] = system
+            self_consumption['Scenario'] = scenario
+            solar_consumption = pd.concat([solar_consumption, self_consumption.to_frame().T], axis=0).reset_index(drop=True)
+
         combined_df = line_plot_dataframe_preprocessing(combined_df, hours_to_plot=8760)
 
         daily_means, daily_stds = compute_mean_and_std(combined_df)
@@ -627,6 +634,8 @@ def yearly_profile_plot(base_path, carriers_directory, systems, output_path, sce
         plot_file_path = os.path.join(output_path, f'Mean_Std_{system}_{scenario}.png')
         plt.savefig(plot_file_path)
         plt.close('all')
+
+    return solar_consumption
 
 def plot_clusters(X_scaled, labels, medoids, path):
 
@@ -710,4 +719,40 @@ def plot_connectivity(connectivity, scenario_name, plot_save_path):
     # Save the plot
     plot_path = os.path.join(plot_save_path, scenario_name, f'{scenario_name}_connectivity_plot.png')
     plt.savefig(plot_path, bbox_inches='tight')
+    plt.close()
+
+def scatter_plot_self(df, path):
+    """
+    Create a scatter plot from a DataFrame with self-consumption and self-sufficiency values,
+    where the color represents different scenarios.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame with columns 'Self-Consumption', 'Self-Sufficiency', 'System', and 'Scenario'.
+    path (str): The path to save the scatter plot image.
+
+    Returns:
+    None
+    """
+    # Set the plot style
+    sns.set(style="whitegrid")
+
+    # Create the scatter plot
+    plt.figure(figsize=(12, 8))
+    scatter = sns.scatterplot(data=df, x='Self_consumption', y='Self_sufficiency',
+                              s=100, hue='Scenario', palette='tab10', legend='full', alpha=0.6)
+
+    # Legend
+    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1)
+
+    # Add titles and labels
+    plt.title('Self-Consumption vs. Self-Sufficiency by Scenario', fontsize=16, pad=20)
+    plt.xlabel('Self-Consumption', fontsize=14)
+    plt.ylabel('Self-Sufficiency', fontsize=14)
+
+    # Adjust layout to make room for the legend
+    plt.tight_layout(rect=[0,0,0.85,1])
+
+    # Save the plot
+    final_path = os.path.join(path, "scenario_representations", 'self_analysis_solar.png')
+    plt.savefig(final_path, bbox_inches='tight')
     plt.close()
