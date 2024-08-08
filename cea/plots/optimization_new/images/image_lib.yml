@@ -87,8 +87,9 @@ Components:
     TES1:
       icon: "water_tank_icon.png"
       color: "purple_lighter"
-
-
+    BT1:
+      icon: "battery.png"
+      color: "purple_lighter"
 
 Consumers:
     IconFiles:
