@@ -43,7 +43,7 @@ def plot_district_network(selected_systems, base_path, carriers_directory,networ
     systems = pd.read_csv(selected_systems)
 
     for avail in availability_list:
-        selected_systems_avail = systems[systems['Availability'] == avail]
+        selected_systems_avail = systems[systems['Availability'] == availability_dict[avail]]
         for scenario in scenarios:
 
             shapefile_path = os.path.join(base_path, avail, scenario, carriers_directory)
