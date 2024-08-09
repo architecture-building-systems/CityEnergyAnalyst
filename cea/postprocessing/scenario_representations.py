@@ -9,11 +9,13 @@ from matplotlib.lines import Line2D
 from directories_files_handler import drop_similar_rows, heat_sinks_analysis
 
 # Define the main directory and the filename
+base_directory = "D:/CEATesting/"
 main_directory = "D:/CEATesting/THESIS_TEST_CASES_BASE/"
 main_directory_ren = "D:/CEATesting/THESIS_TEST_CASES_RENEWABLES/"
 directory_to_file = "inputs/building-geometry/zone.shp"
 directory_to_surrounding = "inputs/building-geometry/surroundings.shp"
 save_directory = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/scenario_representations/"
+save_directory_base = "D:/CEATesting/THESIS_TEST_CASES_PLOTS/"
 folder_combined = 'combined_analysis'
 selected_systems_combined = pd.DataFrame()
 current_DES = pd.DataFrame()
@@ -22,6 +24,74 @@ irradiation_plot = 'outputs/data/potentials/solar'
 combined_analysis = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Percentage_variation.csv'
 selected_systems = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Selected_systems.csv'
 selected_systems_structure = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Selected_systems_structure.csv'
+network_directory = 'outputs/data/optimization/centralized'
+geojson_file = 'networks/N1001_layout.geojson'
+
+
+def plot_district_network(selected_systems, base_path, carriers_directory,network_path, geojson_file, scenarios, save_directory):
+    """
+    Combines a district cooling network from a GeoJSON file with a district shapefile
+    and plots the full representation of the network inside the district.
+
+    Parameters:
+    - district_shapefile_path: str, path to the shapefile containing the district boundaries.
+    - network_geojson_path: str, path to the GeoJSON file containing the district cooling network.
+    - output_plot_path: str, optional, path to save the plot. If None, the plot is displayed.
+    """
+    availability_list = ['THESIS_TEST_CASES_BASE', 'THESIS_TEST_CASES_RENEWABLES']
+    availability_dict = {'THESIS_TEST_CASES_BASE': 'No_renewables', 'THESIS_TEST_CASES_RENEWABLES': 'All_renewables'}
+    systems = pd.read_csv(selected_systems)
+
+    for avail in availability_list:
+        selected_systems_avail = systems[systems['Availability'] == avail]
+        for scenario in scenarios:
+
+            shapefile_path = os.path.join(base_path, avail, scenario, carriers_directory)
+            network_path_system = os.path.join(base_path, avail, scenario, network_path)
+            district_gdf = gpd.read_file(shapefile_path)
+            selected_systems_scenario = selected_systems_avail[selected_systems_avail['Scenario'] == scenario]
+
+            for system in selected_systems_scenario['Supply_System']:
+                system_network_path = os.path.join(network_path_system, system, geojson_file)
+
+                # Load the GeoJSON file containing the district cooling network
+                network_gdf = gpd.read_file(system_network_path)
+
+                for j, row in network_gdf.iterrows():
+                    if 'NODE' in row['index']:
+                        if 'CONSUMER' in row['Type']:
+                            continue
+                        else:
+                            network_gdf = network_gdf.drop(index=j)
+
+                network_gdf = network_gdf.reset_index(drop=True)
+
+                # Ensure both GeoDataFrames have the same CRS
+                if network_gdf.crs != district_gdf.crs:
+                    network_gdf = network_gdf.to_crs(district_gdf.crs)
+
+                # Create a plot of the district with the network overlaid
+                fig, ax = plt.subplots(figsize=(10, 10))
+
+                # Plot the district shapefile
+                district_gdf.plot(ax=ax, color='lightgray', edgecolor='black', alpha=0.5, label='District')
+
+                # Plot the cooling network
+                network_gdf.plot(ax=ax, color='blue', linewidth=2, label='Cooling Network')
+
+                # Add legend and titles
+                plt.legend()
+                plt.title('District Cooling Network inside District')
+                plt.xlabel('Longitude', fontsize=8)
+                plt.ylabel('Latitude', fontsize=8)
+
+                # Save or show the plot
+                save_path = os.path.join(save_directory, avail, scenario)
+                if not os.path.exists(save_path):
+                    os.makedirs(save_path)
+                plt.savefig(save_path + f'/objective_functions_plots/District_network_{system}.png', bbox_inches='tight')
+
+
 
 def calculate_occupation_density(base_path, carriers_directory, directory_to_surrounding, scenarios, save_directory):
     """
@@ -445,9 +515,12 @@ percentage_variation = pd.read_csv(combined_analysis)
 systems = pd.read_csv(selected_systems)
 df_structure = pd.read_csv(selected_systems_structure)
 
-#area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding, scenarios, save_directory)
+# area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding,
+                                             # scenarios, save_directory)
+plot_district_network(selected_systems, base_directory, directory_to_file, network_directory, geojson_file, scenarios,
+                      save_directory_base)
 #plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
 #scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
 #plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
 # heatmap_combined(percentage_variation, scenarios, save_directory)
-hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)
+# hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)
