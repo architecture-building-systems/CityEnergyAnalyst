@@ -117,10 +117,10 @@ async def set_job_error(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerP
 async def start_job(worker_processes: CEAWorkerProcesses, worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
-    worker_processes[job_id] = subprocess.Popen([
+    await worker_processes.set(job_id, subprocess.Popen([
         "python", "-m", "cea.worker", f"{job_id}",
         "--url", f"{worker_url}"
-    ])
+    ]))
     return job_id
 
 
