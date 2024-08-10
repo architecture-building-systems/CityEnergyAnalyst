@@ -163,7 +163,7 @@ async def get_plot(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index:
     return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
 
-@router.put('/{dashboard_index}/plots/{plot_index}>')
+@router.put('/{dashboard_index}/plots/{plot_index}')
 async def create_plot_at_index(config: CEAConfig, plot_cache: CEAPlotCache,
                                dashboard_index: int, plot_index: int, payload: Dict[str, Any]):
     """
