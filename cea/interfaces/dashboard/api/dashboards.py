@@ -104,7 +104,7 @@ async def get_plot_categories(config: CEAConfig):
     return get_categories(config.plugins)
 
 
-@router.get('/plot-categories/{category_name}/plots/{plot_id>}/parameters')
+@router.get('/plot-categories/{category_name}/plots/{plot_id}/parameters')
 async def get_plot_category_parameters(config: CEAConfig, category_name: str, plot_id: str, scenario: str = None):
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
     return get_parameters_from_plot_class(config, plot_class, scenario)
