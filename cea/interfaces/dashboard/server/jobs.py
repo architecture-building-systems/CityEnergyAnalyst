@@ -117,10 +117,11 @@ async def set_job_error(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerP
 async def start_job(worker_processes: CEAWorkerProcesses, worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
-    await worker_processes.set(job_id, subprocess.Popen([
+    process = subprocess.Popen([
         "python", "-m", "cea.worker", f"{job_id}",
         "--url", f"{worker_url}"
-    ]))
+    ])
+    await worker_processes.set(job_id, process.pid)
     return job_id
 
 
@@ -142,12 +143,12 @@ async def kill_job(jobid, worker_processes):
     if jobid not in await worker_processes.values():
         return
 
-    popen = await worker_processes.get(jobid)
+    pid = await worker_processes.get(jobid)
     # using code from here: https://stackoverflow.com/a/4229404/2260
     # to terminate child processes too
-    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
+    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=pid))
     try:
-        process = psutil.Process(popen.pid)
+        process = psutil.Process(pid)
     except psutil.NoSuchProcess:
         return
     children = process.children(recursive=True)
