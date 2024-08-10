@@ -55,10 +55,11 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 # install cea after dependencies to avoid running conda too many times when rebuilding
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
 RUN pip install /tmp/cea
-RUN cea-config write --general:project /project
-RUN cea-config write --radiation:daysim-bin-directory /Daysim
-# required for flask to receive reqests from the docker host
-RUN cea-config write --server:host 0.0.0.0
+
+# write config files
+RUN cea-config write --general:project /project \
+    && cea-config write --radiation:daysim-bin-directory /Daysim \
+    && cea-config write --server:host 0.0.0.0  # required for flask to receive requests from the docker host
 
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD cea dashboard
