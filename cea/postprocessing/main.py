@@ -73,7 +73,7 @@ for context in context_analysis:
         n_clusters = test_different_cluster_numbers(X_scaled, cluster_path)
         if n_clusters != 1:
             labels, medoids, selected_systems_names = kmedoids_clustering(X_scaled, n_medoids=n_clusters, system_names=system_names)
-            plot_clusters(X_scaled, labels, medoids, cluster_path)
+            # plot_clusters(X_scaled, labels, medoids, cluster_path)
             selected_systems = convert_medoids_to_original_scale(medoids, scaler, objective_labels, selected_systems_names)
             selected_systems.insert(0, 'Supply_System', selected_systems_names)
         else:
@@ -89,9 +89,9 @@ for context in context_analysis:
 
         # Generate and save plots
         dataframes['Supply_System'] = dataframes['Supply_System'].astype('category')
-        generate_and_save_plots(dataframes, plots_path)
+        # generate_and_save_plots(dataframes, plots_path)
         systems = selected_systems['Supply_System'].tolist()
-        line_graph_plot(main_directory, carriers_profile, systems, plots_path, scenario)
+        #line_graph_plot(main_directory, carriers_profile, systems, plots_path, scenario)
         solar_consumption = yearly_profile_plot(main_directory, carriers_profile, systems, plots_path, scenario, solar_consumption)
         # In the percentage change Dataframe, keep only the energy systems that are in the selected systems DataFrame
         percentage_change = percentage_change[percentage_change['Supply_System'].isin(selected_systems['Supply_System'])].reset_index(drop=True)
@@ -150,9 +150,9 @@ selected_systems_structure = pd.concat([fixed_columns, columns_to_sort], axis=1)
 selected_systems_structure = selected_systems_structure.fillna(0)
 
 for scenario in scenarios:
-    heatmap(percentage_variation, plots_path_combined, scenario)
+    # heatmap(percentage_variation, plots_path_combined, scenario)
     # scatter_plot(current_DES, selected_systems_combined, plots_path_combined, scenario)
-    stellar_chart(selected_systems_structure, plots_path_combined, scenario)
+    # stellar_chart(selected_systems_structure, plots_path_combined, scenario)
     plot_connectivity(connectivity_df, scenario, plots_path_combined)
 
 scatter_plot_self(solar_consumption, save_directory)

@@ -656,7 +656,7 @@ def plot_clusters(X_scaled, labels, medoids, path):
 def plot_connectivity(connectivity, scenario_name, plot_save_path):
 
     results = connectivity[connectivity['scenario'] == scenario_name].reset_index(drop=True)
-    district_buildings = results[results['availability']=='No_renewables']['district_buildings'][0]
+    district_buildings = results[results['availability']=='No_renewables']['district_buildings'].values[0]
     # Calculate figure size based on the amount of data
     fig_width = max(12, np.ceil(len(district_buildings)*0.5))  # Width depends on the number of buildings
     fig_height = max(8, len(results))  # Height depends on the number of results

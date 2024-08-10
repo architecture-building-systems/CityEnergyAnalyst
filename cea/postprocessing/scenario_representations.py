@@ -26,8 +26,7 @@ selected_systems = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\docu
 selected_systems_structure = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\Selected_systems_structure.csv'
 network_directory = 'outputs/data/optimization/centralized'
 geojson_file = 'networks/N1001_layout.geojson'
-
-
+connectivity_directory = 'D:\CEATesting\THESIS_TEST_CASES_PLOTS\combined_analysis\documents\connectivity_analysis.csv'
 def plot_district_network(selected_systems, base_path, carriers_directory,network_path, geojson_file, scenarios, save_directory):
     """
     Combines a district cooling network from a GeoJSON file with a district shapefile
@@ -374,6 +373,10 @@ def heatmap_combined(df, scenarios, path):
     # Create a color dictionary for scenarios
     scenario_colors = {scenario: plt.cm.tab10(i) for i, scenario in enumerate(scenarios)}
 
+    # Find the global minimum and maximum values across both heatmaps
+    min_val = df[['Energy Demand', 'GHG Emissions', 'Cost']].min().min()
+    max_val = df[['Energy Demand', 'GHG Emissions', 'Cost']].max().max()
+
     for availability in availabilities:
         scenario_selection = pd.DataFrame()
         availability_selection = df[df['Availability'] == availability]
@@ -398,7 +401,8 @@ def heatmap_combined(df, scenarios, path):
         plt.figure(figsize=(fig_width, fig_height))
         annot = numeric_values.applymap(lambda x: f'{x:.1f}%')
         sns.heatmap(numeric_values, annot=annot, fmt='', cmap='viridis', cbar=True, linewidths=0.5, linecolor='black',
-                    annot_kws={"fontsize": base_fontsize * font_scaling_factor, "fontweight": "bold"})
+                    annot_kws={"fontsize": base_fontsize * font_scaling_factor, "fontweight": "bold"},
+                    vmin=min_val, vmax=max_val)  # Set the common color scale for all heatmaps
 
         # Customise plot features
         multi_line_labels = [f'{scena}\n{sys}' for scena, sys in
@@ -508,19 +512,64 @@ def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
         plt.savefig(plot_file_path)
         plt.close('all')
 
+
+def scatter_plot_two_dataframes(connectivity, area_analysis, plots_path):
+    """
+    Plots a scatter plot of two columns from two different DataFrames.
+
+    Parameters:
+        df1 (pd.DataFrame): The first DataFrame.
+        col1 (str): The column name from the first DataFrame to be plotted on the x-axis.
+        df2 (pd.DataFrame): The second DataFrame.
+        col2 (str): The column name from the second DataFrame to be plotted on the y-axis.
+        xlabel (str): The label for the x-axis.
+        ylabel (str): The label for the y-axis.
+        title (str): The title of the plot.
+    """
+    # Set the plot style
+    sns.set(style="whitegrid")
+
+    connectivity_district = connectivity[connectivity['availability'] == 'No_renewables']
+    area_analysis = area_analysis.reset_index(drop=False).rename(columns={'index': 'scenario'})
+
+    # Extract the data for plotting
+    x_data = connectivity_district[['scenario','connected_percentage']]
+    y_data = area_analysis[['scenario','density_of_occupation']]
+
+    merged_df = pd.merge(x_data, y_data, on='scenario', how='left')
+
+    # Create the scatter plot
+    plt.figure(figsize=(12, 8))
+    scatter = sns.scatterplot(data=merged_df, x='connected_percentage', y='density_of_occupation',
+                                  s=100, hue='scenario', palette='tab10', legend='full', alpha=0.6)
+    # Set the labels and title
+    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1)
+    # Adjust layout to make room for the legend
+    plt.tight_layout(rect=[0,0,1,0.95])
+    plt.xlabel('Connected buildings percentage', fontsize=12)
+    plt.ylabel('Building density in district', fontsize=12)
+    plt.title('District density vs connectivity percentage', fontsize=14)
+
+    # Save the combined plot
+    plot_file_path = os.path.join(plots_path, f"connection_density.png")
+    plt.savefig(plot_file_path)
+    plt.close('all')
+
 # MAIN
 scenarios = os.listdir(main_directory)[1:]
 scenarios.remove('dashboard.yml')
 percentage_variation = pd.read_csv(combined_analysis)
 systems = pd.read_csv(selected_systems)
 df_structure = pd.read_csv(selected_systems_structure)
+connectivity = pd.read_csv(connectivity_directory)
 
-# area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding,
-                                             # scenarios, save_directory)
+area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding,
+                                             scenarios, save_directory)
+scatter_plot_two_dataframes(connectivity, area_analysis, save_directory)
 plot_district_network(selected_systems, base_directory, directory_to_file, network_directory, geojson_file, scenarios,
                       save_directory_base)
-#plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
-#scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
-#plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
-# heatmap_combined(percentage_variation, scenarios, save_directory)
-# hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)
+plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
+scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
+plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
+heatmap_combined(percentage_variation, scenarios, save_directory)
+hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)
