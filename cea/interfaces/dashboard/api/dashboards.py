@@ -153,7 +153,7 @@ async def update_dashboard(config: CEAConfig, plot_cache: CEAPlotCache, dashboar
     return {'new_dashboard_index': dashboard_index}
 
 
-@router.get('/{dashboard_index}/plots/{plot_index}>')
+@router.get('/{dashboard_index}/plots/{plot_index}')
 async def get_plot(config: CEAConfig, plot_cache: CEAPlotCache, dashboard_index: int, plot_index: int):
     """
     Get Dashboard Plot
@@ -198,7 +198,7 @@ async def create_plot_at_index(config: CEAConfig, plot_cache: CEAPlotCache,
     return dashboard_to_dict(dashboards[dashboard_index])['plots'][plot_index]
 
 
-@router.delete('/{dashboard_index}/plots/{plot_index}>')
+@router.delete('/{dashboard_index}/plots/{plot_index}')
 async def delete_plot(config: CEAConfig, plot_cache: CEAPlotCache,  dashboard_index: int, plot_index: int):
     """
     Delete Plot from Dashboard
