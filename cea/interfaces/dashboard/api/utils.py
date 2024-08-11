@@ -26,7 +26,7 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
 
     try:
         params["nullable"] = p.nullable
-    except AttributeError as e:
+    except AttributeError:
         pass
 
     return params

@@ -223,7 +223,7 @@ async def check_scenario_exists(request: Request, config: CEAConfig, scenario: s
     if scenario not in choices:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Scenario does not exist.',
+            detail='Scenario does not exist.',
         )
 
 
