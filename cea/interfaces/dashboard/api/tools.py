@@ -83,7 +83,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             value = payload[parameter.name]
             print('%s: %s' % (parameter.name, value))
             parameter.set(value)
-    config.save()
+    await config.save()
     return 'Success'
 
 
