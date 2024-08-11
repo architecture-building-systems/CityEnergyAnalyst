@@ -13,10 +13,10 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: b2c2957fddcd9b9ddc8923cef3d935591771d6a6ddd6f2ae4c48c5bd308a7873
-    osx-arm64: d73a8b349385dbaf336923cfa7fdfe17b8e72b5221ca06fffc10b91bb8c3a4fa
-    osx-64: 5f95fabcc9038c883ccf7f2946038b60949ac09ae465dc573316628cedd0ca99
-    win-64: 16ae8e92dda832ad5d683c8c17cee1fa34964ff5dfb470e25ec9ca58ed508447
+    linux-64: 3f1de7a44dc72b20a2c62c66c87f6193bc497c342382a7d34682ceb483e8a4e0
+    osx-arm64: 5b3b91cad60c6d8c07efa763a13b521c9eff4b71763601faf0063fde7b296eea
+    osx-64: 7a324922b520d42f1ad2656260b70a698ceec2ef0827db09dd44d9e0dbb9f32c
+    win-64: ab2315818eb51db6522ca8f1da8125b4df5ea7244d947761eaf86e17243b3159
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -197,7 +197,7 @@ package:
   category: main
   optional: false
 - name: aiohttp
-  version: 3.10.2
+  version: 3.10.3
   manager: conda
   platform: linux-64
   dependencies:
@@ -212,14 +212,14 @@ package:
     python: '>=3.8,<3.9.0a0'
     python_abi: 3.8.*
     yarl: '>=1.0,<2.0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.10.2-py38h2019614_0.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/aiohttp-3.10.3-py38h2019614_0.conda
   hash:
-    md5: aefa307b305ab253c865cc81fa8129b6
-    sha256: c8d937888812c048601533a856492e7fb55db75efde3dfad5756e7fe4c80b4f7
+    md5: 502fd35a4eea3206de0e89539f85f3bd
+    sha256: ed40e0289549f18bb0686d9ada64116ac2174a20a27ae8e49228e87ffc42f8ae
   category: main
   optional: false
 - name: aiohttp
-  version: 3.10.2
+  version: 3.10.3
   manager: conda
   platform: osx-64
   dependencies:
@@ -233,14 +233,14 @@ package:
     python: '>=3.8,<3.9.0a0'
     python_abi: 3.8.*
     yarl: '>=1.0,<2.0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/aiohttp-3.10.2-py38hc718529_0.conda
+  url: https://conda.anaconda.org/conda-forge/osx-64/aiohttp-3.10.3-py38hc718529_0.conda
   hash:
-    md5: 4b315bc686e7c8477504a293f0742b93
-    sha256: b348f8768763d0686d2c782321ef6934d03130ef09cdb5db48abdda72ad707fe
+    md5: ebc8bb195e73321125f6da9c7d0ec039
+    sha256: 6c83d3f4def469d76e738fbc3c840dd22b41b6e51e20648fc86a3c21ac3f5697
   category: main
   optional: false
 - name: aiohttp
-  version: 3.10.2
+  version: 3.10.3
   manager: conda
   platform: osx-arm64
   dependencies:
@@ -254,14 +254,14 @@ package:
     python: '>=3.8,<3.9.0a0'
     python_abi: 3.8.*
     yarl: '>=1.0,<2.0'
-  url: https://conda.anaconda.org/conda-forge/osx-arm64/aiohttp-3.10.2-py38h3237794_0.conda
+  url: https://conda.anaconda.org/conda-forge/osx-arm64/aiohttp-3.10.3-py38h3237794_0.conda
   hash:
-    md5: 7a61e6aabd919af7c6e8b8fbeeeccd4d
-    sha256: 799d22e7642deed0825c87dc2267f49e2b8705bdc697c9367290d9acddae2adc
+    md5: 7e5a34fafcd669028dcfc7e91c14c565
+    sha256: b7d7348f9f430ec6e41682f9d372a288b5506b5c56962440f9684bf73b050d90
   category: main
   optional: false
 - name: aiohttp
-  version: 3.10.2
+  version: 3.10.3
   manager: conda
   platform: win-64
   dependencies:
@@ -277,10 +277,10 @@ package:
     vc: '>=14.2,<15'
     vc14_runtime: '>=14.29.30139'
     yarl: '>=1.0,<2.0'
-  url: https://conda.anaconda.org/conda-forge/win-64/aiohttp-3.10.2-py38h4cb3324_0.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/aiohttp-3.10.3-py38h4cb3324_0.conda
   hash:
-    md5: 858504ad3c45ed8b4ff01fd5df063b69
-    sha256: 28563fce8c4e8c628a730bb9180b479f15f0287fb58efda335981b6fe5c8c79f
+    md5: 87451e1e15d6811023efbb6558a0a2b7
+    sha256: 25711bddc935b9b6e1b904150bb6ce638cf76b635d2f387ea8d2df7b5722a8f8
   category: main
   optional: false
 - name: aiosignal
@@ -19481,6 +19481,62 @@ package:
     sha256: 4790787fe1f4e8da616edca4acf6a4f8ed4e7c6967aa31b920208fc8f95efcca
   category: main
   optional: false
+- name: python-louvain
+  version: '0.16'
+  manager: conda
+  platform: linux-64
+  dependencies:
+    networkx: ''
+    numpy: ''
+    python: '>=3.6'
+  url: https://conda.anaconda.org/conda-forge/noarch/python-louvain-0.16-pyhd8ed1ab_0.conda
+  hash:
+    md5: db29f9a0f9ee3495b4eda33c5dde7628
+    sha256: 2802225f77c2c03e027e8b08eff46a6a333dc686b68d3ceb271916018f6ee508
+  category: main
+  optional: false
+- name: python-louvain
+  version: '0.16'
+  manager: conda
+  platform: osx-64
+  dependencies:
+    numpy: ''
+    networkx: ''
+    python: '>=3.6'
+  url: https://conda.anaconda.org/conda-forge/noarch/python-louvain-0.16-pyhd8ed1ab_0.conda
+  hash:
+    md5: db29f9a0f9ee3495b4eda33c5dde7628
+    sha256: 2802225f77c2c03e027e8b08eff46a6a333dc686b68d3ceb271916018f6ee508
+  category: main
+  optional: false
+- name: python-louvain
+  version: '0.16'
+  manager: conda
+  platform: osx-arm64
+  dependencies:
+    numpy: ''
+    networkx: ''
+    python: '>=3.6'
+  url: https://conda.anaconda.org/conda-forge/noarch/python-louvain-0.16-pyhd8ed1ab_0.conda
+  hash:
+    md5: db29f9a0f9ee3495b4eda33c5dde7628
+    sha256: 2802225f77c2c03e027e8b08eff46a6a333dc686b68d3ceb271916018f6ee508
+  category: main
+  optional: false
+- name: python-louvain
+  version: '0.16'
+  manager: conda
+  platform: win-64
+  dependencies:
+    numpy: ''
+    networkx: ''
+    python: '>=3.6'
+  url: https://conda.anaconda.org/conda-forge/noarch/python-louvain-0.16-pyhd8ed1ab_0.conda
+  hash:
+    md5: db29f9a0f9ee3495b4eda33c5dde7628
+    sha256: 2802225f77c2c03e027e8b08eff46a6a333dc686b68d3ceb271916018f6ee508
+  category: main
+  optional: false
 - name: python-multipart
   version: 0.0.9
   manager: conda
@@ -23945,51 +24001,51 @@ package:
   category: main
   optional: false
 - name: webcolors
-  version: 24.6.0
+  version: 24.8.0
   manager: conda
   platform: linux-64
   dependencies:
     python: '>=3.5'
-  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.6.0-pyhd8ed1ab_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.8.0-pyhd8ed1ab_0.conda
   hash:
-    md5: 419f2f6cf90fc7a6feee657752cd0f7b
-    sha256: 6377de3bc05b80f25c5fe75f180a81fc8a6aa601d4b228161f75f78862d00a0f
+    md5: eb48b812eb4fbb9ff238a6651fdbbcae
+    sha256: ec71f97c332a7d328ae038990b8090cbfa772f82845b5d2233defd167b7cc5ac
   category: main
   optional: false
 - name: webcolors
-  version: 24.6.0
+  version: 24.8.0
   manager: conda
   platform: osx-64
   dependencies:
     python: '>=3.5'
-  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.6.0-pyhd8ed1ab_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.8.0-pyhd8ed1ab_0.conda
   hash:
-    md5: 419f2f6cf90fc7a6feee657752cd0f7b
-    sha256: 6377de3bc05b80f25c5fe75f180a81fc8a6aa601d4b228161f75f78862d00a0f
+    md5: eb48b812eb4fbb9ff238a6651fdbbcae
+    sha256: ec71f97c332a7d328ae038990b8090cbfa772f82845b5d2233defd167b7cc5ac
   category: main
   optional: false
 - name: webcolors
-  version: 24.6.0
+  version: 24.8.0
   manager: conda
   platform: osx-arm64
   dependencies:
     python: '>=3.5'
-  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.6.0-pyhd8ed1ab_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.8.0-pyhd8ed1ab_0.conda
   hash:
-    md5: 419f2f6cf90fc7a6feee657752cd0f7b
-    sha256: 6377de3bc05b80f25c5fe75f180a81fc8a6aa601d4b228161f75f78862d00a0f
+    md5: eb48b812eb4fbb9ff238a6651fdbbcae
+    sha256: ec71f97c332a7d328ae038990b8090cbfa772f82845b5d2233defd167b7cc5ac
   category: main
   optional: false
 - name: webcolors
-  version: 24.6.0
+  version: 24.8.0
   manager: conda
   platform: win-64
   dependencies:
     python: '>=3.5'
-  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.6.0-pyhd8ed1ab_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.8.0-pyhd8ed1ab_0.conda
   hash:
-    md5: 419f2f6cf90fc7a6feee657752cd0f7b
-    sha256: 6377de3bc05b80f25c5fe75f180a81fc8a6aa601d4b228161f75f78862d00a0f
+    md5: eb48b812eb4fbb9ff238a6651fdbbcae
+    sha256: ec71f97c332a7d328ae038990b8090cbfa772f82845b5d2233defd167b7cc5ac
   category: main
   optional: false
 - name: webencodings
