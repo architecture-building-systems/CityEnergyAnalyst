@@ -38,9 +38,9 @@ from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
-from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
+from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class DistrictEnergySystem(object):
@@ -207,15 +207,10 @@ class DistrictEnergySystem(object):
                                               in zip(building_ids, buildings_are_disconnected)
                                               if is_disconnected]
             else:
-                buildings_are_connected_to_network = [connection == network_id for connection in self.connectivity]
-                connected_buildings = [building_id for [building_id, is_connected]
-                                       in zip(building_ids, buildings_are_connected_to_network)
-                                       if is_connected]
-                full_network_identifier = 'N' + str(1000 + network_id)
-                network = Network(self.connectivity, full_network_identifier, connected_buildings)
-                network.run_steiner_tree_optimisation()
-                network.calculate_operational_conditions()
+                network = Network.build_network(network_id, building_ids, self.connectivity, generate_dataframes=True)
+                network.calculate_operational_conditions(self.connectivity.as_str(for_filename=True))
                 self.networks.append(network)
+
         return self.networks
 
     def aggregate_demand(self):
@@ -340,6 +335,8 @@ class DistrictEnergySystem(object):
                                                     self.subsystem_demands[network.identifier])
             designated_supply_system.evaluate()
             self.supply_systems[network.identifier] = designated_supply_system
+
+        self.combine_supply_systems_and_networks()
 
         return self.supply_systems
 
