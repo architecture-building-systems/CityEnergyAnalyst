@@ -25,9 +25,12 @@ __status__ = "Production"
 import random
 from deap import tools
 import hashlib
+import networkx as nx
 
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
-from cea.optimization_new.helpercalsses.optimization.clustering import Clustering
+from cea.constants import SHAPEFILE_TOLERANCE
+from cea.optimization_new.network import Network
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.clustering import Clustering
 
 
 class Connection(object):
@@ -77,8 +80,7 @@ class Connection(object):
 
     @staticmethod
     def initialize_class_variables(domain):
-        Connection.possible_connections = range(len(domain.buildings)
-                                                // domain.config.optimization_new.buildings_to_networks_ratio + 2)
+        Connection.possible_connections = range(domain.config.optimization_new.maximum_number_of_networks + 1)
         Connection.possible_building_codes = [building.identifier for building in domain.buildings]
         Connection.zero_demand_buildings = [building.identifier for building in domain.buildings
                                             if all(building.demand_flow.profile == 0)]
@@ -86,6 +88,8 @@ class Connection(object):
 
 class ConnectivityVector(object):
     _cluster_indexes: list = None
+    _overlap_correction_method: str = None
+    _building_nodes: dict = None
 
     def __init__(self, connection_list=None):
         if not connection_list:
@@ -114,6 +118,19 @@ class ConnectivityVector(object):
                                   if connection.network_connection in values_appearing_once}
                 for index, corrected_value in changed_values.items():
                     new_connections[index].network_connection = corrected_value
+                new_values = [new_connection.network_connection for new_connection in new_connections]
+
+            # If indicated, check for overlaps in the network connections and eliminate them
+            if self._overlap_correction_method:
+                new_connections = self.correct_for_network_overlaps(new_connections, as_connection_list=True)
+                new_values = [new_connection.network_connection for new_connection in new_connections]
+
+            # Stabilise the vector, this ensures no duplicate network connectivity states are evaluated
+            stable_values = ConnectivityVector.stabilise_vector(new_values)
+            changed_values = {i: connection for i, connection in enumerate(stable_values)
+                              if connection != new_values[i]}
+            for index, corrected_value in changed_values.items():
+                new_connections[index].network_connection = corrected_value
 
             # Set the connectivity vector
             self._connections = new_connections
@@ -135,6 +152,13 @@ class ConnectivityVector(object):
             # ... if so set them to 0 (network with only one building = stand-alone building)
             if values_appearing_once:
                 new_values = [0 if i in values_appearing_once else i for i in new_values]
+
+            # If indicated, check for overlaps in the network connections and eliminate them
+            if self._overlap_correction_method:
+                new_values = self.correct_for_network_overlaps(new_values)
+
+            # Stabilise the vector, this ensures no duplicate network connectivity states are evaluated
+            new_values = ConnectivityVector.stabilise_vector(new_values)
 
             # Set the new values
             for i in range(len(self)):
@@ -212,6 +236,184 @@ class ConnectivityVector(object):
             connectivity_str = hashlib.sha256(connectivity_bytes).hexdigest()
         return connectivity_str
 
+    def correct_for_network_overlaps(self, network_connections, as_connection_list=False):
+        """
+        Handle network overlaps by identifying overlapping networks, removing them and reassigning buildings to the
+        remaining networks. Then rebuild the connectivity vector.
+
+        :param network_connections: list of network connections (int) or list of Connection-objects
+        :param as_connection_list: boolean indicating if the input is a list network ids [False]
+                                   or a list of Connection-objects [True]
+        :return: list <Connection>-objects
+        """
+        # Turn network connections into a Connection-objects list if necessary
+        if as_connection_list:
+            connection_list = network_connections
+        else:
+            connection_list = [Connection(connection, self.connections[i].building)
+                               for i, connection in enumerate(network_connections)]
+
+        # Identify unique network ids among the connections
+        network_ids = set([connection.network_connection for connection in connection_list
+                           if connection.network_connection != 0])
+
+        # check for network overlaps
+        if len(network_ids) > 1:
+            network_graphs = {}
+            ordered_building_ids = [connection.building for connection in connection_list]
+
+            # build network graphs
+            for network_id in network_ids:
+                network_graphs[network_id] = Network.build_network(network_id, ordered_building_ids,
+                                                                   connection_list, return_graph=True)
+
+            # identify overlaps and modify network graphs to remove them
+            overlapping_networks = Network.identify_overlapping_networks(network_graphs)
+            modified_network_graphs = self.remove_overlaps_from_networks(network_graphs, overlapping_networks)
+
+            # rebuild the connectivity vector based on the modified network graphs
+            connection_list = self.reconstruct_connections_list(modified_network_graphs, ordered_building_ids)
+
+        # return the corrected network connections and make sure they have the correct format
+        if as_connection_list:
+            network_connections = connection_list
+        else:
+            network_connections = [connection.network_connection for connection in connection_list]
+
+        return network_connections
+
+    def remove_overlaps_from_networks(self, network_graphs, overlapping_networks):
+        """
+        Modify the network graphs based on the overlap correction method.
+
+        :param network_graphs: The network graphs to be modified.
+        :type network_graphs: dict, {network_id: networkx.Graph}
+        :param overlapping_networks: The networks that overlap with each other.
+        :type overlapping_networks: dict, {network_id: {network_id: [overlapping_nodes]}}
+        """
+        random_int = random.randint(0, 100)
+
+        while overlapping_networks:
+            # i. select one of the networks to retain
+            networks_with_overlap = list(overlapping_networks.keys())
+            network_to_retain = random.choice(networks_with_overlap)
+
+            if self._overlap_correction_method == 'MergeOnOverlap' or \
+                    (self._overlap_correction_method == 'Random' and 0 <= random_int < 25):
+                # ii.a) merge other networks into the retained network
+                networks_to_merge = list(overlapping_networks[network_to_retain].keys())
+                network_graphs = Network.merge_networks(network_graphs, network_to_retain,
+                                                                    networks_to_merge)
+
+            elif self._overlap_correction_method == 'CutOnOverlap'or \
+                    (self._overlap_correction_method == 'Random' and 25 <= random_int < 50):
+                # ii.b) cut other networks on the overlapping nodes
+                network_graphs = Network.cut_networks_on_overlap(network_graphs, overlapping_networks,
+                                                                 network_to_retain, self._building_nodes)
+
+            elif self._overlap_correction_method == 'DeleteOnOverlap'or \
+                    (self._overlap_correction_method == 'Random' and 50 <= random_int < 75):
+                # ii.c) delete other networks with overlapping nodes
+                networks_to_delete = list(overlapping_networks[network_to_retain].keys())
+                network_graphs = Network.delete_networks(network_graphs, networks_to_delete)
+
+            elif self._overlap_correction_method == 'Random':
+                # ii.d) ignore overlaps
+                break
+
+            else:
+                raise ValueError(
+                    f"Method '{self._overlap_correction_method}' for handling network overlaps not recognized. "
+                    f"Please choose from 'MergeOnOverlap', 'CutOnOverlap', 'DeleteOnOverlap' or 'Random'.")
+
+            # iii. recalculate overlaps
+            overlapping_networks = Network.identify_overlapping_networks(network_graphs)
+
+        return network_graphs
+
+    def reconstruct_connections_list(self, network_graphs, ordered_building_ids):
+        """
+        Rebuild the connectivity vector based on a dictionary of network graphs.
+
+        :param network_graphs: The modified network graphs.
+        :type network_graphs: dict, {network_id: networkx.Graph}
+        :param ordered_building_ids: Ordered list of building ids in the domain.
+        :type ordered_building_ids: list, [str]
+        """
+        # create a dictionary of building ids and their corresponding network ids
+        buildings_in_networks = {}
+        for network_id, network_graph in network_graphs.items():
+            building_nodes_in_network = set(self._building_nodes.keys()).intersection(set(network_graph.nodes()))
+            for building_node in building_nodes_in_network:
+                buildings_in_networks[self._building_nodes[building_node]] = int(network_id)
+
+        # reconstruct the connections list for the domain
+        connection_list = [Connection(buildings_in_networks[identifier], identifier)
+                           if identifier in buildings_in_networks.keys()
+                           else Connection(0, identifier)
+                           for identifier in ordered_building_ids]
+
+        return connection_list
+
+
+    @staticmethod
+    def stabilise_vector(connectivity_vector):
+        """
+        Stabilise the connectivity vector by ensuring that identical network connections in a district are encoded with
+        the same connectivity vector. This prevents duplicate evaluations of the same network configuration.
+
+        This operation consists of two steps:
+        1. Ensure the set of network connection values used is the lowest they can be
+            e.g. possible_connections = 4 and set(vector) = {0, 1, 2, 4}
+                 -> set(stabilised_vector) = {0, 1, 2, 3}
+        2. Ensure that the network connection values are ordered in ascending order by number of connections
+            e.g. vector = [0, 1, 3, 3, 3, 0, 1, 2, 3, 1, 2]
+                 -> stabilised_vector = [0, 2, 1, 1, 1, 0, 2, 3, 1, 2, 3]
+        3. If certain values appear equally often, ensure that the lowest value appears first in the list
+            e.g. vector = [0, 1, 1, 3, 2, 3, 2, 0, 1, 1, 0]
+                    -> stabilised_vector = [0, 1, 1, 2, 3, 2, 3, 0, 1, 1, 0]
+
+        :param connectivity_vector: List of network connection values
+        :return: Stabilised list of network connection values
+        """
+        # Step 0: Copy the vector to avoid changing the original list and add the stand-alone building value
+        base_vector = connectivity_vector.copy()
+        base_vector.append(0)
+
+        # Step 1: Ensure the set of network connection values used is the lowest they can be
+        connectivity_values = list(set(base_vector))
+        new_connectivity_values = list(range(len(connectivity_values)))
+
+        if not connectivity_values == new_connectivity_values:
+            rebasing_dict = {connectivity_values[i]: new_connectivity_values[i] for i in
+                             range(len(connectivity_values))}
+            connectivity_vector = [rebasing_dict[value] for value in connectivity_vector]
+
+        # Step 2: Ensure that the network connection values are ordered in ascending order by number of connections
+        values_count = {value: connectivity_vector.count(value) for value in new_connectivity_values if value != 0}
+
+        if not all([values_count[i] >= values_count[i+1] for i in range(1,len(values_count))]):
+            sorted_values = sorted(values_count, key=values_count.get)
+            reordering_dict = {sorted_values[i]: len(sorted_values) - i for i in range(len(sorted_values))}
+            connectivity_vector = [reordering_dict[value] if value != 0 else 0 for value in connectivity_vector]
+
+        # Step 3: If certain values appear equally often, ensure that the lowest value appears first in the list
+        values_count = {value: connectivity_vector.count(value) for value in new_connectivity_values if value != 0}
+
+        for count in set(values_count.values()):
+            values_with_count = [value for value in values_count if values_count[value] == count]
+            # Check if there are multiple values with the same count
+            if len(values_with_count) >= 2:
+                first_appearance = {connectivity_vector.index(value): value for value in values_with_count}
+                values_by_appearance = [first_appearance[i] for i in sorted(first_appearance.keys())]
+                # Check if the values need to be swapped
+                if values_by_appearance != values_with_count:
+                    swapping_dict = {value: values_by_appearance[i] for i, value in enumerate(set(values_with_count))}
+                    connectivity_vector = [swapping_dict[value] if value in swapping_dict.keys() else value\
+                                           for value in connectivity_vector]
+
+        return connectivity_vector
+
     @staticmethod
     def generate(method='random'):
         """
@@ -227,12 +429,21 @@ class ConnectivityVector(object):
         return connections_list
 
     @staticmethod
-    def mutate(cv, algorithm=None, connection_points:list=None):
+    def generate_full_network_connectivity(domain_buildings):
+        """
+        Generate a full network connectivity vector for the domain.
+        """
+        full_network_connections_list = [Connection(1, building.identifier) for building in domain_buildings]
+        full_network_connectivity = ConnectivityVector(full_network_connections_list)
+        return full_network_connectivity
+
+    @staticmethod
+    def mutate(cv, algorithm=None, domain_network_graph:nx.Graph=None):
         """
         Mutate the connectivity vector (inplace) according to the defined mutation algorithm.
         :param cv: ConnectivityVector object to be mutated
         :param algorithm: Genetic algorithm settings to be used
-        :param connection_points: List of connection points (needed for the ClusterSwitch mutation)
+        :param domain_network_graph: Network graph of the domain (needed for the ClusterSwitch mutation)
         """
         if algorithm.mutation == 'ShuffleIndexes':
             mutated_cv = tools.mutShuffleIndexes(cv, algorithm.mut_prob)
@@ -241,7 +452,7 @@ class ConnectivityVector(object):
             mutated_cv = tools.mutUniformInt(cv, low=0, up=nbr_of_networks, indpb=algorithm.mut_prob)
         elif algorithm.mutation == 'ClusterSwitch':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             mutated_cv = ConnectivityVector.mutClusterSwitch(cv, algorithm.mut_prob)
         else:
             raise ValueError(f"The chosen mutation method ({algorithm.mutation}) has not been implemented for "
@@ -284,13 +495,13 @@ class ConnectivityVector(object):
         return cv,
 
     @staticmethod
-    def mate(cv_1, cv_2, algorithm=None, connection_points:list=None):
+    def mate(cv_1, cv_2, algorithm=None, domain_network_graph:nx.Graph=None):
         """
         Recombine two connectivity vectors (inplace) according to the defined crossover algorithm.
         :param cv_1: First connectivity vector
         :param cv_2: Second connectivity vector
         :param algorithm: Algorithm object containing the crossover method and probability
-        :param connection_points: List of all connection points in the network
+        :param domain_network_graph: NetworkX graph object of the thermal network connecting the full domain
         """
         if algorithm.crossover == 'OnePoint':
             recombined_cvs = tools.cxOnePoint(cv_1, cv_2)
@@ -300,11 +511,11 @@ class ConnectivityVector(object):
             recombined_cvs = tools.cxUniform(cv_1, cv_2, algorithm.cx_prob)
         elif algorithm.crossover == 'ClusterSwap':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             recombined_cvs = ConnectivityVector.cxClusterSwap(cv_1, cv_2, algorithm.cx_prob)
         elif algorithm.crossover == 'ClusterAlignment':
             if not ConnectivityVector._cluster_indexes:
-                ConnectivityVector._cluster_indexes = Clustering(connection_points).cluster()
+                ConnectivityVector._cluster_indexes = Clustering(domain_network_graph).cluster()
             recombined_cvs = ConnectivityVector.cxClusterAlignment(cv_1, cv_2, algorithm.cx_prob)
         else:
             raise ValueError(f"The chosen crossover method ({algorithm.crossover}) has not been implemented for "
@@ -456,3 +667,21 @@ class ConnectivityVector(object):
             optimization_tracker.update_current_non_dominated_fronts(new_population, supsys_combination_solution_fronts)
 
         return new_population
+
+    @staticmethod
+    def initialize_class_variables(domain):
+        """
+        Set up parameters necessary for correcting overlapping networks that result from a given connectivity vector.
+
+        :param domain: description of the complete domain including all configurations of the run
+        :type domain: <Domain>-class object
+        """
+        # create a list of tuples that contain the connectivity vectors that are to be corrected
+        ConnectivityVector._overlap_correction_method = domain.config.optimization_new.networks_overlap_correction_method
+
+        # create a dictionary that associates the building's location to the building's identifier
+        if ConnectivityVector._overlap_correction_method:
+            ConnectivityVector._building_nodes = {(round(building.location.x, SHAPEFILE_TOLERANCE),
+                                                   round(building.location.y, SHAPEFILE_TOLERANCE)): building.identifier
+                                                  for building in domain.buildings}
+
