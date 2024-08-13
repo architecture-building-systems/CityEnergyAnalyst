@@ -31,7 +31,7 @@ import numpy as np
 
 from deap import tools
 
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
 
 
 class CapacityIndicator(object):
@@ -82,7 +82,10 @@ class CapacityIndicator(object):
             warnings.warn("There was an attempt to apply a value smaller than 0 to a capacity indicator. "
                           "This is not allowed. The value is set to 0.")
         else:
-            self._value = round(new_value, 2)
+            if new_value == 0 or new_value == 1:
+                self._value = int(new_value)
+            else:
+                self._value = round(new_value, 2)
 
 
 class CapacityIndicatorVector(object):
@@ -569,6 +572,8 @@ class CapacityIndicatorVectorMemory(object):
 
         :param max_system_demand: maximum supply system energy demand for any given time step
         :type max_system_demand: float
+        :param current_civ: the current capacity indicator vector
+        :type current_civ: <CapacityIndicatorVector>-object
         """
         diff_with_bracket_medians = [abs(max_system_demand - bracket_median)
                                      for bracket_median in self.best_capacity_indicator_vectors.keys()]

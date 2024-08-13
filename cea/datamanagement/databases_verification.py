@@ -217,7 +217,7 @@ class InputFileValidator(object):
                 try:
                     result = data.eval(constraint)
                     # Only process
-                    if type(result) == pd.Series and result.dtype == 'bool':
+                    if isinstance(result, pd.Series) and result.dtype == 'bool':
                         for index, error in result[~result].items():
                             errors.append([{'row': int(index) + 1}, 'failed constraint: {}'.format(constraint)])
                 except Exception as e:
