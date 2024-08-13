@@ -114,6 +114,12 @@ def lca_embodied(year_to_calculate, locator):
     surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
 
 
+    system_database_ventilation = pd.read_excel(locator.get_database_air_conditioning_systems(), "VENTILATION")
+    system_database_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), "COOLING")
+    system_database_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), "HOT_WATER")
+    system_database_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), "HEATING")
+    surface_database_structure = pd.read_excel(locator.get_database_envelope_systems(), "CONSTRUCTION")
+
 
     # query data
     df = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -124,6 +130,7 @@ def lca_embodied(year_to_calculate, locator):
     df5.rename({'GHG_floor_kgCO2m2': 'GHG_base_kgCO2m2'}, inplace=True, axis=1)
     df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
     df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
+    df7=architecture_df.merge(surface_database_structure, left_on='type_cons', right_on='code')
     fields = ['Name', "GHG_win_kgCO2m2"]
     fields2 = ['Name', "GHG_roof_kgCO2m2"]
     fields3 = ['Name', "GHG_wall_kgCO2m2"]
@@ -138,8 +145,23 @@ def lca_embodied(year_to_calculate, locator):
     fields11 = ['Name', "Service_Life_base"]
     df6.rename({'Service_Life_wall': 'Service_Life_part'}, inplace=True, axis=1)
     fields12 = ['Name', "Service_Life_part"]
+    fields13 = ['Name', "GHGFossil_kgCO2m2"]
+    fields14 = ['Name', "BiogenicCo2_kgCO2m2"]
 
 
+
+    # surface_properties = df[fields].merge(df2[fields2],
+    #                                       on='Name').merge(df3[fields3],
+    #                                       on='Name').merge(df4[fields4],
+    #                                       on='Name').merge(df5[fields5],
+    #                                       on='Name').merge(df6[fields6],
+    #                                       on='Name').merge(df[fields7],
+    #                                       on='Name').merge(df2[fields8],
+    #                                       on='Name').merge(df3[fields9],
+    #                                       on='Name').merge(df4[fields10],
+    #                                       on='Name').merge(df5[fields11],
+    #                                       on='Name').merge(df6[fields12],
+    #
 
     surface_properties = df[fields].merge(df2[fields2],
                                           on='Name').merge(df3[fields3],
@@ -152,12 +174,28 @@ def lca_embodied(year_to_calculate, locator):
                                           on='Name').merge(df4[fields10],
                                           on='Name').merge(df5[fields11],
                                           on='Name').merge(df6[fields12],
+                                          on='Name').merge(df7[fields13],
+                                          on='Name').merge(df7[fields14],
                                           on='Name')
 
-
+    df_sys1 = air_conditioning_df.merge(system_database_ventilation, left_on='type_vent', right_on='code')
+    df_sys2 = air_conditioning_df.merge(system_database_cooling, left_on='type_cs', right_on='code')
+    df_sys3 = air_conditioning_df.merge(system_database_heating, left_on='type_hs', right_on='code')
+    df_sys4 = air_conditioning_df.merge(system_database_dhw, left_on='type_dhw', right_on='code')
+    fields15 = ['Name', "GHG_VENTILATION_kgCO2m2"]
+    fields16 = ['Name', "GHG_COOLING_kgCO2m2"]
+    fields17 = ['Name', "GHG_HEATING_kgCO2m2"]
+    fields18 = ['Name', "GHG_DHW_kgCO2m2"]
+    system_properties = df_sys1[fields15].merge(df_sys2[fields16],
+                                          on='Name').merge(df_sys3[fields17],
+                                          on='Name').merge(df_sys4[fields18],
+                                          on='Name')
 
     # DataFrame with joined data for all categories
-    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties, on='Name').merge(architecture_df,on='Name')
+    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties,
+                                                                on='Name').merge(architecture_df,
+                                                                on='Name').merge(system_properties,
+                                                                on='Name')
 
 
     # calculate building geometry
@@ -227,10 +265,17 @@ def calculate_contributions(df, year_to_calculate):
 
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
-    Embodied_wall='Embodied_wall'
-    Embodied_floor = 'Embodied_floor'
-    Embodied_base = 'Embodied_base'
-    Embodied_roof = 'Embodied_roof'
+    Embodied_wall='GWP_WALL_tonCO2'
+    Embodied_floor = 'GWP_FLOOR_tonCO2'
+    Embodied_base = 'GWP_BASE_tonCO2'
+    Embodied_roof = 'GWP_ROOF_tonCO2'
+    Embodied_cons = 'GWP_CONS_tonCO2'
+    Uptake_cons = 'UPTAKE_CONS_tonCO2'
+    Embodied_Heating = 'GWP_HEATING_tonCO2yr'
+    Embodied_Cooling = 'GWP_COOLING_tonCO2yr'
+    Embodied_Ventilation = 'GWP_VENTILATION_tonCO2yr'
+    Embodied_DHW = 'GWP_DHW_tonCO2yr'
+    Embodied_Electricity = 'GWP_ELECTRICITY_tonCO2yr'
 
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
@@ -267,18 +312,44 @@ def calculate_contributions(df, year_to_calculate):
     df[Embodied_roof] = df['GHG_roof_kgCO2m2'] * df['footprint'] * np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']) * df['confirm']
     df[Embodied_roof]/=1000
 
+    df[Embodied_cons] = df['GHGFossil_kgCO2m2'] * df['GFA_m2']
+    df[Embodied_cons] /= 1000
+    df[Uptake_cons] = df['BiogenicCo2_kgCO2m2'] * df['GFA_m2']
+    df[Uptake_cons] /= 1000
 
-    df[total_column] += (((df['floor_area_ag'] + df[
-         'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
+
+
+    df[Embodied_Ventilation] = ((df['floor_area_ag'] * df['GHG_VENTILATION_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df[
+        'confirm']
+    df[Embodied_Ventilation] /= 1000
+    df[Embodied_Cooling] = ((df['floor_area_ag'] * df['GHG_COOLING_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df[
+        'confirm']
+    df[Embodied_Cooling] /= 1000
+    df[Embodied_Heating] = ((df['floor_area_ag'] * df['GHG_HEATING_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df[
+        'confirm']
+    df[Embodied_Heating] /= 1000
+    df[Embodied_DHW] = ((df['floor_area_ag']  * df['GHG_DHW_kgCO2m2']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
+    df[Embodied_DHW] /= 1000
+    GHG_Electricity_kgCO2m2= 13
+    df[Embodied_Electricity] = ((df['floor_area_ag'] * GHG_Electricity_kgCO2m2) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df[
+        'confirm']
+    df[Embodied_Electricity] /= 1000
+
+    # df[total_column] += (((df['floor_area_ag'] + df[
+    #      'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * df['confirm']
 
     # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
 
     df['GHG_sys_embodied_tonCO2yr'] = df[total_column] / 1000  # kG-CO2 eq to ton
     df['GHG_sys_embodied_kgCO2m2yr'] = df[total_column] / df['GFA_m2']
 
+
     # the total and specific embodied emissions are returned
     result = df[['Name', 'GHG_sys_embodied_tonCO2yr', 'GHG_sys_embodied_kgCO2m2yr',
-                 'GFA_m2','Embodied_wall','Embodied_floor','Embodied_base','Embodied_roof']]
+                 'GFA_m2','GWP_WALL_tonCO2','GWP_FLOOR_tonCO2','GWP_BASE_tonCO2',
+                 'GWP_ROOF_tonCO2','GWP_CONS_tonCO2','UPTAKE_CONS_tonCO2',
+                 'GWP_VENTILATION_tonCO2yr', 'GWP_COOLING_tonCO2yr',
+                 'GWP_HEATING_tonCO2yr', 'GWP_DHW_tonCO2yr', 'GWP_ELECTRICITY_tonCO2yr']]
     return result
 
 def calc_if_existing(x, y):
