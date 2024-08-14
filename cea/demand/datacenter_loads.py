@@ -9,6 +9,7 @@ import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
+from cea.optimization.constants import HP_ETA_EX_COOL
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -52,9 +53,9 @@ def calc_mcpcdata(Qcdata_sys):
         mcpcdata_sys = 0.0
     return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
-def calc_Qcdata_sys(bpr, tsd):
+def calc_Qcdata_sys(bpr, tsd, n_hs = 0.9):
     # calculate cooling loads for data center
-    tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
+    tsd['Qcdata'] = n_hs * tsd['Edata'] * -1.0  # cooling loads are negative
 
     # calculate distribution losses for data center cooling analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
@@ -69,7 +70,7 @@ def calc_Qcdata_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = None):
+def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL):
     """
     it calculates final loads
     """
