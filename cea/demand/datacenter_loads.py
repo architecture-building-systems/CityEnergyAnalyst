@@ -69,7 +69,7 @@ def calc_Qcdata_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qcdataf(locator, bpr, tsd):
+def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = None):
     """
     it calculates final loads
     """
@@ -82,8 +82,11 @@ def calc_Qcdataf(locator, bpr, tsd):
             t_source = (tsd['T_ext'] + 273)
 
             # heat pump energy
+            # modified, allow different values of hp_eta_x_cool to be supplied
+
             tsd['E_cdata'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
-                                                                (tsd['Tcdata_sys_re'] + 273), t_source)
+                    (tsd['Tcdata_sys_re'] + 273), t_source, hp_eta_x_cool)
+
             # final to district is zero
             tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
