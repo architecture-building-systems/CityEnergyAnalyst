@@ -59,11 +59,11 @@ def embodiedUpdated(locator, config):
     # ge2(locator, config)
     # mainweather(config)
 
-    archMapmain(config)
+    # archMapmain(config)
     # schedulemain(config)
     # radmain(config)
     # demandmain(config)
-    # emissionmain(config)
+    emissionmain(config)
     # operationmain(config)
 
     pass
