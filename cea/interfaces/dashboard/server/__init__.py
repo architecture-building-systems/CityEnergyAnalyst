@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+import cea
 import cea.interfaces.dashboard.server.jobs as jobs
 import cea.interfaces.dashboard.server.streams as streams
 from cea.interfaces.dashboard.dependencies import get_worker_processes
@@ -20,3 +21,8 @@ async def shutdown_worker_processes():
 @router.get("/alive")
 async def get_health_check():
     return {'success': True}
+
+
+@router.get("/version")
+async def get_version():
+    return {'version': cea.__version__}
