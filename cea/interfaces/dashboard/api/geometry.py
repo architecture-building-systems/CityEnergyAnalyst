@@ -7,7 +7,9 @@ from fastapi import APIRouter, HTTPException, status
 import geopandas as gpd
 from pydantic import BaseModel
 
-from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
+    verify_input_typology
+from cea.utilities.dbf import dbf_to_dataframe
 
 router = APIRouter()
 
@@ -55,6 +57,34 @@ async def validate_building_geometry(data: ValidateGeometry):
                 verify_input_geometry_zone(building_df)
             elif data.building == 'surroundings':
                 verify_input_geometry_surroundings(building_df)
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e),
+            )
+
+        return {}
+
+
+class ValidateTypology(BaseModel):
+    type: Literal['path', 'file']
+    path: Optional[str] = None
+    file: Optional[str] = None
+
+
+# TODO: Find a more suitable route
+@router.post("/typology/validate")
+async def validate_typology(data: ValidateTypology):
+    """Validate the given typology"""
+    if data.type == 'path':
+        if data.path is None:
+            raise HTTPException(status_code=400, detail="Missing path")
+
+        try:
+            typology_df = dbf_to_dataframe(data.path)
+            verify_input_typology(typology_df)
+            print(typology_df)
         except Exception as e:
             print(e)
             raise HTTPException(
