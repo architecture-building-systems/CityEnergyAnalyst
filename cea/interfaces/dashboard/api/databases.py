@@ -1,9 +1,13 @@
 import os
+from typing import Optional, Literal
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 
+import cea.inputlocator
 from cea.databases import get_regions, get_database_tree, databases_folder_path
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
 router = APIRouter()
@@ -131,3 +135,32 @@ async def get_database_schema():
             except KeyError as ex:
                 raise KeyError(f"Could not convert_path_to_name for {db_name}/{db_schema_key}. {ex}")
     return out
+
+
+class ValidateDatabase(BaseModel):
+    type: Literal['path', 'file']
+    path: Optional[str] = None
+    file: Optional[str] = None
+
+
+@router.post("/validate")
+async def validate_database(config: CEAConfig, data: ValidateDatabase):
+    """Validate the given databases (only checks if the folder structure is correct)"""
+    if data.type == 'path':
+        # Override the locator to use path of database
+        class DummyInputLocator(cea.inputlocator.InputLocator):
+            def get_databases_folder(self):
+                return data.path
+
+        try:
+            DummyInputLocator(config.scenario).verify_database_template()
+        except IOError as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e),
+            )
+
+        return {}
+    return {}
+
