@@ -9,7 +9,7 @@ import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
-from cea.optimization.constants import HP_ETA_EX_COOL
+from cea.optimization.constants import HP_ETA_EX_COOL, HP_AUXRATIO
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -70,7 +70,7 @@ def calc_Qcdata_sys(bpr, tsd, t_c_data_sup = T_C_DATA_SUP_0, t_c_data_re = T_C_D
     return tsd
 
 
-def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL):
+def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL, hp_ratio = HP_AUXRATIO):
     """
     it calculates final loads
     """
@@ -86,7 +86,7 @@ def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL):
             # modified, allow different values of hp_eta_x_cool to be supplied
 
             tsd['E_cdata'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
-                    (tsd['Tcdata_sys_re'] + 273), t_source, hp_eta_x_cool)
+                    (tsd['Tcdata_sys_re'] + 273), t_source, hp_eta_x_cool, hp_ratio)
 
             # final to district is zero
             tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)

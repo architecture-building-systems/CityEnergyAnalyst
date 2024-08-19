@@ -9,6 +9,7 @@ import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
+from cea.optimization.constants import HP_ETA_EX_COOL, HP_AUXRATIO
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -73,7 +74,7 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
 
 
-def calc_Qref(locator, bpr, tsd):
+def calc_Qref(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL, hp_ratio = HP_AUXRATIO):
     """
     it calculates final loads
     """
@@ -86,7 +87,7 @@ def calc_Qref(locator, bpr, tsd):
             t_source = (tsd['T_ext'] + 273)
             # heat pump energy
             tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
-                                                                (tsd['Tcre_sys_re'] + 273), t_source)
+                                                                (tsd['Tcre_sys_re'] + 273), t_source, hp_eta_x_cool, hp_ratio)
             # final to district is zero
             tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
