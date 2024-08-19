@@ -147,6 +147,9 @@ class ValidateDatabase(BaseModel):
 async def validate_database(config: CEAConfig, data: ValidateDatabase):
     """Validate the given databases (only checks if the folder structure is correct)"""
     if data.type == 'path':
+        if data.path is None:
+            raise HTTPException(status_code=400, detail="Missing path")
+
         # Override the locator to use path of database
         class DummyInputLocator(cea.inputlocator.InputLocator):
             def get_databases_folder(self):
