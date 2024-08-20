@@ -27,6 +27,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def generate_empty_surroundings(crs) -> gdf:
+    return gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=crs)
+
 
 def calc_surrounding_area(zone_gdf, buffer_m):
     """
@@ -189,7 +192,7 @@ def geometry_extractor_osm(locator, config):
     if not surroundings.shape[0] > 0:
         print('No buildings were found within range based on buffer parameter.')
         # Create an empty surroundings file
-        result = gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=surroundings.crs)
+        result = generate_empty_surroundings(surroundings.crs)
     else:
         # clean attributes of height, name and number of floors
         result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")

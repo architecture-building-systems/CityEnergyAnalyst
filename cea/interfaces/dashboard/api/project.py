@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 import traceback
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import geopandas
 from fastapi import APIRouter, HTTPException, status, Request, Path, Depends
@@ -15,6 +15,10 @@ from staticmap import StaticMap, Polygon
 import cea.config
 import cea.api
 import cea.inputlocator
+from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
+from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
+    verify_input_typology, verify_input_terrain
+from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.colors import color_to_rgb
@@ -24,6 +28,12 @@ router = APIRouter()
 
 # PATH_REGEX = r'(^[a-zA-Z]:\\[\\\S|*\S]?.*$)|(^(/[^/ ]*)+/?$)'
 
+GENERATE_ZONE_CEA = 'generate-zone-cea'
+GENERATE_SURROUNDINGS_CEA = 'generate-surroundings-cea'
+GENERATE_TYPOLOGY_CEA = 'generate-typology-cea'
+GENERATE_TERRAIN_CEA = 'generate-terrain-cea'
+GENERATE_STREET_CEA = 'generate-street-cea'
+EMTPY_GEOMETRY = 'none'
 
 class ScenarioPath(BaseModel):
     project: str
@@ -33,6 +43,34 @@ class ScenarioPath(BaseModel):
 class NewProject(BaseModel):
     project_name: str
     project_root: str
+
+class CreateScenario(BaseModel):
+    project: str
+    scenario_name: str
+    database: str
+    user_zone: str
+    user_surroundings: str
+    generate_zone: Optional[dict] = None
+    generate_surroundings: Optional[int] = None
+    typology: Optional[str] = None
+    weather: str
+    terrain: str
+    street: str
+
+    def should_generate_zone(self) -> bool:
+        return self.user_zone == GENERATE_ZONE_CEA
+
+    def should_generate_surroundings(self) -> bool:
+        return self.user_surroundings == GENERATE_SURROUNDINGS_CEA
+
+    def should_generate_typology(self) -> bool:
+        return self.typology == GENERATE_TYPOLOGY_CEA
+
+    def should_generate_terrain(self) -> bool:
+        return self.terrain == GENERATE_TERRAIN_CEA
+
+    def should_generate_street(self) -> bool:
+        return self.street == GENERATE_STREET_CEA
 
 
 @router.get('/')
@@ -105,6 +143,101 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Parameters not valid - project: {project}, scenario_name: {scenario_name}',
         )
+
+
+# TODO: Rename this endpoint once the old one is removed
+# Temporary endpoint to prevent breaking existing frontend
+@router.post('/scenario/v2')
+async def create_new_scenario_v2(config: CEAConfig, scenario_form: CreateScenario):
+    with tempfile.TemporaryDirectory() as tmp:
+        # Create temporary project before copying to actual scenario path
+        config.project = tmp
+        config.scenario_name = "temp_scenario"
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        # Run database_initializer to copy databases to input
+        cea.api.data_initializer(config, databases_path=scenario_form.database)
+
+        # Generate / Copy zone and surroundings
+        if scenario_form.should_generate_zone():
+            site_geojson = scenario_form.generate_zone
+            site_df = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
+                                             geometry=[shape(site_geojson['features'][0]['geometry'])])
+            site_path = locator.get_site_polygon()
+            locator.ensure_parent_folder_exists(site_path)
+            site_df.to_file(site_path)
+            # Generate using zone helper
+            cea.api.zone_helper(config)
+
+            # Ensure that zone exists
+            zone_df = geopandas.read_file(locator.get_zone_geometry())
+        else:
+            # Copy zone using path
+            zone_df = geopandas.read_file(scenario_form.user_zone).to_crs(get_geographic_coordinate_system())
+            verify_input_geometry_zone(zone_df)
+
+            zone_path = locator.get_zone_geometry()
+            locator.ensure_parent_folder_exists(zone_path)
+            zone_df.to_file(zone_path)
+
+        if scenario_form.should_generate_surroundings():
+            # Generate using surroundings helper
+            config.surroundings_helper.buffer = scenario_form.generate_surroundings
+            cea.api.surroundings_helper(config)
+        elif scenario_form.user_surroundings == EMTPY_GEOMETRY:
+            # Generate empty surroundings
+            surroundings_df = generate_empty_surroundings(zone_df.crs)
+
+            surroundings_path = locator.get_surroundings_geometry()
+            locator.ensure_parent_folder_exists(surroundings_path)
+            surroundings_df.to_file(surroundings_path)
+        else:
+            # Copy surroundings using path
+            surroundings_df = geopandas.read_file(scenario_form.user_surroundings).to_crs(get_geographic_coordinate_system())
+            verify_input_geometry_surroundings(surroundings_df)
+
+            surroundings_path = locator.get_surroundings_geometry()
+            locator.ensure_parent_folder_exists(surroundings_path)
+            surroundings_df.to_file(surroundings_path)
+
+        if scenario_form.should_generate_typology():
+            # Generate using default typology
+            locator.ensure_parent_folder_exists(locator.get_building_typology())
+            generate_default_typology(zone_df, locator)
+        elif scenario_form.typology is not None:
+            # Copy typology using path
+            locator.ensure_parent_folder_exists(locator.get_building_typology())
+            copy_typology(scenario_form.typology, locator)
+
+        if scenario_form.should_generate_terrain():
+            # Run terrain helper
+            cea.api.terrain_helper(config)
+        else:
+            # Copy terrain using path
+            centroid = zone_df.dissolve().centroid.values[0]
+            lat, lon = centroid.y, centroid.x
+            locator.ensure_parent_folder_exists(locator.get_terrain())
+            copy_terrain(scenario_form.terrain, locator, lat, lon)
+
+        if scenario_form.should_generate_street():
+            # Run street helper
+            cea.api.streets_helper(config)
+        elif scenario_form.street != EMTPY_GEOMETRY:
+            # Copy street using path
+            street_df = geopandas.read_file(scenario_form.street).to_crs(get_geographic_coordinate_system())
+            locator.ensure_parent_folder_exists(locator.get_street_network())
+            street_df.to_file(locator.get_street_network())
+
+        # Move temp scenario to correct path
+        new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
+        print(f"Moving from {config.scenario} to {new_scenario_path}")
+        shutil.move(config.scenario, new_scenario_path)
+
+    return {
+        'message': 'Scenario created successfully',
+        'project': scenario_form.project,
+        'scenario_name': scenario_form.scenario_name
+    }
 
 
 @router.post('/scenario/')
