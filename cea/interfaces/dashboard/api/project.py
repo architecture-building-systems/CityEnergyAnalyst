@@ -210,6 +210,10 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_building_typology())
             copy_typology(scenario_form.typology, locator)
 
+        # Run weather helper
+        config.weather_helper.weather = scenario_form.weather
+        cea.api.weather_helper(config)
+
         if scenario_form.should_generate_terrain():
             # Run terrain helper
             cea.api.terrain_helper(config)
