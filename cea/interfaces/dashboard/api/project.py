@@ -229,6 +229,9 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_street_network())
             street_df.to_file(locator.get_street_network())
 
+        # Run archetypes mapper
+        cea.api.archetypes_mapper(config)
+
         # Move temp scenario to correct path
         new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
         print(f"Moving from {config.scenario} to {new_scenario_path}")
