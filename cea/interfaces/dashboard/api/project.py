@@ -149,6 +149,14 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2')
 async def create_new_scenario_v2(scenario_form: CreateScenario):
+    new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
+
+    if os.path.exists(new_scenario_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Scenario already exists - project: {scenario_form.project}, scenario_name: {scenario_form.scenario_name}',
+        )
+
     with tempfile.TemporaryDirectory() as tmp:
         # Create temporary project before copying to actual scenario path
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -237,7 +245,6 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         cea.api.archetypes_mapper(config)
 
         # Move temp scenario to correct path
-        new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
         print(f"Moving from {config.scenario} to {new_scenario_path}")
         shutil.move(config.scenario, new_scenario_path)
 
