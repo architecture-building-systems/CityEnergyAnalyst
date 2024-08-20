@@ -82,7 +82,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, sampling_da
     # CALCULATE REFRIGERATION LOADS
     if refrigeration_loads.has_refrigeration_load(bpr):
         tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
-        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, config.demand.hp_eta_x_cool, config.demand.hp_ratio)
+        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, bpr.internal_loads['Hp_X_Cool'], bpr.internal_loads['Hp_Ratio'])
     else:
         tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(HOURS_IN_YEAR)
         tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(HOURS_IN_YEAR)
@@ -97,8 +97,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, sampling_da
     # CALCULATE DATA CENTER LOADS
     if datacenter_loads.has_data_load(bpr):
         tsd = datacenter_loads.calc_Edata(tsd, schedules)  # end-use electricity
-        tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd, config.demand.t_c_data_sup, config.demand.t_c_data_re, config.demand.n_hs)  # system need for cooling
-        tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd, config.demand.hp_eta_x_cool, config.demand.hp_ratio)  # final need for cooling
+        tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd, bpr.internal_loads['TCData_Sup'], bpr.internal_loads['TCData_Re'], bpr.internal_loads['N_Hs'])  # system need for cooling
+        tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd, bpr.internal_loads['Hp_X_Cool'], bpr.internal_loads['Hp_Ratio'])  # final need for cooling
     else:
         tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(HOURS_IN_YEAR)
         tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(HOURS_IN_YEAR)
