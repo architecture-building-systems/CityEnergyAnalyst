@@ -148,9 +148,10 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2')
-async def create_new_scenario_v2(config: CEAConfig, scenario_form: CreateScenario):
+async def create_new_scenario_v2(scenario_form: CreateScenario):
     with tempfile.TemporaryDirectory() as tmp:
         # Create temporary project before copying to actual scenario path
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.project = tmp
         config.scenario_name = "temp_scenario"
         locator = cea.inputlocator.InputLocator(config.scenario)
