@@ -18,6 +18,8 @@ Data management:
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
+    input-files:
+      - [ get_zone_geometry ]
 
   - name: surroundings-helper
     label: Surroundings helper
