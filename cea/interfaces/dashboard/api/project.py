@@ -17,11 +17,12 @@ import cea.api
 import cea.inputlocator
 from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.colors import color_to_rgb
+from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 router = APIRouter()
@@ -210,17 +211,30 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
+        locator.ensure_parent_folder_exists(locator.get_building_typology())
         if scenario_form.should_generate_typology():
             # Generate using default typology
-            locator.ensure_parent_folder_exists(locator.get_building_typology())
             generate_default_typology(zone_df, locator)
         elif scenario_form.typology is not None:
             # Copy typology using path
             typology_df = geopandas.read_file(scenario_form.typology)
             verify_input_typology(typology_df)
-
-            locator.ensure_parent_folder_exists(locator.get_building_typology())
             copy_typology(scenario_form.typology, locator)
+        else:
+            # Try extracting typology from zone
+            print(f'Trying to extract typology from zone')
+            try:
+                verify_input_typology(zone_df)
+            except Exception as e:
+                print(f'Could not extract typology from zone: {e}')
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Not enough information to generate typology file',
+                )
+
+            typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
+            dataframe_to_dbf(typology_df, locator.get_building_typology())
+            print(f'Typology file created at {locator.get_building_typology()}')
 
         # Run weather helper
         config.weather_helper.weather = scenario_form.weather
