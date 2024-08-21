@@ -15,6 +15,7 @@ from staticmap import StaticMap, Polygon
 import cea.config
 import cea.api
 import cea.inputlocator
+from cea.databases import get_regions, databases_folder_path
 from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY
@@ -286,8 +287,15 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
             detail='scenario_name parameter cannot be empty',
         )
 
-    databases_path = secure_path(payload.get('databases_path'))
+    databases_path = payload.get('databases_path')
     input_data = payload.get('input_data')
+
+    # Ignore using secure databases_path and only allow the default databases_path
+    if databases_path not in (os.path.join(databases_folder_path, region) for region in get_regions()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid databases_path: {databases_path}',
+        )
 
     with tempfile.TemporaryDirectory() as tmp:
         config.project = tmp
