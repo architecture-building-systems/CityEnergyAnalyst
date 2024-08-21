@@ -82,7 +82,7 @@ async def validate_typology(data: ValidateTypology):
             raise HTTPException(status_code=400, detail="Missing path")
 
         try:
-            typology_df = dbf_to_dataframe(data.path)
+            typology_df = gpd.read_file(data.path)
             verify_input_typology(typology_df)
             print(typology_df)
         except Exception as e:

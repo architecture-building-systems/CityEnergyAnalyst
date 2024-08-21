@@ -17,7 +17,7 @@ import cea.api
 import cea.inputlocator
 from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, verify_input_terrain
+    verify_input_typology
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.utils import secure_path
@@ -149,6 +149,7 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2')
 async def create_new_scenario_v2(scenario_form: CreateScenario):
+    print(f'ScenarioForm: {scenario_form}')
     new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
 
     if os.path.exists(new_scenario_path):
@@ -215,6 +216,9 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             generate_default_typology(zone_df, locator)
         elif scenario_form.typology is not None:
             # Copy typology using path
+            typology_df = geopandas.read_file(scenario_form.typology)
+            verify_input_typology(typology_df)
+
             locator.ensure_parent_folder_exists(locator.get_building_typology())
             copy_typology(scenario_form.typology, locator)
 
