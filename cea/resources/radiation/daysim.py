@@ -4,7 +4,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import warnings
 from typing import Optional, Tuple, NamedTuple
 
 import numpy as np
@@ -127,11 +126,10 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
             continue
 
         # If path to binaries contains whitespace, provide a warning
-        # TODO: try copying binaries to a temp folder instead
-        if contains_whitespace(possible_path):
-            warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
-                          "Consider moving the binaries to another path to use them.")
-            continue
+        # if contains_whitespace(possible_path):
+        #     warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
+        #                   "Consider moving the binaries to another path to use them.")
+        #     continue
 
         if sys.platform == "win32":
             # Use path lib folder if it exists
@@ -149,13 +147,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
                 result = subprocess.run(["xattr", "−l", binary_path], capture_output=True)
                 if "com.apple.quarantine" in result.stdout.decode('utf-8'):
                     subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
-
-        return str(possible_path), str(lib_path)
-
-    # FIXME: Temp solution for Windows users with space in directory
-    if sys.platform == "win32":
-        root_path = os.path.abspath(os.sep)
-        possible_path = create_temp_daysim_directory(os.path.join(root_path, "temp"))
 
         return str(possible_path), str(lib_path)
 
