@@ -4,7 +4,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import warnings
 from typing import Optional, Tuple, NamedTuple
 
 import numpy as np
