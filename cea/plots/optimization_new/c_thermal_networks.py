@@ -110,7 +110,7 @@ def identify_overlapping_edges(all_edges):
 def main(config):
     locator = InputLocator(config.scenario)
 
-    zone_gdf, network_gdfs = load_geo_data(locator, run_id=6, des_id="DCS_105")
+    zone_gdf, network_gdfs = load_geo_data(locator, des_id="DCS_101")
     plot_geodata(zone_gdf, network_gdfs)
 
 
