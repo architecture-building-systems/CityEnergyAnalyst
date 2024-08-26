@@ -230,8 +230,9 @@ def main(config=cea.config.Configuration()):
     """Test this plot"""
     locator = InputLocator(scenario=config.scenario)
     optimisation_results = locator.get_new_optimization_results_folder()
-    individual_supply_system_results = [locator.get_new_optimization_optimal_supply_systems_summary_file(subfolder)
-                                 for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
+    individual_supply_system_results = \
+        [locator.get_new_optimization_optimal_supply_systems_summary_file(district_energy_system_id=subfolder)
+         for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
     objectives, objective_function_values = read_objective_values_from_file(individual_supply_system_results)
     if 'Cost_USD' in objectives:
         individual_network_results = [locator.get_new_optimization_detailed_network_performance_file(subfolder)
