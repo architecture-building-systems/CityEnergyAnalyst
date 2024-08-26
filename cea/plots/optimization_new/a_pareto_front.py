@@ -228,10 +228,12 @@ def add_3D_scatter_plot(objectives, objective_values):
 
 def main(config=cea.config.Configuration()):
     """Test this plot"""
+    run_id = 6
+
     locator = InputLocator(scenario=config.scenario)
-    optimisation_results = locator.get_new_optimization_results_folder()
+    optimisation_results = locator.get_new_optimization_results_folder(run_id=run_id)
     individual_supply_system_results = \
-        [locator.get_new_optimization_optimal_supply_systems_summary_file(district_energy_system_id=subfolder)
+        [locator.get_new_optimization_optimal_supply_systems_summary_file(run_id, subfolder)
          for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging']
     objectives, objective_function_values = read_objective_values_from_file(individual_supply_system_results)
     if 'Cost_USD' in objectives:
