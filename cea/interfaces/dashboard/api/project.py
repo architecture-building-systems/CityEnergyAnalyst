@@ -212,25 +212,27 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
-        locator.ensure_parent_folder_exists(locator.get_building_typology())
-        if scenario_form.should_generate_typology():
-            # Generate using default typology
-            generate_default_typology(zone_df, locator)
-        elif scenario_form.typology is not None:
-            # Copy typology using path
-            typology_df = geopandas.read_file(scenario_form.typology)
-            verify_input_typology(typology_df)
-            copy_typology(scenario_form.typology, locator)
-        else:
-            # Try extracting typology from zone
-            print(f'Trying to extract typology from zone')
-            try:
-                verify_input_typology(zone_df)
-            except Exception as e:
-                print(f'Could not extract typology from zone: {e}')
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Not enough information to generate typology file',
+        # Only process typology if zone is not generated
+        if not scenario_form.should_generate_zone():
+            locator.ensure_parent_folder_exists(locator.get_building_typology())
+            if scenario_form.should_generate_typology():
+                # Generate using default typology
+                generate_default_typology(zone_df, locator)
+            elif scenario_form.typology is not None:
+                # Copy typology using path
+                typology_df = geopandas.read_file(scenario_form.typology)
+                verify_input_typology(typology_df)
+                copy_typology(scenario_form.typology, locator)
+            else:
+                # Try extracting typology from zone
+                print(f'Trying to extract typology from zone')
+                try:
+                    verify_input_typology(zone_df)
+                except Exception as e:
+                    print(f'Could not extract typology from zone: {e}')
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='Not enough information to generate typology file',
                 )
 
             typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
