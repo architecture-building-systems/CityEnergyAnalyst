@@ -150,7 +150,7 @@ def plot_pareto_front(objectives, objective_values_dict):
     base_visibility = [False] * nbr_traces
     traces = []
     buttons = []
-    colors = ['blue', 'green', 'red', 'purple', 'orange']
+    colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow']
 
     for i in range(len(objectives)):
         for j in range(i + 1, len(objectives)):
@@ -300,7 +300,7 @@ def add_3D_scatter_plot(objectives, objective_values):
 
 def main(config=cea.config.Configuration()):
     """Test this plot"""
-    run_ids = [1, 2, 4, 5]  # List of run IDs to compare
+    run_ids = [1, 4]  # List of run IDs to compare
     locator = InputLocator(scenario=config.scenario)
     objective_values_dict = {}
 
