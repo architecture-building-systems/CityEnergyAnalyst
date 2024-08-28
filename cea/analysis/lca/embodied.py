@@ -262,7 +262,7 @@ def calculate_contributions(df, year_to_calculate):
     uptake_part = 'UPTAKE_PART_tonCO2'
     embodied_cons = 'GWP_CONS_tonCO2'
     uptake_cons = 'UPTAKE_CONS_tonCO2'
-    embodied_sytem = 'saver3'
+    embodied_system = 'embodied_system_tonCO2'
 
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
@@ -273,22 +273,6 @@ def calculate_contributions(df, year_to_calculate):
     # (replacements considered) is calculated
     # This includes both the emissions in building material production, end of life and replacement based on the
     # specific reference service life for each component.
-
-    # df[total_column] = ((df['GWP_fossil_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall']) +
-    #                      df['GWP_win_kgCO2m2'] * df['windows_ag'] *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win']) +
-    #                      df['GWP_fossil_floor_kgCO2m2'] * df['floor_area_ag'] *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor']) +
-    #                      df['GWP_fossil_base_kgCO2m2'] * df['floor_area_bg'] *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base']) +
-    #                      df['GWP_fossil_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) *
-    #                      CONVERSION_AREA_TO_FLOOR_AREA_RATIO *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_part']) +
-    #                      df['GWP_fossil_roof_kgCO2m2'] * df['footprint'] *
-    #                      np.ceil(SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof']))
-    #                     / SERVICE_LIFE_OF_BUILDINGS
-    #                     ) * df['confirm']
 
     # BY COMPONENT
 
@@ -344,15 +328,15 @@ def calculate_contributions(df, year_to_calculate):
 
 # the embodie emission og technical system by considering constant values for GWP technical system
 
-    df[embodied_sytem] = (df['floor_area_ag'] + df[
+    df[embodied_system] = (df['floor_area_ag'] + df[
          'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS)
-    df[embodied_sytem]/=1000
+    df[embodied_system]/=1000
 
     # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
     df[total_column] = ((df[embodied_win] + df[embodied_wall] + df[embodied_part] + df[
                      embodied_floor] + df[embodied_base] + df[embodied_roof] + df[
-                     embodied_cons]+df[embodied_sytem])/ SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
+                     embodied_cons]+df[embodied_system])/ SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
     df[total_column_uptake] = ((df[uptake_wall] + df[uptake_part] + df[uptake_floor] + df[
                                 uptake_base] + df[uptake_roof] + df[uptake_cons]) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
@@ -366,7 +350,7 @@ def calculate_contributions(df, year_to_calculate):
                 'GWP_sys_embodied_kgCO2m2yr','GWP_CONS_tonCO2','UPTAKE_CONS_tonCO2', 'GWP_WINDOW_tonCO2',
                 'GWP_WALL_tonCO2', 'UPTAKE_WALL_tonCO2', 'GWP_FLOOR_tonCO2', 'UPTAKE_FLOOR_tonCO2',
                 'GWP_BASE_tonCO2', 'UPTAKE_BASE_tonCO2', 'GWP_ROOF_tonCO2', 'UPTAKE_ROOF_tonCO2', 'GWP_PART_tonCO2',
-                'UPTAKE_PART_tonCO2','saver3']]
+                'UPTAKE_PART_tonCO2','embodied_system_tonCO2']]
     return result
 
 def calc_if_existing(x, y):
