@@ -469,7 +469,6 @@ def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
 
         base_value = 100
         values = df_percentage['Heat_Emissions']
-        font_size = 12
 
         # Plot the base part of each bar
         for i, value in enumerate(values):
@@ -479,14 +478,16 @@ def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
             # Plot the difference part of each bar
             if value > 0:
                 plt.bar(i, value, bottom=base_value, color='red', hatch='//')  # Above base value
-                plt.text(i, base_value + value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=font_size)
+                plt.text(i, base_value + value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=10)
             elif value <= 0:
                 plt.bar(i, -value, bottom=base_value + value, color='green', hatch='\\\\')  # Below base value
-                plt.text(i, base_value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=font_size)
+                plt.text(i, base_value, f"{diff_percentage:.1f}%", ha='center', va='bottom', fontsize=10)
 
-        plt.ylabel(f'Heat Emissions [{unit_dict["Heat_Emissions"]}]')
-        plt.xlabel('Supply System')
+        plt.ylabel(f'Heat Emissions [{unit_dict["Heat_Emissions"]}]', fontsize=16)
+        plt.xlabel('Supply System', fontsize=16)
         plt.title(f'Heat Emissions - {availability}')
+        plt.xticks(fontsize=14)  # Font size for x-axis tick labels
+        plt.yticks(fontsize=14)  # Font size for y-axis tick labels
 
         # Customise plot features
         x_tick_labels = [f'{scena}\n{sys}' for scena, sys in
@@ -499,13 +500,13 @@ def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
         # Add colored x-axis labels with rotation
         for i, label in enumerate(x_tick_labels):
             scena, sys = label.split('\n')
-            ax.text(i - 0.8, -18, scena, color=scenario_colors[scena], va='center', ha='center',
-                    fontsize=font_size, weight='bold', rotation=45)
-            ax.text(i - 0.5, -20, sys, color='black', va='center', ha='center',
-                    fontsize=font_size, rotation=45)
+            ax.text(i - 0.8, -20, scena, color=scenario_colors[scena], va='center', ha='center',
+                    fontsize=12, weight='bold', rotation=45)
+            ax.text(i - 0.5, -22, sys, color='black', va='center', ha='center',
+                    fontsize=10, rotation=45)
 
         plt.tight_layout()
-        plt.subplots_adjust(left=0.2, right=0.95, top=0.9, bottom=0.2)
+        plt.subplots_adjust(left=0.2, right=0.95, top=0.9, bottom=0.21)
 
         # Save the combined plot
         plot_file_path = os.path.join(plots_path, f"hashed_bar_{availability}.png")
@@ -513,18 +514,11 @@ def hashed_bar_plot(percentage_variation, df_structure, scenarios, plots_path):
         plt.close('all')
 
 
-def scatter_plot_two_dataframes(connectivity, area_analysis, plots_path):
+def connectivity_density(connectivity, area_analysis, plots_path):
     """
-    Plots a scatter plot of two columns from two different DataFrames.
+    Plots a scatter plot correlating the connectivity percentage of buildings in a district with the building density
+    within the district
 
-    Parameters:
-        df1 (pd.DataFrame): The first DataFrame.
-        col1 (str): The column name from the first DataFrame to be plotted on the x-axis.
-        df2 (pd.DataFrame): The second DataFrame.
-        col2 (str): The column name from the second DataFrame to be plotted on the y-axis.
-        xlabel (str): The label for the x-axis.
-        ylabel (str): The label for the y-axis.
-        title (str): The title of the plot.
     """
     # Set the plot style
     sns.set(style="whitegrid")
@@ -541,14 +535,16 @@ def scatter_plot_two_dataframes(connectivity, area_analysis, plots_path):
     # Create the scatter plot
     plt.figure(figsize=(12, 8))
     scatter = sns.scatterplot(data=merged_df, x='connected_percentage', y='density_of_occupation',
-                                  s=100, hue='scenario', palette='tab10', legend='full', alpha=0.6)
+                                  s=150, hue='scenario', palette='tab10', legend='full', alpha=1)
     # Set the labels and title
-    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1)
+    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, fontsize=16)
     # Adjust layout to make room for the legend
     plt.tight_layout(rect=[0,0,1,0.95])
-    plt.xlabel('Connected buildings percentage', fontsize=12)
-    plt.ylabel('Building density in district', fontsize=12)
-    plt.title('District density vs connectivity percentage', fontsize=14)
+    plt.xlabel('Connected buildings percentage', fontsize=16)
+    plt.ylabel('Building density in district', fontsize=16)
+    plt.title('District density vs connectivity percentage', fontsize=18)
+    plt.xticks(fontsize=14)  # Font size for x-axis tick labels
+    plt.yticks(fontsize=14)  # Font size for y-axis tick labels
 
     # Save the combined plot
     plot_file_path = os.path.join(plots_path, f"connection_density.png")
@@ -565,11 +561,11 @@ connectivity = pd.read_csv(connectivity_directory)
 
 area_analysis = calculate_occupation_density(main_directory, directory_to_file, directory_to_surrounding,
                                              scenarios, save_directory)
-scatter_plot_two_dataframes(connectivity, area_analysis, save_directory)
-plot_district_network(selected_systems, base_directory, directory_to_file, network_directory, geojson_file, scenarios,
-                      save_directory_base)
-plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
-scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
-plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
-heatmap_combined(percentage_variation, scenarios, save_directory)
+#connectivity_density(connectivity, area_analysis, save_directory)
+#plot_district_network(selected_systems, base_directory, directory_to_file, network_directory, geojson_file, scenarios,
+                      #save_directory_base)
+# plot_zones_with_labels_and_image_background(main_directory, scenarios, directory_to_file, singapore_shapefile_path, save_directory)
+# scenarios_irradiation(area_analysis, main_directory_ren, irradiation_plot, scenarios, save_directory)
+# plot_building_height_statistics(scenarios, main_directory, directory_to_surrounding, directory_to_file, save_directory)
+# heatmap_combined(percentage_variation, scenarios, save_directory)
 hashed_bar_plot(percentage_variation, df_structure, scenarios, save_directory)

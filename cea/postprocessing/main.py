@@ -148,13 +148,13 @@ fixed_columns = selected_systems_structure.iloc[:, :3]
 columns_to_sort = selected_systems_structure.iloc[:, 3:].sort_index(axis=1)
 selected_systems_structure = pd.concat([fixed_columns, columns_to_sort], axis=1)
 selected_systems_structure = selected_systems_structure.fillna(0)
-
+'''
 for scenario in scenarios:
-    # heatmap(percentage_variation, plots_path_combined, scenario)
-    # scatter_plot(current_DES, selected_systems_combined, plots_path_combined, scenario)
-    # stellar_chart(selected_systems_structure, plots_path_combined, scenario)
+    heatmap(percentage_variation, plots_path_combined, scenario)
+    scatter_plot(current_DES, selected_systems_combined, plots_path_combined, scenario)
+    stellar_chart(selected_systems_structure, plots_path_combined, scenario)
     plot_connectivity(connectivity_df, scenario, plots_path_combined)
-
+'''
 scatter_plot_self(solar_consumption, save_directory)
 
 # Sort the DataFrames by Scenario and Availability and save them to a CSV file

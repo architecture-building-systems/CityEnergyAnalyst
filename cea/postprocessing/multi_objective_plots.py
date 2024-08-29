@@ -739,15 +739,17 @@ def scatter_plot_self(df, path):
     # Create the scatter plot
     plt.figure(figsize=(12, 8))
     scatter = sns.scatterplot(data=df, x='Self_consumption', y='Self_sufficiency',
-                              s=100, hue='Scenario', palette='tab10', legend='full', alpha=0.6)
+                              s=100, hue='Scenario', palette='tab10', legend='full', alpha=1)
 
     # Legend
-    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1)
+    scatter.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, fontsize=16)
 
     # Add titles and labels
-    plt.title('Self-Consumption vs. Self-Sufficiency by Scenario', fontsize=16, pad=20)
-    plt.xlabel('Self-Consumption', fontsize=14)
-    plt.ylabel('Self-Sufficiency', fontsize=14)
+    plt.title('Self-Consumption vs. Self-Sufficiency by Scenario', fontsize=18, pad=20)
+    plt.xlabel('Self-Consumption', fontsize=16)
+    plt.ylabel('Self-Sufficiency', fontsize=16)
+    plt.xticks(fontsize=14)  # Font size for x-axis tick labels
+    plt.yticks(fontsize=14)  # Font size for y-axis tick labels
 
     # Adjust layout to make room for the legend
     plt.tight_layout(rect=[0,0,0.85,1])
