@@ -367,6 +367,10 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
                     elif tool == 'terrain':
                         cea.api.terrain_helper(config)
                     elif tool == 'weather':
+                        # Fetch weather as default if weather is not set
+                        # (old versions of GUI might return empty string as default)
+                        if config.weather_helper.weather is "":
+                            config.weather_helper.weather = "climate.onebuilding.org"
                         cea.api.weather_helper(config)
                 except Exception as e:
                     raise HTTPException(
