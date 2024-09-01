@@ -45,7 +45,9 @@ def render_missing_data(request, missing_files):
         context={
             "missing_input_files": [lm(*args) for lm, args in missing_files],
             "script_suggestions": script_suggestions(lm.__name__ for lm, _ in missing_files)
-        }
+        },
+        # TODO: Change to 400 code after frontend is updated
+        status_code=404
     )
 
 
