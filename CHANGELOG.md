@@ -1,3 +1,9 @@
+- 2024-08-25 - 3.37.1 - #3645 Fix daysim binaries to allow whitespace in path
+- 2024-08-06 - 3.37.1 - #3636 Introduce result-retention toggle
+- 2024-08-06 - 3.37.1 - #3638 Fix radiation simplified
+- 2024-08-06 - 3.37.1 - #3635 New connetivity vector operations for improved networks
+- 2024-07-09 - 3.37.1 - #3621 Optimisation: Making base DES part of initial population
+- 2024-06-25 - 3.37.1 - #3622 Release 3.37.1
 - 2024-06-25 - 3.37.0 - #3620 Update documentation 3.37.x
 - 2024-06-24 - 3.37.0 - #3618 Fix terrain bounds error after using terrain-helper
 - 2024-06-14 - 3.37.0 - #3611 Release 3.37.0
