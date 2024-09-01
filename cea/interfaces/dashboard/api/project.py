@@ -312,7 +312,10 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
             try:
                 cea.api.data_initializer(config, databases_path=databases_path)
             except Exception as e:
-                raise Exception(f'data_initializer: {e}') from e
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f'data_initializer: {e}',
+                ) from e
 
         if input_data == 'import':
             files = payload.get('files')
@@ -329,7 +332,10 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
                                                 terrain=files.get('terrain'),
                                                 typology=files.get('typology'))
                 except Exception as e:
-                    raise Exception(f'create_new_scenario: {e}') from e
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f'create_new_scenario: {e}',
+                    ) from e
 
         elif input_data == 'copy':
             source_scenario_name = payload.get('copy_scenario')
@@ -363,7 +369,10 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
                     elif tool == 'weather':
                         cea.api.weather_helper(config)
                 except Exception as e:
-                    raise Exception(f'{tool}_helper: {e}') from e
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f'{tool}_helper: {e}',
+                    ) from e
 
         # Move temp scenario to correct path
         new_scenario_path = secure_path(os.path.join(_project, str(scenario_name).strip()))
