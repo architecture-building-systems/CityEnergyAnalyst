@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -13,7 +14,8 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="templates")
+dir_path = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(Path(dir_path, 'templates')))
 
 
 def script_suggestions(locator_names):
