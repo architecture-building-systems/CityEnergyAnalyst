@@ -56,8 +56,12 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
 RUN pip install /tmp/cea
 
+# extract reference case
+RUN cea extract-reference-case --destination /project
+
 # write config files
-RUN cea-config write --general:project /project \
+RUN cea-config write --general:project /project/reference-case-open \
+    && cea-config write --general:scenario-name baseline \
     && cea-config write --radiation:daysim-bin-directory /Daysim \
     && cea-config write --server:host 0.0.0.0  # required for flask to receive requests from the docker host
 
