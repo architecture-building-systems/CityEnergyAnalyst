@@ -9,6 +9,7 @@ import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
+from cea.optimization.constants import HP_ETA_EX_COOL, HP_AUXRATIO
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -41,10 +42,10 @@ def calc_Edata(tsd, schedules):
 
     return tsd
 
-def calc_mcpcdata(Qcdata_sys):
+def calc_mcpcdata(Qcdata_sys, t_c_data_sup = T_C_DATA_SUP_0, t_c_data_re = T_C_DATA_RE_0):
     if Qcdata_sys > 0.0:
-        Tcdata_sys_re = T_C_DATA_RE_0
-        Tcdata_sys_sup = T_C_DATA_SUP_0
+        Tcdata_sys_re = t_c_data_re
+        Tcdata_sys_sup = t_c_data_sup
         mcpcdata_sys = Qcdata_sys / (Tcdata_sys_re - Tcdata_sys_sup)
     else:
         Tcdata_sys_re = np.nan
@@ -52,24 +53,24 @@ def calc_mcpcdata(Qcdata_sys):
         mcpcdata_sys = 0.0
     return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
-def calc_Qcdata_sys(bpr, tsd):
+def calc_Qcdata_sys(bpr, tsd, t_c_data_sup = T_C_DATA_SUP_0, t_c_data_re = T_C_DATA_RE_0, n_hs = 0.9):
     # calculate cooling loads for data center
-    tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
+    tsd['Qcdata'] = n_hs * tsd['Edata'] * -1.0  # cooling loads are negative
 
     # calculate distribution losses for data center cooling analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcdata_d_ls = ((T_C_DATA_SUP_0 + T_C_DATA_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
+    Qcdata_d_ls = ((t_c_data_sup + t_c_data_re) / 2.0 - tsd['T_ext']) * (tsd['Qcdata'] / np.nanmin(tsd['Qcdata'])) * (
                 Lv * Y)
     # calculate system loads for data center
     #WHATCHOUT! if we change it, then the optimization use of wasteheat breaks. mcpdata has to be positive and Qcdata_sys too!
     tsd['Qcdata_sys'] = abs(tsd['Qcdata'] + Qcdata_d_ls) # convert to positive so we get the mcp in positive numbers
-    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(abs(tsd['Qcdata_sys']))
+    tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(calc_mcpcdata)(abs(tsd['Qcdata_sys']), t_c_data_sup, t_c_data_re)
 
     return tsd
 
 
-def calc_Qcdataf(locator, bpr, tsd):
+def calc_Qcdataf(locator, bpr, tsd, hp_eta_x_cool = HP_ETA_EX_COOL, hp_ratio = HP_AUXRATIO):
     """
     it calculates final loads
     """
@@ -82,8 +83,11 @@ def calc_Qcdataf(locator, bpr, tsd):
             t_source = (tsd['T_ext'] + 273)
 
             # heat pump energy
+            # modified, allow different values of hp_eta_x_cool to be supplied
+
             tsd['E_cdata'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
-                                                                (tsd['Tcdata_sys_re'] + 273), t_source)
+                    (tsd['Tcdata_sys_re'] + 273), t_source, hp_eta_x_cool, hp_ratio)
+
             # final to district is zero
             tsd['DC_cdata'] = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":

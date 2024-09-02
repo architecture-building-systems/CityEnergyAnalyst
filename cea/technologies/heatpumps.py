@@ -48,7 +48,8 @@ def calc_HP_const(q_load_Wh, COP):
     return q_env_in_Wh, p_supply_Wh
 
 
-def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
+# modified to take in hp_eta_x_cool and hp_ratio as an optional argument, default value is the CEA default
+def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, hp_eta_x_cool = HP_ETA_EX_COOL, hp_ratio = HP_AUXRATIO):
     """
     For the operation of a heat pump (direct expansion unit) connected to minisplit units
 
@@ -80,7 +81,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
             print('condenser temperature is equal to evaporator temperature, COP set to the maximum')
             COP = HP_COP_MAX
         else:
-            COP = HP_ETA_EX_COOL * tevap_K / (tcond_K - tevap_K)
+            COP = hp_eta_x_cool * tevap_K / (tcond_K - tevap_K)
 
         # in order to work in the limits of the equation
         if COP > HP_COP_MAX:
@@ -91,7 +92,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
         wdot_W = qcolddot_W / COP
-        E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
+        E_req_W = wdot_W / hp_ratio     # compressor power [C. Montagud et al., 2014]_
 
     else:
         E_req_W = 0.0
@@ -225,7 +226,7 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
+def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake, hp_ratio = HP_AUXRATIO):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -252,7 +253,7 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     """
     mdot_kgpers = Q_gen_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K))
 
-    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake)
+    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake, hp_ratio)
 
     Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
@@ -260,7 +261,7 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
 
     return E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, hp_ratio = HP_AUXRATIO):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
@@ -299,7 +300,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
         print("Qhot above max size on the market !")
 
     wdot_W = q_hotdot_W / COP
-    E_HPLake_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
+    E_HPLake_req_W = wdot_W / hp_ratio     # compressor power [C. Montagud et al., 2014]_
 
     q_colddot_W =  q_hotdot_W - wdot_W
 

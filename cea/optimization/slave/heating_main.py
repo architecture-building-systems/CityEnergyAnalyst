@@ -167,8 +167,8 @@ def district_heating_network(locator,
                                                                           Q_therm_Sew_W,
                                                                           T_source_average_sewage_K,
                                                                           T_district_heating_supply_K,
-                                                                          T_district_heating_return_K
-                                                                          )
+                                                                          T_district_heating_return_K,
+                                                                          bpr.internal_loads['Hp_Ratio'])
 
         # COgen size for electricity production
         master_to_slave_variables.CCGT_SIZE_electrical_W = max(E_CHP_gen_W)

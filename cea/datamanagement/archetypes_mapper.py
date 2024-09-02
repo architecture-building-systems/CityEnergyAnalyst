@@ -139,7 +139,12 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
               'Vw_ldp',
               'Qhpro_Wm2',
               'Qcpro_Wm2',
-              'Epro_Wm2']
+              'Epro_Wm2',
+              'TCData_Sup',
+              'TCData_Re',
+              'Hp_X_Cool',
+              'Hp_Ratio',
+              'N_Hs']
     prop_internal_df_merged = calculate_average_multiuse(fields,
                                                          prop_internal_df,
                                                          occupant_densities,

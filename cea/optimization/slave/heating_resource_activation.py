@@ -31,7 +31,8 @@ def heating_source_activator(Q_therm_req_W,
                              Q_therm_Sew_W,
                              TretsewArray_K,
                              tdhsup_K,
-                             tdhret_req_K):
+                             tdhret_req_K,
+                             hp_ratio = HP_AUXRATIO):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -171,8 +172,8 @@ def heating_source_activator(Q_therm_req_W,
         E_HPLake_req_W, Q_coldsource_HPLake_W, Q_HPLake_gen_W = HPLake_op_cost(Q_HPLake_gen_W,
                                                                                tdhsup_K,
                                                                                tdhret_req_K,
-                                                                               TretLakeArray_K
-                                                                               )
+                                                                               TretLakeArray_K,
+                                                                               hp_ratio)
         E_pump_req_W = calc_water_body_uptake_pumping(Q_HPLake_gen_W,
                                                          tdhret_req_K,
                                                          tdhsup_K)
