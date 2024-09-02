@@ -21,6 +21,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.colors import color_to_rgb
 from cea.utilities.dbf import dataframe_to_dbf
@@ -90,8 +91,26 @@ async def get_project_info(config: CEAConfig, project: str = None):
         config.project = project
         scenario_name = None
 
-    return {'project_name': os.path.basename(config.project), 'project': config.project,
-            'scenario_name': scenario_name, 'scenarios_list': list_scenario_names_for_project(config)}
+    # FIXME: This exposes the project path to the frontend. Should be removed.
+    project_info = {
+        'project_name': os.path.basename(config.project),
+        'project': config.project,
+        'scenario_name': scenario_name,
+        'scenarios_list': list_scenario_names_for_project(config)
+    }
+
+    # List projects if no path transversal is allowed
+    if not get_settings().allow_path_transversal():
+        def valid_project(project_name):
+            return not project_name.startswith(".")
+
+        projects = [
+            project_name for project_name in os.listdir(get_settings().project_root)
+            if valid_project(project_name)
+        ]
+        project_info['projects'] = projects
+
+    return project_info
 
 
 @router.post('/')

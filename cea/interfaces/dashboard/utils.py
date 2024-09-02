@@ -11,10 +11,11 @@ def secure_path(path: str) -> str:
     """
     Simple sanitation of path
     """
-    project_root = os.path.realpath(get_settings().project_root)
     real_path = os.path.realpath(path)
 
-    if project_root != "":
+    if not get_settings().allow_path_transversal():
+        project_root = os.path.realpath(get_settings().project_root)
+
         prefix = os.path.commonpath((project_root, real_path))
         if project_root != prefix:
             raise InvalidPathError("Path is outside of project root")
