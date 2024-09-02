@@ -9,13 +9,14 @@ from pydantic import BaseModel
 
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology
+from cea.interfaces.dashboard.utils import secure_path
 from cea.utilities.dbf import dbf_to_dataframe
 
 router = APIRouter()
 
 
 @router.get("/buildings")
-async def fetch_buildings(generate: bool = False, polygon: str = None):
+async def fetch_buildings(generate: bool = False, polygon: str = None, path: str = None):
     if generate:
         if polygon is None:
             return HTTPException(status_code=400, detail="Missing polygon")
@@ -32,6 +33,16 @@ async def fetch_buildings(generate: bool = False, polygon: str = None):
 
             return json.loads(buildings.to_json())
 
+        except Exception as e:
+            print(e)
+            return HTTPException(status_code=500, detail=str(e))
+
+    elif path is not None:
+        try:
+            _path = secure_path(path)
+            buildings = gpd.read_file(_path).to_crs("epsg:4326")
+
+            return json.loads(buildings.to_json())
         except Exception as e:
             print(e)
             return HTTPException(status_code=500, detail=str(e))
