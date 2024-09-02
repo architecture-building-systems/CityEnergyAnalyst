@@ -11,7 +11,7 @@ def secure_path(path: str) -> str:
     """
     Simple sanitation of path
     """
-    project_root = get_settings().project_root
+    project_root = os.path.realpath(get_settings().project_root)
     real_path = os.path.realpath(path)
 
     if project_root != "":
