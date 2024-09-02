@@ -14,7 +14,11 @@ class Settings(BaseSettings):
     worker_url: Optional[str] = None
     project_root: Optional[str] = None
 
+    def allow_path_transversal(self) -> bool:
+        return self.project_root == ""
 
+
+# FIXME: Settings does not load from cea config
 @lru_cache
 def get_settings():
     return Settings()
