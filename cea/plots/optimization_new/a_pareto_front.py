@@ -122,7 +122,7 @@ def plot_pareto_front(objectives, objective_values):
         text=objective_values['DCS-solution'],
         marker=dict(
             size=20,
-            color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
+            color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution'][1:]],
             colorscale='Viridis',
             line=dict(width=2,
                       color='black'),
@@ -188,7 +188,7 @@ def add_3D_scatter_plot(objectives, objective_values):
                             text=objective_values['DCS-solution'],
                             marker=dict(
                                 size=15,
-                                color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']],
+                                color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution'][1:]],
                                 colorscale='Viridis',
                                 opacity=0.9,
                                 line=dict(width=4,

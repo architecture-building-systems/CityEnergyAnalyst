@@ -199,6 +199,127 @@ def geometry_extractor_osm(locator, config):
     # save to shapefile
     result.to_file(shapefile_out_path)
 
+def find_industries_nearby(locator):
+    """
+    This script checks the nearby buildings, in a 500 m radius of the analysed zone, and checks whether they are
+    industry buildings, to identify potential data centers.
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500  # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+
+    industry_tag = {'building': 'industrial'}
+
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+
+    try:
+        industrial_buildings = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags=industry_tag)
+        industrial_buildings = industrial_buildings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+        check_industry = True
+
+    except:
+        print('No industrial building found in the area')
+        check_industry = False
+        industrial_buildings = None
+
+    return industrial_buildings, check_industry
+def get_surrounding_building_sewage(locator):
+    """
+    This script checks the nearby buildings, in a 500 m radius of the analysed zone
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 750  # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    all_surroundings = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                                tags={"building": True})
+    all_surroundings = all_surroundings.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    # Exclude buildings included in the zone and outside of the buffer
+    surroundings = erase_no_surrounding_areas(all_surroundings, zone, area_with_buffer)
+
+    fig, ax = plt.subplots( figsize=(10, 10) )
+    surroundings.plot(column='building', categorical=True, legend=True, ax=ax)
+    plt.title('Buildings in the surroundings of the zone')
+    # plt.show()
+
+    return surroundings, buffer_m
+
+def get_water_basin(locator):
+    """
+    This script checks whether the zone has a water basin nearby. If it does, it calculates the potential of the
+    water basin to be used as a heat sink for the cooling system. The potential is calculated based on the temperature
+    of the water basin, which is assumed to be the same as the bottom temperature of the lake.
+    """
+    import matplotlib.pyplot as plt
+    # local variables:
+    buffer_m = 500 # meters
+    zone = gdf.from_file(locator.get_zone_geometry())
+
+    # transform zone file to geographic coordinates
+    zone = zone.to_crs(get_geographic_coordinate_system())
+    lon = zone.geometry[0].centroid.coords.xy[0][0]
+    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # get a polygon of the surrounding area, and one polygon representative of the zone area
+    area_with_buffer = calc_surrounding_area(zone, buffer_m)
+    # get footprints of all the surroundings
+    area_with_buffer_polygon = area_with_buffer.to_crs(get_geographic_coordinate_system()).geometry.values[0]
+    water_tags = {'natural': 'water'}
+
+    try:
+        water_basin = osmnx.features.features_from_polygon(polygon=area_with_buffer_polygon,
+                                                               tags=water_tags)
+        water_basin = water_basin.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+        allowed_basins = ['lake', 'reservoir', 'river', 'canal']
+
+        # Select only big water bodies to discharge heat
+        water_filtered = water_basin[water_basin['water'].notna()]
+        # Filter the DataFrame to keep only rows where the 'water' column contains any of the substrings
+        filtered_water_basin = water_filtered[water_filtered['water'].str.contains('|'.join(allowed_basins))]
+        if not filtered_water_basin.empty:
+            tot_area_available = filtered_water_basin.area.sum() / 1e6  # km2
+            check_water_basin = True
+        else:
+            check_water_basin = False
+            tot_area_available = None
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        water_basin.plot(column='water', categorical=True, legend=True, ax=ax)
+        plt.title('Water Features')
+        # plt.show()
+
+    except:
+        print('No water basins found in the area')
+        check_water_basin = False
+        tot_area_available = None
+
+    return check_water_basin, tot_area_available
 
 def main(config):
     """

@@ -42,7 +42,7 @@ HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be therma
                                 # the results of these hours will be overwritten
 
 # Specific heat
-HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
+HEAT_CAPACITY_OF_WATER_JPERKGK = 4186  # [J/kg K]
 DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 = 983.21  # [kg/m^3] density of Water @ 60°C
 P_WATER_KGPERM3 = 998.0  # water density kg/m3
 P_SEWAGEWATER_KGPERM3 = 1400  # sewagewater density kg/m3
@@ -57,6 +57,15 @@ HEX_WIDTH_M = 0.40  # in m
 AT_HEX_K = 5  # rule of thumb, Approach temperature of a heat exchanger
 AT_MIN_K = 2  # rule of thumb, Minimum approach temperature of a heat exchanger
 CT_MAX_SIZE_W = 10000000
+MULTI_RES_OCC = 35  # in m2/person
+
+# ==============================================================================================================
+# wasteheat potential
+# ==============================================================================================================
+
+P_UPS = 52500  # W
+P_D = 275000  # W
+E = 18  # people
 
 # ??
 VEL_FLOW_MPERS = 3  # in m/s got from Rabtherm technology
@@ -64,10 +73,20 @@ MIN_FLOW_LPERS = 9  # in lps got from Rabtherm technology
 T_MIN = 8  # tmin of extraction got from Rabtherm technology
 H0_KWPERM2K = 1.5  # kW/m2K # heat transfer coefficient/ got from Rabtherm technology
 
-#ground temperature values
+# ==============================================================================================================
+# geothermal potential
+# ==============================================================================================================
+
 SOIL_Cp_JkgK = 2000 # _[A. Kecebas et al., 2011]
 SOIL_lambda_WmK = 1.6
-SOIL_rho_kgm3 = 1600
+SOIL_rho_kgm3 = 1600 # Bulk density of soil
+PERMEABIL = 10**-7
+PIEZ = [10, 30]
+DIST_PIEZ = [0.5, 20]
+#Li, Xinguo, 2006. “Simulation and Experiment on the Thermal Performance of U-Vertical
+# Ground Coupled Heat Exchanger.”
+
+# Singapore Groundwater Temperature according to “AG 31-008 Geothermal Heat Pump Design Manual - McQuay” (April 9, 2024)
 
 #insulation of pipes
 PUR_lambda_WmK = 0.023
@@ -84,3 +103,24 @@ BOLTZMANN = 0.000000056697  # W/m2K4
 
 # KELVIN TO DEGREE CELSIUS CONVERSION
 KELVIN_OFFSET = 273.0
+
+# ==============================================================================================================
+# datacenter heat integration
+# ==============================================================================================================
+
+P_UPS = 52500 #[W]
+P_D = 275000 #[W]
+E = 18 #[W]
+# Values are estimated from typical values in the context of Singapore data centers
+
+# ==============================================================================================================
+# water body integration
+# ==============================================================================================================
+
+# Fink, Gabriel 2014. “Large Lakes as Sources and Sinks of Anthropogenic Heat:Capacities and Limits.”
+T_sup = 30 #°C
+T_bot = 27 #°C
+Mixed_Layer_Depth = 1 #m #Defined with a decrease in temperature of 0.5°C, as from Wells, Mathew G. “Surface Mixed Layers in Lakes.”
+
+# All the reservoir data refer to Kranji reservoir and were taken from:
+# Xing, Zikun, Derek A. Fong “Water and Heat Budgets of a Shallow Tropical Reservoir.”

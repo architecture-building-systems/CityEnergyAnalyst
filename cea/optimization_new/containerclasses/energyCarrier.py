@@ -26,6 +26,7 @@ import numpy as np
 
 class EnergyCarrier(object):
     _available_energy_carriers = pd.DataFrame
+    _feedstocks = pd.DataFrame
     _thermal_energy_carriers = {}
     _electrical_energy_carriers = {}
     _combustible_energy_carriers = {}
@@ -76,7 +77,7 @@ class EnergyCarrier(object):
 
     @subtype.setter
     def subtype(self, new_subtype):
-        allowed_subtypes = {'thermal': ['water', 'air', 'brine'],
+        allowed_subtypes = {'thermal': ['water', 'air', 'brine', 'water sink'],
                             'electrical': ['AC', 'DC'],
                             'combustible': ['fossil', 'biofuel'],
                             'radiation': ['-']}
@@ -181,7 +182,6 @@ class EnergyCarrier(object):
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_buy_USD2015kWh'])}
             EnergyCarrier._daily_sell_price_profile[tab_name] = \
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_sell_USD2015kWh'])}
-
 
     @staticmethod
     def _extract_thermal_energy_carriers():
@@ -305,6 +305,7 @@ class EnergyCarrier(object):
         if not EnergyCarrier._thermal_energy_carriers:
             EnergyCarrier._extract_thermal_energy_carriers()
 
+
         thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
         thermal_ec_mean_quals = pd.to_numeric(thermal_ecs_of_subtype['mean_qual'])
         if not np.isnan(temperature):
@@ -315,6 +316,32 @@ class EnergyCarrier(object):
             print(f'The temperature level of a renewable energy potential was not available. '
                   f'We assume that the following energy carrier is output: '
                   f'{thermal_ecs_of_subtype["description"].iloc[0]}')
+        return energy_carrier_code
+
+    @staticmethod
+    def volt_to_elec_ec(energy_carrier_subtype, potential):
+        """
+        Determine which electrical energy carrier corresponds to a given potential.
+
+        :param energy_carrier_subtype: type of the electrical energy carrier
+        :type energy_carrier_subtype: str
+        :param temperature: potential in V
+        :type temperature: float
+        :return energy_carrier_code: code of the corresponding electrical energy carrier
+        :rtype energy_carrier_code: str
+        """
+        EnergyCarrier._extract_electrical_energy_carriers()
+
+        electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
+        electrical_ec_mean_quals = pd.to_numeric(electrical_ecs_of_subtype['mean_qual'])
+        if not np.isnan(potential):
+            index_closest_mean_temp = (electrical_ec_mean_quals - potential).abs().nsmallest(n=1).index[0]
+            energy_carrier_code = electrical_ecs_of_subtype['code'].loc[index_closest_mean_temp]
+        else:
+            energy_carrier_code = electrical_ecs_of_subtype['code'].iloc[0]
+            print(f'The temperature level of a renewable energy potential was not available. '
+                  f'We assume that the following energy carrier is output: '
+                  f'{electrical_ecs_of_subtype["description"].iloc[0]}')
         return energy_carrier_code
 
     @staticmethod
@@ -467,7 +494,6 @@ class EnergyCarrier(object):
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
         tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
-
         if mode == 'buy':
             unit_price = EnergyCarrier._daily_buy_price_profile[tab_name][timestep.hour]
         elif mode == 'sell':
@@ -485,3 +511,4 @@ class EnergyCarrier(object):
         corresponding_feedstock_tab = EnergyCarrier._available_energy_carriers[
             EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['cost_and_ghg_tab'].values[0]
         EnergyCarrier._feedstock_tab[energy_carrier_code] = corresponding_feedstock_tab
+

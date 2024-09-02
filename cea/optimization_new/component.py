@@ -21,6 +21,8 @@ __status__ = "Production"
 # standard libraries
 import pandas as pd
 from math import log
+import geopandas as gpd
+import numpy as np
 # third party libraries
 # other files (modules) of this project
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
@@ -33,6 +35,11 @@ from cea.technologies.boiler import calc_boiler_const
 from cea.technologies.cogeneration import calc_cogen_const
 from cea.technologies.heatpumps import calc_HP_const
 from cea.technologies.cooling_tower import calc_CT_const
+from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
+from cea.technologies.storage_tank_pcm import Storage_tank_PCM
+from cea.technologies.batteries import Battery
+from cea.inputlocator import InputLocator
+from cea.config import Configuration
 
 
 class Component(object):
@@ -79,7 +86,13 @@ class Component(object):
         HeatPump.initialize_subclass_variables(Component._components_database)
         CoolingTower.initialize_subclass_variables(Component._components_database)
         PowerTransformer.initialize_subclass_variables(Component._components_database)
+        Inverter.initialize_subclass_variables(Component._components_database)
         HeatExchanger.initialize_subclass_variables(Component._components_database)
+        HeatSink.initialize_subclass_variables(Component._components_database)
+        Solar_PV.initialize_subclass_variables(Component._components_database)
+        Solar_collector.initialize_subclass_variables(Component._components_database)
+        ThermalStorage.initialize_subclass_variables(Component._components_database)
+        Batteries.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
     def create_code_mapping(database):
@@ -172,6 +185,7 @@ class Component(object):
     def calculate_cost(self):
         """ placeholder for subclass investment cost functions """
         capacity_W = self.capacity * 1000
+
         if capacity_W <= 0:
             capex_USD = 0
         else:
@@ -560,6 +574,409 @@ class CogenPlant(ActiveComponent):
                                                                            'T_water_out_design',
                                                                            'water')
 
+class Solar_PV(ActiveComponent):
+
+    _database_tab = 'PHOTOVOLTAIC_PANELS'
+
+    def __init__(self, pv_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(Solar_PV._database_tab, pv_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.electrical_eff = self._model_data['PV_n'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))
+        self.input_energy_carriers = []  # [EnergyCarrier(self._model_data['fuel_code'].values[0])]
+        self.output_energy_carriers = [(
+            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', self._model_data['V_power_supply'].values[0])))]
+        self.locator = InputLocator(scenario=Configuration().scenario)
+
+    def operate(self, heating_out):
+        """
+        Operate the solar PV. The electrical output is simply given by the solar production profile evaluated in the solar potential
+        script, and scale down depending on the assigned capacity. The capacity is capped at the maximum area coverage for solar installations.
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+
+        # load potentials from solar resources and calculate the maximum area used, capacity and electricity flow
+        chosen_cap = self.capacity
+        solarPV_potential = self.load_potentials()
+        electricity_flow = solarPV_potential.main_potential
+        max_cap = max(electricity_flow.profile)
+
+        # Resize the used area based on the chosen capacity
+        ratio = chosen_cap / max_cap
+
+        # initialize energy flows
+        electricity_out = EnergyFlow(self.placement, 'primary', electricity_flow.energy_carrier.code)
+        electricity_out.profile = electricity_flow.profile * ratio
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {electricity_flow.energy_carrier.code: electricity_out}
+
+        return input_energy_flows, output_energy_flows
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of PV panels from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        """
+        ct_database = components_database[Solar_PV._database_tab]
+        voltage_levels = ct_database['V_power_supply'].unique()
+        electric_ecs = {volt: EnergyCarrier.volt_to_elec_ec('DC', volt) for volt in voltage_levels}
+        ec_code_series = pd.Series([electric_ecs[volt] for volt in ct_database['V_power_supply']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        Solar_PV.possible_main_ecs = possible_main_ecs_dict
+
+    def load_potentials(self):
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
+        shp_file = gpd.read_file(self.locator.get_zone_geometry())
+        building_list = shp_file['Name']
+        PV_potential = EnergyPotential().load_PV_potential(self.locator, building_list)
+
+        return PV_potential
+
+class Solar_collector(ActiveComponent):
+
+    _database_tab = 'SOLAR_THERMAL_PANELS'
+
+    def __init__(self, sc_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(Solar_collector._database_tab, sc_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.electrical_eff = self._model_data['n0'].values[0]
+
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0]))
+        self.input_energy_carriers = []
+        self.output_energy_carriers = [(
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_supply_sup'].values[0])))]
+        self.locator = InputLocator(scenario=Configuration().scenario)
+
+        # Calculate area used to install solar collectors and total capacity
+        self.solar_collector_potential = self.load_potentials()
+        self.max_capacity = max(self.solar_collector_potential.main_potential.profile)
+        self.capacity_ratio = self.capacity / self.max_capacity
+        self.total_area_installed = sum(self.solar_collector_potential.area_usage.loc['Total'] * self.capacity_ratio)
+        self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost_with_m2()
+
+    def operate(self, heating_out):
+        """
+        Operate the solar collector. The hot water output is simply given by the solar production profile evaluated in the solar 
+        potential script, and scale down depending on the assigned capacity. 
+        The capacity is capped at the maximum area coverage for solar installations.
+
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+
+        # load potentials from solar resources and calculate the maximum area used, capacity and profile
+        thermal_flow = self.solar_collector_potential.main_potential
+
+        # initialize energy flows
+        thermal_out = EnergyFlow(self.placement, 'primary', self.main_energy_carrier.code)
+        thermal_out.profile = thermal_flow.profile * self.capacity_ratio
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {self.main_energy_carrier.code: thermal_out}
+
+        return input_energy_flows, output_energy_flows
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of solar collectors from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        """
+        ct_database = components_database[Solar_collector._database_tab]
+        temp_levels = ct_database['T_supply_sup'].unique()
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in temp_levels}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_supply_sup']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        Solar_collector.possible_main_ecs = possible_main_ecs_dict
+
+    def load_potentials(self):
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
+
+        shp_file = gpd.read_file(self.locator.get_zone_geometry())
+        building_list = shp_file['Name']
+        thermal_potential = EnergyPotential().load_SCET_potential(self.locator, building_list)
+
+        return thermal_potential
+
+    def calculate_cost_with_m2(self):
+        """ placeholder for subclass investment cost functions """
+        area_installed = self.total_area_installed
+
+        if area_installed <= 0:
+            capex_USD = 0
+        else:
+            capex_USD = self._cost_params['a'] + \
+                        self._cost_params['b'] * area_installed ** self._cost_params['c'] + \
+                        (self._cost_params['d'] + self._cost_params['e'] * area_installed) * log(area_installed)
+
+        capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
+        opex_a_fix_USD = capex_USD * self._cost_params['om_share']
+
+        return capex_USD, capex_a_USD, opex_a_fix_USD
+
+class Batteries(ActiveComponent):
+
+    _database_tab = 'BATTERIES'
+
+    def __init__(self, storage_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(Batteries._database_tab, storage_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.storage_properties = pd.DataFrame(self._model_data)
+        self.round_trip = self._model_data['round-trip efficiency'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['output_voltage'].values[0]))]
+
+    def operate(self, heating_out, demand = None):
+        """
+        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
+        The electrical output is simply given by that operating point. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        # self._check_operational_requirements(heating_out)
+
+        # initialize energy flows
+        input_thermal_flow = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+        input_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
+
+        output_thermal_flow = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
+        output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
+
+        # initialize tank
+        battery = Battery(size_Wh=self.capacity * 1000,
+                                database_model_parameters=self.storage_properties,
+                                type_storage=self.code)
+
+        # prepare dataframe for testing
+        hours_to_test = len(heating_out.profile)
+        data = pd.DataFrame({"E_DailyStorage_gen_directLoad_W": np.zeros(hours_to_test),
+                             "E_DailyStorage_to_storage_W": np.zeros(hours_to_test),
+                             "E_DailyStorage_content_W": np.zeros(hours_to_test),
+                             })
+
+        # and input boundary conditions for the tank
+        hours = list(range(hours_to_test))
+        load = list(heating_out.profile)
+        unload = list(demand.profile)
+        schedule = []
+
+        for i in range(hours_to_test):
+            if unload[i] > 0:
+                schedule.append("discharge")
+            elif load[i] > 0:
+                schedule.append("charge")
+            else:
+                schedule.append("balance")
+
+        # run simulation
+        for hour, x, y, z in zip(hours, load, unload, schedule):
+            load_proposed_to_storage_Wh = x * 1000
+            load_proposed_from_storage_Wh = y * 1000
+            operation_mode = z
+            battery.hour = hour
+            if operation_mode == "charge":
+                load_to_storage_Wh, new_storage_capacity_wh = battery.charge_storage(load_proposed_to_storage_Wh)
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = load_to_storage_Wh
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+            elif operation_mode == "discharge":
+                load_from_storage_Wh, new_storage_capacity_wh = battery.discharge_storage(
+                    load_proposed_from_storage_Wh)
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = load_from_storage_Wh
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+            else:
+                new_storage_capacity_wh = battery.balance_storage()
+                data.loc[hour, "E_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "E_DailyStorage_content_W"] = new_storage_capacity_wh
+
+            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "E_DailyStorage_gen_directLoad_W"] / 1000, 0)
+            input_thermal_flow.profile[hour] = heating_out.profile[hour] - data.loc[hour, "E_DailyStorage_to_storage_W"] / 1000
+
+        # calculate results to assert
+        output_thermal_flow.profile = data['E_DailyStorage_content_W'] / 1000
+
+        # reformat outputs to dicts
+        input_energy_flows = {self.input_energy_carriers[0].code: input_thermal_flow}
+        output_energy_flows = {self.output_energy_carriers[0].code: output_thermal_flow}
+
+        return input_energy_flows, output_energy_flows, demand
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of thermal energy storage tech from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        Only the heating energy carriers are considered for thermal storage.
+        """
+
+        ct_database = components_database[Batteries._database_tab]
+        voltage_levels = ct_database['input_voltage'].unique()
+        electric_ecs = {volt: EnergyCarrier.volt_to_elec_ec('DC', volt) for volt in voltage_levels}
+        ec_code_series = pd.Series([electric_ecs[volt] for volt in ct_database['input_voltage']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        Batteries.possible_main_ecs = possible_main_ecs_dict
+
+class ThermalStorage(ActiveComponent):
+
+    _database_tab = 'THERMAL_ENERGY_STORAGES'
+
+    def __init__(self, storage_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(ThermalStorage._database_tab, storage_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.round_trip = self._model_data['round-trip efficiency'].values[0]
+        self.storage_properties = pd.DataFrame(self._model_data)
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['water_temperature'].values[0]))]
+
+    def operate(self, heating_out, demand = None):
+        """
+        Operate the cogeneration plant, whereby the targeted heating output dictates the operating point of the plant.
+        The electrical output is simply given by that operating point. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heating_out: Targeted heat produced by the cogeneration plant
+        :type heating_out: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Total electrical power produced by the combined heat and power plant,
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of heat contained in the rejected flue gas
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        # initialize energy flows
+        input_thermal_flow = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+        input_thermal_flow.profile = heating_out.profile
+        output_thermal_flow = EnergyFlow(self.placement, 'primary', self.output_energy_carriers[0].code)
+        output_thermal_flow.profile = pd.Series(0, index=heating_out.profile.index)
+
+        # initialize tank
+        tank = Storage_tank_PCM(size_Wh=self.capacity * 1000,
+                                database_model_parameters=self.storage_properties,
+                                T_ambient_K=303,
+                                type_storage=self.code)
+
+        # prepare dataframe for testing
+        hours_to_test = len(heating_out.profile)
+        data = pd.DataFrame({"Q_DailyStorage_gen_directLoad_W": np.zeros(hours_to_test),
+                             "Q_DailyStorage_to_storage_W": np.zeros(hours_to_test),
+                             "Q_DailyStorage_content_W": np.zeros(hours_to_test),
+                             "T_DailyStorage_C": np.zeros(hours_to_test),
+                             })
+
+        # and input boundary conditions for the tank
+        hours = list(range(hours_to_test))
+        load = list(input_thermal_flow.profile)
+        unload = list(demand.profile)
+        schedule = []
+
+        for i in range(hours_to_test):
+            if unload[i] > 0:
+                schedule.append("discharge")
+            elif load[i] > 0:
+                schedule.append("charge")
+            else:
+                schedule.append("balance")
+
+        # run simulation
+        for hour, x, y, z in zip(hours, load, unload, schedule):
+            load_proposed_to_storage_Wh = x * 1000
+            load_proposed_from_storage_Wh = y * 1000
+            operation_mode = z
+            tank.hour = hour
+            if operation_mode == "charge":
+                load_to_storage_Wh, new_storage_capacity_wh = tank.charge_storage(load_proposed_to_storage_Wh)
+                data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "Q_DailyStorage_to_storage_W"] = load_to_storage_Wh
+                data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
+            elif operation_mode == "discharge":
+                load_from_storage_Wh, new_storage_capacity_wh = tank.discharge_storage(
+                    load_proposed_from_storage_Wh)
+                data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] = load_from_storage_Wh
+                data.loc[hour, "Q_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
+            else:
+                new_storage_capacity_wh = tank.balance_storage()
+                data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] = 0.0
+                data.loc[hour, "Q_DailyStorage_to_storage_W"] = 0.0
+                data.loc[hour, "Q_DailyStorage_content_W"] = new_storage_capacity_wh
+
+            data.loc[hour, "T_DailyStorage_C"] = tank.T_tank_K - 273.0
+            demand.profile[hour] = max(demand.profile[hour] - data.loc[hour, "Q_DailyStorage_gen_directLoad_W"] / 1000, 0)
+
+        # calculate results to assert
+        output_thermal_flow.profile = data['Q_DailyStorage_content_W'] / 1000
+
+        # reformat outputs to dicts
+        input_energy_flows = {}
+        output_energy_flows = {self.output_energy_carriers[0].code: output_thermal_flow}
+
+        return input_energy_flows, output_energy_flows, demand
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of thermal energy storage tech from the database and save a dictionary, indicating
+        which component models can provide each of the energy carriers, as a new class variable.
+        Only the heating energy carriers are considered for thermal storage.
+        """
+        cp_database = components_database[ThermalStorage._database_tab]
+        cp_database = cp_database[cp_database['type'] == 'HEATING']
+        ThermalStorage.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
+                                                                           'water_temperature',
+                                                                           'water')
 
 class HeatPump(ActiveComponent):
 
@@ -711,6 +1128,101 @@ class CoolingTower(ActiveComponent):
                                   for ec in model_and_ec_code_match['ec'].unique()}
         CoolingTower.possible_main_ecs = possible_main_ecs_dict
 
+class HeatSink(ActiveComponent):
+    """ This component refers to any condeser for the chillers that releases heat coming from primary and secondary
+    components through water loops, if any of the potentials (water basin, sewage, geothermal) are available  """
+
+    main_side = 'input'
+    _database_tab = 'HEAT_SINK'
+
+    def __init__(self, ct_model_code, placement, capacity):
+        # initialise parent-class attributes
+        super().__init__(HeatSink._database_tab, ct_model_code, capacity, placement)
+        # initialise subclass attributes
+        self.aux_power_share = self._model_data['aux_power'].values[0]
+        # assign technology-specific energy carriers
+        self.main_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
+        self.input_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+        self.output_energy_carriers = \
+            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water sink', self._model_data['T_water_out_design'].values[0]))]
+        self.water_source = self._model_data['Water_source_code'].values[0]
+        self.locator = InputLocator(scenario=Configuration().scenario)
+
+    def operate(self, heat_rejection):
+        """
+        Operate the heat sink, so that it rejects the targeted amount of heat. The operation is modeled according to
+        the chosen general component efficiency code complexity.
+
+        :param heat_rejection: Targeted heat rejection from the heat sink's water loop
+        :type heat_rejection: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Power supply required to reject the targeted amount of heat
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        # load potentials from heat sink resources
+        anthropogenic_heat_out = self.load_potentials().main_potential
+
+        self._check_operational_requirements(heat_rejection)
+
+        # initialize energy flows
+        electricity_in = EnergyFlow('secondary', self.placement, self.input_energy_carriers[0].code)
+
+        # run operational/efficiency code
+        if Component._model_complexity == 'constant':
+            electricity_in.profile, anthropogenic_heat_out.profile = self._constant_efficiency_operation(heat_rejection)
+        else:
+            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
+                             f"implemented for {self.technology}")
+
+        # reformat outputs to dicts
+        input_energy_flows = {self.input_energy_carriers[0].code: electricity_in}
+        output_energy_flows = {anthropogenic_heat_out.energy_carrier.code: anthropogenic_heat_out}
+
+        return input_energy_flows, output_energy_flows
+
+    def _constant_efficiency_operation(self, heat_rejection_load):
+        """ Operate heat sink assuming a constant electrical efficiency rating, using the same approach of
+        Cooling Towers. """
+        electricity_flow, anthropogenic_heat_out = calc_CT_const(heat_rejection_load.profile, self.aux_power_share)
+        return electricity_flow, anthropogenic_heat_out
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible main energy carriers of heat sinks from the database and save the list as a new class
+        variable.
+        """
+        ct_database = components_database[HeatSink._database_tab]
+        # Assumed hot water temperature value at same value of open circuit Cooling Towers
+        hot_water_temperatures = ct_database['T_water_in_design'].unique()
+        heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
+        ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
+        model_and_ec_code_match = pd.merge(ct_database['code'], ec_code_series, right_index=True, left_index=True)
+        possible_main_ecs_dict = {ec: model_and_ec_code_match[model_and_ec_code_match['ec'] == ec]['code'].unique()
+                                  for ec in model_and_ec_code_match['ec'].unique()}
+        HeatSink.possible_main_ecs = possible_main_ecs_dict
+
+    def load_potentials(self):
+        '''
+        Load potentials based on availability of the selected area, directly from results of the potential scripts
+        '''
+        potential_path_dictionary = {'LW': self.locator.get_water_body_potential(),
+                                     'SW': self.locator.get_sewage_heat_potential(),
+                                     'GW': self.locator.get_geothermal_potential()}
+        path_to_potential = potential_path_dictionary[self.water_source]
+
+        if self.water_source == 'LW':
+            ec_flow = EnergyPotential().load_water_body_potential(path_to_potential)
+        elif self.water_source == 'SW':
+            ec_flow = EnergyPotential().load_sewage_potential(path_to_potential)
+        elif self.water_source == 'GW':
+            ec_flow = EnergyPotential().load_geothermal_potential(path_to_potential)
+
+        return ec_flow
 
 class PowerTransformer(PassiveComponent):
 
@@ -843,6 +1355,136 @@ class PowerTransformer(PassiveComponent):
         PowerTransformer.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
                                               for ec_code, component_models
                                               in PowerTransformer.conversion_matrix.iterrows()}
+
+class Inverter(PassiveComponent):
+
+    _database_tab = 'INVERTERS'
+
+    def __init__(self, in_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
+        # initialise parent-class attributes
+        super().__init__(Inverter._database_tab, in_model_code, capacity, placed_after, placed_before)
+        # initialise subclass attributes
+        self.min_low_voltage = self._model_data['V_min_lowV_side'].values[0]
+        self.max_low_voltage = self._model_data['V_max_lowV_side'].values[0]
+        self.min_high_voltage = self._model_data['V_min_highV_side'].values[0]
+        self.max_high_voltage = self._model_data['V_max_highV_side'].values[0]
+        self.current_form_low_voltage_side = self._model_data['current_form_lowV'].values[0]
+        self.current_form_high_voltage_side = self._model_data['current_form_highV'].values[0]
+
+        self._set_energy_carriers(voltage_before, voltage_after)
+
+    def operate(self, power_transfer):
+        """
+        Operate the inverter, so that it converts the targeted amount of power. The operation is modeled
+        assuming there are no losses in the conversion.
+
+        :param power_transfer: Targeted power transfer through the inverter (into or out of the inverter)
+        :type power_transfer: <cea.optimization_new.energyFlow>-EnergyFlow object
+
+        :return input_energy_flows: Electrical energy flow into the power inverter
+        :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        :return output_energy_flows: Thermal energy flow out of the power inverter
+        :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
+        """
+        self._check_operational_requirements(power_transfer)
+
+        # initialize energy flows
+        converted_energy_flow = EnergyFlow()
+        if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+            converted_energy_flow = EnergyFlow(self.placement['after'], 'passive_conversion', self.input_energy_carriers[0].code)
+        elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+            converted_energy_flow = EnergyFlow('passive_conversion', self.placement['before'], self.output_energy_carriers[0].code)
+
+        # run operational/efficiency code
+        if Component._model_complexity == 'constant':
+            if [self.placement['after'], self.placement['before']] \
+                in [['source', 'secondary'], ['secondary', 'primary'], ['primary', 'consumer']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(power_transfer)
+            elif [self.placement['after'], self.placement['before']] \
+                    in [['primary', 'tertiary'], ['secondary', 'tertiary'], ['tertiary', 'environment']]:
+                converted_energy_flow.profile = self._constant_efficiency_operation(power_transfer)
+        else:
+            raise ValueError(f"The chosen code complexity, i.e. '{Component._model_complexity}', has not yet been "
+                             f"implemented for {self.technology}")
+
+        return converted_energy_flow
+
+    @staticmethod
+    def _constant_efficiency_operation(power_transfer):
+        """
+        Operate inverter assuming constant operating conditions, i.e. power_in = power_out.
+        (Since we assume that inverters incur negligible losses)
+        """
+
+        return power_transfer.profile
+
+    def _set_energy_carriers(self, voltage_before, voltage_after):
+        """
+        This method checks if the inverter is used with appropriate voltage levels and allocates main,
+        input and output energy carriers according to the inverter's placement within the supply system.
+        """
+        # check if voltage levels are valid
+        if voltage_before > voltage_after:  # step-down method
+            if not (self.min_high_voltage <= voltage_before <= self.max_high_voltage) and \
+                    (self.min_low_voltage <= voltage_after <= self.max_low_voltage):
+                raise ValueError(f"The selected transformer model {self.code} cannot operate with a high voltage side "
+                                 f"at {voltage_before}V and a low voltage side at {voltage_after}V.")
+        elif voltage_before < voltage_after:  # step-up method
+            if not (self.min_high_voltage <= voltage_before <= self.max_high_voltage) and \
+                    (self.min_low_voltage <= voltage_after <= self.max_low_voltage):
+                raise ValueError(f"The selected transformer model {self.code} cannot operate with a high voltage side "
+                                 f"at {voltage_after}V and a low voltage side at {voltage_before}V.")
+        else:
+            raise ValueError('The voltage levels of the power transformer are either identical or invalid. If they '
+                             'are identical it makes no sense to install a power transformer.')
+        # assign energy carriers
+        if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
+            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', voltage_after))
+            self.input_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))]
+        else:
+            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('DC', voltage_before))
+            self.output_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))]
+
+    @staticmethod
+    def initialize_subclass_variables(components_database):
+        """
+        Fetch possible inverter models that can convert a given electrical input energy carrier into a
+        different electrical output energy carrier (either in step-up or step-down method) and save the result in a
+        pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
+        """
+        inverter_db = components_database[Inverter._database_tab]
+        all_inverters_codes = list(inverter_db['code'])
+        all_electrical_ecs = EnergyCarrier.get_all_electrical_ecs()
+        Inverter.conversion_matrix = pd.DataFrame(data=[], index=all_electrical_ecs, columns=all_electrical_ecs)
+
+        pt_low_voltage_side_ecs = {inverter['code']:
+                                       EnergyCarrier.all_elec_ecs_between_voltages(inverter['current_form_lowV'],
+                                                                                   inverter['V_max_lowV_side'],
+                                                                                   inverter['V_min_lowV_side'])
+                                   for index, inverter in inverter_db.iterrows()}
+        pt_high_voltage_side_ecs = {inverter['code']:
+                                        EnergyCarrier.all_elec_ecs_between_voltages(inverter['current_form_highV'],
+                                                                                    inverter['V_max_highV_side'],
+                                                                                    inverter['V_min_highV_side'])
+                                    for index, inverter in inverter_db.iterrows()}
+
+        for ec_in in all_electrical_ecs:
+            for ec_out in all_electrical_ecs:
+                if not ec_in == ec_out:
+                    viable_components = list(set([inverter for inverter in all_inverters_codes
+                                                  if (ec_in in pt_low_voltage_side_ecs[inverter] and
+                                                      ec_out in pt_high_voltage_side_ecs[inverter])
+                                                  or (ec_in in pt_high_voltage_side_ecs[inverter] and
+                                                      ec_out in pt_low_voltage_side_ecs[inverter])]))
+                    Inverter.conversion_matrix[ec_in][ec_out] = viable_components
+                else:
+                    Inverter.conversion_matrix[ec_in][ec_out] = []
+
+        Inverter.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
+                                              for ec_code, component_models
+                                              in Inverter.conversion_matrix.iterrows()}
 
 
 class HeatExchanger(PassiveComponent):

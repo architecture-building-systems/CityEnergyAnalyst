@@ -115,6 +115,16 @@ class CapacityIndicatorVector(object):
             raise ValueError("Elements of the capacity indicators vector can only be instances of CapacityIndicator.")
         else:
             self._capacity_indicators = new_capacity_indicators
+            #solar_capacity = sum([component.value for i, component in enumerate(self._capacity_indicators)
+                                  #if 'PV' in component.code or 'SC' in component.code])
+
+            # Limit the total capacity of the available solar components,
+            # due to limited area availability for solar installation
+            new_capacity_indicators = self._solar_capacity_control(new_capacity_indicators)
+
+            # Size the storage technology to the capacity of renewables in order to enhance integration
+            new_capacity_indicators = self._dimension_storage_system(new_capacity_indicators)
+            self._capacity_indicators = new_capacity_indicators
             if any(self._categories_overdimensioned([ci.value for ci in new_capacity_indicators])):
                 self.values = [ci.value for ci in new_capacity_indicators] # values setter will correct overdimensioning
 
@@ -307,12 +317,172 @@ class CapacityIndicatorVector(object):
         cumulated_ci_values = sum([capacity_indicator_value
                                    for i, capacity_indicator_value in enumerate(new_capacity_indicator_values)
                                    if (self.capacity_indicators[i].category == category) and
-                                   (self.capacity_indicators[i].main_energy_carrier == energy_carrier)])
+                                   (self.capacity_indicators[i].main_energy_carrier == energy_carrier)
+                                   and ('PV' not in self.capacity_indicators[i].code)
+                                   and ('SC' not in self.capacity_indicators[i].code)
+                                   and ('TES' not in self.capacity_indicators[i].code)
+                                   and ('BT' not in self.capacity_indicators[i].code)])
 
         upper_bound_breached = round(cumulated_ci_values, 2) > \
                                round(upper_bound * CapacityIndicatorVector._overdimensioning_factor, 2)
 
         return upper_bound_breached
+
+    def _solar_capacity_control(self, capacity_indicator_values):
+        """
+        Check the capacity indicators of solar technologies, with the goal of limiting the total capacity in order to respect
+        the area constraints for solar installations. If oversized, reduce the capacity so that total capacity is less or equal to 1
+        """
+
+        non_zero_ci_values_in_solar = {self.capacity_indicators[i].code: ci_value.value
+                                       for i, ci_value in enumerate(capacity_indicator_values)
+                                       if (('PV' in self.capacity_indicators[i].code) or
+                                       ('SC' in self.capacity_indicators[i].code)) and (ci_value.value > 0)}
+        upper_bound = 1
+
+        PV_components = [component for component, value in non_zero_ci_values_in_solar.items()
+                                    if 'PV' in component]
+        SC_components = [component for component, value in non_zero_ci_values_in_solar.items()
+                                       if 'SC' in component]
+        absorption_tech_capacity_indicator_value = (
+            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if 'ACH' in cap.code))
+        vapor_tech_capacity_indicator_value = (
+            sum(cap.value for i, cap in enumerate(capacity_indicator_values) if cap.code in ['CH1','CH2']))
+
+        if PV_components and not SC_components:
+
+            if vapor_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+            else:
+                PV_component = random.choice(PV_components)
+
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components) and
+                                                    (self.capacity_indicators[i].code != PV_component) else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+
+                # Use the random number to scale the capacity of the selected PV component and allow the optimizer to use
+                # the capacities of the solar components which are smaller than the maximum capacity
+
+                random_number = round(random.uniform(0.7, 0.9), 2)
+
+                new_capacity_indicator_values = [ci_value
+                                                 if (self.capacity_indicators[i].code != PV_component)
+                                                 else random_number
+                                                 for i, ci_value in enumerate(new_capacity_indicator_values)]
+
+            for i, ci_value in enumerate(capacity_indicator_values):
+                ci_value.value = new_capacity_indicator_values[i]
+
+            return capacity_indicator_values
+
+        elif SC_components and not PV_components:
+
+            if absorption_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+            else:
+                SC_component = random.choice(SC_components)
+
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components) and
+                                                    (self.capacity_indicators[i].code != SC_component) else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+
+                # In case one of the two technologies are alone, scale up in order to have a higher exploitation of
+                # solar power
+
+                random_number = round(random.uniform(0.7, 0.9), 2)
+
+                new_capacity_indicator_values = [ci_value
+                                                 if (self.capacity_indicators[i].code != SC_component)
+                                                 else random_number
+                                                 for i, ci_value in enumerate(new_capacity_indicator_values)]
+
+            for i, ci_value in enumerate(capacity_indicator_values):
+                ci_value.value = new_capacity_indicator_values[i]
+
+            return capacity_indicator_values
+
+        elif not SC_components and not PV_components:
+
+            return capacity_indicator_values
+
+        else:
+            PV_component = random.choice(PV_components)
+            SC_component = random.choice(SC_components)
+            solar_components = [PV_component, SC_component]
+
+            if absorption_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in SC_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+
+                random_number = round(random.uniform(0.7, 0.9), 2)
+                for i, ci_value in enumerate(new_capacity_indicator_values):
+                    if self.capacity_indicators[i].code == PV_component:
+                        new_capacity_indicator_values[i] = random_number
+                
+            elif vapor_tech_capacity_indicator_value == 0:
+                new_capacity_indicator_values = [0
+                                                 if (self.capacity_indicators[i].code in PV_components)
+                                                 else ci_value.value
+                                                 for i, ci_value in enumerate(capacity_indicator_values)]
+
+                random_number = round(random.uniform(0.7, 0.9), 2)
+                for i, ci_value in enumerate(new_capacity_indicator_values):
+                    if self.capacity_indicators[i].code == SC_component:
+                        new_capacity_indicator_values[i] = random_number
+
+            else:
+
+                new_capacity_indicator_values = [0
+                                             if (self.capacity_indicators[i].code in non_zero_ci_values_in_solar) and
+                                                (self.capacity_indicators[i].code not in solar_components) else ci_value.value
+                                             for i, ci_value in enumerate(capacity_indicator_values)]
+
+        tolerance = 0.05
+
+        while ((non_zero_ci_values_in_solar[PV_component] + non_zero_ci_values_in_solar[SC_component]) >
+               upper_bound + tolerance):
+
+            random_number_PV = round(random.random(), 2)
+            random_number_SC = round(random.random(), 2)
+
+            non_zero_ci_values_in_solar[PV_component] = non_zero_ci_values_in_solar[PV_component] * random_number_PV
+            non_zero_ci_values_in_solar[SC_component] = non_zero_ci_values_in_solar[SC_component] * random_number_SC
+
+            for i, ci_value in enumerate(new_capacity_indicator_values):
+                if self.capacity_indicators[i].code == PV_component:
+                    new_capacity_indicator_values[i] = non_zero_ci_values_in_solar[PV_component]
+                elif self.capacity_indicators[i].code == SC_component:
+                    new_capacity_indicator_values[i] = non_zero_ci_values_in_solar[SC_component]
+
+        for i, ci_value in enumerate(capacity_indicator_values):
+            ci_value.value = new_capacity_indicator_values[i]
+
+        return capacity_indicator_values
+
+    def _dimension_storage_system(self, capacity_indicator_values):
+        # Size the thermal storage capacity as the capacity of the solar collector
+
+        for i, ci_value in enumerate(capacity_indicator_values):
+            if 'TES' in capacity_indicator_values[i].code:
+                SC_cap = max([CI.value if 'SC' in self.capacity_indicators[j].code else 0
+                              for j, CI in enumerate(capacity_indicator_values)])
+                capacity_indicator_values[i].value = SC_cap
+            elif 'BT' in capacity_indicator_values[i].code:
+                PV_cap = max([CI.value if 'PV' in self.capacity_indicators[j].code else 0
+                              for j, CI in enumerate(capacity_indicator_values)])
+                capacity_indicator_values[i].value = PV_cap
+
+        return capacity_indicator_values
 
     def _get_upper_bound(self, category, energy_carrier, capacity_indicator_values):
         """
@@ -358,29 +528,33 @@ class CapacityIndicatorVector(object):
                                  for category, main_ecs in main_energy_carriers_in_cat.items()
                                  for main_ec in main_ecs
                                  if self._values_breach_upper_bound(category, main_ec, new_capacity_indicator_values)]
-
         # Step 3
         while overdimensioned_groups:
             for group in overdimensioned_groups:
                 while self._values_breach_upper_bound(group['category'], group['main_ec'],
                                                       new_capacity_indicator_values):
+
                     # Step 3a
                     non_zero_ci_values_in_group = {self.capacity_indicators[i].code: ci_value
                                                    for i, ci_value in enumerate(new_capacity_indicator_values)
                                                    if (self.capacity_indicators[i].category == group['category']) and
                                                    (self.capacity_indicators[i].main_energy_carrier == group['main_ec'])
-                                                   and
-                                                   (ci_value > 0)}
+                                                   and (ci_value > 0) and ('PV' not in self.capacity_indicators[i].code)
+                                                   and ('SC' not in self.capacity_indicators[i].code)
+                                                   and ('TES' not in self.capacity_indicators[i].code)
+                                                   and ('BT' not in self.capacity_indicators[i].code)}
+
                     lowest_ci_components = [component for component, value in non_zero_ci_values_in_group.items()
                                             if value == min(non_zero_ci_values_in_group.values())]
-                    component_to_resize = random.choice(lowest_ci_components)
 
                     # Step 3b
                     upper_bound = self._get_upper_bound(group['category'], group['main_ec'],
                                                         new_capacity_indicator_values)
                     odf_corrected_bound = upper_bound * CapacityIndicatorVector._overdimensioning_factor
-                    corrected_ci_value = min(non_zero_ci_values_in_group.values()) - \
-                                         (sum(non_zero_ci_values_in_group.values()) - odf_corrected_bound)
+
+                    component_to_resize = random.choice(lowest_ci_components)
+                    corrected_ci_value = round(min(non_zero_ci_values_in_group.values()) - \
+                                        (sum(non_zero_ci_values_in_group.values()) - odf_corrected_bound), 2)
                     new_capacity_indicator_values = [ci_value
                                                      if not self.capacity_indicators[i].code == component_to_resize
                                                      else max(corrected_ci_value, 0)

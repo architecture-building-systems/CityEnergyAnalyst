@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calculate_ground_temperature(locator):
+def calculate_ground_temperature(locator, config):
     """
     calculate ground temperatures.
 
@@ -38,9 +38,10 @@ def calculate_ground_temperature(locator):
     :rtype: list[np.float64]
     """
     weather_file = locator.get_weather_file()
-    T_ambient_C = epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
+    T_ambient_C = epw_reader(weather_file)[['drybulb_C']]
+    T_ground_water = config.shallow_geothermal.groundwater_temperature + 273.15  # K
+    T_ground_K = geothermal.calc_ground_temperature(T_ground_water, T_ambient_C.values,
+                                                    config.shallow_geothermal.average_probe_depth)
     return T_ground_K
 
 

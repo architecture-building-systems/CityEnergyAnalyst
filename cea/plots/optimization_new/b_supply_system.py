@@ -146,9 +146,9 @@ class SupplySystemGraphInfo(object):
                                            ("right", "full"): {"direction": "out",
                                                                "linked_categories": ["consumer"]}},
                                "secondary": {("left", "top"): {"direction": "in",
-                                                               "linked_categories": ["sources"]},
+                                                               "linked_categories": ["sources", "secondary"]},
                                              ("left", "bottom"): {"direction": "out",
-                                                                  "linked_categories": ["sinks"]},
+                                                                  "linked_categories": ["sinks", "secondary"]},
                                              ("right", "top"): {"direction": "out",
                                                                 "linked_categories": ["primary"]},
                                              ("right", "bottom"): {"direction": "out",
@@ -391,6 +391,7 @@ class EnergyFlowGraphInfo(object):
                      ("secondary", "tertiary"): (("right", "bottom"), ("right", "full")),
                      ("tertiary", "sinks"): (("left", "bottom"), "sinks"),
                      ("secondary", "sinks"): (("left", "bottom"), "sinks"),
+                     ("secondary", "secondary"): (("left", "bottom"), ("left", "top")),
                      ("sources", "primary"): ("sources", ("left", "top")),
                      ("sources", "secondary"): ("sources", ("left", "top")),
                      ("sources", "tertiary"): ("sources", ("left", "top"))}
@@ -417,6 +418,8 @@ class EnergyFlowGraphInfo(object):
         indexes_of_main_generators = [i for i, main_ecs in generator_components["Main_energy_carrier_code"].items()
                                       if isinstance(main_ecs, list) and self.energy_carrier in main_ecs]
         main_generators_of_ec = generator_components.loc[indexes_of_main_generators, :]
+        if self.energy_carrier == "E230AC":
+            main_generators_of_ec = main_generators_of_ec[~main_generators_of_ec["Component_code"].isin(["PV1", "PV2", "PV3"])]
         self.instances["main_generators"] = {category: [row["Component_code"] for index, row
                                                         in main_generators_of_ec.iterrows()
                                                         if row["Category"] == category]
@@ -471,22 +474,30 @@ class EnergyFlowGraphInfo(object):
                 elif "secondary" in self.instances["other_generators"].keys():
                     links.append(("secondary", "tertiary"))
 
-        for category in self.instances["other_generators"].keys():
+        for category, component in self.instances["other_generators"].items():
             if category == "secondary":
                 if "primary" in self.instances["other_absorbers"].keys():
                     links.append(("secondary", "primary"))
+                    if self.energy_carrier == "E230AC":
+                        links.append(("secondary", "sinks"))
+                elif 'PV' in component[0]:
+                    continue
                 else:
                     links.append(("secondary", "sinks"))
             if category == "tertiary":
                 links.append(("tertiary", "sinks"))
 
         for category in self.instances["other_absorbers"].keys():
-            if category == "primary" and not "secondary" in self.instances["main_generators"].keys():
+            if (category == "primary" and not "secondary" in self.instances["main_generators"].keys()
+                    and not "secondary" in self.instances["other_generators"].keys()):
                 links.append(("sources", "primary"))
-            elif category == "secondary":
+            elif category == "secondary" and not "secondary" in self.instances["other_generators"].keys():
                 links.append(("sources", "secondary"))
-            elif category == "tertiary":
+            elif (category == "tertiary" and not "secondary" in self.instances["main_generators"].keys()
+                    and not "secondary" in self.instances["other_generators"].keys()):
                 links.append(("sources", "tertiary"))
+            elif category == "tertiary":
+                links.append(('secondary', "tertiary"))
 
         return links
 

@@ -47,15 +47,19 @@ class SupplySystem(object):
         # set energy potential parameters
         self.available_potentials = system_structure.available_potentials
         self.used_potentials = {}
+        self.bought_carriers = {}
+        self.sold_carriers = {}
 
         # set system operation parameters
         self.installed_components = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_inputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
         self.component_energy_outputs = {'primary': {}, 'secondary': {}, 'tertiary': {}}
+        self.component_ec_profiles = {'primary': {}, 'secondary': {}, 'tertiary': {}}
 
         # set system evaluation parameters
         self.system_energy_demand = {}
         self.heat_rejection = {}
+        self.heat_rejected_water = {}
         self.greenhouse_gas_emissions = {}
         self.annual_cost = {}
         self.overall_fitness = {}
@@ -89,13 +93,22 @@ class SupplySystem(object):
                                                                         for carrier, flow in component_dict.items()}
                                                             for component, component_dict in placement_dict.items()}
                                                 for placement, placement_dict in self.component_energy_outputs.items()}
-
+        object_copy.component_ec_profiles = {placement: {component: {carrier: copy(flow)
+                                                                    for carrier, flow in component_dict.items()}
+                                                        for component, component_dict in placement_dict.items()}
+                                            for placement, placement_dict in self.component_ec_profiles.items()}
         object_copy.used_potentials = {carrier: copy(flow_profile)
                                        for carrier, flow_profile in self.used_potentials.items()}
         object_copy.system_energy_demand = {carrier: copy(flow_profile)
                                             for carrier, flow_profile in self.system_energy_demand.items()}
+        object_copy.bought_carriers = {carrier: copy(flow_profile)
+                                        for carrier, flow_profile in self.bought_carriers.items()}
+        object_copy.sold_carriers = {carrier: copy(flow_profile)
+                                        for carrier, flow_profile in self.sold_carriers.items()}
         object_copy.heat_rejection = {carrier: copy(flow_profile)
                                       for carrier, flow_profile in self.heat_rejection.items()}
+        object_copy.heat_rejected_water = {carrier: copy(flow_profile)
+                                             for carrier, flow_profile in self.heat_rejected_water.items()}
         object_copy.greenhouse_gas_emissions = {carrier: copy(flow_profile)
                                                 for carrier, flow_profile in self.greenhouse_gas_emissions.items()}
 
@@ -137,21 +150,20 @@ class SupplySystem(object):
         remaining_primary_demand_dict = self._draw_from_potentials(primary_demand_dict, reset=True)
         remaining_primary_demand_dict = self._draw_from_infinite_sources(remaining_primary_demand_dict)
         self._perform_water_filling_principle('primary', remaining_primary_demand_dict)
-        # operate secondary components
-        secondary_demand_dict = self._group_component_flows_by_ec('primary', 'in')
-        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
-        remaining_secondary_demand_dict = self._draw_from_infinite_sources(remaining_secondary_demand_dict)
-        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
         # operate tertiary components
-        component_energy_release_dict = self._group_component_flows_by_ec(['primary', 'secondary'], 'out')
+        component_energy_release_dict = self._group_component_flows_by_ec(['primary'], 'out')
         tertiary_demand_dict = self._release_to_grids_or_env(component_energy_release_dict)
         self._perform_water_filling_principle('tertiary', tertiary_demand_dict)
+        # operate secondary components
+        secondary_demand_dict = self._group_component_flows_by_ec(['primary','tertiary'], 'in')
+        remaining_secondary_demand_dict = self._draw_from_potentials(secondary_demand_dict)
+        self._perform_water_filling_principle('secondary', remaining_secondary_demand_dict)
 
-        system_energy_flows_in = self._group_component_flows_by_ec(['secondary', 'tertiary'], 'in')
+        system_energy_flows_in = self._group_component_flows_by_ec(['secondary'], 'in')
         remaining_system_energy_flows_in = self._draw_from_potentials(system_energy_flows_in)
         unavailable_system_energy_flows_in = self._draw_from_infinite_sources(remaining_system_energy_flows_in)
 
-        system_energy_flows_out = self._group_component_flows_by_ec('tertiary', 'out')
+        system_energy_flows_out = self._group_component_flows_by_ec(['tertiary','secondary'], 'out')
         unreleasable_system_energy_flows_out = self._release_to_grids_or_env(system_energy_flows_out)
 
         self._calculate_greenhouse_gas_emissions()
@@ -164,18 +176,19 @@ class SupplySystem(object):
 
         objectives = SupplySystem.optimisation_algorithm.objectives
 
-        if 'system_energy_demand' in objectives:
-            total_sed = sum([sum(energy) for key, energy in self.system_energy_demand.items()])
-            self.overall_fitness['system_energy_demand'] = total_sed
-        if 'anthropogenic_heat' in objectives:
-            total_heat_rejection = sum([sum(heat) for key, heat in self.heat_rejection.items()])
-            self.overall_fitness['anthropogenic_heat'] = total_heat_rejection
-        if 'GHG_emissions' in objectives:
-            total_ghg_emissions = sum([sum(emissions) for key, emissions in self.greenhouse_gas_emissions.items()])
-            self.overall_fitness['GHG_emissions'] = total_ghg_emissions
-        if 'cost' in objectives:
-            total_cost = sum([cost for key, cost in self.annual_cost.items()])
-            self.overall_fitness['cost'] = total_cost
+        for objective in objectives:
+            if objective == 'system_energy_demand':
+                total_sed = sum([sum(energy) for key, energy in self.system_energy_demand.items()])
+                self.overall_fitness['system_energy_demand'] = total_sed
+            if objective == 'anthropogenic_heat':
+                total_heat_rejection = sum([sum(heat) for key, heat in self.heat_rejection.items()])
+                self.overall_fitness['anthropogenic_heat'] = total_heat_rejection
+            if objective == 'GHG_emissions':
+                total_ghg_emissions = sum([sum(emissions) for key, emissions in self.greenhouse_gas_emissions.items()])
+                self.overall_fitness['GHG_emissions'] = total_ghg_emissions
+            if objective == 'cost':
+                total_cost = sum([cost for key, cost in self.annual_cost.items()])
+                self.overall_fitness['cost'] = total_cost
 
         return self.capacity_indicator_vector
 
@@ -279,21 +292,121 @@ class SupplySystem(object):
                 if not ((component_model in self.structure.component_selection_by_ec[placement][ec_code]) and
                         (component_model in self.installed_components[placement].keys())):
                     continue
+                # Operate storage component only when renewables are operated
+                if 'TES' in component_model or 'BT' in component_model:
+                    continue
 
                 component = self.installed_components[placement][component_model]
                 main_energy_flow = demand.cap_at(component.capacity)
-                demand = demand - main_energy_flow
+
+                # Limit the amount of heat discharged in water-based heat sinks, added a maximum for environmental reason
+                # Iterate over the values to avoid discharging in some hours when the limit is reached
+                
+                if component.code in ['HEXLW', 'HEXSW', 'HEXGW']:
+                    tot_dischargeable = sum(component.load_potentials().main_potential.profile)
+                    if tot_dischargeable < sum(main_energy_flow.profile):
+                        diff = sum(main_energy_flow.profile) - tot_dischargeable
+                        while diff > 0:
+                            # Find the minimum value in the list
+                            non_zero_values = [(index, value) for index, value in enumerate(main_energy_flow.profile) if value != 0]
+                            min_index, min_value = min(non_zero_values, key=lambda x: x[1])
+
+                            main_energy_flow.profile[min_index] = 0
+                            diff = sum(main_energy_flow.profile) - tot_dischargeable
+                            if diff <= 0:
+                                break
 
                 if component.main_energy_carrier.code == main_energy_flow.energy_carrier.code:
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(main_energy_flow)
+                    output_list = list(self.component_energy_outputs[placement][component_model].items())[0]
+                    output_code = output_list[0]
+                    output_object = output_list[1]
+                    # Convert the flow in order to obtain the required energy carrier (e.g. from DC output of PV to AC) by
+                    # using passive components. Passive component is used after the active component is this case
+                    if 'PV' in component_model and output_code != main_energy_flow.energy_carrier.code:
+                        auxiliary_component = list(self.structure.max_cap_passive_components[placement][component_model].values())[0]
+                        converted_flow = auxiliary_component.operate(output_object)
+                        self.component_energy_outputs[placement][component_model][converted_flow.energy_carrier.code] = converted_flow
+                        del self.component_energy_outputs[placement][component_model][output_code]
+
                 else:
+                    # Passive component is used before the active component in this case
                     auxiliary_component = list(self.structure.max_cap_passive_components[placement]
                                                [component_model].values())[0]  # TODO: change this to allow all passive components to be activated
                     converted_energy_flow = auxiliary_component.operate(main_energy_flow)
 
                     self.component_energy_inputs[placement][component_model], \
                     self.component_energy_outputs[placement][component_model] = component.operate(converted_energy_flow)
+
+                if 'PV' in component_model:
+                    # Take the solar profile in case PV is used and calculate the unsed energy to be sold on the grid
+                    main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
+                    demand_prior_PV = copy(demand)
+                    demand = demand - main_energy_flow
+                    # Keep the remaining PV production and send it to the grid
+                    if (main_energy_flow - demand_prior_PV).profile.sum() > 0:
+                        self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
+                                                                                              demand_prior_PV)
+
+                        # Use a battery storage to store the remaining energy and use it in different timesteps
+                        electric_storage = [tech for comp_code, tech in self.installed_components[placement].items() if
+                                           'BT' in comp_code]
+                        if electric_storage:
+                            self.component_energy_inputs[placement][electric_storage[0].code], \
+                                self.component_energy_outputs[placement][electric_storage[0].code], demand = (
+                                electric_storage[0].operate(
+                                    self.component_energy_outputs[placement][component_model][ec_code], demand))
+
+                            self.component_ec_profiles[placement][electric_storage[0].code] = \
+                                copy(self.component_energy_outputs[placement][electric_storage[0].code])
+
+                            self.component_energy_outputs[placement][component_model][ec_code] = (
+                                self.component_energy_inputs)[placement][electric_storage[0].code][ec_code]
+
+                            del self.component_energy_outputs[placement][electric_storage[0].code][ec_code]
+                            del self.component_energy_inputs[placement][electric_storage[0].code][ec_code]
+
+                    else:
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+
+                elif 'SC' in component_model:
+                    # Take the solar profile in case SC is used
+                    main_energy_flow = copy(self.component_energy_outputs[placement][component_model][ec_code])
+                    demand_prior_SC = copy(demand)
+                    demand = demand - main_energy_flow
+                    # Keep the remaining SC production and send it to the thermal storage
+                    if (main_energy_flow - demand_prior_SC).profile.sum() > 0:
+                        self.component_energy_outputs[placement][component_model][ec_code] = (main_energy_flow -
+                                                                                              demand_prior_SC)
+
+                        # Use a thermal storage to store the remaining energy and use it in different timesteps
+                        thermal_storage = [tech for comp_code, tech in self.installed_components[placement].items() if 'TES' in comp_code]
+                        self.component_energy_inputs[placement][thermal_storage[0].code], \
+                            self.component_energy_outputs[placement][thermal_storage[0].code], demand = (
+                            thermal_storage[0].operate(self.component_energy_outputs[placement][component_model][ec_code], demand))
+
+                        self.component_ec_profiles[placement][thermal_storage[0].code] = \
+                                copy(self.component_energy_outputs[placement][thermal_storage[0].code])
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+                        del self.component_energy_outputs[placement][thermal_storage[0].code][ec_code]
+
+                    else:
+                        del self.component_energy_outputs[placement][component_model][ec_code]
+
+                else:
+                    demand = demand - main_energy_flow
+
+                self.component_ec_profiles[placement][component_model] = {ec_code: copy(main_energy_flow)}
+
+            if ec_code == 'E230AC' and demand.profile.sum() > 0:
+                # When PV is used, need to draw electricity from the grid once the production is too low in order to satisfy the 
+                # demand
+                leftovers = self._draw_from_infinite_sources({ec_code: demand})
+                if leftovers:
+                    demand.profile = leftovers[ec_code].profile
+                else:
+                    demand.profile = pd.Series([0] * len(demand.profile))
 
             if not isclose(max(demand.profile), 0, abs_tol=1e-09):
                 raise ValueError(f'The installed component capacity was insufficient and demand could not be met. '
@@ -318,12 +431,36 @@ class SupplySystem(object):
                                 if ec_code in self.used_potentials.keys() else self.available_potentials[ec_code]
                                 for ec_code in self.available_potentials.keys()}
 
+        # For absorption chillers, water temperature between 70 and 100 can be used, thus included lower water temperatures
+        # from potentials in the next lines
+        new_absorption_feed = None
+        if 'T100W' in required_energy_flows.keys():
+            for ec_code in remaining_potentials.keys():
+                temp = remaining_potentials[ec_code].energy_carrier.mean_qual
+                type = remaining_potentials[ec_code].energy_carrier.qualifier
+                subtype = remaining_potentials[ec_code].energy_carrier.subtype
+                if temp >= 70 and type == 'temperature' and subtype == 'water':
+                    new_absorption_feed = ec_code
+                    required_energy_flows[ec_code] = required_energy_flows['T100W']
+                    del required_energy_flows['T100W']
+
         usable_potential = {ec_code: remaining_potentials[ec_code].cap_at(required_energy_flows[ec_code].profile)
-                                     if ec_code in remaining_potentials.keys()
-                                     else required_energy_flows[ec_code].cap_at(0)
+                            if ec_code in remaining_potentials.keys() else required_energy_flows[ec_code].cap_at(0)
                             for ec_code in required_energy_flows.keys()}
         new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - usable_potential[ec_code]
-                                    for ec_code in required_energy_flows.keys()}
+                                    for ec_code in required_energy_flows.keys()
+                                    if (required_energy_flows[ec_code] - usable_potential[ec_code]).profile.sum() !=0}
+
+        # Use the T100W as energy flow code when flows are exchanged between components for consistency
+        if new_absorption_feed and new_absorption_feed in new_required_energy_flow.keys():
+            new_required_energy_flow['T100W'] = new_required_energy_flow[new_absorption_feed]
+            required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
+            del new_required_energy_flow[new_absorption_feed]
+            del required_energy_flows[new_absorption_feed]
+        elif new_absorption_feed:
+            required_energy_flows['T100W'] = required_energy_flows[new_absorption_feed]
+            del required_energy_flows[new_absorption_feed]
+
         for ec_code in usable_potential.keys():
             if ec_code in self.used_potentials.keys():
                 self.used_potentials[ec_code] += usable_potential[ec_code]
@@ -345,6 +482,20 @@ class SupplySystem(object):
 
         self._add_to_system_energy_demand(required_energy_flows, self.structure.infinite_energy_carriers)
 
+        '''        
+        # If energy carriers are being produced and sold (e.g. electricity), use them to satisfy upcoming demand
+        if self.sold_carriers:
+            required_energy_flows_copy = copy(required_energy_flows)
+            required_energy_flows = {ec_code: required_energy_flows[ec_code] - self.sold_carriers[ec_code]
+            if ec_code in self.sold_carriers.keys() else required_energy_flows[ec_code]
+                                     for ec_code in required_energy_flows.keys()}
+            self.sold_carriers = {
+                ec_code: (self.sold_carriers[ec_code] - required_energy_flows_copy[ec_code].profile).clip(lower=0)
+                for ec_code in self.sold_carriers.keys()}
+        '''
+
+        self._buy_required_energy(required_energy_flows, self.structure.infinite_energy_carriers)
+
         return new_required_energy_flow
 
     def _release_to_grids_or_env(self, energy_flows_to_release):
@@ -363,8 +514,10 @@ class SupplySystem(object):
         if not SupplySystem._ec_releases_to_grids:
             SupplySystem._ec_releases_to_grids = SupplySystemStructure().releasable_grid_based_energy_carriers
 
+
         self._add_to_heat_rejection(energy_flows_to_release, SupplySystem._ec_releases_to_env)
         self._deduct_from_system_energy_demand(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
+        self._sell_excess_energy(energy_flows_to_release, SupplySystem._ec_releases_to_grids)
 
         return remaining_energy_flows_to_release
 
@@ -374,10 +527,11 @@ class SupplySystem(object):
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
                 if ec_code in self.system_energy_demand.keys():
-                    self.system_energy_demand[ec_code] += energy_flow.profile
+                    self.system_energy_demand[ec_code] += profile_copy
                 else:
-                    self.system_energy_demand[ec_code] = energy_flow.profile
+                    self.system_energy_demand[ec_code] = profile_copy
 
         return self.system_energy_demand
 
@@ -388,23 +542,61 @@ class SupplySystem(object):
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
                 if ec_code in self.system_energy_demand.keys():
-                    self.system_energy_demand[ec_code] -= energy_flow.profile
+                    self.system_energy_demand[ec_code] -= profile_copy
                 else:
-                    self.system_energy_demand[ec_code] = -energy_flow.profile
+                    self.system_energy_demand[ec_code] = -profile_copy
 
         return self.system_energy_demand
+
+    def _buy_required_energy(self, energy_flow_dict, available_system_energy_carriers):
+        """
+        Add the energy flows to the 'bought carriers' dictionary, to cumulate the energy flows that are bought
+        from external sources.
+        """
+        for ec_code, energy_flow in energy_flow_dict.items():
+            if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
+                if ec_code in self.bought_carriers.keys():
+                    self.bought_carriers[ec_code] += profile_copy
+                else:
+                    self.bought_carriers[ec_code] = profile_copy
+
+        return self.bought_carriers
+
+    def _sell_excess_energy(self, energy_flow_dict, available_system_energy_carriers):
+        """
+        Add the energy flows to the 'sold carriers' dictionary, to cumulate the energy flows that are sold to
+        external sources.
+        """
+        for ec_code, energy_flow in energy_flow_dict.items():
+            if ec_code in available_system_energy_carriers:
+                profile_copy = energy_flow.profile.copy()
+                if ec_code in self.sold_carriers.keys():
+                    self.sold_carriers[ec_code] += profile_copy
+                else:
+                    self.sold_carriers[ec_code] = profile_copy
+
+        return self.sold_carriers
 
     def _add_to_heat_rejection(self, energy_flow_dict, releasable_energy_carriers):
         """
         Add energy flows to the system heat rejection if they consist of one of the releasable energy carriers.
+        Exclude water sinks from the heat rejection, since heat is not released in atmosphere, this will be stored separately
         """
         for ec_code, energy_flow in energy_flow_dict.items():
             if ec_code in releasable_energy_carriers:
-                if ec_code in self.heat_rejection.keys():
-                    self.heat_rejection[ec_code] += energy_flow.profile
+                if energy_flow.energy_carrier.subtype == 'water sink':
+                    if ec_code in self.heat_rejected_water.keys():
+                        self.heat_rejected_water[ec_code] += energy_flow.profile
+                    else:
+                        self.heat_rejected_water[ec_code] = energy_flow.profile
                 else:
-                    self.heat_rejection[ec_code] = energy_flow.profile
+                    if ec_code in self.heat_rejection.keys():
+                        self.heat_rejection[ec_code] += energy_flow.profile
+                    else:
+                        self.heat_rejection[ec_code] = energy_flow.profile
 
         return self.heat_rejection
 
@@ -412,13 +604,12 @@ class SupplySystem(object):
         """
         Calculate green house gas emissions of all system energy demand flows.
         """
-
         self.greenhouse_gas_emissions = \
             {ec_code: pd.Series((energy * EnergyCarrier.get_ghg_for_timestep(ec_code, timestep)
                                  for timestep, energy
                                  in energy_flow.replace(list(energy_flow[energy_flow<0]), 0).items()),
                                 index=EnergyFlow.time_series)
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+             for ec_code, energy_flow in self.bought_carriers.items()}
 
         return self.greenhouse_gas_emissions
 
@@ -436,13 +627,18 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = \
-            {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy') if energy > 0
-                          else - energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
+        annual_energy_supply = {}
+        annual_energy_supply_cost = {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy')
                           for timestep, energy in energy_flow.items())
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+             for ec_code, energy_flow in self.bought_carriers.items()}
+        annual_energy_supply_sold = {ec_code: - sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
+                          for timestep, energy in energy_flow.items())
+             for ec_code, energy_flow in self.sold_carriers.items()}
 
-        self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}
+        for key in set(annual_energy_supply_cost) | set(annual_energy_supply_sold):
+            annual_energy_supply[key] = annual_energy_supply_cost.get(key, 0) + annual_energy_supply_sold.get(key, 0)
+
+        self.annual_cost = {**annual_component_cost, **annual_energy_supply}
 
         return self.annual_cost
 
