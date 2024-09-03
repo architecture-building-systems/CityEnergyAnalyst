@@ -13,12 +13,20 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import os
+import tempfile
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+import matplotlib.pyplot as plt
+import imageio.v2 as imageio
 
 import cea.config
 from cea.inputlocator import InputLocator
+
+
+
 
 def read_fitnesses_from_file(file_path):
     """
@@ -124,14 +132,58 @@ def plot_fitness_tracker(objectives, sorted_fitness_tracker):
     fig = go.Figure(data=traces, layout=layout)
     fig.show()
 
+def plot_generation_evolution(sorted_fitness_tracker, objectives, output_gif_path):
+    """Plot the evolution of the Pareto front across generations and save as a GIF."""
+    images = []
+    max_generation = max(sorted_fitness_tracker.keys())
+    colors = plt.cm.viridis(np.linspace(0, 1, max_generation + 1))
+    objective_codes = sorted_fitness_tracker[0][1].columns.values.tolist()[1:]
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        for generation in range(max_generation + 1):
+            plt.figure(figsize=(10, 8))
+            plt.xlabel(objectives[0])
+            plt.ylabel(objectives[1])
+            plt.title(f'Pareto Front Evolution - Generation {generation}')
+
+            # Plot each generation with increasing opacity
+            for gen in range(generation + 1):
+                data = sorted_fitness_tracker[gen][1]
+                # Sort the points to make the line connection meaningful
+                sorted_data = data.sort_values(by=objective_codes[0])
+
+                # Plot points
+                plt.scatter(sorted_data[objective_codes[0]], sorted_data[objective_codes[1]], color=colors[gen],
+                            alpha=(gen + 1) / (generation + 1))
+
+                # Plot lines connecting the points
+                plt.plot(sorted_data[objective_codes[0]], sorted_data[objective_codes[1]], color=colors[gen],
+                         alpha=(gen + 1) / (generation + 1))
+
+            # Save the frame to a temporary file
+            temp_file_path = os.path.join(temp_dir, f'gen_{generation}.png')
+            plt.savefig(temp_file_path)
+            plt.close()
+            images.append(imageio.imread(temp_file_path))
+
+        # Create the GIF
+        imageio.mimsave(output_gif_path, images, duration=0.5)
+
+
 def main(config=cea.config.Configuration()):
     """Test this plot"""
     # Read the fitness tracker file
     locator = InputLocator(scenario=config.scenario)
     fitness_tracker = locator.get_new_optimization_debugging_fitness_tracker_file()
     objectives, objective_function_values = read_fitnesses_from_file(fitness_tracker)
+
     # Plot the non-dominated solutions chosen at each generation of the genetic algorithm
     plot_fitness_tracker(objectives, objective_function_values)
+
+    # Plot the evolution and save as GIF
+    output_gif_path = os.path.join(locator.get_new_optimization_debugging_folder(), 'pareto_front_evolution.gif')
+    plot_generation_evolution(objective_function_values, objectives, output_gif_path)
+    print(f"GIF saved as {output_gif_path}")
 
 
 if __name__ == '__main__':
