@@ -334,8 +334,8 @@ class Domain(object):
             system_name = district_energy_system.identifier
 
         for ntw_ind, network in enumerate(district_energy_system.networks):
-            network_layout_file = self.locator.get_new_optimization_optimal_network_layout_file(system_name,
-                                                                                                network.identifier)
+            network_layout_file = self.locator.get_centralized_optimization_optimal_network_layout_file(system_name,
+                                                                                                        network.identifier)
             network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
             network_layout = network_layout.to_crs(get_geographic_coordinate_system())
             network_layout.to_file(network_layout_file, driver='GeoJSON')
@@ -370,8 +370,8 @@ class Domain(object):
             supply_system = building.stand_alone_supply_system
 
             # Summarise structure of the supply system & print to file
-            building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
-            building_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, supply_system_id)
+            building_file = self.locator.get_centralized_optimization_optimal_supply_system_file(system_name, supply_system_id)
+            building_file_cost = self.locator.get_centralized_optimization_supply_system_cost(system_name, supply_system_id)
             Domain._write_system_structure(building_file, supply_system, building_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -381,8 +381,8 @@ class Domain(object):
         # FOR NETWORKS
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
-            network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
-            network_file_cost = self.locator.get_new_optimization_supply_system_cost(system_name, network_id)
+            network_file = self.locator.get_centralized_optimization_optimal_supply_system_file(system_name, network_id)
+            network_file_cost = self.locator.get_centralized_optimization_supply_system_cost(system_name, network_id)
             Domain._write_system_structure(network_file, supply_system, network_file_cost)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -396,7 +396,7 @@ class Domain(object):
         supply_system_summary['GHG_Emissions_kgCO2'] += [sum(supply_system_summary['GHG_Emissions_kgCO2'])]
         supply_system_summary['Cost_USD'] += [sum(supply_system_summary['Cost_USD'])]
 
-        summary_file = self.locator.get_new_optimization_optimal_supply_systems_summary_file(system_name)
+        summary_file = self.locator.get_centralized_optimization_optimal_supply_systems_summary_file(system_name)
         pd.DataFrame(supply_system_summary).to_csv(summary_file, index=False)
 
         return
@@ -573,27 +573,27 @@ class Domain(object):
             supply_system = building.stand_alone_supply_system
 
             # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
-            building_file = self.locator.get_new_optimization_supply_systems_detailed_operation_file(des_id,
-                                                                                                     supply_system_id)
+            building_file = self.locator.get_centralized_optimization_supply_systems_detailed_operation_file(des_id,
+                                                                                                             supply_system_id)
             Domain._write_combined_objective_function_profiles(date_range, supply_system, building_file)
 
         # FOR NETWORKS
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
-            network_file = self.locator.get_new_optimization_supply_systems_detailed_operation_file(des_id, network_id)
-            network_file_ec = self.locator.get_new_optimization_energy_carrier_detailed_profile(des_id, network_id)
+            network_file = self.locator.get_centralized_optimization_supply_systems_detailed_operation_file(des_id, network_id)
+            network_file_ec = self.locator.get_centralized_optimization_energy_carrier_detailed_profile(des_id, network_id)
             Domain._write_combined_objective_function_profiles(date_range, supply_system, network_file)
             Domain._write_detailed_objective_function_profiles(date_range, supply_system, network_file_ec)
             # Create a breakdown of annual energy demand, cost, GHG- and heat-emissions and print to file
-            breakdown_file = self.locator.get_new_optimization_supply_systems_annual_breakdown_file(des_id, network_id)
-            breakdown_file_profile = self.locator.get_new_optimization_supply_systems_ec_annual_profiles(des_id, network_id)
+            breakdown_file = self.locator.get_centralized_optimization_supply_systems_annual_breakdown_file(des_id, network_id)
+            breakdown_file_profile = self.locator.get_centralized_optimization_supply_systems_ec_annual_profiles(des_id, network_id)
             Domain._write_annual_breakdown(supply_system, breakdown_file)
             Domain._write_profile_breakdown(supply_system, breakdown_file_profile)
 
         # FOR DES AS A WHOLE
         # Summarise performance metrics of the networks and print to file
         if district_energy_system.networks:
-            network_perf_file = self.locator.get_new_optimization_detailed_network_performance_file(des_id)
+            network_perf_file = self.locator.get_centralized_optimization_detailed_network_performance_file(des_id)
             Domain._write_detailed_network_performance(district_energy_system, network_perf_file)
 
         return

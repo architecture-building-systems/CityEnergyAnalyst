@@ -12,11 +12,11 @@ def load_geo_data(locator, run_id=None, des_id=None):
     zone_gdf = gpd.read_file(locator.get_zone_geometry())
 
     # Load the GeoJSON files for all networks
-    networks_folder = locator.get_new_optimization_optimal_networks_folder(run_id, des_id)
+    networks_folder = locator.get_centralized_optimization_optimal_networks_folder(run_id, des_id)
     network_ids = [f.split('_')[0] for f in os.listdir(networks_folder) if f.endswith('layout.geojson')]
     network_gdfs = {network_id:
-                        gpd.read_file(locator.get_new_optimization_optimal_network_layout_file(run_id, des_id,
-                                                                                               network_id))
+                        gpd.read_file(locator.get_centralized_optimization_optimal_network_layout_file(run_id, des_id,
+                                                                                                       network_id))
                     for network_id in network_ids}
 
     # Check for CRS consistency

@@ -174,14 +174,14 @@ def main(config=cea.config.Configuration()):
     """Test this plot"""
     # Read the fitness tracker file
     locator = InputLocator(scenario=config.scenario)
-    fitness_tracker = locator.get_new_optimization_debugging_fitness_tracker_file()
+    fitness_tracker = locator.get_centralized_optimization_debugging_fitness_tracker_file()
     objectives, objective_function_values = read_fitnesses_from_file(fitness_tracker)
 
     # Plot the non-dominated solutions chosen at each generation of the genetic algorithm
     plot_fitness_tracker(objectives, objective_function_values)
 
     # Plot the evolution and save as GIF
-    output_gif_path = os.path.join(locator.get_new_optimization_debugging_folder(), 'pareto_front_evolution.gif')
+    output_gif_path = os.path.join(locator.get_centralized_optimization_debugging_folder(), 'pareto_front_evolution.gif')
     plot_generation_evolution(objective_function_values, objectives, output_gif_path)
     print(f"GIF saved as {output_gif_path}")
 
