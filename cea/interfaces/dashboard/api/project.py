@@ -6,6 +6,7 @@ import traceback
 from typing import Dict, Any, Optional
 
 import geopandas
+import pandas as pd
 from fastapi import APIRouter, HTTPException, status, Request, Path, Depends
 from pydantic import BaseModel
 from shapely.geometry import shape
@@ -236,7 +237,11 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             generate_default_typology(zone_df, locator)
         elif scenario_form.typology is not None:
             # Copy typology using path
-            typology_df = geopandas.read_file(scenario_form.typology)
+            _, extension = os.path.splitext(scenario_form.typology)
+            if extension == ".xlsx":
+                typology_df = pd.read_excel(scenario_form.typology)
+            else:
+                typology_df = geopandas.read_file(scenario_form.typology)
 
             # Make sure typology column names are in correct case
             typology_df.columns = [col.lower() for col in typology_df.columns]

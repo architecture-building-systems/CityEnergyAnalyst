@@ -1,7 +1,9 @@
 import json
+import os
 from typing import Literal, Optional
 
 import osmnx
+import pandas as pd
 from fastapi import APIRouter, HTTPException, status
 
 import geopandas as gpd
@@ -91,10 +93,14 @@ async def validate_typology(data: ValidateTypology):
         if data.path is None:
             raise HTTPException(status_code=400, detail="Missing path")
 
+        _, extension = os.path.splitext(data.path)
         try:
-            typology_df = gpd.read_file(data.path)
+            if extension == ".xlsx":
+                typology_df = pd.read_excel(data.path)
+            else:
+                typology_df = gpd.read_file(data.path)
+
             verify_input_typology(typology_df)
-            print(typology_df)
         except Exception as e:
             print(e)
             raise HTTPException(
