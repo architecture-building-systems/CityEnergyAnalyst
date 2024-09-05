@@ -179,16 +179,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             detail=f'Scenario already exists - project: {scenario_form.project}, scenario_name: {scenario_form.scenario_name}',
         )
 
-    with tempfile.TemporaryDirectory() as tmp:
-        # Create temporary project before copying to actual scenario path
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.project = tmp
-        config.scenario_name = "temp_scenario"
-        locator = cea.inputlocator.InputLocator(config.scenario)
-
-        # Run database_initializer to copy databases to input
-        cea.api.data_initializer(config, databases_path=scenario_form.database)
-
+    def create_zone(scenario_form):
         # Generate / Copy zone and surroundings
         if scenario_form.should_generate_zone():
             site_geojson = scenario_form.generate_zone
@@ -211,6 +202,9 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(zone_path)
             zone_df.to_file(zone_path)
 
+        return zone_df
+
+    def create_surroundings(scenario_form, zone_df):
         if scenario_form.should_generate_surroundings():
             # Generate using surroundings helper
             config.surroundings_helper.buffer = scenario_form.generate_surroundings
@@ -231,37 +225,49 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
+    def create_typology(scenario_form, zone_df):
         # Only process typology if zone is not generated
-        if not scenario_form.should_generate_zone():
-            locator.ensure_parent_folder_exists(locator.get_building_typology())
-            if scenario_form.should_generate_typology():
-                # Generate using default typology
-                generate_default_typology(zone_df, locator)
-            elif scenario_form.typology is not None:
-                # Copy typology using path
-                typology_df = geopandas.read_file(scenario_form.typology)
-                verify_input_typology(typology_df)
-                copy_typology(scenario_form.typology, locator)
-            else:
-                # Try extracting typology from zone
-                print(f'Trying to extract typology from zone')
-                try:
-                    verify_input_typology(zone_df)
-                except Exception as e:
-                    print(f'Could not extract typology from zone: {e}')
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail='Not enough information to generate typology file',
-                )
+        if scenario_form.should_generate_zone():
+            return
+
+        locator.ensure_parent_folder_exists(locator.get_building_typology())
+        if scenario_form.should_generate_typology():
+            # Generate using default typology
+            generate_default_typology(zone_df, locator)
+        elif scenario_form.typology is not None:
+            # Copy typology using path
+            typology_df = geopandas.read_file(scenario_form.typology)
+
+            # Make sure typology column names are in correct case
+            typology_df.columns = [col.lower() for col in typology_df.columns]
+            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_TYPOLOGY}
+            typology_df.rename(columns=rename_dict, inplace=True)
+
+            verify_input_typology(typology_df)
+            copy_typology(scenario_form.typology, locator)
+        else:
+            # Try extracting typology from zone
+            print(f'Trying to extract typology from zone')
+
+            # Make sure typology column names are in correct case
+            zone_df.columns = [col.lower() for col in zone_df.columns]
+            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_TYPOLOGY}
+            zone_df.rename(columns=rename_dict, inplace=True)
+
+            try:
+                verify_input_typology(zone_df)
+            except Exception as e:
+                print(f'Could not extract typology from zone: {e}')
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Not enough information to generate typology file. Check zone file for typology.',
+            )
 
             typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
             dataframe_to_dbf(typology_df, locator.get_building_typology())
             print(f'Typology file created at {locator.get_building_typology()}')
 
-        # Run weather helper
-        config.weather_helper.weather = scenario_form.weather
-        cea.api.weather_helper(config)
-
+    def create_terrain(scenario_form, zone_df):
         if scenario_form.should_generate_terrain():
             # Run terrain helper
             cea.api.terrain_helper(config)
@@ -272,6 +278,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_terrain())
             copy_terrain(scenario_form.terrain, locator, lat, lon)
 
+    def create_street(scenario_form):
         if scenario_form.should_generate_street():
             # Run street helper
             cea.api.streets_helper(config)
@@ -280,6 +287,34 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             street_df = geopandas.read_file(scenario_form.street).to_crs(get_geographic_coordinate_system())
             locator.ensure_parent_folder_exists(locator.get_street_network())
             street_df.to_file(locator.get_street_network())
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Create temporary project before copying to actual scenario path
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.project = tmp
+        config.scenario_name = "temp_scenario"
+        locator = cea.inputlocator.InputLocator(config.scenario)
+
+        # Run database_initializer to copy databases to input
+        cea.api.data_initializer(config, databases_path=scenario_form.database)
+
+        # Generate / Copy zone
+        zone_df = create_zone(scenario_form)
+
+        # Generate / Copy surroundings
+        create_surroundings(scenario_form, zone_df)
+
+        create_typology(scenario_form, zone_df)
+
+        # Run weather helper
+        config.weather_helper.weather = scenario_form.weather
+        cea.api.weather_helper(config)
+
+        # Generate / Copy terrain
+        create_terrain(scenario_form, zone_df)
+
+        # Generate / Copy street
+        create_street(scenario_form)
 
         # Run archetypes mapper
         cea.api.archetypes_mapper(config)
