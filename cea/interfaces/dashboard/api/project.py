@@ -180,7 +180,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             detail=f'Scenario already exists - project: {scenario_form.project}, scenario_name: {scenario_form.scenario_name}',
         )
 
-    def create_zone(scenario_form):
+    def create_zone(scenario_form, locator):
         # Generate / Copy zone and surroundings
         if scenario_form.should_generate_zone():
             site_geojson = scenario_form.generate_zone
@@ -205,7 +205,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
         return zone_df
 
-    def create_surroundings(scenario_form, zone_df):
+    def create_surroundings(scenario_form, zone_df, locator):
         if scenario_form.should_generate_surroundings():
             # Generate using surroundings helper
             config.surroundings_helper.buffer = scenario_form.generate_surroundings
@@ -226,7 +226,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
-    def create_typology(scenario_form, zone_df):
+    def create_typology(scenario_form, zone_df, locator):
         # Only process typology if zone is not generated
         if scenario_form.should_generate_zone():
             return
@@ -249,6 +249,15 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             typology_df.rename(columns=rename_dict, inplace=True)
 
             verify_input_typology(typology_df)
+
+            # Check if typology index matches zone
+            if not typology_df["Name"].equals(zone_df["Name"]):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Typology buildings do not match zone buildings.'
+                           'Check buildings in typology file with zone file.',
+                )
+
             copy_typology(scenario_form.typology, locator)
         else:
             # Try extracting typology from zone
@@ -265,14 +274,15 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
                 print(f'Could not extract typology from zone: {e}')
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Not enough information to generate typology file. Check zone file for typology.',
+                    detail='Not enough information to generate typology file from zone file.'
+                           'Check zone file for the required typology.',
             )
 
             typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
             dataframe_to_dbf(typology_df, locator.get_building_typology())
             print(f'Typology file created at {locator.get_building_typology()}')
 
-    def create_terrain(scenario_form, zone_df):
+    def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
             # Run terrain helper
             cea.api.terrain_helper(config)
@@ -283,7 +293,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_terrain())
             copy_terrain(scenario_form.terrain, locator, lat, lon)
 
-    def create_street(scenario_form):
+    def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
             # Run street helper
             cea.api.streets_helper(config)
@@ -293,6 +303,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_street_network())
             street_df.to_file(locator.get_street_network())
 
+
     with tempfile.TemporaryDirectory() as tmp:
         # Create temporary project before copying to actual scenario path
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -300,33 +311,41 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         config.scenario_name = "temp_scenario"
         locator = cea.inputlocator.InputLocator(config.scenario)
 
-        # Run database_initializer to copy databases to input
-        cea.api.data_initializer(config, databases_path=scenario_form.database)
+        try:
+            # Run database_initializer to copy databases to input
+            cea.api.data_initializer(config, databases_path=scenario_form.database)
 
-        # Generate / Copy zone
-        zone_df = create_zone(scenario_form)
+            # Generate / Copy zone
+            zone_df = create_zone(scenario_form, locator)
 
-        # Generate / Copy surroundings
-        create_surroundings(scenario_form, zone_df)
+            # Generate / Copy surroundings
+            create_surroundings(scenario_form, zone_df, locator)
 
-        create_typology(scenario_form, zone_df)
+            create_typology(scenario_form, zone_df, locator)
 
-        # Run weather helper
-        config.weather_helper.weather = scenario_form.weather
-        cea.api.weather_helper(config)
+            # Run weather helper
+            config.weather_helper.weather = scenario_form.weather
+            cea.api.weather_helper(config)
 
-        # Generate / Copy terrain
-        create_terrain(scenario_form, zone_df)
+            # Generate / Copy terrain
+            create_terrain(scenario_form, zone_df, locator)
 
-        # Generate / Copy street
-        create_street(scenario_form)
+            # Generate / Copy street
+            create_street(scenario_form, locator)
 
-        # Run archetypes mapper
-        cea.api.archetypes_mapper(config)
+            # Run archetypes mapper
+            cea.api.archetypes_mapper(config)
 
-        # Move temp scenario to correct path
-        print(f"Moving from {config.scenario} to {new_scenario_path}")
-        shutil.move(config.scenario, new_scenario_path)
+            # Move temp scenario to correct path
+            print(f"Moving from {config.scenario} to {new_scenario_path}")
+            shutil.move(config.scenario, new_scenario_path)
+        except HTTPException as e:
+            raise e from e
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f'Uncaught exception: {e}',
+            ) from e
 
     return {
         'message': 'Scenario created successfully',
