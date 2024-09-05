@@ -30,10 +30,10 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 router = APIRouter()
 
 COLORS = {
-    'surroundings': get_color_array('white'),
+    'surroundings': get_color_array('grey_light'),
     'dh': get_color_array('red'),
     'dc': get_color_array('blue'),
-    'disconnected': get_color_array('grey')
+    'disconnected': get_color_array('white')
 }
 
 # List of input databases (db_name, locator/schema_key)
