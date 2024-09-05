@@ -2,11 +2,12 @@ from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import cea.config
 import cea.scripts
+from cea.schemas import schemas
 from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.dependencies import CEAConfig
 
@@ -85,6 +86,30 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             parameter.set(value)
     await config.save()
     return 'Success'
+
+
+@router.get('/{tool_name}/check')
+async def check_tool_inputs(config: CEAConfig, tool_name: str):
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    schema_data = schemas(config.plugins)
+
+    script_suggestions = set()
+
+    for method_name, path in script.missing_input_files(config):
+        _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[method_name] else None
+
+        if _script_suggestions is not None:
+            script_suggestions.update(_script_suggestions)
+
+    if script_suggestions:
+        scripts = []
+        for script_suggestion in script_suggestions:
+            _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
+            scripts.append({"label": _script.label, "name": _script.name})
+
+        raise HTTPException(status_code=400,
+                            detail={"message": "Missing input files",
+                                    "script_suggestions": list(scripts)})
 
 
 def parameters_for_script(script_name, config):
