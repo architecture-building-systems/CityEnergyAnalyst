@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology
 from cea.interfaces.dashboard.utils import secure_path
-from cea.utilities.dbf import dbf_to_dataframe
 
 router = APIRouter()
 
