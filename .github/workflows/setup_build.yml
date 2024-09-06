@@ -1,7 +1,13 @@
 name: Build CEA Setup
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      gui-branch:
+        description: 'Branch of GUI repo to build with'
+        required: true
+        type: string
+        default: 'master'
 
 jobs:
   build_win_setup:
@@ -59,6 +65,7 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: ${{ inputs.gui-branch }}
 
       - uses: actions/setup-node@v4
         with:
@@ -120,6 +127,7 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: ${{ inputs.gui-branch }}
 
       - name: Fetch micromamba
         run: |
