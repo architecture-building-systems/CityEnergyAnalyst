@@ -261,7 +261,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             copy_typology(scenario_form.typology, locator)
         else:
             # Try extracting typology from zone
-            print(f'Trying to extract typology from zone')
+            print('Trying to extract typology from zone')
 
             # Make sure typology column names are in correct case
             zone_df.columns = [col.lower() for col in zone_df.columns]
