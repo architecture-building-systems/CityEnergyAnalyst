@@ -66,6 +66,7 @@ jobs:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
           ref: ${{ inputs.gui-branch }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -128,6 +129,7 @@ jobs:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
           ref: ${{ inputs.gui-branch }}
+          fetch-depth: 0
 
       - name: Fetch micromamba
         run: |
