@@ -19,7 +19,7 @@ import cea.inputlocator
 from cea.databases import get_regions, databases_folder_path
 from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, COLUMNS_ZONE_TYPOLOGY
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.settings import get_settings
@@ -197,6 +197,12 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         else:
             # Copy zone using path
             zone_df = geopandas.read_file(scenario_form.user_zone).to_crs(get_geographic_coordinate_system())
+
+            # Make sure zone column names are in correct case
+            zone_df.columns = [col.lower() for col in zone_df.columns]
+            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_GEOMETRY}
+            zone_df.rename(columns=rename_dict, inplace=True)
+
             verify_input_geometry_zone(zone_df)
 
             zone_path = locator.get_zone_geometry()
