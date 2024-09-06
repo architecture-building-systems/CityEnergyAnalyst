@@ -10,7 +10,7 @@ import geopandas as gpd
 from pydantic import BaseModel
 
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
 from cea.interfaces.dashboard.utils import secure_path
 
 router = APIRouter()
@@ -66,6 +66,12 @@ async def validate_building_geometry(data: ValidateGeometry):
             building_df = gpd.read_file(data.path)
             print(building_df)
             if data.building == 'zone':
+
+                # Make sure zone column names are in correct case
+                building_df.columns = [col.lower() for col in building_df.columns]
+                rename_dict = {col.lower(): col for col in COLUMNS_ZONE_GEOMETRY}
+                building_df.rename(columns=rename_dict, inplace=True)
+
                 verify_input_geometry_zone(building_df)
             elif data.building == 'surroundings':
                 verify_input_geometry_surroundings(building_df)
@@ -99,6 +105,12 @@ async def validate_typology(data: ValidateTypology):
                 typology_df = pd.read_excel(data.path)
             else:
                 typology_df = gpd.read_file(data.path)
+
+
+            # Make sure typology column names are in correct case
+            typology_df.columns = [col.lower() for col in typology_df.columns]
+            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_TYPOLOGY}
+            typology_df.rename(columns=rename_dict, inplace=True)
 
             verify_input_typology(typology_df)
         except Exception as e:
