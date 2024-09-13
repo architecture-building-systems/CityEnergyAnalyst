@@ -260,8 +260,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             if not typology_df["Name"].equals(zone_df["Name"]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Typology buildings do not match zone buildings.'
-                           'Check buildings in typology file with zone file.',
+                    detail='Building geometries (zone) and Building information (typology) do not match.'
+                           'Ensure the `Name` Columns of the two files are identical.',
                 )
 
             copy_typology(scenario_form.typology, locator)
