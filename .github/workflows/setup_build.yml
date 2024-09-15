@@ -79,6 +79,8 @@ jobs:
         shell: bash -el {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
+          # Temp fix for yarn validation fails during build
+          YARN_ENABLE_HARDENED_MODE: 0
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn
