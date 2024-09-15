@@ -79,11 +79,9 @@ jobs:
         shell: bash -el {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
-          # Temp fix for yarn validation fails during build
-          YARN_ENABLE_HARDENED_MODE: 0
         run: |
           cd $GITHUB_WORKSPACE/gui
-          yarn
+          yarn install --immutable
           yarn version $CEA_VERSION
           yarn electron:release
           mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
