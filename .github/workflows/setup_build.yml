@@ -81,6 +81,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/gui
+          yarn set version 4.4.1
           yarn install
           yarn version $CEA_VERSION
           yarn electron:release
