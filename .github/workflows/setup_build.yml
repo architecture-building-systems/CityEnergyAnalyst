@@ -81,7 +81,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/gui
-          yarn install --immutable
+          yarn install
           yarn version $CEA_VERSION
           yarn electron:release
           mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
