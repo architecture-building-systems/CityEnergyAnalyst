@@ -1132,9 +1132,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
         """
         folder_path = os.path.join(project_path, folder_name)
 
+        # TODO: Use .gitignore to ignore scenarios
         return all([os.path.isdir(folder_path),
                     not folder_name.startswith('.'),
-                    folder_name != "__pycache__"])
+                    folder_name != "__pycache__",
+                    folder_name != "__MACOSX"])
 
     return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
 
