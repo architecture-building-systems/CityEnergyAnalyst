@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 
@@ -30,13 +31,15 @@ def main(config):
 
     try:
         # Write missing settings to temp env file
-        with tempfile.NamedTemporaryFile(mode="w") as f:
-            for key, value in config_dict.items():
-                f.write(f"CEA_{key.upper()}={value}\n")
-                f.flush()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_file = os.path.join(temp_dir, "cea.env")
+            with open(env_file, "w") as f:
+                for key, value in config_dict.items():
+                    f.write(f"CEA_{key.upper()}={value}\n")
+                    f.flush()
 
             uvicorn.run("cea.interfaces.dashboard.app:app",
-                        env_file=f.name,
+                        env_file=env_file,
                         host=settings.host, port=settings.port)
     except KeyboardInterrupt:
         sys.exit(0)
