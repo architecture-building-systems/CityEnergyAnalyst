@@ -19,7 +19,7 @@ __status__ = "Production"
 
 class ComparisonsAnnualCostsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annualized costs"
+    name = "Annualized costs per Scenario"
 
     def __init__(self, project, parameters, cache):
         super(ComparisonsAnnualCostsPlot, self).__init__(project, parameters, cache)

@@ -32,36 +32,39 @@ class LifecyclePlotBase(PlotBase):
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
-        'normalization': 'plots-schedules:normalization',
+        'normalization': 'plots-lifecycle:normalization',
     }
 
     def __init__(self, project, parameters, cache):
         super(LifecyclePlotBase, self).__init__(project, parameters, cache)
         self.category_path = os.path.join('new_basic', 'lifecycle')
-        self.input_files = [(self.locator.get_demand_results_file, [building]) for building in self.buildings]
 
 
-    def normalize_data(self, data_processed, buildings, analysis_fields):
+    def normalize_data_individual_emissions(self, data_processed, buildings, analysis_fields):
+        data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+        data_processed_2 = data_processed.join(data)
         if self.normalization == "gross floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['GFA_m2'], axis=0)*1000
         elif self.normalization == "net floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['Aocc_m2'], axis=0)*1000
         elif self.normalization == "air conditioned floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['Af_m2'], axis=0)*1000
         elif self.normalization == "building occupancy":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
-            normalizatioon_factor = data.loc[buildings]['people0'].sum()
-            data_processed = data_processed.apply(
-                lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['people0'], axis=0)*1000
 
-        return data_processed
+        return data_processed_2
+
+    def normalize_data_individual_costs(self, data_processed, buildings, analysis_fields):
+        data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+        data_processed_2 = data_processed.join(data)
+        if self.normalization == "gross floor area":
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['GFA_m2'], axis=0)
+        elif self.normalization == "net floor area":
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['Aocc_m2'], axis=0)
+        elif self.normalization == "air conditioned floor area":
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['Af_m2'], axis=0)
+        elif self.normalization == "building occupancy":
+            data_processed_2.loc[:, analysis_fields] = data_processed_2.loc[:, analysis_fields].div(data_processed_2['people0'], axis=0)
+
+        return data_processed_2
 

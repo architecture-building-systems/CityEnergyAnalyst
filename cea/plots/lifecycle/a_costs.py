@@ -20,11 +20,11 @@ __status__ = "Production"
 
 class AnnualCostsPlot(cea.plots.lifecycle.LifecyclePlotBase):
     """Implement the "CAPEX vs. OPEX of a building system"""
-    name = "Annualized costs"
+    name = "Annualized costs per Building"
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
-        'normalization': 'plots-schedules:normalization',
+        'normalization': 'plots-lifecycle:normalization',
     }
 
     def __init__(self, project, parameters, cache):
@@ -37,6 +37,7 @@ class AnnualCostsPlot(cea.plots.lifecycle.LifecyclePlotBase):
                                 'Opex_a_sys_city_scale_USD']
         self.normalization = self.parameters['normalization']
         self.titley = self.calc_titles()
+        self.input_files = [(self.locator.get_demand_results_file, [building]) for building in self.buildings]
         self.data_clean = None
 
     def calc_titles(self):
@@ -67,17 +68,18 @@ class AnnualCostsPlot(cea.plots.lifecycle.LifecyclePlotBase):
         return go.Layout(barmode='relative', yaxis=dict(title=self.titley))
 
     @cea.plots.cache.cached
-    def data_building(self):
+    def data_building_costs(self):
         data_building_costs = pd.read_csv(self.locator.get_costs_operation_file()).set_index('Name')
         if len(self.buildings) == 1:
             data_raw_df = pd.DataFrame(data_building_costs.loc[self.buildings]).T
         else:
             data_raw_df = pd.DataFrame(data_building_costs.loc[self.buildings])
-        data_normalized = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
-        return data_normalized
+        data_normalized = self.normalize_data_individual_costs(data_raw_df, self.buildings, self.analysis_fields)
+        return data_normalized.fillna(0)
 
     def calc_graph(self):
-        data = self.data_building()
+        data = self.data_building_costs()
+        print(data.columns)
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -98,7 +100,8 @@ def main():
     cache = cea.plots.cache.NullPlotCache()
     AnnualCostsPlot(config.project,
                     {'buildings': locator.get_zone_building_names(),
-                     'scenario-name': config.scenario_name},
+                     'scenario-name': config.scenario_name,
+                     'normalization': config.plots_lifecycle.normalization},
                     cache).plot(auto_open=True)
 
 

@@ -20,12 +20,11 @@ __status__ = "Production"
 
 class AnnualEmissionsPlot(cea.plots.lifecycle.LifecyclePlotBase):
     """Implement the "CAPEX vs. OPEX of a building system"""
-    name = "Annualized Emissions"
+    name = "Annualized Emissions per Building"
     expected_parameters = {
         'buildings': 'plots:buildings',
         'scenario-name': 'general:scenario-name',
-        'normalization': 'plots-schedules:normalization',
-    }
+        'normalization': 'plots-lifecycle:normalization'}
 
     def __init__(self, project, parameters, cache):
         super(AnnualEmissionsPlot, self).__init__(project, parameters, cache)
@@ -37,6 +36,9 @@ class AnnualEmissionsPlot(cea.plots.lifecycle.LifecyclePlotBase):
         self.input_files = [(self.locator.get_lca_embodied, []),
                             (self.locator.get_lca_operation, [])]
         self.titley = self.calc_titles()
+        self.input_files = [(self.locator.get_demand_results_file, [building]) for building in self.buildings]
+        self.data_clean = None
+
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
@@ -66,7 +68,7 @@ class AnnualEmissionsPlot(cea.plots.lifecycle.LifecyclePlotBase):
         return go.Layout(barmode='relative', yaxis=dict(title=self.titley))
 
     @cea.plots.cache.cached
-    def data_building(self):
+    def data_building_emissions(self):
         data_embodied = pd.read_csv(self.locator.get_lca_embodied())
         data_operations = pd.read_csv(self.locator.get_lca_operation())
         all_data = data_embodied.merge(data_operations, on="Name").set_index('Name')
@@ -74,11 +76,11 @@ class AnnualEmissionsPlot(cea.plots.lifecycle.LifecyclePlotBase):
             data_raw_df = pd.DataFrame(all_data.loc[self.buildings]).T
         else:
             data_raw_df = pd.DataFrame(all_data.loc[self.buildings])
-        data_normalized = self.normalize_data(data_raw_df, self.normalization, self.analysis_fields)
-        return data_normalized
+        data_normalized = self.normalize_data_individual_emissions(data_raw_df, self.buildings, self.analysis_fields)
+        return data_normalized.fillna(0)
 
     def calc_graph(self):
-        data = self.data_building()
+        data = self.data_building_emissions()
         graph = []
         for field in self.analysis_fields:
             y = data[field].values
@@ -98,10 +100,10 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     cache = cea.plots.cache.NullPlotCache()
     AnnualEmissionsPlot(config.project,
-                    {'buildings': locator.get_zone_building_names(),
-                     'scenario-name': config.scenario_name},
-                    cache).plot(auto_open=True)
-
+                        {'buildings': locator.get_zone_building_names(),
+                         'scenario-name': config.scenario_name,
+                         'normalization': config.plots_lifecycle.normalization},
+                        cache).plot(auto_open=True)
 
 if __name__ == '__main__':
     main()

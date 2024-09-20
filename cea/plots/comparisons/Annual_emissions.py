@@ -19,7 +19,7 @@ __status__ = "Production"
 
 class ComparisonsAnnualEmissionsPlot(cea.plots.comparisons.ComparisonsPlotBase):
     """Implement the "CAPEX vs. OPEX of centralized system in generation X" plot"""
-    name = "Annualized emissions"
+    name = "Annualized emissions per Scenario"
 
     def __init__(self, project, parameters, cache):
         super(ComparisonsAnnualEmissionsPlot, self).__init__(project, parameters, cache)
@@ -31,6 +31,7 @@ class ComparisonsAnnualEmissionsPlot(cea.plots.comparisons.ComparisonsPlotBase):
         self.input_files = [(x[4].get_optimization_slave_total_performance, [x[3], x[2]]) if x[2] != "today" else
                             (x[4].get_lca_embodied, []) for x in self.scenarios_and_systems]
         self.titley = self.calc_titles()
+        self.data_clean = None
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
