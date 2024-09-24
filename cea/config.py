@@ -463,6 +463,12 @@ class PathParameter(Parameter):
         return str(os.path.normpath(os.path.abspath(os.path.expanduser(value))))
 
 
+class NullablePathParameter(PathParameter):
+    def decode(self, value):
+        if value == '':
+            return value
+        return super().decode(value)
+
 class FileParameter(Parameter):
     """Describes a file in the system."""
 
