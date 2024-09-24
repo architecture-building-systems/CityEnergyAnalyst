@@ -1,10 +1,10 @@
-
-
+import json
 
 from flask import current_app
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields, abort
 
 import cea.scripts
+from cea.schemas import schemas
 from .utils import deconstruct_parameters
 
 api = Namespace('Tools', description='Scripts for CEA')
@@ -91,6 +91,29 @@ class ToolSave(Resource):
         config.save()
         return 'Success'
 
+
+@api.route('/<string:tool_name>/check')
+class ToolCheck(Resource):
+    def get(self, tool_name: str):
+        config = current_app.cea_config
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+        schema_data = schemas(config.plugins)
+
+        script_suggestions = set()
+
+        for method_name, path in script.missing_input_files(config):
+            _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[method_name] else None
+
+            if _script_suggestions is not None:
+                script_suggestions.update(_script_suggestions)
+
+        if script_suggestions:
+            scripts = []
+            for script_suggestion in script_suggestions:
+                _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
+                scripts.append({"label": _script.label, "name": _script.name})
+
+            abort(400, detail={"message": "Missing input files","script_suggestions": list(scripts)})
 
 def parameters_for_script(script_name, config):
     """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
