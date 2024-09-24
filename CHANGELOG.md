@@ -1,3 +1,45 @@
+- 2024-08-25 - 3.37.1 - #3645 Fix daysim binaries to allow whitespace in path
+- 2024-08-06 - 3.37.1 - #3636 Introduce result-retention toggle
+- 2024-08-06 - 3.37.1 - #3638 Fix radiation simplified
+- 2024-08-06 - 3.37.1 - #3635 New connetivity vector operations for improved networks
+- 2024-07-09 - 3.37.1 - #3621 Optimisation: Making base DES part of initial population
+- 2024-06-25 - 3.37.1 - #3622 Release 3.37.1
+- 2024-06-25 - 3.37.0 - #3620 Update documentation 3.37.x
+- 2024-06-24 - 3.37.0 - #3618 Fix terrain bounds error after using terrain-helper
+- 2024-06-14 - 3.37.0 - #3611 Release 3.37.0
+- 2024-06-13 - 3.36.1 - #3608 Fix high internal temperatures during demand calculation
+- 2024-06-13 - 3.36.1 - #3609 updating a wrong term for trees helper
+- 2024-06-13 - 3.36.1 - #3601 DE database supply technolgies fix
+- 2024-06-11 - 3.36.1 - #3598 fixing operation result files
+- 2024-06-04 - 3.36.1 - #3602 Fixes datetime not JSON serializable error
+- 2024-06-04 - 3.36.1 - #3599 Run tests in parallel
+- 2024-05-29 - 3.36.1 - #3595 Release 3.36.1
+- 2024-05-27 - 3.36.0 - #3586 Add nullable info for column schema
+- 2024-05-21 - 3.36.0 - #3584 Release 3.36.0
+- 2024-05-16 - 3.35.6 - #3583 Use MKL for Windows to solve memory errors
+- 2024-05-15 - 3.35.6 - #3574 Add trees as shading for radiation script
+- 2024-05-14 - 3.35.6 - #3576 Consider adjacent walls by default
+- 2024-05-14 - 3.35.6 - #3579 Hotfix two decentralised optimisation workflow test
+- 2024-05-10 - 3.35.6 - #3575 Hotfix-decentralised-optimisaiton-test
+- 2024-05-07 - 3.35.6 - #3550 Optimisation - Calculate the baseline system
+- 2024-05-07 - 3.35.6 - #3572 Fixing database to fit the long unit test
+- 2024-05-07 - 3.35.6 - #3552 3524 memory error in optimisation script
+- 2024-05-07 - 3.35.6 - #3570 removing _new.xlsx in the databases
+- 2024-04-30 - 3.35.6 - #3567 Fixing oudated excel writer
+- 2024-04-29 - 3.35.6 - #3566 Push Docker build to GitHub Container Registry
+- 2024-04-29 - 3.35.6 - #3521 Add German Building Database
+- 2024-04-26 - 3.35.6 - #3563 Return empty data even if surroundings file is empty
+- 2024-04-25 - 3.35.6 - #3562 Remove `MULTIUSER_PAGE_INSTALLMODE`
+- 2024-04-25 - 3.35.6 - #3561 Update deprecated pandas append function
+- 2024-04-24 - 3.35.6 - #3559 Remove multiuser option from setup
+- 2024-04-18 - 3.35.6 - #3553 Enable auto update for windows
+- 2024-04-18 - 3.35.6 - #3543 Fixing interaction between energy potentials and supply system operation
+- 2024-04-18 - 3.35.6 - #3549 Handling zero interest rates
+- 2024-04-12 - 3.35.6 - #3548 Update mac build workflow
+- 2024-04-02 - 3.35.5 - #3539 Add build tools to environment
+- 2024-03-21 - 3.35.5 - #3536 Fix missing html template for plots
+- 2024-03-21 - 3.35.5 - #3535 Update workflow and docs based on new GUI build steps
+- 2024-03-21 - 3.35.5 - #3533 Release 3.35.5
 - 2024-03-20 - 3.35.4 - #3531 Correctly set installation directory for CurrentUser mode for Windows setup
 - 2024-03-20 - 3.35.4 - #3530 Add missing schema keys
 - 2024-03-16 - 3.35.4 - #3525 Fix Windows setup bugs regarding developer version

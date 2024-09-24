@@ -1,7 +1,7 @@
 """
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
-
+import atexit
 import os
 import cea.schemas
 import shutil
@@ -33,11 +33,10 @@ class InputLocator(object):
         self.weather_path = os.path.join(self.db_path, 'weather')
         self._wrap_locator_methods(plugins)
         self.plugins = plugins
+        self.optimization_run = None
 
-        self._temp_directory = tempfile.TemporaryDirectory()
-
-    def __del__(self):
-        self._temp_directory.cleanup()
+        self._temp_directory = tempfile.mkdtemp()
+        atexit.register(self._cleanup_temp_directory)
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -58,6 +57,11 @@ class InputLocator(object):
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
         self._temp_directory = state["_temp_directory"]
+
+    def _cleanup_temp_directory(self):
+        # Cleanup the temporary directory when the object is destroyed
+        if os.path.exists(self._temp_directory):
+            shutil.rmtree(self._temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -86,6 +90,19 @@ class InputLocator(object):
                 if not os.path.exists(folder):
                     raise e
         return folder
+    
+    @staticmethod
+    def _clear_folder(folder):
+        """Delete all files in a folder"""
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     def ensure_parent_folder_exists(self, file_path):
         """Use os.makedirs to ensure the folders exist"""
@@ -347,17 +364,34 @@ class InputLocator(object):
                             "Total_%(network_type)s_%(district_network_barcode_hex)s.csv" % locals())
 
     # OPTIMIZATION *NEW*
-    def get_new_optimization_results_folder(self):
+    def get_centralized_optimization_results_folder(self):
         """Returns the folder containing the scenario's results for the new optimization script"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization', 'centralized')
+        if self.optimization_run:
+            return os.path.join(self.get_optimization_results_folder(), f'centralized_run_{self.optimization_run}')
+        else:
+            return self._ensure_folder(self.get_optimization_results_folder(), 'centralized')
+
+    def register_centralized_optimization_run_id(self):
+        """Registers the run_id of the centralized optimization run"""
+        i = 1
+        while True:
+            results_folder = os.path.join(self.get_optimization_results_folder(), f'centralized_run_{i}')
+            if not os.path.exists(results_folder):
+                self.optimization_run = i
+                break
+            i += 1
+
+    def clear_centralized_optimization_results_folder(self):
+        """Deletes the folder containing the scenario's results for the new optimization script"""
+        return self._clear_folder(self.get_centralized_optimization_results_folder())
 
     def get_new_optimization_base_case_folder(self, network_type):
         """Returns the folder containing the base-case energy systems against which optimal systems are compared"""
-        return self._ensure_folder(self.get_new_optimization_results_folder(), f'base_{network_type}S')
+        return self._ensure_folder(self.get_centralized_optimization_results_folder(), f'base_{network_type}S')
 
     def get_new_optimization_optimal_district_energy_system_folder(self, district_energy_system_id='DES_000'):
         """Returns the results-folder for the n-th near pareto-optimal district energy system"""
-        return self._ensure_folder(self.get_new_optimization_results_folder(),
+        return self._ensure_folder(self.get_centralized_optimization_results_folder(),
                                    f'{district_energy_system_id}')
 
     def get_new_optimization_optimal_networks_folder(self, district_energy_system_id='DES_000'):
@@ -412,7 +446,7 @@ class InputLocator(object):
 
     def get_new_optimization_debugging_folder(self):
         """Returns the debugging-folder, used to store information gathered by the optimisation tracker"""
-        return self._ensure_folder(self.get_new_optimization_results_folder(), 'debugging')
+        return self._ensure_folder(self.get_centralized_optimization_results_folder(), 'debugging')
 
     def get_new_optimization_debugging_network_tracker_file(self):
         """Returns the debugging-file, used to store information gathered by the optimisation tracker"""
@@ -535,6 +569,12 @@ class InputLocator(object):
 
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
+
+    def get_tree_geometry_folder(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry')
+
+    def get_tree_geometry(self):
+        return os.path.join(self.scenario, 'inputs', 'tree-geometry', 'trees.shp')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
@@ -1145,7 +1185,7 @@ class InputLocator(object):
     # OTHER
     def get_temporary_folder(self):
         """Temporary folder as returned by `tempfile`."""
-        return self._temp_directory.name
+        return self._temp_directory
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""

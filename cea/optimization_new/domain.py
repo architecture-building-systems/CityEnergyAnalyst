@@ -43,11 +43,12 @@ from cea.optimization_new.containerclasses.supplySystemStructure import SupplySy
 from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-from cea.optimization_new.helpercalsses.optimization.connectivity import Connection, ConnectivityVector
-from cea.optimization_new.helpercalsses.optimization.algorithm import Algorithm
-from cea.optimization_new.helpercalsses.optimization.tracker import optimizationTracker
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
-from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.helperclasses.optimization.connectivity import Connection, ConnectivityVector
+from cea.optimization_new.helperclasses.optimization.algorithm import Algorithm
+from cea.optimization_new.helperclasses.optimization.tracker import OptimizationTracker
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.clustering import Clustering
+from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class Domain(object):
@@ -60,7 +61,8 @@ class Domain(object):
         self.initial_energy_system = None
         self.optimal_energy_systems = []
 
-        self._initialise_domain_descriptor_classes()
+        self._setup_save_directory()
+        self._initialize_domain_descriptor_classes()
 
     def _load_weather(self, locator):
         weather_path = locator.get_weather_file()
@@ -137,6 +139,9 @@ class Domain(object):
             ii. Aggregate demands of the buildings connected to each network and use a second genetic algorithm to find
                 supply system configurations that are near-pareto optimal for the respective networks.
         """
+        print("\nSetting up optimisation algorithm:")
+        self._initialize_algorithm_helper_classes()
+
         print("\nInitializing domain:")
         self._initialize_energy_system_descriptor_classes()
 
@@ -154,7 +159,7 @@ class Domain(object):
         if self.config.general.debug:
             nbr_networks = self.config.optimization_new.maximum_number_of_networks
             building_ids = [building.identifier for building in self.buildings]
-            tracker = optimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
+            tracker = OptimizationTracker(algorithm.objectives, nbr_networks, building_ids, self.locator)
         else:
             tracker = None
 
@@ -170,6 +175,11 @@ class Domain(object):
             pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
             toolbox.register("map", pool.map)
 
+        # Generate fully connected network as basis for the clustering algorithm
+        full_network = Network(self.buildings, 'Nfull')
+        full_network_graph = full_network.generate_condensed_graph()
+
+        # Register genetic operators
         toolbox.register("generate", ConnectivityVector.generate)
         toolbox.register("individual", tools.initIterate, ConnectivityVector, toolbox.generate)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -177,16 +187,19 @@ class Domain(object):
         toolbox.register("evaluate", DistrictEnergySystem.evaluate_energy_system, district_buildings=self.buildings,
                          energy_potentials=self.energy_potentials, optimization_tracker=tracker,
                          process_memory=main_process_memory)
-        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm)
-        toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm)
+        toolbox.register("mate", ConnectivityVector.mate, algorithm=algorithm, domain_network_graph=full_network_graph)
+        toolbox.register("mutate", ConnectivityVector.mutate, algorithm=algorithm,
+                         domain_network_graph=full_network_graph)
         toolbox.register("select", ConnectivityVector.select, population_size=algorithm.population,
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = set(toolbox.population(n=algorithm.population))
+        population = set(toolbox.population(n = algorithm.population - 1))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
+        optimal_supply_system_combinations[self.initial_energy_system.connectivity.as_str()] = \
+            self.initial_energy_system.best_supsys_combinations
 
         # Consolidate certain objects in the child processes' memory and make them available to the main process
         for non_dominated_front in non_dominated_fronts:
@@ -474,7 +487,7 @@ class Domain(object):
                                                          in supply_system.heat_rejection.values()],
                                                         axis=1).sum(1)
         else:
-            combined_heat_rejection_profile = pd.Series(0, index=range(len(date_time)))
+            combined_heat_rejection_profile = pd.Series(0, index=date_time)
 
         if supply_system.greenhouse_gas_emissions.values():
             combined_ghg_emission_profile = pd.concat([ghg_emission_profile
@@ -482,7 +495,7 @@ class Domain(object):
                                                        in supply_system.greenhouse_gas_emissions.values()],
                                                       axis=1).sum(1)
         else:
-            combined_ghg_emission_profile = pd.Series(0, index=range(len(date_time)))
+            combined_ghg_emission_profile = pd.Series(0, index=date_time)
 
         if supply_system.system_energy_demand.values():
             combined_system_energy_demand_profile = pd.concat([system_demand_profile
@@ -490,10 +503,10 @@ class Domain(object):
                                                                in supply_system.system_energy_demand.values()],
                                                               axis=1).sum(1)
         else:
-            combined_system_energy_demand_profile = pd.Series(0, index=range(len(date_time)))
+            combined_system_energy_demand_profile = pd.Series(0, index=date_time)
 
         # combine the profiles into one data frame and write to file
-        combined_objective_function_timelines = pd.concat([date_time.to_series(index=range(len(date_time))),
+        combined_objective_function_timelines = pd.concat([date_time.to_series(index=date_time),
                                                            combined_system_energy_demand_profile,
                                                            combined_heat_rejection_profile,
                                                            combined_ghg_emission_profile],
@@ -575,8 +588,14 @@ class Domain(object):
 
         return
 
+    def _setup_save_directory(self):
+        """Setup the directory for saving the results."""
+        if self.config.optimization_new.retain_run_results:
+            self.locator.register_centralized_optimization_run_id()
+        else:
+            self.locator.clear_centralized_optimization_results_folder()
 
-    def _initialise_domain_descriptor_classes(self):
+    def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
         Fitness.initialize_class_variables(self)
@@ -593,6 +612,12 @@ class Domain(object):
         print("4. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
+    def _initialize_algorithm_helper_classes(self):
+        """
+        initialise network specific helpers for overlap correction and clustering
+        """
+        ConnectivityVector.initialize_class_variables(self)
+        Clustering.initialize_class_variables(self)
 
 def main(config):
     """
