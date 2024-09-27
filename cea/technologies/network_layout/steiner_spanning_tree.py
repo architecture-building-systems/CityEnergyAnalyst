@@ -183,9 +183,9 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, pipe_dn)
                             line = LineString((node_coords, new_neighbour))
                             if line not in mst_edges['geometry']:
                                 mst_edges = pd.concat([mst_edges,
-                                    {"geometry": line, "Pipe_DN": pipe_dn,
-                                     "Name": "PIPE" + str(mst_edges.Name.count())}],
-                                    ignore_index=True)
+                                                       pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn,
+                                                                      "Name": "PIPE" + str(mst_edges.Name.count())}])],
+                                                      ignore_index=True)
                                 added_a_loop = True
                             mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
@@ -219,9 +219,10 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, pipe_dn)
                                         line = LineString((node_coords, new_neighbour))
                                         if line not in mst_edges['geometry']:
                                             mst_edges = pd.concat([mst_edges,
-                                                {"geometry": line, "Pipe_DN": pipe_dn,
-                                                 "Name": "PIPE" + str(mst_edges.Name.count())}],
-                                                ignore_index=True)
+                                                                   pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn,
+                                                                                  "Name": "PIPE" + str(
+                                                                                      mst_edges.Name.count())}])],
+                                                                  ignore_index=True)
                                         # Add new node from potential network to steiner tree
                                         # create copy of selected node and add to list of all nodes
                                         copy_of_new_mst_nodes = new_mst_nodes.copy()
@@ -242,10 +243,12 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, pipe_dn)
                                         line2 = LineString((new_neighbour, potential_second_deg_neighbour))
                                         if line2 not in mst_edges['geometry']:
                                             mst_edges = pd.concat([mst_edges,
-                                                {"geometry": line2, "Pipe_DN": pipe_dn,
-                                                 "Name": "PIPE" + str(mst_edges.Name.count())}],
-                                                ignore_index=True)
+                                                                   pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn,
+                                                                                  "Name": "PIPE" + str(
+                                                                                      mst_edges.Name.count())}])],
+                                                                  ignore_index=True)
                                             added_a_loop = True
+
                                         mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
         print('No loops added.')
