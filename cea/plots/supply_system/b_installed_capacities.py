@@ -63,6 +63,7 @@ class InstalledCapacities(cea.plots.supply_system.SupplySystemPlotBase):
                                                       'Capacity_GRID_el_district_scale_W',
                                                       ]
         self.analysis_fields_building_scale_heating = ['Capacity_BaseBoiler_NG_heat_building_scale_W',
+                                                       'Capacity_BaseBoiler_BG_heat_building_scale_W',
                                                      'Capacity_FC_NG_heat_building_scale_W',
                                                      'Capacity_GS_HP_heat_building_scale_W']
         self.analysis_fields_building_scale_cooling = ['Capacity_DX_AS_cool_building_scale_W',

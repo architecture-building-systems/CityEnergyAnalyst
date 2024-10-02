@@ -1206,6 +1206,8 @@ def calc_costs_emissions_decentralized_DH(DHN_barcode, buildings_names_with_heat
             data = pd.DataFrame({'Name': building_name,
                                  'Capacity_BaseBoiler_NG_heat_building_scale_W': dfBest["Capacity_BaseBoiler_NG_W"].iloc[
                                      0],
+                                 'Capacity_BaseBoiler_BG_heat_building_scale_W':dfBest["Capacity_BaseBoiler_BG_W"].iloc[
+                                         0],
                                  'Capacity_FC_NG_heat_building_scale_W': dfBest["Capacity_FC_NG_W"].iloc[0],
                                  'Capacity_GS_HP_heat_building_scale_W': dfBest["Capacity_GS_HP_W"].iloc[0]}, index=[0])
             capacity_installed_df = pd.concat([capacity_installed_df, data], ignore_index=True)

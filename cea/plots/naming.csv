@@ -286,6 +286,7 @@ Activation curve,Q_HP_Server_gen_directload_W,W,Server-source_HP to direct load,
 Activation curve,Q_HP_Sew_gen_directload_W,W,Sewage-source-HP generation to direct load,blue_light
 Activation curve,Q_HP_Lake_gen_directload_W,W,Water-source-HP generation to direct load,blue
 Activation curve,Q_GHP_gen_directload_W,W,Ground-source-HP generation to direct load,purple
+Activation curve,Q_ASHP_gen_directload_W,W,Air-source-HP generation to direct load,blue
 Activation curve,Q_CHP_gen_directload_W,W,NG-fired cogeneration to direct load,brown
 Activation curve,Q_Furnace_wet_gen_directload_W,W,Wet biomass cogeneration to direct load,green
 Activation curve,Q_Furnace_dry_gen_directload_W,W,Dry biomass cogeneration to direct load,green_light
@@ -620,6 +621,7 @@ capacities,Capacity_TrigenCCGT_el_NG_district_scale_W,W,Capacity_TrigenCCGT_el_N
 capacities,Capacity_TrigenCCGT_heat_NG_district_scale_W,W,Capacity_TrigenCCGT_heat_NG_district_scale_W,blue_lighter
 
 capacities,Capacity_BaseBoiler_NG_heat_building_scale_W,W,Capacity_BaseBoiler_NG_heat_building_scale_W,red
+capacities,Capacity_BaseBoiler_BG_heat_building_scale_W,W,Capacity_BaseBoiler_BG_heat_building_scale_W,red
 capacities,Capacity_FC_NG_heat_building_scale_W,W,Capacity_FC_NG_heat_building_scale_W,red_light
 capacities,Capacity_GS_HP_heat_building_scale_W,W,Capacity_GS_HP_heat_building_scale_W,red_lighter
 

@@ -136,17 +136,21 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     # calculate evaporator temperature
     tevap_K = ground_temp_K - HP_DELTA_T_EVAP
-    COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
-    qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
-    qhotdot_missing_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
+    if mdot_kgpers > 0.0:
+        COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)
+        qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
+        qhotdot_missing_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
-    wdot_W = qhotdot_W / COP
-    wdot_el_W = wdot_W / GHP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
+        wdot_W = qhotdot_W / COP
+        wdot_el_W = wdot_W / GHP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
 
-    qcolddot_W =  qhotdot_W - wdot_W
+        qcolddot_W =  qhotdot_W - wdot_W
+    else:
+        COP = np.nan # just to avoid weird outputs when there is no load
+        wdot_el_W = qcolddot_W = qhotdot_missing_W = 0.0
 
-    return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
+    return COP, wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
 # ============================
 # operation cost
@@ -433,7 +437,7 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
     return Capex_a_HP_USD, Opex_fixed_HP_USD, Capex_HP_USD
 
 
-def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
+def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data, technology_type= "HP1"):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -445,8 +449,9 @@ def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
     """
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if GHP_Size_W < GHP_cost_data['cap_min'][0]:
-        GHP_Size_W = GHP_cost_data['cap_min'][0]
+    GHP_cost_data = GHP_cost_data[GHP_cost_data['code'] == technology_type]
+    if GHP_Size_W < GHP_cost_data.iloc[0]['cap_min']:
+        GHP_Size_W = GHP_cost_data.iloc[0]['cap_min']
     GHP_cost_data = GHP_cost_data[
         (GHP_cost_data['cap_min'] <= GHP_Size_W) & (GHP_cost_data['cap_max'] > GHP_Size_W)]
 
@@ -490,3 +495,38 @@ def calc_Cinv_GHP(GHP_Size_W, GHP_cost_data, BH_cost_data):
     Capex_GHP_total_USD = InvC_BH + InvC_GHP
 
     return Capex_a_GHP_total_USD, Opex_fixed_GHP_total_USD, Capex_GHP_total_USD
+
+def calc_Cinv_ASHP(ASHP_Size_W, ASHP_cost_data, technology_type="HP3"):
+    """
+    Calculates the annualized investment costs for the geothermal heat pump
+
+    :type ASHP_Size_W : float
+    :param ASHP_Size_W: Design electrical size of the heat pump in [Wel]
+
+    InvCa : float
+        annualized investment costs in EUROS/a
+    """
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    ASHP_cost_data = ASHP_cost_data[ASHP_cost_data['code'] == technology_type]
+    if ASHP_Size_W < ASHP_cost_data.iloc[0]['cap_min']:
+        ASHP_Size_W = ASHP_cost_data.iloc[0]['cap_min']
+
+    ASHP_cost_data = ASHP_cost_data[
+        (ASHP_cost_data['cap_min'] <= ASHP_Size_W) & (ASHP_cost_data['cap_max'] > ASHP_Size_W)]
+
+    Inv_a = ASHP_cost_data.iloc[0]['a']
+    Inv_b = ASHP_cost_data.iloc[0]['b']
+    Inv_c = ASHP_cost_data.iloc[0]['c']
+    Inv_d = ASHP_cost_data.iloc[0]['d']
+    Inv_e = ASHP_cost_data.iloc[0]['e']
+    Inv_IR = ASHP_cost_data.iloc[0]['IR_%']
+    Inv_LT = ASHP_cost_data.iloc[0]['LT_yr']
+    Inv_OM = ASHP_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC_ASHP = Inv_a + Inv_b * (ASHP_Size_W) ** Inv_c + (Inv_d + Inv_e * ASHP_Size_W) * log(ASHP_Size_W)
+
+    Capex_a_ASHP_USD = calc_capex_annualized(InvC_ASHP, Inv_IR, Inv_LT)
+    Opex_fixed_ASHP_USD = InvC_ASHP * Inv_OM
+
+    return Capex_a_ASHP_USD, Opex_fixed_ASHP_USD, InvC_ASHP

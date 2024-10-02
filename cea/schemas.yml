@@ -9853,6 +9853,12 @@ get_optimization_decentralized_folder_building_result_heating_activation:
         unit: '[Wh]'
         values: '{0.0...n}'
         min: 0.0
+      Q_ASHP_gen_directload_W:
+        description: Thermal generation of Air-source heat pump to direct load
+        type: float
+        unit: '[Wh]'
+        values: '{0.0...n}'
+        min: 0.0
       Q_Fuelcell_gen_directload_W:
         description: Thermal generation of fuel cell to direct load
         type: float
@@ -9930,7 +9936,13 @@ get_optimization_building_scale_heating_capacity:
   schema:
     columns:
       Capacity_BaseBoiler_NG_heat_building_scale_W:
-        description: Thermal capacity of Base load boiler for Decentralized building
+        description: Thermal capacity of Base load NaturalGas boiler for Decentralized building
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      Capacity_BaseBoiler_BG_heat_building_scale_W:
+        description: Thermal capacity of Base load Biogas boiler for Decentralized building
         type: float
         unit: '[W]'
         values: '{0.0...n}'

@@ -466,7 +466,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     Opex_a_USD, TAC_USD, TotalCO2, TotalPrim = compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD,
                                                                     number_of_configurations, operation_results)
     ## Determine the best configuration
-    Best, indexBest = rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations)
+    Best, Message, indexBest = single_objective_ranking(TAC_USD, number_of_configurations)
     # Save results in csv file
     performance_results = {
         "Nominal heating load": operation_results[:, 0],
@@ -476,17 +476,18 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         "Capacity_ACH_SC_FP_W": operation_results[:, 4],
         "Capaticy_ACH_SC_ET_W": operation_results[:, 5],
         "Capacity_ACHHT_FP_W": operation_results[:, 6],
+        "Qh_sys_release_Wh": Qh_sys_release_Wh[:, 0],
+        "NG_sys_req_Wh": NG_sys_req_Wh[:, 0],
+        "E_sys_req_Wh": E_sys_req_Wh[:, 0],
+        "system_COP": operation_results[:, 9],
+        "GHG_tonCO2": operation_results[:, 8],
         "Capex_a_USD": Capex_a_USD[:, 0],
         "Capex_total_USD": Capex_total_USD[:, 0],
         "Opex_fixed_USD": Opex_a_fixed_USD[:, 0],
         "Opex_var_USD": operation_results[:, 7],
-        "GHG_tonCO2": operation_results[:, 8],
         "TAC_USD": TAC_USD[:, 1],
-        "Qh_sys_release_Wh": Qh_sys_release_Wh[:, 0],
-        "NG_sys_req_Wh": NG_sys_req_Wh[:, 0],
-        "E_sys_req_Wh": E_sys_req_Wh[:, 0],
         "Best configuration": Best[:, 0],
-        "system_COP": operation_results[:, 9],
+        "Message": Message[:, 0]
     }
     performance_results_df = pd.DataFrame(performance_results)
     performance_results_df.to_csv(
@@ -566,69 +567,34 @@ def compile_TAC_CO2_Prim(Capex_a_USD, Opex_a_fixed_USD, number_of_configurations
     return Opex_a_USD, TAC_USD, TotalCO2, TotalPrim
 
 
-def rank_results(TAC_USD, TotalCO2, TotalPrim, number_of_configurations):
+def single_objective_ranking(utility_function, number_of_configurations):
     """
-    This function chooses the best configuration according to the configurations' ranking in terms of cost and
-    emissions.
-    If different configurations have the same rank, just across different objective functions:
-    e.g. config 1: 1st in emissions, 2nd in cost
-         config 2: 2nd in emissions, 1st in cost
-    the function chooses the config that has the lowest value in each of the objective functions, relative to
-    the mean of the all configs:
-    e.g. If config 1: 41000 kgCO2 per year and the mean across all configs is 50000 kgCO2 per year the relative
-         emissions value of config 1 would be 82%.
-         If config 2: 44000 kgCO2 per year its relative emissions value would be 88%.
-         Let's assume the relative cost values of config 1 and 2 are 78% and 75% respectively.
-         The compounded relative objective value (cROV) of config 1 would therefore be 160%,
-         the compounded relative objective value of config 2 would be 163%.
-         -> config 1 would be chosen as the best
-    In the rare case where multiple configurations have the exact same compounded relative objective value
-    one of them is selected at random.
+    just rank by a utilitz function. Or an Arraz storing the values to rank for. Onlz one objective possible
     """
 
     # sort TAC_USD and TotalCO2
-    CostsS = TAC_USD[np.argsort(TAC_USD[:, 1])]
-    CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
+    utility_function_sorted = utility_function[np.argsort(utility_function[:, 1])]
     # initialize optSearch array
-    optSearch = np.empty(number_of_configurations)
-    number_of_objectives = 2  # TAC_USD and TotalCO2
-    optSearch.fill(number_of_objectives)
+    optSearch = np.zeros((number_of_configurations, 1))
+    Best = np.zeros((number_of_configurations, 1))
+    Message = np.full((number_of_configurations, 1), ["Possible Configuration"])
     # rank results
     rank = 0
     BestFound = False
     indexBest = None
-    Best = np.zeros((number_of_configurations, 1))
     while not BestFound and rank < number_of_configurations:
-        optSearch[int(CostsS[rank][0])] -= 1
-        optSearch[int(CO2S[rank][0])] -= 1
-
+        optSearch[int(utility_function_sorted[rank][0])] -= 1
         if np.count_nonzero(optSearch) != number_of_configurations:
             BestFound = True
-            # in case only one best ranked configuration exists choose that one
-            if np.count_nonzero(optSearch) == number_of_configurations - 1:
-                indexBest = np.where(optSearch == 0)[0][0]
-            # in case different configurations have the same rank, evaluate their compounded relative objective values
-            else:
-                indexesSharedBest = np.where(optSearch == 0)[0]
-                relTAC_USD = TAC_USD[:, 1] / np.mean(TAC_USD[:, 1])
-                relTotalCO2 = TotalCO2[:, 1] / np.mean(TotalCO2[:, 1])
-                relTAC_USDSharedBest = relTAC_USD[indexesSharedBest]
-                relTotalCO2SharedBest = relTotalCO2[indexesSharedBest]
-                cROVsSharedBest = relTAC_USDSharedBest + relTotalCO2SharedBest
-                locBestCROV = np.where(cROVsSharedBest == np.min(cROVsSharedBest))[0]
-                if len(locBestCROV) == 1:
-                    indexBest = indexesSharedBest[locBestCROV[0]]
-                else:
-                    freeChoice = random.randint(0, len(locBestCROV) - 1)
-                    indexBest = indexesSharedBest[locBestCROV[freeChoice]]
-
+            indexBest = np.where(optSearch)[0][0]
         rank += 1
     # get the best option according to the ranking.
     if indexBest is not None:
         Best[indexBest][0] = 1
+        Message[indexBest][0] = "Best configuration ranked according to TAC or Total anualized Costs"
     else:
         raise ('indexBest not found, please check the ranking process or report this issue on GitHub.')
-    return Best, indexBest
+    return Best, Message, indexBest
 
 
 def initialize_result_tables_for_supply_configurations(Qc_nom_SCU_W):
