@@ -460,8 +460,8 @@ class Domain(object):
     def _identify_time_steps(self, sampling_dates):
         """Identify the time steps for the given date"""
         weather_dates = [date_datetime.date() for date_datetime in self.weather['date']]
-        sampling_time_steps = {sampling_date:
-                                   [index for index, date in enumerate(weather_dates) if date == sampling_date]
+        sampling_time_steps = {sampling_date: [index for index, date in enumerate(weather_dates)
+                                               if date.day == sampling_date.day and date.month == sampling_date.month]
                                for sampling_date in sampling_dates}
         return sampling_time_steps
 
