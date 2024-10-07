@@ -363,6 +363,6 @@ class OptimizationTracker(object):
     def print_evolutions(self):
         """ Print the contents of all tracker dataframes to their respective files """
 
-        self.non_dom_networks.to_csv(self.debug_locator.get_new_optimization_debugging_network_tracker_file(), index=False)
-        self.non_dom_supsys_combinations.to_csv(self.debug_locator.get_new_optimization_debugging_supply_system_tracker_file(), index=False)
-        self.non_dom_ind_fitnesses.to_csv(self.debug_locator.get_new_optimization_debugging_fitness_tracker_file(), index=False)
+        self.non_dom_networks.to_csv(self.debug_locator.get_centralized_optimization_debugging_network_tracker_file(), index=False)
+        self.non_dom_supsys_combinations.to_csv(self.debug_locator.get_centralized_optimization_debugging_supply_system_tracker_file(), index=False)
+        self.non_dom_ind_fitnesses.to_csv(self.debug_locator.get_centralized_optimization_debugging_fitness_tracker_file(), index=False)

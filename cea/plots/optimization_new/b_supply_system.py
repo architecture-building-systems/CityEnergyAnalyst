@@ -59,8 +59,8 @@ class SupplySystemGraphInfo(object):
     def _get_data(self, energy_system_id, supply_system_id):
         """ Import the supply system data """
         supply_system_file = \
-            SupplySystemGraphInfo._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
-                                                                                           supply_system_id)
+            SupplySystemGraphInfo._locator.get_centralized_optimization_optimal_supply_system_file(energy_system_id,
+                                                                                                   supply_system_id)
         raw_supply_system_data = pd.read_csv(supply_system_file)
         for column in ["Main_energy_carrier_code", "Other_inputs", "Other_outputs"]:
             raw_supply_system_data[column] = pd.Series([ecs.split(', ')
@@ -595,9 +595,9 @@ def main():
 
     # Load the supply system data
     des_supply_systems_dict = {}
-    des_solution_folders = locator.get_new_optimization_des_solution_folders()
+    des_solution_folders = locator.get_centralized_optimization_des_solution_folders()
     for district_energy_system in des_solution_folders:
-        supply_systems = locator.get_new_optimization_optimal_supply_system_ids(district_energy_system)
+        supply_systems = locator.get_centralized_optimization_optimal_supply_system_ids(district_energy_system)
         des_supply_systems_dict[district_energy_system] = supply_systems
 
     # Assign relevant information to the SupplySystemGraphInfo class variables
