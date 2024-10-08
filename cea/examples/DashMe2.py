@@ -52,7 +52,7 @@ def embodiedUpdated(locator, config):
 
 
     # intialmain(config)
-    # archMapmain(config)
+    archMapmain(config)
     # zmain(config)
     # surrmain(config)
     # termain(config)
@@ -64,7 +64,7 @@ def embodiedUpdated(locator, config):
     # radmain(config)
     # demandmain(config)
     # emissionmain(config)
-    operationmain(config)
+    # operationmain(config)
 
     pass
 def main(config):
