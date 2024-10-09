@@ -9,6 +9,7 @@ import cea.interfaces.dashboard.api.project as project
 import cea.interfaces.dashboard.api.tools as tools
 import cea.interfaces.dashboard.api.weather as weather
 import cea.interfaces.dashboard.api.geometry as geometry
+import cea.interfaces.dashboard.api.map_layers as map_layers
 
 router = APIRouter()
 
@@ -21,3 +22,4 @@ router.include_router(project.router, prefix="/project")
 router.include_router(tools.router, prefix="/tools")
 router.include_router(weather.router, prefix="/weather")
 router.include_router(geometry.router, prefix="/geometry")
+router.include_router(map_layers.router, prefix="/map_layers")
