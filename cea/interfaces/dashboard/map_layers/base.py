@@ -55,7 +55,9 @@ class MapLayer(abc.ABC):
                 locator_callable = locator_descriptor
                 if len(locator_descriptor) > 1:
                     func, args = locator_descriptor
-                    locator_callable = lambda: func(*args)
+                    def _callable():
+                        return func(*args)
+                    locator_callable = _callable
 
                 yield locator_callable()
 
