@@ -10,9 +10,9 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer
 
 class SolarPotentialsMapLayer(MapLayer):
     category = "solar-potentials"
-    name = "solar-potentials"
-    label = "Solar potentials"
-    description = "Solar potentials of building surfaces"
+    name = "solar-irradiation"
+    label = "Solar irradiation [kWh/m2]"
+    description = "Solar irradiation of building surfaces"
 
     @property
     def input_files(self):
@@ -53,7 +53,11 @@ class SolarPotentialsMapLayer(MapLayer):
         # Format for each data point: {"position":[0,0,0],"normal":[0,0,0],"color":[0,0,0]}
         output = {
             "data": [],
-            "properties": {}
+            "properties": {
+                "name": self.name,
+                "label": self.label,
+                "description": self.description,
+            }
         }
 
         value_min, value_max = 10e10, 0
