@@ -27,6 +27,11 @@ def main(config):
         settings.project_root = config.server.project_root
         config_dict["project_root"] = config.server.project_root
 
+        # Ensure project root exists before starting the server
+        if settings.project_root != "" and not os.path.exists(settings.project_root):
+            raise ValueError(f"The path `{settings.project_root}` does not exist. "
+                             f"Make sure project_root in config is set correctly.")
+
     print(f"Using settings: {settings}")
 
     try:
