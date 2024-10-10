@@ -1,4 +1,7 @@
+import importlib
+import inspect
 import os
+from typing import List, Any, Type
 
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -21,3 +24,27 @@ def secure_path(path: str) -> str:
             raise InvalidPathError("Path is outside of project root")
 
     return real_path
+
+
+def find_subclasses_in_path(parent_class: Type, path: str) -> List[Any]:
+    classes_found = []
+
+    # Walk through all files in the directory and subdirectories
+    for root, _, files in os.walk(path):
+        for file in files:
+            if file.endswith('.py') and not file.startswith('__'):
+                module_path = os.path.join(root, file)
+                module_name = os.path.splitext(file)[0]
+
+                # Load the module from file path
+                spec = importlib.util.spec_from_file_location(module_name, module_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                # Inspect all members of the module to find classes
+                for name, obj in inspect.getmembers(module):
+                    # Check if the member is a class and is a subclass of the parent class
+                    if inspect.isclass(obj) and issubclass(obj, parent_class) and obj is not parent_class:
+                        classes_found.append(obj)
+
+    return classes_found
