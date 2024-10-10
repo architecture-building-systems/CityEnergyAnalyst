@@ -33,9 +33,9 @@ class PVPotentialPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsP
         self.panel_type = self.parameters['type-pvpanel']
         # self.input_files = [(self.locator.PV_totals, [self.panel_type])] + [(self.locator.PV_results, [building])
         #                                                                     for building in self.buildings]
-        self.input_files = [(self.locator.PV_totals, [self.panel_type])]
-        # FIXME: Remove this
-        self.buildings = []
+        self.input_files = [(self.locator.get_total_demand, []), (self.locator.PV_totals, [self.panel_type])]
+
+        self.buildings = self.locator.get_zone_building_names()
 
     def calc_titles(self):
         if self.normalization == "gross floor area":
