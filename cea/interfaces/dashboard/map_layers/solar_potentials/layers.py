@@ -35,8 +35,14 @@ class SolarPotentialsMapLayer(MapLayer):
             'hour': {
                 "type": "integer",
                 "selector": "time-series",
-                "description": "Hour to generate the data",
+                "description": "Period to generate the data",
                 "default": 4380
+            },
+            'threshold': {
+                "type": "array",
+                "selector": "threshold",
+                "description": "Thresholds for the layer",
+                "label": "Annual Solar Irradiation Threshold"
             },
         }
 
@@ -60,14 +66,15 @@ class SolarPotentialsMapLayer(MapLayer):
             }
         }
 
-        value_min, value_max = 10e10, 0
+        # Convert coordinates to WGS84
+        with fiona.open(locator.get_zone_geometry()) as src:
+            transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
+
+        total_min, total_max = 10e10, 0
+        period_min, period_max = 10e10, 0
         for building in buildings:
             metadata = pd.read_csv(locator.get_radiation_metadata(building)).set_index('SURFACE')
             building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building))
-
-            # Convert coordinates to WGS84
-            with fiona.open(locator.get_zone_geometry()) as src:
-                transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
 
             # Get terrain elevation
             if "terrain_elevation" in metadata.columns:
@@ -75,9 +82,12 @@ class SolarPotentialsMapLayer(MapLayer):
             else:
                 terrain_elevation = 0
 
+            total_min = min(total_min, building_sensors.min(numeric_only=True).min())
+            total_max = max(total_max, building_sensors.max(numeric_only=True).max())
+
             sensor_values = building_sensors.iloc[hour]
-            value_min = min(value_min, sensor_values.min())
-            value_max = max(value_max, sensor_values.max())
+            period_min = min(period_min, sensor_values.min())
+            period_max = max(period_max, sensor_values.max())
             for sensor, value in sensor_values.items():
                 sensor_metadata = metadata.loc[sensor]
                 sensor_position = transformer.transform(sensor_metadata['Xcoor'], sensor_metadata['Ycoor'],
@@ -90,7 +100,9 @@ class SolarPotentialsMapLayer(MapLayer):
                 }
                 output['data'].append(sensor_output)
 
-        output['properties']['value_min'] = float(value_min)
-        output['properties']['value_max'] = float(value_max)
+        output['properties']['total_min'] = float(total_min)
+        output['properties']['total_max'] = float(total_max)
+        output['properties']['period_min'] = float(period_min)
+        output['properties']['period_max'] = float(period_max)
 
         return output
