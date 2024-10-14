@@ -4,6 +4,7 @@ import fiona
 import pandas as pd
 from pyproj import CRS, Transformer
 
+from cea.config import Parameter
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers.base import MapLayer
 
@@ -42,7 +43,8 @@ class SolarIrradianceMapLayer(MapLayer):
                 "type": "array",
                 "selector": "threshold",
                 "description": "Thresholds for the layer",
-                "label": "Annual Solar Irradiation Threshold"
+                "label": "Annual Solar Irradiation Threshold",
+                "range": "total"
             },
         }
 
@@ -100,9 +102,17 @@ class SolarIrradianceMapLayer(MapLayer):
                 }
                 output['data'].append(sensor_output)
 
-        output['properties']['total_min'] = float(total_min)
-        output['properties']['total_max'] = float(total_max)
-        output['properties']['period_min'] = float(period_min)
-        output['properties']['period_max'] = float(period_max)
+        output['properties']['range'] = {
+            'total': {
+                'label': 'Total Range',
+                'min': float(total_min),
+                'max': float(total_max)
+            },
+            'period': {
+                'label': 'Period Range',
+                'min': float(period_min),
+                'max': float(period_max)
+            }
+        }
 
         return output
