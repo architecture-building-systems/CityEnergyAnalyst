@@ -8,10 +8,10 @@ from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers.base import MapLayer
 
 
-class SolarPotentialsMapLayer(MapLayer):
+class SolarIrradianceMapLayer(MapLayer):
     category = "solar-potentials"
-    name = "solar-irradiation"
-    label = "Solar irradiation [kWh/m2]"
+    name = "solar-irradiance"
+    label = "Solar irradiance [kW/m2]"
     description = "Solar irradiation of building surfaces"
 
     @property
