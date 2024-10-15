@@ -37,3 +37,13 @@ async def generate_map_layer(params: LayerParams, layer_category: str, layer_nam
         raise HTTPException(status_code=400, detail="Missing input files")
 
     return layer.generate_output()
+
+
+@router.post('/{layer_category}/{layer_name}/check')
+async def check_map_layer(params: LayerParams, layer_category: str, layer_name: str):
+    layer_class = load_layer(layer_name, layer_category)
+
+    try:
+        layer = layer_class(project=params.project, parameters=params.parameters)
+    except MissingInputDataException:
+        raise HTTPException(status_code=400, detail="Missing input files")
