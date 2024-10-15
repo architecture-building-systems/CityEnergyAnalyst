@@ -4,7 +4,6 @@ import fiona
 import pandas as pd
 from pyproj import CRS, Transformer
 
-from cea.config import Parameter
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers.base import MapLayer
 
