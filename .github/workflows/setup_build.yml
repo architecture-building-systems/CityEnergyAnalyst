@@ -136,9 +136,9 @@ jobs:
         run: |
           cd gui
           mkdir -p ./dependencies/arm64
-          curl -Ls https://micro.mamba.pm/api/micromamba/osx-arm64/latest | tar -xvj -C ./dependencies/arm64 --strip-components=1 bin/micromamba
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-arm64/1.5.10 | tar -xvj -C ./dependencies/arm64 --strip-components=1 bin/micromamba
           mkdir -p ./dependencies/x64
-          curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/latest | tar -xvj -C ./dependencies/x64 --strip-components=1 bin/micromamba 
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/1.5.10 | tar -xvj -C ./dependencies/x64 --strip-components=1 bin/micromamba 
 
       - name: Save Apple API Key secret to file
         env:
