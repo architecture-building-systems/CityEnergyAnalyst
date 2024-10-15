@@ -39,12 +39,17 @@ class SolarIrradianceMapLayer(MapLayer):
                 "description": "Period to generate the data",
                 "default": 4380
             },
+            # TODO: Move to separate property e.g. data filter parameters
             'threshold': {
                 "type": "array",
                 "selector": "threshold",
                 "description": "Thresholds for the layer",
                 "label": "Annual Solar Irradiation Threshold",
-                "range": "total"
+                "range": "total",
+                "default": {
+                    "min": 0,
+                    "max": 1000
+                }
             },
         }
 
