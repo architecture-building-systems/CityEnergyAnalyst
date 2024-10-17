@@ -32,10 +32,15 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
 
 def ensure_cpg_file(shapefile_path):
     cpg_file_path = shapefile_path.split('.shp', 1)[0] + '.CPG'
-    cpg_file = open(cpg_file_path, "w")
-    cpg_file.write("ISO-8859-1")
-    cpg_file.close()
-
+    with open(cpg_file_path, "r") as cpg_file:
+        content = cpg_file.read()
+        if content == "ISO-8859-1":
+            # already set to ISO-8859-1, nothing to do
+            return
+        
+    with open(cpg_file_path, "w") as cpg_file:
+        cpg_file.write("ISO-8859-1")
+        cpg_file.close()
 
 def raster_to_WSG_and_UTM(raster_path, lat, lon):
 
