@@ -60,11 +60,11 @@ def embodiedUpdated(locator, config):
     # mainweather(config)
 
     # archMapmain(config)
-    # schedulemain(config)
     # radmain(config)
+    # schedulemain(config)
     # demandmain(config)
     emissionmain(config)
-    # operationmain(config)
+    operationmain(config)
 
     pass
 def main(config):
