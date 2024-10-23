@@ -64,7 +64,7 @@ def embodiedUpdated(locator, config):
     # schedulemain(config)
     # demandmain(config)
     emissionmain(config)
-    operationmain(config)
+    # operationmain(config)
 
     pass
 def main(config):
