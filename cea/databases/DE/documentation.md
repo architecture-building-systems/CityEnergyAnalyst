@@ -166,7 +166,7 @@ DIN EN 16789-1:2019 presents indoor environmental input parameters for design an
 |---   |---   |---  |
 | `Occ_m2P` | Occupancy density (refers to “code”) | According to Sagner: 48 m2 per person for house owner (SFH)  and 35m2 per Person in rented flats (MFH)  |
 | `El_Wm2` |  Peak specific electrical load due to artificial lighting (refers to “code”)| DIN V 18599-4 Anhang B (Abbildung B.12) =  6,4 W/m²  |
-| `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany [^BDEW] |
+| `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany, 42% of 121 lpd [^BDEW] |
 | `Vww_ldp` | Peak specific hot water consumption (refers to “code”)| 10% of `Vww` (educated guess) |
 
 ##### Use type properties - indoor comfort
@@ -175,8 +175,8 @@ DIN EN 16789-1:2019 presents indoor environmental input parameters for design an
 |---   |---   |---  |
 | `Tcs_set_C` |   Setpoint temperature for cooling system (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.3 Höchstwert für Kühlung in der Sommerperiode Wohnen Kat. II : 26°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegung Kühlfall|
 | `Tcs_setb_C` |  Setback point of temperature for cooling system (refers to "code")  | DIN V 18599-10:2018-09 Tab. 4 |
-| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | DIN EN 16798-1:2022-03 Tab.NA.3  Wohnen Kat. I: 20°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall |
-| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K -> 16°C|
+| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | [^statista] 20.9 °C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall |
+| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K -> 17°C|
 | `Ve_lsp` | Minimum outdoor air ventilation rate per person for Air Quality (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.6 Kat. II - I  (erhöht auf Grdl. VDI Empfehlung zu 30 m³/h |
 
 ##### SCHEDULES
@@ -399,6 +399,7 @@ In alphabetic order:
 
 ## References
 
+[^statista] https://de.statista.com/statistik/daten/studie/1072340/umfrage/raumtemperatur-in-haushalten-in-deutschland-oesterreich-und-der-schweiz/. Accessed on 04.11.2024
 [^tab]: Loga, Tobias, Britta Stein, and Nikolaus Diefenbach. "TABULA building typologies in 20 European countries—Making energy-related features of residential building stocks comparable." _Energy and Buildings_ 132 (2016): 4-12. <https://doi.org/10.1016/j.enbuild.2016.06.094>
 [^tab-com]: Loga, Tobias, and Nikolaus Diefenbach. "TABULA Calculation Method-Energy Use for Heating and Domestic Hot Water." _Germany: Institut Wohnen und Umwelt GmbH_ (2013). Available at <https://episcope.eu/building-typology/tabula-structure/calculation/>. Last accessed 01.12.2023.
 [^cea-desc]: CEA documentation for intermediate input methods.  Available at <https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/0c483f4553c2d53c866cd8ce4f1ed278cf7ace3b/docs/intermediate_input_methods.rst#L45>
@@ -412,5 +413,5 @@ In alphabetic order:
 [^IWU-NW-data]: Github repository "Nichtwohngebaeude-Typologie-Deutschland" of IWUGERMANY. Available at: <https://github.com/IWUGERMANY/Nichtwohngebaeude-Typologie-Deutschland>.
 [^KEA]: KEA-BW (2022): Technikkatalog zur Kommunalen Wärmeplanung.  Available at <https://www.kea-bw.de/fileadmin/user_upload/Waermewende/Wissensportal/Technikkatalog_Tabellen_v1.1.zip>. Last accessed 26.8.23.
 [^US]: US INFLATION CALCULATOR. Available at <https://www.usinflationcalculator.com/>. Last accessed 26.8.23.
-[^BDEW] : Bundesverbands der Energie- und Wasserwirtschaft
+[^BDEW] : Bundesverbands der Energie- und Wasserwirtschaft. https://www.bdew.de/service/daten-und-grafiken/trinkwasserverwendung-im-haushalt/, accessed on 04.11.2024
 [^Sagner]: Pekka Sagner. "IW-Kurzbericht 11: Wer wohnt wie groß?" Institut der deutschen Wirtschaft. 2021. Köln.
