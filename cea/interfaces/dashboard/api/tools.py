@@ -88,8 +88,14 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
     return 'Success'
 
 
-@router.get('/{tool_name}/check')
-async def check_tool_inputs(config: CEAConfig, tool_name: str):
+@router.post('/{tool_name}/check')
+async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+    # Set config parameters
+    for parameter in parameters_for_script(tool_name, config):
+        if parameter.name in payload:
+            value = payload[parameter.name]
+            parameter.set(value)
+
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
     schema_data = schemas(config.plugins)
 
