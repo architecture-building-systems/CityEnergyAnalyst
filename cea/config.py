@@ -940,8 +940,10 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         if isinstance(value, str):
             raise ValueError(f"Bad value for encode of parameter {self.name}")
+
+        valid_choices = set(self._choices)
         for choice in value:
-            if str(choice) not in self._choices:
+            if str(choice) not in valid_choices:
                 raise ValueError(f"Invalid parameter value {value} for {self.name}, choose from: {self._choices}")
         return ', '.join(map(str, value))
 
@@ -949,7 +951,8 @@ class MultiChoiceParameter(ChoiceParameter):
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
-        return [choice for choice in choices if choice in self._choices]
+        valid_choices = set(self._choices)
+        return [choice for choice in choices if choice in valid_choices]
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
