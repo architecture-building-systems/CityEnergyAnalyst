@@ -677,7 +677,16 @@ class ConnectivityVector(object):
         :type domain: <Domain>-class object
         """
         # create a list of tuples that contain the connectivity vectors that are to be corrected
-        ConnectivityVector._overlap_correction_method = domain.config.optimization_new.networks_overlap_correction_method
+        overlap_correction_method = domain.config.optimization_new.networks_overlap_correction_method
+
+        if isinstance(overlap_correction_method, str):
+            if overlap_correction_method == 'None':
+                ConnectivityVector._overlap_correction_method = None
+            else:
+                ConnectivityVector._overlap_correction_method = overlap_correction_method
+        else:
+            raise ValueError("The overlap correction method needs to be a string. "
+                             f"Tried to assign {overlap_correction_method}.")
 
         # create a dictionary that associates the building's location to the building's identifier
         if ConnectivityVector._overlap_correction_method:
