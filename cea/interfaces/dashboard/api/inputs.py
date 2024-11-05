@@ -128,15 +128,17 @@ async def get_all_inputs(config: CEAConfig):
     def fn():
         store = get_building_properties(config)
         store['geojsons'] = {}
-        store['connected_buildings'] = {}
+        store['connected_buildings'] = {'dc': [], 'dh': []}
         store['crs'] = {}
         store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
             locator.get_surroundings_geometry())
         store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
         store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
-        store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
-        store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
+        # store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
+        # store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
+        store['geojsons']['dc'] = None
+        store['geojsons']['dh'] = None
         store['colors'] = COLORS
         store['schedules'] = {}
 
