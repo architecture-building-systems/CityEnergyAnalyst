@@ -14,6 +14,7 @@ import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
+import re
 
 import cea.config
 import cea.inputlocator
@@ -473,6 +474,17 @@ def thermal_network_main(locator, thermal_network, processes=1):
 
     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network)
+    # Function to extract numeric part from column names
+    def extract_numeric_part(column_name):
+        # Find the first sequence of digits in the string
+        match = re.search(r'\d+', column_name)
+        return int(match.group()) if match else float('inf')  # Return inf if no digits are found
+
+    # Sort the columns based on the numeric part again to assure the order of the pipes in the DataFrame
+    sorted_columns = sorted(thermal_network.pipe_properties.columns, key=extract_numeric_part)
+
+    # Reorder the DataFrame according to the sorted column names
+    thermal_network.pipe_properties = thermal_network.pipe_properties[sorted_columns]
 
     # merge pipe properties to edge_df and then output as .csv
     thermal_network.edge_df = thermal_network.edge_df.merge(thermal_network.pipe_properties.T, left_index=True,
