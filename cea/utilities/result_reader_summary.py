@@ -94,7 +94,7 @@ def exec_read_and_summarise(cea_scenario):
 
     # read and summarise: pv
     pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
-    pv_database_df = pd.read_excel(pv_database_path, sheet_name="PV")
+    pv_database_df = pd.read_excel(pv_database_path, sheet_name="PHOTOVOLTAIC_PANELS")
     panel_types = list(set(pv_database_df['code']))
     for panel_type in panel_types:
         pv_path = os.path.join(cea_scenario, 'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv'.format(panel_type=panel_type))

@@ -851,7 +851,7 @@ def main(config):
 
     project_path = config.general.project
     scenario_name = config.general.scenario_name
-    project_boolean = config.result_reader_analysis.all_scenarios
+    project_boolean = config.result_reader_analytics.all_scenarios
 
     # deciding to run all scenarios or the current the scenario only
     if project_boolean:
@@ -875,7 +875,7 @@ def main(config):
 
     # write the results
     if project_boolean:
-        analysis_project_path = os.path.join(config.general.project, 'result_analysis.csv')
+        analysis_project_path = os.path.join(config.general.project, 'result_analytics.csv')
         analysis_project_df.to_csv(analysis_project_path, index=False, float_format='%.2f')
 
     else:
