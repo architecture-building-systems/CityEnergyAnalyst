@@ -509,7 +509,7 @@ def exec_read_and_analyse(cea_scenario):
     :type cea_scenario: file path
     Returns:
     -------
-    analysis_df: pd.DataFrame
+    analytics_df: pd.DataFrame
         A dataframe of the metrics at the top of this script.
 
     """
@@ -545,8 +545,8 @@ def exec_read_and_analyse(cea_scenario):
 
 
     # create an empty DataFrame to store all the results
-    analysis_results_dict = dict()
-    analysis_results_dict['scenario_name'] = cea_scenario
+    analytics_results_dict = dict()
+    analytics_results_dict['scenario_name'] = cea_scenario
 
     # intialize the time periods
     # Todo this should be a config option?
@@ -589,46 +589,46 @@ def exec_read_and_analyse(cea_scenario):
 
     time_period_options_generation_intensity = time_period_options_yield
 
-    # not found message to be reflected in the analysis DataFrame
+    # not found message to be reflected in the analytics DataFrame
     na = float('Nan')
 
     # metrics: EUI or energy demand-related
     try:
         demand_buildings_path = os.path.join(cea_scenario, 'outputs/data/demand/Total_demand.csv')
         cea_result_total_demand_buildings_df = pd.read_csv(demand_buildings_path)
-        analysis_results_dict['EUI - grid electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['GRID_MWhyr'].sum() / \
+        analytics_results_dict['EUI - grid electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['GRID_MWhyr'].sum() / \
                                                             cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df[
+        analytics_results_dict['EUI - enduse electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df[
                                                                   'E_sys_MWhyr'].sum().sum() / \
                                                               cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - cooling demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['QC_sys_MWhyr'].sum() / \
+        analytics_results_dict['EUI - cooling demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['QC_sys_MWhyr'].sum() / \
                                                           cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qcs_sys_MWhyr'].sum() / \
+        analytics_results_dict['EUI - space cooling demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qcs_sys_MWhyr'].sum() / \
                                                                 cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - heating demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['QH_sys_MWhyr'].sum() / \
+        analytics_results_dict['EUI - heating demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['QH_sys_MWhyr'].sum() / \
                                                           cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - space heating demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qhs_MWhyr'].sum() / \
+        analytics_results_dict['EUI - space heating demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qhs_MWhyr'].sum() / \
                                                                 cea_result_total_demand_buildings_df['GFA_m2'].sum() * 1000
-        analysis_results_dict['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qww_MWhyr'].sum() / \
+        analytics_results_dict['EUI - domestic hot water demand [kWh/m2/yr]'] = cea_result_total_demand_buildings_df['Qww_MWhyr'].sum() / \
                                                                      cea_result_total_demand_buildings_df[
                                                                          'GFA_m2'].sum() * 1000
 
     except FileNotFoundError:
-        analysis_results_dict['EUI - grid electricity [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - enduse electricity [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - cooling demand [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - space cooling demand [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - heating demand [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - space heating demand [kWh/m2/yr]'] = na
-        analysis_results_dict['EUI - domestic hot water demand [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - grid electricity [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - enduse electricity [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - cooling demand [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - space cooling demand [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - heating demand [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - space heating demand [kWh/m2/yr]'] = na
+        analytics_results_dict['EUI - domestic hot water demand [kWh/m2/yr]'] = na
 
         pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
         pv_database_df = pd.read_excel(pv_database_path, sheet_name="PHOTOVOLTAIC_PANELS")
         panel_types = list(set(pv_database_df['code']))
         for panel_type in panel_types:
-            analysis_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
-            analysis_results_dict[f'PV_{panel_type}_self_consumption[-]'] = na
-            analysis_results_dict[f'PV_{panel_type}_energy_sufficiency[-]'] = na
+            analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
+            analytics_results_dict[f'PV_{panel_type}_self_consumption[-]'] = na
+            analytics_results_dict[f'PV_{panel_type}_energy_sufficiency[-]'] = na
 
     try:
 
@@ -643,11 +643,11 @@ def exec_read_and_analyse(cea_scenario):
                 pv_buildings_path = os.path.join(cea_scenario,
                                                  f'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv')
                 cea_result_pv_buildings_df = pd.read_csv(pv_buildings_path)
-                analysis_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = cea_result_pv_buildings_df['E_PV_gen_kWh'].sum() / (
+                analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = cea_result_pv_buildings_df['E_PV_gen_kWh'].sum() / (
                             cea_result_total_demand_buildings_df['GRID_MWhyr'].sum() * 1000)
 
             except FileNotFoundError:
-                analysis_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
 
             pv_hourly_path = os.path.join(cea_scenario,
                                           f'outputs/data/potentials/solar/PV_{panel_type}_total.csv')
@@ -655,17 +655,17 @@ def exec_read_and_analyse(cea_scenario):
             for time_period in time_period_options_autarky:
                 try:
                     cea_result_pv_hourly_df = pd.read_csv(pv_hourly_path)
-                    analysis_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
+                    analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
                         cea_result_pv_hourly_df['E_PV_gen_kWh'],
                         cea_result_demand_hourly_df['district_GRID_kWh'],
                         time_period=time_period)
-                    analysis_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = calc_self_sufficiency(
+                    analytics_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = calc_self_sufficiency(
                         cea_result_pv_hourly_df['E_PV_gen_kWh'],
                         cea_result_demand_hourly_df['district_GRID_kWh'],
                         time_period=time_period)
                 except FileNotFoundError:
-                    analysis_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
-                    analysis_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
+                    analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
+                    analytics_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
 
 
     except FileNotFoundError:
@@ -687,11 +687,11 @@ def exec_read_and_analyse(cea_scenario):
             cea_result_df = pd.read_csv(pv_path)
             system_area_m2 = cea_result_df['Area_PV_m2']
             max_kw = (module_capacity_kWp / module_area_m2) * system_area_m2
-            analysis_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['E_PV_gen_kWh'],
+            analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['E_PV_gen_kWh'],
                                                                                       max_kw)
 
         except FileNotFoundError:
-            analysis_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = na
+            analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = na
 
         pv_hourly_path = os.path.join(cea_scenario,
                                       f'outputs/data/potentials/solar/PV_{panel_type}_total.csv')
@@ -704,12 +704,12 @@ def exec_read_and_analyse(cea_scenario):
                 # capacity_kWp
                 max_kw = (module_capacity_kWp / module_area_m2) * system_area_m2
 
-                analysis_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = calc_specific_yield(
+                analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = calc_specific_yield(
                     cea_result_pv_hourly_df['E_PV_gen_kWh'],
                     max_kw,
                     time_period=time_period)
             except FileNotFoundError:
-                analysis_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = na
     # metrics: pv impact
     pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
     pv_database_df = pd.read_excel(pv_database_path, sheet_name="PHOTOVOLTAIC_PANELS")
@@ -725,9 +725,9 @@ def exec_read_and_analyse(cea_scenario):
             system_area_m2 = cea_result_df['Area_PV_m2'].sum()
             system_impact_kgco2 = module_impact_kgco2m2 * system_area_m2
 
-            analysis_results_dict[f'PV_{panel_type}_system_emissions[kgCO2]'] = system_impact_kgco2
+            analytics_results_dict[f'PV_{panel_type}_system_emissions[kgCO2]'] = system_impact_kgco2
         except:
-            analysis_results_dict[f'PV_{panel_type}_system_emissions[kgCO2]'] = na
+            analytics_results_dict[f'PV_{panel_type}_system_emissions[kgCO2]'] = na
 
     # metrics: pv generation intensity
     pv_database_path = os.path.join(cea_scenario, 'inputs/technology/components/CONVERSION.xlsx')
@@ -750,18 +750,18 @@ def exec_read_and_analyse(cea_scenario):
 
                 cea_result_pv_hourly_df = pd.read_csv(pv_hourly_path)
 
-                analysis_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
+                analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
                     cea_result_pv_hourly_df['E_PV_gen_kWh'],
                     cea_result_demand_hourly_df['district_GRID_kWh'],
                     time_period=time_period)
-                analysis_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = calc_self_sufficiency(
+                analytics_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = calc_self_sufficiency(
                     cea_result_pv_hourly_df['E_PV_gen_kWh'],
                     cea_result_demand_hourly_df['district_GRID_kWh'],
                     time_period=time_period)
 
             except FileNotFoundError:
-                analysis_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
-                analysis_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
 
         for time_period in time_period_options_generation_intensity:
             try:
@@ -776,68 +776,68 @@ def exec_read_and_analyse(cea_scenario):
                                                                                  lifetime_generation_kWh.sum(axis=0),
                                                                                  time_period=time_period)
 
-                analysis_results_dict[
+                analytics_results_dict[
                     f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = module_generation_intensity_kgco2kwh
 
             except FileNotFoundError:
-                analysis_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
-                analysis_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_energy_sufficiency_{time_period}[-]'] = na
 
     # metrics: district heating plant - thermal
     try:
         dh_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-networkDH__plant_thermal_load_kW.csv')
         cea_result_df = pd.read_csv(dh_plant_thermal_path)
-        analysis_results_dict['DH_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'],
+        analytics_results_dict['DH_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'],
                                                                           cea_result_df['thermal_load_kW'].max())
 
     except FileNotFoundError:
-        analysis_results_dict['DH_plant_capacity_factor[-]'] = na
+        analytics_results_dict['DH_plant_capacity_factor[-]'] = na
 
     # metrics: district heating plant - pumping
     try:
         dh_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-networkDH__plant_pumping_load_kW.csv')
         cea_result_df = pd.read_csv(dh_plant_pumping_path)
-        analysis_results_dict['DH_pump_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['pressure_loss_total_kW'],
+        analytics_results_dict['DH_pump_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['pressure_loss_total_kW'],
                                                                          cea_result_df['pressure_loss_total_kW'].max())
 
     except FileNotFoundError:
-        analysis_results_dict['DH_pump_capacity_factor[-]'] = na
+        analytics_results_dict['DH_pump_capacity_factor[-]'] = na
 
     # metrics: district cooling plant - thermal
     try:
         dc_plant_thermal_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DC__plant_thermal_load_kW.csv')
         cea_result_df = pd.read_csv(dc_plant_thermal_path)
-        analysis_results_dict['DC_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'],
+        analytics_results_dict['DC_plant_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['thermal_load_kW'],
                                                                           cea_result_df['thermal_load_kW'].max())
 
     except FileNotFoundError:
-        analysis_results_dict['DC_plant_capacity_factor[-]'] = na
+        analytics_results_dict['DC_plant_capacity_factor[-]'] = na
 
     # metrics: district cooling plant - pumping
     try:
         dc_plant_pumping_path = os.path.join(cea_scenario, 'outputs/data/thermal-network/DC__plant_pumping_load_kW.csv')
         cea_result_df = pd.read_csv(dc_plant_pumping_path)
-        analysis_results_dict['DC_pump_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['pressure_loss_total_kW'],
+        analytics_results_dict['DC_pump_capacity_factor[-]'] = calc_capacity_factor(cea_result_df['pressure_loss_total_kW'],
                                                                          cea_result_df['pressure_loss_total_kW'].max())
 
     except FileNotFoundError:
-        analysis_results_dict['DC_pump_capacity_factor[-]'] = na
+        analytics_results_dict['DC_pump_capacity_factor[-]'] = na
 
-    # analysis_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
-    # for k,v in analysis_results_dict.items():
-    #     analysis_df[k] = v
-    # # analysis_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
+    # analytics_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
+    # for k,v in analytics_results_dict.items():
+    #     analytics_df[k] = v
+    # # analytics_df = pd.DataFrame([cea_scenario], columns=['scenario_name'])
     # pd.Series()
 
 
-    analysis_df = pd.DataFrame([analysis_results_dict])
-    # return analysis DataFrame
-    return analysis_df
+    analytics_df = pd.DataFrame([analytics_results_dict])
+    # return analytics DataFrame
+    return analytics_df
 
 
 def main(config):
     """
-    Read through CEA results for all scenarios under a project and generate UBEM metrics for quick analysis.
+    Read through CEA results for all scenarios under a project and generate UBEM metrics for quick analytics.
 
     :param config: the configuration object to use
     :type config: cea.config.Configuration
@@ -860,7 +860,7 @@ def main(config):
         scenarios_list = [scenario_name]
 
     # loop over one or all scenarios under the project
-    analysis_project_df = pd.DataFrame()
+    analytics_project_df = pd.DataFrame()
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
@@ -869,19 +869,19 @@ def main(config):
         cea_scenario = os.path.join(project_path, scenario)
         print(f'Reading and analysing the CEA results for Scenario {cea_scenario}.')
         # executing CEA commands
-        analysis_scenario_df = exec_read_and_analyse(cea_scenario)
-        analysis_scenario_df['scenario_name'] = scenario
-        analysis_project_df = pd.concat([analysis_project_df, analysis_scenario_df])
+        analytics_scenario_df = exec_read_and_analyse(cea_scenario)
+        analytics_scenario_df['scenario_name'] = scenario
+        analytics_project_df = pd.concat([analytics_project_df, analytics_scenario_df])
 
     # write the results
     if project_boolean:
-        analysis_project_path = os.path.join(config.general.project, 'result_analytics.csv')
-        analysis_project_df.to_csv(analysis_project_path, index=False, float_format='%.2f')
+        analytics_project_path = os.path.join(config.general.project, 'result_analytics.csv')
+        analytics_project_df.to_csv(analytics_project_path, index=False, float_format='%.2f')
 
     else:
-        analysis_scenario_path = os.path.join(project_path, scenario_name,
-                                              f'{scenario_name}_result_analysis.csv')
-        analysis_project_df.to_csv(analysis_scenario_path, index=False, float_format='%.2f')
+        analytics_scenario_path = os.path.join(project_path, scenario_name,
+                                              f'{scenario_name}_result_analytics.csv')
+        analytics_project_df.to_csv(analytics_scenario_path, index=False, float_format='%.2f')
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
