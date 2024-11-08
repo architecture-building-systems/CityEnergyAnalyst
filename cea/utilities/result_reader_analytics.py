@@ -54,6 +54,8 @@ The list of UBEM metrics include:
 """
 
 import os
+import pathlib
+
 # import warnings
 import numpy as np
 import pandas as pd
@@ -519,19 +521,16 @@ def exec_read_and_analyse(cea_scenario):
     """
     # create an empty DataFrame to store all the results
     analytics_results_dict = dict()
-    analytics_results_dict['scenario_name'] = cea_scenario
+    scenario_name = pathlib.Path(cea_scenario).name
+    analytics_results_dict['scenario_name'] = scenario_name
 
-    # intialise the controls assuming the new generator database is in place
-    old_generator_database = False
-    skip_capacity_factor = False
-    skip_autarky = False
-    skip_specific_yield = False
-    skip_generation_intensity = False
-
-    skip_demand = False
-
-    skip_dh = False
-    skip_dc = False
+    # intialise the controls and start adding default controls assuming everything can be run
+    control_dict = {
+    "old_generator_database": False,
+    "skip_demand": False,
+    "skip_dh": False,
+    "skip_dc": False
+    }
 
     # intialize the time periods
     # Todo this should be a config option?
@@ -590,11 +589,7 @@ def exec_read_and_analyse(cea_scenario):
                             "module_embodied_kgco2m2"]
     for col in new_database_columns:
         if col not in pv_database_df.columns:
-            old_generator_database = True
-            skip_capacity_factor = True
-            skip_autarky = True
-            skip_specific_yield = True
-            skip_generation_intensity = True
+            control_dict["old_generator_database"] = True
 
     # hourly demand data for each building
     cea_result_demand_hourly_df = pd.DataFrame()
@@ -628,6 +623,7 @@ def exec_read_and_analyse(cea_scenario):
                 pass
             cea_result_demand_hourly_df.loc[:, 'district_GRID_kWh'] = cea_result_demand_hourly_df.sum(axis=1)
         except FileNotFoundError:
+            control_dict["skip_demand"] = True
             print(
                 f"File {file} not found. All building demand results currently required for analysis. Returning empty dataframe")
             return cea_result_demand_hourly_df
@@ -636,6 +632,7 @@ def exec_read_and_analyse(cea_scenario):
     na = float('Nan')
     missing_panel_list = []
     for panel_type in panel_types:
+        control_dict[panel_type] = {}
         pv_buildings_path = os.path.join(cea_scenario,
                                          f'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv')
         pv_hourly_path = os.path.join(cea_scenario,
@@ -643,27 +640,29 @@ def exec_read_and_analyse(cea_scenario):
         try:
             pd.read_csv(pv_buildings_path)
             pd.read_csv(pv_hourly_path)
-
-
+            control_dict[panel_type]['skip_capacity_factor'] = False
+            control_dict[panel_type]['skip_specific_yield'] = False
+            control_dict[panel_type]['skip_generation_intensity'] = False
+            control_dict[panel_type]['skip_autarky'] = False
 
 
         except FileNotFoundError:
             missing_panel_list.append(panel_type)
             analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
 
-            skip_capacity_factor = True
+            control_dict[panel_type]['skip_capacity_factor'] = True
             analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = na
 
-            skip_specific_yield = True
+            control_dict[panel_type]['skip_specific_yield'] = True
             for time_period in time_period_options_yield:
                 analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = na
 
-            skip_generation_intensity = True
+            control_dict[panel_type]['skip_generation_intensity'] = True
             for time_period in time_period_options_generation_intensity:
                 analytics_results_dict[
                     f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = na
 
-            skip_autarky = True
+            control_dict[panel_type]['skip_autarky'] = True
             for time_period in time_period_options_autarky:
                 analytics_results_dict[f'PV_{panel_type}_self_consumption_{time_period}[-]'] = na
                 analytics_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = na
@@ -676,7 +675,8 @@ def exec_read_and_analyse(cea_scenario):
 
     except FileNotFoundError:
         print(f"{total_demand_buildings_path} missing.")
-        skip_demand = True
+        control_dict["skip_demand"] = True
+
         analytics_results_dict['EUI - grid electricity [kWh/m2/yr]'] = na
         analytics_results_dict['EUI - enduse electricity [kWh/m2/yr]'] = na
         analytics_results_dict['EUI - cooling demand [kWh/m2/yr]'] = na
@@ -692,7 +692,7 @@ def exec_read_and_analyse(cea_scenario):
 
     except FileNotFoundError:
         # thermal plants
-        skip_dh = True
+        control_dict['skip_dh'] = True
         analytics_results_dict['DH_plant_capacity_factor[-]'] = na
         analytics_results_dict['DH_pump_capacity_factor[-]'] = na
 
@@ -702,11 +702,11 @@ def exec_read_and_analyse(cea_scenario):
 
     except FileNotFoundError:
         # thermal plants
-        skip_dc = True
+        control_dict['skip_dc'] = True
         analytics_results_dict['DC_plant_capacity_factor[-]'] = na
         analytics_results_dict['DC_pump_capacity_factor[-]'] = na
 
-    if skip_demand == False:
+    if control_dict['skip_demand'] == False:
         analytics_results_dict['EUI - grid electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df[
                                                                            'GRID_MWhyr'].sum() / \
                                                                        cea_result_total_demand_buildings_df[
@@ -741,7 +741,6 @@ def exec_read_and_analyse(cea_scenario):
         if panel_type in missing_panel_list:
             continue
 
-        print(skip_capacity_factor)
         module = pv_database_df[pv_database_df["code"] == panel_type].iloc[0]
         pv_buildings_path = os.path.join(cea_scenario,
                                          f'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv')
@@ -756,22 +755,23 @@ def exec_read_and_analyse(cea_scenario):
                                                                                    cea_result_total_demand_buildings_df[
                                                                                        'GRID_MWhyr'].sum() * 1000)
 
-        if old_generator_database == False:
+        if control_dict['old_generator_database'] == False:
             module_capacity_kWp = module["capacity_Wp"] / 1000
             module_area_m2 = module["module_area_m2"]
             module_impact_kgco2m2 = module["module_embodied_kgco2m2"]
             system_area_m2 = cea_result_pv_buildings_df['Area_PV_m2'].sum()
             system_impact_kgco2 = module_impact_kgco2m2 * system_area_m2
-            max_kw = (module_capacity_kWp / module_area_m2) * system_area_m2
+            n_modules = system_area_m2 / module_area_m2
+            max_kw = module_capacity_kWp * n_modules
 
             # capacity factor
-            if skip_capacity_factor == False:
+            if control_dict[panel_type]['skip_capacity_factor'] == False:
                 analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = calc_capacity_factor(
                     cea_result_pv_buildings_df['E_PV_gen_kWh'],
                     max_kw)
 
             # autarky
-            if skip_autarky == False:
+            if control_dict[panel_type]['skip_autarky'] == False:
                 for time_period in time_period_options_autarky:
                     analytics_results_dict[
                         f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
@@ -784,7 +784,7 @@ def exec_read_and_analyse(cea_scenario):
                         cea_result_demand_hourly_df['district_GRID_kWh'],
                         time_period=time_period)
 
-            if skip_specific_yield == False:
+            if control_dict[panel_type]['skip_specific_yield'] == False:
                 # specific yield
                 for time_period in time_period_options_yield:
                     analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = calc_specific_yield(
@@ -792,7 +792,7 @@ def exec_read_and_analyse(cea_scenario):
                         max_kw,
                         time_period=time_period)
 
-            if skip_generation_intensity == False:
+            if control_dict[panel_type]['skip_generation_intensity'] == False:
                 module_lifetime_years = int(module["LT_yr"])
                 lifetime_generation_kWh = projected_lifetime_output(cea_result_pv_hourly_df['E_PV_gen_kWh'].values,
                                                                     module_lifetime_years)
@@ -816,7 +816,7 @@ def exec_read_and_analyse(cea_scenario):
                 analytics_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = na
 
     # thermal power plants
-    if skip_dh == False:
+    if control_dict['skip_dh'] == False:
         cea_result_dh_thermal_df = pd.read_csv(dh_plant_thermal_path)
         cea_result_dh_pumping_df = pd.read_csv(dh_plant_pumping_path)
         analytics_results_dict['DH_plant_capacity_factor[-]'] = calc_capacity_factor(
@@ -826,7 +826,7 @@ def exec_read_and_analyse(cea_scenario):
         analytics_results_dict['DH_pump_capacity_factor[-]'] = calc_capacity_factor(
             cea_result_dh_pumping_df['pressure_loss_total_kW'],
             cea_result_dh_pumping_df['pressure_loss_total_kW'].max())
-    if skip_dc == False:
+    if control_dict['skip_dc'] == False:
         cea_result_dc_thermal_df = pd.read_csv(dc_plant_thermal_path)
         cea_result_dc_pumping_df = pd.read_csv(dc_plant_pumping_path)
         analytics_results_dict['DC_plant_capacity_factor[-]'] = calc_capacity_factor(
@@ -877,8 +877,10 @@ def main(config):
         print(f'Reading and analysing the CEA results for Scenario {cea_scenario}.')
         # executing CEA commands
         analytics_scenario_df = exec_read_and_analyse(cea_scenario)
-        analytics_scenario_df['scenario_name'] = scenario
+        # analytics_scenario_df['scenario_name'] = scenario
         analytics_project_df = pd.concat([analytics_project_df, analytics_scenario_df])
+
+    #todo contemplate if we should change the orientaiton of the table to have a column as scenario and rows as metrics
 
     # write the results
     if project_boolean:
