@@ -156,7 +156,7 @@ def calc_specific_yield(gen_kwh, max_kw, time_period="annual"):
         specific_yield = season_gen / max_kw
 
     elif time_period in [str(m) for m in range(1, 13)]:
-        month_gen = df.resample("M").sum().iloc[int(time_period) - 1]
+        month_gen = df.resample("M").sum().iloc[int(time_period) - 1].values[0]
         specific_yield = month_gen / max_kw
 
     else:
@@ -582,7 +582,7 @@ def exec_read_and_analyse(cea_scenario):
     # grab panel types for PV
     pv_database_df = pd.read_excel(pv_database_path, sheet_name="PHOTOVOLTAIC_PANELS")
     panel_types = list(set(pv_database_df['code']))
-    new_database_columns = ["capacity_Wp"
+    new_database_columns = ["capacity_Wp",
                             "module_area_m2",
                             "primary_energy_kWh_m2",
                             "cost_facade_euro_m2",
@@ -648,7 +648,6 @@ def exec_read_and_analyse(cea_scenario):
 
 
         except FileNotFoundError:
-            print(f"A necessary PV file was not found.")
             analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
 
             skip_capacity_factor = True
@@ -834,6 +833,7 @@ def exec_read_and_analyse(cea_scenario):
             cea_result_dc_pumping_df['pressure_loss_total_kW'].max())
 
     analytics_df = pd.DataFrame([analytics_results_dict])
+    analytics_df = analytics_df.reindex(sorted(analytics_df.columns), axis=1)
     return analytics_df
 
 
