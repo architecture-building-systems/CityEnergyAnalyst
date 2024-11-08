@@ -634,7 +634,7 @@ def exec_read_and_analyse(cea_scenario):
 
     # not found message to be reflected in the analytics DataFrame
     na = float('Nan')
-
+    missing_panel_list = []
     for panel_type in panel_types:
         pv_buildings_path = os.path.join(cea_scenario,
                                          f'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv')
@@ -648,6 +648,7 @@ def exec_read_and_analyse(cea_scenario):
 
 
         except FileNotFoundError:
+            missing_panel_list.append(panel_type)
             analytics_results_dict[f'PV_{panel_type}_energy_penetration[-]'] = na
 
             skip_capacity_factor = True
@@ -737,6 +738,10 @@ def exec_read_and_analyse(cea_scenario):
 
     # metrics for on-site solar energy use
     for panel_type in panel_types:
+        if panel_type in missing_panel_list:
+            continue
+
+        print(skip_capacity_factor)
         module = pv_database_df[pv_database_df["code"] == panel_type].iloc[0]
         pv_buildings_path = os.path.join(cea_scenario,
                                          f'outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv')
