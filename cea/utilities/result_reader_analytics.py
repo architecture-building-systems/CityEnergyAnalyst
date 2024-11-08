@@ -570,6 +570,9 @@ def exec_read_and_analyse(cea_scenario):
         "summer",
         "autumn"
     ]
+    month_string_number = [str(m) for m in range(1,13)]
+    month_string = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    time_period_dict = dict(zip(month_string_number,month_string))
 
     time_period_options_generation_intensity = time_period_options_yield
 
@@ -655,11 +658,18 @@ def exec_read_and_analyse(cea_scenario):
 
             control_dict[panel_type]['skip_specific_yield'] = True
             for time_period in time_period_options_yield:
-                analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = na
+                if time_period in month_string_number:
+                    analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period_dict[time_period]}[kwh/kwp]'] = na
+                else:
+                    analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[kwh/kwp]'] = na
 
             control_dict[panel_type]['skip_generation_intensity'] = True
             for time_period in time_period_options_generation_intensity:
-                analytics_results_dict[
+                if time_period in month_string_number:
+                    analytics_results_dict[
+                        f'PV_{panel_type}_generation_intensity_{time_period_dict[time_period]}[kgco2kwh]'] = na
+                else:
+                    analytics_results_dict[
                     f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = na
 
             control_dict[panel_type]['skip_autarky'] = True
@@ -787,10 +797,19 @@ def exec_read_and_analyse(cea_scenario):
             if control_dict[panel_type]['skip_specific_yield'] == False:
                 # specific yield
                 for time_period in time_period_options_yield:
-                    analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = calc_specific_yield(
-                        cea_result_pv_hourly_df['E_PV_gen_kWh'],
-                        max_kw,
-                        time_period=time_period)
+                    if time_period in month_string_number:
+
+                        analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period_dict[time_period]}[kwh/kwp]'] = calc_specific_yield(
+                            cea_result_pv_hourly_df['E_PV_gen_kWh'],
+                            max_kw,
+                            time_period=time_period)
+                    else:
+
+                        analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[kwh/kwp]'] = calc_specific_yield(
+                            cea_result_pv_hourly_df['E_PV_gen_kWh'],
+                            max_kw,
+                            time_period=time_period)
+
 
             if control_dict[panel_type]['skip_generation_intensity'] == False:
                 module_lifetime_years = int(module["LT_yr"])
@@ -798,16 +817,23 @@ def exec_read_and_analyse(cea_scenario):
                                                                     module_lifetime_years)
                 # generation intensity
                 for time_period in time_period_options_generation_intensity:
-                    module_generation_intensity_kgco2kwh = calc_generation_intensity(system_impact_kgco2,
+                    if time_period in month_string_number:
+                        analytics_results_dict[
+                        f'PV_{panel_type}_generation_intensity_{time_period_dict[time_period]}[kgco2kwh]'] = calc_generation_intensity(system_impact_kgco2,
                                                                                      lifetime_generation_kWh.sum(
                                                                                          axis=0),
                                                                                      time_period=time_period)
-                    analytics_results_dict[
-                        f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = module_generation_intensity_kgco2kwh
+                    else:
+                        analytics_results_dict[
+                        f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = calc_generation_intensity(system_impact_kgco2,
+                                                                                     lifetime_generation_kWh.sum(
+                                                                                         axis=0),
+                                                                                     time_period=time_period)
+
         else:
             analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = na
             for time_period in time_period_options_yield:
-                analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[-]'] = na
+                analytics_results_dict[f'PV_{panel_type}_specific_yield_{time_period}[kwh/kwp]'] = na
             for time_period in time_period_options_generation_intensity:
                 analytics_results_dict[
                     f'PV_{panel_type}_generation_intensity_{time_period}[kgco2kwh]'] = na
