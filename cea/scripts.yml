@@ -380,6 +380,24 @@ Utilities:
     input-files:
       - [get_zone_geometry]
 
+  - name: result-reader-summary
+    label: Get result summary (beta)
+    description: Collection of useful CEA results
+    interfaces: [cli, dashboard]
+    module: cea.utilities.result_reader_summary
+    parameters: ['general:scenario', result-reader-summary]
+    input-files:
+      - [get_zone_geometry]
+
+  - name: result-reader-analytics
+    label: Get advanced analytics (beta)
+    description: Collection of advanced useful energy analytics
+    interfaces: [cli, dashboard]
+    module: cea.utilities.result_reader_analytics
+    parameters: ['general:scenario', result-reader-analytics]
+    input-files:
+      - [get_zone_geometry]
+
   - name: create-mixed-use-type
     label: Create mixed-use type
     description: Creates a new use-type by aggregating values from a list of different use-types
