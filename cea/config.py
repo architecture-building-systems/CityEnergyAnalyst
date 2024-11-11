@@ -14,6 +14,8 @@ import re
 import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 
+import pandas as pd
+
 import cea.inputlocator
 import cea.plugin
 from cea.utilities import unique
@@ -1191,6 +1193,26 @@ def parse_string_coordinate_list(string_tuples):
         coordinates_list.append(coord_tuple)
 
     return coordinates_list
+
+
+class PVChoiceParameter(ChoiceParameter):
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to PV codes
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        try:
+            df = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
+            pv_codes = df['code'].unique()
+            return list(pv_codes)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f'Could not find conversion database at {locator.get_database_conversion_systems()}') from e
+        except Exception as e:
+            raise ValueError(f'There was an error generating PV choices from {locator.get_database_conversion_systems()}') from e
+
 
 
 def validate_coord_tuple(coord_tuple):
