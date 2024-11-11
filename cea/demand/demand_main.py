@@ -114,7 +114,7 @@ def demand_calculation(locator, config):
         repeat(loads_output, n),
         repeat(massflows_output, n),
         repeat(temperatures_output, n),
-         repeat(config, n),
+        repeat(config, n),
         repeat(debug, n))
 
     # WRITE TOTAL YEARLY VALUES
