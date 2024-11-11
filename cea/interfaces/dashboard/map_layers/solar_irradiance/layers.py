@@ -6,10 +6,11 @@ from pyproj import CRS, Transformer
 
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers.base import MapLayer
+from cea.interfaces.dashboard.map_layers.solar_irradiance import SolarIrradianceCategory
 
 
 class SolarIrradianceMapLayer(MapLayer):
-    category = "solar-potentials"
+    category = SolarIrradianceCategory
     name = "solar-irradiance"
     label = "Solar irradiance [kW/m2]"
     description = "Solar irradiation of building surfaces"

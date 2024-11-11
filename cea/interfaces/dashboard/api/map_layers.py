@@ -21,7 +21,9 @@ async def get_layers():
     for category, layers in layers.items():
         category_description = {"name": category, "layers":[]}
         for layer in layers:
-            category_description["layers"].append(layer.describe())
+            layer_description = layer.describe()
+            category_description["label"] = layer_description["category"]["label"]
+            category_description["layers"].append(layer_description)
         out["categories"].append(category_description)
 
     print(out)
