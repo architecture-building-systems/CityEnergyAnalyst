@@ -33,6 +33,34 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def projected_lifetime_output(
+    production_values,
+    lifetime_years,
+    max_performance=100,
+    annual_factor=0.54,
+    min_performance=80,
+):
+    """
+    Model the projected lifetime output of a PV module using a linear derating system
+    Authors:
+    - Justin McCarty
+
+    Args:
+        production_values (np.array shape(n_time_steps,)): electricity produced during the first year
+        lifetime_years (int): the expected lifetime of the module
+        max_performance (int, optional): _description_. Defaults to 100.
+        annual_factor (float, optional): _description_. Defaults to 0.54.
+        min_performance (int, optional): _description_. Defaults to 80.
+
+    Returns:
+        np.array: array with shape (lifetime_years, n_time_steps)
+    """
+    derate_factors = np.linspace(
+        max_performance, max_performance - (lifetime_years * annual_factor), num=lifetime_years
+    ).reshape(-1, 1)
+    derate_factors = np.clip(derate_factors, min_performance, None) / 100
+    lifetime_production = production_values * derate_factors
+    return lifetime_production
 
 def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, building_name):
     """
