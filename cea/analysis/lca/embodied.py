@@ -242,19 +242,19 @@ def calculate_contributions(df, year_to_calculate):
     # calculate the embodied energy/emissions due to construction
     total_column = 'saver'
     total_column_uptake = 'saver2'
-    embodied_win = 'GHG_WINDOW_tonCO2'
-    uptake_win = 'UPTAKE_WINDOW_tonCO2'
-    embodied_wall= 'GHG_WALL_tonCO2'
-    uptake_wall= 'UPTAKE_WALL_tonCO2'
-    embodied_floor = 'GHG_FLOOR_tonCO2'
-    uptake_floor = 'UPTAKE_FLOOR_tonCO2'
-    embodied_base = 'GHG_BASE_tonCO2'
-    uptake_base = 'UPTAKE_BASE_tonCO2'
-    embodied_roof = 'GHG_ROOF_tonCO2'
-    uptake_roof = 'UPTAKE_ROOF_tonCO2'
-    embodied_part = 'GHG_PART_tonCO2'
-    uptake_part = 'UPTAKE_PART_tonCO2'
-    embodied_system = 'GHG_TECHNICAL_SYSTEM_tonCO2'
+    embodied_win = 'GHG_window_tonCO2'
+    uptake_win = 'uptake_window_tonCO2'
+    embodied_wall= 'GHG_wall_tonCO2'
+    uptake_wall= 'uptake_wall_tonCO2'
+    embodied_floor = 'GHG_floor_tonCO2'
+    uptake_floor = 'uptake_floor_tonCO2'
+    embodied_base = 'GHG_base_tonCO2'
+    uptake_base = 'uptake_base_tonCO2'
+    embodied_roof = 'GHG_roof_tonCO2'
+    uptake_roof = 'uptake_roof_tonCO2'
+    embodied_part = 'GHG_part_tonCO2'
+    uptake_part = 'uptake_part_tonCO2'
+    embodied_system = 'GHG_technical_system_tonCO2'
 
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
@@ -338,10 +338,10 @@ def calculate_contributions(df, year_to_calculate):
 
     # the total and specific embodied emissions are returned
     result = df[['Name','GFA_m2','GHG_sys_embodied_tonCO2yr', 'GHG_sys_uptake_tonCO2yr',
-                'GHG_sys_embodied_kgCO2m2yr', 'GHG_WINDOW_tonCO2','UPTAKE_WINDOW_tonCO2',
-                 'GHG_WALL_tonCO2', 'UPTAKE_WALL_tonCO2', 'GHG_FLOOR_tonCO2',
-                 'UPTAKE_FLOOR_tonCO2', 'GHG_BASE_tonCO2', 'UPTAKE_BASE_tonCO2', 'GHG_ROOF_tonCO2',
-                 'UPTAKE_ROOF_tonCO2', 'GHG_PART_tonCO2', 'UPTAKE_PART_tonCO2','GHG_TECHNICAL_SYSTEM_tonCO2']]
+                'GHG_sys_embodied_kgCO2m2yr', 'GHG_window_tonCO2','uptake_window_tonCO2',
+                 'GHG_wall_tonCO2', 'uptake_wall_tonCO2', 'GHG_floor_tonCO2',
+                 'uptake_floor_tonCO2', 'GHG_base_tonCO2', 'uptake_base_tonCO2', 'GHG_roof_tonCO2',
+                 'uptake_roof_tonCO2', 'GHG_part_tonCO2', 'uptake_part_tonCO2','GHG_technical_system_tonCO2']]
     return result
 
 def calc_if_existing(x, y):
