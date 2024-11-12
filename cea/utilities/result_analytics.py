@@ -92,7 +92,7 @@ def calc_capacity_factor(gen_kwh, max_kw):
         the unitless ratio of actual energy output over a year to the theoretical maximum energy output over that period.
 
     """
-    if type(gen_kwh) == float:
+    if isinstance(gen_kwh, float):
         len_time_period = 8760
     else:
         len_time_period = len(gen_kwh)
@@ -716,7 +716,8 @@ def exec_read_and_analyse(cea_scenario):
         analytics_results_dict['DC_plant_capacity_factor[-]'] = na
         analytics_results_dict['DC_pump_capacity_factor[-]'] = na
 
-    if control_dict['skip_demand'] == False:
+    if not control_dict['skip_demand']:
+
         analytics_results_dict['EUI - grid electricity [kWh/m2/yr]'] = cea_result_total_demand_buildings_df[
                                                                            'GRID_MWhyr'].sum() / \
                                                                        cea_result_total_demand_buildings_df[
@@ -765,7 +766,7 @@ def exec_read_and_analyse(cea_scenario):
                                                                                    cea_result_total_demand_buildings_df[
                                                                                        'GRID_MWhyr'].sum() * 1000)
 
-        if control_dict['old_generator_database'] == False:
+        if not control_dict['old_generator_database']:
             module_capacity_kWp = module["capacity_Wp"] / 1000
             module_area_m2 = module["module_area_m2"]
             module_impact_kgco2m2 = module["module_embodied_kgco2m2"]
@@ -775,13 +776,13 @@ def exec_read_and_analyse(cea_scenario):
             max_kw = module_capacity_kWp * n_modules
 
             # capacity factor
-            if control_dict[panel_type]['skip_capacity_factor'] == False:
+            if not control_dict[panel_type]['skip_capacity_factor']:
                 analytics_results_dict[f'PV_{panel_type}_capacity_factor[-]'] = calc_capacity_factor(
                     cea_result_pv_buildings_df['E_PV_gen_kWh'],
                     max_kw)
 
             # autarky
-            if control_dict[panel_type]['skip_autarky'] == False:
+            if not control_dict[panel_type]['skip_autarky']:
                 for time_period in time_period_options_autarky:
                     analytics_results_dict[
                         f'PV_{panel_type}_self_consumption_{time_period}[-]'] = calc_self_consumption(
@@ -794,7 +795,7 @@ def exec_read_and_analyse(cea_scenario):
                         cea_result_demand_hourly_df['district_GRID_kWh'],
                         time_period=time_period)
 
-            if control_dict[panel_type]['skip_specific_yield'] == False:
+            if not control_dict[panel_type]['skip_specific_yield']:
                 # specific yield
                 for time_period in time_period_options_yield:
                     if time_period in month_string_number:
@@ -811,7 +812,7 @@ def exec_read_and_analyse(cea_scenario):
                             time_period=time_period)
 
 
-            if control_dict[panel_type]['skip_generation_intensity'] == False:
+            if not control_dict[panel_type]['skip_generation_intensity']:
                 module_lifetime_years = int(module["LT_yr"])
                 lifetime_generation_kWh = projected_lifetime_output(cea_result_pv_hourly_df['E_PV_gen_kWh'].values,
                                                                     module_lifetime_years)
@@ -842,7 +843,7 @@ def exec_read_and_analyse(cea_scenario):
                 analytics_results_dict[f'PV_{panel_type}_self_sufficiency_{time_period}[-]'] = na
 
     # thermal power plants
-    if control_dict['skip_dh'] == False:
+    if not control_dict['skip_dh']:
         cea_result_dh_thermal_df = pd.read_csv(dh_plant_thermal_path)
         cea_result_dh_pumping_df = pd.read_csv(dh_plant_pumping_path)
         analytics_results_dict['DH_plant_capacity_factor[-]'] = calc_capacity_factor(
@@ -852,7 +853,7 @@ def exec_read_and_analyse(cea_scenario):
         analytics_results_dict['DH_pump_capacity_factor[-]'] = calc_capacity_factor(
             cea_result_dh_pumping_df['pressure_loss_total_kW'],
             cea_result_dh_pumping_df['pressure_loss_total_kW'].max())
-    if control_dict['skip_dc'] == False:
+    if not control_dict['skip_dc']:
         cea_result_dc_thermal_df = pd.read_csv(dc_plant_thermal_path)
         cea_result_dc_pumping_df = pd.read_csv(dc_plant_pumping_path)
         analytics_results_dict['DC_plant_capacity_factor[-]'] = calc_capacity_factor(

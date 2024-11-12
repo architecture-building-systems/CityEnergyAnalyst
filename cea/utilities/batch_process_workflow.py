@@ -219,9 +219,9 @@ def main(config):
     # Read and summarise project results
     project_result_summary = config.batch_process_workflow.result_summary
     if project_result_summary and project_boolean:
-        subprocess.run(['cea', 'result-reader-summary', '--all-scenarios', 'true'], env=my_env, check=True, capture_output=True)
+        subprocess.run(['cea', 'result-summary', '--all-scenarios', 'true'], env=my_env, check=True, capture_output=True)
     elif project_result_summary and not project_boolean:
-        subprocess.run(['cea', 'result-reader-summary', '--all-scenarios', 'false'], env=my_env, check=True, capture_output=True)
+        subprocess.run(['cea', 'result-summary', '--all-scenarios', 'false'], env=my_env, check=True, capture_output=True)
 
 
 

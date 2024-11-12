@@ -380,21 +380,21 @@ Utilities:
     input-files:
       - [get_zone_geometry]
 
-  - name: result-reader-summary
+  - name: result-summary
     label: Get result summary (beta)
     description: Collection of useful CEA results
     interfaces: [cli, dashboard]
-    module: cea.utilities.result_reader_summary
-    parameters: ['general:scenario', result-reader-summary]
+    module: cea.utilities.result_summary
+    parameters: ['general:scenario', result-summary]
     input-files:
       - [get_zone_geometry]
 
-  - name: result-reader-analytics
+  - name: result-analytics
     label: Get advanced analytics (beta)
     description: Collection of advanced useful energy analytics
     interfaces: [cli, dashboard]
-    module: cea.utilities.result_reader_analytics
-    parameters: ['general:scenario', result-reader-analytics]
+    module: cea.utilities.result_analytics
+    parameters: ['general:scenario', result-analytics]
     input-files:
       - [get_zone_geometry]
 
