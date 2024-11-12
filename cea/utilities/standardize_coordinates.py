@@ -33,7 +33,7 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
 
 
 def ensure_cpg_file(shapefile_path):
-    cpg_file_path = os.path.join(os.path.splitext(shapefile_path)[0], '.cpg')
+    cpg_file_path = f"{os.path.splitext(shapefile_path)[0]}.cpg"
 
     if os.path.exists(cpg_file_path):
         with open(cpg_file_path, "r") as cpg_file:
