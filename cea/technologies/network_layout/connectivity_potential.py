@@ -373,7 +373,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    valid_geometries = street_network[street_network.geometry.is_valid]
+    valid_geometries = street_network[street_network.geometry.is_valid].geometry
 
     if valid_geometries.empty:
         raise ValueError("No valid geometries found in the shapefile.")
