@@ -100,7 +100,7 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
     :type list_var_values: list[str]
     :return:
     """
-
+    LEN_TYPICAL_SCHEDULE_HOURS = 72 #24 hours of weekday + 24 hours of Saturday + 24 hours of Sunday
     schedule_new_data = {}
     # First name in `list_var_names` would be treated as main use
     main_use_this_building = building_typology_df[list_var_names[0]][building]
@@ -111,7 +111,7 @@ def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_
              * building_typology_df.loc[building, var_value] if building_typology_df.loc[building, var_name] == use
              else np.zeros(12) for use in list_uses], axis=0)
     for schedule_type in VARIABLE_CEA_SCHEDULE_RELATION.values():
-        current_schedule = np.zeros(len(schedule_data_all_uses.schedule_data['HOTEL'][schedule_type]))
+        current_schedule = np.zeros(LEN_TYPICAL_SCHEDULE_HOURS)
         normalizing_value = 0.0
         if schedule_type in ['HEATING', 'COOLING']:
             schedule_new_data[schedule_type] = schedule_data_all_uses.schedule_data[main_use_this_building][
