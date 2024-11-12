@@ -180,7 +180,7 @@ def exec_cea_commands(config, cea_scenario):
                        capture_output=True)
 
     if result_analytics:
-        subprocess.run(['cea', 'result-summary', '--all-scenarios', 'false'], env=my_env, check=True,
+        subprocess.run(['cea', 'result-analytics', '--all-scenarios', 'false'], env=my_env, check=True,
                        capture_output=True)
 
 
