@@ -885,7 +885,7 @@ def main(config):
 
     project_path = config.general.project
     scenario_name = config.general.scenario_name
-    project_boolean = config.result_reader_analytics.all_scenarios
+    project_boolean = config.result_analytics.all_scenarios
 
     # deciding to run all scenarios or the current the scenario only
     if project_boolean:
