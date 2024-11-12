@@ -111,7 +111,6 @@ def lca_embodied(year_to_calculate, locator):
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
     surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
-    surface_database_structure = pd.read_excel(locator.get_database_envelope_systems(), "CONSTRUCTION")
 
 
     # query data
@@ -120,57 +119,52 @@ def lca_embodied(year_to_calculate, locator):
     df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')
     df4 = architecture_df.merge(surface_database_floors, left_on='type_floor', right_on='code')
     df5 = architecture_df.merge(surface_database_floors, left_on='type_base', right_on='code')
-    df5.rename({'GWP_fossil_floor_kgCO2m2': 'GWP_fossil_base_kgCO2m2'}, inplace=True, axis=1)
-    df5.rename({'GWP_biogenic_floor_kgCO2m2': 'GWP_biogenic_base_kgCO2m2'}, inplace=True, axis=1)
+    df5.rename({'GHG_floor_kgCO2m2': 'GHG_base_kgCO2m2'}, inplace=True, axis=1)
+    df5.rename({'GHG_biogenic_floor_kgCO2m2': 'GHG_biogenic_base_kgCO2m2'}, inplace=True, axis=1)
     df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
-    df6.rename({'GWP_fossil_wall_kgCO2m2': 'GWP_fossil_part_kgCO2m2'}, inplace=True, axis=1)
-    df6.rename({'GWP_biogenic_wall_kgCO2m2': 'GWP_biogenic_part_kgCO2m2'}, inplace=True, axis=1)
+    df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
+    df6.rename({'GHG_biogenic_wall_kgCO2m2': 'GHG_biogenic_part_kgCO2m2'}, inplace=True, axis=1)
 
-    field1 = ['Name', "GHG_win_kgCO2m2"]
-    fields2 = ['Name', "Service_Life_win"]
-    fields3 = ['Name', "GHG_roof_kgCO2m2"]
-    fields4 = ['Name', "GHG_biogenic_roof_kgCO2m2"]
-    fields5 = ['Name', "Service_Life_roof"]
-    fields6 = ['Name', "GHG_wall_kgCO2m2"]
-    fields7 = ['Name', "GHG_biogenic_wall_kgCO2m2"]
-    fields8 = ['Name', "Service_Life_wall"]
-    fields9 = ['Name', "GHG_floor_kgCO2m2"]
-    fields10 = ['Name', "GHG_biogenic_floor_kgCO2m2"]
-    fields11 = ['Name', "Service_Life_floor"]
-    fields12 = ['Name', "GHG_base_kgCO2m2"]
-    fields13 = ['Name', "GHG_biogenic_base_kgCO2m2"]
+    fields1 = ['Name', "GHG_win_kgCO2m2"]
+    fields2= ['Name', "GHG_biogenic_win_kgCO2m2"]
+    fields3 = ['Name', "Service_Life_win"]
+    fields4 = ['Name', "GHG_roof_kgCO2m2"]
+    fields5 = ['Name', "GHG_biogenic_roof_kgCO2m2"]
+    fields6 = ['Name', "Service_Life_roof"]
+    fields7 = ['Name', "GHG_wall_kgCO2m2"]
+    fields8 = ['Name', "GHG_biogenic_wall_kgCO2m2"]
+    fields9 = ['Name', "Service_Life_wall"]
+    fields10 = ['Name', "GHG_floor_kgCO2m2"]
+    fields11 = ['Name', "GHG_biogenic_floor_kgCO2m2"]
+    fields12 = ['Name', "Service_Life_floor"]
+    fields13 = ['Name', "GHG_base_kgCO2m2"]
+    fields14 = ['Name', "GHG_biogenic_base_kgCO2m2"]
     df5.rename({'Service_Life_floor': 'Service_Life_base'}, inplace=True, axis=1)
-    fields14 = ['Name', "Service_Life_base"]
-    fields15 = ['Name', "GHG_fossil_part_kgCO2m2"]
-    fields16 = ['Name', "GHG_biogenic_part_kgCO2m2"]
+    fields15 = ['Name', "Service_Life_base"]
+    fields16 = ['Name', "GHG_part_kgCO2m2"]
+    fields17 = ['Name', "GHG_biogenic_part_kgCO2m2"]
     df6.rename({'Service_Life_wall': 'Service_Life_part'}, inplace=True, axis=1)
-    fields17 = ['Name', "Service_Life_part"]
-
-    df7 = architecture_df.merge(surface_database_structure, left_on='type_cons', right_on='code')
-    fields18 = ['Name', "GHG_cons_kgCO2m2"]
-    fields19 = ['Name', "GHG_biogenic_cons_kgCO2m2"]
-    fields20 = ['Name', "Service_Life_cons"]
+    fields18 = ['Name', "Service_Life_part"]
 
 
-    surface_properties = df1[field1].merge(df1[fields2],
-                                          on='Name').merge(df2[fields3],
+
+    surface_properties = df1[fields1].merge(df1[fields2],
+                                          on='Name').merge(df1[fields3],
                                           on='Name').merge(df2[fields4],
                                           on='Name').merge(df2[fields5],
-                                          on='Name').merge(df3[fields6],
+                                          on='Name').merge(df2[fields6],
                                           on='Name').merge(df3[fields7],
                                           on='Name').merge(df3[fields8],
-                                          on='Name').merge(df4[fields9],
+                                          on='Name').merge(df3[fields9],
                                           on='Name').merge(df4[fields10],
                                           on='Name').merge(df4[fields11],
-                                          on='Name').merge(df5[fields12],
+                                          on='Name').merge(df4[fields12],
                                           on='Name').merge(df5[fields13],
                                           on='Name').merge(df5[fields14],
-                                          on='Name').merge(df6[fields15],
+                                          on='Name').merge(df5[fields15],
                                           on='Name').merge(df6[fields16],
                                           on='Name').merge(df6[fields17],
-                                          on='Name').merge(df7[fields18],
-                                          on='Name').merge(df7[fields19],
-                                          on='Name').merge(df7[fields20],
+                                          on='Name').merge(df6[fields18],
                                           on='Name')
 
 
@@ -207,7 +201,6 @@ def lca_embodied(year_to_calculate, locator):
     ## total floor area
     data_merged_df['GFA_m2'] = data_merged_df['floor_area_ag'] + data_merged_df['floor_area_bg']
 
-    data_merged_df['Aocc'] = data_merged_df['GFA_m2'] * data_merged_df['Ns']  # occupied floor area: all occupied areas in the building
 
     result_emissions = calculate_contributions(data_merged_df,
                                                year_to_calculate)
@@ -250,6 +243,7 @@ def calculate_contributions(df, year_to_calculate):
     total_column = 'saver'
     total_column_uptake = 'saver2'
     embodied_win = 'GHG_WINDOW_tonCO2'
+    uptake_win = 'UPTAKE_WINDOW_tonCO2'
     embodied_wall= 'GHG_WALL_tonCO2'
     uptake_wall= 'UPTAKE_WALL_tonCO2'
     embodied_floor = 'GHG_FLOOR_tonCO2'
@@ -260,9 +254,7 @@ def calculate_contributions(df, year_to_calculate):
     uptake_roof = 'UPTAKE_ROOF_tonCO2'
     embodied_part = 'GHG_PART_tonCO2'
     uptake_part = 'UPTAKE_PART_tonCO2'
-    embodied_cons = 'GHG_CONS_tonCO2'
-    uptake_cons = 'UPTAKE_CONS_tonCO2'
-    embodied_system = 'embodied_system_tonCO2'
+    embodied_system = 'GHG_TECHNICAL_SYSTEM_tonCO2'
 
     ## calculate how many years before the calculation year the building was built in
     df['delta_year'] = year_to_calculate - df['YEAR']
@@ -280,6 +272,10 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])
     df[embodied_win] /= 1000  # kG-CO2 eq to ton
 
+    df[uptake_win] = df['GHG_biogenic_win_kgCO2m2'] * df['windows_ag']  * np.ceil(
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])
+    df[uptake_win] /= 1000  # kG-CO2 eq to ton
+
     df[embodied_wall] = df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
     df[embodied_wall] /= 1000
@@ -288,7 +284,7 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
     df[uptake_wall] /= 1000
 
-    df[embodied_part] = df['GHG_fossil_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO * np.ceil(
+    df[embodied_part] = df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
     df[embodied_part] /= 1000
 
@@ -296,7 +292,7 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
     df[uptake_part] /= 1000
 
-    df[embodied_floor] = df['GHG_fossil_floor_kgCO2m2'] * df['floor_area_ag'] * np.ceil(
+    df[embodied_floor] = df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])
     df[embodied_floor] /= 1000
 
@@ -304,7 +300,7 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])
     df[uptake_floor] /= 1000
 
-    df[embodied_base] = df['GHG_fossil_base_kgCO2m2'] * df['floor_area_bg'] * np.ceil(
+    df[embodied_base] = df['GHG_base_kgCO2m2'] * df['floor_area_bg'] * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])
     df[embodied_base] /= 1000
 
@@ -312,7 +308,7 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])
     df[uptake_base] /= 1000
 
-    df[embodied_roof] = df['GHG_fossil_roof_kgCO2m2'] * df['footprint'] * np.ceil(
+    df[embodied_roof] = df['GHG_roof_kgCO2m2'] * df['footprint'] * np.ceil(
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])
     df[embodied_roof] /= 1000
 
@@ -320,11 +316,6 @@ def calculate_contributions(df, year_to_calculate):
         SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])
     df[uptake_roof] /= 1000
 
-    df[embodied_cons] = df['GHG_fossil_cons_kgCO2m2'] * df['Aocc']
-    df[embodied_cons] /= 1000
-
-    df[uptake_cons] = df['GHG_biogenic_cons_kgCO2m2'] * df['Aocc']
-    df[uptake_cons] /= 1000
 
 # the embodie emission og technical system by considering constant values for GWP technical system
 
@@ -335,11 +326,11 @@ def calculate_contributions(df, year_to_calculate):
 
     # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
     df[total_column] = ((df[embodied_win] + df[embodied_wall] + df[embodied_part] + df[
-                     embodied_floor] + df[embodied_base] + df[embodied_roof] + df[
-                     embodied_cons]+df[embodied_system])/ SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
+                     embodied_floor] + df[embodied_base] + df[embodied_roof]+
+                         df[embodied_system])/ SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
-    df[total_column_uptake] = ((df[uptake_wall] + df[uptake_part] + df[uptake_floor] + df[
-                                uptake_base] + df[uptake_roof] + df[uptake_cons]) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
+    df[total_column_uptake] = ((df[uptake_win]+ df[uptake_wall] + df[uptake_part] + df[uptake_floor] + df[
+                                uptake_base] + df[uptake_roof]) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
     df['GHG_sys_embodied_tonCO2yr'] = df[total_column]
     df['GHG_sys_uptake_tonCO2yr'] = df[total_column_uptake]
@@ -347,10 +338,10 @@ def calculate_contributions(df, year_to_calculate):
 
     # the total and specific embodied emissions are returned
     result = df[['Name','GFA_m2','GHG_sys_embodied_tonCO2yr', 'GHG_sys_uptake_tonCO2yr',
-                'GHG_sys_embodied_kgCO2m2yr','GHG_CONS_tonCO2','UPTAKE_CONS_tonCO2', 'GHG_WINDOW_tonCO2',
-                'GHG_WALL_tonCO2', 'UPTAKE_WALL_tonCO2', 'GHG_FLOOR_tonCO2', 'UPTAKE_FLOOR_tonCO2',
-                'GHG_BASE_tonCO2', 'UPTAKE_BASE_tonCO2', 'GHG_ROOF_tonCO2', 'UPTAKE_ROOF_tonCO2', 'GHG_PART_tonCO2',
-                'UPTAKE_PART_tonCO2','embodied_system_tonCO2']]
+                'GHG_sys_embodied_kgCO2m2yr', 'GHG_WINDOW_tonCO2','UPTAKE_WINDOW_tonCO2',
+                 'GHG_WALL_tonCO2', 'UPTAKE_WALL_tonCO2', 'GHG_FLOOR_tonCO2',
+                 'UPTAKE_FLOOR_tonCO2', 'GHG_BASE_tonCO2', 'UPTAKE_BASE_tonCO2', 'GHG_ROOF_tonCO2',
+                 'UPTAKE_ROOF_tonCO2', 'GHG_PART_tonCO2', 'UPTAKE_PART_tonCO2','GHG_TECHNICAL_SYSTEM_tonCO2']]
     return result
 
 def calc_if_existing(x, y):
