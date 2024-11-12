@@ -10,7 +10,8 @@ it is estimated as the centroid of buildings.
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely.geometry import Point
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 from cea.constants import SHAPEFILE_TOLERANCE
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -50,11 +51,8 @@ def calc_building_centroids(input_buildings_shp,
             raise Exception("We could not find two or more buildings with thermal energy demand the network layout "
                             "will not work unless the consider_only_buildings_with_demand parameter is set to False")
 
-    zone_df = zone_df.to_crs(get_geographic_coordinate_system())
-    lon = zone_df.geometry[0].centroid.coords.xy[0][0]
-    lat = zone_df.geometry[0].centroid.coords.xy[1][0]
-
     # get coordinate system and re project to UTM
+    lat, lon = get_lat_lon_projected_shapefile(zone_df)
     zone_df = zone_df.to_crs(get_projected_coordinate_system(lat, lon))
 
     # create points with centroid

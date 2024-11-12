@@ -19,7 +19,8 @@ from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.dbf import dataframe_to_dbf
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -496,8 +497,7 @@ def calculate_age(zone_df, year_construction):
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
                     fix_overlapping, include_building_parts, poly, zone_out_path):
     poly = poly.to_crs(get_geographic_coordinate_system())
-    lon = poly.geometry[0].centroid.coords.xy[0][0]
-    lat = poly.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(poly)
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
     shapefile = osmnx.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
