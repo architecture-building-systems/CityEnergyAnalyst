@@ -7,6 +7,7 @@ a series of points (buildings) to the closest street
 
 
 import os
+import warnings
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
@@ -372,7 +373,14 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    street_network = simplify_liness_accurracy(street_network.geometry.values, SHAPEFILE_TOLERANCE, crs)
+    valid_geometries = street_network[street_network.geometry.is_valid]
+
+    if valid_geometries.empty:
+        raise ValueError("No valid geometries found in the shapefile.")
+    elif len(street_network) != len(valid_geometries):
+        warnings.warn(f"Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+
+    street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
 
     # create terminals/branches form street to buildings
     prototype_network = create_terminals(building_centroids_df, crs, street_network)
