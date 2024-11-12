@@ -1,3 +1,5 @@
+import os
+
 import geopandas
 import utm
 from osgeo import gdal, osr
@@ -31,16 +33,19 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
 
 
 def ensure_cpg_file(shapefile_path):
-    cpg_file_path = shapefile_path.split('.shp', 1)[0] + '.CPG'
-    with open(cpg_file_path, "r") as cpg_file:
-        content = cpg_file.read()
-        if content == "ISO-8859-1":
-            # already set to ISO-8859-1, nothing to do
-            return
+    cpg_file_path = f"{os.path.splitext(shapefile_path)[0]}.cpg"
+
+    if os.path.exists(cpg_file_path):
+        with open(cpg_file_path, "r") as cpg_file:
+            content = cpg_file.read()
+            if content == "ISO-8859-1":
+                # already set to ISO-8859-1, nothing to do
+                return
+    else:
+        print(f"No .cpg file found at {cpg_file_path}, creating one")
         
     with open(cpg_file_path, "w") as cpg_file:
         cpg_file.write("ISO-8859-1")
-        cpg_file.close()
 
 def raster_to_WSG_and_UTM(raster_path, lat, lon):
 
