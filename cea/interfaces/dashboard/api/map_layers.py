@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -12,22 +14,41 @@ class LayerParams(BaseModel):
     parameters: dict
 
 
+class LayerDescription(BaseModel):
+    name: str
+    label: str
+    description: str
+
+
+class LayerCategory(BaseModel):
+    name: str
+    label: str
+    layers: List[LayerDescription]
+
+
+class LayersList(BaseModel):
+    categories: List[LayerCategory]
+
+
 @router.get('/')
-async def get_layers():
+async def get_layers() -> LayersList:
     layers = get_layers_grouped_by_category()
 
     # Parse layer class to get name and description
-    out = {"categories": []}
+    categories = []
     for category, layers in layers.items():
-        category_description = {"name": category, "layers":[]}
+        category_label = category
+        _layers = []
         for layer in layers:
             layer_description = layer.describe()
-            category_description["label"] = layer_description["category"]["label"]
-            category_description["layers"].append(layer_description)
-        out["categories"].append(category_description)
+            category_label = layer_description["category"]["label"]
+            _layers.append(LayerDescription(**layer_description))
 
-    print(out)
-    return out
+        category_description = LayerCategory(name=category, label=category_label, layers=_layers)
+        categories.append(category_description)
+
+    return LayersList(categories=categories)
+
 
 @router.post('/{layer_category}/{layer_name}/generate')
 async def generate_map_layer(params: LayerParams, layer_category: str, layer_name: str):
