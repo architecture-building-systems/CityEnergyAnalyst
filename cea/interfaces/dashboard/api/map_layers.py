@@ -18,6 +18,7 @@ class LayerDescription(BaseModel):
     name: str
     label: str
     description: str
+    parameters: dict
 
 
 class LayerCategory(BaseModel):
