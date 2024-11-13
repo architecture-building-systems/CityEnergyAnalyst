@@ -29,7 +29,7 @@ RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src
     && mv ./bin/rtrace /Daysim_build/rtrace_dc
 
 
-FROM mambaorg/micromamba as cea-build
+FROM mambaorg/micromamba:1.5.10 as cea-build
 
 COPY --from=daysim-build /Daysim_build /Daysim
 
