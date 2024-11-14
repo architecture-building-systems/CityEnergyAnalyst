@@ -1,3 +1,14 @@
+Import & Export:
+  - name: export-results-csv
+    label: Export results to .csv
+    description: Generate .csv files containing user-selected CEA simulated results by building, time, and metric.
+    interfaces: [cli, dashboard]
+    module: cea.import_export.result_summary
+    parameters: ['general:scenario', result-summary]
+    input-files:
+      - [get_zone_geometry]
+      - [get_building_typology]
+
 Data management:
 
   - name: archetypes-mapper
