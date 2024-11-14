@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import cea.config
 import time
+from datetime import datetime
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -16,6 +17,90 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+def get_hours_start_end(config):
+
+    # get the user-defined dates from config
+    date_start = config.result_summary.period_start_date
+    date_end = config.result_summary.period_end_date
+
+    def check_user_period_validity(date):
+        s = "".join(date)
+        # Check for length, alphanumeric, and the presence of both letters and numbers
+        return len(s) == 5 and s.isalnum() and any(c.isalpha() for c in s) and any(c.isdigit() for c in s)
+    def check_user_period_impossible_date(date):
+        list_impossible_dates = ['30Feb', '31Feb', '31Apr', '31Jun', '31Sep', '31Nov',
+                                 'Feb30', 'Feb31', 'Apr31', 'Jun31', 'Sep31', 'Nov31']
+        s = "".join(date)
+        return s in list_impossible_dates
+
+    def check_user_period_leap_date(date):
+        list_leap_dates = ['29Feb', 'Feb29']
+        s = "".join(date)
+        return s in list_leap_dates
+
+    def from_date_string_to_hours(date_str):
+        # Define possible date formats to handle both "31Jan" and "Jan31"
+        formats = ["%d%b", "%b%d"]
+
+        # Try each format to parse the date
+        for fmt in formats:
+            try:
+                date_obj = datetime.strptime(date_str, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            raise ValueError("Check start date or/and end date of the defined period.")
+
+        # Calculate the day of the year (1-365)
+        day_of_year = date_obj.timetuple().tm_yday
+
+        # Calculate the Nth hour of the year
+        hour_of_year = (day_of_year - 1) * 24  # (day - 1) because days start from hour 0, not 24
+
+        return hour_of_year
+
+    # validate start date
+    if not check_user_period_validity(date_start):
+        raise ValueError('Check the start date. Select one number and one month only.')
+
+    elif check_user_period_impossible_date(date_start):
+        raise ValueError('Check the start date. Ensure the combination is an actual date.')
+
+    elif check_user_period_leap_date(date_start):
+        raise ValueError('Check the start date. CEA does not consider 29 Feb in a leap year.')
+
+    # validate end date
+    if not check_user_period_validity(date_end):
+        raise ValueError('Check the end date. Select one number and one month only.')
+
+    elif check_user_period_impossible_date(date_end):
+        raise ValueError('Check the end date. Ensure the combination is an actual date.')
+
+    elif check_user_period_leap_date(date_end):
+        raise ValueError('Check the end date. CEA does not consider 29 Feb in a leap year.')
+
+    hour_start = from_date_string_to_hours(date_start) - 24 #Nth hour of the year, starting at 0, inclusive
+    hour_end = from_date_string_to_hours(date_end)   #Nth hour of the year, ending at 8760, not-inclusive
+
+    # determine the period
+    if hour_end < hour_start:
+        print("End date is earlier than Start date. CEA considers the period ending at the End date in the year after.")
+
+    elif hour_end == hour_start:
+        print("End date is the same as Start date. CEA considers the 24 hours this date.")
+
+    else:
+        print("End date is earlier than Start date. CEA considers the period between the two dates in the same year.")
+
+    return hour_start, hour_end
+
+def exec_read_and_summarise(hour_start, hour_end, cea_feature, metrics):
+    return
+
+
+    
 
 def exec_read_and_summarise(cea_scenario):
     """
@@ -225,6 +310,8 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
+    # get the start (inclusive) and end (not-inclusive) hours
+    hour_start, hour_end = get_hours_start_end(config)
 
     # Start the timer
     t0 = time.perf_counter()
