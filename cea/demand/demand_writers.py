@@ -174,7 +174,7 @@ class YearlyDemandWriter(DemandWriter):
         super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_aggregate_buildingly(self, locator, building_names):
-        """read in the temporary results files and append them to the Totals.csv file."""
+        """read in the temporary results files and append them to the Total_demand_buildingly.csv file."""
         df = None
         for building in building_names:
             temporary_file = locator.get_temporary_file('%(building)sT.csv' % locals())
@@ -185,6 +185,7 @@ class YearlyDemandWriter(DemandWriter):
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
     def write_aggregate_hourly(config, locator, building_names):
+        """read in the building files and append them to the Total_demand_hourly.csv file."""
         aggregated_hourly_results_df = pd.DataFrame()
 
         for i, building in enumerate(building_names):
@@ -199,9 +200,6 @@ class YearlyDemandWriter(DemandWriter):
         # save hourly results
         aggregated_hourly_results_df.to_csv(locator.get_total_demand_hourly('csv'),
                                             index=True, float_format='%.3f', na_rep='nan')
-
-
-
 
     def write_to_hdf5(self, list_buildings, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
