@@ -10,6 +10,7 @@ the `MonthlyDemandWriter`.
 
 import numpy as np
 import pandas as pd
+from multiprocessing.dummy import Pool
 
 FLOAT_FORMAT = '%.3f'
 
@@ -152,28 +153,55 @@ class MonthlyDemandWriter(DemandWriter):
         return monthly_data_new
 
 
+
+def aggregate_results(locator, building_names):
+    aggregated_hourly_results_df = pd.DataFrame()
+
+    for i, building in enumerate(building_names):
+        hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+        if i == 0:
+            aggregated_hourly_results_df = hourly_results_per_building
+        else:
+            aggregated_hourly_results_df += hourly_results_per_building
+
+    return aggregated_hourly_results_df
+
+
 class YearlyDemandWriter(DemandWriter):
     """Write out the yearly demand results"""
 
     def __init__(self, loads, massflows, temperatures):
         super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
-    def write_to_csv(self, list_buildings, locator):
+    def write_aggregate_buildingly(self, locator, building_names):
         """read in the temporary results files and append them to the Totals.csv file."""
         df = None
-        for name in list_buildings:
-            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+        for building in building_names:
+            temporary_file = locator.get_temporary_file('%(building)sT.csv' % locals())
             if df is None:
                 df = pd.read_csv(temporary_file)
             else:
                 df = pd.concat([df, pd.read_csv(temporary_file)], ignore_index=True)
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
-        # """read saved data of monthly values and return as totals"""
-        # monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
-        #                           in
-        #                           list_buildings]
-        # return df, monthly_data_buildings
+    def write_aggregate_hourly(config, locator, building_names):
+        aggregated_hourly_results_df = pd.DataFrame()
+
+        for i, building in enumerate(building_names):
+            hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+            if i == 0:
+                aggregated_hourly_results_df = hourly_results_per_building
+            else:
+                aggregated_hourly_results_df += hourly_results_per_building
+
+        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['Name', 'x_int'])
+
+        # save hourly results
+        aggregated_hourly_results_df.to_csv(locator.get_total_demand_hourly('csv'),
+                                            index=True, float_format='%.3f', na_rep='nan')
+
+
+
 
     def write_to_hdf5(self, list_buildings, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
