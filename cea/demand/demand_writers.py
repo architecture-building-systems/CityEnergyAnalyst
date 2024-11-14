@@ -10,7 +10,6 @@ the `MonthlyDemandWriter`.
 
 import numpy as np
 import pandas as pd
-from multiprocessing.dummy import Pool
 
 FLOAT_FORMAT = '%.3f'
 
