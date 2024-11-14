@@ -17,8 +17,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# TODO: change the hard-coded path; this is subject to a structural separation of project-based CEA Features from scenario-based CEA Features
-
 def exec_read_and_summarise(cea_scenario):
     """
     read and summarise the "useful" CEA results one after another: demand, emissions, potentials, thermal-network
