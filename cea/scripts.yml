@@ -391,15 +391,6 @@ Utilities:
     input-files:
       - [get_zone_geometry]
 
-  - name: result-summary
-    label: Get result summary (beta)
-    description: Collection of useful CEA results
-    interfaces: [cli, dashboard]
-    module: cea.utilities.result_summary
-    parameters: ['general:scenario', result-summary]
-    input-files:
-      - [get_zone_geometry]
-
   - name: result-analytics
     label: Get advanced analytics (beta)
     description: Collection of advanced useful energy analytics
