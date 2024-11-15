@@ -96,25 +96,50 @@ def get_hours_start_end(config):
 
     return hour_start, hour_end
 
-def map_cea_features(list_metrics):
+def map_metrics_cea_features(list_metrics):
 
     dict = {
     "demand": ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','nominal_occupancy[-]',
                'grid_electricity_consumption[MWh]','enduse_electricity_consumption[MWh]',
                'enduse_cooling_demand[MWh]','enduse_space_cooling_demand[MWh]','enduse_heating_demand[MWh]',
                'enduse_space_heating_demand[MWh]','enduse_dhw_demand[MWh]'],
-    "embodied_emissions": ["x", "y", "z"],
-    "operation_emissions": ["m", "n", "o", "p"],
-    "pv": ["a", "b", "c", "d"],
-    "pvt_et": ["x", "y", "z"],
-    "pvt_fp": ["m", "n", "o", "p"],
-    "sc_et": ["m", "n", "o", "p"],
-    "sc_fp": ["a", "b", "c", "d"],
-    "other_renewables": ["x", "y", "z"],
-    "district_heating": ["m", "n", "o", "p"],
-    "district_cooling": ["m", "n", "o", "p"],
+    "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
+    "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+    "pv": ['pv_installed_area_total[m2]','pv_electricity_total[kWh]','pv_installed_area_roof[m2]',
+           'pv_electricity_roof[kWh]','pv_installed_area_north[m2]','pv_electricity_north[kWh]',
+           'pv_installed_area_south[m2]','pv_electricity_south[kWh]','pv_installed_area_east[m2]',
+           'pv_electricity_east[kWh]','pv_installed_area_west[m2]','pv_electricity_west[kWh]'],
+    "pvt_et": ['pvt_et_installed_area_total[m2]','pvt_et_electricity_total[kWh]','pvt_et_heat_total[kWh]',
+               'pvt_et_installed_area_roof[m2]','pvt_et_electricity_roof[kWh]','pvt_et_heat_roof[kWh]',
+               'pvt_et_installed_area_north[m2]','pvt_et_electricity_north[kWh]','pvt_et_heat_north[kWh]',
+               'pvt_et_installed_area_south[m2]','pvt_et_electricity_south[kWh]','pvt_et_installed_area_east[m2]',
+               'pvt_et_electricity_east[kWh]','pvt_et_heat_east[kWh]','pvt_et_installed_area_west[m2]',
+               'pvt_et_electricity_west[kWh]','pvt_et_heat_west[kWh]'],
+    "pvt_fp": ['pvt_fp_installed_area_total[m2]','pvt_fp_electricity_total[kWh]','pvt_fp_heat_total[kWh]',
+               'pvt_fp_installed_area_roof[m2]','pvt_fp_electricity_roof[kWh]','pvt_fp_heat_roof[kWh]',
+               'pvt_fp_installed_area_north[m2]','pvt_fp_electricity_north[kWh]','pvt_fp_heat_north[kWh]',
+               'pvt_fp_installed_area_south[m2]','pvt_fp_electricity_south[kWh]','pvt_fp_installed_area_east[m2]',
+               'pvt_fp_electricity_east[kWh]','pvt_fp_heat_east[kWh]','pvt_fp_installed_area_west[m2]',
+               'pvt_fp_electricity_west[kWh]','pvt_fp_heat_west[kWh]'],
+    "sc_et": ['sc_et_installed_area_total[m2]','sc_et_electricity_total[kWh]','sc_et_heat_total[kWh]',
+              'sc_et_installed_area_roof[m2]','sc_et_electricity_roof[kWh]','sc_et_heat_roof[kWh]',
+              'sc_et_installed_area_north[m2]','sc_et_electricity_north[kWh]','sc_et_heat_north[kWh]',
+              'sc_et_installed_area_south[m2]','sc_et_electricity_south[kWh]','sc_et_installed_area_east[m2]',
+              'sc_et_electricity_east[kWh]','sc_et_heat_east[kWh]','sc_et_installed_area_west[m2]',
+              'sc_et_electricity_west[kWh]','sc_et_heat_west[kWh]'],
+    "sc_fp": ['sc_fp_installed_area_total[m2]','sc_fp_electricity_total[kWh]','sc_fp_heat_total[kWh]',
+              'sc_fp_installed_area_roof[m2]','sc_fp_electricity_roof[kWh]','sc_fp_heat_roof[kWh]',
+              'sc_fp_installed_area_north[m2]','sc_fp_electricity_north[kWh]','sc_fp_heat_north[kWh]',
+              'sc_fp_installed_area_south[m2]','sc_fp_electricity_south[kWh]','sc_fp_installed_area_east[m2]',
+              'sc_fp_electricity_east[kWh]','sc_fp_heat_east[kWh]','sc_fp_installed_area_west[m2]',
+              'sc_fp_electricity_west[kWh]','sc_fp_heat_west[kWh]'],
+    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',
+                         'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
+    "district_heating": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
+                         'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
+    "district_cooling": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
+                         'DC_electricity_consumption_for_pressure_loss[kWh]','DC_plant_pumping_power[kW]'],
     }
-
 
     for key, attached_list in dict.items():
         if set(list_metrics).issubset(set(attached_list)):
