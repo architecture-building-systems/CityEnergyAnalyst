@@ -96,7 +96,44 @@ def get_hours_start_end(config):
 
     return hour_start, hour_end
 
-def exec_read_and_summarise(hour_start, hour_end, cea_feature, metrics):
+def map_cea_features(list_metrics):
+
+    dict = {
+    "demand": ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','nominal_occupancy[-]',
+               'grid_electricity_consumption[MWh]','enduse_electricity_consumption[MWh]',
+               'enduse_cooling_demand[MWh]','enduse_space_cooling_demand[MWh]','enduse_heating_demand[MWh]',
+               'enduse_space_heating_demand[MWh]','enduse_dhw_demand[MWh]'],
+    "embodied_emissions": ["x", "y", "z"],
+    "operation_emissions": ["m", "n", "o", "p"],
+    "pv": ["a", "b", "c", "d"],
+    "pvt_et": ["x", "y", "z"],
+    "pvt_fp": ["m", "n", "o", "p"],
+    "sc_et": ["m", "n", "o", "p"],
+    "sc_fp": ["a", "b", "c", "d"],
+    "other_renewables": ["x", "y", "z"],
+    "district_heating": ["m", "n", "o", "p"],
+    "district_cooling": ["m", "n", "o", "p"],
+    }
+
+
+    for key, attached_list in dict.items():
+        if set(list_metrics).issubset(set(attached_list)):
+            return key
+    return None
+
+
+
+def exec_read_and_summarise_demand(config, hour_start, hour_end):
+
+    # create an empty DataFrame to store all the results
+    summary_df = pd.DataFrame()
+
+    # get the user-defined dates from config
+    metrics = config.result_summary.demand
+
+    # not found message to be reflected in the summary DataFrame
+    na = float('Nan')
+
     return
 
 
