@@ -7,6 +7,7 @@ a series of points (buildings) to the closest street
 
 
 import os
+import warnings
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
@@ -16,7 +17,8 @@ from shapely.ops import split, linemerge, snap
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -367,13 +369,18 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     street_network = gdf.from_file(path_streets_shp)
 
     # check coordinate system
-    street_network = street_network.to_crs(get_geographic_coordinate_system())
-    lon = street_network.geometry[0].centroid.coords.xy[0][0]
-    lat = street_network.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(street_network)
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    street_network = simplify_liness_accurracy(street_network.geometry.values, SHAPEFILE_TOLERANCE, crs)
+    valid_geometries = street_network[street_network.geometry.is_valid].geometry
+
+    if valid_geometries.empty:
+        raise ValueError("No valid geometries found in the shapefile.")
+    elif len(street_network) != len(valid_geometries):
+        warnings.warn(f"Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+
+    street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
 
     # create terminals/branches form street to buildings
     prototype_network = create_terminals(building_centroids_df, crs, street_network)

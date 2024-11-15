@@ -35,7 +35,7 @@ def fetch_weather_data(weather_file: str, zone_file: str):
     weather_data = gpd.read_file(WEATHER_DATA_LOCATION)
 
     # Find nearest weather data based on centroid of zone
-    centroid = zone_gdf.dissolve().centroid.to_crs(weather_data.crs)[0]
+    centroid = zone_gdf.make_valid().to_crs(weather_data.crs).unary_union.centroid
     index = weather_data.sindex.nearest(centroid)[1][0]
     url = f"https://climate.onebuilding.org/{weather_data.iloc[index]['url']}"
     data_source_url = "https://climate.onebuilding.org/sources/default.html"

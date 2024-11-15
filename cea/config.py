@@ -14,6 +14,8 @@ import re
 import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 
+import pandas as pd
+
 import cea.inputlocator
 import cea.plugin
 from cea.utilities import unique
@@ -462,6 +464,12 @@ class PathParameter(Parameter):
         """Always return a canonical path"""
         return str(os.path.normpath(os.path.abspath(os.path.expanduser(value))))
 
+
+class NullablePathParameter(PathParameter):
+    def decode(self, value):
+        if value == '':
+            return value
+        return super().decode(value)
 
 class FileParameter(Parameter):
     """Describes a file in the system."""
@@ -934,8 +942,10 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         if isinstance(value, str):
             raise ValueError(f"Bad value for encode of parameter {self.name}")
+
+        valid_choices = set(self._choices)
         for choice in value:
-            if str(choice) not in self._choices:
+            if str(choice) not in valid_choices:
                 raise ValueError(f"Invalid parameter value {value} for {self.name}, choose from: {self._choices}")
         return ', '.join(map(str, value))
 
@@ -943,7 +953,8 @@ class MultiChoiceParameter(ChoiceParameter):
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
-        return [choice for choice in choices if choice in self._choices]
+        valid_choices = set(self._choices)
+        return [choice for choice in choices if choice in valid_choices]
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
@@ -1132,9 +1143,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
         """
         folder_path = os.path.join(project_path, folder_name)
 
+        # TODO: Use .gitignore to ignore scenarios
         return all([os.path.isdir(folder_path),
                     not folder_name.startswith('.'),
-                    folder_name != "__pycache__"])
+                    folder_name != "__pycache__",
+                    folder_name != "__MACOSX"])
 
     return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
 
@@ -1180,6 +1193,26 @@ def parse_string_coordinate_list(string_tuples):
         coordinates_list.append(coord_tuple)
 
     return coordinates_list
+
+
+class PVChoiceParameter(ChoiceParameter):
+    def initialize(self, parser):
+        # skip the default ChoiceParameter initialization of _choices
+        pass
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to PV codes
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        try:
+            df = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
+            pv_codes = df['code'].unique()
+            return list(pv_codes)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f'Could not find conversion database at {locator.get_database_conversion_systems()}') from e
+        except Exception as e:
+            raise ValueError(f'There was an error generating PV choices from {locator.get_database_conversion_systems()}') from e
+
 
 
 def validate_coord_tuple(coord_tuple):

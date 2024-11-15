@@ -19,7 +19,8 @@ import ast
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Daren Thomas, Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"
@@ -80,10 +81,7 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
               "the .csv file to ESRI Shapefile based on the reference shapefile.")
 
         # get longitude and latitude of reference shapefile's centroid
-        gdf_in_geographic_crs = gdf.to_crs(get_geographic_coordinate_system())
-        lon = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
-        lat = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
-
+        lat, lon = get_lat_lon_projected_shapefile(gdf)
         # project the reference geometry to the global crs and get the crs
         gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
 
@@ -115,9 +113,7 @@ def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name):
     gdf = gpd.GeoDataFrame.from_file(shapefile)
 
     # get longitude and latitude of reference shapefile's centroid
-    gdf_in_geographic_crs = gdf.to_crs(get_geographic_coordinate_system())
-    lon = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
-    lat = gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(gdf)
 
     # project the geometry to the global crs
     gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))

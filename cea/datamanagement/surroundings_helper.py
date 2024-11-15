@@ -16,7 +16,8 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
 from cea.demand import constants
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -26,6 +27,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+def generate_empty_surroundings(crs) -> gdf:
+    return gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=crs)
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
@@ -49,9 +53,8 @@ def get_zone_and_surr_in_projected_crs(locator):
     zone_gdf = gdf.from_file(locator.get_zone_geometry())
     surroundings_gdf = gdf.from_file(locator.get_surroundings_geometry())
     # get longitude and latitude of zone centroid
-    zone_gdf_in_geographic_crs = zone_gdf.to_crs(get_geographic_coordinate_system())
-    lon = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
-    lat = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(zone_gdf)
+
     # check if the coordinate reference systems (crs) of the zone and its surroundings match
     if zone_gdf.crs != surroundings_gdf.crs or zone_gdf.crs != get_projected_coordinate_system(lat=lat, lon=lon):
         # if they don't match project the zone and its surroundings to the global crs...
@@ -167,9 +170,7 @@ def geometry_extractor_osm(locator, config):
     zone = gdf.from_file(locator.get_zone_geometry())
 
     # trnasform zone file to geographic coordinates
-    zone = zone.to_crs(get_geographic_coordinate_system())
-    lon = zone.geometry[0].centroid.coords.xy[0][0]
-    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(zone)
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
@@ -189,7 +190,7 @@ def geometry_extractor_osm(locator, config):
     if not surroundings.shape[0] > 0:
         print('No buildings were found within range based on buffer parameter.')
         # Create an empty surroundings file
-        result = gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=surroundings.crs)
+        result = generate_empty_surroundings(surroundings.crs)
     else:
         # clean attributes of height, name and number of floors
         result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")

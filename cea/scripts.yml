@@ -59,7 +59,7 @@ Data management:
       - [ get_zone_geometry ]
       - [ get_terrain ]
 
-Demand forecasting:
+Solar radiation:
   - name: radiation
     label: Building solar radiation
     description: Use Daysim to calculate solar radiation for a scenario
@@ -93,6 +93,7 @@ Demand forecasting:
       - [ get_terrain ]
       - [ get_weather_file ]
 
+Demand forecasting:
   - name: schedule-maker
     label: Building occupancy
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings
@@ -104,10 +105,10 @@ Demand forecasting:
                  'general:debug',
                  schedule-maker]
     input-files:
-      - [get_database_envelope_systems]
+      - [get_building_internal]
+      - [get_building_comfort]
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_terrain]
       - [get_weather_file]
 
   - name: demand
@@ -466,7 +467,7 @@ default:
     description: dashboard
     interfaces: [cli]
     module: cea.interfaces.dashboard.dashboard
-    parameters: ['general:debug', 'server']
+    parameters: ['general:debug', 'server', 'worker']
 
   - name: excel-to-shapefile
     label: excel-to-shapefile
