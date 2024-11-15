@@ -82,7 +82,7 @@ def get_lat_lon_projected_shapefile(data):
     if valid_geometries.empty:
         raise ValueError("No valid geometries found in the shapefile")
     elif len(data) != len(valid_geometries):
-        warnings.warn(f"Invalid geometries found in the shapefile. Using the first valid geometry.")
+        warnings.warn("Invalid geometries found in the shapefile. Using the first valid geometry.")
 
     # Use the first valid geometry as representative point
     representative_point = valid_geometries.iloc[0].geometry.representative_point()
