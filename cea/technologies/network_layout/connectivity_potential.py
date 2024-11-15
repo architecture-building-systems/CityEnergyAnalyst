@@ -17,8 +17,7 @@ from shapely.ops import split, linemerge, snap
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
-    get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -378,7 +377,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     if valid_geometries.empty:
         raise ValueError("No valid geometries found in the shapefile.")
     elif len(street_network) != len(valid_geometries):
-        warnings.warn(f"Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+        warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
 
     street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
 
