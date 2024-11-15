@@ -4,10 +4,6 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
-
-
-
-
 import numpy as np
 import pandas as pd
 
@@ -23,7 +19,6 @@ class DemandWriter(object):
     """
 
     def __init__(self, loads, massflows, temperatures):
-
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         self.load_vars = loads
@@ -61,7 +56,7 @@ class DemandWriter(object):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
         data = dict((x + '_MWhyr', np.nan_to_num(tsd[x]).sum() / 1000000) for x in self.load_vars)
-        data.update(dict((x + '0_kW', np.nan_to_num(tsd[x]) .max() / 1000) for x in self.load_vars))
+        data.update(dict((x + '0_kW', np.nan_to_num(tsd[x]).max() / 1000) for x in self.load_vars))
         # get order of columns
         keys = data.keys()
         columns = self.OTHER_VARS
@@ -152,30 +147,54 @@ class MonthlyDemandWriter(DemandWriter):
         return monthly_data_new
 
 
-class YearlyDemandWriter(DemandWriter):
+def aggregate_results(locator, building_names):
+    aggregated_hourly_results_df = pd.DataFrame()
+
+    for i, building in enumerate(building_names):
+        hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+        if i == 0:
+            aggregated_hourly_results_df = hourly_results_per_building
+        else:
+            aggregated_hourly_results_df += hourly_results_per_building
+
+    return aggregated_hourly_results_df
+
+
+class YearlyDemandWriter:
     """Write out the yearly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
-        super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
-
-    def write_to_csv(self, list_buildings, locator):
-        """read in the temporary results files and append them to the Totals.csv file."""
+    @staticmethod
+    def write_aggregate_buildings(locator, building_names):
+        """read in the temporary results files and append them to the Total_demand_building.csv file."""
         df = None
-        for name in list_buildings:
-            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+        for building in building_names:
+            temporary_file = locator.get_temporary_file('%(building)sT.csv' % locals())
             if df is None:
                 df = pd.read_csv(temporary_file)
             else:
                 df = pd.concat([df, pd.read_csv(temporary_file)], ignore_index=True)
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
-        # """read saved data of monthly values and return as totals"""
-        # monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
-        #                           in
-        #                           list_buildings]
-        # return df, monthly_data_buildings
+    @staticmethod
+    def write_aggregate_hourly(locator, building_names):
+        """read in the building files and append them to the Total_demand_hourly.csv file."""
+        aggregated_hourly_results_df = pd.DataFrame()
 
-    def write_to_hdf5(self, list_buildings, locator):
+        for i, building in enumerate(building_names):
+            hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+            if i == 0:
+                aggregated_hourly_results_df = hourly_results_per_building
+            else:
+                aggregated_hourly_results_df += hourly_results_per_building
+
+        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['Name', 'x_int'])
+
+        # save hourly results
+        aggregated_hourly_results_df.to_csv(locator.get_total_demand_hourly('csv'),
+                                            index=True, float_format='%.3f', na_rep='nan')
+
+    @staticmethod
+    def write_to_hdf5(locator, list_buildings):
         """read in the temporary results files and append them to the Totals.csv file."""
         df = None
         for name in list_buildings:
