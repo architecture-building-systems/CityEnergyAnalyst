@@ -269,15 +269,15 @@ def calculate_contributions(df, year_to_calculate):
     # BY COMPONENT
 
     df[embodied_win] = df['GHG_win_kgCO2m2'] * df['windows_ag']  * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])* df['confirm']
     df[embodied_win] /= 1000  # kG-CO2 eq to ton
 
     df[uptake_win] = df['GHG_biogenic_win_kgCO2m2'] * df['windows_ag']  * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_win'])* df['confirm']
     df[uptake_win] /= 1000  # kG-CO2 eq to ton
 
     df[embodied_wall] = df['GHG_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])* df['confirm']
     df[embodied_wall] /= 1000
 
     df[uptake_wall] = df['GHG_biogenic_wall_kgCO2m2'] * (df['area_walls_ext_ag'] + df['area_walls_ext_bg']) * np.ceil(
@@ -285,60 +285,61 @@ def calculate_contributions(df, year_to_calculate):
     df[uptake_wall] /= 1000
 
     df[embodied_part] = df['GHG_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])* df['confirm']
     df[embodied_part] /= 1000
 
     df[uptake_part] = df['GHG_biogenic_part_kgCO2m2'] * (df['floor_area_ag'] + df['floor_area_bg']) * CONVERSION_AREA_TO_FLOOR_AREA_RATIO * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_wall'])* df['confirm']
     df[uptake_part] /= 1000
 
     df[embodied_floor] = df['GHG_floor_kgCO2m2'] * df['floor_area_ag'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])* df['confirm']
     df[embodied_floor] /= 1000
 
     df[uptake_floor] = df['GHG_biogenic_floor_kgCO2m2'] * df['floor_area_ag'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_floor'])* df['confirm']
     df[uptake_floor] /= 1000
 
     df[embodied_base] = df['GHG_base_kgCO2m2'] * df['floor_area_bg'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])* df['confirm']
     df[embodied_base] /= 1000
 
     df[uptake_base] = df['GHG_biogenic_base_kgCO2m2'] * df['floor_area_bg'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_base'])* df['confirm']
     df[uptake_base] /= 1000
 
     df[embodied_roof] = df['GHG_roof_kgCO2m2'] * df['footprint'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])* df['confirm']
     df[embodied_roof] /= 1000
 
     df[uptake_roof] = df['GHG_biogenic_roof_kgCO2m2'] * df['footprint'] * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])
+        SERVICE_LIFE_OF_BUILDINGS / df['Service_Life_roof'])* df['confirm']
     df[uptake_roof] /= 1000
 
 
-# the embodie emission og technical system by considering constant values for GWP technical system
+# the embodie emission of technical system by considering constant values for GWP technical system
 
     df[embodied_system] = (df['floor_area_ag'] + df[
          'floor_area_bg']) * EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS * np.ceil(
-        SERVICE_LIFE_OF_BUILDINGS / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS)
+        SERVICE_LIFE_OF_BUILDINGS / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS)* df['confirm']
     df[embodied_system]/=1000
 
     # the total embodied emissions are calculated as a sum of the contributions from construction and retrofits
     df[total_column] = ((df[embodied_win] + df[embodied_wall] + df[embodied_part] + df[
                      embodied_floor] + df[embodied_base] + df[embodied_roof]+
                          df[embodied_system])/ SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
-
+    # the total co2 storage called as uptake are calculated as a sum of the contributions from construction and retrofits
     df[total_column_uptake] = ((df[uptake_win]+ df[uptake_wall] + df[uptake_part] + df[uptake_floor] + df[
                                 uptake_base] + df[uptake_roof]) / SERVICE_LIFE_OF_BUILDINGS) * df['confirm']
 
     df['GHG_sys_embodied_tonCO2yr'] = df[total_column]
     df['GHG_sys_uptake_tonCO2yr'] = df[total_column_uptake]
     df['GHG_sys_embodied_kgCO2m2yr'] = (df[total_column] * 1000) / df['GFA_m2'] # ton-CO2 eq to kg
+    df['GHG_sys_uptake_kgCO2m2yr'] = (df[total_column_uptake]*1000) / df['GFA_m2'] # ton-CO2 eq to kg
 
     # the total and specific embodied emissions are returned
     result = df[['Name','GFA_m2','GHG_sys_embodied_tonCO2yr', 'GHG_sys_uptake_tonCO2yr',
-                'GHG_sys_embodied_kgCO2m2yr', 'GHG_window_tonCO2','uptake_window_tonCO2',
+                'GHG_sys_embodied_kgCO2m2yr', 'GHG_sys_uptake_kgCO2m2yr', 'GHG_window_tonCO2','uptake_window_tonCO2',
                  'GHG_wall_tonCO2', 'uptake_wall_tonCO2', 'GHG_floor_tonCO2',
                  'uptake_floor_tonCO2', 'GHG_base_tonCO2', 'uptake_base_tonCO2', 'GHG_roof_tonCO2',
                  'uptake_roof_tonCO2', 'GHG_part_tonCO2', 'uptake_part_tonCO2','GHG_technical_system_tonCO2']]
