@@ -8,6 +8,7 @@ import pandas as pd
 import cea.config
 import time
 from datetime import datetime
+import cea.inputlocator
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -141,20 +142,38 @@ def map_metrics_cea_features(list_metrics):
                          'DC_electricity_consumption_for_pressure_loss[kWh]','DC_plant_pumping_power[kW]'],
     }
 
-    for key, attached_list in dict.items():
+    for cea_feature, attached_list in dict.items():
         if set(list_metrics).issubset(set(attached_list)):
-            return key
+            return cea_feature
     return None
 
+def get_results_path(locator, cea_feature, selected_buildings):
+    list_paths = []
+
+    if cea_feature == 'demand':
+        for building in selected_buildings:
+            path = locator.get_demand_results_file(building)
+            list_paths.append(path)
+
+    elif cea_feature == 'embodied_emissions':
+        path = locator.get_lca_embodied()
+        list_paths.append(path)
+
+    elif cea_feature == 'operation_emissions':
+        path = locator.get_lca_operation()
+        list_paths.append(path)
+
+    if cea_feature == 'pv':
+        for building in selected_buildings:
+            path = locator.get_demand_results_file(building)
+            list_paths.append(path)
 
 
-def exec_read_and_summarise_demand(config, hour_start, hour_end):
+
+def exec_read_and_summarise(config, hour_start, hour_end, list_metrics):
 
     # create an empty DataFrame to store all the results
     summary_df = pd.DataFrame()
-
-    # get the user-defined dates from config
-    metrics = config.result_summary.demand
 
     # not found message to be reflected in the summary DataFrame
     na = float('Nan')
