@@ -206,14 +206,40 @@ def get_results_path(locator, config, cea_feature):
 
     return list_paths
 
+def from_metrics_to_cea_column_names(list_metrics):
 
-def exec_read_and_summarise(config, hour_start, hour_end, list_metrics):
+    mapping_dict = {
+
+    }
+    cea_column_names_set = set()
+
+    for metric in list_metrics:
+        if metric in mapping_dict:
+            # Add the corresponding output strings (handle single or multiple values)
+            cea_column_name = mapping_dict[metric]
+            if isinstance(cea_column_name, list):
+                cea_column_names_set.update(cea_column_name)  # Add all items from the list
+            else:
+                cea_column_names_set.add(cea_column_name)  # Add single value
+        else:
+            # Optionally handle unmapped strings (e.g., log a warning or ignore)
+            raise ValueError("There might be a CEA bug here. Post an issue on GitHub or CEA Forum to report it.")
+
+    return list(cea_column_names_set)
+
+def exec_read_and_summarise(config, locator, hour_start, hour_end, list_metrics):
 
     # create an empty DataFrame to store all the results
     summary_df = pd.DataFrame()
 
     # not found message to be reflected in the summary DataFrame
     na = float('Nan')
+
+    # map the CEA Feature for the selected metrics
+    cea_feature = map_metrics_cea_features(list_metrics)
+
+    # locate the path(s) to the results of the CEA Feature
+    list_paths = get_results_path(locator, config, cea_feature)
 
     return
 
