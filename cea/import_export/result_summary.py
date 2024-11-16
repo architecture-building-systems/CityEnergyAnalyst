@@ -110,18 +110,12 @@ def map_metrics_cea_features(list_metrics):
            'pv_electricity_roof[kWh]','pv_installed_area_north[m2]','pv_electricity_north[kWh]',
            'pv_installed_area_south[m2]','pv_electricity_south[kWh]','pv_installed_area_east[m2]',
            'pv_electricity_east[kWh]','pv_installed_area_west[m2]','pv_electricity_west[kWh]'],
-    "pvt_et": ['pvt_et_installed_area_total[m2]','pvt_et_electricity_total[kWh]','pvt_et_heat_total[kWh]',
-               'pvt_et_installed_area_roof[m2]','pvt_et_electricity_roof[kWh]','pvt_et_heat_roof[kWh]',
-               'pvt_et_installed_area_north[m2]','pvt_et_electricity_north[kWh]','pvt_et_heat_north[kWh]',
-               'pvt_et_installed_area_south[m2]','pvt_et_electricity_south[kWh]','pvt_et_installed_area_east[m2]',
-               'pvt_et_electricity_east[kWh]','pvt_et_heat_east[kWh]','pvt_et_installed_area_west[m2]',
-               'pvt_et_electricity_west[kWh]','pvt_et_heat_west[kWh]'],
-    "pvt_fp": ['pvt_fp_installed_area_total[m2]','pvt_fp_electricity_total[kWh]','pvt_fp_heat_total[kWh]',
-               'pvt_fp_installed_area_roof[m2]','pvt_fp_electricity_roof[kWh]','pvt_fp_heat_roof[kWh]',
-               'pvt_fp_installed_area_north[m2]','pvt_fp_electricity_north[kWh]','pvt_fp_heat_north[kWh]',
-               'pvt_fp_installed_area_south[m2]','pvt_fp_electricity_south[kWh]','pvt_fp_installed_area_east[m2]',
-               'pvt_fp_electricity_east[kWh]','pvt_fp_heat_east[kWh]','pvt_fp_installed_area_west[m2]',
-               'pvt_fp_electricity_west[kWh]','pvt_fp_heat_west[kWh]'],
+    "pvt": ['pvt_installed_area_total[m2]','pvt_electricity_total[kWh]','pvt_heat_total[kWh]',
+            'pvt_installed_area_roof[m2]','pvt_electricity_roof[kWh]','pvt_heat_roof[kWh]',
+            'pvt_installed_area_north[m2]','pvt_electricity_north[kWh]','pvt_heat_north[kWh]',
+            'pvt_installed_area_south[m2]','pvt_electricity_south[kWh]','pvt_installed_area_east[m2]',
+            'pvt_electricity_east[kWh]','pvt_heat_east[kWh]','pvt_installed_area_west[m2]',
+            'pvt_electricity_west[kWh]','pvt_heat_west[kWh]'],
     "sc_et": ['sc_et_installed_area_total[m2]','sc_et_electricity_total[kWh]','sc_et_heat_total[kWh]',
               'sc_et_installed_area_roof[m2]','sc_et_electricity_roof[kWh]','sc_et_heat_roof[kWh]',
               'sc_et_installed_area_north[m2]','sc_et_electricity_north[kWh]','sc_et_heat_north[kWh]',
@@ -147,7 +141,12 @@ def map_metrics_cea_features(list_metrics):
             return cea_feature
     return None
 
-def get_results_path(locator, cea_feature, selected_buildings):
+def get_results_path(locator, config, cea_feature):
+
+    selected_buildings = config.result_summary.buildings
+    network_names_DH = config.result_summary.networks_heating
+    network_names_DC = config.result_summary.networks_cooling
+
     list_paths = []
 
     if cea_feature == 'demand':
@@ -165,9 +164,47 @@ def get_results_path(locator, cea_feature, selected_buildings):
 
     if cea_feature == 'pv':
         for building in selected_buildings:
-            path = locator.get_demand_results_file(building)
+            path = locator.PV_results(building, panel_type)
             list_paths.append(path)
 
+    if cea_feature == 'pvt':
+        for building in selected_buildings:
+            path = locator.PVT_results(building)
+            list_paths.append(path)
+
+    if cea_feature == 'sc-et':
+        for building in selected_buildings:
+            path = locator.SC_results(building, 'ET')
+            list_paths.append(path)
+
+    if cea_feature == 'sc-fp':
+        for building in selected_buildings:
+            path = locator.SC_results(building, 'FP')
+            list_paths.append(path)
+
+    if cea_feature == 'other_renewables':
+        path_geothermal = locator.get_geothermal_potential()
+        list_paths.append(path_geothermal)
+        path_sewage_heat = locator.get_sewage_heat_potential()
+        list_paths.append(path_sewage_heat)
+        path_water_body = locator.get_water_body_potential()
+        list_paths.append(path_water_body)
+
+    if cea_feature == 'district_heating':
+        for network in network_names_DH:
+            path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', network, representative_week=False)
+            list_paths.append(path_thermal)
+            path_pump = locator.get_network_energy_pumping_requirements_file('DH', network, representative_week=False)
+            list_paths.append(path_pump)
+
+    if cea_feature == 'district_cooling':
+        for network in network_names_DC:
+            path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', network, representative_week=False)
+            list_paths.append(path_thermal)
+            path_pump = locator.get_network_energy_pumping_requirements_file('DC', network, representative_week=False)
+            list_paths.append(path_pump)
+
+    return list_paths
 
 
 def exec_read_and_summarise(config, hour_start, hour_end, list_metrics):
