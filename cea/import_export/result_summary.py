@@ -203,117 +203,124 @@ def get_results_path(locator, config, cea_feature):
 
     return list_paths
 
-def from_metrics_to_cea_column_names(list_metrics):
+def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
+    """
+    Maps between metrics and CEA column names based on the direction.
 
+    Parameters:
+    - input_list (list): A list of metrics or CEA column names to map.
+    - direction (str): Direction of mapping:
+        - "metrics_to_columns": Maps metrics to CEA column names.
+        - "columns_to_metrics": Maps CEA column names to metrics.
+
+    Returns:
+    - list: A list of mapped values (CEA column names or metrics).
+
+    Raises:
+    - ValueError: If an unmapped value is encountered or if the direction is invalid.
+    """
     mapping_dict = {
-                    'conditioned_floor_area[m2]':['Af_m2'],
-                    'roof_area[m2]':['Aroof_m2'],
-                    'gross_floor_area[m2]':['GFA_m2'],
-                    'occupied_floor_area[m2]':['Aocc_m2'],
-
-                    'nominal_occupancy[-]':['people'],
-                    'grid_electricity_consumption[MWh]':['GRID_kWh'],
-                    'enduse_electricity_consumption[MWh]':['E_sys_kWh'],
-                    'enduse_cooling_demand[MWh]':['QC_sys_kWh'],
-                    'enduse_space_cooling_demand[MWh]':['Qcs_sys_kWh'],
-                    'enduse_heating_demand[MWh]':['QH_sys_kWh'],
-                    'enduse_space_heating_demand[MWh]':['Qhs_sys_kWh'],
-                    'enduse_dhw_demand[MWh]':['Qww_kWh'],
-
-                    'embodied_emissions_building_construction[tonCO2-eq/yr]':['GHG_sys_embodied_tonCO2yr'],
-
-                    'operation_emissions[tonCO2-eq/yr]':['GHG_sys_tonCO2'],
-                    'operation_emissions_grid[tonCO2-eq/yr]':['GRID_tonCO2'],
-
-                    'pv_installed_area_total[m2]':['Area_PV_m2'],
-                    'pv_electricity_total[kWh]':['E_PV_gen_kWh'],
-                    'pv_installed_area_roof[m2]':['PV_roofs_top_m2'],
-                    'pv_electricity_roof[kWh]':['PV_roofs_top_E_kWh'],
-                    'pv_installed_area_north[m2]':['PV_walls_north_m2'],
-                    'pv_electricity_north[kWh]':['PV_walls_north_E_kWh'],
-                    'pv_installed_area_south[m2]':['PV_walls_south_m2'],
-                    'pv_electricity_south[kWh]':['PV_walls_south_E_kWh'],
-                    'pv_installed_area_east[m2]':['PV_walls_east_m2'],
-                    'pv_electricity_east[kWh]':['PV_walls_east_E_kWh'],
-                    'pv_installed_area_west[m2]':['PV_walls_west_m2'],
-                    'pv_electricity_west[kWh]':['PV_walls_west_E_kWh'],
-
-                    'pvt_installed_area_total[m2]':['Area_PVT_m2'],
-                    'pvt_electricity_total[kWh]':['E_PVT_gen_kWh'],
-                    'pvt_heat_total[kWh]':['Q_PVT_gen_kWh'],
-                    'pvt_installed_area_roof[m2]':['PVT_roofs_top_m2'],
-                    'pvt_electricity_roof[kWh]':['PVT_roofs_top_E_kWh'],
-                    'pvt_heat_roof[kWh]':['PVT_roofs_top_Q_kWh'],
-                    'pvt_installed_area_north[m2]':['PVT_walls_north_m2'],
-                    'pvt_electricity_north[kWh]':['PVT_walls_north_E_kWh'],
-                    'pvt_heat_north[kWh]':['PVT_walls_north_Q_kWh'],
-                    'pvt_installed_area_south[m2]':['PVT_walls_south_m2'],
-                    'pvt_electricity_south[kWh]':['PVT_walls_south_E_kWh'],
-                    'pvt_heat_south[kWh]':['PVT_walls_south_Q_kWh'],
-                    'pvt_installed_area_east[m2]':['PVT_walls_east_m2'],
-                    'pvt_electricity_east[kWh]':['PVT_walls_east_E_kWh'],
-                    'pvt_heat_east[kWh]':['PVT_walls_east_Q_kWh'],
-                    'pvt_installed_area_west[m2]':['PVT_walls_west_m2'],
-                    'pvt_electricity_west[kWh]':['PVT_walls_west_E_kWh'],
-                    'pvt_heat_west[kWh]':['PVT_walls_west_Q_kWh'],
-
-                    'sc_et_installed_area_total[m2]':['Area_SC_m2'],
-                    'sc_et_heat_total[kWh]':['Q_SC_gen_kWh'],
-                    'sc_et_installed_area_roof[m2]':['SC_ET_roofs_top_m2'],
-                    'sc_et_heat_roof[kWh]':['SC_ET_roofs_top_Q_kWh'],
-                    'sc_et_installed_area_north[m2]':['SC_ET_walls_north_m2'],
-                    'sc_et_heat_north[kWh]':['SC_ET_walls_north_Q_kWh'],
-                    'sc_et_installed_area_south[m2]':['SC_ET_walls_south_m2'],
-                    'sc_et_heat_south[kWh]':['SC_ET_walls_south_Q_kWh'],
-                    'sc_et_installed_area_east[m2]':['SC_ET_walls_east_m2'],
-                    'sc_et_heat_east[kWh]':['SC_ET_walls_east_Q_kWh'],
-                    'sc_et_installed_area_west[m2]':['SC_ET_walls_west_m2'],
-                    'sc_et_heat_west[kWh]':['SC_ET_walls_west_Q_kWh'],
-
-                    'sc_fp_installed_area_total[m2]':['Area_SC_m2'],
-                    'sc_fp_heat_total[kWh]':['Q_FP_gen_kWh'],
-                    'sc_fp_installed_area_roof[m2]':['SC_FP_roofs_top_m2'],
-                    'sc_fp_heat_roof[kWh]':['SC_FP_roofs_top_Q_kWh'],
-                    'sc_fp_installed_area_north[m2]':['SC_FP_walls_north_m2'],
-                    'sc_fp_heat_north[kWh]':['SC_FP_walls_north_Q_kWh'],
-                    'sc_fp_installed_area_south[m2]':['SC_FP_walls_south_m2'],
-                    'sc_fp_heat_south[kWh]':['SC_FP_walls_south_Q_kWh'],
-                    'sc_fp_installed_area_east[m2]':['SC_FP_walls_east_m2'],
-                    'sc_fp_heat_east[kWh]':['SC_FP_walls_east_Q_kWh'],
-                    'sc_fp_installed_area_west[m2]':['SC_FP_walls_west_m2'],
-                    'sc_fp_heat_west[kWh]':['SC_FP_walls_west_Q_kWh'],
-
-                    'geothermal_heat_potential[kWh]':['QGHP_kW'],
-                    'area_for_ground_source_heat_pump[m2]':['Area_avail_m2'],
-                    'sewage_heat_potential[kWh]':['Qsw_kW'],
-                    'water_body_heat_potential[kWh]':['QLake_kW'],
-
-                    'DH_plant_thermal_load[kWh]':['thermal_load_kW'],
-                    'DH_plant_power[kW]':['thermal_load_kW'],
-                    'DH_electricity_consumption_for_pressure_loss[kWh]':['pressure_loss_total_kW'],
-                    'DH_plant_pumping_power[kW]':['pressure_loss_total_kW'],
-
-                    'DC_plant_thermal_load[kWh]':['thermal_load_kW'],
-                    'DC_plant_power[kW]':['thermal_load_kW'],
-                    'DC_electricity_consumption_for_pressure_loss[kWh]':['pressure_loss_total_kW'],
-                    'DC_plant_pumping_power[kW]':['pressure_loss_total_kW'],
-
+        'conditioned_floor_area[m2]': ['Af_m2'],
+        'roof_area[m2]': ['Aroof_m2'],
+        'gross_floor_area[m2]': ['GFA_m2'],
+        'occupied_floor_area[m2]': ['Aocc_m2'],
+        'nominal_occupancy[-]': ['people'],
+        'grid_electricity_consumption[MWh]': ['GRID_kWh'],
+        'enduse_electricity_consumption[MWh]': ['E_sys_kWh'],
+        'enduse_cooling_demand[MWh]': ['QC_sys_kWh'],
+        'enduse_space_cooling_demand[MWh]': ['Qcs_sys_kWh'],
+        'enduse_heating_demand[MWh]': ['QH_sys_kWh'],
+        'enduse_space_heating_demand[MWh]': ['Qhs_sys_kWh'],
+        'enduse_dhw_demand[MWh]': ['Qww_kWh'],
+        'embodied_emissions_building_construction[tonCO2-eq/yr]': ['GHG_sys_embodied_tonCO2yr'],
+        'operation_emissions[tonCO2-eq/yr]': ['GHG_sys_tonCO2'],
+        'operation_emissions_grid[tonCO2-eq/yr]': ['GRID_tonCO2'],
+        'pv_installed_area_total[m2]': ['Area_PV_m2'],
+        'pv_electricity_total[kWh]': ['E_PV_gen_kWh'],
+        'pv_installed_area_roof[m2]': ['PV_roofs_top_m2'],
+        'pv_electricity_roof[kWh]': ['PV_roofs_top_E_kWh'],
+        'pv_installed_area_north[m2]': ['PV_walls_north_m2'],
+        'pv_electricity_north[kWh]': ['PV_walls_north_E_kWh'],
+        'pv_installed_area_south[m2]': ['PV_walls_south_m2'],
+        'pv_electricity_south[kWh]': ['PV_walls_south_E_kWh'],
+        'pv_installed_area_east[m2]': ['PV_walls_east_m2'],
+        'pv_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
+        'pv_installed_area_west[m2]': ['PV_walls_west_m2'],
+        'pv_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
+        'pvt_installed_area_total[m2]': ['Area_PVT_m2'],
+        'pvt_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'pvt_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'pvt_installed_area_roof[m2]': ['PVT_roofs_top_m2'],
+        'pvt_electricity_roof[kWh]': ['PVT_roofs_top_E_kWh'],
+        'pvt_heat_roof[kWh]': ['PVT_roofs_top_Q_kWh'],
+        'pvt_installed_area_north[m2]': ['PVT_walls_north_m2'],
+        'pvt_electricity_north[kWh]': ['PVT_walls_north_E_kWh'],
+        'pvt_heat_north[kWh]': ['PVT_walls_north_Q_kWh'],
+        'pvt_installed_area_south[m2]': ['PVT_walls_south_m2'],
+        'pvt_electricity_south[kWh]': ['PVT_walls_south_E_kWh'],
+        'pvt_heat_south[kWh]': ['PVT_walls_south_Q_kWh'],
+        'pvt_installed_area_east[m2]': ['PVT_walls_east_m2'],
+        'pvt_electricity_east[kWh]': ['PVT_walls_east_E_kWh'],
+        'pvt_heat_east[kWh]': ['PVT_walls_east_Q_kWh'],
+        'pvt_installed_area_west[m2]': ['PVT_walls_west_m2'],
+        'pvt_electricity_west[kWh]': ['PVT_walls_west_E_kWh'],
+        'pvt_heat_west[kWh]': ['PVT_walls_west_Q_kWh'],
+        'sc_et_installed_area_total[m2]': ['Area_SC_m2'],
+        'sc_et_heat_total[kWh]': ['Q_SC_gen_kWh'],
+        'sc_et_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
+        'sc_et_heat_roof[kWh]': ['SC_ET_roofs_top_Q_kWh'],
+        'sc_et_installed_area_north[m2]': ['SC_ET_walls_north_m2'],
+        'sc_et_heat_north[kWh]': ['SC_ET_walls_north_Q_kWh'],
+        'sc_et_installed_area_south[m2]': ['SC_ET_walls_south_m2'],
+        'sc_et_heat_south[kWh]': ['SC_ET_walls_south_Q_kWh'],
+        'sc_et_installed_area_east[m2]': ['SC_ET_walls_east_m2'],
+        'sc_et_heat_east[kWh]': ['SC_ET_walls_east_Q_kWh'],
+        'sc_et_installed_area_west[m2]': ['SC_ET_walls_west_m2'],
+        'sc_et_heat_west[kWh]': ['SC_ET_walls_west_Q_kWh'],
+        'sc_fp_installed_area_total[m2]': ['Area_SC_m2'],
+        'sc_fp_heat_total[kWh]': ['Q_FP_gen_kWh'],
+        'sc_fp_installed_area_roof[m2]': ['SC_FP_roofs_top_m2'],
+        'sc_fp_heat_roof[kWh]': ['SC_FP_roofs_top_Q_kWh'],
+        'sc_fp_installed_area_north[m2]': ['SC_FP_walls_north_m2'],
+        'sc_fp_heat_north[kWh]': ['SC_FP_walls_north_Q_kWh'],
+        'sc_fp_installed_area_south[m2]': ['SC_FP_walls_south_m2'],
+        'sc_fp_heat_south[kWh]': ['SC_FP_walls_south_Q_kWh'],
+        'sc_fp_installed_area_east[m2]': ['SC_FP_walls_east_m2'],
+        'sc_fp_heat_east[kWh]': ['SC_FP_walls_east_Q_kWh'],
+        'sc_fp_installed_area_west[m2]': ['SC_FP_walls_west_m2'],
+        'sc_fp_heat_west[kWh]': ['SC_FP_walls_west_Q_kWh'],
+        'geothermal_heat_potential[kWh]': ['QGHP_kW'],
+        'area_for_ground_source_heat_pump[m2]': ['Area_avail_m2'],
+        'sewage_heat_potential[kWh]': ['Qsw_kW'],
+        'water_body_heat_potential[kWh]': ['QLake_kW'],
+        'DH_plant_thermal_load[kWh]': ['thermal_load_kW'],
+        'DH_plant_power[kW]': ['thermal_load_kW'],
+        'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
+        'DH_plant_pumping_power[kW]': ['pressure_loss_total_kW'],
+        'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
+        'DC_plant_power[kW]': ['thermal_load_kW'],
+        'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
+        'DC_plant_pumping_power[kW]': ['pressure_loss_total_kW'],
     }
-    cea_column_names_set = set()
 
-    for metric in list_metrics:
-        if metric in mapping_dict:
-            # Add the corresponding output strings (handle single or multiple values)
-            cea_column_name = mapping_dict[metric]
-            if isinstance(cea_column_name, list):
-                cea_column_names_set.update(cea_column_name)  # Add all items from the list
+    # Reverse the mapping if direction is "columns_to_metrics"
+    if direction == "columns_to_metrics":
+        mapping_dict = {cea_col: metric for metric, cea_cols in mapping_dict.items() for cea_col in cea_cols}
+
+    # Perform the mapping
+    output_set = set()
+    for item in input_list:
+        if item in mapping_dict:
+            # Add the mapped value(s) (handle lists or single items)
+            mapped_value = mapping_dict[item]
+            if isinstance(mapped_value, list):
+                output_set.update(mapped_value)
             else:
-                cea_column_names_set.add(cea_column_name)  # Add single value
+                output_set.add(mapped_value)
         else:
-            # Optionally handle unmapped strings (e.g., log a warning or ignore)
-            raise ValueError("There might be a CEA bug here. Post an issue on GitHub or CEA Forum to report it.")
+            raise ValueError(f"Unrecognized value in the input list: {item}")
 
-    return list(cea_column_names_set)
+    return list(output_set)
 
 
 def load_cea_results_csv_files(list_paths, list_cea_column_names):
@@ -399,14 +406,14 @@ def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
     list_paths = get_results_path(locator, config, cea_feature)
 
     # get the relevant CEA column names based on selected metrics
-    list_cea_column_names = from_metrics_to_cea_column_names(list_metrics)
+    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
 
     # get the useful CEA results for the user-selected metrics and hours
     list_useful_cea_results = load_cea_results_csv_files(list_paths, list_cea_column_names)
 
     # aggregate these results
     df_aggregated_results_hourly_8760 = aggregate_dataframes(list_useful_cea_results)
-
+    
     return df_aggregated_results_hourly_8760
 
 def slice_hourly_results_time_period(df, hour_start, hour_end):
