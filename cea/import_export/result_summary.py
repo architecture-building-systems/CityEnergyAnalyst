@@ -657,7 +657,7 @@ def results_writer_time_period(config, output_path, list_metrics, list_df_aggreg
 
     # Join the paths
     target_path = os.path.join(output_path, 'export',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start,hour_end=hour_end),
+                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end),
                                cea_feature)
 
     # Create the folder if it doesn't exist
@@ -672,32 +672,61 @@ def results_writer_time_period(config, output_path, list_metrics, list_df_aggreg
     # Write .csv files for each DataFrame
     for df in list_df_aggregate_time_period:
         if df is not None:
-            # Determine time period name based on number of rows
-            row_count = len(df)
-            if row_count == 1:
+            # Determine time period name based on the content in Column ['period']
+            if len(df) == 1 and abs(hour_end - hour_start) == 8760:
                 time_period_name = "annually"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+            # if only one day is selected
+            elif len(df) == 1 and df['period'].astype(str).str.contains("day").any():
+                time_period_name = "daily"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+                break
+
+            elif len(df) > 1 and df['period'].astype(str).str.contains("day").any():
+                time_period_name = "daily"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+
+            # if all days selected fall into the same month
+            elif len(df) == 1 and df['period'].isin(month_names).any():
+                time_period_name = "monthly"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+                break
+            elif len(df) > 1 and df['period'].isin(month_names).any():
+                time_period_name = "monthly"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+
             elif df['period'].isin(season_names).any():
                 time_period_name = "seasonally"
-            elif df['period'].isin(month_names).any():
-                time_period_name = "monthly"
-            elif df['period'].astype(str).str.contains("day").any():
-                time_period_name = "daily"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+
             elif df['period'].astype(str).str.contains("hour").any():
                 time_period_name = "hourly"
-            else:
-                raise ValueError("Bug here.")
-
-            # Create the file path
-            path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-
-            # Write the DataFrame to .csv files
-            try:
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
                 df.to_csv(path_csv, index=False, float_format="%.2f")
-            except Exception as e:
-                print(f"Failed to write {time_period_name} results to {path_csv}: {e}")
 
         else:
-            pass
+            pass    # Allow the missing results and will just pass
+
+    # Write .csv files for sum of all selected hours
+    for df in list_df_aggregate_time_period:
+        if df is not None:
+            if len(df) == 1 and abs(hour_end - hour_start) != 8760 \
+                    and not df['period'].astype(str).str.contains("day").any() \
+                    and not df['period'].isin(month_names).any() \
+                    and not df['period'].isin(season_names).any() \
+                    and not df['period'].astype(str).str.contains("hour").any():
+                time_period_name = "sum_selected_hours"
+                df['period'] = "selected_hours"
+                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+        else:
+            pass    # Allow the missing results and will just pass
 
 
 def results_writer_without_date(config, output_path, list_metrics, list_df):
