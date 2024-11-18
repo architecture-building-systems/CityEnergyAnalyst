@@ -86,6 +86,17 @@ def get_hours_start_end(config):
 
         return hour_of_year
 
+    # When left blank, start date is set to Jan 01 and end date is set to Dec 31
+    list_all = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17',
+                '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31',
+                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    if date_start == list_all:
+        date_start = ['01','Jan']
+
+    if date_end == list_all:
+        date_end = ['31','Dec']
+
     # validate start date
     if not check_user_period_validity(date_start):
         raise ValueError('Check the start date. Select one number and one month only.')
@@ -142,9 +153,8 @@ def map_metrics_cea_features(list_metrics):
               'sc_fp_installed_area_south[m2]','sc_fp_heat_south[kWh]',
               'sc_fp_installed_area_east[m2]','sc_fp_heat_east[kWh]',
               'sc_fp_installed_area_west[m2]','sc_fp_heat_west[kWh]'],
-    "geothermal": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',],
-    "sewage": ['sewage_heat_potential[kWh]'],
-    "water_body": ['water_body_heat_potential[kWh]'],
+    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',
+                         'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
     "dh": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
                          'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
     "dc": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
@@ -202,15 +212,11 @@ def get_results_path(locator, config, cea_feature):
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
 
-    if cea_feature == 'geothermal':
+    if cea_feature == 'other_renewables':
         path_geothermal = locator.get_geothermal_potential()
         list_paths.append(path_geothermal)
-
-    if cea_feature == 'sewage':
         path_sewage_heat = locator.get_sewage_heat_potential()
         list_paths.append(path_sewage_heat)
-
-    if cea_feature == 'water_body':
         path_water_body = locator.get_water_body_potential()
         list_paths.append(path_water_body)
 
@@ -360,20 +366,29 @@ def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
     - list of pd.DataFrame: A list of DataFrames for files that exist.
     """
     list_dataframes = []
-    selected_columns = ['date'] + list_cea_column_names
+    date_columns = {'Date', 'DATE', 'date'}
     for path in list_paths:
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
-                df = get_standardized_date_column(df)   #change where ['DATE'] or ['Date'] to ['date']
+                if date_columns.intersection(df.columns):
+                    df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
-                # Slice the useful columns
-                available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
-                df = df[available_columns]
+                    # Slice the useful columns
+                    selected_columns = ['date'] + list_cea_column_names
+                    available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
+                    df = df[available_columns]
 
-                df['date'] = pd.to_datetime(df['date'], errors='coerce')
-                df = slice_hourly_results_time_period(config, df)   #slice the custom period of time
-                list_dataframes.append(df)  # Add the DataFrame to the list
+                    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                    df = slice_hourly_results_time_period(config, df)   # Slice the custom period of time
+                    list_dataframes.append(df)  # Add the DataFrame to the list
+                else:
+                    # Slice the useful columns
+                    selected_columns = ['Name'] + list_cea_column_names
+                    available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
+                    df = df[available_columns]
+                    list_dataframes.append(df)  # Add the DataFrame to the list
+
             except Exception as e:
                 print(f"Error loading {path}: {e}")
         else:
@@ -398,7 +413,7 @@ def aggregate_dataframes(dataframes):
     """
     # Ensure there are DataFrames to aggregate
     if not dataframes:
-        raise ValueError("The list of DataFrames is empty.")
+        return None
 
     # Start with the first DataFrame as a base
     aggregated_df = dataframes[0].copy()
@@ -443,7 +458,7 @@ def aggregate_dataframes(dataframes):
     return aggregated_df
 
 
-def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
+def exec_read_and_summarise_hourly_8760(config, locator, list_metrics):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
@@ -461,6 +476,23 @@ def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
     df_aggregated_results_hourly_8760 = aggregate_dataframes(list_useful_cea_results)
 
     return df_aggregated_results_hourly_8760
+
+
+def exec_read_and_summarise_without_date(config, locator, list_metrics):
+
+    # map the CEA Feature for the selected metrics
+    cea_feature = map_metrics_cea_features(list_metrics)
+
+    # locate the path(s) to the results of the CEA Feature
+    list_paths = get_results_path(locator, config, cea_feature)
+
+    # get the relevant CEA column names based on selected metrics
+    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
+
+    # get the useful CEA results for the user-selected metrics and hours
+    list_useful_cea_results = load_cea_results_csv_files(config, list_paths, list_cea_column_names)
+
+    return list_useful_cea_results
 
 def slice_hourly_results_time_period(config, df):
     """
@@ -515,6 +547,9 @@ def aggregate_by_period(df, period, date_column='date'):
     - pd.DataFrame: Aggregated DataFrame.
     """
     # Ensure the date column is in datetime format
+    if df is None:
+        return None
+
     if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
         df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
 
@@ -618,36 +653,79 @@ def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # Join the paths
-    target_path = os.path.join(output_path, 'results', cea_feature)
+    target_path = os.path.join(output_path, 'export', cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
 
+    # Remove all files in folder
+    for filename in os.listdir(target_path):
+        file_path = os.path.join(target_path, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
     # Write .csv files for each DataFrame
     for df in list_df_aggregate_time_period:
-        # Determine time period name based on number of rows
-        row_count = len(df)
-        if row_count == 1:
-            time_period_name = "annually"
-        elif df['period'].isin(season_names).any():
-            time_period_name = "seasonally"
-        elif df['period'].isin(month_names).any():
-            time_period_name = "monthly"
-        elif df['period'].astype(str).str.contains("day").any():
-            time_period_name = "daily"
-        elif df['period'].astype(str).str.contains("hour").any():
-            time_period_name = "hourly"
+        if df is not None:
+            # Determine time period name based on number of rows
+            row_count = len(df)
+            if row_count == 1:
+                time_period_name = "annually"
+            elif df['period'].isin(season_names).any():
+                time_period_name = "seasonally"
+            elif df['period'].isin(month_names).any():
+                time_period_name = "monthly"
+            elif df['period'].astype(str).str.contains("day").any():
+                time_period_name = "daily"
+            elif df['period'].astype(str).str.contains("hour").any():
+                time_period_name = "hourly"
+            else:
+                raise ValueError("Bug here.")
+
+            # Create the file path
+            path_csv = os.path.join(target_path, f"{time_period_name}.csv")
+
+            # Write the DataFrame to .csv files
+            try:
+                df.to_csv(path_csv, index=False, float_format="%.2f")
+            except Exception as e:
+                print(f"Failed to write {time_period_name} results to {path_csv}: {e}")
+
         else:
-            raise ValueError(f"Unexpected number of rows ({row_count}) in DataFrame. Cannot determine time period.")
+            pass
 
-        # Create the file path
-        path_csv = os.path.join(target_path, f"{time_period_name}.csv")
 
-        # Write the DataFrame to .csv files
-        try:
-            df.to_csv(path_csv, index=False, float_format="%.2f")
-        except Exception as e:
-            print(f"Failed to write {time_period_name} results to {path_csv}: {e}")
+def results_writer_without_date(output_path, list_metrics, list_df):
+    """
+    Writes aggregated results for different time periods to CSV files.
+
+    Parameters:
+    - output_path (str): The base directory to save the results.
+    - list_metrics (List[str]): A list of metrics corresponding to the results.
+    - list_df (List[pd.DataFrame]): A list of DataFrames.
+    """
+    # Map metrics to CEA features
+    cea_feature = map_metrics_cea_features(list_metrics)
+
+    # Join the paths
+    target_path = os.path.join(output_path, 'export', cea_feature)
+
+    # Create the folder if it doesn't exist
+    os.makedirs(target_path, exist_ok=True)
+
+    # Remove all files in folder
+    for filename in os.listdir(target_path):
+        file_path = os.path.join(target_path, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+    # Create the .csv file path
+    path_csv = os.path.join(target_path, f"{cea_feature}.csv")
+
+    # Write to .csv files
+    for df in list_df:
+        df.to_csv(path_csv, index=False, float_format="%.2f")
+
 
 def main(config):
     """
@@ -669,39 +747,34 @@ def main(config):
     list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
-    list_metrics_architecture = config.result_summary.metrics_architecture
-    list_metrics_demand = config.result_summary.metrics_demand
-    list_metrics_embodied_emissions = config.result_summary.metrics_embodied_emissions
-    list_metrics_operation_emissions = config.result_summary.metrics_operation_emissions
-    list_metrics_pv = config.result_summary.metrics_pv
-    list_metrics_pvt = config.result_summary.metrics_pvt
-    list_metrics_sc_et = config.result_summary.metrics_sc_et
-    list_metrics_sc_fp = config.result_summary.metrics_sc_fp
-    list_metrics_geothermal = config.result_summary.metrics_geothermal
-    list_metrics_sewage = config.result_summary.metrics_sewage
-    list_metrics_water_body = config.result_summary.metrics_water_body
-    list_metrics_dh = config.result_summary.metrics_dh
-    list_metrics_dc = config.result_summary.metrics_dc
 
-    list_list_metrics = [
+    list_list_metrics_with_date = [
                         config.result_summary.metrics_demand,
                         config.result_summary.metrics_pv,
                         config.result_summary.metrics_pvt,
                         config.result_summary.metrics_sc_et,
                         config.result_summary.metrics_sc_fp,
-                        config.result_summary.metrics_geothermal,
-                        config.result_summary.metrics_sewage,
-                        config.result_summary.metrics_water_body,
+                        config.result_summary.metrics_other_renewables,
                         config.result_summary.metrics_dh,
                         config.result_summary.metrics_dc
                         ]
 
-    for list_metrics in list_list_metrics:
+    list_list_metrics_without_date = [
+                        config.result_summary.metrics_architecture,
+                        config.result_summary.metrics_embodied_emissions,
+                        config.result_summary.metrics_operation_emissions,
+                        ]
+    # Export results that have no date information, non-8760 hours
+    for list_metrics in list_list_metrics_without_date:
+        list_df = exec_read_and_summarise_without_date(config, locator, list_metrics)
+        results_writer_without_date(output_path, list_metrics, list_df)
+
+    # Export results that have date information, 8760 hours
+    for list_metrics in list_list_metrics_with_date:
         list_df_time_period = exec_aggregate_time_period(
             exec_read_and_summarise_hourly_8760(config, locator, list_metrics), list_aggregate_by_time_period)
         results_writer_time_period(output_path, list_metrics, list_df_time_period)
 
-    #architecture
 
 
     # Print the time used for the entire processing
