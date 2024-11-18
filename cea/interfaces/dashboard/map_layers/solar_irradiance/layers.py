@@ -1,4 +1,6 @@
+import itertools
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import fiona
 import pandas as pd
@@ -52,7 +54,6 @@ class SolarIrradianceMapLayer(MapLayer):
 
     def generate_output(self):
         """Generates the output for this layer"""
-
         scenario_name = self.parameters['scenario-name']
         locator = InputLocator(os.path.join(self.project, scenario_name))
 
@@ -74,9 +75,7 @@ class SolarIrradianceMapLayer(MapLayer):
         with fiona.open(locator.get_zone_geometry()) as src:
             transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
 
-        total_min, total_max = 10e10, 0
-        period_min, period_max = 10e10, 0
-        for building in buildings:
+        def get_building_sensors(building):
             metadata = pd.read_csv(locator.get_radiation_metadata(building)).set_index('SURFACE')
             building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building))
 
@@ -86,35 +85,51 @@ class SolarIrradianceMapLayer(MapLayer):
             else:
                 terrain_elevation = 0
 
-            total_min = min(total_min, building_sensors.min(numeric_only=True).min())
-            total_max = max(total_max, building_sensors.max(numeric_only=True).max())
+            total_min = building_sensors.min(numeric_only=True).min()
+            total_max = building_sensors.max(numeric_only=True).max()
 
             sensor_values = building_sensors.iloc[hour]
-            period_min = min(period_min, sensor_values.min())
-            period_max = max(period_max, sensor_values.max())
-            for sensor, value in sensor_values.items():
-                sensor_metadata = metadata.loc[sensor]
-                sensor_position = transformer.transform(sensor_metadata['Xcoor'], sensor_metadata['Ycoor'],
-                                                        sensor_metadata['Zcoor'] - terrain_elevation)
-                # sensor_normal = (sensor_metadata['Xdir'], sensor_metadata['Ydir'], sensor_metadata['Zdir'])
+            period_min = sensor_values.min()
+            period_max = sensor_values.max()
 
-                sensor_output = {
-                    "position": sensor_position,
-                    "value": value
+            # Ensure metadata index matches sensor_values keys
+            metadata_subset = metadata.loc[list(sensor_values.keys())]
+
+            # Vectorized transformation
+            transformed_positions = transformer.transform(
+                metadata_subset['Xcoor'].values,
+                metadata_subset['Ycoor'].values,
+                metadata_subset['Zcoor'].values - terrain_elevation
+            )
+
+            # Create data efficiently using list comprehension
+            data = [
+                {
+                    "position": [float(x), float(y), float(z)],
+                    "value": float(sensor_values[sensor])
                 }
-                output['data'].append(sensor_output)
+                for sensor, x, y, z in zip(sensor_values.keys(),
+                                           transformed_positions[0], transformed_positions[1], transformed_positions[2])
+            ]
 
+            return total_min, total_max, period_min, period_max, data
+
+        with ThreadPoolExecutor() as executor:
+            values = executor.map(get_building_sensors, buildings)
+
+        total_min, total_max, period_min, period_max, data = zip(*values)
+
+        output['data'] = list(itertools.chain(*data))
         output['properties']['range'] = {
             'total': {
                 'label': 'Total Range',
-                'min': float(total_min),
-                'max': float(total_max)
+                'min': float(min(total_min)),
+                'max': float(max(total_max))
             },
             'period': {
                 'label': 'Period Range',
-                'min': float(period_min),
-                'max': float(period_max)
+                'min': float(min(period_min)),
+                'max': float(max(period_max))
             }
         }
-
         return output
