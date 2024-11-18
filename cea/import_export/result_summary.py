@@ -153,8 +153,9 @@ def map_metrics_cea_features(list_metrics):
               'sc_fp_installed_area_south[m2]','sc_fp_heat_south[kWh]',
               'sc_fp_installed_area_east[m2]','sc_fp_heat_east[kWh]',
               'sc_fp_installed_area_west[m2]','sc_fp_heat_west[kWh]'],
-    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',
-                         'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
+    "geothermal": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]'],
+    "sewage": ['sewage_heat_potential[kWh]'],
+    "water_body": ['water_body_heat_potential[kWh]'],
     "dh": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
                          'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
     "dc": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
@@ -212,11 +213,15 @@ def get_results_path(locator, config, cea_feature):
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
 
-    if cea_feature == 'other_renewables':
+    if cea_feature == 'geothermal':
         path_geothermal = locator.get_geothermal_potential()
         list_paths.append(path_geothermal)
+
+    if cea_feature == 'sewage':
         path_sewage_heat = locator.get_sewage_heat_potential()
         list_paths.append(path_sewage_heat)
+
+    if cea_feature == 'water_body':
         path_water_body = locator.get_water_body_potential()
         list_paths.append(path_water_body)
 
@@ -794,7 +799,9 @@ def main(config):
                         config.result_summary.metrics_pvt,
                         config.result_summary.metrics_sc_et,
                         config.result_summary.metrics_sc_fp,
-                        config.result_summary.metrics_other_renewables,
+                        config.result_summary.metrics_geothermal,
+                        config.result_summary.metrics_sewage,
+                        config.result_summary.metrics_water_body,
                         config.result_summary.metrics_dh,
                         config.result_summary.metrics_dc
                         ]
