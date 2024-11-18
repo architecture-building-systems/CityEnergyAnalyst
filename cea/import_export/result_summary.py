@@ -413,7 +413,7 @@ def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
 
     # aggregate these results
     df_aggregated_results_hourly_8760 = aggregate_dataframes(list_useful_cea_results)
-    
+
     return df_aggregated_results_hourly_8760
 
 def slice_hourly_results_time_period(df, hour_start, hour_end):
@@ -456,10 +456,14 @@ def aggregate_by_period(df, period, date_column='DATE'):
     df[date_column] = pd.to_datetime(df[date_column])
 
     if period == 'monthly':
-        df['Period'] = df[date_column].dt.month
+        df['period'] = df[date_column].dt.month
         period_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        df['Period'] = df['Period'].apply(lambda x: period_names[x - 1])
+        df['period'] = df['period'].apply(lambda x: period_names[x - 1])
+
+        df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
+        df = df.sort_values(by=['period'])
+
     elif period == 'seasonally':
         season_mapping = {
             1: 'Winter', 2: 'Winter', 12: 'Winter',
@@ -467,11 +471,16 @@ def aggregate_by_period(df, period, date_column='DATE'):
             6: 'Summer', 7: 'Summer', 8: 'Summer',
             9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
         }
-        df['Period'] = df[date_column].dt.month.map(season_mapping)
-    elif period == 'annually':
-        df['Period'] = df[date_column].dt.year
+        period_names = ['Winter', 'Spring', 'Summer', 'Autumn']
+        df['period'] = df[date_column].dt.month.map(season_mapping)
 
-    return df.groupby('Period').sum(numeric_only=True).reset_index()
+        df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
+        df = df.sort_values(by=['period'])
+
+    elif period == 'annually':
+        df['period'] = df[date_column].dt.year
+
+    return df.groupby('period').sum(numeric_only=True).reset_index()
 
 def exec_aggregate_time_period(config, df_aggregated_results_hourly_8760, list_aggregate_by_time_period):
 
