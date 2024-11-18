@@ -3445,10 +3445,10 @@ def main(config):
     start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    network_names = config.thermal_network.network_names
     network_model = config.thermal_network.network_model
-    if len(network_names) == 0:
-        network_names = ['']
+
+    # FIXME: Hardcoded to consider one netwrok for now. Best scenario is to allow multiple network layouts and run Part 2 for each layout.
+    network_names = ['']
 
     if network_model == 'simplified':
         for network_name in network_names:

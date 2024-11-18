@@ -159,8 +159,6 @@ def map_metrics_cea_features(list_metrics):
 def get_results_path(locator, config, cea_feature):
 
     selected_buildings = config.result_summary.buildings
-    network_names_DH = config.result_summary.networks_dh
-    network_names_DC = config.result_summary.networks_dc
 
     list_paths = []
 
@@ -204,11 +202,15 @@ def get_results_path(locator, config, cea_feature):
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
 
-    if cea_feature == 'other_renewables':
+    if cea_feature == 'geothermal':
         path_geothermal = locator.get_geothermal_potential()
         list_paths.append(path_geothermal)
+
+    if cea_feature == 'sewage':
         path_sewage_heat = locator.get_sewage_heat_potential()
         list_paths.append(path_sewage_heat)
+
+    if cea_feature == 'water_body':
         path_water_body = locator.get_water_body_potential()
         list_paths.append(path_water_body)
 
@@ -879,49 +881,30 @@ def main(config):
     list_metrics_dh = config.result_summary.metrics_dh
     list_metrics_dc = config.result_summary.metrics_dc
 
+    list_list_metrics = [
+                        # config.result_summary.metrics_demand,
+                        # config.result_summary.metrics_pv,
+                        # config.result_summary.metrics_pvt,
+                        # config.result_summary.metrics_sc_et,
+                        # config.result_summary.metrics_sc_fp,
+                        # config.result_summary.metrics_geothermal,
+                        # config.result_summary.metrics_sewage,
+                        # config.result_summary.metrics_water_body,
+                        # config.result_summary.metrics_dh,
+                        config.result_summary.metrics_dc
+                        ]
+
+    for list_metrics in list_list_metrics:
+        list_df_time_period = exec_aggregate_time_period(
+            exec_read_and_summarise_hourly_8760(config, locator, list_metrics), list_aggregate_by_time_period)
+        results_writer_time_period(output_path, list_metrics, list_df_time_period)
+
     #architecture
-
-
-    #demand
-    # df_demand_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_demand)
-    # list_df_demand_aggregate_time_period = exec_aggregate_time_period(df_demand_hourly_8760,
-    #                                                                list_aggregate_by_time_period)
-    # results_writer_time_period(output_path, list_metrics_demand, list_df_demand_aggregate_time_period)
-
-    # #pv
-    # df_pv_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_pv)
-    # list_df_pv_aggregate_time_period = exec_aggregate_time_period(df_pv_hourly_8760,
-    #                                                                list_aggregate_by_time_period)
-    # results_writer_time_period(output_path, list_metrics_pv, list_df_pv_aggregate_time_period)
-    #
-    # #pvt
-    # df_pvt_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_pvt)
-    # list_df_pvt_aggregate_time_period = exec_aggregate_time_period(df_pvt_hourly_8760,
-    #                                                                list_aggregate_by_time_period)
-    # results_writer_time_period(output_path, list_metrics_pvt, list_df_pvt_aggregate_time_period)
-
-    # #sc_et
-    # df_sc_et_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_sc_et)
-    # list_df_sc_et_aggregate_time_period = exec_aggregate_time_period(df_sc_et_hourly_8760,
-    #                                                                list_aggregate_by_time_period)
-    # results_writer_time_period(output_path, list_metrics_sc_et, list_df_sc_et_aggregate_time_period)
-    #
-    # #sc_fp
-    # df_sc_fp_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_sc_fp)
-    # list_df_sc_fp_aggregate_time_period = exec_aggregate_time_period(df_sc_fp_hourly_8760,
-    #                                                                list_aggregate_by_time_period)
-    # results_writer_time_period(output_path, list_metrics_sc_fp, list_df_sc_fp_aggregate_time_period)
-
-    #geothermal
-    df_geothermal_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_geothermal)
-    list_df_geothermal_aggregate_time_period = exec_aggregate_time_period(df_geothermal_hourly_8760,
-                                                                   list_aggregate_by_time_period)
-    results_writer_time_period(output_path, list_metrics_geothermal, list_df_geothermal_aggregate_time_period)
 
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire process of export CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
 
 
 
