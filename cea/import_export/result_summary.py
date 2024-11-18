@@ -19,6 +19,27 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
+month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+def get_standardized_date_column(df):
+    """
+    Standardizes the date column name in the DataFrame.
+    If the DataFrame contains 'DATE', 'date', or 'Date', renames it to 'DATE'.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+    - pd.DataFrame: DataFrame with the standardized 'DATE' column.
+    """
+    for col in ['DATE', 'date', 'Date']:
+        if col in df.columns:
+            df = df.rename(columns={col: 'date'})
+            break
+    return df
+
 def get_hours_start_end(config):
 
     # get the user-defined dates from config
@@ -121,8 +142,9 @@ def map_metrics_cea_features(list_metrics):
               'sc_fp_installed_area_south[m2]','sc_fp_heat_south[kWh]',
               'sc_fp_installed_area_east[m2]','sc_fp_heat_east[kWh]',
               'sc_fp_installed_area_west[m2]','sc_fp_heat_west[kWh]'],
-    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',
-                         'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
+    "geothermal": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]',],
+    "sewage": ['sewage_heat_potential[kWh]'],
+    "water_body": ['water_body_heat_potential[kWh]'],
     "dh": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
                          'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
     "dc": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
@@ -160,21 +182,24 @@ def get_results_path(locator, config, cea_feature):
         list_paths.append(path)
 
     if cea_feature == 'pv':
+        database_pv = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
+        list_panel_type = database_pv['code'].dropna().unique().tolist()
         for building in selected_buildings:
-            path = locator.PV_results(building, panel_type)
-            list_paths.append(path)
+            for panel_type in list_panel_type:
+                path = locator.PV_results(building, panel_type)
+                list_paths.append(path)
 
     if cea_feature == 'pvt':
         for building in selected_buildings:
             path = locator.PVT_results(building)
             list_paths.append(path)
 
-    if cea_feature == 'sc-et':
+    if cea_feature == 'sc_et':
         for building in selected_buildings:
             path = locator.SC_results(building, 'ET')
             list_paths.append(path)
 
-    if cea_feature == 'sc-fp':
+    if cea_feature == 'sc_fp':
         for building in selected_buildings:
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
@@ -323,7 +348,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     return list(output_set)
 
 
-def load_cea_results_csv_files(list_paths, list_cea_column_names):
+def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
     and returns a list of these DataFrames.
@@ -335,13 +360,15 @@ def load_cea_results_csv_files(list_paths, list_cea_column_names):
     - list of pd.DataFrame: A list of DataFrames for files that exist.
     """
     list_dataframes = []
-    selected_columns = ['DATE'] + list_cea_column_names
+    selected_columns = ['date'] + list_cea_column_names
     for path in list_paths:
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+                df = get_standardized_date_column(df)   #change where ['DATE'] or ['Date'] to ['date']
                 df = df[selected_columns]
-                df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+                df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                df = slice_hourly_results_time_period(config, df)   #slice the custom period of time
                 list_dataframes.append(df)  # Add the DataFrame to the list
             except Exception as e:
                 print(f"Error loading {path}: {e}")
@@ -356,6 +383,7 @@ def aggregate_dataframes(dataframes):
     Aggregates a list of DataFrames by summing or averaging cells based on column name conditions:
     - Columns containing "m2": Take the mean.
     - Columns containing "load_kW": Sum and create a new column ending with "power_kW" with max values.
+    - Columns containing "people": Take the mean, rounded to the nearest integer.
     - Other columns: Sum.
 
     Parameters:
@@ -371,31 +399,45 @@ def aggregate_dataframes(dataframes):
     # Start with the first DataFrame as a base
     aggregated_df = dataframes[0].copy()
 
-    # List of columns excluding 'DATE'
-    columns_to_iterate = [col for col in aggregated_df.columns if col != 'DATE']
+    # Ensure DATE is in datetime format
+    if 'date' in aggregated_df.columns:
+        aggregated_df['date'] = pd.to_datetime(aggregated_df['date'], errors='coerce')
+
+    # List of columns excluding 'date'
+    columns_to_iterate = [col for col in aggregated_df.columns if col != 'date']
 
     # Iterate through the remaining DataFrames and sum/average corresponding columns
     for df in dataframes[1:]:
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
         for col in columns_to_iterate:
-            if "m2" in col:
-                aggregated_df[col] = aggregated_df[col] + df[col]
-            elif "load_kW" in col:
-                aggregated_df[col] = aggregated_df[col] + df[col]
-            else:
-                aggregated_df[col] = aggregated_df[col] + df[col]
+            if col in df.columns:  # Ensure column exists in current DataFrame
+                aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
 
-    # Post-process "m2" columns (take the mean)
+    # Post-process "people" columns (take the mean, rounded to integer)
     for col in aggregated_df.columns:
-        if "m2" in col:
-            aggregated_df[col] = aggregated_df[col] / len(dataframes)
+        if "people" in col:
+            aggregated_df[col] = (aggregated_df[col] / len(dataframes)).round().astype(int)
+
+    # Post-process "_m2" columns (take the mean)
+    for col in aggregated_df.columns:
+        if "_m2" in col:
+            aggregated_df[col] = (aggregated_df[col] / len(dataframes)).round(2)
 
     # Post-process "load_kW" columns (create corresponding "power_kW" columns)
     for col in aggregated_df.columns:
         if "load_kW" in col:
             power_col = col.replace("load_kW", "power_kW")
-            aggregated_df[power_col] = max(df[col].max() for df in dataframes)
+            aggregated_df[power_col] = max(
+                df[col].max() for df in dataframes if col in df.columns and not df[col].isnull().all()
+            )
+
+    # Ensure numeric columns are rounded to a reasonable number of decimal places
+    aggregated_df = aggregated_df.round(2)
+
 
     return aggregated_df
+
 
 def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
 
@@ -409,41 +451,56 @@ def exec_read_and_summarise_hourly_8760(config, locator,list_metrics):
     list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
 
     # get the useful CEA results for the user-selected metrics and hours
-    list_useful_cea_results = load_cea_results_csv_files(list_paths, list_cea_column_names)
+    list_useful_cea_results = load_cea_results_csv_files(config, list_paths, list_cea_column_names)
 
     # aggregate these results
     df_aggregated_results_hourly_8760 = aggregate_dataframes(list_useful_cea_results)
 
     return df_aggregated_results_hourly_8760
 
-def slice_hourly_results_time_period(df, hour_start, hour_end):
+def slice_hourly_results_time_period(config, df):
     """
-    Slices a DataFrame based on hour_start and hour_end.
+    Slices a DataFrame based on hour_start and hour_end from the configuration.
     If hour_start > hour_end, wraps around the year:
     - Keeps rows from Hour 0 to hour_end
     - Keeps rows from hour_start to Hour 8760
+    - Drops rows that are entirely empty (all NaN values).
 
     Parameters:
+    - config: Configuration object containing hour_start and hour_end.
     - df (pd.DataFrame): The DataFrame to slice (8760 rows, 1 per hour).
-    - hour_start (int): The starting hour (0 to 8759).
-    - hour_end (int): The ending hour (0 to 8759).
 
     Returns:
-    - pd.DataFrame: The sliced DataFrame.
+    - pd.DataFrame: The sliced DataFrame with empty rows removed.
     """
+    # Get the start (inclusive) and end (exclusive) hours
+    hour_start, hour_end = get_hours_start_end(config)
+
+    # Perform slicing based on hour_start and hour_end
     if hour_start <= hour_end:
         # Normal case: Slice rows from hour_start to hour_end
-        return df.iloc[hour_start:hour_end + 1]
+        sliced_df = df.iloc[hour_start:hour_end].copy()
     else:
         # Wrapping case: Combine two slices (0 to hour_end and hour_start to 8760)
-        top_slice = df.iloc[0:hour_end + 1]
+        top_slice = df.iloc[0:hour_end]
         bottom_slice = df.iloc[hour_start:8760]
-        return pd.concat([bottom_slice, top_slice])
+        sliced_df = pd.concat([bottom_slice, top_slice]).copy()
+
+    # Drop rows where all values are NaN
+    sliced_df = sliced_df.dropna(how='all')
+
+    # Reset the index to ensure consistency
+    sliced_df.reset_index(drop=True, inplace=True)
+
+    return sliced_df
 
 
-def aggregate_by_period(df, period, date_column='DATE'):
+def aggregate_by_period(df, period, date_column='date'):
     """
-    Aggregates a DataFrame by a given time period.
+    Aggregates a DataFrame by a given time period with special handling for certain column types:
+    - Columns containing '_m2' or 'people': Use .mean() and round to integer.
+    - Columns containing '_kW' but not '_kWh': Use .sum() and also calculate .max().
+    - Other columns: Use .sum().
 
     Parameters:
     - df (pd.DataFrame): The input DataFrame.
@@ -453,17 +510,25 @@ def aggregate_by_period(df, period, date_column='DATE'):
     Returns:
     - pd.DataFrame: Aggregated DataFrame.
     """
-    df[date_column] = pd.to_datetime(df[date_column])
+    # Ensure the date column is in datetime format
+    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
 
-    if period == 'monthly':
+    if period == 'hourly':
+        df['period'] = df[date_column].apply(
+        lambda date: f"hour_{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
+    )
+
+    elif period == 'daily':
+        # Group by day
+        df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x:03d}")
+
+    elif period == 'monthly':
         df['period'] = df[date_column].dt.month
-        period_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        df['period'] = df['period'].apply(lambda x: period_names[x - 1])
-
-        # re-order rows by months
-        df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
-        df = df.sort_values(by=['period'])
+        df['period'] = df['period'].apply(lambda x: month_names[x - 1])
+        # To get only the relevant months
+        categories = df['period'].unique().tolist()
+        df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
 
     elif period == 'seasonally':
         season_mapping = {
@@ -472,66 +537,113 @@ def aggregate_by_period(df, period, date_column='DATE'):
             6: 'Summer', 7: 'Summer', 8: 'Summer',
             9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
         }
-        period_names = ['Winter', 'Spring', 'Summer', 'Autumn']
-        df['period'] = df[date_column].dt.month.map(season_mapping)
 
-        # re-order rows by seasons
-        df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
-        df = df.sort_values(by=['period'])
+        df['period'] = df[date_column].dt.month.map(season_mapping)
+        # To get only the relevant seasons
+        categories = df['period'].unique().tolist()
+        df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
 
     elif period == 'annually':
         df['period'] = df[date_column].dt.year
 
-    return df.groupby('period').sum(numeric_only=True).reset_index()
+    # Initialize a DataFrame for the aggregated results
+    aggregated_df = pd.DataFrame()
 
-def exec_aggregate_time_period(config, df_aggregated_results_hourly_8760, list_aggregate_by_time_period):
+    # Process columns based on their naming
+    for col in df.columns:
+        if col == date_column or col == 'period':
+            continue
 
-    # get the start (inclusive) and end (not-inclusive) hours
-    hour_start, hour_end = get_hours_start_end(config)
+        if 'people' in col:
+            # Use mean and round to integer for columns with  'people'
+            aggregated_col = df.groupby('period')[col].mean().round().astype(int)
+        elif '_m2' in col:
+            # Use mean for columns with '_m2'
+            aggregated_col = df.groupby('period')[col].mean().round(2)
+        elif 'power_kW' in col:
+            # Use sum and max for columns with '_kW' but not '_kWh'
+            aggregated_col_max = df.groupby('period')[col].max().round(2)
+            aggregated_df[f"{col}_power"] = aggregated_col_max
+            continue
+        else:
+            # Default to sum for other columns
+            aggregated_col = df.groupby('period')[col].sum()
+
+        aggregated_df[col] = aggregated_col
+
+    aggregated_df.reset_index(inplace=True)
+
+    return aggregated_df
+
+def exec_aggregate_time_period(df_aggregated_results_hourly_8760, list_aggregate_by_time_period):
 
     results = []
 
     if 'hourly' in list_aggregate_by_time_period:
-        results.append(df_aggregated_results_hourly_8760)
+        df_hourly = aggregate_by_period(df_aggregated_results_hourly_8760, 'hourly', date_column='date')
+        results.append(df_hourly)
+
+    if 'daily' in list_aggregate_by_time_period:
+        df_daily = aggregate_by_period(df_aggregated_results_hourly_8760, 'daily', date_column='date')
+        results.append(df_daily)
 
     if 'monthly' in list_aggregate_by_time_period:
-        df_monthly = aggregate_by_period(df_aggregated_results_hourly_8760, 'monthly', date_column='DATE')
+        df_monthly = aggregate_by_period(df_aggregated_results_hourly_8760, 'monthly', date_column='date')
         results.append(df_monthly)
 
     if 'seasonally' in list_aggregate_by_time_period:
-        df_seasonally = aggregate_by_period(df_aggregated_results_hourly_8760, 'seasonally', date_column='DATE')
+        df_seasonally = aggregate_by_period(df_aggregated_results_hourly_8760, 'seasonally', date_column='date')
         results.append(df_seasonally)
 
     if 'annually' in list_aggregate_by_time_period:
-        df_annually = aggregate_by_period(df_aggregated_results_hourly_8760, 'annually', date_column='DATE')
+        df_annually = aggregate_by_period(df_aggregated_results_hourly_8760, 'annually', date_column='date')
         results.append(df_annually)
-
-    if 'custom' in list_aggregate_by_time_period:
-        df_user_defined =slice_hourly_results_time_period(df_aggregated_results_hourly_8760, hour_start, hour_end)
-        results.append(df_user_defined)
 
     return results
 
-def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time_period, list_aggregate_by_time_period):
+def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time_period):
+    """
+    Writes aggregated results for different time periods to CSV files.
+
+    Parameters:
+    - output_path (str): The base directory to save the results.
+    - list_metrics (List[str]): A list of metrics corresponding to the results.
+    - list_df_aggregate_time_period (List[pd.DataFrame]): A list of DataFrames, each representing a different aggregation period.
+    """
     # Map metrics to CEA features
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # Join the paths
-    target_path = os.path.join(output_path, cea_feature)
+    target_path = os.path.join(output_path, 'results', cea_feature)
 
-    # Create the folder
+    # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
 
-    # Write .csv files for each time period
-    for time_period in range(len(list_aggregate_by_time_period)):
-        time_period_name = list_aggregate_by_time_period[time_period]
-        path_csv = os.path.join(target_path, f'{time_period_name}.csv')
+    # Write .csv files for each DataFrame
+    for df in list_df_aggregate_time_period:
+        # Determine time period name based on number of rows
+        row_count = len(df)
+        if row_count == 1:
+            time_period_name = "annually"
+        elif df['period'].isin(season_names).any():
+            time_period_name = "seasonally"
+        elif df['period'].isin(month_names).any():
+            time_period_name = "monthly"
+        elif df['period'].astype(str).str.contains("day").any():
+            time_period_name = "daily"
+        elif df['period'].astype(str).str.contains("hour").any():
+            time_period_name = "hourly"
+        else:
+            raise ValueError(f"Unexpected number of rows ({row_count}) in DataFrame. Cannot determine time period.")
 
-        # Get the corresponding DataFrame
-        df = list_df_aggregate_time_period[time_period]
+        # Create the file path
+        path_csv = os.path.join(target_path, f"{time_period_name}.csv")
 
-        # Write the DataFrame to CSV
-        df.to_csv(path_csv, index=False, float_format='%.2f')
+        # Write the DataFrame to .csv files
+        try:
+            df.to_csv(path_csv, index=False, float_format="%.2f")
+        except Exception as e:
+            print(f"Failed to write {time_period_name} results to {path_csv}: {e}")
 
 def exec_read_and_summarise(cea_scenario):
     """
@@ -761,15 +873,51 @@ def main(config):
     list_metrics_pvt = config.result_summary.metrics_pvt
     list_metrics_sc_et = config.result_summary.metrics_sc_et
     list_metrics_sc_fp = config.result_summary.metrics_sc_fp
-    list_metrics_other_renewables = config.result_summary.metrics_other_renewables
+    list_metrics_geothermal = config.result_summary.metrics_geothermal
+    list_metrics_sewage = config.result_summary.metrics_sewage
+    list_metrics_water_body = config.result_summary.metrics_water_body
     list_metrics_dh = config.result_summary.metrics_dh
     list_metrics_dc = config.result_summary.metrics_dc
 
+    #architecture
+
+
     #demand
-    df_demand_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_demand)
-    list_df_demand_aggregate_time_period = exec_aggregate_time_period(config, df_demand_hourly_8760,
+    # df_demand_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_demand)
+    # list_df_demand_aggregate_time_period = exec_aggregate_time_period(df_demand_hourly_8760,
+    #                                                                list_aggregate_by_time_period)
+    # results_writer_time_period(output_path, list_metrics_demand, list_df_demand_aggregate_time_period)
+
+    # #pv
+    # df_pv_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_pv)
+    # list_df_pv_aggregate_time_period = exec_aggregate_time_period(df_pv_hourly_8760,
+    #                                                                list_aggregate_by_time_period)
+    # results_writer_time_period(output_path, list_metrics_pv, list_df_pv_aggregate_time_period)
+    #
+    # #pvt
+    # df_pvt_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_pvt)
+    # list_df_pvt_aggregate_time_period = exec_aggregate_time_period(df_pvt_hourly_8760,
+    #                                                                list_aggregate_by_time_period)
+    # results_writer_time_period(output_path, list_metrics_pvt, list_df_pvt_aggregate_time_period)
+
+    # #sc_et
+    # df_sc_et_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_sc_et)
+    # list_df_sc_et_aggregate_time_period = exec_aggregate_time_period(df_sc_et_hourly_8760,
+    #                                                                list_aggregate_by_time_period)
+    # results_writer_time_period(output_path, list_metrics_sc_et, list_df_sc_et_aggregate_time_period)
+    #
+    # #sc_fp
+    # df_sc_fp_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_sc_fp)
+    # list_df_sc_fp_aggregate_time_period = exec_aggregate_time_period(df_sc_fp_hourly_8760,
+    #                                                                list_aggregate_by_time_period)
+    # results_writer_time_period(output_path, list_metrics_sc_fp, list_df_sc_fp_aggregate_time_period)
+
+    #geothermal
+    df_geothermal_hourly_8760 = exec_read_and_summarise_hourly_8760(config, locator, list_metrics_geothermal)
+    list_df_geothermal_aggregate_time_period = exec_aggregate_time_period(df_geothermal_hourly_8760,
                                                                    list_aggregate_by_time_period)
-    results_writer_time_period(output_path, list_metrics_demand, list_df_demand_aggregate_time_period, list_aggregate_by_time_period)
+    results_writer_time_period(output_path, list_metrics_geothermal, list_df_geothermal_aggregate_time_period)
+
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
