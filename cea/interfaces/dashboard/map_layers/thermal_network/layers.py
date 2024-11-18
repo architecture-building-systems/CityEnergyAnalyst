@@ -45,8 +45,10 @@ class ThermalNetworkMapLayer(MapLayer):
             },
             'network-type': {
                 "type": "string",
+                "selector": "choice",
                 "description": "Type of the network",
-                "default": "DC"
+                "default": "DC",
+                "choices": ["DC", "DH"]
             },
             'width-scale': {
                 "type": "float",
