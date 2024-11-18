@@ -251,9 +251,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
 
     Returns:
     - list: A list of mapped values (CEA column names or metrics).
-
-    Raises:
-    - ValueError: If an unmapped value is encountered or if the direction is invalid.
     """
     mapping_dict = {
         'conditioned_floor_area[m2]': ['Af_m2'],
@@ -330,13 +327,10 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'sewage_heat_potential[kWh]': ['Qsw_kW'],
         'water_body_heat_potential[kWh]': ['QLake_kW'],
         'DH_plant_thermal_load[kWh]': ['thermal_load_kW'],
-        'DH_plant_power[kW]': ['thermal_load_kW'],
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-        'DH_plant_pumping_power[kW]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
-        'DC_plant_power[kW]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-        'DC_plant_pumping_power[kW]': ['pressure_loss_total_kW'],
+
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -344,19 +338,20 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         mapping_dict = {cea_col: metric for metric, cea_cols in mapping_dict.items() for cea_col in cea_cols}
 
     # Perform the mapping
-    output_set = set()
+    output_list = []
     for item in input_list:
         if item in mapping_dict:
-            # Add the mapped value(s) (handle lists or single items)
+            # Map the item
             mapped_value = mapping_dict[item]
             if isinstance(mapped_value, list):
-                output_set.update(mapped_value)
+                output_list.extend(mapped_value)
             else:
-                output_set.add(mapped_value)
+                output_list.append(mapped_value)
         else:
-            raise ValueError(f"Unrecognized value in the input list: {item}")
+            # If no mapping found, keep the original item
+            output_list.append(item)
 
-    return list(output_set)
+    return output_list
 
 
 def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
@@ -402,66 +397,69 @@ def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
     return list_dataframes
 
 
-def aggregate_dataframes(dataframes):
+def aggregate_or_combine_dataframes(dataframes):
     """
-    Aggregates a list of DataFrames by summing or averaging cells based on column name conditions:
-    - Columns containing "m2": Take the mean.
-    - Columns containing "load_kW": Sum and create a new column ending with "power_kW" with max values.
-    - Columns containing "people": Take the mean, rounded to the nearest integer.
-    - Other columns: Sum.
+    Aggregates or horizontally combines a list of DataFrames:
+    - If all DataFrames share the same column names (excluding 'date'), aggregate corresponding cells.
+    - If DataFrames have different column names, combine them horizontally based on the 'date' column.
 
     Parameters:
-    - dataframes (list of pd.DataFrame): List of DataFrames to aggregate.
+    - dataframes (list of pd.DataFrame): List of DataFrames to process.
 
     Returns:
-    - pd.DataFrame: Aggregated DataFrame.
+    - pd.DataFrame: Aggregated or combined DataFrame.
     """
-    # Ensure there are DataFrames to aggregate
+    # Ensure there are DataFrames to process
     if not dataframes:
         return None
 
-    # Start with the first DataFrame as a base
-    aggregated_df = dataframes[0].copy()
+    # Check if all DataFrames share the same column names (excluding 'date')
+    column_sets = [set(df.columns) - {'date'} for df in dataframes]
+    all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
-    # Ensure DATE is in datetime format
-    if 'date' in aggregated_df.columns:
-        aggregated_df['date'] = pd.to_datetime(aggregated_df['date'], errors='coerce')
+    if all_columns_match:
+        # Aggregate DataFrames with the same columns
+        aggregated_df = dataframes[0].copy()
+        for df in dataframes[1:]:
+            for col in aggregated_df.columns:
+                if col == 'date':
+                    continue
+                if 'people' in col:
+                    # Average "people" columns and round to integer
+                    aggregated_df[col] = (
+                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                    ).round().astype(int)
+                elif '_m2' in col:
+                    # Average "_m2" columns
+                    aggregated_df[col] = (
+                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                    ).round(2)
+                else:
+                    # Sum for other numeric columns
+                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
 
-    # List of columns excluding 'date'
-    columns_to_iterate = [col for col in aggregated_df.columns if col != 'date']
+            aggregated_df = aggregated_df.round(2)
 
-    # Iterate through the remaining DataFrames and sum/average corresponding columns
-    for df in dataframes[1:]:
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-        for col in columns_to_iterate:
-            if col in df.columns:  # Ensure column exists in current DataFrame
-                aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+            # Switch back from CEA Columns to metrics
+            aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
 
-    # Post-process "people" columns (take the mean, rounded to integer)
-    for col in aggregated_df.columns:
-        if "people" in col:
-            aggregated_df[col] = (aggregated_df[col] / len(dataframes)).round().astype(int)
-
-    # Post-process "_m2" columns (take the mean)
-    for col in aggregated_df.columns:
-        if "_m2" in col:
-            aggregated_df[col] = (aggregated_df[col] / len(dataframes)).round(2)
-
-    # Post-process "load_kW" columns (create corresponding "power_kW" columns)
-    for col in aggregated_df.columns:
-        if "load_kW" in col:
-            power_col = col.replace("load_kW", "power_kW")
-            aggregated_df[power_col] = max(
-                df[col].max() for df in dataframes if col in df.columns and not df[col].isnull().all()
-            )
-
-    # Ensure numeric columns are rounded to a reasonable number of decimal places
-    aggregated_df = aggregated_df.round(2)
+            return aggregated_df
 
 
-    return aggregated_df
+    else:
+        # Combine DataFrames horizontally on 'date'
+        combined_df = dataframes[0].copy()
+        for df in dataframes[1:]:
+            combined_df = pd.merge(combined_df, df, on='date', how='outer')
 
+        # Sort by 'date' and reset the index
+        combined_df.sort_values(by='date', inplace=True)
+        combined_df.reset_index(drop=True, inplace=True)
+
+        # Switch back from CEA Columns to metrics
+        combined_df.columns = map_metrics_and_cea_columns(combined_df.columns.tolist(), direction="columns_to_metrics")
+
+        return combined_df
 
 def exec_read_and_summarise_hourly_8760(config, locator, list_metrics):
 
@@ -478,7 +476,7 @@ def exec_read_and_summarise_hourly_8760(config, locator, list_metrics):
     list_useful_cea_results = load_cea_results_csv_files(config, list_paths, list_cea_column_names)
 
     # aggregate these results
-    df_aggregated_results_hourly_8760 = aggregate_dataframes(list_useful_cea_results)
+    df_aggregated_results_hourly_8760 = aggregate_or_combine_dataframes(list_useful_cea_results)
 
     return df_aggregated_results_hourly_8760
 
@@ -536,41 +534,41 @@ def slice_hourly_results_time_period(config, df):
     return sliced_df
 
 
+
 def aggregate_by_period(df, period, date_column='date'):
     """
     Aggregates a DataFrame by a given time period with special handling for certain column types:
-    - Columns containing '_m2' or 'people': Use .mean() and round to integer.
-    - Columns containing '_kW' but not '_kWh': Use .sum() and also calculate .max().
+    - Columns containing '_m2' or 'people': Use .mean() and round.
     - Other columns: Use .sum().
 
     Parameters:
     - df (pd.DataFrame): The input DataFrame.
-    - period (str): Aggregation period ('monthly', 'seasonally', 'annually').
+    - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
     - date_column (str): Name of the date column.
 
     Returns:
     - pd.DataFrame: Aggregated DataFrame.
     """
-    # Ensure the date column is in datetime format
-    if df is None:
+    if df is None or df.empty:
         return None
 
+    # Ensure the date column is in datetime format
     if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
         df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
 
+    # Handle different periods
     if period == 'hourly':
         df['period'] = df[date_column].apply(
-        lambda date: f"hour_{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
-    )
+            lambda date: f"hour_{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
+        )
 
     elif period == 'daily':
-        # Group by day
         df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x:03d}")
 
     elif period == 'monthly':
         df['period'] = df[date_column].dt.month
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         df['period'] = df['period'].apply(lambda x: month_names[x - 1])
-        # To get only the relevant months
         categories = df['period'].unique().tolist()
         df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
 
@@ -581,39 +579,34 @@ def aggregate_by_period(df, period, date_column='date'):
             6: 'Summer', 7: 'Summer', 8: 'Summer',
             9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
         }
-
         df['period'] = df[date_column].dt.month.map(season_mapping)
-        # To get only the relevant seasons
         categories = df['period'].unique().tolist()
         df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
 
     elif period == 'annually':
         df['period'] = df[date_column].dt.year
 
-    # Initialize a DataFrame for the aggregated results
+    # Initialize an aggregated DataFrame
     aggregated_df = pd.DataFrame()
 
     # Process columns based on their naming
     for col in df.columns:
-        if col == date_column or col == 'period':
+        if col in [date_column, 'period']:
             continue
 
         if 'people' in col:
-            # Use mean and round to integer for columns with  'people'
             aggregated_col = df.groupby('period')[col].mean().round().astype(int)
         elif '_m2' in col:
-            # Use mean for columns with '_m2'
             aggregated_col = df.groupby('period')[col].mean().round(2)
-        elif 'power_kW' in col:
-            # Use sum and max for columns with '_kW' but not '_kWh'
-            aggregated_col_max = df.groupby('period')[col].max().round(2)
-            aggregated_df[f"{col}_power"] = aggregated_col_max
-            continue
         else:
             # Default to sum for other columns
             aggregated_col = df.groupby('period')[col].sum()
 
         aggregated_df[col] = aggregated_col
+
+    # Preserve the date_column for hourly or daily periods
+    if period in ['hourly', 'daily']:
+        aggregated_df[date_column] = df.groupby('period')[date_column].first()
 
     aggregated_df.reset_index(inplace=True)
 
