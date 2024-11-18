@@ -461,6 +461,7 @@ def aggregate_by_period(df, period, date_column='DATE'):
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         df['period'] = df['period'].apply(lambda x: period_names[x - 1])
 
+        # re-order rows by months
         df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
         df = df.sort_values(by=['period'])
 
@@ -474,6 +475,7 @@ def aggregate_by_period(df, period, date_column='DATE'):
         period_names = ['Winter', 'Spring', 'Summer', 'Autumn']
         df['period'] = df[date_column].dt.month.map(season_mapping)
 
+        # re-order rows by seasons
         df['period'] = pd.Categorical(df['period'], categories=period_names, ordered=True)
         df = df.sort_values(by=['period'])
 
