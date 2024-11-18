@@ -46,10 +46,7 @@ class SolarIrradianceMapLayer(MapLayer):
                 "description": "Thresholds for the layer",
                 "label": "Annual Solar Irradiation Threshold",
                 "range": "total",
-                "default": {
-                    "min": 0,
-                    "max": 1000
-                }
+                "default": [0, 1000]
             },
         }
 
