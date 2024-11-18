@@ -640,7 +640,7 @@ def exec_aggregate_time_period(df_aggregated_results_hourly_8760, list_aggregate
 
     return results
 
-def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time_period):
+def results_writer_time_period(config, output_path, list_metrics, list_df_aggregate_time_period):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -652,8 +652,13 @@ def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time
     # Map metrics to CEA features
     cea_feature = map_metrics_cea_features(list_metrics)
 
+    # Get the hour start and hour end
+    hour_start, hour_end = get_hours_start_end(config)
+
     # Join the paths
-    target_path = os.path.join(output_path, 'export', cea_feature)
+    target_path = os.path.join(output_path, 'export',
+                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start,hour_end=hour_end),
+                               cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -695,7 +700,7 @@ def results_writer_time_period(output_path, list_metrics, list_df_aggregate_time
             pass
 
 
-def results_writer_without_date(output_path, list_metrics, list_df):
+def results_writer_without_date(config, output_path, list_metrics, list_df):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -704,11 +709,17 @@ def results_writer_without_date(output_path, list_metrics, list_df):
     - list_metrics (List[str]): A list of metrics corresponding to the results.
     - list_df (List[pd.DataFrame]): A list of DataFrames.
     """
+
     # Map metrics to CEA features
     cea_feature = map_metrics_cea_features(list_metrics)
 
+    # Get the hour start and hour end
+    hour_start, hour_end = get_hours_start_end(config)
+
     # Join the paths
-    target_path = os.path.join(output_path, 'export', cea_feature)
+    target_path = os.path.join(output_path, 'export',
+                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start,hour_end=hour_end),
+                               cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -767,21 +778,17 @@ def main(config):
     # Export results that have no date information, non-8760 hours
     for list_metrics in list_list_metrics_without_date:
         list_df = exec_read_and_summarise_without_date(config, locator, list_metrics)
-        results_writer_without_date(output_path, list_metrics, list_df)
+        results_writer_without_date(config, output_path, list_metrics, list_df)
 
     # Export results that have date information, 8760 hours
     for list_metrics in list_list_metrics_with_date:
         list_df_time_period = exec_aggregate_time_period(
             exec_read_and_summarise_hourly_8760(config, locator, list_metrics), list_aggregate_by_time_period)
-        results_writer_time_period(output_path, list_metrics, list_df_time_period)
-
-
+        results_writer_time_period(config, output_path, list_metrics, list_df_time_period)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
-
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
