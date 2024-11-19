@@ -1,3 +1,4 @@
+import warnings
 import os
 
 import geopandas
@@ -76,6 +77,17 @@ def crs_to_epsg(crs: str) -> int:
 
 def get_lat_lon_projected_shapefile(data):
     data = data.to_crs(get_geographic_coordinate_system())
-    lon = data.geometry[0].centroid.coords.xy[0][0]
-    lat = data.geometry[0].centroid.coords.xy[1][0]
+    valid_geometries = data[data.geometry.is_valid]
+
+    if valid_geometries.empty:
+        raise ValueError("No valid geometries found in the shapefile")
+    elif len(data) != len(valid_geometries):
+        warnings.warn("Invalid geometries found in the shapefile. Using the first valid geometry.")
+
+    # Use the first valid geometry as representative point
+    representative_point = valid_geometries.iloc[0].geometry.representative_point()
+
+    lon = representative_point.x
+    lat = representative_point.y
+
     return lat, lon

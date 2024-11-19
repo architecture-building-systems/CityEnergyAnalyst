@@ -63,7 +63,7 @@ def stream_poster(jobid, server, queue):
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
-class JobServerStream(object):
+class JobServerStream:
     """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
 
     def __init__(self, jobid, server, stream):
@@ -79,9 +79,12 @@ class JobServerStream(object):
         self.queue.put(EOFError)
         self.stream_poster.join()
 
-    def write(self, str):
-        self.queue.put_nowait(str)
-        print("cea-worker: {str}".format(**locals()), end='', file=self.stream)
+    def write(self, value):
+        self.queue.put_nowait(value)
+        try:
+            print(f"cea-worker: {value}", end='', file=self.stream)
+        except Exception as e:
+            print(f"cea-worker: error writing to stream: {e}")
 
     def isatty(self):
         return False
@@ -166,7 +169,7 @@ def main(config=None):
 def parse_arguments(default_url):
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("jobid", type=int, help="Job id to run - use 0 to run the next job", default=0)
+    parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job", default=0)
     parser.add_argument("-u", "--url", type=str, help="URL of the CEA server api", default=default_url)
     args = parser.parse_args()
     return args

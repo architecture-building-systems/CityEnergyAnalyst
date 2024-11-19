@@ -5427,12 +5427,18 @@ get_database_envelope_systems:
           type: string
           unit: 'NA'
           values: 'NA'
-        GHG_FLOOR_kgCO2m2:
-          description: Embodied emissions per m2 of roof.(entire building life cycle)
+        GHG_floor_kgCO2m2:
+          description: Embodied emissions per m2 of floor.(entire building life cycle)
           type: float
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
           min: 0.0
+        GHG_biogenic_floor_kgCO2m2:
+          description: Biogenic carbon storage per m2 of floor.(entire building life cycle)
+          type: float
+          unit: '[kg CO2-eq/m2]'
+          values: '{-n...0.0}'
+          max: 0.0
         U_base:
           description: Thermal transmittance of floor including linear losses (+10%).
             Defined according to ISO 13790.
@@ -5453,12 +5459,18 @@ get_database_envelope_systems:
           type: string
           unit: 'NA'
           values: 'NA'
-        GHG_ROOF_kgCO2m2:
+        GHG_roof_kgCO2m2:
           description: Embodied emissions per m2 of roof.(entire building life cycle)
           type: float
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
           min: 0.0
+        GHG_biogenic_roof_kgCO2m2:
+          description: Biogenic carbon storage per m2 of roof.(entire building life cycle)
+          type: float
+          unit: '[kg CO2-eq/m2]'
+          values: '{-n...0.0}'
+          max: 0.0
         U_roof:
           description: Thermal transmittance of windows including linear losses (+10%).
             Defined according to ISO 13790.
@@ -5542,12 +5554,18 @@ get_database_envelope_systems:
           type: string
           unit: 'NA'
           values: 'NA'
-        GHG_WALL_kgCO2m2:
+        GHG_wall_kgCO2m2:
           description: Embodied emissions per m2 of walls (entire building life cycle)
           type: float
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
           min: 0.0
+        GHG_biogenic_wall_kgCO2m2:
+          description: Biogenic carbon storage per m2 of walls (entire building life cycle)
+          type: float
+          unit: '[kg CO2-eq/m2]'
+          values: '{-n...0.0}'
+          max: 0.0
         U_wall:
           description: Thermal transmittance of windows including linear losses (+10%).
             Defined according to ISO 13790.
@@ -5598,13 +5616,20 @@ get_database_envelope_systems:
           values: '{0.0...1}'
           min: 0.0
           max: 1.0
-        GHG_WIN_kgCO2m2:
+        GHG_win_kgCO2m2:
           description: Embodied emissions per m2 of windows.(entire building life
             cycle)
           type: float
           unit: '[kg CO2-eq/m2]'
           values: '{0.0...n}'
           min: 0.0
+        GHG_biogenic_win_kgCO2m2:
+          description: Biogenic carbon storage per m2 of windows.(entire building life
+            cycle)
+          type: float
+          unit: '[kg CO2-eq/m2]'
+          values: '{-n...0.0}'
+          max: 0.0
         G_win:
           description: Solar heat gain coefficient. Defined according to ISO 13790.
           type: float
@@ -8597,14 +8622,21 @@ get_lca_embodied:
         values: '{0.0...n}'
         min: 0.0
       GHG_sys_embodied_kgCO2m2yr:
-        description: Embodied emissions per conditioned floor area due to building
+        description: Embodied emissions per conditioned floor area due to building or retrofit
           construction and decommissioning
         type: float
         unit: "[kg CO2-eq/m2.yr]"
         values: '{0.0...n}'
         min: 0.0
+      GHG_sys_uptake_kgCO2m2yr:
+        description: Embodied emissions per conditioned floor area due to building or retrofit
+          construction and decommissioning
+        type: float
+        unit: "[kg CO2-eq/m2.yr]"
+        values: '{-n...0.0}'
+        max: 0.0
       GHG_sys_embodied_tonCO2yr:
-        description: Embodied emissions due to building construction and decommissioning
+        description: Embodied emissions due to building construction and decommissioning or retrofit
         type: float
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
@@ -8614,6 +8646,91 @@ get_lca_embodied:
         type: string
         unit: 'NA'
         values: alphanumeric
+      GHG_sys_uptake_tonCO2yr:
+        description: Carbon storage with in building materials due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_window_tonCO2:
+        description: Embodied emissions of windows due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_window_tonCO2:
+        description: Carbon storage with in the windows due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_wall_tonCO2:
+        description: Embodied emissions of external walls due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_wall_tonCO2:
+        description: Carbon storage with in the external walls due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_floor_tonCO2:
+        description: Embodied emissions of floors due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_floor_tonCO2:
+        description: Carbon storage with in the floors due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_base_tonCO2:
+        description: Embodied emissions of basement floor due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_base_tonCO2:
+        description: Carbon storage with in the basement floor due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_roof_tonCO2:
+        description: Embodied emissions of roof due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_roof_tonCO2:
+        description: Carbon storage with in the roof due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_part_tonCO2:
+        description: Embodied emissions of indoor partition due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+      uptake_part_tonCO2:
+        description: Carbon storage with in the indoor partition due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{-n...0.0}'
+        max: 0.0
+      GHG_technical_system_tonCO2:
+        description: Embodied emissions of building technical systems due to building construction or retrofit
+        type: float
+        unit: "[ton CO2-eq/yr]"
+        values: '{0.0...n}'
+        min: 0.0
+
   used_by: []
 get_lca_mobility:
   created_by:
