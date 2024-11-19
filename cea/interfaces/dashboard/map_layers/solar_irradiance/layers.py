@@ -1,6 +1,7 @@
 import itertools
 import os
 from concurrent.futures import ThreadPoolExecutor
+from typing import Tuple
 
 import fiona
 import pandas as pd
@@ -35,11 +36,11 @@ class SolarIrradiationMapLayer(MapLayer):
                 "type": "string",
                 "description": "Scenario of the layer",
             },
-            'hour': {
-                "type": "integer",
+            'period': {
+                "type": "array",
                 "selector": "time-series",
-                "description": "Period to generate the data",
-                "default": 4380
+                "description": "Period to generate the data (start, end) in days",
+                "default": [1, 365]
             },
             # TODO: Move to separate property e.g. data filter parameters
             'threshold': {
@@ -59,9 +60,9 @@ class SolarIrradiationMapLayer(MapLayer):
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = locator.get_zone_building_names()
-        hour = self.parameters['hour']
+        period = self.parameters['period']
+        start, end = day_range_to_hour_range(period[0], period[1])
 
-        # Format for each data point: {"position":[0,0,0],"normal":[0,0,0],"color":[0,0,0]}
         output = {
             "data": [],
             "properties": {
@@ -77,7 +78,7 @@ class SolarIrradiationMapLayer(MapLayer):
 
         def get_building_sensors(building):
             metadata = pd.read_csv(locator.get_radiation_metadata(building)).set_index('SURFACE')
-            building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building))
+            building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building)) * 1 / 1000 # Convert W/m2 to kWh/m2
 
             # Get terrain elevation
             if "terrain_elevation" in metadata.columns:
@@ -85,15 +86,15 @@ class SolarIrradiationMapLayer(MapLayer):
             else:
                 terrain_elevation = 0
 
-            total_min = building_sensors.min(numeric_only=True).min()
-            total_max = building_sensors.max(numeric_only=True).max()
+            total_min = 0
+            total_max = building_sensors.sum(numeric_only=True).max()
 
-            sensor_values = building_sensors.iloc[hour]
-            period_min = sensor_values.min()
-            period_max = sensor_values.max()
+            period_sensor_values = building_sensors.iloc[start:end+1].sum(numeric_only=True)
+            period_min = period_sensor_values.min()
+            period_max = period_sensor_values.max()
 
             # Ensure metadata index matches sensor_values keys
-            metadata_subset = metadata.loc[list(sensor_values.keys())]
+            metadata_subset = metadata.loc[list(period_sensor_values.keys())]
 
             # Vectorized transformation
             transformed_positions = transformer.transform(
@@ -106,9 +107,9 @@ class SolarIrradiationMapLayer(MapLayer):
             data = [
                 {
                     "position": [float(x), float(y), float(z)],
-                    "value": float(sensor_values[sensor])
+                    "value": float(period_sensor_values[sensor])
                 }
-                for sensor, x, y, z in zip(sensor_values.keys(),
+                for sensor, x, y, z in zip(period_sensor_values.keys(),
                                            transformed_positions[0], transformed_positions[1], transformed_positions[2])
             ]
 
@@ -133,3 +134,18 @@ class SolarIrradiationMapLayer(MapLayer):
             }
         }
         return output
+
+def day_range_to_hour_range(nth_day_start: int, nth_day_end: int) -> Tuple[int, int]:
+    """
+    Converts a nth day range (e.g. 01-Jan is 1, 31-Dec is 365) to hour range (zero-indexed),
+    where the first hour is the hour at the start of the "start day" and the second hour is the
+    hour at the end of the "end day".
+
+    e.g. day_range_to_hour_range(1, 1) returns 0, 23
+    e.g. day_range_to_hour_range(1, 2) returns 0, 47
+    """
+    return (nth_day_start-1) * 24, nth_day_end * 24 -1
+
+
+if __name__ == "__main__":
+    print(day_range_to_hour_range(1, 2))
