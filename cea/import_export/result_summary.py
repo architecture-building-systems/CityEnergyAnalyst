@@ -645,23 +645,21 @@ def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
 
     list_results = []
     for list_useful_cea_results in list_list_useful_cea_results:
-        # Ensure there are DataFrames to process
-        if not list_useful_cea_results:
-            return None
 
-        else:
-            # Compute the sum for each DataFrame
-            rows = []
-            for df in list_useful_cea_results:
+        # Compute the sum for each DataFrame
+        rows = []
+        for df in list_useful_cea_results:
+            if df is not None:
                 row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
                 rows.append(row_sum)
 
-            # Create a DataFrame from the rows
-            result_df = pd.DataFrame(rows)
+        # Create a DataFrame from the rows
+        result_df = pd.DataFrame(rows)
+        if not result_df.empty:
             result_df.insert(0, 'Name', list_buildings)
 
-            # Reset index for a clean result
-            list_results.append([result_df.reset_index(drop=True)])
+        # Reset index for a clean result
+        list_results.append([result_df.reset_index(drop=True)])
 
     return list_results
 
@@ -707,7 +705,7 @@ def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_t
 
     return list_list_df, list_list_time_period
 
-def results_writer_time_period(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period):
+def results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -725,6 +723,9 @@ def results_writer_time_period(config, output_path, list_metrics, list_list_df_a
     # Create the target path of directory
     target_path = os.path.join(output_path, cea_feature)
 
+    # Create the folder if it doesn't exist
+    os.makedirs(target_path, exist_ok=True)
+
     # Remove all files in folder
     for filename in os.listdir(target_path):
         file_path = os.path.join(target_path, filename)
@@ -734,6 +735,7 @@ def results_writer_time_period(config, output_path, list_metrics, list_list_df_a
     for m in range(len(list_list_df_aggregate_time_period)):
         list_df_aggregate_time_period = list_list_df_aggregate_time_period[m]
         list_time_period = list_list_time_period[m]
+        appendix = list_appendix[m]
 
         # Write .csv files for each DataFrame
         for n in range(len(list_df_aggregate_time_period)):
@@ -742,33 +744,33 @@ def results_writer_time_period(config, output_path, list_metrics, list_list_df_a
             if df is not None:
                 # Determine time period name based on the content in Column ['period']
                 if len(df) == 1 and abs(hour_end - hour_start) == 8760:
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                 # if only one day is involved
                 elif len(df) == 1 and time_period == 'daily':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
                 elif len(df) > 1 and time_period == 'daily':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
                 elif len(df) == 1 and time_period == 'monthly':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
@@ -784,13 +786,13 @@ def results_writer_time_period(config, output_path, list_metrics, list_list_df_a
                         and not df['period'].astype(str).str.contains("hour").any():
                     time_period = "sum_selected_hours"
                     df['period'] = "selected_hours"
-                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
                     df.to_csv(path_csv, index=False, float_format="%.2f")
             else:
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_without_date(config, output_path, list_metrics, list_df):
+def results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -803,13 +805,8 @@ def results_writer_without_date(config, output_path, list_metrics, list_df):
     # Map metrics to CEA features
     cea_feature = map_metrics_cea_features(list_metrics)
 
-    # Get the hour start and hour end
-    hour_start, hour_end = get_hours_start_end(config)
-
     # Join the paths
-    target_path = os.path.join(output_path, 'export',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start,hour_end=hour_end),
-                               cea_feature)
+    target_path = os.path.join(output_path, cea_feature, 'buildings')
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -819,13 +816,19 @@ def results_writer_without_date(config, output_path, list_metrics, list_df):
         file_path = os.path.join(target_path, filename)
         if os.path.isfile(file_path):
             os.remove(file_path)
+    for m in range(len(list_list_df)):
+        list_df = list_list_df[m]
+        appendix = list_appendix[m]
 
-    # Create the .csv file path
-    path_csv = os.path.join(target_path, f"{cea_feature}_buildings.csv")
-
-    # Write to .csv files
-    for df in list_df:
-        df.to_csv(path_csv, index=False, float_format="%.2f")
+        if appendix == 'architecture':
+            # Create the .csv file path
+            path_csv = os.path.join(target_path, f"{appendix}_buildings.csv")
+        else:
+            path_csv = os.path.join(target_path, f"{appendix}_sum_selected_hours_buildings.csv")
+        # Write to .csv files
+        for df in list_df:
+            if not df.empty:
+                df.to_csv(path_csv, index=False, float_format="%.2f")
 
 
 def main(config):
@@ -850,13 +853,13 @@ def main(config):
 
     list_list_metrics_with_date = [
                         config.result_summary.metrics_demand,
-                        # config.result_summary.metrics_pv,
-                        # config.result_summary.metrics_pvt,
-                        # config.result_summary.metrics_sc_et,
-                        # config.result_summary.metrics_sc_fp,
-                        # config.result_summary.metrics_other_renewables,
-                        # config.result_summary.metrics_dh,
-                        # config.result_summary.metrics_dc
+                        config.result_summary.metrics_pv,
+                        config.result_summary.metrics_pvt,
+                        config.result_summary.metrics_sc_et,
+                        config.result_summary.metrics_sc_fp,
+                        config.result_summary.metrics_other_renewables,
+                        config.result_summary.metrics_dh,
+                        config.result_summary.metrics_dc
                         ]
 
     list_list_metrics_without_date = [
@@ -865,34 +868,42 @@ def main(config):
                         config.result_summary.metrics_operation_emissions,
                         ]
 
+    list_list_metrics_building = [
+                        config.result_summary.metrics_demand,
+                        config.result_summary.metrics_pv,
+                        config.result_summary.metrics_pvt,
+                        config.result_summary.metrics_sc_et,
+                        config.result_summary.metrics_sc_fp,
+                        ]
+
     # Get the hour start and hour end
     hour_start, hour_end = get_hours_start_end(config)
 
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'export',
+    output_path = os.path.join(output_path, 'export', 'results',
                                f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
     os.makedirs(output_path, exist_ok=True)
 
     # Export results that have no date information, non-8760 hours, aggregate by building
-    # for list_metrics in list_list_metrics_without_date:
-    #     list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-    #     results_writer_without_date(config, output_path, list_metrics, list_useful_cea_results)
+    for list_metrics in list_list_metrics_without_date:
+        list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
+        results_writer_time_period_without_date(config, output_path, list_metrics, list_useful_cea_results, list_appendix)
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_df_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
                                                                                      list_aggregate_by_time_period)
-        print(list_list_df_time_period)
-        print(list_list_time_period)
-        print(list_appendix)
-        # results_writer_time_period(config, output_path, list_metrics, list_list_df_time_period)
+
+        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)
 
         # aggregate by building
-        if bool_aggregate_by_building:
-            list_list_df_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
-            print(list_list_df_building)
-            # results_writer_without_date(config, output_path, list_metrics, list_df_building)
+    if bool_aggregate_by_building:
+        for list_metrics in list_list_metrics_building:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
+            list_list_df_aggregate_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
+            results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df_aggregate_building, list_appendix)
+
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
