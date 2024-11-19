@@ -885,7 +885,7 @@ def main(config):
     os.makedirs(output_path, exist_ok=True)
 
     # Store the list of selected buildings
-    df_buildings = pd.DataFrame(data=list_buildings, columns=['name'])
+    df_buildings = pd.DataFrame(data=list_buildings, columns=['Name'])
     buildings_path = os.path.join(output_path, 'selected_buildings.csv')
     df_buildings.to_csv(buildings_path, index=False)
 
