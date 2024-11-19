@@ -455,27 +455,7 @@ def aggregate_or_combine_dataframes(dataframes):
 
         return combined_df
 
-def exec_read_and_summarise_hourly_8760(config, locator, list_metrics):
-
-    # map the CEA Feature for the selected metrics
-    cea_feature = map_metrics_cea_features(list_metrics)
-
-    # locate the path(s) to the results of the CEA Feature
-    list_paths = get_results_path(locator, config, cea_feature)
-
-    # get the relevant CEA column names based on selected metrics
-    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
-
-    # get the useful CEA results for the user-selected metrics and hours
-    list_useful_cea_results = load_cea_results_csv_files(config, list_paths, list_cea_column_names)
-
-    # aggregate these results
-    df_aggregated_results_hourly_8760 = aggregate_or_combine_dataframes(list_useful_cea_results)
-
-    return df_aggregated_results_hourly_8760
-
-
-def exec_read_and_summarise_without_date(config, locator, list_metrics):
+def exec_read_and_slice(config, locator, list_metrics):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
@@ -797,13 +777,14 @@ def main(config):
                         ]
     # Export results that have no date information, non-8760 hours
     for list_metrics in list_list_metrics_without_date:
-        list_df = exec_read_and_summarise_without_date(config, locator, list_metrics)
-        results_writer_without_date(config, output_path, list_metrics, list_df)
+        list_useful_cea_results = exec_read_and_slice(config, locator, list_metrics)
+        results_writer_without_date(config, output_path, list_metrics, list_useful_cea_results)
 
     # Export results that have date information, 8760 hours
     for list_metrics in list_list_metrics_with_date:
-        list_df_time_period = exec_aggregate_time_period(
-            exec_read_and_summarise_hourly_8760(config, locator, list_metrics), list_aggregate_by_time_period)
+        list_useful_cea_results = exec_read_and_slice(config, locator, list_metrics)
+        list_df_time_period = exec_aggregate_time_period(aggregate_or_combine_dataframes(list_useful_cea_results),
+                                                         list_aggregate_by_time_period)
         results_writer_time_period(config, output_path, list_metrics, list_df_time_period)
 
     # Print the time used for the entire processing
