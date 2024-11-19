@@ -170,68 +170,82 @@ def get_results_path(locator, config, cea_feature):
     selected_buildings = config.result_summary.buildings
 
     list_paths = []
+    list_appendix = []
 
     if cea_feature == 'architecture':
         path = locator.get_total_demand()
         list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     elif cea_feature == 'demand':
         for building in selected_buildings:
             path = locator.get_demand_results_file(building)
             list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     elif cea_feature == 'embodied_emissions':
         path = locator.get_lca_embodied()
         list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     elif cea_feature == 'operation_emissions':
         path = locator.get_lca_operation()
         list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'pv':
         database_pv = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
         list_panel_type = database_pv['code'].dropna().unique().tolist()
-        for building in selected_buildings:
-            for panel_type in list_panel_type:
+        for panel_type in list_panel_type:
+            pv_paths = []
+            for building in selected_buildings:
                 path = locator.PV_results(building, panel_type)
-                list_paths.append(path)
+                pv_paths.append(path)
+            list_paths.append(pv_paths)
+            list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt':
         for building in selected_buildings:
             path = locator.PVT_results(building)
             list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_et':
         for building in selected_buildings:
             path = locator.SC_results(building, 'ET')
             list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_fp':
         for building in selected_buildings:
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'other_renewables':
         path_geothermal = locator.get_geothermal_potential()
-        list_paths.append(path_geothermal)
         path_sewage_heat = locator.get_sewage_heat_potential()
-        list_paths.append(path_sewage_heat)
         path_water_body = locator.get_water_body_potential()
+        list_paths.append(path_geothermal)
+        list_paths.append(path_sewage_heat)
         list_paths.append(path_water_body)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'dh':
         path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', '', representative_week=False)
-        list_paths.append(path_thermal)
         path_pump = locator.get_network_energy_pumping_requirements_file('DH', '', representative_week=False)
+        list_paths.append(path_thermal)
         list_paths.append(path_pump)
+        list_appendix.append(cea_feature)
 
     if cea_feature == 'dc':
         path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', '', representative_week=False)
-        list_paths.append(path_thermal)
         path_pump = locator.get_network_energy_pumping_requirements_file('DC', '', representative_week=False)
+        list_paths.append(path_thermal)
         list_paths.append(path_pump)
+        list_appendix.append(cea_feature)
 
-    return list_paths
+    return list_paths, list_appendix
 
 def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     """
@@ -348,7 +362,38 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     return output_list
 
 
-def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
+def check_list_nesting(input_list):
+    """
+    Checks whether every item in a list is itself a list or not.
+
+    Returns:
+    - True: if every item in the list is a list.
+    - False: if no item in the list is a list.
+    - ValueError: if the list contains a mix of lists and non-lists.
+
+    Parameters:
+    - input_list (list): The list to check.
+
+    Returns:
+    - bool: True or False based on the condition.
+
+    Raises:
+    - ValueError: If the list contains a mix of lists and non-lists.
+    """
+    if not isinstance(input_list, list):
+        raise TypeError("Input must be a list.")
+
+    all_lists = all(isinstance(item, list) for item in input_list)
+    no_lists = all(not isinstance(item, list) for item in input_list)
+
+    if all_lists:
+        return True
+    elif no_lists:
+        return False
+    else:
+        raise ValueError("The input list contains a mix of lists and non-lists.")
+
+def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
     and returns a list of these DataFrames.
@@ -374,7 +419,7 @@ def load_cea_results_csv_files(config, list_paths, list_cea_column_names):
                     df = df[available_columns]
 
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
-                    df = slice_hourly_results_time_period(config, df)   # Slice the custom period of time
+                    df = slice_hourly_results_for_custom_time_period(config, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 else:
                     # Slice the useful columns
@@ -455,23 +500,7 @@ def aggregate_or_combine_dataframes(dataframes):
 
         return combined_df
 
-def exec_read_and_slice(config, locator, list_metrics):
-
-    # map the CEA Feature for the selected metrics
-    cea_feature = map_metrics_cea_features(list_metrics)
-
-    # locate the path(s) to the results of the CEA Feature
-    list_paths = get_results_path(locator, config, cea_feature)
-
-    # get the relevant CEA column names based on selected metrics
-    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
-
-    # get the useful CEA results for the user-selected metrics and hours
-    list_useful_cea_results = load_cea_results_csv_files(config, list_paths, list_cea_column_names)
-
-    return list_useful_cea_results
-
-def slice_hourly_results_time_period(config, df):
+def slice_hourly_results_for_custom_time_period(config, df):
     """
     Slices a DataFrame based on hour_start and hour_end from the configuration.
     If hour_start > hour_end, wraps around the year:
@@ -586,33 +615,99 @@ def aggregate_by_period(df, period, date_column='date'):
 
     return aggregated_df
 
-def exec_aggregate_time_period(df_aggregated_results_hourly_8760, list_aggregate_by_time_period):
 
-    results = []
+def exec_read_and_slice(config, locator, list_metrics):
 
-    if 'hourly' in list_aggregate_by_time_period:
-        df_hourly = aggregate_by_period(df_aggregated_results_hourly_8760, 'hourly', date_column='date')
-        results.append(df_hourly)
+    # map the CEA Feature for the selected metrics
+    cea_feature = map_metrics_cea_features(list_metrics)
 
-    if 'daily' in list_aggregate_by_time_period:
-        df_daily = aggregate_by_period(df_aggregated_results_hourly_8760, 'daily', date_column='date')
-        results.append(df_daily)
+    # locate the path(s) to the results of the CEA Feature
+    list_paths, list_appendix = get_results_path(locator, config, cea_feature)
 
-    if 'monthly' in list_aggregate_by_time_period:
-        df_monthly = aggregate_by_period(df_aggregated_results_hourly_8760, 'monthly', date_column='date')
-        results.append(df_monthly)
+    # get the relevant CEA column names based on selected metrics
+    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
 
-    if 'seasonally' in list_aggregate_by_time_period:
-        df_seasonally = aggregate_by_period(df_aggregated_results_hourly_8760, 'seasonally', date_column='date')
-        results.append(df_seasonally)
+    list_list_useful_cea_results = []
+    # check if list_paths is nested, for example, for PV, the lists can be nested as there are different types of PV
+    if not check_list_nesting(list_paths):
+        # get the useful CEA results for the user-selected metrics and hours
+        list_useful_cea_results = load_cea_results_from_csv_files(config, list_paths, list_cea_column_names)
+        list_list_useful_cea_results.append(list_useful_cea_results)
+    else:
+        for sublist_paths in list_paths:
+            list_useful_cea_results = load_cea_results_from_csv_files(config, sublist_paths, list_cea_column_names)
+            list_list_useful_cea_results.append(list_useful_cea_results)
 
-    if 'annually' in list_aggregate_by_time_period:
-        df_annually = aggregate_by_period(df_aggregated_results_hourly_8760, 'annually', date_column='date')
-        results.append(df_annually)
+    return list_list_useful_cea_results, list_appendix
 
-    return results
 
-def results_writer_time_period(config, output_path, list_metrics, list_df_aggregate_time_period):
+def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
+
+    list_results = []
+    for list_useful_cea_results in list_list_useful_cea_results:
+        # Ensure there are DataFrames to process
+        if not list_useful_cea_results:
+            return None
+
+        else:
+            # Compute the sum for each DataFrame
+            rows = []
+            for df in list_useful_cea_results:
+                row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
+                rows.append(row_sum)
+
+            # Create a DataFrame from the rows
+            result_df = pd.DataFrame(rows)
+            result_df.insert(0, 'Name', list_buildings)
+
+            # Reset index for a clean result
+            list_results.append([result_df.reset_index(drop=True)])
+
+    return list_results
+
+
+def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_time_period):
+
+    list_list_df = []
+    list_list_time_period = []
+
+    for list_useful_cea_results in list_list_useful_cea_results:
+        df_aggregated_results_hourly = aggregate_or_combine_dataframes(list_useful_cea_results)
+
+        list_df = []
+        list_time_period = []
+
+        if 'hourly' in list_aggregate_by_time_period:
+            df_hourly = aggregate_by_period(df_aggregated_results_hourly, 'hourly', date_column='date')
+            list_df.append(df_hourly)
+            list_time_period.append('hourly')
+
+        if 'daily' in list_aggregate_by_time_period:
+            df_daily = aggregate_by_period(df_aggregated_results_hourly, 'daily', date_column='date')
+            list_df.append(df_daily)
+            list_time_period.append('daily')
+
+        if 'monthly' in list_aggregate_by_time_period:
+            df_monthly = aggregate_by_period(df_aggregated_results_hourly, 'monthly', date_column='date')
+            list_df.append(df_monthly)
+            list_time_period.append('monthly')
+
+        if 'seasonally' in list_aggregate_by_time_period:
+            df_seasonally = aggregate_by_period(df_aggregated_results_hourly, 'seasonally', date_column='date')
+            list_df.append(df_seasonally)
+            list_time_period.append('seasonally')
+
+        if 'annually' in list_aggregate_by_time_period:
+            df_annually = aggregate_by_period(df_aggregated_results_hourly, 'annually', date_column='date')
+            list_df.append(df_annually)
+            list_time_period.append('annually')
+
+        list_list_df.append(list_df)
+        list_list_time_period.append(list_time_period)
+
+    return list_list_df, list_list_time_period
+
+def results_writer_time_period(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -627,13 +722,8 @@ def results_writer_time_period(config, output_path, list_metrics, list_df_aggreg
     # Get the hour start and hour end
     hour_start, hour_end = get_hours_start_end(config)
 
-    # Join the paths
-    target_path = os.path.join(output_path, 'export',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end),
-                               cea_feature)
-
-    # Create the folder if it doesn't exist
-    os.makedirs(target_path, exist_ok=True)
+    # Create the target path of directory
+    target_path = os.path.join(output_path, cea_feature)
 
     # Remove all files in folder
     for filename in os.listdir(target_path):
@@ -641,64 +731,63 @@ def results_writer_time_period(config, output_path, list_metrics, list_df_aggreg
         if os.path.isfile(file_path):
             os.remove(file_path)
 
-    # Write .csv files for each DataFrame
-    for df in list_df_aggregate_time_period:
-        if df is not None:
-            # Determine time period name based on the content in Column ['period']
-            if len(df) == 1 and abs(hour_end - hour_start) == 8760:
-                time_period_name = "annually"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
-            # if only one day is selected
-            elif len(df) == 1 and df['period'].astype(str).str.contains("day").any():
-                time_period_name = "daily"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
-                break
+    for m in range(len(list_list_df_aggregate_time_period)):
+        list_df_aggregate_time_period = list_list_df_aggregate_time_period[m]
+        list_time_period = list_list_time_period[m]
 
-            elif len(df) > 1 and df['period'].astype(str).str.contains("day").any():
-                time_period_name = "daily"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
+        # Write .csv files for each DataFrame
+        for n in range(len(list_df_aggregate_time_period)):
+            df = list_df_aggregate_time_period[n]
+            time_period = list_time_period[n]
+            if df is not None:
+                # Determine time period name based on the content in Column ['period']
+                if len(df) == 1 and abs(hour_end - hour_start) == 8760:
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
+                # if only one day is involved
+                elif len(df) == 1 and time_period == 'daily':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
+                    break
 
-            # if all days selected fall into the same month
-            elif len(df) == 1 and df['period'].isin(month_names).any():
-                time_period_name = "monthly"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
-                break
-            elif len(df) > 1 and df['period'].isin(month_names).any():
-                time_period_name = "monthly"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
+                elif len(df) > 1 and time_period == 'daily':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
 
-            elif df['period'].isin(season_names).any():
-                time_period_name = "seasonally"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
+                # if all days selected fall into the same month
+                elif len(df) == 1 and time_period == 'monthly':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
+                    break
+                elif len(df) > 1 and time_period == 'monthly':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
 
-            elif df['period'].astype(str).str.contains("hour").any():
-                time_period_name = "hourly"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
+                elif time_period == 'seasonally':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
 
-        else:
-            pass    # Allow the missing results and will just pass
+                elif time_period == 'hourly':
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
 
-    # Write .csv files for sum of all selected hours
-    for df in list_df_aggregate_time_period:
-        if df is not None:
-            if len(df) == 1 and abs(hour_end - hour_start) != 8760 \
-                    and not df['period'].astype(str).str.contains("day").any() \
-                    and not df['period'].isin(month_names).any() \
-                    and not df['period'].isin(season_names).any() \
-                    and not df['period'].astype(str).str.contains("hour").any():
-                time_period_name = "sum_selected_hours"
-                df['period'] = "selected_hours"
-                path_csv = os.path.join(target_path, f"{time_period_name}.csv")
-                df.to_csv(path_csv, index=False, float_format="%.2f")
-        else:
-            pass    # Allow the missing results and will just pass
+            else:
+                pass    # Allow the missing results and will just pass
+
+        # Write .csv files for sum of all selected hours
+        for df in list_df_aggregate_time_period:
+            if df is not None:
+                if len(df) == 1 and abs(hour_end - hour_start) != 8760 \
+                        and not df['period'].astype(str).str.contains("day").any() \
+                        and not df['period'].isin(month_names).any() \
+                        and not df['period'].isin(season_names).any() \
+                        and not df['period'].astype(str).str.contains("hour").any():
+                    time_period = "sum_selected_hours"
+                    df['period'] = "selected_hours"
+                    path_csv = os.path.join(target_path, f"{time_period}.csv")
+                    df.to_csv(path_csv, index=False, float_format="%.2f")
+            else:
+                pass    # Allow the missing results and will just pass
 
 
 def results_writer_without_date(config, output_path, list_metrics, list_df):
@@ -732,7 +821,7 @@ def results_writer_without_date(config, output_path, list_metrics, list_df):
             os.remove(file_path)
 
     # Create the .csv file path
-    path_csv = os.path.join(target_path, f"{cea_feature}.csv")
+    path_csv = os.path.join(target_path, f"{cea_feature}_buildings.csv")
 
     # Write to .csv files
     for df in list_df:
@@ -761,13 +850,13 @@ def main(config):
 
     list_list_metrics_with_date = [
                         config.result_summary.metrics_demand,
-                        config.result_summary.metrics_pv,
-                        config.result_summary.metrics_pvt,
-                        config.result_summary.metrics_sc_et,
-                        config.result_summary.metrics_sc_fp,
-                        config.result_summary.metrics_other_renewables,
-                        config.result_summary.metrics_dh,
-                        config.result_summary.metrics_dc
+                        # config.result_summary.metrics_pv,
+                        # config.result_summary.metrics_pvt,
+                        # config.result_summary.metrics_sc_et,
+                        # config.result_summary.metrics_sc_fp,
+                        # config.result_summary.metrics_other_renewables,
+                        # config.result_summary.metrics_dh,
+                        # config.result_summary.metrics_dc
                         ]
 
     list_list_metrics_without_date = [
@@ -775,17 +864,35 @@ def main(config):
                         config.result_summary.metrics_embodied_emissions,
                         config.result_summary.metrics_operation_emissions,
                         ]
-    # Export results that have no date information, non-8760 hours
-    for list_metrics in list_list_metrics_without_date:
-        list_useful_cea_results = exec_read_and_slice(config, locator, list_metrics)
-        results_writer_without_date(config, output_path, list_metrics, list_useful_cea_results)
 
-    # Export results that have date information, 8760 hours
+    # Get the hour start and hour end
+    hour_start, hour_end = get_hours_start_end(config)
+
+    # Create the folder to store all the .csv file if it doesn't exist
+    output_path = os.path.join(output_path, 'export',
+                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
+    os.makedirs(output_path, exist_ok=True)
+
+    # Export results that have no date information, non-8760 hours, aggregate by building
+    # for list_metrics in list_list_metrics_without_date:
+    #     list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
+    #     results_writer_without_date(config, output_path, list_metrics, list_useful_cea_results)
+
+    # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
-        list_useful_cea_results = exec_read_and_slice(config, locator, list_metrics)
-        list_df_time_period = exec_aggregate_time_period(aggregate_or_combine_dataframes(list_useful_cea_results),
-                                                         list_aggregate_by_time_period)
-        results_writer_time_period(config, output_path, list_metrics, list_df_time_period)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
+        list_list_df_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
+                                                                                     list_aggregate_by_time_period)
+        print(list_list_df_time_period)
+        print(list_list_time_period)
+        print(list_appendix)
+        # results_writer_time_period(config, output_path, list_metrics, list_list_df_time_period)
+
+        # aggregate by building
+        if bool_aggregate_by_building:
+            list_list_df_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
+            print(list_list_df_building)
+            # results_writer_without_date(config, output_path, list_metrics, list_df_building)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
