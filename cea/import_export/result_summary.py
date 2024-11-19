@@ -884,6 +884,11 @@ def main(config):
                                f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
     os.makedirs(output_path, exist_ok=True)
 
+    # Store the list of selected buildings
+    df_buildings = pd.DataFrame(data=list_buildings, columns=['name'])
+    buildings_path = os.path.join(output_path, 'selected_buildings.csv')
+    df_buildings.to_csv(buildings_path, index=False)
+
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
         list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
