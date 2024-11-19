@@ -36,7 +36,7 @@ def exec_export_csv_for_rhino(config, locator):
     :type cea_scenario: file path
     :return:
     """
-    # acquire the user inputs from config
+    # Acquire the user inputs from config
     output_path = config.to_rhino_gh.output_path
     bool_include_zone = config.to_rhino_gh.include_zone
     bool_include_site = config.to_rhino_gh.include_site
@@ -112,13 +112,6 @@ def exec_export_csv_for_rhino(config, locator):
                         ], env=my_env, check=True, capture_output=True)
 
 def main(config):
-    """
-    Batch processing all scenarios under a project.
-
-    :param config: the configuration object to use
-    :type config: cea.config.Configuration
-    :return:
-    """
 
     # Start the timer
     t0 = time.perf_counter()

@@ -4,7 +4,7 @@ Import & Export:
     label: Export to Rhino/Grasshopper
     description: Export CEA files into Rhino/Grasshopper-ready format.
     interfaces: [cli, dashboard]
-    module: cea.import_export.to_rhino_gh
+    module: cea.import_export.export_to_rhino_gh
     parameters: ['general:scenario', to-rhino-gh]
     input-files:
       - [get_zone_geometry]
@@ -14,7 +14,7 @@ Import & Export:
     label: Import from Rhino/Grasshopper
     description: Import Rhino/Grasshopper-generated files into CEA.
     interfaces: [cli, dashboard]
-    module: cea.import_export.from_rhino_gh
+    module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
     input-files:
       - [get_zone_geometry]
