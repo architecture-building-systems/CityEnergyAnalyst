@@ -2,7 +2,7 @@ import abc
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-from typing import Tuple, Callable, Collection
+from typing import Tuple, Callable, Collection, NamedTuple
 
 from cea import MissingInputDataException
 
@@ -10,8 +10,13 @@ locator_func = Callable[..., str]
 locator_func_args = Collection[str]
 
 
+class Category(NamedTuple):
+    name: str
+    label: str
+
+
 class MapLayer(abc.ABC):
-    category: str
+    category: Category
     name: str
     label: str
     description: str
@@ -26,7 +31,7 @@ class MapLayer(abc.ABC):
     @classmethod
     def describe(cls) -> dict:
         return {
-            "category": cls.category,
+            "category": cls.category._asdict(),
             "name": cls.name,
             "label": cls.label,
             "description": cls.description,
@@ -55,8 +60,10 @@ class MapLayer(abc.ABC):
                 locator_callable = locator_descriptor
                 if len(locator_descriptor) > 1:
                     func, args = locator_descriptor
+
                     def _callable():
                         return func(*args)
+
                     locator_callable = _callable
 
                 yield locator_callable()
