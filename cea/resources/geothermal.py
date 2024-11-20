@@ -12,6 +12,7 @@ import cea.inputlocator
 from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3
 from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 from cea.utilities import epwreader
+from cea.utilities.date import get_date_range_hours_from_year
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,8 +34,13 @@ def calc_geothermal_potential(locator, config):
     depth_m = config.shallow_geothermal.average_probe_depth
 
     # dataprocessing
+    weather_data = epwreader.epw_reader(weather_file)
     area_below_buildings = calc_area_buildings(locator, buildings)
-    T_ambient_C = epwreader.epw_reader(weather_file)[['drybulb_C']].values
+    T_ambient_C =weather_data[['drybulb_C']].values
+
+    # create date range for the calculation year
+    year = weather_data['year'][0]
+    date_range = get_date_range_hours_from_year(year)
 
     # total area available
     area_geothermal = extra_area + area_below_buildings
@@ -48,7 +54,7 @@ def calc_geothermal_potential(locator, config):
 
     # export
     output_file = locator.get_geothermal_potential()
-    pd.DataFrame({"Ts_C": t_source_final, "QGHP_kW": Q_max_kwh, "Area_avail_m2": area_geothermal}).to_csv(output_file,
+    pd.DataFrame({"date": pd.to_datetime(date_range), "Ts_C": t_source_final, "QGHP_kW": Q_max_kwh, "Area_avail_m2": area_geothermal}).to_csv(output_file,
                                                                                                           index=False,
                                                                                                           float_format='%.3f')
 
