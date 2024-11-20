@@ -1245,6 +1245,10 @@ class ColumnChoiceParameter(ChoiceParameter):
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
 
+class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
+    pass
+
+
 def validate_coord_tuple(coord_tuple):
     """Validates a (lat, long) tuple, throws exception if not valid"""
 
