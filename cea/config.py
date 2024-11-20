@@ -1195,24 +1195,52 @@ def parse_string_coordinate_list(string_tuples):
     return coordinates_list
 
 
-class PVChoiceParameter(ChoiceParameter):
+class ColumnChoiceParameter(ChoiceParameter):
+    extension_readers = {
+        '.xlsx': pd.read_excel,
+        '.csv': pd.read_csv,
+    }
+
     def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
+        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
+        self.column_name = parser.get(self.section.name, f"{self.name}.column")
+        self.sheet_name = parser.get(self.section.name, f"{self.name}.sheet", fallback=None)
 
     @property
     def _choices(self):
         # set the `._choices` attribute to PV codes
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        try:
-            df = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
-            pv_codes = df['code'].unique()
-            return list(pv_codes)
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f'Could not find conversion database at {locator.get_database_conversion_systems()}') from e
-        except Exception as e:
-            raise ValueError(f'There was an error generating PV choices from {locator.get_database_conversion_systems()}') from e
 
+        try:
+            location = getattr(locator, self.locator_method)()
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+
+        ext = os.path.splitext(location)[1]
+        if ext not in self.extension_readers:
+            raise ValueError(f'Invalid file type {ext}, expected one of {self.extension_readers.keys()}')
+
+        reader = self.extension_readers[ext]
+
+        try:
+            if ext == '.xlsx':
+                if self.sheet_name is None:
+                    raise ValueError(f'Sheet name not specified for parameter {self.section.name}.{self.name}')
+
+                df = reader(location, sheet_name=self.sheet_name)
+            else:
+                df = reader(location)
+
+            if self.column_name not in df.columns:
+                raise ValueError(f'Column {self.column_name} not found in source file')
+
+            codes = df[self.column_name].unique()
+            return list(codes)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f'Could not find source file at {location}') from e
+        except Exception as e:
+            raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
 
 def validate_coord_tuple(coord_tuple):
