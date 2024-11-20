@@ -9,6 +9,7 @@ import cea.config
 import time
 from datetime import datetime
 import cea.inputlocator
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -22,6 +23,7 @@ __status__ = "Production"
 
 season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 
 def get_standardized_date_column(df):
     """
@@ -40,6 +42,7 @@ def get_standardized_date_column(df):
             break
     return df
 
+
 def get_hours_start_end(config):
 
     # get the user-defined dates from config
@@ -50,6 +53,7 @@ def get_hours_start_end(config):
         s = "".join(date)
         # Check for length, alphanumeric, and the presence of both letters and numbers
         return len(s) == 5 and s.isalnum() and any(c.isalpha() for c in s) and any(c.isdigit() for c in s)
+
     def check_user_period_impossible_date(date):
         list_impossible_dates = ['30Feb', '31Feb', '31Apr', '31Jun', '31Sep', '31Nov',
                                  'Feb30', 'Feb31', 'Apr31', 'Jun31', 'Sep31', 'Nov31']
@@ -117,10 +121,11 @@ def get_hours_start_end(config):
     elif check_user_period_leap_date(date_end):
         raise ValueError('Check the end date. CEA does not consider 29 Feb in a leap year.')
 
-    hour_start = from_date_string_to_hours(date_start) #Nth hour of the year, starting at 0, inclusive
-    hour_end = from_date_string_to_hours(date_end) + 24  #Nth hour of the year, ending at 8760, not-inclusive
+    hour_start = from_date_string_to_hours(date_start)      #Nth hour of the year, starting at 0, inclusive
+    hour_end = from_date_string_to_hours(date_end) + 24     #Nth hour of the year, ending at 8760, not-inclusive
 
     return hour_start, hour_end
+
 
 def map_metrics_cea_features(list_metrics):
 
@@ -165,9 +170,8 @@ def map_metrics_cea_features(list_metrics):
             return cea_feature
     return None
 
-def get_results_path(locator, config, cea_feature):
 
-    selected_buildings = config.result_summary.buildings
+def get_results_path(locator, cea_feature, list_buildings):
 
     list_paths = []
     list_appendix = []
@@ -178,7 +182,7 @@ def get_results_path(locator, config, cea_feature):
         list_appendix.append(cea_feature)
 
     elif cea_feature == 'demand':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.get_demand_results_file(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -198,26 +202,26 @@ def get_results_path(locator, config, cea_feature):
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
-            for building in selected_buildings:
+            for building in list_buildings:
                 path = locator.PV_results(building, panel_type)
                 pv_paths.append(path)
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.PVT_results(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_et':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'ET')
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_fp':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -246,6 +250,7 @@ def get_results_path(locator, config, cea_feature):
         list_appendix.append(cea_feature)
 
     return list_paths, list_appendix
+
 
 def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     """
@@ -338,7 +343,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -393,6 +397,7 @@ def check_list_nesting(input_list):
     else:
         raise ValueError("The input list contains a mix of lists and non-lists.")
 
+
 def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
@@ -436,7 +441,7 @@ def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     return list_dataframes
 
 
-def aggregate_or_combine_dataframes(dataframes):
+def aggregate_or_combine_dataframes(config, dataframes):
     """
     Aggregates or horizontally combines a list of DataFrames:
     - If all DataFrames share the same column names (excluding 'date'), aggregate corresponding cells.
@@ -447,7 +452,11 @@ def aggregate_or_combine_dataframes(dataframes):
 
     Returns:
     - pd.DataFrame: Aggregated or combined DataFrame.
+
     """
+
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
+
     # Ensure there are DataFrames to process
     if not dataframes:
         return None
@@ -479,11 +488,10 @@ def aggregate_or_combine_dataframes(dataframes):
 
             aggregated_df = aggregated_df.round(2)
 
-            # Switch back from CEA Columns to metrics
-            aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
+            if not bool_use_acronym:
+                aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
 
             return aggregated_df
-
 
     else:
         # Combine DataFrames horizontally on 'date'
@@ -495,10 +503,11 @@ def aggregate_or_combine_dataframes(dataframes):
         combined_df.sort_values(by='date', inplace=True)
         combined_df.reset_index(drop=True, inplace=True)
 
-        # Switch back from CEA Columns to metrics
-        combined_df.columns = map_metrics_and_cea_columns(combined_df.columns.tolist(), direction="columns_to_metrics")
+        if not bool_use_acronym:
+            combined_df.columns = map_metrics_and_cea_columns(combined_df.columns, direction="columns_to_metrics")
 
         return combined_df
+
 
 def slice_hourly_results_for_custom_time_period(config, df):
     """
@@ -535,7 +544,6 @@ def slice_hourly_results_for_custom_time_period(config, df):
     sliced_df.reset_index(drop=True, inplace=True)
 
     return sliced_df
-
 
 
 def aggregate_by_period(df, period, date_column='date'):
@@ -616,13 +624,13 @@ def aggregate_by_period(df, period, date_column='date'):
     return aggregated_df
 
 
-def exec_read_and_slice(config, locator, list_metrics):
+def exec_read_and_slice(config, locator, list_metrics, list_buildings):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # locate the path(s) to the results of the CEA Feature
-    list_paths, list_appendix = get_results_path(locator, config, cea_feature)
+    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
 
     # get the relevant CEA column names based on selected metrics
     list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
@@ -641,8 +649,9 @@ def exec_read_and_slice(config, locator, list_metrics):
     return list_list_useful_cea_results, list_appendix
 
 
-def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
+def exec_aggregate_building(config, list_list_useful_cea_results, list_buildings):
 
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     list_results = []
     for list_useful_cea_results in list_list_useful_cea_results:
 
@@ -655,6 +664,10 @@ def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
 
         # Create a DataFrame from the rows
         result_df = pd.DataFrame(rows)
+
+        if not bool_use_acronym:
+             result_df.columns = map_metrics_and_cea_columns(result_df.columns, direction="columns_to_metrics")
+
         if not result_df.empty:
             result_df.insert(0, 'Name', list_buildings)
 
@@ -664,13 +677,13 @@ def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
     return list_results
 
 
-def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_time_period):
+def exec_aggregate_time_period(config, list_list_useful_cea_results, list_aggregate_by_time_period):
 
     list_list_df = []
     list_list_time_period = []
 
     for list_useful_cea_results in list_list_useful_cea_results:
-        df_aggregated_results_hourly = aggregate_or_combine_dataframes(list_useful_cea_results)
+        df_aggregated_results_hourly = aggregate_or_combine_dataframes(config, list_useful_cea_results)
 
         list_df = []
         list_time_period = []
@@ -704,6 +717,7 @@ def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_t
         list_list_time_period.append(list_time_period)
 
     return list_list_df, list_list_time_period
+
 
 def results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
     """
@@ -792,7 +806,7 @@ def results_writer_time_period_with_date(config, output_path, list_metrics, list
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df, list_appendix):
+def results_writer_time_period_without_date(output_path, list_metrics, list_list_df, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -830,7 +844,8 @@ def results_writer_time_period_without_date(config, output_path, list_metrics, l
             if not df.empty:
                 df.to_csv(path_csv, index=False, float_format="%.2f")
 
-def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings):
+
+def filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_buildings):
     """
     Filters rows in all DataFrames within a nested list of DataFrames,
     keeping only rows where the 'Name' column matches any value in list_buildings.
@@ -842,6 +857,7 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
     Returns:
     - list of list of pd.DataFrame: Nested list of filtered DataFrames with the same shape as the input.
     """
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     list_list_useful_cea_results_buildings = []
 
     for dataframe_list in list_list_useful_cea_results:
@@ -849,7 +865,12 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
         for df in dataframe_list:
             if 'Name' in df.columns:
                 filtered_df = df[df['Name'].isin(list_buildings)]
+
+                if not bool_use_acronym:
+                    filtered_df.columns = map_metrics_and_cea_columns(filtered_df.columns, direction="columns_to_metrics")
+
                 filtered_list.append(filtered_df)
+
             else:
                 # If the 'Name' column does not exist, append an empty DataFrame
                 print("Skipping a DataFrame as it does not contain the 'Name' column.")
@@ -858,6 +879,206 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
 
     return list_list_useful_cea_results_buildings
 
+def determine_building_main_use(df_typology):
+
+    # Create a new DataFrame to store results
+    result = pd.DataFrame()
+    result['Name'] = df_typology['Name']
+
+    # Determine the main use type and its ratio
+    result['main_use'] = df_typology.apply(
+        lambda row: row['1ST_USE'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE'],
+        axis=1
+    )
+    result['main_use_r'] = df_typology.apply(
+        lambda row: row['1ST_USE_R'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE_R'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE_R'],
+        axis=1
+    )
+
+    return result
+
+
+def get_building_year_standard_main_use_type(locator):
+
+    typology_dbf = dbf_to_dataframe(locator.get_building_typology())
+    df = determine_building_main_use(typology_dbf)
+    df['standard'] = typology_dbf['STANDARD']
+    df['year'] = typology_dbf['YEAR']
+
+    return df
+
+def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=None):
+    """
+    Filters rows in the DataFrame based on a year range.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'year' column.
+    - integer_year_start (int, optional): Start of the year range (inclusive). Defaults to 0 if None or empty.
+    - integer_year_end (int, optional): End of the year range (inclusive). Defaults to 9999 if None or empty.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'year' is within the specified range.
+
+    Raises:
+    - ValueError: If 'year' column is not found or if integer_year_start > integer_year_end,
+                  or if the filtered DataFrame is empty.
+    """
+
+    # Handle None or empty values
+    integer_year_start = 0 if not integer_year_start else integer_year_start
+    integer_year_end = 9999 if not integer_year_end else integer_year_end
+
+    if integer_year_start > integer_year_end:
+        raise ValueError("The start year cannot be greater than the end year.")
+
+    # Filter rows where 'year' is within the range
+    filtered_df = df_typology[
+        (df_typology['year'] >= integer_year_start) & (df_typology['year'] <= integer_year_end)
+    ]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified year range.")
+
+    return filtered_df
+
+def filter_by_standard(df_typology, list_standard):
+    """
+    Filters rows in the DataFrame based on whether the 'standard' column matches any item in list_standard.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'standard' column.
+    - list_standard (list): List of standard values to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'standard' matches any item in list_standard.
+
+    Raises:
+    - ValueError: If 'standard' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'standard' matches any value in list_standard
+    filtered_df = df_typology[df_typology['standard'].isin(list_standard)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified standards.")
+
+    return filtered_df
+
+
+def filter_by_main_use(df_typology, list_main_use_type):
+    """
+    Filters rows in the DataFrame based on whether the 'main_use' column matches any item in list_main_use_type.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use' column.
+    - list_main_use_type (list): List of main use types to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use' matches any item in list_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'main_use' not in df_typology.columns:
+        raise ValueError("'main_use' column not found in the DataFrame.")
+
+    # Filter rows where 'main_use' matches any value in list_main_use_type
+    filtered_df = df_typology[df_typology['main_use'].isin(list_main_use_type)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified main use types.")
+
+    return filtered_df
+
+
+def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
+    """
+    Filters rows in the DataFrame where the 'main_use_r' column is equal to or larger than a given ratio.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_r' column.
+    - ratio_main_use_type (float): The minimum ratio threshold for filtering.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_r' >= ratio_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use_r' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'main_use_r' is greater than or equal to the threshold
+    filtered_df = df_typology[df_typology['main_use_r'] >= ratio_main_use_type]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the criteria for the specified main use ratio.")
+
+    return filtered_df
+
+
+def filter_by_building_names(df_typology, list_buildings):
+    """
+    Filters rows in the DataFrame where the 'Name' column matches any item in the given list.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'Name' column.
+    - list_buildings (list of str): List of building names to filter for.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'Name' matches any item in list_buildings.
+
+    Raises:
+    - ValueError: If 'Name' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'Name' not in df_typology.columns:
+        raise ValueError("'Name' column not found in the DataFrame.")
+
+    # Filter rows where 'Name' is in list_buildings
+    filtered_df = df_typology[df_typology['Name'].isin(list_buildings)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings match the specified list of names.")
+
+    return filtered_df
+
+
+def serial_filer_buildings(config, locator):
+
+    # Get the building info
+    df_typology = get_building_year_standard_main_use_type(locator)
+
+    # get the selecting criteria from config
+    list_buildings = config.result_summary.buildings
+    integer_year_start = config.result_summary.filer_building_by_year_start
+    integer_year_end = config.result_summary.filer_building_by_year_end
+    list_standard = config.result_summary.filer_building_by_standard
+    list_main_use_type = config.result_summary.filer_building_by_use_type
+    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
+
+    # Initial filter to keep the selected buildings
+    df_typology = filter_by_building_names(df_typology, list_buildings)
+
+    # Further select by year
+    df_typology = filter_by_year_range(df_typology, integer_year_start, integer_year_end)
+
+    # Further filter by standard
+    df_typology = filter_by_standard(df_typology, list_standard)
+
+    # Further filter by main use type
+    df_typology = filter_by_main_use(df_typology, list_main_use_type)
+
+    # Further filter by main use type ratio
+    df_typology = filter_by_main_use_ratio(df_typology, ratio_main_use_type)
+
+    return df_typology
 
 
 def main(config):
@@ -876,8 +1097,6 @@ def main(config):
 
     # gather info from config file
     output_path = locator.get_export_folder()
-    print(output_path)
-    list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
 
@@ -909,41 +1128,51 @@ def main(config):
     # Get the hour start and hour end
     hour_start, hour_end = get_hours_start_end(config)
 
+    # Get the current time in the desired format
+    current_time = datetime.now().strftime("%y.%m.%d_%H.%M.%S")
+
+    # Get the user-defined name of folder
+    folder_name = config.result_summary.folder_name_to_save_exported_results
+
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'results',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
+    if folder_name is None or folder_name.strip() == "":
+        output_path = os.path.join(output_path, 'results', f'hours_{hour_start}_{hour_end}_done_{current_time}')
+
+    else:
+        output_path = os.path.join(output_path, 'results', f'{folder_name}_done_{current_time}')
+
     os.makedirs(output_path, exist_ok=True)
 
     # Store the list of selected buildings
-    df_buildings = pd.DataFrame(data=list_buildings, columns=['Name'])
+    df_buildings = serial_filer_buildings(config, locator)
     buildings_path = os.path.join(output_path, 'selected_buildings.csv')
-    df_buildings.to_csv(buildings_path, index=False)
+    list_buildings = df_buildings['Name'].to_list()
+
+    df_buildings.set_index('Name').to_csv(buildings_path, index=False)
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_without_date(config, output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_without_date(output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)   # Write to disk
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
-                                                                                     list_aggregate_by_time_period)
-
-        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(config, list_list_useful_cea_results, list_aggregate_by_time_period)
+        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
 
         # aggregate by building
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-            list_list_df_aggregate_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
-            results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df_aggregate_building, list_appendix)
-
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+            list_list_df_aggregate_building = exec_aggregate_building(config, list_list_useful_cea_results, list_buildings)
+            results_writer_time_period_without_date(output_path, list_metrics, list_list_df_aggregate_building, list_appendix)  # Write to disk
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
