@@ -1244,41 +1244,6 @@ class ColumnChoiceParameter(ChoiceParameter):
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
-class StandardChoiceParameter(ChoiceParameter):
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
-    @property
-    def _choices(self):
-        # set the `._choices` attribute to PV codes
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        try:
-            df = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
-            codes = df['STANDARD'].unique()
-            return list(codes)
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f'Could not find conversion database at {locator.get_database_construction_standards()}') from e
-        except Exception as e:
-            raise ValueError(f'There was an error generating PV choices from {locator.get_database_construction_standards()}') from e
-
-class UseTypeChoiceParameter(ChoiceParameter):
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
-    @property
-    def _choices(self):
-        # set the `._choices` attribute to PV codes
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        try:
-            df = pd.read_excel(locator.get_database_use_types_properties(), sheet_name='INDOOR_COMFORT')
-            codes = df['code'].unique()
-            return list(codes)
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f'Could not find conversion database at {locator.get_database_use_types_properties()}') from e
-        except Exception as e:
-            raise ValueError(f'There was an error generating PV choices from {locator.get_database_use_types_properties()}') from e
 
 class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass

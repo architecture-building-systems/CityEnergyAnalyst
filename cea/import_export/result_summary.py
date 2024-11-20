@@ -1129,9 +1129,12 @@ def main(config):
     # Get the hour start and hour end
     hour_start, hour_end = get_hours_start_end(config)
 
+    # Get the current time in the desired format
+    current_time = datetime.now().strftime("%y.%m.%d_%H.%M.%S")
+
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'results',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
+    output_path = os.path.join(output_path, 'results', f'hours_{hour_start}_{hour_end}_done_{current_time}')
+
     os.makedirs(output_path, exist_ok=True)
 
     # Store the list of selected buildings
