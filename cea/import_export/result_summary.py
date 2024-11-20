@@ -23,6 +23,7 @@ __status__ = "Production"
 season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+
 def get_standardized_date_column(df):
     """
     Standardizes the date column name in the DataFrame.
@@ -40,6 +41,7 @@ def get_standardized_date_column(df):
             break
     return df
 
+
 def get_hours_start_end(config):
 
     # get the user-defined dates from config
@@ -50,6 +52,7 @@ def get_hours_start_end(config):
         s = "".join(date)
         # Check for length, alphanumeric, and the presence of both letters and numbers
         return len(s) == 5 and s.isalnum() and any(c.isalpha() for c in s) and any(c.isdigit() for c in s)
+
     def check_user_period_impossible_date(date):
         list_impossible_dates = ['30Feb', '31Feb', '31Apr', '31Jun', '31Sep', '31Nov',
                                  'Feb30', 'Feb31', 'Apr31', 'Jun31', 'Sep31', 'Nov31']
@@ -117,10 +120,11 @@ def get_hours_start_end(config):
     elif check_user_period_leap_date(date_end):
         raise ValueError('Check the end date. CEA does not consider 29 Feb in a leap year.')
 
-    hour_start = from_date_string_to_hours(date_start) #Nth hour of the year, starting at 0, inclusive
-    hour_end = from_date_string_to_hours(date_end) + 24  #Nth hour of the year, ending at 8760, not-inclusive
+    hour_start = from_date_string_to_hours(date_start)      #Nth hour of the year, starting at 0, inclusive
+    hour_end = from_date_string_to_hours(date_end) + 24     #Nth hour of the year, ending at 8760, not-inclusive
 
     return hour_start, hour_end
+
 
 def map_metrics_cea_features(list_metrics):
 
@@ -164,6 +168,7 @@ def map_metrics_cea_features(list_metrics):
         if set(list_metrics).issubset(set(attached_list)):
             return cea_feature
     return None
+
 
 def get_results_path(locator, cea_feature, list_buildings):
 
@@ -244,6 +249,7 @@ def get_results_path(locator, cea_feature, list_buildings):
         list_appendix.append(cea_feature)
 
     return list_paths, list_appendix
+
 
 def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     """
@@ -389,6 +395,7 @@ def check_list_nesting(input_list):
         return False
     else:
         raise ValueError("The input list contains a mix of lists and non-lists.")
+
 
 def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     """
@@ -536,7 +543,6 @@ def slice_hourly_results_for_custom_time_period(config, df):
     sliced_df.reset_index(drop=True, inplace=True)
 
     return sliced_df
-
 
 
 def aggregate_by_period(df, period, date_column='date'):
@@ -711,6 +717,7 @@ def exec_aggregate_time_period(config, list_list_useful_cea_results, list_aggreg
 
     return list_list_df, list_list_time_period
 
+
 def results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
@@ -836,6 +843,7 @@ def results_writer_time_period_without_date(output_path, list_metrics, list_list
             if not df.empty:
                 df.to_csv(path_csv, index=False, float_format="%.2f")
 
+
 def filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_buildings):
     """
     Filters rows in all DataFrames within a nested list of DataFrames,
@@ -869,7 +877,6 @@ def filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_b
         list_list_useful_cea_results_buildings.append(filtered_list)
 
     return list_list_useful_cea_results_buildings
-
 
 
 def main(config):
@@ -939,9 +946,7 @@ def main(config):
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(config, list_list_useful_cea_results,
-                                                                                     list_aggregate_by_time_period)
-
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(config, list_list_useful_cea_results, list_aggregate_by_time_period)
         results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
 
         # aggregate by building
@@ -951,10 +956,10 @@ def main(config):
             list_list_df_aggregate_building = exec_aggregate_building(config, list_list_useful_cea_results, list_buildings)
             results_writer_time_period_without_date(output_path, list_metrics, list_list_df_aggregate_building, list_appendix)  # Write to disk
 
-
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
