@@ -10,8 +10,7 @@ it is estimated as the centroid of buildings.
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely.geometry import Point
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
-    get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 from cea.constants import SHAPEFILE_TOLERANCE
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

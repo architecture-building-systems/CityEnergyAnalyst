@@ -18,6 +18,7 @@ from cea.technologies.thermal_network.thermal_network_loss import calc_temperatu
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
+from cea.utilities.date import get_date_range_hours_from_year
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -28,6 +29,21 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+def add_date_to_dataframe(locator, df):
+    # create date range for the calculation year
+    weather_file = locator.get_weather_file()
+    weather_data = epw_reader(weather_file)
+    year = weather_data['year'][0]
+    date_range = get_date_range_hours_from_year(year)
+
+    # Convert date_range to datetime
+    date_column = pd.to_datetime(date_range, errors='coerce')
+
+    # Insert the 'date' column at the first position
+    df.insert(0, 'date', date_column)
+
+    return df
 
 def calculate_ground_temperature(locator):
     """
@@ -456,8 +472,9 @@ def thermal_network_simplified(locator, config, network_name=''):
     # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
     plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
         axis=1) - accumulated_head_loss_total_kW.values
-    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
-                          header=['thermal_load_kW'], index=False)
+    plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
+    plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -473,6 +490,8 @@ def thermal_network_simplified(locator, config, network_name=''):
                                               "pressure_loss_return_kW": accumulated_head_loss_return_kW,
                                               "pressure_loss_substations_kW": accumulated_head_loss_substations_kW,
                                               "pressure_loss_total_kW": accumulated_head_loss_total_kW})
+
+    pumping_energy_system_kWh = add_date_to_dataframe(locator, pumping_energy_system_kWh)
     pumping_energy_system_kWh.to_csv(
         locator.get_network_energy_pumping_requirements_file(network_type, network_name), index=False)
 

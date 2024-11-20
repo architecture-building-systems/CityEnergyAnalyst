@@ -118,8 +118,8 @@ def demand_calculation(locator, config):
         repeat(debug, n))
 
     # WRITE TOTAL YEARLY VALUES
-    writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
-    writer_totals.write_to_csv(building_names, locator)
+    demand_writers.YearlyDemandWriter.write_aggregate_buildings(locator, building_names)
+    demand_writers.YearlyDemandWriter.write_aggregate_hourly(locator, building_names)
     time_elapsed = time.perf_counter() - t0
     print('done - time elapsed: %d.2 seconds' % time_elapsed)
 

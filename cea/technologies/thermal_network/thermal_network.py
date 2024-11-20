@@ -26,7 +26,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
-from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified
+from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities import epwreader
@@ -692,6 +692,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pressure_loss_system_kW_for_csv.columns = ['pressure_loss_supply_kW', 'pressure_loss_return_kW',
                                                    'pressure_loss_substations_kW',
                                                    'pressure_loss_total_kW']
+        pressure_loss_system_kW_for_csv = add_date_to_dataframe(thermal_network.locator, pressure_loss_system_kW_for_csv)
         pressure_loss_system_kW_for_csv.to_csv(
             thermal_network.locator.get_network_energy_pumping_requirements_file(thermal_network.network_type,
                                                                                  thermal_network.network_name),
@@ -758,6 +759,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # plant heat requirements
         plant_heat_requirement_for_csv.columns = filter(None, thermal_network.all_nodes_df[
             thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
+        plant_heat_requirement_for_csv = add_date_to_dataframe(thermal_network.locator, plant_heat_requirement_for_csv)
         plant_heat_requirement_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
@@ -920,6 +922,7 @@ def extrapolate_datapoints_for_representative_weeks(representative_week_data):
     while len(representative_week_df.index) < HOURS_IN_YEAR:
         representative_week_df = representative_week_df.append(representative_week_df.mean(), ignore_index=True)
     return representative_week_df
+
 
 
 def calculate_ground_temperature(locator):
@@ -3445,10 +3448,10 @@ def main(config):
     start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    network_names = config.thermal_network.network_names
     network_model = config.thermal_network.network_model
-    if len(network_names) == 0:
-        network_names = ['']
+
+    # FIXME: Hardcoded to consider one network for now. Best scenario is to allow multiple network layouts and run Part 2 for each layout.
+    network_names = ['']
 
     if network_model == 'simplified':
         for network_name in network_names:

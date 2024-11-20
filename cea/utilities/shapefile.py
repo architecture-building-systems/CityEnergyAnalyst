@@ -19,8 +19,7 @@ import ast
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
-    get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 __author__ = "Daren Thomas, Zhongming Shi"
 __copyright__ = "Copyright 2023, Architecture and Building Systems - ETH Zurich"

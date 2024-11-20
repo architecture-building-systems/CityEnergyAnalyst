@@ -70,18 +70,18 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print('calculating solar properties done for building %s' % building_name)
+    # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
     panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
-    print('gathering properties of PVT collector panel for building %s' % building_name)
+    # print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
 
-    print('filtering low potential sensor points done for building %s' % building_name)
+    # print('filtering low potential sensor points done for building %s' % building_name)
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -97,19 +97,19 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
                                                                           max_annual_radiation, panel_properties_PV,
                                                                           max_roof_coverage)
 
-            print('calculating optimal tile angle and separation done for building %s' % building_name)
+            # print('calculating optimal tile angle and separation done for building %s' % building_name)
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_PV,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
-            print('calculating separation for custom tilt angle done')
+            # print('calculating separation for custom tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print('generating groups of sensor points done for building %s' % building_name)
+        # print('generating groups of sensor points done for building %s' % building_name)
 
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
