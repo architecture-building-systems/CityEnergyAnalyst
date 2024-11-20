@@ -165,9 +165,7 @@ def map_metrics_cea_features(list_metrics):
             return cea_feature
     return None
 
-def get_results_path(locator, config, cea_feature):
-
-    selected_buildings = config.result_summary.buildings
+def get_results_path(locator, cea_feature, list_buildings):
 
     list_paths = []
     list_appendix = []
@@ -178,7 +176,7 @@ def get_results_path(locator, config, cea_feature):
         list_appendix.append(cea_feature)
 
     elif cea_feature == 'demand':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.get_demand_results_file(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -198,26 +196,26 @@ def get_results_path(locator, config, cea_feature):
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
-            for building in selected_buildings:
+            for building in list_buildings:
                 path = locator.PV_results(building, panel_type)
                 pv_paths.append(path)
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.PVT_results(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_et':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'ET')
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_fp':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -338,7 +336,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -436,7 +433,7 @@ def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     return list_dataframes
 
 
-def aggregate_or_combine_dataframes(dataframes):
+def aggregate_or_combine_dataframes(config, dataframes):
     """
     Aggregates or horizontally combines a list of DataFrames:
     - If all DataFrames share the same column names (excluding 'date'), aggregate corresponding cells.
@@ -447,7 +444,11 @@ def aggregate_or_combine_dataframes(dataframes):
 
     Returns:
     - pd.DataFrame: Aggregated or combined DataFrame.
+
     """
+
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
+
     # Ensure there are DataFrames to process
     if not dataframes:
         return None
@@ -479,11 +480,10 @@ def aggregate_or_combine_dataframes(dataframes):
 
             aggregated_df = aggregated_df.round(2)
 
-            # Switch back from CEA Columns to metrics
-            aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
+            if not bool_use_acronym:
+                aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
 
             return aggregated_df
-
 
     else:
         # Combine DataFrames horizontally on 'date'
@@ -495,10 +495,11 @@ def aggregate_or_combine_dataframes(dataframes):
         combined_df.sort_values(by='date', inplace=True)
         combined_df.reset_index(drop=True, inplace=True)
 
-        # Switch back from CEA Columns to metrics
-        combined_df.columns = map_metrics_and_cea_columns(combined_df.columns.tolist(), direction="columns_to_metrics")
+        if not bool_use_acronym:
+            combined_df.columns = map_metrics_and_cea_columns(combined_df.columns, direction="columns_to_metrics")
 
         return combined_df
+
 
 def slice_hourly_results_for_custom_time_period(config, df):
     """
@@ -616,13 +617,13 @@ def aggregate_by_period(df, period, date_column='date'):
     return aggregated_df
 
 
-def exec_read_and_slice(config, locator, list_metrics):
+def exec_read_and_slice(config, locator, list_metrics, list_buildings):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # locate the path(s) to the results of the CEA Feature
-    list_paths, list_appendix = get_results_path(locator, config, cea_feature)
+    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
 
     # get the relevant CEA column names based on selected metrics
     list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
@@ -641,8 +642,9 @@ def exec_read_and_slice(config, locator, list_metrics):
     return list_list_useful_cea_results, list_appendix
 
 
-def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
+def exec_aggregate_building(config, list_list_useful_cea_results, list_buildings):
 
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     list_results = []
     for list_useful_cea_results in list_list_useful_cea_results:
 
@@ -655,6 +657,10 @@ def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
 
         # Create a DataFrame from the rows
         result_df = pd.DataFrame(rows)
+
+        if not bool_use_acronym:
+             result_df.columns = map_metrics_and_cea_columns(result_df.columns, direction="columns_to_metrics")
+
         if not result_df.empty:
             result_df.insert(0, 'Name', list_buildings)
 
@@ -664,13 +670,13 @@ def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
     return list_results
 
 
-def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_time_period):
+def exec_aggregate_time_period(config, list_list_useful_cea_results, list_aggregate_by_time_period):
 
     list_list_df = []
     list_list_time_period = []
 
     for list_useful_cea_results in list_list_useful_cea_results:
-        df_aggregated_results_hourly = aggregate_or_combine_dataframes(list_useful_cea_results)
+        df_aggregated_results_hourly = aggregate_or_combine_dataframes(config, list_useful_cea_results)
 
         list_df = []
         list_time_period = []
@@ -792,7 +798,7 @@ def results_writer_time_period_with_date(config, output_path, list_metrics, list
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df, list_appendix):
+def results_writer_time_period_without_date(output_path, list_metrics, list_list_df, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -830,7 +836,7 @@ def results_writer_time_period_without_date(config, output_path, list_metrics, l
             if not df.empty:
                 df.to_csv(path_csv, index=False, float_format="%.2f")
 
-def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings):
+def filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_buildings):
     """
     Filters rows in all DataFrames within a nested list of DataFrames,
     keeping only rows where the 'Name' column matches any value in list_buildings.
@@ -842,6 +848,7 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
     Returns:
     - list of list of pd.DataFrame: Nested list of filtered DataFrames with the same shape as the input.
     """
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     list_list_useful_cea_results_buildings = []
 
     for dataframe_list in list_list_useful_cea_results:
@@ -849,7 +856,12 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
         for df in dataframe_list:
             if 'Name' in df.columns:
                 filtered_df = df[df['Name'].isin(list_buildings)]
+
+                if not bool_use_acronym:
+                    filtered_df.columns = map_metrics_and_cea_columns(filtered_df.columns, direction="columns_to_metrics")
+
                 filtered_list.append(filtered_df)
+
             else:
                 # If the 'Name' column does not exist, append an empty DataFrame
                 print("Skipping a DataFrame as it does not contain the 'Name' column.")
@@ -876,7 +888,6 @@ def main(config):
 
     # gather info from config file
     output_path = locator.get_export_folder()
-    print(output_path)
     list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
@@ -921,24 +932,24 @@ def main(config):
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_without_date(config, output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_without_date(output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)   # Write to disk
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(config, list_list_useful_cea_results,
                                                                                      list_aggregate_by_time_period)
 
-        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)
+        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
 
         # aggregate by building
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-            list_list_df_aggregate_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
-            results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df_aggregate_building, list_appendix)
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics, list_buildings)
+            list_list_df_aggregate_building = exec_aggregate_building(config, list_list_useful_cea_results, list_buildings)
+            results_writer_time_period_without_date(output_path, list_metrics, list_list_df_aggregate_building, list_appendix)  # Write to disk
 
 
     # Print the time used for the entire processing
