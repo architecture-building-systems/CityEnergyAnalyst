@@ -1131,8 +1131,15 @@ def main(config):
     # Get the current time in the desired format
     current_time = datetime.now().strftime("%y.%m.%d_%H.%M.%S")
 
+    # Get the user-defined name of folder
+    folder_name = config.result_summary.folder_name_to_save_exported_results
+
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'results', f'hours_{hour_start}_{hour_end}_done_{current_time}')
+    if folder_name is None or folder_name.strip() == "":
+        output_path = os.path.join(output_path, 'results', f'hours_{hour_start}_{hour_end}_done_{current_time}')
+
+    else:
+        output_path = os.path.join(output_path, 'results', f'{folder_name}_done_{current_time}')
 
     os.makedirs(output_path, exist_ok=True)
 
