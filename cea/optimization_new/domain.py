@@ -98,7 +98,7 @@ class Domain(object):
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None):
+    def load_potentials(self, buildings_in_domain=None, panel_type='PV1'):
         """
         Import energy potentials from the current scenario.
 
@@ -111,7 +111,7 @@ class Domain(object):
             buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
-        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
+        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, panel_type)
         pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
         scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
         scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
