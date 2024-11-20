@@ -19,7 +19,7 @@ def get_layers_grouped_by_category() -> Dict[str, List[Type[MapLayer]]]:
     layers_grouped_by_category = defaultdict(list)
 
     for layer in layers:
-        layers_grouped_by_category[layer.category].append(layer)
+        layers_grouped_by_category[layer.category.name].append(layer)
     return dict(layers_grouped_by_category)
 
 
