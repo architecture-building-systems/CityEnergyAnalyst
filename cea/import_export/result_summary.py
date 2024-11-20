@@ -1097,7 +1097,6 @@ def main(config):
 
     # gather info from config file
     output_path = locator.get_export_folder()
-    list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
 
@@ -1140,7 +1139,9 @@ def main(config):
     # Store the list of selected buildings
     df_buildings = serial_filer_buildings(config, locator)
     buildings_path = os.path.join(output_path, 'selected_buildings.csv')
-    df_buildings.to_csv(buildings_path, index=False)
+    list_buildings = df_buildings['Name'].to_list()
+
+    df_buildings.set_index('Name').to_csv(buildings_path, index=False)
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
