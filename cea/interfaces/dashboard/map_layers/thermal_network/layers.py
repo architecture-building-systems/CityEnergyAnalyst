@@ -50,12 +50,12 @@ class ThermalNetworkMapLayer(MapLayer):
                 "default": "DC",
                 "choices": ["DC", "DH"]
             },
-            'width-scale': {
-                "type": "float",
-                "selector": "input",
-                "description": "Scale factor for the width of the pipes",
-                "default": 1.0
-            },
+            # 'width-scale': {
+            #     "type": "float",
+            #     "selector": "input",
+            #     "description": "Scale factor for the width of the pipes",
+            #     "default": 1.0
+            # },
         }
 
     def generate_output(self):
