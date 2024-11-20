@@ -9,6 +9,7 @@ import cea.config
 import time
 from datetime import datetime
 import cea.inputlocator
+from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -877,6 +878,37 @@ def filter_cea_results_by_buildings(config, list_list_useful_cea_results, list_b
         list_list_useful_cea_results_buildings.append(filtered_list)
 
     return list_list_useful_cea_results_buildings
+
+def determine_building_main_use(df_typology):
+
+    # Create a new DataFrame to store results
+    result = pd.DataFrame()
+    result['Name'] = df_typology['Name']
+
+    # Determine the main use type and its ratio
+    result['main_use'] = df_typology.apply(
+        lambda row: row['1ST_USE'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE'],
+        axis=1
+    )
+    result['main_use_r'] = df_typology.apply(
+        lambda row: row['1ST_USE_R'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE_R'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE_R'],
+        axis=1
+    )
+
+    return result
+
+def get_building_year_standard_main_use_type(locator):
+
+    typology_dbf = dbf_to_dataframe(locator.get_building_typology())
+    df = determine_building_main_use(typology_dbf)
+    df['standard'] = typology_dbf['STANDARD']
+    df['year'] = typology_dbf['YEAR']
+
+    return df
 
 
 def main(config):
