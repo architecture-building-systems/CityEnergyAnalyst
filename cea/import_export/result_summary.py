@@ -830,6 +830,35 @@ def results_writer_time_period_without_date(config, output_path, list_metrics, l
             if not df.empty:
                 df.to_csv(path_csv, index=False, float_format="%.2f")
 
+def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings):
+    """
+    Filters rows in all DataFrames within a nested list of DataFrames,
+    keeping only rows where the 'Name' column matches any value in list_buildings.
+
+    Parameters:
+    - list_list_useful_cea_results (list of list of pd.DataFrame): Nested list of DataFrames.
+    - list_buildings (list of str): List of building names to filter by in the 'Name' column.
+
+    Returns:
+    - list of list of pd.DataFrame: Nested list of filtered DataFrames with the same shape as the input.
+    """
+    list_list_useful_cea_results_buildings = []
+
+    for dataframe_list in list_list_useful_cea_results:
+        filtered_list = []
+        for df in dataframe_list:
+            if 'Name' in df.columns:
+                filtered_df = df[df['Name'].isin(list_buildings)]
+                filtered_list.append(filtered_df)
+            else:
+                # If the 'Name' column does not exist, append an empty DataFrame
+                print("Skipping a DataFrame as it does not contain the 'Name' column.")
+                filtered_list.append(pd.DataFrame())
+        list_list_useful_cea_results_buildings.append(filtered_list)
+
+    return list_list_useful_cea_results_buildings
+
+
 
 def main(config):
     """
@@ -847,6 +876,7 @@ def main(config):
 
     # gather info from config file
     output_path = locator.get_export_folder()
+    print(output_path)
     list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
@@ -891,8 +921,9 @@ def main(config):
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
-        list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        results_writer_time_period_without_date(config, output_path, list_metrics, list_useful_cea_results, list_appendix)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_without_date(config, output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
