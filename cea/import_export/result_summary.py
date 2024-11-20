@@ -901,6 +901,7 @@ def determine_building_main_use(df_typology):
 
     return result
 
+
 def get_building_year_standard_main_use_type(locator):
 
     typology_dbf = dbf_to_dataframe(locator.get_building_typology())
@@ -909,6 +910,175 @@ def get_building_year_standard_main_use_type(locator):
     df['year'] = typology_dbf['YEAR']
 
     return df
+
+def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=None):
+    """
+    Filters rows in the DataFrame based on a year range.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'year' column.
+    - integer_year_start (int, optional): Start of the year range (inclusive). Defaults to 0 if None or empty.
+    - integer_year_end (int, optional): End of the year range (inclusive). Defaults to 9999 if None or empty.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'year' is within the specified range.
+
+    Raises:
+    - ValueError: If 'year' column is not found or if integer_year_start > integer_year_end,
+                  or if the filtered DataFrame is empty.
+    """
+
+    # Handle None or empty values
+    integer_year_start = 0 if not integer_year_start else integer_year_start
+    integer_year_end = 9999 if not integer_year_end else integer_year_end
+
+    if integer_year_start > integer_year_end:
+        raise ValueError("The start year cannot be greater than the end year.")
+
+    # Filter rows where 'year' is within the range
+    filtered_df = df_typology[
+        (df_typology['year'] >= integer_year_start) & (df_typology['year'] <= integer_year_end)
+    ]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified year range.")
+
+    return filtered_df
+
+def filter_by_standard(df_typology, list_standard):
+    """
+    Filters rows in the DataFrame based on whether the 'standard' column matches any item in list_standard.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'standard' column.
+    - list_standard (list): List of standard values to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'standard' matches any item in list_standard.
+
+    Raises:
+    - ValueError: If 'standard' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'standard' matches any value in list_standard
+    filtered_df = df_typology[df_typology['standard'].isin(list_standard)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified standards.")
+
+    return filtered_df
+
+
+def filter_by_main_use(df_typology, list_main_use_type):
+    """
+    Filters rows in the DataFrame based on whether the 'main_use' column matches any item in list_main_use_type.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use' column.
+    - list_main_use_type (list): List of main use types to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use' matches any item in list_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'main_use' not in df_typology.columns:
+        raise ValueError("'main_use' column not found in the DataFrame.")
+
+    # Filter rows where 'main_use' matches any value in list_main_use_type
+    filtered_df = df_typology[df_typology['main_use'].isin(list_main_use_type)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified main use types.")
+
+    return filtered_df
+
+
+def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
+    """
+    Filters rows in the DataFrame where the 'main_use_r' column is equal to or larger than a given ratio.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_r' column.
+    - ratio_main_use_type (float): The minimum ratio threshold for filtering.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_r' >= ratio_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use_r' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'main_use_r' is greater than or equal to the threshold
+    filtered_df = df_typology[df_typology['main_use_r'] >= ratio_main_use_type]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the criteria for the specified main use ratio.")
+
+    return filtered_df
+
+
+def filter_by_building_names(df_typology, list_buildings):
+    """
+    Filters rows in the DataFrame where the 'Name' column matches any item in the given list.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'Name' column.
+    - list_buildings (list of str): List of building names to filter for.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'Name' matches any item in list_buildings.
+
+    Raises:
+    - ValueError: If 'Name' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'Name' not in df_typology.columns:
+        raise ValueError("'Name' column not found in the DataFrame.")
+
+    # Filter rows where 'Name' is in list_buildings
+    filtered_df = df_typology[df_typology['Name'].isin(list_buildings)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings match the specified list of names.")
+
+    return filtered_df
+
+
+def serial_filer_buildings(config, locator):
+
+    # Get the building info
+    df_typology = get_building_year_standard_main_use_type(locator)
+
+    # get the selecting criteria from config
+    list_buildings = config.result_summary.buildings
+    integer_year_start = config.result_summary.filer_building_by_year_start
+    integer_year_end = config.result_summary.filer_building_by_year_end
+    list_standard = config.result_summary.filer_building_by_standard
+    list_main_use_type = config.result_summary.filer_building_by_use_type
+    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
+
+    # Initial filter to keep the selected buildings
+    df_typology = filter_by_building_names(df_typology, list_buildings)
+
+    # Further select by year
+    df_typology = filter_by_year_range(df_typology, integer_year_start, integer_year_end)
+
+    # Further filter by standard
+    df_typology = filter_by_standard(df_typology, list_standard)
+
+    # Further filter by main use type
+    df_typology = filter_by_main_use(df_typology, list_main_use_type)
+
+    # Further filter by main use type ratio
+    df_typology = filter_by_main_use_ratio(df_typology, ratio_main_use_type)
+
+    return df_typology
 
 
 def main(config):
@@ -965,7 +1135,7 @@ def main(config):
     os.makedirs(output_path, exist_ok=True)
 
     # Store the list of selected buildings
-    df_buildings = pd.DataFrame(data=list_buildings, columns=['Name'])
+    df_buildings = serial_filer_buildings(config, locator)
     buildings_path = os.path.join(output_path, 'selected_buildings.csv')
     df_buildings.to_csv(buildings_path, index=False)
 
