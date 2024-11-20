@@ -49,7 +49,7 @@ class SolarIrradiationMapLayer(MapLayer):
                 "description": "Thresholds for the layer",
                 "label": "Solar Irradiation Threshold [kWh/m2]",
                 "range": "total",
-                "default": [0, 1000]
+                "default": [0, 3000]
             },
         }
 
