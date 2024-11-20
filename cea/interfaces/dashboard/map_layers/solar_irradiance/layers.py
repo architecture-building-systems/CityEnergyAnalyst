@@ -47,7 +47,7 @@ class SolarIrradiationMapLayer(MapLayer):
                 "type": "array",
                 "selector": "threshold",
                 "description": "Thresholds for the layer",
-                "label": "Annual Solar Irradiation Threshold",
+                "label": "Solar Irradiation Threshold [kWh/m2]",
                 "range": "total",
                 "default": [0, 1000]
             },
@@ -89,7 +89,10 @@ class SolarIrradiationMapLayer(MapLayer):
             total_min = 0
             total_max = building_sensors.sum(numeric_only=True).max()
 
-            period_sensor_values = building_sensors.iloc[start:end+1].sum(numeric_only=True)
+            if start < end:
+                period_sensor_values = building_sensors.iloc[start:end+1].sum(numeric_only=True)
+            else:
+                period_sensor_values = building_sensors.iloc[start:].sum(numeric_only=True) + building_sensors.iloc[:end+1].sum(numeric_only=True)
             period_min = period_sensor_values.min()
             period_max = period_sensor_values.max()
 
@@ -143,9 +146,6 @@ def day_range_to_hour_range(nth_day_start: int, nth_day_end: int) -> Tuple[int, 
 
     e.g. day_range_to_hour_range(1, 1) returns 0, 23
     e.g. day_range_to_hour_range(1, 2) returns 0, 47
+    e.g. day_range_to_hour_range(365, 1) returns 8736, 23
     """
     return (nth_day_start-1) * 24, nth_day_end * 24 -1
-
-
-if __name__ == "__main__":
-    print(day_range_to_hour_range(1, 2))
