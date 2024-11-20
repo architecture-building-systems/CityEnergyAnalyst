@@ -2,7 +2,7 @@ Import & Export:
 
   - name: export-results-csv
     label: Export results to .csv (summary)
-    description: Generate .csv files containing user-selected CEA simulated results by building(s), time period(s), and metric(s).
+    description: Generate .csv files containing user-selected CEA simulated results by building(s), time period(s), and metric(s), stored under the current_Scenario/export/results Folder.
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
     parameters: ['general:scenario', result-summary]

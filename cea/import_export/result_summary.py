@@ -846,7 +846,7 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # gather info from config file
-    output_path = config.result_summary.output_path
+    output_path = locator.get_export_folder()
     list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
@@ -880,7 +880,7 @@ def main(config):
     hour_start, hour_end = get_hours_start_end(config)
 
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'export', 'results',
+    output_path = os.path.join(output_path, 'results',
                                f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
     os.makedirs(output_path, exist_ok=True)
 
