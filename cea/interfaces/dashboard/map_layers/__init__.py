@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from typing import Dict, List, Type
 
-from cea.interfaces.dashboard.map_layers.base import MapLayer, Category
+from cea.interfaces.dashboard.map_layers.base import MapLayer
 from cea.interfaces.dashboard.utils import find_subclasses_in_path
 
 

@@ -1,10 +1,8 @@
 import json
 import os
 
-import fiona
 import pandas as pd
 import geopandas as gpd
-from pyproj import CRS, Transformer
 
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers.base import MapLayer
