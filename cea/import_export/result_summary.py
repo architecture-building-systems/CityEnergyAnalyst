@@ -1050,17 +1050,17 @@ def filter_by_building_names(df_typology, list_buildings):
     return filtered_df
 
 
-def serial_filer_buildings(config, locator):
+def serial_filter_buildings(config, locator):
 
     # Get the building info
     df_typology = get_building_year_standard_main_use_type(locator)
 
     # get the selecting criteria from config
     list_buildings = config.result_summary.buildings
-    integer_year_start = config.result_summary.filer_building_by_year_start
-    integer_year_end = config.result_summary.filer_building_by_year_end
-    list_standard = config.result_summary.filer_building_by_standard
-    list_main_use_type = config.result_summary.filer_building_by_use_type
+    integer_year_start = config.result_summary.filter_building_by_year_start
+    integer_year_end = config.result_summary.filter_building_by_year_end
+    list_standard = config.result_summary.filter_building_by_standard
+    list_main_use_type = config.result_summary.filter_building_by_use_type
     ratio_main_use_type = config.result_summary.min_ratio_as_main_use
 
     # Initial filter to keep the selected buildings
@@ -1144,7 +1144,7 @@ def main(config):
     os.makedirs(output_path, exist_ok=True)
 
     # Store the list of selected buildings
-    df_buildings = serial_filer_buildings(config, locator)
+    df_buildings = serial_filter_buildings(config, locator)
     buildings_path = os.path.join(output_path, 'selected_buildings.csv')
     list_buildings = df_buildings['Name'].to_list()
 
