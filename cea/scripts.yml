@@ -21,7 +21,7 @@ Import & Export:
       - [get_building_typology]
 
   - name: export-results-csv
-    label: Export results to .csv (summary)
+    label: Export results to .csv (summary & analytics)
     description: Generate .csv files containing user-selected CEA simulated results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
@@ -410,15 +410,6 @@ Utilities:
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
-    input-files:
-      - [get_zone_geometry]
-
-  - name: result-analytics
-    label: Get advanced analytics (beta)
-    description: Collection of advanced useful energy analytics
-    interfaces: [cli, dashboard]
-    module: cea.utilities.result_analytics
-    parameters: ['general:scenario', result-analytics]
     input-files:
       - [get_zone_geometry]
 
