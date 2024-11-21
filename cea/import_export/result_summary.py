@@ -1101,14 +1101,14 @@ def main(config):
     list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
 
     list_list_metrics_with_date = [
-                        config.result_summary.metrics_demand,
-                        config.result_summary.metrics_pv,
-                        config.result_summary.metrics_pvt,
-                        config.result_summary.metrics_sc_et,
-                        config.result_summary.metrics_sc_fp,
+                        config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_photovoltaic_panels,
+                        config.result_summary.metrics_photovoltaic_thermal_panels,
+                        config.result_summary.metrics_solar_collectors_et,
+                        config.result_summary.metrics_solar_collectors_fp,
                         config.result_summary.metrics_other_renewables,
-                        config.result_summary.metrics_dh,
-                        config.result_summary.metrics_dc
+                        config.result_summary.metrics_district_heating,
+                        config.result_summary.metrics_district_cooling
                         ]
 
     list_list_metrics_without_date = [
@@ -1118,11 +1118,11 @@ def main(config):
                         ]
 
     list_list_metrics_building = [
-                        config.result_summary.metrics_demand,
-                        config.result_summary.metrics_pv,
-                        config.result_summary.metrics_pvt,
-                        config.result_summary.metrics_sc_et,
-                        config.result_summary.metrics_sc_fp,
+                        config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_photovoltaic_panels,
+                        config.result_summary.metrics_photovoltaic_thermal_panels,
+                        config.result_summary.metrics_solar_collectors_et,
+                        config.result_summary.metrics_solar_collectors_fp,
                         ]
 
     # Get the hour start and hour end
