@@ -1073,6 +1073,10 @@ def serial_filter_buildings(config, locator):
     return df_typology
 
 
+def calc_analytics(list_buildings):
+    return None
+
+
 def main(config):
     """
     Read through and summarise CEA results for all scenarios under a project.
