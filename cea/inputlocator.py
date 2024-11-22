@@ -7,6 +7,7 @@ import cea.schemas
 import shutil
 import tempfile
 import time
+from datetime import datetime
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -153,8 +154,55 @@ class InputLocator(object):
         return os.path.join(self.scenario, "inputs")
 
     def get_export_folder(self):
-        """Returns the inputs folder of a scenario"""
+        """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
+
+    def get_export_results_folder(self):
+        """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
+        """scenario/export/results"""
+        return os.path.join(self.get_export_folder(), "results")
+
+    def get_export_results_summary_folder(self, hour_start, hour_end, folder_name):
+        if folder_name is None or folder_name.strip() == "":
+            """scenario/export/results/hours_{hour_start}_{hour_end}_done_{current_time}"""
+            path = os.path.join(self.get_export_results_folder(), f'unnamed_hours_{hour_start}_{hour_end}')
+        else:
+            """scenario/export/results/{folder_name}_done_{current_time}"""
+            path = os.path.join(self.get_export_results_folder(), f'{folder_name}_hours_{hour_start}_{hour_end}')
+
+        # new path ending with _1, _2, _3 if the user-defined path exists
+        base_path = path
+        counter = 1
+
+        while os.path.exists(path):
+            path = f"{base_path}_{counter}"
+            counter += 1
+
+        return path
+
+    def get_export_results_summary_selected_building_file(self, summary_folder):
+        """scenario/export/results/{summary_folder}/selected_buildings.csv"""
+        return os.path.join(summary_folder,'selected_buildings.csv')
+
+    def get_export_results_summary_cea_feature_folder(self, summary_folder, cea_feature):
+        """scenario/export/results/{summary_folder}/{cea_feature}"""
+        return os.path.join(summary_folder, cea_feature)
+
+    def get_export_results_summary_cea_feature_time_resolution_file(self, summary_folder, cea_feature, appendix, time_period):
+        """scenario/export/results/{summary_folder}/{cea_feature}/{appendix}_{time_period}.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f'{appendix}_{time_period}.csv')
+
+    def get_export_results_summary_cea_feature_buildings_folder(self, summary_folder, cea_feature):
+        """scenario/export/results/{summary_folder}/{cea_feature}/buildings"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), 'buildings')
+
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
+        """scenario/export/results/{summary_folder}/{cea_feature}/buildings/{appendix}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_buildings_folder(summary_folder, cea_feature), f"{appendix}_buildings.csv")
+
+    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature, appendix, time_resolution):
+        """scenario/export/results/{summary_folder}/{cea_feature}/buildings/{appendix}_{time_resolution}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_buildings_folder(summary_folder, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
