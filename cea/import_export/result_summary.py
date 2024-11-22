@@ -760,7 +760,8 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
             monthly_df = pd.DataFrame(monthly_rows)
             if not monthly_df.empty:
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
-                monthly_df.insert(0, 'Name', list_buildings_repeated)
+                list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
+                monthly_df.insert(0, 'Name', list_buildings_series)
                 if not bool_use_acronym:
                     monthly_df.columns = map_metrics_and_cea_columns(
                         monthly_df.columns, direction="columns_to_metrics"
@@ -771,7 +772,8 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
             seasonally_df = pd.DataFrame(seasonally_rows)
             if not seasonally_df.empty:
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                seasonally_df.insert(0, 'Name', list_buildings_repeated)
+                list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
+                seasonally_df.insert(0, 'Name', list_buildings_series)
                 if not bool_use_acronym:
                     seasonally_df.columns = map_metrics_and_cea_columns(
                         seasonally_df.columns, direction="columns_to_metrics"
