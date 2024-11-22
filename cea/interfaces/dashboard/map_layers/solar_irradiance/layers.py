@@ -45,6 +45,7 @@ class SolarIrradiationMapLayer(MapLayer):
             # TODO: Move to separate property e.g. data filter parameters
             'threshold': {
                 "type": "array",
+                "filter": "range",
                 "selector": "threshold",
                 "description": "Thresholds for the layer",
                 "label": "Solar Irradiation Threshold [kWh/m2]",

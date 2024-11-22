@@ -42,10 +42,11 @@ class DemandMapLayer(MapLayer):
             },
             'radius': {
                 "type": "number",
+                "filter": "radius",
                 "selector": "input",
                 "description": "Radius of hexagon bin in meters",
-                "range": [0, 1000],
-                "default": 10
+                "range": [0, 100],
+                "default": 5
             },
         }
 
