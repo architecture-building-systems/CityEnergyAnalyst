@@ -490,12 +490,12 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
                 if 'people' in col:
                     # Average "people" columns and round to integer
                     aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
                     ).round().astype(int)
                 elif '_m2' in col:
                     # Average "_m2" columns
                     aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
                     ).round(2)
                 else:
                     # Sum for other numeric columns
