@@ -6,7 +6,7 @@ from pyproj import CRS
 
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
-from cea.interfaces.dashboard.map_layers.base import MapLayer
+from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
 
 
@@ -17,7 +17,7 @@ class DemandMapLayer(MapLayer):
     description = "Energy Demand of buildings"
 
     @property
-    def input_files(self):
+    def input_file_locators(self):
         scenario_name = self.parameters['scenario-name']
         locator = InputLocator(os.path.join(self.project, scenario_name))
 
@@ -50,6 +50,7 @@ class DemandMapLayer(MapLayer):
             },
         }
 
+    @cache_output
     def generate_output(self):
         """Generates the output for this layer"""
         scenario_name = self.parameters['scenario-name']

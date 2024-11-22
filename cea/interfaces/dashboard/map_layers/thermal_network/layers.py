@@ -17,7 +17,7 @@ class ThermalNetworkMapLayer(MapLayer):
     description = "Thermal Network Design"
 
     @property
-    def input_files(self):
+    def input_file_locators(self):
         scenario_name = self.parameters['scenario-name']
         network_type = self.parameters.get('network-type', 'DC')
         # FIXME: network_name is usually not used in the script
