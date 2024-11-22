@@ -23,7 +23,12 @@ __status__ = "Production"
 
 season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
+season_mapping = {
+            1: 'Winter', 2: 'Winter', 12: 'Winter',
+            3: 'Spring', 4: 'Spring', 5: 'Spring',
+            6: 'Summer', 7: 'Summer', 8: 'Summer',
+            9: 'Autumn', 10: 'Autumn', 11: 'Autumn'
+}
 
 def get_standardized_date_column(df):
     """
@@ -418,8 +423,11 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                 if date_columns.intersection(df.columns):
                     df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
+                    # Label months and seasons
+                    df = add_period_columns(df, month_names, season_names, season_mapping)
+
                     # Slice the useful columns
-                    selected_columns = ['date'] + list_cea_column_names
+                    selected_columns = ['date'] + list_cea_column_names + ['period_month'] + ['period_season']
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
 
@@ -441,7 +449,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
     return list_dataframes
 
 
-def aggregate_or_combine_dataframes(bool_use_acronym, dataframes):
+def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned):
     """
     Aggregates or horizontally combines a list of DataFrames:
     - If all DataFrames share the same column names (excluding 'date'), aggregate corresponding cells.
@@ -456,17 +464,26 @@ def aggregate_or_combine_dataframes(bool_use_acronym, dataframes):
     """
 
     # Ensure there are DataFrames to process
-    if not dataframes:
+    if not list_dataframes_uncleaned:
         return None
 
+    list_dataframes = []
+    columns_to_remove = ['period_month', 'period_season']
+
+    for df in list_dataframes_uncleaned:
+        # Ensure it's a DataFrame and drop the specified columns if they exist
+        if isinstance(df, pd.DataFrame):
+            cleaned_df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
+            list_dataframes.append(cleaned_df)
+
     # Check if all DataFrames share the same column names (excluding 'date')
-    column_sets = [set(df.columns) - {'date'} for df in dataframes]
+    column_sets = [set(df.columns) - {'date'} for df in list_dataframes]
     all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
     if all_columns_match:
         # Aggregate DataFrames with the same columns
-        aggregated_df = dataframes[0].copy()
-        for df in dataframes[1:]:
+        aggregated_df = list_dataframes[0].copy()
+        for df in list_dataframes[1:]:
             for col in aggregated_df.columns:
                 if col == 'date':
                     continue
@@ -493,8 +510,8 @@ def aggregate_or_combine_dataframes(bool_use_acronym, dataframes):
 
     else:
         # Combine DataFrames horizontally on 'date'
-        combined_df = dataframes[0].copy()
-        for df in dataframes[1:]:
+        combined_df = list_dataframes[0].copy()
+        for df in list_dataframes[1:]:
             combined_df = pd.merge(combined_df, df, on='date', how='outer')
 
         # Sort by 'date' and reset the index
@@ -574,18 +591,11 @@ def aggregate_by_period(df, period, date_column='date'):
 
     elif period == 'monthly':
         df['period'] = df[date_column].dt.month
-        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         df['period'] = df['period'].apply(lambda x: month_names[x - 1])
         categories = df['period'].unique().tolist()
         df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
 
     elif period == 'seasonally':
-        season_mapping = {
-            1: 'Winter', 2: 'Winter', 12: 'Winter',
-            3: 'Spring', 4: 'Spring', 5: 'Spring',
-            6: 'Summer', 7: 'Summer', 8: 'Summer',
-            9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
-        }
         df['period'] = df[date_column].dt.month.map(season_mapping)
         categories = df['period'].unique().tolist()
         df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
@@ -645,34 +655,135 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     return list_list_useful_cea_results, list_appendix
 
 
-def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings):
+def add_period_columns(df, month_names, season_names, season_mapping, date_column='date'):
+    """
+    Adds 'period_month' and 'period_season' columns to a DataFrame with 8760 rows (hourly data for a year).
 
-    list_results = []
+    Parameters:
+    - df (pd.DataFrame): DataFrame with a column named 'date' containing datetime values.
+    - season_names (list of str): List of season names in order.
+    - month_names (list of str): List of month names in order.
+    - season_mapping (dict): Mapping of month to season.
+    - date_column (str): Name of the column containing datetime values.
+
+    Returns:
+    - pd.DataFrame: The original DataFrame with additional columns ['period_month', 'period_season'].
+    """
+    # Ensure the date column exists
+    if date_column not in df.columns:
+        raise ValueError(f"The column '{date_column}' is not present in the DataFrame.")
+
+    # Convert the date column to datetime if it's not already
+    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+
+    # Check for any invalid or NaT values in the date column
+    if df[date_column].isna().any():
+        raise ValueError(f"The column '{date_column}' contains invalid or NaT values.")
+
+    # Add period_month column using month names
+    df['period_month'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
+
+    # Add period_season column using season_mapping
+    df['period_season'] = df[date_column].dt.month.map(season_mapping)
+
+    # Ensure the order of categories is maintained for month and season
+    df['period_month'] = pd.Categorical(df['period_month'], categories=month_names, ordered=True)
+    df['period_season'] = pd.Categorical(df['period_season'], categories=season_names, ordered=True)
+
+    return df
+
+
+def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period):
+    """
+    Aggregates building-level results based on the provided list of DataFrames.
+
+    Parameters:
+    - bool_use_acronym (bool): Whether to map columns to acronyms.
+    - list_list_useful_cea_results (list of lists of DataFrames): List of DataFrame lists to aggregate.
+    - list_buildings (list): List of building names.
+    - list_selected_time_period (list): List of selected time periods ('hourly', 'annually', 'monthly', 'seasonally').
+
+    Returns:
+    - list: A list of three lists of DataFrames corresponding to the time periods:
+        [hourly/annually results, monthly results, seasonally results].
+    """
+    # Initialize separate lists for the results
+    hourly_annually_results = []
+    monthly_results = []
+    seasonally_results = []
+
     for list_useful_cea_results in list_list_useful_cea_results:
+        hourly_annually_rows = []
+        monthly_rows = []
+        seasonally_rows = []
 
-        # Compute the sum for each DataFrame
-        rows = []
         for df in list_useful_cea_results:
-            if df is not None:
+            if df is None:
+                continue
+
+            # Handle 'monthly' aggregation
+            if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
+                grouped_monthly = df.groupby('period_month').sum(numeric_only=True)
+                grouped_monthly['period'] = grouped_monthly.index  # Add 'period' column with month names
+                grouped_monthly.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
+                for _, group in grouped_monthly.iterrows():
+                    monthly_rows.append(group)
+
+            # Handle 'seasonally' aggregation
+            if 'seasonally' in list_selected_time_period and 'period_season' in df.columns:
+                grouped_seasonally = df.groupby('period_season').sum(numeric_only=True)
+                grouped_seasonally['period'] = grouped_seasonally.index  # Add 'period' column with season names
+                grouped_seasonally.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
+                for _, group in grouped_seasonally.iterrows():
+                    seasonally_rows.append(group)
+
+            # Handle 'hourly', 'annually', or no specific time period
+            if not list_selected_time_period or 'hourly' in list_selected_time_period or 'annually' in list_selected_time_period:
                 row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
-                rows.append(row_sum)
+                row_sum['period'] = 'selected_hours'  # Add 'period' column for this case
+                row_sum.drop(labels=['period_month', 'period_season'], errors='ignore', inplace=True)
+                hourly_annually_rows.append(row_sum)
 
-        # Create a DataFrame from the rows
-        result_df = pd.DataFrame(rows)
+        # Create DataFrames for each time period
+        if hourly_annually_rows:
+            hourly_annually_df = pd.DataFrame(hourly_annually_rows)
+            if not hourly_annually_df.empty:
+                hourly_annually_df.insert(0, 'Name', list_buildings)
+                if not bool_use_acronym:
+                    hourly_annually_df.columns = map_metrics_and_cea_columns(
+                        hourly_annually_df.columns, direction="columns_to_metrics"
+                    )
+                hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
 
-        if not bool_use_acronym:
-             result_df.columns = map_metrics_and_cea_columns(result_df.columns, direction="columns_to_metrics")
+        if monthly_rows:
+            monthly_df = pd.DataFrame(monthly_rows)
+            if not monthly_df.empty:
+                list_buildings = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                monthly_df.insert(0, 'Name', list_buildings)
+                if not bool_use_acronym:
+                    monthly_df.columns = map_metrics_and_cea_columns(
+                        monthly_df.columns, direction="columns_to_metrics"
+                    )
+                monthly_results.append(monthly_df.reset_index(drop=True))
 
-        if not result_df.empty:
-            result_df.insert(0, 'Name', list_buildings)
+        if seasonally_rows:
+            seasonally_df = pd.DataFrame(seasonally_rows)
+            if not seasonally_df.empty:
+                list_buildings = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
+                seasonally_df.insert(0, 'Name', list_buildings)
+                if not bool_use_acronym:
+                    seasonally_df.columns = map_metrics_and_cea_columns(
+                        seasonally_df.columns, direction="columns_to_metrics"
+                    )
+                seasonally_results.append(seasonally_df.reset_index(drop=True))
 
-        # Reset index for a clean result
-        list_results.append([result_df.reset_index(drop=True)])
-
-    return list_results
+    # Combine results into a single list
+    return [hourly_annually_results, monthly_results, seasonally_results], ['selected_hours','monthly','seasonally']
 
 
-def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_aggregate_by_time_period):
+
+def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period):
 
     list_list_df = []
     list_list_time_period = []
@@ -683,27 +794,27 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
         list_df = []
         list_time_period = []
 
-        if 'hourly' in list_aggregate_by_time_period:
+        if 'hourly' in list_selected_time_period:
             df_hourly = aggregate_by_period(df_aggregated_results_hourly, 'hourly', date_column='date')
             list_df.append(df_hourly)
             list_time_period.append('hourly')
 
-        if 'daily' in list_aggregate_by_time_period:
+        if 'daily' in list_selected_time_period:
             df_daily = aggregate_by_period(df_aggregated_results_hourly, 'daily', date_column='date')
             list_df.append(df_daily)
             list_time_period.append('daily')
 
-        if 'monthly' in list_aggregate_by_time_period:
+        if 'monthly' in list_selected_time_period:
             df_monthly = aggregate_by_period(df_aggregated_results_hourly, 'monthly', date_column='date')
             list_df.append(df_monthly)
             list_time_period.append('monthly')
 
-        if 'seasonally' in list_aggregate_by_time_period:
+        if 'seasonally' in list_selected_time_period:
             df_seasonally = aggregate_by_period(df_aggregated_results_hourly, 'seasonally', date_column='date')
             list_df.append(df_seasonally)
             list_time_period.append('seasonally')
 
-        if 'annually' in list_aggregate_by_time_period:
+        if 'annually' in list_selected_time_period:
             df_annually = aggregate_by_period(df_aggregated_results_hourly, 'annually', date_column='date')
             list_df.append(df_annually)
             list_time_period.append('annually')
@@ -798,7 +909,7 @@ def results_writer_time_period_with_date(hour_start, hour_end, output_path, list
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_without_date(output_path, list_metrics, list_list_df, list_appendix):
+def results_writer_time_period_without_date(output_path, list_metrics, list_list_df, list_appendix, list_time_resolution):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -824,13 +935,15 @@ def results_writer_time_period_without_date(output_path, list_metrics, list_list
             os.remove(file_path)
     for m in range(len(list_list_df)):
         list_df = list_list_df[m]
-        appendix = list_appendix[m]
+        appendix = list_appendix[0]
 
-        if appendix == 'architecture':
+        if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
             # Create the .csv file path
             path_csv = os.path.join(target_path, f"{appendix}_buildings.csv")
         else:
-            path_csv = os.path.join(target_path, f"{appendix}_sum_selected_hours_buildings.csv")
+            time_resolution = list_time_resolution[m]
+            path_csv = os.path.join(target_path, f"{appendix}_{time_resolution}_buildings.csv")
+
         # Write to .csv files
         for df in list_df:
             if not df.empty:
@@ -1094,7 +1207,7 @@ def main(config):
     # gather info from config file
     output_path = locator.get_export_folder()
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
-    list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
+    list_selected_time_period = config.result_summary.aggregate_by_time_period
     bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     hour_start, hour_end = get_hours_start_end(config)
 
@@ -1149,20 +1262,20 @@ def main(config):
     for list_metrics in list_list_metrics_without_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
         list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_without_date(output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)   # Write to disk
+        results_writer_time_period_without_date(output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None)   # Write to disk
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_aggregate_by_time_period)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
         results_writer_time_period_with_date(hour_start, hour_end, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
 
         # aggregate by building
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            list_list_df_aggregate_building = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-            results_writer_time_period_without_date(output_path, list_metrics, list_list_df_aggregate_building, list_appendix)  # Write to disk
+            list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
+            results_writer_time_period_without_date(output_path, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution)  # Write to disk
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
