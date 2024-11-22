@@ -40,6 +40,13 @@ class DemandMapLayer(MapLayer):
                 "description": "Period to generate the data (start, end) in days",
                 "default": [1, 365]
             },
+            'radius': {
+                "type": "number",
+                "selector": "input",
+                "description": "Radius of hexagon bin in meters",
+                "range": [0, 1000],
+                "default": 10
+            },
         }
 
     def generate_output(self):
