@@ -1436,7 +1436,7 @@ def main(config):
     buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     list_buildings = df_buildings['Name'].to_list()
 
-    df_buildings.set_index('Name').to_csv(buildings_path, index=False)
+    df_buildings.to_csv(buildings_path, index=False)
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
