@@ -670,15 +670,18 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
 
             # Add labels for each hour
             df['period_hour'] = df[date_column].apply(
-                lambda date: f"{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
+                lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
             )
+
+            # Convert 'period_hour' to numeric (if it's not already)
+            df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
 
             # Handle 'monthly' aggregation
             if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
                 grouped_monthly = df.groupby('period_month').sum(numeric_only=True)
                 grouped_monthly['period'] = grouped_monthly.index  # Add 'period' column with month names
                 grouped_monthly['hour_start'] = df.groupby('period_month')['period_hour'].first().values
-                grouped_monthly['hour_end'] = df.groupby('period_month')['period_hour'].last().values
+                grouped_monthly['hour_end'] = df.groupby('period_month')['period_hour'].last().values + 1
                 grouped_monthly.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
                 monthly_rows.extend(grouped_monthly.reset_index(drop=True).to_dict(orient='records'))
 
@@ -687,7 +690,7 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
                 grouped_seasonally = df.groupby('period_season').sum(numeric_only=True)
                 grouped_seasonally['period'] = grouped_seasonally.index  # Add 'period' column with season names
                 grouped_seasonally['hour_start'] = df.groupby('period_season')['period_hour'].first().values
-                grouped_seasonally['hour_end'] = df.groupby('period_season')['period_hour'].last().values
+                grouped_seasonally['hour_end'] = df.groupby('period_season')['period_hour'].last().values + 1
                 grouped_seasonally.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
                 seasonally_rows.extend(grouped_seasonally.reset_index(drop=True).to_dict(orient='records'))
 
@@ -696,7 +699,7 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
                 row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
                 row_sum['period'] = 'selected_hours'  # Add 'period' column for this case
                 row_sum['hour_start'] = df['period_hour'].iloc[0]
-                row_sum['hour_end'] = df['period_hour'].iloc[-1]
+                row_sum['hour_end'] = df['period_hour'].iloc[-1] + 1
                 row_sum.drop(labels=['period_month', 'period_season'], errors='ignore', inplace=True)
                 hourly_annually_rows.append(row_sum)
 
@@ -766,6 +769,10 @@ def add_nominal_actual_and_coverage(df):
     if df is None or df.empty:
         return None
 
+    if 'period' not in df.columns:
+        df['period'] = df.index.tolist()
+        df['period'] = df['period'].astype(str)
+
     # Convert 'hour_start' and 'hour_end' to numeric values
     df['hour_start'] = pd.to_numeric(df['hour_start'], errors='coerce')
     df['hour_end'] = pd.to_numeric(df['hour_end'], errors='coerce')
@@ -776,11 +783,11 @@ def add_nominal_actual_and_coverage(df):
             return month_hours[period]
         elif period in season_hours:
             return season_hours[period]
-        elif df['hour_end'] - df['hour_start'] == 24:
+        elif period.startswith("day_"):
             return 24
-        elif df['hour_end'] - df['hour_start'] == 1:
+        elif period.startswith("hour_"):
             return 1
-        elif isinstance(period, str) and period.isdigit() and len(period) == 4:  # Check if it looks like a year
+        elif period.startswith("year_"):
             return 8760
         elif period == 'selected_hours':
             return 8760
@@ -788,19 +795,17 @@ def add_nominal_actual_and_coverage(df):
             return None  # Handle unexpected values
 
     # Add 'nominal_hours' column
-    if df['period']:
-        df['nominal_hours'] = df['period'].apply(calculate_nominal_hours)
-        df['nominal_hours'] = pd.to_numeric(df['nominal_hours'], errors='coerce')
-
-    else:
-        df['nominal_hours'] = df['period'].apply(calculate_nominal_hours)
-        df['nominal_hours'] = pd.to_numeric(df['nominal_hours'], errors='coerce')
+    df['nominal_hours'] = df['period'].apply(calculate_nominal_hours)
+    df['nominal_hours'] = pd.to_numeric(df['nominal_hours'], errors='coerce')
 
     # Calculate 'actual_selected_hours'
     df['actual_selected_hours'] = df['hour_end'] - df['hour_start']
 
     # Calculate 'coverage_ratio' and round to 2 decimal places
     df['coverage_ratio'] = (df['actual_selected_hours'] / df['nominal_hours']).round(2)
+
+    # # Remove period column
+    # df = df.drop(columns=['period'])
 
     return df
 
@@ -835,14 +840,14 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Add labels for each hour
         df['period_hour'] = df[date_column].apply(
-            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
+            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
         )
 
         # Handle different periods
         if period == 'hourly':
             df['period'] = 'hour_' + df['period_hour']
         elif period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -850,7 +855,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
             df['period'] = df[date_column].dt.month.map(season_mapping)
             df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
         elif period == 'annually':
-            df['period'] = df[date_column].dt.year
+            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
         else:
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
@@ -872,10 +877,13 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
             aggregated_df[col] = aggregated_col
 
+        # Convert 'period_hour' to numeric (if it's not already)
+        df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
+
         # Add hour_start and hour_end columns
         period_groups = df.groupby('period')
-        aggregated_df['hour_start'] = period_groups['period_hour'].first()
-        aggregated_df['hour_end'] = period_groups['period_hour'].last()
+        aggregated_df['hour_start'] = period_groups['period_hour'].first().values
+        aggregated_df['hour_end'] = period_groups['period_hour'].last().values + 1
 
         # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
         aggregated_df = add_nominal_actual_and_coverage(aggregated_df)
@@ -884,12 +892,13 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
         if period in ['hourly', 'daily']:
             aggregated_df[date_column] = period_groups[date_column].first()
 
-        # Reset the index for a clean result
-        aggregated_df.reset_index(inplace=True)
-
         # Drop temporary 'period_hour' column
-        if 'period_hour' in df.columns:
-            df.drop(columns=['period_hour'], inplace=True)
+        if 'period_hour' in aggregated_df.columns:
+            aggregated_df.drop(columns=['period_hour'], inplace=True)
+
+        # Move the period column to the first column
+        cols = ['period'] + [col for col in aggregated_df.columns if col != 'period']
+        aggregated_df = aggregated_df[cols]
 
         return aggregated_df
 
