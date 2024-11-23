@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe
+import ubem_analytics
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -45,6 +46,11 @@ season_hours = {
         'Summer': (30 + 31 + 31) * 24,  # Jun, Jul, Aug
         'Autumn': (30 + 31 + 30) * 24   # Sep, Oct, Nov
 }
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Data preparation
+
 
 def get_standardized_date_column(df):
     """
@@ -152,7 +158,7 @@ def map_metrics_cea_features(list_metrics):
 
     dict = {
     "architecture": ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]'],
-    "demand": ['nominal_occupancy[-]','grid_electricity_consumption[kWh]','enduse_electricity_consumption[kWh]',
+    "demand": ['nominal_occupancy[-]','grid_electricity_consumption[kWh]','enduse_electricity_demand[kWh]',
                'enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]',
                'enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]'],
     "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
@@ -293,7 +299,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'occupied_floor_area[m2]': ['Aocc_m2'],
         'nominal_occupancy[-]': ['people'],
         'grid_electricity_consumption[kWh]': ['GRID_kWh'],
-        'enduse_electricity_consumption[kWh]': ['E_sys_kWh'],
+        'enduse_electricity_demand[kWh]': ['E_sys_kWh'],
         'enduse_cooling_demand[kWh]': ['QC_sys_kWh'],
         'enduse_space_cooling_demand[kWh]': ['Qcs_sys_kWh'],
         'enduse_heating_demand[kWh]': ['QH_sys_kWh'],
@@ -386,6 +392,44 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
 
     return output_list
 
+def add_period_columns(df, date_column='date'):
+    """
+    Adds 'period_month' and 'period_season' columns to a DataFrame with 8760 rows (hourly data for a year).
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame with a column named 'date' containing datetime values.
+    - season_names (list of str): List of season names in order.
+    - month_names (list of str): List of month names in order.
+    - season_mapping (dict): Mapping of month to season.
+    - date_column (str): Name of the column containing datetime values.
+
+    Returns:
+    - pd.DataFrame: The original DataFrame with additional columns ['period_month', 'period_season'].
+    """
+    # Ensure the date column exists
+    if date_column not in df.columns:
+        raise ValueError(f"The column '{date_column}' is not present in the DataFrame.")
+
+    # Convert the date column to datetime if it's not already
+    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+
+    # Check for any invalid or NaT values in the date column
+    if df[date_column].isna().any():
+        raise ValueError(f"The column '{date_column}' contains invalid or NaT values.")
+
+    # Add period_month column using month names
+    df['period_month'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
+
+    # Add period_season column using season_mapping
+    df['period_season'] = df[date_column].dt.month.map(season_mapping)
+
+    # Ensure the order of categories is maintained for month and season
+    df['period_month'] = pd.Categorical(df['period_month'], categories=month_names, ordered=True)
+    df['period_season'] = pd.Categorical(df['period_season'], categories=season_names, ordered=True)
+
+    return df
+
 
 def check_list_nesting(input_list):
     """
@@ -463,6 +507,11 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
             print(f"File not found: {path}")
 
     return list_dataframes
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute aggregation
 
 
 def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned):
@@ -600,43 +649,8 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     return list_list_useful_cea_results, list_appendix
 
 
-def add_period_columns(df, date_column='date'):
-    """
-    Adds 'period_month' and 'period_season' columns to a DataFrame with 8760 rows (hourly data for a year).
-
-    Parameters:
-    - df (pd.DataFrame): DataFrame with a column named 'date' containing datetime values.
-    - season_names (list of str): List of season names in order.
-    - month_names (list of str): List of month names in order.
-    - season_mapping (dict): Mapping of month to season.
-    - date_column (str): Name of the column containing datetime values.
-
-    Returns:
-    - pd.DataFrame: The original DataFrame with additional columns ['period_month', 'period_season'].
-    """
-    # Ensure the date column exists
-    if date_column not in df.columns:
-        raise ValueError(f"The column '{date_column}' is not present in the DataFrame.")
-
-    # Convert the date column to datetime if it's not already
-    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
-        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
-
-    # Check for any invalid or NaT values in the date column
-    if df[date_column].isna().any():
-        raise ValueError(f"The column '{date_column}' contains invalid or NaT values.")
-
-    # Add period_month column using month names
-    df['period_month'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
-
-    # Add period_season column using season_mapping
-    df['period_season'] = df[date_column].dt.month.map(season_mapping)
-
-    # Ensure the order of categories is maintained for month and season
-    df['period_month'] = pd.Categorical(df['period_month'], categories=month_names, ordered=True)
-    df['period_season'] = pd.Categorical(df['period_season'], categories=season_names, ordered=True)
-
-    return df
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute aggregation
 
 
 def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period, date_column='date'):
@@ -957,6 +971,10 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
     return list_list_df, list_list_time_period
 
 
+# Write to disk
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
     """
     Writes aggregated results for different time periods to CSV files.
@@ -974,12 +992,6 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
-
-    # Remove all files in folder
-    for filename in os.listdir(target_path):
-        file_path = os.path.join(target_path, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
 
     for m in range(len(list_list_df_aggregate_time_period)):
         list_df_aggregate_time_period = list_list_df_aggregate_time_period[m]
@@ -1033,7 +1045,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         and not df['period'].isin(month_names).any() \
                         and not df['period'].isin(season_names).any() \
                         and not df['period'].astype(str).str.contains("hour").any():
-                    time_period = "sum_selected_hours"
+                    time_period = "selected_hours"
                     df['period'] = "selected_hours"
                     path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
@@ -1055,16 +1067,11 @@ def results_writer_time_period_building(locator, summary_folder, list_metrics, l
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # Join the paths
-    target_path = locator.get_export_results_summary_cea_feature_buildings_folder(summary_folder, cea_feature)
+    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
 
-    # Remove all files in folder
-    for filename in os.listdir(target_path):
-        file_path = os.path.join(target_path, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
     for m in range(len(list_list_df)):
         list_df = list_list_df[m]
         appendix = list_appendix[0]
@@ -1080,6 +1087,10 @@ def results_writer_time_period_building(locator, summary_folder, list_metrics, l
         for df in list_df:
             if not df.empty:
                 df.to_csv(path_csv, index=False, float_format="%.2f")
+
+
+# Filter by criteria for buildings
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings):
@@ -1321,6 +1332,9 @@ def serial_filter_buildings(config, locator):
     return df_typology
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute advanced UBEM analytics
+
 def calc_ubem_analytics(locator, list_buildings):
     """
     Read CEA results over all scenarios in a project and produce commonly used UBEM analytics.
@@ -1374,10 +1388,13 @@ def calc_ubem_analytics(locator, list_buildings):
       - Annual
     - DC Pump Capacity Factor [-]
       - Annual
-
     """
+
     return None
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Activate: Export results to .csv (summary & analytics)
 
 def main(config):
     """
