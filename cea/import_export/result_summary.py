@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe
-import ubem_analytics
+# from cea.import_export.ubem_analytics import import ubem_analytics
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -1390,20 +1390,70 @@ def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
     """
 
     # The CEA Features that the current analytics feature supports
-    list_cea_feature = ['pv', 'demand', 'dh', 'dc']
+    list_cea_feature = ['demand', 'pv', 'dh', 'dc']
 
     # Calculating EUIs
-    time_resolution = config.result_summary.aggregate_by_time_period
-
-    def de
-        df_demand_hourly = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(folder_name, cea_feature, appendix, time_period))
-
-         pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(folder_name, cea_feature, appendix, time_resolution))
-
-    if ['hourly'] in time_resolution:
+    list_time_period = config.result_summary.aggregate_by_time_period
 
     return None
 
+
+def calc_ubem_analytics_normalised(locator, cea_feature, folder_name, list_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation):
+
+    appendix = cea_feature
+
+    list_result_time_resolution = []
+    list_result_buildings = []
+
+    name_mapping = {
+        'GRID_kWh':'Grid',
+        'E_sys_kWh':'',
+        'QC_sys_kWh':'',
+        'Qcs_sys_kWh':'',
+        'QH_sys_kWh':'',
+        'Qhs_sys_kWh':'',
+        'Qww_sys_kWh':'',
+    }
+
+    # Gather the building architecture information
+    df_architecture = pd.read_csv(locator.get_export_results_summary_cea_feature_buildings_file(folder_name, cea_feature='architecture', appendix='architecture'))
+    if not bool_use_acronym:
+        df_architecture = map_metrics_and_cea_columns([df_architecture], direction="metrics_to_columns")[0]
+
+    for time_period in list_time_period:
+
+        # Read the summary .csv files generated earlier in this script
+        df_time_resolution = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(folder_name, cea_feature, appendix, time_period))
+        if not bool_use_acronym:
+            df_time_resolution = map_metrics_and_cea_columns([df_time_resolution], direction="metrics_to_columns")[0]
+
+        # Normalising
+        if not bool_use_conditioned_floor_area_for_normalisation:
+            result_time_resolution = df_time_resolution.div(df_architecture['GFA_m2'], axis=0)
+
+        else:
+            result_time_resolution = df_time_resolution.div(df_architecture['af_m2'], axis=0)
+
+        result_buildings = result_time_resolution.rename(columns=name_mapping)
+        list_result_time_resolution.append(result_time_resolution)
+
+        # Ensure the aggregate-by-building toggle is on
+        if bool_aggregate_by_building:
+            df_buildings = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(folder_name, cea_feature, appendix, time_period))
+            if not bool_use_acronym:
+                df_buildings = map_metrics_and_cea_columns([df_buildings], direction="metrics_to_columns")[0]
+
+            # Normalising
+            if not bool_use_conditioned_floor_area_for_normalisation:
+                result_buildings = df_buildings.div(df_architecture['GFA_m2'], axis=0)
+
+            else:
+                result_buildings = df_buildings.div(df_architecture['af_m2'], axis=0)
+
+            result_buildings = result_buildings.rename(columns=name_mapping)
+            list_result_buildings.append(result_buildings)
+
+    return list_result_time_resolution, list_result_buildings, list_time_period
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)
@@ -1427,6 +1477,7 @@ def main(config):
     list_selected_time_period = config.result_summary.aggregate_by_time_period
     bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     hour_start, hour_end = get_hours_start_end(config)
+    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
     list_list_metrics_with_date = [
                         config.result_summary.metrics_building_energy_demand,
@@ -1457,7 +1508,7 @@ def main(config):
     folder_name = config.result_summary.folder_name_to_save_exported_results
 
     # Create the folder to store all the .csv file if it doesn't exist
-    summary_folder = locator.get_export_results_folder_name(hour_start, hour_end, folder_name)
+    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
     os.makedirs(summary_folder, exist_ok=True)
 
     # Store the list of selected buildings

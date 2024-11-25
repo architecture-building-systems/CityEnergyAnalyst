@@ -196,9 +196,9 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
         return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, folder_name, cea_feature, appendix, time_resolution):
+    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, folder_name, cea_feature, appendix, time_period):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_results_summary_cea_feature_analytics_folder(self, folder_name, cea_feature):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
@@ -208,7 +208,7 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_{time_period}.csv"""
         return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(folder_name, cea_feature), f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_analytics_file(self, folder_name, cea_feature, appendix):
+    def get_export_results_summary_cea_feature_analytics_buildings_file(self, folder_name, cea_feature, appendix):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_buildings.csv"""
         return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_buildings.csv")
 
