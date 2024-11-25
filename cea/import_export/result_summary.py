@@ -154,50 +154,6 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
-def map_metrics_cea_features(list_metrics):
-
-    dict = {
-    "architecture": ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]'],
-    "demand": ['nominal_occupancy[-]','grid_electricity_consumption[kWh]','enduse_electricity_demand[kWh]',
-               'enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]',
-               'enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]'],
-    "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
-    "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
-    "pv": ['PV_installed_area_total[m2]','PV_electricity_total[kWh]','PV_installed_area_roof[m2]',
-           'PV_electricity_roof[kWh]','PV_installed_area_north[m2]','PV_electricity_north[kWh]',
-           'PV_installed_area_south[m2]','PV_electricity_south[kWh]','PV_installed_area_east[m2]',
-           'PV_electricity_east[kWh]','PV_installed_area_west[m2]','PV_electricity_west[kWh]'],
-    "pvt": ['PVT_installed_area_total[m2]','PVT_electricity_total[kWh]','PVT_heat_total[kWh]',
-            'PVT_installed_area_roof[m2]','PVT_electricity_roof[kWh]','PVT_heat_roof[kWh]',
-            'PVT_installed_area_north[m2]','PVT_electricity_north[kWh]','PVT_heat_north[kWh]',
-            'PVT_installed_area_south[m2]','PVT_electricity_south[kWh]','PVT_heat_south[kWh]',
-            'PVT_installed_area_east[m2]','PVT_electricity_east[kWh]','PVT_heat_east[kWh]',
-            'PVT_installed_area_west[m2]','PVT_electricity_west[kWh]','PVT_heat_west[kWh]'],
-    "sc_et": ['SC_ET_installed_area_total[m2]','SC_ET_heat_total[kWh]',
-              'SC_ET_installed_area_roof[m2]','SC_ET_heat_roof[kWh]',
-              'SC_ET_installed_area_north[m2]','SC_ET_heat_north[kWh]',
-              'SC_ET_installed_area_south[m2]','SC_ET_heat_south[kWh]',
-              'SC_ET_installed_area_east[m2]','SC_ET_heat_east[kWh]',
-              'SC_ET_installed_area_west[m2]','SC_ET_heat_west[kWh]'],
-    "sc_fp": ['SC_FP_installed_area_total[m2]','SC_FP_heat_total[kWh]',
-              'SC_FP_installed_area_roof[m2]','SC_FP_heat_roof[kWh]',
-              'SC_FP_installed_area_north[m2]','SC_FP_heat_north[kWh]',
-              'SC_FP_installed_area_south[m2]','SC_FP_heat_south[kWh]',
-              'SC_FP_installed_area_east[m2]','SC_FP_heat_east[kWh]',
-              'SC_FP_installed_area_west[m2]','SC_FP_heat_west[kWh]'],
-    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
-    "dh": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
-                         'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
-    "dc": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
-                         'DC_electricity_consumption_for_pressure_loss[kWh]','DC_plant_pumping_power[kW]'],
-    }
-
-    for cea_feature, attached_list in dict.items():
-        if set(list_metrics).issubset(set(attached_list)):
-            return cea_feature
-    return None
-
-
 def get_results_path(locator, cea_feature, list_buildings):
 
     list_paths = []
@@ -279,6 +235,80 @@ def get_results_path(locator, cea_feature, list_buildings):
     return list_paths, list_appendix
 
 
+def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_features"):
+    """
+    Maps between metrics and CEA feature categories with support for reverse mapping.
+
+    Parameters:
+    - list_metrics_or_features (list): List of metrics or CEA feature categories to map.
+    - direction (str): Direction of mapping:
+        - "metrics_to_features" (default): Maps metrics to CEA feature categories.
+        - "features_to_metrics": Maps CEA feature categories to metrics.
+
+    Returns:
+    - str or list: Mapped CEA feature or metrics based on the direction.
+
+    Raises:
+    - ValueError: If the direction is invalid.
+    """
+    mapping_dict = {
+        "architecture": ['conditioned_floor_area[m2]', 'roof_area[m2]', 'gross_floor_area[m2]', 'occupied_floor_area[m2]'],
+        "demand": ['nominal_occupancy[-]', 'grid_electricity_consumption[kWh]', 'enduse_electricity_demand[kWh]',
+                   'enduse_cooling_demand[kWh]', 'enduse_space_cooling_demand[kWh]', 'enduse_heating_demand[kWh]',
+                   'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
+        "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
+        "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+        "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
+               'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
+               'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
+               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'],
+        "pvt": ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]',
+                'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]',
+                'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]',
+                'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]',
+                'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]',
+                'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]'],
+        "sc_et": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
+                  'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
+                  'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
+                  'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]',
+                  'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]',
+                  'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]'],
+        "sc_fp": ['SC_FP_installed_area_total[m2]', 'SC_FP_heat_total[kWh]',
+                  'SC_FP_installed_area_roof[m2]', 'SC_FP_heat_roof[kWh]',
+                  'SC_FP_installed_area_north[m2]', 'SC_FP_heat_north[kWh]',
+                  'SC_FP_installed_area_south[m2]', 'SC_FP_heat_south[kWh]',
+                  'SC_FP_installed_area_east[m2]', 'SC_FP_heat_east[kWh]',
+                  'SC_FP_installed_area_west[m2]', 'SC_FP_heat_west[kWh]'],
+        "other_renewables": ['geothermal_heat_potential[kWh]', 'area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]'],
+        "dh": ['DH_plant_thermal_load[kWh]', 'DH_plant_power[kW]',
+               'DH_electricity_consumption_for_pressure_loss[kWh]', 'DH_plant_pumping_power[kW]'],
+        "dc": ['DC_plant_thermal_load[kWh]', 'DC_plant_power[kW]',
+               'DC_electricity_consumption_for_pressure_loss[kWh]', 'DC_plant_pumping_power[kW]'],
+    }
+
+    if direction == "metrics_to_features":
+        # Find all matches
+        matched_features = {feature for feature, metrics in mapping_dict.items() if set(list_metrics_or_features) & set(metrics)}
+
+        if not matched_features:
+            return None
+        else:
+            return list(matched_features)[0]
+
+    elif direction == "features_to_metrics":
+        # Reverse the mapping dictionary
+        reverse_mapping = {feature: metrics for feature, metrics in mapping_dict.items()}
+        list_metrics = []
+        for feature in list_metrics_or_features:
+            if feature in reverse_mapping:
+                list_metrics.extend(reverse_mapping[feature])
+        return list_metrics
+
+    else:
+        raise ValueError("Invalid direction. Use 'metrics_to_features' or 'features_to_metrics'.")
+
+
 def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     """
     Maps between metrics and CEA column names based on the direction.
@@ -297,7 +327,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'roof_area[m2]': ['Aroof_m2'],
         'gross_floor_area[m2]': ['GFA_m2'],
         'occupied_floor_area[m2]': ['Aocc_m2'],
-        'nominal_occupancy[-]': ['people'],
         'grid_electricity_consumption[kWh]': ['GRID_kWh'],
         'enduse_electricity_demand[kWh]': ['E_sys_kWh'],
         'enduse_cooling_demand[kWh]': ['QC_sys_kWh'],
@@ -984,7 +1013,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
     - list_df_aggregate_time_period (List[pd.DataFrame]): A list of DataFrames, each representing a different aggregation period.
     """
     # Map metrics to CEA features
-    cea_feature = map_metrics_cea_features(list_metrics)
+    cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
 
     # Create the target path of directory
     target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
@@ -1086,7 +1115,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 
     # Map metrics to CEA features
     if list_metrics is not None and len(list_metrics) > 0:
-        cea_feature = map_metrics_cea_features(list_metrics)
+        cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
     else:
         cea_feature = list_appendix
 
