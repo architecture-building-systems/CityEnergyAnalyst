@@ -509,7 +509,6 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
     return list_dataframes
 
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute aggregation
 
@@ -1335,7 +1334,7 @@ def serial_filter_buildings(config, locator):
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_ubem_analytics(locator, list_buildings):
+def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
     """
     Read CEA results over all scenarios in a project and produce commonly used UBEM analytics.
     The list of UBEM analytics include:
@@ -1389,6 +1388,19 @@ def calc_ubem_analytics(locator, list_buildings):
     - DC Pump Capacity Factor [-]
       - Annual
     """
+
+    # The CEA Features that the current analytics feature supports
+    list_cea_feature = ['pv', 'demand', 'dh', 'dc']
+
+    # Calculating EUIs
+    time_resolution = config.result_summary.aggregate_by_time_period
+
+    def de
+        df_demand_hourly = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(folder_name, cea_feature, appendix, time_period))
+
+         pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(folder_name, cea_feature, appendix, time_resolution))
+
+    if ['hourly'] in time_resolution:
 
     return None
 
@@ -1445,7 +1457,7 @@ def main(config):
     folder_name = config.result_summary.folder_name_to_save_exported_results
 
     # Create the folder to store all the .csv file if it doesn't exist
-    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+    summary_folder = locator.get_export_results_folder_name(hour_start, hour_end, folder_name)
     os.makedirs(summary_folder, exist_ok=True)
 
     # Store the list of selected buildings

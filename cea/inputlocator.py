@@ -180,41 +180,41 @@ class InputLocator(object):
 
         return path
 
-    def get_export_results_summary_selected_building_file(self, summary_folder):
-        """scenario/export/results/{summary_folder}/selected_buildings.csv"""
-        return os.path.join(summary_folder,'selected_buildings.csv')
+    def get_export_results_summary_selected_building_file(self, folder_name):
+        """scenario/export/results/{folder_name}/selected_buildings.csv"""
+        return os.path.join(folder_name,'selected_buildings.csv')
 
-    def get_export_results_summary_cea_feature_folder(self, summary_folder, cea_feature):
-        """scenario/export/results/{summary_folder}/{cea_feature}"""
-        return os.path.join(summary_folder, cea_feature)
+    def get_export_results_summary_cea_feature_folder(self, folder_name, cea_feature):
+        """scenario/export/results/{folder_name}/{cea_feature}"""
+        return os.path.join(folder_name, cea_feature)
 
-    def get_export_results_summary_cea_feature_time_resolution_file(self, summary_folder, cea_feature, appendix, time_period):
-        """scenario/export/results/{summary_folder}/{cea_feature}/{appendix}_{time_period}.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f'{appendix}_{time_period}.csv')
+    def get_export_results_summary_cea_feature_time_resolution_file(self, folder_name, cea_feature, appendix, time_period):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
-        """scenario/export/results/{summary_folder}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f"{appendix}_buildings.csv")
+    def get_export_results_summary_cea_feature_buildings_file(self, folder_name, cea_feature, appendix):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature, appendix, time_resolution):
-        """scenario/export/results/{summary_folder}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
+    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, folder_name, cea_feature, appendix, time_resolution):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
-        """scenario/export/results/{summary_folder}/{cea_feature}/analytics"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), 'analytics')
+    def get_export_results_summary_cea_feature_analytics_folder(self, folder_name, cea_feature):
+        """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), 'analytics')
 
-    def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature, appendix, time_period):
-        """scenario/export/results/{summary_folder}/{cea_feature}/analytics/{appendix}_{time_period}.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f'{appendix}_{time_period}.csv')
+    def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, folder_name, cea_feature, appendix, time_period):
+        """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_{time_period}.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(folder_name, cea_feature), f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_analytics_file(self, summary_folder, cea_feature, appendix):
-        """scenario/export/results/{summary_folder}/{cea_feature}/analytics/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f"{appendix}_buildings.csv")
+    def get_export_results_summary_cea_feature_analytics_file(self, folder_name, cea_feature, appendix):
+        """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(folder_name, cea_feature), f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_time_resolution_analytics_file(self, summary_folder, cea_feature, appendix, time_resolution):
-        """scenario/export/results/{summary_folder}/{cea_feature}/analytics/{appendix}_{time_resolution}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
+    def get_export_results_summary_cea_feature_time_resolution_analytics_file(self, folder_name, cea_feature, appendix, time_resolution):
+        """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_{time_resolution}_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(folder_name, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
