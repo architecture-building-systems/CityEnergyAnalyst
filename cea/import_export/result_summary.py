@@ -974,7 +974,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
+def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -1004,33 +1004,55 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
             if df is not None:
                 # Determine time period name based on the content in Column ['period']
                 if len(df) == 1 and abs(hour_end - hour_start) == 8760:
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
+
                 # if only one day is involved
                 elif len(df) == 1 and time_period == 'daily':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
                 elif len(df) > 1 and time_period == 'daily':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
                 elif len(df) == 1 and time_period == 'monthly':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    if bool_analytics:
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
@@ -1046,15 +1068,15 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         and not df['period'].astype(str).str.contains("hour").any():
                     time_period = "selected_hours"
                     df['period'] = "selected_hours"
-                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period)
+                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
             else:
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics):
     """
-    Writes aggregated results for different time periods to CSV files.
+    Writes aggregated results for each building to CSV files.
 
     Parameters:
     - output_path (str): The base directory to save the results.
@@ -1063,7 +1085,10 @@ def results_writer_time_period_building(locator, summary_folder, list_metrics, l
     """
 
     # Map metrics to CEA features
-    cea_feature = map_metrics_cea_features(list_metrics)
+    if list_metrics is not None and len(list_metrics) > 0:
+        cea_feature = map_metrics_cea_features(list_metrics)
+    else:
+        cea_feature = list_appendix
 
     # Join the paths
     target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
@@ -1079,8 +1104,13 @@ def results_writer_time_period_building(locator, summary_folder, list_metrics, l
             # Create the .csv file path
             path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
         else:
-            time_resolution = list_time_resolution[m]
-            path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution)
+            if not bool_analytics:
+                time_resolution = list_time_resolution[m]
+                path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+            else:
+                time_resolution = list_time_resolution[m]
+                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution)
+                os.makedirs(target_path, exist_ok=True)
 
         # Write to .csv files
         for df in list_df:
@@ -1398,50 +1428,56 @@ def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
     return None
 
 
-def calc_ubem_analytics_normalised(locator, cea_feature, folder_name, list_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation):
+def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation):
 
     appendix = cea_feature
+    list_metrics = []
 
     list_result_time_resolution = []
     list_result_buildings = []
 
     name_mapping = {
-        'GRID_kWh':'Grid',
-        'E_sys_kWh':'',
-        'QC_sys_kWh':'',
-        'Qcs_sys_kWh':'',
-        'QH_sys_kWh':'',
-        'Qhs_sys_kWh':'',
-        'Qww_sys_kWh':'',
+        'GRID_kWh': 'EUI - grid electricity [kWh/m²/yr]',
+        'E_sys_kWh': 'EUI - enduse electricity [kWh/m²/yr]',
+        'QC_sys_kWh': 'EUI - cooling [kWh/m²/yr]',
+        'Qcs_sys_kWh': 'EUI - space cooling [kWh/m²/yr]',
+        'QH_sys_kWh': 'EUI - heating [kWh/m²/yr]',
+        'Qhs_sys_kWh': 'EUI - space heating [kWh/m²/yr]',
+        'Qww_sys_kWh': 'EUI - domestic hot water [kWh/m²/yr]',
     }
 
     # Gather the building architecture information
-    df_architecture = pd.read_csv(locator.get_export_results_summary_cea_feature_buildings_file(folder_name, cea_feature='architecture', appendix='architecture'))
-    if not bool_use_acronym:
-        df_architecture = map_metrics_and_cea_columns([df_architecture], direction="metrics_to_columns")[0]
+    df_architecture = pd.read_csv(locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='architecture', appendix='architecture'))
 
+    if not bool_use_acronym:
+        architecture_columns = map_metrics_and_cea_columns(df_architecture.columns, direction="metrics_to_columns")
+        df_architecture.columns = architecture_columns
     for time_period in list_time_period:
 
         # Read the summary .csv files generated earlier in this script
-        df_time_resolution = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(folder_name, cea_feature, appendix, time_period))
+        df_time_resolution = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end))
         if not bool_use_acronym:
-            df_time_resolution = map_metrics_and_cea_columns([df_time_resolution], direction="metrics_to_columns")[0]
+            time_resolution_columns = map_metrics_and_cea_columns(df_time_resolution.columns, direction="metrics_to_columns")
+            df_time_resolution.columns = time_resolution_columns
 
         # Normalising
         if not bool_use_conditioned_floor_area_for_normalisation:
-            result_time_resolution = df_time_resolution.div(df_architecture['GFA_m2'], axis=0)
+            result_time_resolution = df_time_resolution.div(df_architecture['GFA_m2'].sum(), axis=0)
 
         else:
-            result_time_resolution = df_time_resolution.div(df_architecture['af_m2'], axis=0)
+            result_time_resolution = df_time_resolution.div(df_architecture['af_m2'].sum(), axis=0)
 
-        result_buildings = result_time_resolution.rename(columns=name_mapping)
+        result_time_resolution = result_time_resolution.rename(columns=name_mapping)
         list_result_time_resolution.append(result_time_resolution)
+
+        # Write to disk
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], 'demand', bool_analytics=True)
 
         # Ensure the aggregate-by-building toggle is on
         if bool_aggregate_by_building:
-            df_buildings = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(folder_name, cea_feature, appendix, time_period))
+            df_buildings = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end))
             if not bool_use_acronym:
-                df_buildings = map_metrics_and_cea_columns([df_buildings], direction="metrics_to_columns")[0]
+                df_buildings = map_metrics_and_cea_columns(df_buildings.columns, direction="metrics_to_columns")[0]
 
             # Normalising
             if not bool_use_conditioned_floor_area_for_normalisation:
@@ -1453,7 +1489,9 @@ def calc_ubem_analytics_normalised(locator, cea_feature, folder_name, list_time_
             result_buildings = result_buildings.rename(columns=name_mapping)
             list_result_buildings.append(result_buildings)
 
-    return list_result_time_resolution, list_result_buildings, list_time_period
+            # Write to disk
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_buildings], appendix, list_time_period, bool_analytics=True)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)
@@ -1478,6 +1516,7 @@ def main(config):
     bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     hour_start, hour_end = get_hours_start_end(config)
     bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
+    bool_include_advanced_analytics = config.result_summary.include_advanced_analytics
 
     list_list_metrics_with_date = [
                         config.result_summary.metrics_building_energy_demand,
@@ -1511,6 +1550,8 @@ def main(config):
     summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
     os.makedirs(summary_folder, exist_ok=True)
 
+    summary_folder = r'/Users/zshi/Library/CloudStorage/Dropbox/CEA2/batch/Urban_Design_2/export/results/unnamed_hours_144_5832_6'
+
     # Store the list of selected buildings
     df_buildings = serial_filter_buildings(config, locator)
     buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
@@ -1518,24 +1559,29 @@ def main(config):
 
     df_buildings.to_csv(buildings_path, index=False)
 
-    # Export results that have no date information, non-8760 hours, aggregate by building
-    for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None)   # Write to disk
+    # # Export results that have no date information, non-8760 hours, aggregate by building
+    # for list_metrics in list_list_metrics_without_date:
+    #     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+    #     list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+    #     results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False)   # Write to disk
+    #
+    # # Export results that have date information, 8760 hours, aggregate by time period
+    # for list_metrics in list_list_metrics_with_date:
+    #     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+    #     list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+    #     results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
+    #
+    # # Aggregate by building
+    # if bool_aggregate_by_building:
+    #     for list_metrics in list_list_metrics_building:
+    #         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+    #         list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
+    #         results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution, bool_analytics=False)  # Write to disk
 
-    # Export results that have date information, 8760 hours, aggregate by time period
-    for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
+    # Include analytics
+    if bool_include_advanced_analytics:
+        calc_ubem_analytics_normalised(locator, hour_start, hour_end, 'demand', summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
 
-        # aggregate by building
-    if bool_aggregate_by_building:
-        for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
-            results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution)  # Write to disk
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
