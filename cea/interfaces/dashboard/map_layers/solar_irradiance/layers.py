@@ -1,14 +1,14 @@
 import itertools
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Tuple
 
 import fiona
 import pandas as pd
 from pyproj import CRS, Transformer
 
 from cea.inputlocator import InputLocator
-from cea.interfaces.dashboard.map_layers.base import MapLayer
+from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
+from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output
 from cea.interfaces.dashboard.map_layers.solar_irradiance import SolarIrradiationCategory
 
 
@@ -19,7 +19,7 @@ class SolarIrradiationMapLayer(MapLayer):
     description = "Solar irradiation of building surfaces"
 
     @property
-    def input_files(self):
+    def input_file_locators(self):
         scenario_name = self.parameters['scenario-name']
         locator = InputLocator(os.path.join(self.project, scenario_name))
 
@@ -45,6 +45,7 @@ class SolarIrradiationMapLayer(MapLayer):
             # TODO: Move to separate property e.g. data filter parameters
             'threshold': {
                 "type": "array",
+                "filter": "range",
                 "selector": "threshold",
                 "description": "Thresholds for the layer",
                 "label": "Solar Irradiation Threshold [kWh/m2]",
@@ -53,6 +54,7 @@ class SolarIrradiationMapLayer(MapLayer):
             },
         }
 
+    @cache_output
     def generate_output(self):
         """Generates the output for this layer"""
         scenario_name = self.parameters['scenario-name']
@@ -137,15 +139,3 @@ class SolarIrradiationMapLayer(MapLayer):
             }
         }
         return output
-
-def day_range_to_hour_range(nth_day_start: int, nth_day_end: int) -> Tuple[int, int]:
-    """
-    Converts a nth day range (e.g. 01-Jan is 1, 31-Dec is 365) to hour range (zero-indexed),
-    where the first hour is the hour at the start of the "start day" and the second hour is the
-    hour at the end of the "end day".
-
-    e.g. day_range_to_hour_range(1, 1) returns 0, 23
-    e.g. day_range_to_hour_range(1, 2) returns 0, 47
-    e.g. day_range_to_hour_range(365, 1) returns 8736, 23
-    """
-    return (nth_day_start-1) * 24, nth_day_end * 24 -1
