@@ -1,32 +1,31 @@
-import itertools
 import os
-from concurrent.futures import ThreadPoolExecutor
-from typing import Tuple
 
-import fiona
 import pandas as pd
-from pyproj import CRS, Transformer
+import geopandas as gpd
+from pyproj import CRS
 
 from cea.inputlocator import InputLocator
-from cea.interfaces.dashboard.map_layers.base import MapLayer
+from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
+from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
 
 
 class DemandMapLayer(MapLayer):
     category = DemandCategory
     name = "demand"
-    label = "Demand [kWh]"
-    description = "Enegry Demand of buildings"
+    label = "Grid Electricity Consumption [kWh]"
+    description = "Energy Demand of buildings"
 
     @property
-    def input_files(self):
+    def input_file_locators(self):
         scenario_name = self.parameters['scenario-name']
         locator = InputLocator(os.path.join(self.project, scenario_name))
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = locator.get_zone_building_names()
 
-        return [(locator.get_demand_results_file, [building]) for building in buildings]
+        return [(locator.get_demand_results_file, [building]) for building in buildings] + [
+            (locator.get_zone_geometry, [])]
 
     @classmethod
     def expected_parameters(cls):
@@ -41,8 +40,17 @@ class DemandMapLayer(MapLayer):
                 "description": "Period to generate the data (start, end) in days",
                 "default": [1, 365]
             },
+            'radius': {
+                "type": "number",
+                "filter": "radius",
+                "selector": "input",
+                "description": "Radius of hexagon bin in meters",
+                "range": [0, 100],
+                "default": 5
+            },
         }
 
+    @cache_output
     def generate_output(self):
         """Generates the output for this layer"""
         scenario_name = self.parameters['scenario-name']
@@ -52,6 +60,7 @@ class DemandMapLayer(MapLayer):
         buildings = locator.get_zone_building_names()
         period = self.parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
+        data_column = "GRID_kWh"
 
         output = {
             "data": [],
@@ -62,58 +71,37 @@ class DemandMapLayer(MapLayer):
             }
         }
 
-        # Convert coordinates to WGS84
-        with fiona.open(locator.get_zone_geometry()) as src:
-            transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
-
-        def get_building_sensors(building):
-            metadata = pd.read_csv(locator.get_radiation_metadata(building)).set_index('SURFACE')
-            building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building)) * 1 / 1000 # Convert W/m2 to kWh/m2
-
-            # Get terrain elevation
-            if "terrain_elevation" in metadata.columns:
-                terrain_elevation = metadata["terrain_elevation"].values[0]
-            else:
-                terrain_elevation = 0
+        def get_building_demand(building, centroid):
+            demand = pd.read_csv(locator.get_demand_results_file(building), usecols=[data_column])[data_column]
 
             total_min = 0
-            total_max = building_sensors.sum(numeric_only=True).max()
+            total_max = demand.sum()
 
             if start < end:
-                period_sensor_values = building_sensors.iloc[start:end+1].sum(numeric_only=True)
+                period_value = demand.iloc[start:end + 1].sum()
             else:
-                period_sensor_values = building_sensors.iloc[start:].sum(numeric_only=True) + building_sensors.iloc[:end+1].sum(numeric_only=True)
-            period_min = period_sensor_values.min()
-            period_max = period_sensor_values.max()
+                period_value = demand.iloc[start:].sum() + demand.iloc[:end + 1].sum()
+            period_min = period_value
+            period_max = period_value
 
-            # Ensure metadata index matches sensor_values keys
-            metadata_subset = metadata.loc[list(period_sensor_values.keys())]
-
-            # Vectorized transformation
-            transformed_positions = transformer.transform(
-                metadata_subset['Xcoor'].values,
-                metadata_subset['Ycoor'].values,
-                metadata_subset['Zcoor'].values - terrain_elevation
-            )
-
-            # Create data efficiently using list comprehension
-            data = [
-                {
-                    "position": [float(x), float(y), float(z)],
-                    "value": float(period_sensor_values[sensor])
-                }
-                for sensor, x, y, z in zip(period_sensor_values.keys(),
-                                           transformed_positions[0], transformed_positions[1], transformed_positions[2])
-            ]
+            data = {"position": [centroid.x, centroid.y], "value": period_value}
 
             return total_min, total_max, period_min, period_max, data
 
-        with ThreadPoolExecutor() as executor:
-            values = executor.map(get_building_sensors, buildings)
+        df = gpd.read_file(locator.get_zone_geometry()).set_index("Name").loc[buildings]
+        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+
+        # with ThreadPoolExecutor() as executor:
+        #     values = executor.map(get_building_demand, buildings, building_centroids)
+        #
+        # total_min, total_max, period_min, period_max, data = zip(*values)
+
+        values = (get_building_demand(building, centroid)
+                  for building, centroid in zip(buildings, building_centroids))
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
-        output['data'] = list(itertools.chain(*data))
+        output['data'] = data
         output['properties']['range'] = {
             'total': {
                 'label': 'Total Range',
@@ -127,15 +115,3 @@ class DemandMapLayer(MapLayer):
             }
         }
         return output
-
-def day_range_to_hour_range(nth_day_start: int, nth_day_end: int) -> Tuple[int, int]:
-    """
-    Converts a nth day range (e.g. 01-Jan is 1, 31-Dec is 365) to hour range (zero-indexed),
-    where the first hour is the hour at the start of the "start day" and the second hour is the
-    hour at the end of the "end day".
-
-    e.g. day_range_to_hour_range(1, 1) returns 0, 23
-    e.g. day_range_to_hour_range(1, 2) returns 0, 47
-    e.g. day_range_to_hour_range(365, 1) returns 8736, 23
-    """
-    return (nth_day_start-1) * 24, nth_day_end * 24 -1
