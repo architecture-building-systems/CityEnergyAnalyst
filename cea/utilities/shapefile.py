@@ -95,44 +95,52 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
                 driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
+import geopandas as gpd
+import pandas as pd
+import os
+
 def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name):
     """
-    This function converts ESRI shapefile to .csv file or .xlsx with a column ['geometry'] storing the coordinates of the
-    building footprints in metres.
+    Converts an ESRI shapefile to a .csv or .xlsx file, including a 'geometry' column with serialized coordinates.
+    Writes CRS information to a .txt file.
 
-    :param shapefile: path to the input shapefile
-    :type shapefile: string
-    :param output_file_path: directory to story the output .csv file or .xlsx file
-    :type output_file_path_file_path: string
-    :param output_file_name_file_name: name of the output .csv file or .xlsx file
-    :type output_file_name_file_name: string
-
+    :param shapefile: Path to the input shapefile
+    :type shapefile: str
+    :param output_file_path: Directory to store the output .csv or .xlsx file
+    :type output_file_path: str
+    :param output_file_name: Name of the output .csv or .xlsx file
+    :type output_file_name: str
     """
-    # generate GeoDataFrames from files
-    gdf = gpd.GeoDataFrame.from_file(shapefile)
+    try:
+        # Read shapefile into a GeoDataFrame
+        gdf = gpd.read_file(shapefile)
+        crs = gdf.crs.to_string() if gdf.crs else "CRS information not available"
 
-    # generate GeoDataFrames from files and get its crs
-    gdf = gpd.GeoDataFrame.from_file(shapefile)
-    crs = gdf.crs
+        # Process geometries and convert to a projected CRS if possible
+        lat, lon = get_lat_lon_projected_shapefile(gdf)  # Ensure this function is implemented
+        gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
 
-    # get longitude and latitude of reference shapefile's centroid
-    lat, lon = get_lat_lon_projected_shapefile(gdf)
+        # Convert GeoDataFrame to DataFrame
+        df = pd.DataFrame(gdf.drop(columns='geometry'))
+        df['geometry'] = gdf.geometry.apply(serialize_geometry)  # Ensure serialize_geometry is implemented
 
-    # project the geometry to the global crs
-    gdf = gdf.to_crs(get_projected_coordinate_system(lat=lat, lon=lon))
+        # Write DataFrame to CSV or Excel
+        output_path = os.path.join(output_file_path, output_file_name)
+        if output_file_name.endswith('.csv'):
+            df.to_csv(output_path, index=False)
+        elif output_file_name.endswith('.xlsx'):
+            df.to_excel(output_path, index=False)
+        else:
+            raise ValueError("Output file name must end with '.csv' or '.xlsx'.")
 
-    index = None
-    if index:
-        gdf = gdf.set_index(index)
+        # Write CRS to a text file
+        crs_file_name = os.path.splitext(output_file_name)[0] + "_crs.txt"
+        crs_file_path = os.path.join(output_file_path, crs_file_name)
+        with open(crs_file_path, 'w') as file:
+            file.write(crs)
 
-    df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
-    df['geometry'] = gdf.geometry.apply(serialize_geometry)
-
-    # write to disk
-    if output_file_name.endswith('.csv'):
-        df.to_csv(os.path.join(output_file_path, '{filename}'.format(filename=output_file_name)))
-    if output_file_name.endswith('.xlsx'):
-        df.to_excel(os.path.join(output_file_path, '{filename}'.format(filename=output_file_name)))
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def serialize_geometry(geometry):

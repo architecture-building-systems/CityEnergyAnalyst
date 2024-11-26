@@ -46,7 +46,7 @@ def exec_export_csv_for_rhino(config, locator):
 
 
     # Create the folder to store all the exported files if it doesn't exist
-    output_path = os.path.join(output_path, 'export', 'rhino')
+    output_path = locator.get_export_rhino_from_ceea_folder()
     os.makedirs(output_path, exist_ok=True)
 
     # Remove all files in folder

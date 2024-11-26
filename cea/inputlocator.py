@@ -224,6 +224,10 @@ class InputLocator(object):
         else:
             return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f"{appendix}_analytics_{time_period}_buildings.csv")
 
+    def get_export_rhino_from_ceea_folder(self):
+        """scenario/export/rhino/from_cea"""
+        return os.path.join(self.get_export_folder(), 'rhino', 'from_cea')
+
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
