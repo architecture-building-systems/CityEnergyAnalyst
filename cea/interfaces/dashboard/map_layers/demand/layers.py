@@ -45,8 +45,8 @@ class DemandMapLayer(MapLayer):
                 "type": "string",
                 "selector": "choice",
                 "description": "Data column to use",
-                "default": list(self._data_columns.keys())[0],
-                "choices": list(self._data_columns.keys()),
+                "default": list(cls._data_columns.keys())[0],
+                "choices": list(cls._data_columns.keys()),
             },
             'period': {
                 "type": "array",
