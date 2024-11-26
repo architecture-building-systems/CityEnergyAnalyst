@@ -111,6 +111,10 @@ def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name):
     # generate GeoDataFrames from files
     gdf = gpd.GeoDataFrame.from_file(shapefile)
 
+    # generate GeoDataFrames from files and get its crs
+    gdf = gpd.GeoDataFrame.from_file(shapefile)
+    crs = gdf.crs
+
     # get longitude and latitude of reference shapefile's centroid
     lat, lon = get_lat_lon_projected_shapefile(gdf)
 
