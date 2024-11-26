@@ -507,7 +507,7 @@ def calc_simple_pv_payback(annual_generation_kwh, annual_electricity_demand_kwh,
     return lifetime
 
 
-def exec_read_and_analyse(cea_scenario):
+def exec_read_and_analyse(list_buildings):
     """
     read the CEA results and calculates the UBEM metrics listed at the top of this script
 
@@ -521,8 +521,6 @@ def exec_read_and_analyse(cea_scenario):
     """
     # create an empty DataFrame to store all the results
     analytics_results_dict = dict()
-    scenario_name = pathlib.Path(cea_scenario).name
-    analytics_results_dict['scenario_name'] = scenario_name
 
     # intialise the controls and start adding default controls assuming everything can be run
     control_dict = {

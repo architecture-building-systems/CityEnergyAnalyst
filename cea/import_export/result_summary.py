@@ -9,6 +9,8 @@ import cea.config
 import time
 from datetime import datetime
 import cea.inputlocator
+from cea.utilities.dbf import dbf_to_dataframe
+# from cea.import_export.ubem_analytics import import ubem_analytics
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -22,6 +24,33 @@ __status__ = "Production"
 
 season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+season_mapping = {
+            1: 'Winter', 2: 'Winter', 12: 'Winter',
+            3: 'Spring', 4: 'Spring', 5: 'Spring',
+            6: 'Summer', 7: 'Summer', 8: 'Summer',
+            9: 'Autumn', 10: 'Autumn', 11: 'Autumn'
+}
+
+# Define nominal hours for each month (non-leap year)
+month_hours = {
+        'Jan': 31 * 24, 'Feb': 28 * 24, 'Mar': 31 * 24,
+        'Apr': 30 * 24, 'May': 31 * 24, 'Jun': 30 * 24,
+        'Jul': 31 * 24, 'Aug': 31 * 24, 'Sep': 30 * 24,
+        'Oct': 31 * 24, 'Nov': 30 * 24, 'Dec': 31 * 24
+}
+
+# Define nominal hours for each season
+season_hours = {
+        'Winter': (31 + 28 + 31) * 24,  # Dec, Jan, Feb
+        'Spring': (31 + 30 + 31) * 24,  # Mar, Apr, May
+        'Summer': (30 + 31 + 31) * 24,  # Jun, Jul, Aug
+        'Autumn': (30 + 31 + 30) * 24   # Sep, Oct, Nov
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Data preparation
+
 
 def get_standardized_date_column(df):
     """
@@ -40,6 +69,7 @@ def get_standardized_date_column(df):
             break
     return df
 
+
 def get_hours_start_end(config):
 
     # get the user-defined dates from config
@@ -50,6 +80,7 @@ def get_hours_start_end(config):
         s = "".join(date)
         # Check for length, alphanumeric, and the presence of both letters and numbers
         return len(s) == 5 and s.isalnum() and any(c.isalpha() for c in s) and any(c.isdigit() for c in s)
+
     def check_user_period_impossible_date(date):
         list_impossible_dates = ['30Feb', '31Feb', '31Apr', '31Jun', '31Sep', '31Nov',
                                  'Feb30', 'Feb31', 'Apr31', 'Jun31', 'Sep31', 'Nov31']
@@ -117,57 +148,13 @@ def get_hours_start_end(config):
     elif check_user_period_leap_date(date_end):
         raise ValueError('Check the end date. CEA does not consider 29 Feb in a leap year.')
 
-    hour_start = from_date_string_to_hours(date_start) #Nth hour of the year, starting at 0, inclusive
-    hour_end = from_date_string_to_hours(date_end) + 24  #Nth hour of the year, ending at 8760, not-inclusive
+    hour_start = from_date_string_to_hours(date_start)      #Nth hour of the year, starting at 0, inclusive
+    hour_end = from_date_string_to_hours(date_end) + 24     #Nth hour of the year, ending at 8760, not-inclusive
 
     return hour_start, hour_end
 
-def map_metrics_cea_features(list_metrics):
 
-    dict = {
-    "architecture": ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]'],
-    "demand": ['nominal_occupancy[-]','grid_electricity_consumption[MWh]','enduse_electricity_consumption[MWh]',
-               'enduse_cooling_demand[MWh]','enduse_space_cooling_demand[MWh]','enduse_heating_demand[MWh]',
-               'enduse_space_heating_demand[MWh]','enduse_dhw_demand[MWh]'],
-    "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
-    "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
-    "pv": ['pv_installed_area_total[m2]','pv_electricity_total[kWh]','pv_installed_area_roof[m2]',
-           'pv_electricity_roof[kWh]','pv_installed_area_north[m2]','pv_electricity_north[kWh]',
-           'pv_installed_area_south[m2]','pv_electricity_south[kWh]','pv_installed_area_east[m2]',
-           'pv_electricity_east[kWh]','pv_installed_area_west[m2]','pv_electricity_west[kWh]'],
-    "pvt": ['pvt_installed_area_total[m2]','pvt_electricity_total[kWh]','pvt_heat_total[kWh]',
-            'pvt_installed_area_roof[m2]','pvt_electricity_roof[kWh]','pvt_heat_roof[kWh]',
-            'pvt_installed_area_north[m2]','pvt_electricity_north[kWh]','pvt_heat_north[kWh]',
-            'pvt_installed_area_south[m2]','pvt_electricity_south[kWh]','pvt_heat_south[kWh]',
-            'pvt_installed_area_east[m2]','pvt_electricity_east[kWh]','pvt_heat_east[kWh]',
-            'pvt_installed_area_west[m2]','pvt_electricity_west[kWh]','pvt_heat_west[kWh]'],
-    "sc_et": ['sc_et_installed_area_total[m2]','sc_et_heat_total[kWh]',
-              'sc_et_installed_area_roof[m2]','sc_et_heat_roof[kWh]',
-              'sc_et_installed_area_north[m2]','sc_et_heat_north[kWh]',
-              'sc_et_installed_area_south[m2]','sc_et_heat_south[kWh]',
-              'sc_et_installed_area_east[m2]','sc_et_heat_east[kWh]',
-              'sc_et_installed_area_west[m2]','sc_et_heat_west[kWh]'],
-    "sc_fp": ['sc_fp_installed_area_total[m2]','sc_fp_heat_total[kWh]',
-              'sc_fp_installed_area_roof[m2]','sc_fp_heat_roof[kWh]',
-              'sc_fp_installed_area_north[m2]','sc_fp_heat_north[kWh]',
-              'sc_fp_installed_area_south[m2]','sc_fp_heat_south[kWh]',
-              'sc_fp_installed_area_east[m2]','sc_fp_heat_east[kWh]',
-              'sc_fp_installed_area_west[m2]','sc_fp_heat_west[kWh]'],
-    "other_renewables": ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]','water_body_heat_potential[kWh]'],
-    "dh": ['DH_plant_thermal_load[kWh]','DH_plant_power[kW]',
-                         'DH_electricity_consumption_for_pressure_loss[kWh]','DH_plant_pumping_power[kW]'],
-    "dc": ['DC_plant_thermal_load[kWh]','DC_plant_power[kW]',
-                         'DC_electricity_consumption_for_pressure_loss[kWh]','DC_plant_pumping_power[kW]'],
-    }
-
-    for cea_feature, attached_list in dict.items():
-        if set(list_metrics).issubset(set(attached_list)):
-            return cea_feature
-    return None
-
-def get_results_path(locator, config, cea_feature):
-
-    selected_buildings = config.result_summary.buildings
+def get_results_path(locator, cea_feature, list_buildings):
 
     list_paths = []
     list_appendix = []
@@ -178,7 +165,7 @@ def get_results_path(locator, config, cea_feature):
         list_appendix.append(cea_feature)
 
     elif cea_feature == 'demand':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.get_demand_results_file(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -198,26 +185,26 @@ def get_results_path(locator, config, cea_feature):
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
-            for building in selected_buildings:
+            for building in list_buildings:
                 path = locator.PV_results(building, panel_type)
                 pv_paths.append(path)
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.PVT_results(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_et':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'ET')
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'sc_fp':
-        for building in selected_buildings:
+        for building in list_buildings:
             path = locator.SC_results(building, 'FP')
             list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -247,6 +234,81 @@ def get_results_path(locator, config, cea_feature):
 
     return list_paths, list_appendix
 
+
+def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_features"):
+    """
+    Maps between metrics and CEA feature categories with support for reverse mapping.
+
+    Parameters:
+    - list_metrics_or_features (list): List of metrics or CEA feature categories to map.
+    - direction (str): Direction of mapping:
+        - "metrics_to_features" (default): Maps metrics to CEA feature categories.
+        - "features_to_metrics": Maps CEA feature categories to metrics.
+
+    Returns:
+    - str or list: Mapped CEA feature or metrics based on the direction.
+
+    Raises:
+    - ValueError: If the direction is invalid.
+    """
+    mapping_dict = {
+        "architecture": ['conditioned_floor_area[m2]', 'roof_area[m2]', 'gross_floor_area[m2]', 'occupied_floor_area[m2]'],
+        "demand": ['grid_electricity_consumption[kWh]', 'enduse_electricity_demand[kWh]',
+                   'enduse_cooling_demand[kWh]', 'enduse_space_cooling_demand[kWh]', 'enduse_heating_demand[kWh]',
+                   'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
+        "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
+        "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+        "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
+               'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
+               'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
+               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'],
+        "pvt": ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]',
+                'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]',
+                'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]',
+                'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]',
+                'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]',
+                'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]'],
+        "sc_et": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
+                  'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
+                  'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
+                  'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]',
+                  'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]',
+                  'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]'],
+        "sc_fp": ['SC_FP_installed_area_total[m2]', 'SC_FP_heat_total[kWh]',
+                  'SC_FP_installed_area_roof[m2]', 'SC_FP_heat_roof[kWh]',
+                  'SC_FP_installed_area_north[m2]', 'SC_FP_heat_north[kWh]',
+                  'SC_FP_installed_area_south[m2]', 'SC_FP_heat_south[kWh]',
+                  'SC_FP_installed_area_east[m2]', 'SC_FP_heat_east[kWh]',
+                  'SC_FP_installed_area_west[m2]', 'SC_FP_heat_west[kWh]'],
+        "other_renewables": ['geothermal_heat_potential[kWh]', 'area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]'],
+        "dh": ['DH_plant_thermal_load[kWh]', 'DH_plant_power[kW]',
+               'DH_electricity_consumption_for_pressure_loss[kWh]', 'DH_plant_pumping_power[kW]'],
+        "dc": ['DC_plant_thermal_load[kWh]', 'DC_plant_power[kW]',
+               'DC_electricity_consumption_for_pressure_loss[kWh]', 'DC_plant_pumping_power[kW]'],
+    }
+
+    if direction == "metrics_to_features":
+        # Find all matches
+        matched_features = {feature for feature, metrics in mapping_dict.items() if set(list_metrics_or_features) & set(metrics)}
+
+        if not matched_features:
+            return None
+        else:
+            return list(matched_features)[0]
+
+    elif direction == "features_to_metrics":
+        # Reverse the mapping dictionary
+        reverse_mapping = {feature: metrics for feature, metrics in mapping_dict.items()}
+        list_metrics = []
+        for feature in list_metrics_or_features:
+            if feature in reverse_mapping:
+                list_metrics.extend(reverse_mapping[feature])
+        return list_metrics
+
+    else:
+        raise ValueError("Invalid direction. Use 'metrics_to_features' or 'features_to_metrics'.")
+
+
 def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     """
     Maps between metrics and CEA column names based on the direction.
@@ -265,71 +327,70 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'roof_area[m2]': ['Aroof_m2'],
         'gross_floor_area[m2]': ['GFA_m2'],
         'occupied_floor_area[m2]': ['Aocc_m2'],
-        'nominal_occupancy[-]': ['people'],
-        'grid_electricity_consumption[MWh]': ['GRID_kWh'],
-        'enduse_electricity_consumption[MWh]': ['E_sys_kWh'],
-        'enduse_cooling_demand[MWh]': ['QC_sys_kWh'],
-        'enduse_space_cooling_demand[MWh]': ['Qcs_sys_kWh'],
-        'enduse_heating_demand[MWh]': ['QH_sys_kWh'],
-        'enduse_space_heating_demand[MWh]': ['Qhs_sys_kWh'],
-        'enduse_dhw_demand[MWh]': ['Qww_kWh'],
+        'grid_electricity_consumption[kWh]': ['GRID_kWh'],
+        'enduse_electricity_demand[kWh]': ['E_sys_kWh'],
+        'enduse_cooling_demand[kWh]': ['QC_sys_kWh'],
+        'enduse_space_cooling_demand[kWh]': ['Qcs_sys_kWh'],
+        'enduse_heating_demand[kWh]': ['QH_sys_kWh'],
+        'enduse_space_heating_demand[kWh]': ['Qhs_sys_kWh'],
+        'enduse_dhw_demand[kWh]': ['Qww_kWh'],
         'embodied_emissions_building_construction[tonCO2-eq/yr]': ['GHG_sys_embodied_tonCO2yr'],
         'operation_emissions[tonCO2-eq/yr]': ['GHG_sys_tonCO2'],
         'operation_emissions_grid[tonCO2-eq/yr]': ['GRID_tonCO2'],
-        'pv_installed_area_total[m2]': ['Area_PV_m2'],
-        'pv_electricity_total[kWh]': ['E_PV_gen_kWh'],
-        'pv_installed_area_roof[m2]': ['PV_roofs_top_m2'],
-        'pv_electricity_roof[kWh]': ['PV_roofs_top_E_kWh'],
-        'pv_installed_area_north[m2]': ['PV_walls_north_m2'],
-        'pv_electricity_north[kWh]': ['PV_walls_north_E_kWh'],
-        'pv_installed_area_south[m2]': ['PV_walls_south_m2'],
-        'pv_electricity_south[kWh]': ['PV_walls_south_E_kWh'],
-        'pv_installed_area_east[m2]': ['PV_walls_east_m2'],
-        'pv_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
-        'pv_installed_area_west[m2]': ['PV_walls_west_m2'],
-        'pv_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
-        'pvt_installed_area_total[m2]': ['Area_PVT_m2'],
-        'pvt_electricity_total[kWh]': ['E_PVT_gen_kWh'],
-        'pvt_heat_total[kWh]': ['Q_PVT_gen_kWh'],
-        'pvt_installed_area_roof[m2]': ['PVT_roofs_top_m2'],
-        'pvt_electricity_roof[kWh]': ['PVT_roofs_top_E_kWh'],
-        'pvt_heat_roof[kWh]': ['PVT_roofs_top_Q_kWh'],
-        'pvt_installed_area_north[m2]': ['PVT_walls_north_m2'],
-        'pvt_electricity_north[kWh]': ['PVT_walls_north_E_kWh'],
-        'pvt_heat_north[kWh]': ['PVT_walls_north_Q_kWh'],
-        'pvt_installed_area_south[m2]': ['PVT_walls_south_m2'],
-        'pvt_electricity_south[kWh]': ['PVT_walls_south_E_kWh'],
-        'pvt_heat_south[kWh]': ['PVT_walls_south_Q_kWh'],
-        'pvt_installed_area_east[m2]': ['PVT_walls_east_m2'],
-        'pvt_electricity_east[kWh]': ['PVT_walls_east_E_kWh'],
-        'pvt_heat_east[kWh]': ['PVT_walls_east_Q_kWh'],
-        'pvt_installed_area_west[m2]': ['PVT_walls_west_m2'],
-        'pvt_electricity_west[kWh]': ['PVT_walls_west_E_kWh'],
-        'pvt_heat_west[kWh]': ['PVT_walls_west_Q_kWh'],
-        'sc_et_installed_area_total[m2]': ['Area_SC_m2'],
-        'sc_et_heat_total[kWh]': ['Q_SC_gen_kWh'],
-        'sc_et_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
-        'sc_et_heat_roof[kWh]': ['SC_ET_roofs_top_Q_kWh'],
-        'sc_et_installed_area_north[m2]': ['SC_ET_walls_north_m2'],
-        'sc_et_heat_north[kWh]': ['SC_ET_walls_north_Q_kWh'],
-        'sc_et_installed_area_south[m2]': ['SC_ET_walls_south_m2'],
-        'sc_et_heat_south[kWh]': ['SC_ET_walls_south_Q_kWh'],
-        'sc_et_installed_area_east[m2]': ['SC_ET_walls_east_m2'],
-        'sc_et_heat_east[kWh]': ['SC_ET_walls_east_Q_kWh'],
-        'sc_et_installed_area_west[m2]': ['SC_ET_walls_west_m2'],
-        'sc_et_heat_west[kWh]': ['SC_ET_walls_west_Q_kWh'],
-        'sc_fp_installed_area_total[m2]': ['Area_SC_m2'],
-        'sc_fp_heat_total[kWh]': ['Q_FP_gen_kWh'],
-        'sc_fp_installed_area_roof[m2]': ['SC_FP_roofs_top_m2'],
-        'sc_fp_heat_roof[kWh]': ['SC_FP_roofs_top_Q_kWh'],
-        'sc_fp_installed_area_north[m2]': ['SC_FP_walls_north_m2'],
-        'sc_fp_heat_north[kWh]': ['SC_FP_walls_north_Q_kWh'],
-        'sc_fp_installed_area_south[m2]': ['SC_FP_walls_south_m2'],
-        'sc_fp_heat_south[kWh]': ['SC_FP_walls_south_Q_kWh'],
-        'sc_fp_installed_area_east[m2]': ['SC_FP_walls_east_m2'],
-        'sc_fp_heat_east[kWh]': ['SC_FP_walls_east_Q_kWh'],
-        'sc_fp_installed_area_west[m2]': ['SC_FP_walls_west_m2'],
-        'sc_fp_heat_west[kWh]': ['SC_FP_walls_west_Q_kWh'],
+        'PV_installed_area_total[m2]': ['Area_PV_m2'],
+        'PV_electricity_total[kWh]': ['E_PV_gen_kWh'],
+        'PV_installed_area_roof[m2]': ['PV_roofs_top_m2'],
+        'PV_electricity_roof[kWh]': ['PV_roofs_top_E_kWh'],
+        'PV_installed_area_north[m2]': ['PV_walls_north_m2'],
+        'PV_electricity_north[kWh]': ['PV_walls_north_E_kWh'],
+        'PV_installed_area_south[m2]': ['PV_walls_south_m2'],
+        'PV_electricity_south[kWh]': ['PV_walls_south_E_kWh'],
+        'PV_installed_area_east[m2]': ['PV_walls_east_m2'],
+        'PV_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
+        'PV_installed_area_west[m2]': ['PV_walls_west_m2'],
+        'PV_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
+        'PVT_installed_area_total[m2]': ['Area_PVT_m2'],
+        'PVT_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'PVT_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'PVT_installed_area_roof[m2]': ['PVT_roofs_top_m2'],
+        'PVT_electricity_roof[kWh]': ['PVT_roofs_top_E_kWh'],
+        'PVT_heat_roof[kWh]': ['PVT_roofs_top_Q_kWh'],
+        'PVT_installed_area_north[m2]': ['PVT_walls_north_m2'],
+        'PVT_electricity_north[kWh]': ['PVT_walls_north_E_kWh'],
+        'PVT_heat_north[kWh]': ['PVT_walls_north_Q_kWh'],
+        'PVT_installed_area_south[m2]': ['PVT_walls_south_m2'],
+        'PVT_electricity_south[kWh]': ['PVT_walls_south_E_kWh'],
+        'PVT_heat_south[kWh]': ['PVT_walls_south_Q_kWh'],
+        'PVT_installed_area_east[m2]': ['PVT_walls_east_m2'],
+        'PVT_electricity_east[kWh]': ['PVT_walls_east_E_kWh'],
+        'PVT_heat_east[kWh]': ['PVT_walls_east_Q_kWh'],
+        'PVT_installed_area_west[m2]': ['PVT_walls_west_m2'],
+        'PVT_electricity_west[kWh]': ['PVT_walls_west_E_kWh'],
+        'PVT_heat_west[kWh]': ['PVT_walls_west_Q_kWh'],
+        'SC_ET_installed_area_total[m2]': ['Area_SC_m2'],
+        'SC_ET_heat_total[kWh]': ['Q_SC_gen_kWh'],
+        'SC_ET_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
+        'SC_ET_heat_roof[kWh]': ['SC_ET_roofs_top_Q_kWh'],
+        'SC_ET_installed_area_north[m2]': ['SC_ET_walls_north_m2'],
+        'SC_ET_heat_north[kWh]': ['SC_ET_walls_north_Q_kWh'],
+        'SC_ET_installed_area_south[m2]': ['SC_ET_walls_south_m2'],
+        'SC_ET_heat_south[kWh]': ['SC_ET_walls_south_Q_kWh'],
+        'SC_ET_installed_area_east[m2]': ['SC_ET_walls_east_m2'],
+        'SC_ET_heat_east[kWh]': ['SC_ET_walls_east_Q_kWh'],
+        'SC_ET_installed_area_west[m2]': ['SC_ET_walls_west_m2'],
+        'SC_ET_heat_west[kWh]': ['SC_ET_walls_west_Q_kWh'],
+        'SC_FP_installed_area_total[m2]': ['Area_SC_m2'],
+        'SC_FP_heat_total[kWh]': ['Q_FP_gen_kWh'],
+        'SC_FP_installed_area_roof[m2]': ['SC_FP_roofs_top_m2'],
+        'SC_FP_heat_roof[kWh]': ['SC_FP_roofs_top_Q_kWh'],
+        'SC_FP_installed_area_north[m2]': ['SC_FP_walls_north_m2'],
+        'SC_FP_heat_north[kWh]': ['SC_FP_walls_north_Q_kWh'],
+        'SC_FP_installed_area_south[m2]': ['SC_FP_walls_south_m2'],
+        'SC_FP_heat_south[kWh]': ['SC_FP_walls_south_Q_kWh'],
+        'SC_FP_installed_area_east[m2]': ['SC_FP_walls_east_m2'],
+        'SC_FP_heat_east[kWh]': ['SC_FP_walls_east_Q_kWh'],
+        'SC_FP_installed_area_west[m2]': ['SC_FP_walls_west_m2'],
+        'SC_FP_heat_west[kWh]': ['SC_FP_walls_west_Q_kWh'],
         'geothermal_heat_potential[kWh]': ['QGHP_kW'],
         'area_for_ground_source_heat_pump[m2]': ['Area_avail_m2'],
         'sewage_heat_potential[kWh]': ['Qsw_kW'],
@@ -338,7 +399,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -360,6 +420,44 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
             output_list.append(item)
 
     return output_list
+
+def add_period_columns(df, date_column='date'):
+    """
+    Adds 'period_month' and 'period_season' columns to a DataFrame with 8760 rows (hourly data for a year).
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame with a column named 'date' containing datetime values.
+    - season_names (list of str): List of season names in order.
+    - month_names (list of str): List of month names in order.
+    - season_mapping (dict): Mapping of month to season.
+    - date_column (str): Name of the column containing datetime values.
+
+    Returns:
+    - pd.DataFrame: The original DataFrame with additional columns ['period_month', 'period_season'].
+    """
+    # Ensure the date column exists
+    if date_column not in df.columns:
+        raise ValueError(f"The column '{date_column}' is not present in the DataFrame.")
+
+    # Convert the date column to datetime if it's not already
+    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+
+    # Check for any invalid or NaT values in the date column
+    if df[date_column].isna().any():
+        raise ValueError(f"The column '{date_column}' contains invalid or NaT values.")
+
+    # Add period_month column using month names
+    df['period_month'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
+
+    # Add period_season column using season_mapping
+    df['period_season'] = df[date_column].dt.month.map(season_mapping)
+
+    # Ensure the order of categories is maintained for month and season
+    df['period_month'] = pd.Categorical(df['period_month'], categories=month_names, ordered=True)
+    df['period_season'] = pd.Categorical(df['period_season'], categories=season_names, ordered=True)
+
+    return df
 
 
 def check_list_nesting(input_list):
@@ -393,7 +491,8 @@ def check_list_nesting(input_list):
     else:
         raise ValueError("The input list contains a mix of lists and non-lists.")
 
-def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
+
+def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names):
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
     and returns a list of these DataFrames.
@@ -413,13 +512,16 @@ def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
                 if date_columns.intersection(df.columns):
                     df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
+                    # Label months and seasons
+                    df = add_period_columns(df)
+
                     # Slice the useful columns
-                    selected_columns = ['date'] + list_cea_column_names
+                    selected_columns = ['date'] + list_cea_column_names + ['period_month'] + ['period_season']
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
 
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
-                    df = slice_hourly_results_for_custom_time_period(config, df)   # Slice the custom period of time
+                    df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 else:
                     # Slice the useful columns
@@ -436,7 +538,11 @@ def load_cea_results_from_csv_files(config, list_paths, list_cea_column_names):
     return list_dataframes
 
 
-def aggregate_or_combine_dataframes(dataframes):
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute aggregation
+
+
+def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned):
     """
     Aggregates or horizontally combines a list of DataFrames:
     - If all DataFrames share the same column names (excluding 'date'), aggregate corresponding cells.
@@ -447,60 +553,71 @@ def aggregate_or_combine_dataframes(dataframes):
 
     Returns:
     - pd.DataFrame: Aggregated or combined DataFrame.
+
     """
+
     # Ensure there are DataFrames to process
-    if not dataframes:
+    if not list_dataframes_uncleaned:
         return None
 
+    list_dataframes = []
+    columns_to_remove = ['period_month', 'period_season']
+
+    for df in list_dataframes_uncleaned:
+        # Ensure it's a DataFrame and drop the specified columns if they exist
+        if isinstance(df, pd.DataFrame):
+            cleaned_df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
+            list_dataframes.append(cleaned_df)
+
     # Check if all DataFrames share the same column names (excluding 'date')
-    column_sets = [set(df.columns) - {'date'} for df in dataframes]
+    column_sets = [set(df.columns) - {'date'} for df in list_dataframes]
     all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
     if all_columns_match:
         # Aggregate DataFrames with the same columns
-        aggregated_df = dataframes[0].copy()
-        for df in dataframes[1:]:
+        aggregated_df = list_dataframes[0].copy()
+        for df in list_dataframes[1:]:
             for col in aggregated_df.columns:
                 if col == 'date':
                     continue
                 if 'people' in col:
                     # Average "people" columns and round to integer
                     aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
                     ).round().astype(int)
                 elif '_m2' in col:
                     # Average "_m2" columns
                     aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(dataframes)
+                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
                     ).round(2)
                 else:
                     # Sum for other numeric columns
                     aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
 
-            aggregated_df = aggregated_df.round(2)
+        aggregated_df = aggregated_df.round(2)
 
-            # Switch back from CEA Columns to metrics
+        if not bool_use_acronym:
             aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
 
-            return aggregated_df
-
+        return aggregated_df
 
     else:
         # Combine DataFrames horizontally on 'date'
-        combined_df = dataframes[0].copy()
-        for df in dataframes[1:]:
+        combined_df = list_dataframes[0].copy()
+        for df in list_dataframes[1:]:
             combined_df = pd.merge(combined_df, df, on='date', how='outer')
 
         # Sort by 'date' and reset the index
         combined_df.sort_values(by='date', inplace=True)
         combined_df.reset_index(drop=True, inplace=True)
 
-        # Switch back from CEA Columns to metrics
-        combined_df.columns = map_metrics_and_cea_columns(combined_df.columns.tolist(), direction="columns_to_metrics")
+        if not bool_use_acronym:
+            combined_df.columns = map_metrics_and_cea_columns(combined_df.columns, direction="columns_to_metrics")
 
         return combined_df
 
-def slice_hourly_results_for_custom_time_period(config, df):
+
+def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
     """
     Slices a DataFrame based on hour_start and hour_end from the configuration.
     If hour_start > hour_end, wraps around the year:
@@ -515,8 +632,6 @@ def slice_hourly_results_for_custom_time_period(config, df):
     Returns:
     - pd.DataFrame: The sliced DataFrame with empty rows removed.
     """
-    # Get the start (inclusive) and end (exclusive) hours
-    hour_start, hour_end = get_hours_start_end(config)
 
     # Perform slicing based on hour_start and hour_end
     if hour_start <= hour_end:
@@ -537,92 +652,13 @@ def slice_hourly_results_for_custom_time_period(config, df):
     return sliced_df
 
 
-
-def aggregate_by_period(df, period, date_column='date'):
-    """
-    Aggregates a DataFrame by a given time period with special handling for certain column types:
-    - Columns containing '_m2' or 'people': Use .mean() and round.
-    - Other columns: Use .sum().
-
-    Parameters:
-    - df (pd.DataFrame): The input DataFrame.
-    - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
-    - date_column (str): Name of the date column.
-
-    Returns:
-    - pd.DataFrame: Aggregated DataFrame.
-    """
-    if df is None or df.empty:
-        return None
-
-    # Ensure the date column is in datetime format
-    if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
-        df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
-
-    # Handle different periods
-    if period == 'hourly':
-        df['period'] = df[date_column].apply(
-            lambda date: f"hour_{(date.dayofyear - 1) * 24 + date.hour + 1:04d}" if pd.notnull(date) else None
-        )
-
-    elif period == 'daily':
-        df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x:03d}")
-
-    elif period == 'monthly':
-        df['period'] = df[date_column].dt.month
-        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        df['period'] = df['period'].apply(lambda x: month_names[x - 1])
-        categories = df['period'].unique().tolist()
-        df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
-
-    elif period == 'seasonally':
-        season_mapping = {
-            1: 'Winter', 2: 'Winter', 12: 'Winter',
-            3: 'Spring', 4: 'Spring', 5: 'Spring',
-            6: 'Summer', 7: 'Summer', 8: 'Summer',
-            9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
-        }
-        df['period'] = df[date_column].dt.month.map(season_mapping)
-        categories = df['period'].unique().tolist()
-        df['period'] = pd.Categorical(df['period'], categories=categories, ordered=True)
-
-    elif period == 'annually':
-        df['period'] = df[date_column].dt.year
-
-    # Initialize an aggregated DataFrame
-    aggregated_df = pd.DataFrame()
-
-    # Process columns based on their naming
-    for col in df.columns:
-        if col in [date_column, 'period']:
-            continue
-
-        if 'people' in col:
-            aggregated_col = df.groupby('period')[col].mean().round().astype(int)
-        elif '_m2' in col:
-            aggregated_col = df.groupby('period')[col].mean().round(2)
-        else:
-            # Default to sum for other columns
-            aggregated_col = df.groupby('period')[col].sum()
-
-        aggregated_df[col] = aggregated_col
-
-    # Preserve the date_column for hourly or daily periods
-    if period in ['hourly', 'daily']:
-        aggregated_df[date_column] = df.groupby('period')[date_column].first()
-
-    aggregated_df.reset_index(inplace=True)
-
-    return aggregated_df
-
-
-def exec_read_and_slice(config, locator, list_metrics):
+def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # locate the path(s) to the results of the CEA Feature
-    list_paths, list_appendix = get_results_path(locator, config, cea_feature)
+    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
 
     # get the relevant CEA column names based on selected metrics
     list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
@@ -631,72 +667,329 @@ def exec_read_and_slice(config, locator, list_metrics):
     # check if list_paths is nested, for example, for PV, the lists can be nested as there are different types of PV
     if not check_list_nesting(list_paths):
         # get the useful CEA results for the user-selected metrics and hours
-        list_useful_cea_results = load_cea_results_from_csv_files(config, list_paths, list_cea_column_names)
+        list_useful_cea_results = load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names)
         list_list_useful_cea_results.append(list_useful_cea_results)
     else:
         for sublist_paths in list_paths:
-            list_useful_cea_results = load_cea_results_from_csv_files(config, sublist_paths, list_cea_column_names)
+            list_useful_cea_results = load_cea_results_from_csv_files(hour_start, hour_end, sublist_paths, list_cea_column_names)
             list_list_useful_cea_results.append(list_useful_cea_results)
 
     return list_list_useful_cea_results, list_appendix
 
 
-def exec_aggregate_building(list_list_useful_cea_results, list_buildings):
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute aggregation
 
-    list_results = []
+
+def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period, date_column='date'):
+    """
+    Aggregates building-level results based on the provided list of DataFrames.
+
+    Parameters:
+    - bool_use_acronym (bool): Whether to map columns to acronyms.
+    - list_list_useful_cea_results (list of lists of DataFrames): List of DataFrame lists to aggregate.
+    - list_buildings (list): List of building names.
+    - list_selected_time_period (list): List of selected time periods ('hourly', 'annually', 'monthly', 'seasonally').
+    - date_column (str): The column representing datetime.
+
+    Returns:
+    - list: A list of three lists of DataFrames corresponding to the time periods:
+        [hourly/annually results, monthly results, seasonally results].
+    """
+    # Initialize separate lists for the results
+    hourly_annually_results = []
+    monthly_results = []
+    seasonally_results = []
+
     for list_useful_cea_results in list_list_useful_cea_results:
+        hourly_annually_rows = []
+        monthly_rows = []
+        seasonally_rows = []
 
-        # Compute the sum for each DataFrame
-        rows = []
         for df in list_useful_cea_results:
-            if df is not None:
+            if df is None or df.empty:
+                continue
+
+            # Add labels for each hour
+            df['period_hour'] = df[date_column].apply(
+                lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
+            )
+
+            # Convert 'period_hour' to numeric (if it's not already)
+            df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
+
+            # Handle 'monthly' aggregation
+            if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
+                grouped_monthly = df.groupby('period_month').sum(numeric_only=True)
+                grouped_monthly['period'] = grouped_monthly.index  # Add 'period' column with month names
+                grouped_monthly['hour_start'] = df.groupby('period_month')['period_hour'].first().values
+                grouped_monthly['hour_end'] = df.groupby('period_month')['period_hour'].last().values + 1
+                grouped_monthly.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
+                monthly_rows.extend(grouped_monthly.reset_index(drop=True).to_dict(orient='records'))
+
+            # Handle 'seasonally' aggregation
+            if 'seasonally' in list_selected_time_period and 'period_season' in df.columns:
+                grouped_seasonally = df.groupby('period_season').sum(numeric_only=True)
+                grouped_seasonally['period'] = grouped_seasonally.index  # Add 'period' column with season names
+                grouped_seasonally['hour_start'] = df.groupby('period_season')['period_hour'].first().values
+                grouped_seasonally['hour_end'] = df.groupby('period_season')['period_hour'].last().values + 1
+                grouped_seasonally.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
+                seasonally_rows.extend(grouped_seasonally.reset_index(drop=True).to_dict(orient='records'))
+
+            # Handle 'hourly', 'annually', or no specific time period
+            if not list_selected_time_period or 'hourly' in list_selected_time_period or 'annually' in list_selected_time_period:
                 row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
-                rows.append(row_sum)
+                row_sum['period'] = 'selected_hours'  # Add 'period' column for this case
+                row_sum['hour_start'] = df['period_hour'].iloc[0]
+                row_sum['hour_end'] = df['period_hour'].iloc[-1] + 1
+                row_sum.drop(labels=['period_month', 'period_season'], errors='ignore', inplace=True)
+                hourly_annually_rows.append(row_sum)
 
-        # Create a DataFrame from the rows
-        result_df = pd.DataFrame(rows)
-        if not result_df.empty:
-            result_df.insert(0, 'Name', list_buildings)
+            # Remove 'period_hour' column
+            df.drop(columns=['period_hour'], inplace=True, errors='ignore')
 
-        # Reset index for a clean result
-        list_results.append([result_df.reset_index(drop=True)])
+        # Create DataFrames for each time period
+        if hourly_annually_rows:
+            hourly_annually_df = pd.DataFrame(hourly_annually_rows)
+            if not hourly_annually_df.empty:
+                # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+                hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
+                hourly_annually_df.insert(0, 'Name', list_buildings)
+                if not bool_use_acronym:
+                    hourly_annually_df.columns = map_metrics_and_cea_columns(
+                        hourly_annually_df.columns, direction="columns_to_metrics"
+                    )
+                hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
 
-    return list_results
+        if monthly_rows:
+            monthly_df = pd.DataFrame(monthly_rows)
+            if not monthly_df.empty:
+                monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
+                # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+                monthly_df = add_nominal_actual_and_coverage(monthly_df)
+                list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
+                monthly_df.insert(0, 'Name', list_buildings_series)
+                if not bool_use_acronym:
+                    monthly_df.columns = map_metrics_and_cea_columns(
+                        monthly_df.columns, direction="columns_to_metrics"
+                    )
+                monthly_results.append(monthly_df.reset_index(drop=True))
+
+        if seasonally_rows:
+            seasonally_df = pd.DataFrame(seasonally_rows)
+            if not seasonally_df.empty:
+                seasonally_df = seasonally_df[~(seasonally_df['hour_start'].isnull() & seasonally_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
+                # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+                seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
+                list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
+                list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
+                seasonally_df.insert(0, 'Name', list_buildings_series)
+                if not bool_use_acronym:
+                    seasonally_df.columns = map_metrics_and_cea_columns(
+                        seasonally_df.columns, direction="columns_to_metrics"
+                    )
+                seasonally_results.append(seasonally_df.reset_index(drop=True))
+    # Combine results into a single list
+    return [hourly_annually_results, monthly_results, seasonally_results], ['annually','monthly','seasonally']
 
 
-def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_time_period):
+def add_nominal_actual_and_coverage(df):
+    """
+    Adds 'nominal_hours', 'actual_selected_hours', and 'coverage_ratio' columns to a DataFrame
+    based on the 'period' column and existing columns 'hour_start' and 'hour_end'.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame with columns 'period', 'hour_start', and 'hour_end'.
+    - month_names (list): List of month names in order (e.g., ['Jan', 'Feb', ...]).
+    - season_names (list): List of season names (e.g., ['Winter', 'Spring', 'Summer', 'Autumn']).
+
+    Returns:
+    - pd.DataFrame: DataFrame with additional 'nominal_hours', 'actual_selected_hours', and 'coverage_ratio' columns.
+    """
+
+    if df is None or df.empty:
+        return None
+
+    if 'period' not in df.columns:
+        df['period'] = df.index.tolist()
+        df['period'] = df['period'].astype(str)
+
+    # Convert 'hour_start' and 'hour_end' to numeric values
+    df['hour_start'] = pd.to_numeric(df['hour_start'], errors='coerce')
+    df['hour_end'] = pd.to_numeric(df['hour_end'], errors='coerce')
+
+    # Map 'period' to nominal hours
+    def calculate_nominal_hours(period):
+        if period in month_hours:
+            return month_hours[period]
+        elif period in season_hours:
+            return season_hours[period]
+        elif period.startswith("day_"):
+            return 24
+        elif period.startswith("hour_"):
+            return 1
+        elif period.startswith("year_"):
+            return 8760
+        elif period == 'selected_hours':
+            return 8760
+        else:
+            return None  # Handle unexpected values
+
+    # Add 'nominal_hours' column
+    df['nominal_hours'] = df['period'].apply(calculate_nominal_hours)
+    df['nominal_hours'] = pd.to_numeric(df['nominal_hours'], errors='coerce')
+
+    # Calculate 'actual_selected_hours'
+    df['actual_selected_hours'] = df['hour_end'] - df['hour_start']
+
+    # Calculate 'coverage_ratio' and round to 2 decimal places
+    df['coverage_ratio'] = (df['actual_selected_hours'] / df['nominal_hours']).round(2)
+
+    # # Remove period column
+    # df = df.drop(columns=['period'])
+
+    return df
+
+
+def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period):
+
+    def aggregate_by_period(df, period, date_column='date'):
+        """
+        Aggregates a DataFrame by a given time period with special handling for certain column types:
+        - Columns containing '_m2' or 'people': Use .mean() and round.
+        - Other columns: Use .sum().
+        - Adds 'hour_start' and 'hour_end' columns for group start and end hour information.
+
+        Parameters:
+        - df (pd.DataFrame): The input DataFrame.
+        - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
+        - date_column (str): Name of the date column.
+
+        Returns:
+        - pd.DataFrame: Aggregated DataFrame.
+        """
+        if df is None or df.empty:
+            return None
+
+        # Ensure the date column is in datetime format
+        if date_column not in df.columns:
+            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
+        if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+            df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+            if df[date_column].isnull().all():
+                raise ValueError(f"Failed to convert '{date_column}' to datetime format. Check the input data.")
+
+        # Add labels for each hour
+        df['period_hour'] = df[date_column].apply(
+            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
+        )
+
+        # Handle different periods
+        if period == 'hourly':
+            df['period'] = 'hour_' + df['period_hour']
+        elif period == 'daily':
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
+        elif period == 'monthly':
+            df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
+            df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
+        elif period == 'seasonally':
+            df['period'] = df[date_column].dt.month.map(season_mapping)
+            df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
+        elif period == 'annually':
+            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+        else:
+            raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
+
+        # Initialize an aggregated DataFrame
+        aggregated_df = pd.DataFrame()
+
+        # Process columns based on their naming
+        for col in df.columns:
+            if col in [date_column, 'period', 'period_hour']:
+                continue
+
+            if 'people' in col:
+                aggregated_col = df.groupby('period')[col].mean().round().astype(int)
+            elif '_m2' in col:
+                aggregated_col = df.groupby('period')[col].mean().round(2)
+            else:
+                # Default to sum for other columns
+                aggregated_col = df.groupby('period')[col].sum()
+
+            aggregated_df[col] = aggregated_col
+
+        # Convert 'period_hour' to numeric (if it's not already)
+        df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
+
+        # Add hour_start and hour_end columns
+        period_groups = df.groupby('period')
+        aggregated_df['hour_start'] = period_groups['period_hour'].first().values
+        aggregated_df['hour_end'] = period_groups['period_hour'].last().values + 1
+
+        # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+        aggregated_df = add_nominal_actual_and_coverage(aggregated_df)
+
+        # Preserve the date_column for hourly or daily periods
+        if period in ['hourly', 'daily']:
+            aggregated_df[date_column] = period_groups[date_column].first()
+
+        # Drop temporary 'period_hour' column
+        if 'period_hour' in aggregated_df.columns:
+            aggregated_df.drop(columns=['period_hour'], inplace=True)
+
+        # Move the period column to the first column
+        cols = ['period'] + [col for col in aggregated_df.columns if col != 'period']
+        aggregated_df = aggregated_df[cols]
+
+        return aggregated_df
+
 
     list_list_df = []
     list_list_time_period = []
 
     for list_useful_cea_results in list_list_useful_cea_results:
-        df_aggregated_results_hourly = aggregate_or_combine_dataframes(list_useful_cea_results)
+        df_aggregated_results_hourly = aggregate_or_combine_dataframes(bool_use_acronym, list_useful_cea_results)
 
         list_df = []
         list_time_period = []
 
-        if 'hourly' in list_aggregate_by_time_period:
+        if 'hourly' in list_selected_time_period:
             df_hourly = aggregate_by_period(df_aggregated_results_hourly, 'hourly', date_column='date')
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_hourly = add_nominal_actual_and_coverage(df_hourly)
             list_df.append(df_hourly)
             list_time_period.append('hourly')
 
-        if 'daily' in list_aggregate_by_time_period:
+        if 'daily' in list_selected_time_period:
             df_daily = aggregate_by_period(df_aggregated_results_hourly, 'daily', date_column='date')
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_daily = add_nominal_actual_and_coverage(df_daily)
             list_df.append(df_daily)
             list_time_period.append('daily')
 
-        if 'monthly' in list_aggregate_by_time_period:
+        if 'monthly' in list_selected_time_period:
             df_monthly = aggregate_by_period(df_aggregated_results_hourly, 'monthly', date_column='date')
+            if df_monthly is not None and not df_monthly.empty:
+                df_monthly = df_monthly[~(df_monthly['hour_start'].isnull() & df_monthly['hour_end'].isnull())]
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_monthly = add_nominal_actual_and_coverage(df_monthly)
             list_df.append(df_monthly)
             list_time_period.append('monthly')
 
-        if 'seasonally' in list_aggregate_by_time_period:
+        if 'seasonally' in list_selected_time_period:
             df_seasonally = aggregate_by_period(df_aggregated_results_hourly, 'seasonally', date_column='date')
+            if df_seasonally is not None and not df_seasonally.empty:
+                df_seasonally = df_seasonally[~(df_seasonally['hour_start'].isnull() & df_seasonally['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_seasonally = add_nominal_actual_and_coverage(df_seasonally)
             list_df.append(df_seasonally)
             list_time_period.append('seasonally')
 
-        if 'annually' in list_aggregate_by_time_period:
+        if 'annually' in list_selected_time_period:
             df_annually = aggregate_by_period(df_aggregated_results_hourly, 'annually', date_column='date')
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_annually = add_nominal_actual_and_coverage(df_annually)
             list_df.append(df_annually)
             list_time_period.append('annually')
 
@@ -705,7 +998,12 @@ def exec_aggregate_time_period(list_list_useful_cea_results, list_aggregate_by_t
 
     return list_list_df, list_list_time_period
 
-def results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix):
+
+# Write to disk
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -715,22 +1013,13 @@ def results_writer_time_period_with_date(config, output_path, list_metrics, list
     - list_df_aggregate_time_period (List[pd.DataFrame]): A list of DataFrames, each representing a different aggregation period.
     """
     # Map metrics to CEA features
-    cea_feature = map_metrics_cea_features(list_metrics)
-
-    # Get the hour start and hour end
-    hour_start, hour_end = get_hours_start_end(config)
+    cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
 
     # Create the target path of directory
-    target_path = os.path.join(output_path, cea_feature)
+    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
-
-    # Remove all files in folder
-    for filename in os.listdir(target_path):
-        file_path = os.path.join(target_path, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
 
     for m in range(len(list_list_df_aggregate_time_period)):
         list_df_aggregate_time_period = list_list_df_aggregate_time_period[m]
@@ -743,58 +1032,72 @@ def results_writer_time_period_with_date(config, output_path, list_metrics, list
             time_period = list_time_period[n]
             if df is not None:
                 # Determine time period name based on the content in Column ['period']
-                if len(df) == 1 and abs(hour_end - hour_start) == 8760:
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                if time_period == 'annually':
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
+
                 # if only one day is involved
                 elif len(df) == 1 and time_period == 'daily':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
                 elif len(df) > 1 and time_period == 'daily':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
                 elif len(df) == 1 and time_period == 'monthly':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
+                    if bool_analytics:
+                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                    else:
+                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
                 pass    # Allow the missing results and will just pass
 
-        # Write .csv files for sum of all selected hours
-        for df in list_df_aggregate_time_period:
-            if df is not None:
-                if len(df) == 1 and abs(hour_end - hour_start) != 8760 \
-                        and not df['period'].astype(str).str.contains("day").any() \
-                        and not df['period'].isin(month_names).any() \
-                        and not df['period'].isin(season_names).any() \
-                        and not df['period'].astype(str).str.contains("hour").any():
-                    time_period = "sum_selected_hours"
-                    df['period'] = "selected_hours"
-                    path_csv = os.path.join(target_path, f"{appendix}_{time_period}.csv")
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-            else:
-                pass    # Allow the missing results and will just pass
 
-
-def results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df, list_appendix):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics):
     """
-    Writes aggregated results for different time periods to CSV files.
+    Writes aggregated results for each building to CSV files.
 
     Parameters:
     - output_path (str): The base directory to save the results.
@@ -803,45 +1106,56 @@ def results_writer_time_period_without_date(config, output_path, list_metrics, l
     """
 
     # Map metrics to CEA features
-    cea_feature = map_metrics_cea_features(list_metrics)
+    if list_metrics is not None and len(list_metrics) > 0:
+        cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
+    else:
+        cea_feature = list_appendix
 
     # Join the paths
-    target_path = os.path.join(output_path, cea_feature, 'buildings')
+    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
 
-    # Remove all files in folder
-    for filename in os.listdir(target_path):
-        file_path = os.path.join(target_path, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
     for m in range(len(list_list_df)):
         list_df = list_list_df[m]
-        appendix = list_appendix[m]
+        appendix = list_appendix[0]
 
-        if appendix == 'architecture':
+        if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
             # Create the .csv file path
-            path_csv = os.path.join(target_path, f"{appendix}_buildings.csv")
+            path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
         else:
-            path_csv = os.path.join(target_path, f"{appendix}_sum_selected_hours_buildings.csv")
+            if not bool_analytics:
+                time_resolution = list_time_resolution[m]
+                path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+            else:
+                os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                time_resolution = list_time_resolution[m]
+                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+
         # Write to .csv files
         for df in list_df:
             if not df.empty:
-                df.to_csv(path_csv, index=False, float_format="%.2f")
+                df.to_csv(path_csv, index=False, float_format="%.4f")
 
-def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings):
+
+# Filter by criteria for buildings
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings):
     """
     Filters rows in all DataFrames within a nested list of DataFrames,
     keeping only rows where the 'Name' column matches any value in list_buildings.
 
     Parameters:
-    - list_list_useful_cea_results (list of list of pd.DataFrame): Nested list of DataFrames.
+    - list_list_useful_cea_results (list of lists of pd.DataFrame): Nested list of DataFrames.
     - list_buildings (list of str): List of building names to filter by in the 'Name' column.
 
     Returns:
     - list of list of pd.DataFrame: Nested list of filtered DataFrames with the same shape as the input.
     """
+
     list_list_useful_cea_results_buildings = []
 
     for dataframe_list in list_list_useful_cea_results:
@@ -849,7 +1163,12 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
         for df in dataframe_list:
             if 'Name' in df.columns:
                 filtered_df = df[df['Name'].isin(list_buildings)]
+
+                if not bool_use_acronym:
+                    filtered_df.columns = map_metrics_and_cea_columns(filtered_df.columns, direction="columns_to_metrics")
+
                 filtered_list.append(filtered_df)
+
             else:
                 # If the 'Name' column does not exist, append an empty DataFrame
                 print("Skipping a DataFrame as it does not contain the 'Name' column.")
@@ -858,6 +1177,374 @@ def filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings
 
     return list_list_useful_cea_results_buildings
 
+
+def determine_building_main_use(df_typology):
+
+    # Create a new DataFrame to store results
+    result = pd.DataFrame()
+    result['Name'] = df_typology['Name']
+
+    # Determine the main use type and its ratio
+    result['main_use'] = df_typology.apply(
+        lambda row: row['1ST_USE'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE'],
+        axis=1
+    )
+    result['main_use_r'] = df_typology.apply(
+        lambda row: row['1ST_USE_R'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
+                    row['2ND_USE_R'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
+                    row['3RD_USE_R'],
+        axis=1
+    )
+
+    return result
+
+
+def get_building_year_standard_main_use_type(locator):
+
+    typology_dbf = dbf_to_dataframe(locator.get_building_typology())
+    df = determine_building_main_use(typology_dbf)
+    df['standard'] = typology_dbf['STANDARD']
+    df['year'] = typology_dbf['YEAR']
+
+    return df
+
+
+def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=None):
+    """
+    Filters rows in the DataFrame based on a year range.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'year' column.
+    - integer_year_start (int, optional): Start of the year range (inclusive). Defaults to 0 if None or empty.
+    - integer_year_end (int, optional): End of the year range (inclusive). Defaults to 9999 if None or empty.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'year' is within the specified range.
+
+    Raises:
+    - ValueError: If 'year' column is not found or if integer_year_start > integer_year_end,
+                  or if the filtered DataFrame is empty.
+    """
+
+    # Handle None or empty values
+    integer_year_start = 0 if not integer_year_start else integer_year_start
+    integer_year_end = 9999 if not integer_year_end else integer_year_end
+
+    if integer_year_start > integer_year_end:
+        raise ValueError("The start year cannot be greater than the end year.")
+
+    # Filter rows where 'year' is within the range
+    filtered_df = df_typology[
+        (df_typology['year'] >= integer_year_start) & (df_typology['year'] <= integer_year_end)
+    ]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified year range.")
+
+    return filtered_df
+
+
+def filter_by_standard(df_typology, list_standard):
+    """
+    Filters rows in the DataFrame based on whether the 'standard' column matches any item in list_standard.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'standard' column.
+    - list_standard (list): List of standard values to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'standard' matches any item in list_standard.
+
+    Raises:
+    - ValueError: If 'standard' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'standard' matches any value in list_standard
+    filtered_df = df_typology[df_typology['standard'].isin(list_standard)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified standards.")
+
+    return filtered_df
+
+
+def filter_by_main_use(df_typology, list_main_use_type):
+    """
+    Filters rows in the DataFrame based on whether the 'main_use' column matches any item in list_main_use_type.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use' column.
+    - list_main_use_type (list): List of main use types to filter on.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use' matches any item in list_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'main_use' not in df_typology.columns:
+        raise ValueError("'main_use' column not found in the DataFrame.")
+
+    # Filter rows where 'main_use' matches any value in list_main_use_type
+    filtered_df = df_typology[df_typology['main_use'].isin(list_main_use_type)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the selected criteria for the specified main use types.")
+
+    return filtered_df
+
+
+def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
+    """
+    Filters rows in the DataFrame where the 'main_use_r' column is equal to or larger than a given ratio.
+
+    Parameters:
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_r' column.
+    - ratio_main_use_type (float): The minimum ratio threshold for filtering.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_r' >= ratio_main_use_type.
+
+    Raises:
+    - ValueError: If 'main_use_r' column is not found or if the filtered DataFrame is empty.
+    """
+
+    # Filter rows where 'main_use_r' is greater than or equal to the threshold
+    filtered_df = df_typology[df_typology['main_use_r'] >= ratio_main_use_type]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings meet the criteria for the specified main use ratio.")
+
+    return filtered_df
+
+
+def filter_by_building_names(df_typology, list_buildings):
+    """
+    Filters rows in the DataFrame where the 'Name' column matches any item in the given list.
+
+    Parameters:
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'Name' column.
+    - list_buildings (list of str): List of building names to filter for.
+
+    Returns:
+    - pd.DataFrame: Filtered DataFrame with rows where 'Name' matches any item in list_buildings.
+
+    Raises:
+    - ValueError: If 'Name' column is not found or if the filtered DataFrame is empty.
+    """
+    if 'Name' not in df_typology.columns:
+        raise ValueError("'Name' column not found in the DataFrame.")
+
+    # Filter rows where 'Name' is in list_buildings
+    filtered_df = df_typology[df_typology['Name'].isin(list_buildings)]
+
+    # Check if the filtered DataFrame is empty
+    if filtered_df.empty:
+        raise ValueError("No buildings match the specified list of names.")
+
+    return filtered_df
+
+
+def serial_filter_buildings(config, locator):
+
+    # Get the building info
+    df_typology = get_building_year_standard_main_use_type(locator)
+
+    # get the selecting criteria from config
+    list_buildings = config.result_summary.buildings
+    integer_year_start = config.result_summary.filter_buildings_by_year_start
+    integer_year_end = config.result_summary.filter_buildings_by_year_end
+    list_standard = config.result_summary.filter_buildings_by_standard
+    list_main_use_type = config.result_summary.filter_buildings_by_use_type
+    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
+
+    # Initial filter to keep the selected buildings
+    df_typology = filter_by_building_names(df_typology, list_buildings)
+
+    # Further select by year
+    df_typology = filter_by_year_range(df_typology, integer_year_start, integer_year_end)
+
+    # Further filter by standard
+    df_typology = filter_by_standard(df_typology, list_standard)
+
+    # Further filter by main use type
+    df_typology = filter_by_main_use(df_typology, list_main_use_type)
+
+    # Further filter by main use type ratio
+    df_typology = filter_by_main_use_ratio(df_typology, ratio_main_use_type)
+
+    return df_typology
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Execute advanced UBEM analytics
+
+def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
+    """
+    Read CEA results over all scenarios in a project and produce commonly used UBEM analytics.
+    The list of UBEM analytics include:
+
+    - EUI - Grid Electricity [kWh/m²]
+      - Annual
+    - EUI - Enduse Electricity [kWh/m²]
+      - Annual
+    - EUI - Cooling Demand [kWh/m²]
+      - Annual
+    - EUI - Space Cooling Demand [kWh/m²]
+      - Annual
+    - EUI - Heating Demand [kWh/m²]
+      - Annual
+    - EUI - Space Heating Demand [kWh/m²]
+      - Annual
+    - EUI - Domestic Hot Water Demand [kWh/m²]
+      - Annual
+    - PV Energy Penetration [-]
+      - Annual
+    - PV Self-Consumption [-]
+      - Annual
+    - PV Energy Sufficiency [-]
+      - Annual
+    - PV Self-Sufficiency [-]
+      - Annual
+    - PV Capacity Factor [-]
+      - Annual
+    - PV Specific Yield [-]
+      - Annual
+      - Winter, Spring, Summer, Autumn
+      - Winter+Hourly, Spring+Hourly, Summer+Hourly, Autumn+Hourly
+      - Daily
+      - Weekly
+      - Monthly
+    - PV System Emissions [kgCO₂]
+      - Annual
+    - PV Generation Intensity [kgCO₂/kWh]
+      - Annual
+      - Winter, Spring, Summer, Autumn
+      - Winter+Hourly, Spring+Hourly, Summer+Hourly, Autumn+Hourly
+      - Daily
+      - Weekly
+      - Monthly
+    - DH Plant Capacity Factor [-]
+      - Annual
+    - DH Pump Capacity Factor [-]
+      - Annual
+    - DC Plant Capacity Factor [-]
+      - Annual
+    - DC Pump Capacity Factor [-]
+      - Annual
+    """
+
+    # The CEA Features that the current analytics feature supports
+    list_cea_feature = ['demand', 'pv', 'dh', 'dc']
+
+    # Calculating EUIs
+    list_time_period = config.result_summary.aggregate_by_time_period
+
+    return None
+
+
+def calc_ubem_analytics_normalised(
+    locator, hour_start, hour_end, cea_feature, summary_folder,
+    list_time_period, bool_aggregate_by_building, bool_use_acronym,
+    bool_use_conditioned_floor_area_for_normalisation
+):
+    """
+    Normalizes UBEM analytics based on floor area and writes the results.
+    """
+    appendix = cea_feature
+    list_metrics = map_metrics_cea_features([cea_feature], direction="features_to_metrics")
+    list_result_time_resolution = []
+    list_result_buildings = []
+
+    # Mapping metric names for user-friendly output
+    name_mapping = {
+        'grid_electricity_consumption[kWh]': 'EUI - grid electricity [kWh/m²]',
+        'enduse_electricity_demand[kWh]': 'EUI - enduse electricity [kWh/m²]',
+        'enduse_cooling_demand[kWh]': 'EUI - cooling [kWh/m²]',
+        'enduse_space_cooling_demand[kWh]': 'EUI - space cooling [kWh/m²]',
+        'enduse_heating_demand[kWh]': 'EUI - heating [kWh/m²]',
+        'enduse_space_heating_demand[kWh]': 'EUI - space heating [kWh/m²]',
+        'enduse_dhw_demand[kWh]': 'EUI - domestic hot water [kWh/m²]',
+    }
+
+    # Read and process the architecture DataFrame
+    df_architecture_path = locator.get_export_results_summary_cea_feature_buildings_file(
+        summary_folder, cea_feature='architecture', appendix='architecture'
+    )
+    df_architecture = pd.read_csv(df_architecture_path)
+
+    if bool_use_acronym:
+        df_architecture.columns = map_metrics_and_cea_columns(df_architecture.columns, direction="columns_to_metrics")
+
+    # Helper function for normalization
+    def normalize_dataframe(df, area_column):
+        if area_column not in df_architecture.columns:
+            raise ValueError(f"Column '{area_column}' not found in architecture data.")
+        total_area = df_architecture[area_column].sum()
+        df[list_metrics] = df[list_metrics].div(total_area)
+        return df
+
+    for time_period in list_time_period:
+        # Time resolution processing
+        df_time_path = locator.get_export_results_summary_cea_feature_time_resolution_file(
+            summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
+        )
+        df_time_resolution = pd.read_csv(df_time_path)
+
+        if bool_use_acronym:
+            df_time_resolution.columns = map_metrics_and_cea_columns(
+                df_time_resolution.columns, direction="columns_to_metrics"
+            )
+
+        area_column = 'conditioned_floor_area[m2]' if bool_use_conditioned_floor_area_for_normalisation else 'gross_floor_area[m2]'
+        df_time_resolution = normalize_dataframe(df_time_resolution, area_column)
+
+        result_time_resolution = df_time_resolution.rename(columns=name_mapping)
+        list_result_time_resolution.append(result_time_resolution)
+
+        # Write to disk
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True)
+
+        # Aggregate by building
+        if bool_aggregate_by_building:
+            if time_period in ['hourly', 'daily']:
+                continue
+
+            else:
+                df_buildings_path = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(
+                    summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
+                )
+                df_buildings = pd.read_csv(df_buildings_path)
+
+                if bool_use_acronym:
+                    df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
+
+                result_buildings = pd.merge(
+                    df_buildings,
+                    df_architecture[['Name', area_column]],
+                    on='Name', how='inner'
+                )
+                for col in list_metrics:
+                    if col in result_buildings.columns:
+                        result_buildings[col] = result_buildings[col] / result_buildings[area_column]
+                result_buildings.drop(columns=[area_column], inplace=True)
+
+                result_buildings = result_buildings.rename(columns=name_mapping)
+
+                list_result_buildings.append(result_buildings)
+
+                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
+                [list_result_buildings], [appendix], [time_period], bool_analytics=True
+                                                    )
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Activate: Export results to .csv (summary & analytics)
 
 
 def main(config):
@@ -875,21 +1562,22 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # gather info from config file
-    output_path = locator.get_export_folder()
-    print(output_path)
-    list_buildings = config.result_summary.buildings
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
-    list_aggregate_by_time_period = config.result_summary.aggregate_by_time_period
+    list_selected_time_period = config.result_summary.aggregate_by_time_period
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
+    hour_start, hour_end = get_hours_start_end(config)
+    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
+    bool_include_advanced_analytics = config.result_summary.include_advanced_analytics
 
     list_list_metrics_with_date = [
-                        config.result_summary.metrics_demand,
-                        config.result_summary.metrics_pv,
-                        config.result_summary.metrics_pvt,
-                        config.result_summary.metrics_sc_et,
-                        config.result_summary.metrics_sc_fp,
+                        config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_photovoltaic_panels,
+                        config.result_summary.metrics_photovoltaic_thermal_panels,
+                        config.result_summary.metrics_solar_collectors_et,
+                        config.result_summary.metrics_solar_collectors_fp,
                         config.result_summary.metrics_other_renewables,
-                        config.result_summary.metrics_dh,
-                        config.result_summary.metrics_dc
+                        config.result_summary.metrics_district_heating,
+                        config.result_summary.metrics_district_cooling
                         ]
 
     list_list_metrics_without_date = [
@@ -899,51 +1587,54 @@ def main(config):
                         ]
 
     list_list_metrics_building = [
-                        config.result_summary.metrics_demand,
-                        config.result_summary.metrics_pv,
-                        config.result_summary.metrics_pvt,
-                        config.result_summary.metrics_sc_et,
-                        config.result_summary.metrics_sc_fp,
+                        config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_photovoltaic_panels,
+                        config.result_summary.metrics_photovoltaic_thermal_panels,
+                        config.result_summary.metrics_solar_collectors_et,
+                        config.result_summary.metrics_solar_collectors_fp,
                         ]
 
-    # Get the hour start and hour end
-    hour_start, hour_end = get_hours_start_end(config)
+    # Get the user-defined name of folder
+    folder_name = config.result_summary.folder_name_to_save_exported_results
 
     # Create the folder to store all the .csv file if it doesn't exist
-    output_path = os.path.join(output_path, 'results',
-                               f'hours_{hour_start}_{hour_end}'.format(hour_start=hour_start, hour_end=hour_end))
-    os.makedirs(output_path, exist_ok=True)
+    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+    os.makedirs(summary_folder, exist_ok=True)
 
     # Store the list of selected buildings
-    df_buildings = pd.DataFrame(data=list_buildings, columns=['Name'])
-    buildings_path = os.path.join(output_path, 'selected_buildings.csv')
+    df_buildings = serial_filter_buildings(config, locator)
+    buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    list_buildings = df_buildings['Name'].to_list()
+
     df_buildings.to_csv(buildings_path, index=False)
 
     # Export results that have no date information, non-8760 hours, aggregate by building
     for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_without_date(config, output_path, list_metrics, list_list_useful_cea_results_buildings, list_appendix)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None,  bool_analytics=False)   # Write to disk
 
     # Export results that have date information, 8760 hours, aggregate by time period
     for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(list_list_useful_cea_results,
-                                                                                     list_aggregate_by_time_period)
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False)   # Write to disk
 
-        results_writer_time_period_with_date(config, output_path, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)
-
-        # aggregate by building
+    # Aggregate by building
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(config, locator, list_metrics)
-            list_list_df_aggregate_building = exec_aggregate_building(list_list_useful_cea_results, list_buildings)
-            results_writer_time_period_without_date(config, output_path, list_metrics, list_list_df_aggregate_building, list_appendix)
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution, bool_analytics=False)  # Write to disk
 
+    # Include analytics
+    if bool_include_advanced_analytics:
+        calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

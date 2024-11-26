@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -12,20 +14,42 @@ class LayerParams(BaseModel):
     parameters: dict
 
 
+class LayerDescription(BaseModel):
+    name: str
+    label: str
+    description: str
+    parameters: dict
+
+
+class LayerCategory(BaseModel):
+    name: str
+    label: str
+    layers: List[LayerDescription]
+
+
+class LayersList(BaseModel):
+    categories: List[LayerCategory]
+
+
 @router.get('/')
-async def get_layers():
+async def get_layers() -> LayersList:
     layers = get_layers_grouped_by_category()
 
     # Parse layer class to get name and description
-    out = {"categories": []}
+    categories = []
     for category, layers in layers.items():
-        category_description = {"name": category, "layers":[]}
+        category_label = category
+        _layers = []
         for layer in layers:
-            category_description["layers"].append(layer.describe())
-        out["categories"].append(category_description)
+            layer_description = layer.describe()
+            category_label = layer_description["category"]["label"]
+            _layers.append(LayerDescription(**layer_description))
 
-    print(out)
-    return out
+        category_description = LayerCategory(name=category, label=category_label, layers=_layers)
+        categories.append(category_description)
+
+    return LayersList(categories=categories)
+
 
 @router.post('/{layer_category}/{layer_name}/generate')
 async def generate_map_layer(params: LayerParams, layer_category: str, layer_name: str):
@@ -33,7 +57,8 @@ async def generate_map_layer(params: LayerParams, layer_category: str, layer_nam
 
     try:
         layer = layer_class(project=params.project, parameters=params.parameters)
-    except MissingInputDataException:
+    except MissingInputDataException as e:
+        print(e)
         raise HTTPException(status_code=400, detail="Missing input files")
 
     return layer.generate_output()
@@ -44,6 +69,6 @@ async def check_map_layer(params: LayerParams, layer_category: str, layer_name: 
     layer_class = load_layer(layer_name, layer_category)
 
     try:
-        layer = layer_class(project=params.project, parameters=params.parameters)
+        layer_class(project=params.project, parameters=params.parameters)
     except MissingInputDataException:
         raise HTTPException(status_code=400, detail="Missing input files")
