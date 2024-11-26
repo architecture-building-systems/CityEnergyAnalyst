@@ -16,6 +16,13 @@ class DemandMapLayer(MapLayer):
     label = "Grid Electricity Consumption [kWh]"
     description = "Energy Demand of buildings"
 
+    _data_columns = {
+        "E_sys_kWh": "Electricity Consumption [kWh]",
+        "Qcs_sys_kWh": "Energy demand for space cooling [kWh]",
+        "Qhs_sys_kWh": "Energy demand for space heating [kWh]",
+        "Qww_sys_kWh": "Energy demand for domestic hot water [kWh]",
+    }
+
     @property
     def input_file_locators(self):
         scenario_name = self.parameters['scenario-name']
@@ -33,6 +40,13 @@ class DemandMapLayer(MapLayer):
             'scenario-name': {
                 "type": "string",
                 "description": "Scenario of the layer",
+            },
+            'data-column': {
+                "type": "string",
+                "selector": "choice",
+                "description": "Data column to use",
+                "default": list(self._data_columns.keys())[0],
+                "choices": list(self._data_columns.keys()),
             },
             'period': {
                 "type": "array",
@@ -60,13 +74,14 @@ class DemandMapLayer(MapLayer):
         buildings = locator.get_zone_building_names()
         period = self.parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
-        data_column = "GRID_kWh"
+
+        data_column = self.parameters['data-column']
 
         output = {
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": self.label,
+                "label": self._data_columns[data_column],
                 "description": self.description,
             }
         }
