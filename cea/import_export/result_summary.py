@@ -1146,7 +1146,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
             else:
                 os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                 time_resolution = list_time_resolution[m]
-                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution)
+                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
 
 
         # Write to .csv files
@@ -1406,19 +1406,19 @@ def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
     Read CEA results over all scenarios in a project and produce commonly used UBEM analytics.
     The list of UBEM analytics include:
 
-    - EUI - Grid Electricity [kWh/m²/yr]
+    - EUI - Grid Electricity [kWh/m²]
       - Annual
-    - EUI - Enduse Electricity [kWh/m²/yr]
+    - EUI - Enduse Electricity [kWh/m²]
       - Annual
-    - EUI - Cooling Demand [kWh/m²/yr]
+    - EUI - Cooling Demand [kWh/m²]
       - Annual
-    - EUI - Space Cooling Demand [kWh/m²/yr]
+    - EUI - Space Cooling Demand [kWh/m²]
       - Annual
-    - EUI - Heating Demand [kWh/m²/yr]
+    - EUI - Heating Demand [kWh/m²]
       - Annual
-    - EUI - Space Heating Demand [kWh/m²/yr]
+    - EUI - Space Heating Demand [kWh/m²]
       - Annual
-    - EUI - Domestic Hot Water Demand [kWh/m²/yr]
+    - EUI - Domestic Hot Water Demand [kWh/m²]
       - Annual
     - PV Energy Penetration [-]
       - Annual
@@ -1465,95 +1465,101 @@ def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
     return None
 
 
-def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation):
-
+def calc_ubem_analytics_normalised(
+    locator, hour_start, hour_end, cea_feature, summary_folder,
+    list_time_period, bool_aggregate_by_building, bool_use_acronym,
+    bool_use_conditioned_floor_area_for_normalisation
+):
+    """
+    Normalizes UBEM analytics based on floor area and writes the results.
+    """
     appendix = cea_feature
     list_metrics = map_metrics_cea_features([cea_feature], direction="features_to_metrics")
-
     list_result_time_resolution = []
     list_result_buildings = []
 
+    # Mapping metric names for user-friendly output
     name_mapping = {
-        'grid_electricity_consumption[kWh]': 'EUI - grid electricity [kWh/m²/yr]',
-        'enduse_electricity_demand[kWh]': 'EUI - enduse electricity [kWh/m²/yr]',
-        'enduse_cooling_demand[kWh]': 'EUI - cooling [kWh/m²/yr]',
-        'enduse_space_cooling_demand[kWh]': 'EUI - space cooling [kWh/m²/yr]',
-        'enduse_heating_demand[kWh]': 'EUI - heating [kWh/m²/yr]',
-        'enduse_space_heating_demand[kWh]': 'EUI - space heating [kWh/m²/yr]',
-        'enduse_dhw_demand[kWh]': 'EUI - domestic hot water [kWh/m²/yr]',
+        'grid_electricity_consumption[kWh]': 'EUI - grid electricity [kWh/m²]',
+        'enduse_electricity_demand[kWh]': 'EUI - enduse electricity [kWh/m²]',
+        'enduse_cooling_demand[kWh]': 'EUI - cooling [kWh/m²]',
+        'enduse_space_cooling_demand[kWh]': 'EUI - space cooling [kWh/m²]',
+        'enduse_heating_demand[kWh]': 'EUI - heating [kWh/m²]',
+        'enduse_space_heating_demand[kWh]': 'EUI - space heating [kWh/m²]',
+        'enduse_dhw_demand[kWh]': 'EUI - domestic hot water [kWh/m²]',
     }
 
-    # Gather the building architecture information
-    df_architecture = pd.read_csv(locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='architecture', appendix='architecture'))
+    # Read and process the architecture DataFrame
+    df_architecture_path = locator.get_export_results_summary_cea_feature_buildings_file(
+        summary_folder, cea_feature='architecture', appendix='architecture'
+    )
+    df_architecture = pd.read_csv(df_architecture_path)
 
     if bool_use_acronym:
-        architecture_columns = map_metrics_and_cea_columns(df_architecture.columns, direction="columns_to_metrics")
-        df_architecture.columns = architecture_columns
-    for time_period in list_time_period:
+        df_architecture.columns = map_metrics_and_cea_columns(df_architecture.columns, direction="columns_to_metrics")
 
-        # Read the summary .csv files generated earlier in this script
-        df_time_resolution = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end))
+    # Helper function for normalization
+    def normalize_dataframe(df, area_column):
+        if area_column not in df_architecture.columns:
+            raise ValueError(f"Column '{area_column}' not found in architecture data.")
+        total_area = df_architecture[area_column].sum()
+        df[list_metrics] = df[list_metrics].div(total_area)
+        return df
+
+    for time_period in list_time_period:
+        # Time resolution processing
+        df_time_path = locator.get_export_results_summary_cea_feature_time_resolution_file(
+            summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
+        )
+        df_time_resolution = pd.read_csv(df_time_path)
 
         if bool_use_acronym:
-            time_resolution_columns = map_metrics_and_cea_columns(df_time_resolution.columns, direction="columns_to_metrics")
-            df_time_resolution.columns = time_resolution_columns
+            df_time_resolution.columns = map_metrics_and_cea_columns(
+                df_time_resolution.columns, direction="columns_to_metrics"
+            )
 
-        # Normalising
-        if not bool_use_conditioned_floor_area_for_normalisation:
-            df_time_resolution[list_metrics] = df_time_resolution[list_metrics].div(df_architecture['gross_floor_area[m2]'].sum())
-
-        else:
-            df_time_resolution[list_metrics] = df_time_resolution[list_metrics].div(df_architecture['conditioned_floor_area[m2]'].sum())
+        area_column = 'conditioned_floor_area[m2]' if bool_use_conditioned_floor_area_for_normalisation else 'gross_floor_area[m2]'
+        df_time_resolution = normalize_dataframe(df_time_resolution, area_column)
 
         result_time_resolution = df_time_resolution.rename(columns=name_mapping)
         list_result_time_resolution.append(result_time_resolution)
 
+        results_writer_time_period(
+            locator, hour_start, hour_end, summary_folder, list_metrics,
+            [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True
+        )
 
-        # Write to disk
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True)
-
-        # Ensure the aggregate-by-building toggle is on
+        # Aggregate by building
         if bool_aggregate_by_building:
-
-            if time_period == 'daily' or 'daily':
-                pass
+            if time_period in ['hourly', 'daily']:
+                continue
 
             else:
-                df_buildings = pd.read_csv(locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end))
+                df_buildings_path = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(
+                    summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
+                )
+                df_buildings = pd.read_csv(df_buildings_path)
 
                 if bool_use_acronym:
-                    buildings_columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")[0]
-                    df_buildings.columns = buildings_columns
+                    df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
 
-                # Normalising
-                if not bool_use_conditioned_floor_area_for_normalisation:
-                    # Merge the two DataFrames on the 'Name' column
-                    result_buildings = pd.merge(df_buildings, df_architecture[['Name', 'gross_floor_area[m2]']], on='Name', how='inner')
+                result_buildings = pd.merge(
+                    df_buildings,
+                    df_architecture[['Name', area_column]],
+                    on='Name', how='inner'
+                )
+                for col in list_metrics:
+                    if col in result_buildings.columns:
+                        result_buildings[col] = result_buildings[col] / result_buildings[area_column]
+                result_buildings.drop(columns=[area_column], inplace=True)
 
-                    # Divide the selected columns by the 'GFA' column
-                    for col in list_metrics:
-                        if col in result_buildings.columns:
-                            result_buildings[col] = result_buildings[col] / result_buildings['gross_floor_area[m2]']
+                result_buildings = result_buildings.rename(columns=name_mapping)
 
-                    # Drop the 'GFA' column after computation
-                    result_buildings.drop(columns=['gross_floor_area[m2]'], inplace=True)
-                else:
-                    # Merge the two DataFrames on the 'Name' column
-                    result_buildings = pd.merge(df_buildings, df_architecture[['Name', 'conditioned_floor_area[m2]']], on='Name', how='inner')
-
-                    # Divide the selected columns by the 'GFA' column
-                    for col in list_metrics:
-                        if col in result_buildings.columns:
-                            result_buildings[col] = result_buildings[col] / result_buildings['conditioned_floor_area[m2]']
-
-                    # Drop the 'GFA' column after computation
-                    result_buildings.drop(columns=['conditioned_floor_area[m2]'], inplace=True)
-                    result_buildings = result_buildings.rename(columns=name_mapping)
                 list_result_buildings.append(result_buildings)
 
-            # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_buildings], [appendix], list_time_period, bool_analytics=True)
-
+                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
+                [list_result_buildings], [appendix], [time_period], bool_analytics=True
+                                                    )
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)

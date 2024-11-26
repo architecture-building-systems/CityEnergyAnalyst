@@ -218,9 +218,12 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_buildings.csv"""
         return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(self, summary_folder, cea_feature, appendix, time_resolution):
+    def get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(self, summary_folder, cea_feature, appendix, time_period, hour_start, hour_end ):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_{time_resolution}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f"{appendix}_{time_resolution}_buildings.csv")
+        if hour_end - hour_start != 8760 and time_period == 'annually':
+            return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f"{appendix}_selected_hours_buildings.csv")
+        else:
+            return os.path.join(self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), f"{appendix}_{time_period}_buildings.csv")
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
