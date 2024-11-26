@@ -74,6 +74,31 @@ def copy_weather_file(source_weather_file, locator):
         source_weather_file=source_weather_file
     ))
 
+def parse_dat_weather_file(source_dat_file, output_epw_file):
+    """
+    convert a DWD .dat-file to a epw-file
+
+    :param string source_dat_file: source .dat
+    :param string output_epw_file: output EPW
+    """
+    import pandas as pd
+
+    print(f"Parsing .dat file: {source_dat_file}")
+    try:
+        weather_data = pd.read_csv(source_dat_file, sep="\s+", skiprows=6, header=None)
+        weather_data.columns = ['Year', 'Month', 'Day', 'Hour', 'Temperature', 'Radiation', 'WindSpeed', '...']
+
+        # from dat to epw
+        with open(output_epw_file, 'w') as epw_file:
+            # add EPW-Header
+            epw_file.write("LOCATION,Example,DEU,,,0,0,0\n")
+            epw_file.write("DESIGN CONDITIONS,0\n")
+
+            for _, row in weather_data.iterrows():
+                epw_line = f"{row['Year']},{row['Month']},{row['Day']},{row['Hour']},...,{row['Temperature']},...\n"
+                epw_file.write(epw_line)
+    except Exception as e:
+        raise ValueError(f"Error parsing .dat-Datei: {e}")
 
 def main(config):
     """
@@ -85,7 +110,13 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather = config.weather_helper.weather
 
-    if config.weather_helper.weather == 'climate.onebuilding.org':
+    if weather.endswith('.dat'):
+        print(f"Detected .dat file: {weather}")
+        # convert .dat in .epw
+        dat_weather_file = weather
+        epw_weather_file = locator.get_weather_file()
+        parse_dat_weather_file(dat_weather_file, epw_weather_file)
+    elif config.weather_helper.weather == 'climate.onebuilding.org':
         print("No weather provided, fetching from online sources.")
         fetch_weather_data(locator.get_weather_file(), locator.get_zone_geometry())
     else:
