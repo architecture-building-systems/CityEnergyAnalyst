@@ -1546,6 +1546,7 @@ def calc_ubem_analytics_normalised(
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)
 
+
 def main(config):
     """
     Read through and summarise CEA results for all scenarios under a project.
