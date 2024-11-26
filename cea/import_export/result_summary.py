@@ -1618,8 +1618,6 @@ def main(config):
     summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
     os.makedirs(summary_folder, exist_ok=True)
 
-    summary_folder = r'/Users/zshi/Library/CloudStorage/Dropbox/CEA2/batch/Urban_Design_2/export/results/unnamed_hours_144_5832_3'
-
     # Store the list of selected buildings
     df_buildings = serial_filter_buildings(config, locator)
     buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
@@ -1627,24 +1625,24 @@ def main(config):
 
     df_buildings.to_csv(buildings_path, index=False)
 
-    # # Export results that have no date information, non-8760 hours, aggregate by building
-    # for list_metrics in list_list_metrics_without_date:
-    #     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-    #     list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-    #     results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False)   # Write to disk
-    #
-    # # Export results that have date information, 8760 hours, aggregate by time period
-    # for list_metrics in list_list_metrics_with_date:
-    #     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-    #     list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-    #     results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix)   # Write to disk
-    #
-    # # Aggregate by building
-    # if bool_aggregate_by_building:
-    #     for list_metrics in list_list_metrics_building:
-    #         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-    #         list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
-    #         results_writer_time_period_building(locator, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution, bool_analytics=False)  # Write to disk
+    # Export results that have no date information, non-8760 hours, aggregate by building
+    for list_metrics in list_list_metrics_without_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None,  bool_analytics=False)   # Write to disk
+
+    # Export results that have date information, 8760 hours, aggregate by time period
+    for list_metrics in list_list_metrics_with_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_include_advanced_analytics)   # Write to disk
+
+    # Aggregate by building
+    if bool_aggregate_by_building:
+        for list_metrics in list_list_metrics_building:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution,   bool_analytics=False)  # Write to disk
 
     # Include analytics
     if bool_include_advanced_analytics:
