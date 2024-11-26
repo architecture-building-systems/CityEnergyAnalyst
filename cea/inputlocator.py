@@ -202,7 +202,7 @@ class InputLocator(object):
     def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature, appendix, time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
         if hour_end - hour_start != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f'{appendix}_selected_hours.csv')
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f'{appendix}_selected_hours_buildings.csv')
         else:
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature), f"{appendix}_{time_period}_buildings.csv")
 
