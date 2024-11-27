@@ -38,29 +38,31 @@ def exec_import_csv_from_rhino(config, locator):
     """
     # Acquire the user inputs from config
     input_path = config.from_rhino_gh.input_path
-    new_scenario_name = config.from_rhino_gh.new_scenario_name
+    reference_scenario_name = config.from_rhino_gh.reference_scenario_name
 
     # Directory where the files from Rhino/Grasshopper are stored
-    input_path = os.path.join(input_path, 'export', 'rhino')
-    reference_shapefile_path = os.path.join(input_path, 'reference.shp')
+    input_path = os.path.join(input_path, 'export', 'rhino', 'to_cea')
+    reference_txt_path = os.path.join(input_path, 'reference.txt')
     zone_csv_path = os.path.join(input_path, 'zone_from.csv')
     typology_csv_path = os.path.join(input_path, 'typology_from.csv')
     surroundings_csv_path = os.path.join(input_path, 'surroundings_from.csv')
     streets_csv_path = os.path.join(input_path, 'streets_from.csv')
     trees_csv_path = os.path.join(input_path, 'trees_from.csv')
 
+    with open(reference_txt_path, 'r') as file:
+        reference_shapefile_path = file.read().strip()
+
     # Create the CEA Directory for the new scenario
-    project_path = config.general.project
-    new_scenario_path = os.path.join(project_path, new_scenario_name, 'inputs')
-    building_geometry_path = os.path.join(new_scenario_path, 'building-geometry')
-    building_properties_path = os.path.join(new_scenario_path, 'building-properties')
-    networks_path = os.path.join(new_scenario_path, 'networks')
-    trees_path = os.path.join(new_scenario_path, 'trees')
-    os.makedirs(new_scenario_path, exist_ok=True)
+    input_path = locator.get_input_folder()
+    building_geometry_path = locator.get_building_geometry_folder()
+    building_properties_path = locator.get_building_properties_folder()
+    networks_path = locator.get_networks_folder()
+    trees_path = locator.get_tree_geometry_folder()
+    os.makedirs(input_path, exist_ok=True)
 
     # Remove all files in folder
-    for item in os.listdir(new_scenario_path):
-        item_path = os.path.join(new_scenario_path, item)
+    for item in os.listdir(input_path):
+        item_path = os.path.join(input_path, item)
         if os.path.isdir(item_path):
             # Remove the folder and its contents
             shutil.rmtree(item_path)
@@ -114,11 +116,12 @@ def exec_import_csv_from_rhino(config, locator):
                         '--polygon', 'true',
                         ], env=my_env, check=True, capture_output=True)
 
-def copy_data_from_current_to_new_scenarios(config, locator):
+def copy_data_from_reference_to_new_scenarios(config, locator):
 
     # Acquire the user inputs from config
-    input_path = config.from_rhino_gh.input_path
-    new_scenario_name = config.from_rhino_gh.new_scenario_name
+    project_path = config.general.project
+    reference_scenario_name = config.from_rhino_gh.reference_scenario_name
+    input_path = os.path.join(project_path, reference_scenario_name)
     bool_copy_database = config.from_rhino_gh.copy_database
     bool_copy_weather = config.from_rhino_gh.copy_weather
     bool_copy_terrain = config.from_rhino_gh.copy_terrain
@@ -128,10 +131,10 @@ def copy_data_from_current_to_new_scenarios(config, locator):
 
     # Create the CEA Directory for the new scenario
     project_path = config.general.project
-    new_scenario_path = os.path.join(project_path, new_scenario_name, 'inputs')
-    new_database_path = os.path.join(new_scenario_path, 'technology')
-    new_terrain_path = os.path.join(new_scenario_path, 'topography')
-    new_weather_path = os.path.join(new_scenario_path, 'weather')
+    reference_scenario_path = os.path.join(project_path, reference_scenario_name, 'inputs')
+    reference_database_path = os.path.join(reference_scenario_path, 'technology')
+    reference_terrain_path = os.path.join(reference_scenario_path, 'topography')
+    reference_weather_path = os.path.join(reference_scenario_path, 'weather')
 
     # Acquire the paths to the data to copy in the current scenario
     current_database_path = locator.get_databases_folder()
@@ -140,16 +143,16 @@ def copy_data_from_current_to_new_scenarios(config, locator):
 
     # Copy if needed
     if bool_copy_database:
-        os.makedirs(new_database_path, exist_ok=True)
-        copy_folder_contents(current_database_path, new_database_path)
+        os.makedirs(current_database_path, exist_ok=True)
+        copy_folder_contents(reference_database_path, current_database_path)
 
     if bool_copy_terrain:
-        os.makedirs(new_terrain_path, exist_ok=True)
-        copy_folder_contents(current_terrain_path, new_terrain_path)
+        os.makedirs(current_terrain_path, exist_ok=True)
+        copy_folder_contents(reference_terrain_path, current_terrain_path)
 
     if bool_copy_weather:
-        os.makedirs(new_weather_path, exist_ok=True)
-        copy_folder_contents(current_weather_path, new_weather_path)
+        os.makedirs(current_weather_path, exist_ok=True)
+        copy_folder_contents(reference_weather_path, current_weather_path)
 
 
 def copy_folder_contents(source_path, target_path):
@@ -185,7 +188,7 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     exec_import_csv_from_rhino(config, locator)
-    copy_data_from_current_to_new_scenarios(config,locator)
+    copy_data_from_reference_to_new_scenarios(config,locator)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

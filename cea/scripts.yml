@@ -16,9 +16,6 @@ Import & Export:
     interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
-    input-files:
-      - [get_zone_geometry]
-      - [get_building_typology]
 
   - name: export-results-csv
     label: Export results to .csv (summary & analytics)
