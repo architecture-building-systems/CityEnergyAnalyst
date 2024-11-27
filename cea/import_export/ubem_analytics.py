@@ -507,7 +507,7 @@ def calc_simple_pv_payback(annual_generation_kwh, annual_electricity_demand_kwh,
     return lifetime
 
 
-def exec_read_and_analyse(list_buildings):
+def exec_read_and_analyse(cea_scenario):
     """
     read the CEA results and calculates the UBEM metrics listed at the top of this script
 
