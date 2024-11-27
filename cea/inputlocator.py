@@ -7,7 +7,6 @@ import cea.schemas
 import shutil
 import tempfile
 import time
-from datetime import datetime
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
