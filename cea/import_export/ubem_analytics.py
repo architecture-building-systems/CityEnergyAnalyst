@@ -54,9 +54,6 @@ The list of UBEM metrics include:
 """
 
 import os
-import pathlib
-
-# import warnings
 import numpy as np
 import pandas as pd
 import cea.config
