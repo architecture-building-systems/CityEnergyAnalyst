@@ -5,11 +5,9 @@ Export CEA files into Rhino/Grasshopper-ready format.
 
 import cea.inputlocator
 import os
-import subprocess
-import sys
 import cea.config
-import shutil
 import time
+import geopandas as gpd
 
 
 __author__ = "Zhongming Shi"
@@ -21,11 +19,9 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-# adding CEA to the environment
-# Fix for running in PyCharm for users using micromamba
-my_env = os.environ.copy()
-my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
+from cea.utilities.dbf import dbf_to_csv_xlsx
+from cea.utilities.shapefile import shapefile_to_csv_xlsx
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 def exec_export_csv_for_rhino(config, locator):
     """
@@ -36,17 +32,16 @@ def exec_export_csv_for_rhino(config, locator):
     :type cea_scenario: file path
     :return:
     """
+
     # Acquire the user inputs from config
-    output_path = config.to_rhino_gh.output_path
     bool_include_zone = config.to_rhino_gh.include_zone
     bool_include_site = config.to_rhino_gh.include_site
     bool_include_surroundings = config.to_rhino_gh.include_surroundings
     bool_include_streets = config.to_rhino_gh.include_streets
     bool_include_trees = config.to_rhino_gh.include_trees
 
-
     # Create the folder to store all the exported files if it doesn't exist
-    output_path = os.path.join(output_path, 'export', 'rhino')
+    output_path = locator.get_export_rhino_from_cea_folder()
     os.makedirs(output_path, exist_ok=True)
 
     # Remove all files in folder
@@ -55,61 +50,27 @@ def exec_export_csv_for_rhino(config, locator):
         if os.path.isfile(file_path):
             os.remove(file_path)
 
+    gdf = gpd.read_file(locator.get_zone_geometry())
+    lat, lon = get_lat_lon_projected_shapefile(gdf)  # Ensure this function is implemented
+    new_crs = get_projected_coordinate_system(lat=lat, lon=lon)
+
     # Export zone info including typology
     if bool_include_zone:
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', locator.get_zone_geometry(),
-                        '--output-file-name', 'zone_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
-
-        # Create the reference.shp
-        # Define the possible extensions for shapefile components
-        shp_extensions = ['shp', 'dbf', 'shx', 'prj', 'cpg', 'sbx', 'sbn', 'xml']
-        # Copy each associated file to the target directory
-        file_to_copy = locator.get_zone_geometry()
-        base_name = file_to_copy.rsplit('.', 1)[0]  # Split into the base name and extension
-        all_to_copy = [f"{base_name}.{ext}" for ext in shp_extensions]
-        new_to_copy = [f"reference.{ext}" for ext in shp_extensions]
-        for file, file_new in zip(all_to_copy, new_to_copy):
-            target_path = os.path.join(output_path, file_new)
-            if os.path.exists(file):
-                shutil.copy(file,target_path)
-
-        # Export the typology.dbf
-        subprocess.run(['cea', 'dbf-to-csv-to-dbf',
-                        '--input-file', locator.get_building_typology(),
-                        '--output-file-name', 'typology_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
+        shapefile_to_csv_xlsx(locator.get_zone_geometry(), output_path, 'zone_to.csv', new_crs)
+        dbf_to_csv_xlsx(locator.get_building_typology(), output_path, 'typology_to.csv')
 
     if bool_include_site and os.path.isfile(locator.get_site_polygon()):
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', locator.get_site_polygon(),
-                        '--output-file-name', 'site_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
+        shapefile_to_csv_xlsx(locator.get_site_polygon(), output_path, 'site_to.csv', new_crs)
 
     if bool_include_surroundings and os.path.isfile(locator.get_surroundings_geometry()):
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', locator.get_surroundings_geometry(),
-                        '--output-file-name', 'surroundings_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
+        shapefile_to_csv_xlsx(locator.get_surroundings_geometry(), output_path, 'surroundings_to.csv', new_crs)
 
     if bool_include_streets and os.path.isfile(locator.get_street_network()):
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', locator.get_street_network(),
-                        '--output-file-name', 'streets_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
+        shapefile_to_csv_xlsx(locator.get_street_network(), output_path, 'streets_to.csv', new_crs)
 
     if bool_include_trees and os.path.isfile(locator.get_tree_geometry()):
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', locator.get_tree_geometry(),
-                        '--output-file-name', 'trees_to.csv',
-                        '--output-path', output_path,
-                        ], env=my_env, check=True, capture_output=True)
+        shapefile_to_csv_xlsx(locator.get_tree_geometry(), output_path, 'trees_to.csv', new_crs)
+
 
 def main(config):
 

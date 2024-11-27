@@ -2,7 +2,13 @@ Import & Export:
 
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
-    description: Export CEA files into Rhino/Grasshopper-ready format.
+    description: |
+      Export CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
+      
+      Download the .gh file via the link to import the exported package into Rhino/Grasshopper. 
+      The .gh file requires two inputs: the path to this Project and this Scenario name.
+      
+      https://www.cityenergyanalyst.com/s/to_cea_v400alpha14gh_1.zip
     interfaces: [cli, dashboard]
     module: cea.import_export.export_to_rhino_gh
     parameters: ['general:scenario', to-rhino-gh]
@@ -12,16 +18,19 @@ Import & Export:
 
   - name: import-from-rhino-gh
     label: Import from Rhino/Grasshopper
-    description: Import Rhino/Grasshopper-generated files into CEA.
+    description: |
+      Import Rhino/Grasshopper-generated files into CEA.
+      
+      Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
+      Ensure that this Scenario is the one created with Grasshopper.
+      
+      https://www.cityenergyanalyst.com/s/to_cea_v400alpha14gh_1.zip
     interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
-    input-files:
-      - [get_zone_geometry]
-      - [get_building_typology]
 
   - name: export-results-csv
-    label: Export results to .csv (summary)
+    label: Export results to .csv (summary & analytics)
     description: Generate .csv files containing user-selected CEA simulated results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
@@ -30,11 +39,21 @@ Import & Export:
       - [get_zone_geometry]
       - [get_building_typology]
 
+  - name: result-analytics
+    label: Get advanced analytics (beta)
+    description: Collection of advanced useful energy analytics
+    interfaces: [cli, dashboard]
+    module: cea.import_export.ubem_analytics
+    parameters: ['general:scenario', result-analytics]
+    input-files:
+      - [get_zone_geometry]
+
+
 Data management:
 
   - name: archetypes-mapper
     label: Archetypes mapper
-    description: Assign building properties and systems types from the Archetypes DataBase
+    description: Assign building properties and systems types from the Archetypes Database
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
     parameters: ['general:scenario', archetypes-mapper]
@@ -410,15 +429,6 @@ Utilities:
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
-    input-files:
-      - [get_zone_geometry]
-
-  - name: result-analytics
-    label: Get advanced analytics (beta)
-    description: Collection of advanced useful energy analytics
-    interfaces: [cli, dashboard]
-    module: cea.utilities.result_analytics
-    parameters: ['general:scenario', result-analytics]
     input-files:
       - [get_zone_geometry]
 
