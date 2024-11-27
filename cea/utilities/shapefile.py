@@ -176,20 +176,17 @@ def main(config):
     reference_shapefile = config.shapefile_tools.reference_shapefile
 
     if input_file.endswith('.csv') or input_file.endswith('.xlsx'):
-            # print out all configuration variables used by this script
+        # print out all configuration variables used by this script
         print("Running csv-xlsx-to-shapefile with csv-file = %s" % input_file)
         print("Running csv-xlsx-to-shapefile with polygon = %s" % polygon)
         print("Saving the generated shapefile to directory = %s" % output_path)
 
-        csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path,
-                           shapefile_name=output_file_name,
-                           reference_shapefile=reference_shapefile,
-                           polygon=polygon)
+        csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path, shapefile_name=output_file_name, reference_shapefile=reference_shapefile, polygon=polygon)
 
         print("ESRI Shapefile has been generated.")
 
     elif input_file.endswith('.shp'):
-            # print out all configuration variables used by this script
+        # print out all configuration variables used by this script
         print("Running shapefile-to-csv with shapefile = %s" % config.shapefile_tools.input_file)
         print("Running shapefile-to-csv with csv-file = %s" % config.shapefile_tools.output_path)
 
