@@ -30,6 +30,14 @@ Import & Export:
       - [get_zone_geometry]
       - [get_building_typology]
 
+  - name: result-analytics
+    label: Get advanced analytics (beta)
+    description: Collection of advanced useful energy analytics
+    interfaces: [cli, dashboard]
+    module: cea.import_export.ubem_analytics
+    parameters: ['general:scenario', result-analytics]
+    input-files:
+      - [get_zone_geometry]
 
 
 Data management:
