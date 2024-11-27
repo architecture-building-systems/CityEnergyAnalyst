@@ -21,11 +21,9 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.dbf import csv_xlsx_to_dbf
+from cea.utilities.shapefile import csv_xlsx_to_shapefile
 
-# adding CEA to the environment
-# Fix for running in PyCharm for users using micromamba
-my_env = os.environ.copy()
-my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
 
 def exec_import_csv_from_rhino(config, locator):
     """
@@ -37,12 +35,11 @@ def exec_import_csv_from_rhino(config, locator):
     :return:
     """
     # Acquire the user inputs from config
-    input_path = config.from_rhino_gh.input_path
-    reference_scenario_name = config.from_rhino_gh.reference_scenario_name
+    export_folder_path = locator.get_export_folder()
 
     # Directory where the files from Rhino/Grasshopper are stored
-    input_path = os.path.join(input_path, 'export', 'rhino', 'to_cea')
-    reference_txt_path = os.path.join(input_path, 'reference.txt')
+    input_path = os.path.join(export_folder_path, 'rhino', 'to_cea')
+    reference_txt_path = os.path.join(input_path, 'reference_crs.txt')
     zone_csv_path = os.path.join(input_path, 'zone_from.csv')
     typology_csv_path = os.path.join(input_path, 'typology_from.csv')
     surroundings_csv_path = os.path.join(input_path, 'surroundings_from.csv')
@@ -70,71 +67,43 @@ def exec_import_csv_from_rhino(config, locator):
             # Remove the file
             os.remove(item_path)
 
-    # Export zone info including typology
-    os.makedirs(building_geometry_path, exist_ok=True)
-    subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', zone_csv_path,
-                        '--output-file-name', 'zone.shp',
-                        '--output-path', building_geometry_path,
-                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'true',
-                        ], env=my_env, check=True, capture_output=True)
+    # Convert
+    if os.path.isfile(zone_csv_path):
+        os.makedirs(building_geometry_path, exist_ok=True)
+        csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path, polygon=True)
+    else:
+        raise ValueError("""The minimum requirement - zone_from.csv is missing. Create the file using Rhino/Grasshopper.""")
 
-    os.makedirs(building_properties_path, exist_ok=True)
-    subprocess.run(['cea', 'dbf-to-csv-to-dbf',
-                        '--input-file', typology_csv_path,
-                        '--output-file-name', 'typology.dbf',
-                        '--output-path', building_properties_path,
-                        ], env=my_env, check=True, capture_output=True)
+    if os.path.isfile(typology_csv_path):
+        os.makedirs(building_properties_path, exist_ok=True)
+        csv_xlsx_to_dbf(typology_csv_path, building_properties_path, 'typology.dbf')
 
     if os.path.isfile(surroundings_csv_path):
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', surroundings_csv_path,
-                        '--output-file-name', 'surroundings.shp',
-                        '--output-path', building_geometry_path,
-                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'true',
-                        ], env=my_env, check=True, capture_output=True)
+        csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path, polygon=True)
 
     if os.path.isfile(streets_csv_path):
         os.makedirs(networks_path, exist_ok=True)
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', streets_csv_path,
-                        '--output-file-name', 'streets.shp',
-                        '--output-path', networks_path,
-                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'false',
-                        ], env=my_env, check=True, capture_output=True)
+        csv_xlsx_to_shapefile(streets_csv_path, networks_path, 'streets.shp', reference_txt_path, polygon=False)
 
     if os.path.isfile(trees_csv_path):
         os.makedirs(trees_path, exist_ok=True)
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--input-file', trees_csv_path,
-                        '--output-file-name', 'trees.shp',
-                        '--output-path', trees_path,
-                        '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'true',
-                        ], env=my_env, check=True, capture_output=True)
+        csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path, polygon=True)
+
 
 def copy_data_from_reference_to_new_scenarios(config, locator):
 
     # Acquire the user inputs from config
     project_path = config.general.project
     reference_scenario_name = config.from_rhino_gh.reference_scenario_name
-    input_path = os.path.join(project_path, reference_scenario_name)
+    reference_scenario_path = os.path.join(project_path, reference_scenario_name)
     bool_copy_database = config.from_rhino_gh.copy_database
     bool_copy_weather = config.from_rhino_gh.copy_weather
     bool_copy_terrain = config.from_rhino_gh.copy_terrain
 
-    # Directory where the files from Rhino/Grasshopper are stored
-    input_path = os.path.join(input_path, 'export', 'rhino')
-
     # Create the CEA Directory for the new scenario
-    project_path = config.general.project
-    reference_scenario_path = os.path.join(project_path, reference_scenario_name, 'inputs')
-    reference_database_path = os.path.join(reference_scenario_path, 'technology')
-    reference_terrain_path = os.path.join(reference_scenario_path, 'topography')
-    reference_weather_path = os.path.join(reference_scenario_path, 'weather')
+    reference_database_path = os.path.join(reference_scenario_path, 'inputs', 'technology')
+    reference_terrain_path = os.path.join(reference_scenario_path, 'inputs', 'topography')
+    reference_weather_path = os.path.join(reference_scenario_path, 'inputs', 'weather')
 
     # Acquire the paths to the data to copy in the current scenario
     current_database_path = locator.get_databases_folder()
@@ -178,6 +147,7 @@ def copy_folder_contents(source_path, target_path):
         else:
             # Copy individual files
             shutil.copy2(source_item, target_item)
+
 
 def main(config):
 

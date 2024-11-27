@@ -2,7 +2,7 @@ Import & Export:
 
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
-    description: Export CEA files into Rhino/Grasshopper-ready format.
+    description: Export CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
     interfaces: [cli, dashboard]
     module: cea.import_export.export_to_rhino_gh
     parameters: ['general:scenario', to-rhino-gh]
@@ -41,7 +41,7 @@ Data management:
 
   - name: archetypes-mapper
     label: Archetypes mapper
-    description: Assign building properties and systems types from the Archetypes DataBase
+    description: Assign building properties and systems types from the Archetypes Database
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
     parameters: ['general:scenario', archetypes-mapper]
