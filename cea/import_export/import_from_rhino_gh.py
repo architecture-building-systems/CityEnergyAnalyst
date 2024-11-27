@@ -5,8 +5,6 @@ Import Rhino/Grasshopper-generated files into CEA.
 
 import cea.inputlocator
 import os
-import subprocess
-import sys
 import cea.config
 import shutil
 import time

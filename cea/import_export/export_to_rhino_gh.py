@@ -5,12 +5,8 @@ Export CEA files into Rhino/Grasshopper-ready format.
 
 import cea.inputlocator
 import os
-import subprocess
-import sys
 import cea.config
-import shutil
 import time
-
 import geopandas as gpd
 
 
