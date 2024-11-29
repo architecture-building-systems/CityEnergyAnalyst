@@ -51,7 +51,7 @@ Please refer to the CEA github repository for questions regarding the usage
 of any database, including this one. If you do find the database useful, please cite the
 following submitted conference paper:
 
-> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Austria. [SUBMITTED]
+> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Austria. [DOI: 10.26868/29761662.2024.22]
 
 The reference will be updated as soon as it underwent the review process and has been published.
 
