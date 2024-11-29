@@ -44,9 +44,6 @@ def exec_import_csv_from_rhino(config, locator):
     streets_csv_path = os.path.join(input_path, 'streets_from.csv')
     trees_csv_path = os.path.join(input_path, 'trees_from.csv')
 
-    with open(reference_txt_path, 'r') as file:
-        reference_shapefile_path = file.read().strip()
-
     # Create the CEA Directory for the new scenario
     input_path = locator.get_input_folder()
     building_geometry_path = locator.get_building_geometry_folder()
@@ -140,7 +137,7 @@ def copy_folder_contents(source_path, target_path):
         target_item = os.path.join(target_path, item)
 
         if os.path.isdir(source_item):
-            # Recursively copy subfolders
+            # Recursively copy sub-folders
             shutil.copytree(source_item, target_item, dirs_exist_ok=True)
         else:
             # Copy individual files
@@ -156,7 +153,7 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     exec_import_csv_from_rhino(config, locator)
-    copy_data_from_reference_to_new_scenarios(config,locator)
+    copy_data_from_reference_to_new_scenarios(config, locator)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

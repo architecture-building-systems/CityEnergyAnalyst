@@ -53,7 +53,7 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
     # generate crs and DataFrame from files
     if input_file.endswith('.csv'):
-        df = pd.read_csv(input_file, sep=None)
+        df = pd.read_csv(input_file, sep=None, engine='python')
 
     elif input_file.endswith('.xlsx'):
         df = pd.read_excel(input_file)
