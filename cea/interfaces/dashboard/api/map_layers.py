@@ -11,6 +11,7 @@ router = APIRouter()
 
 class LayerParams(BaseModel):
     project: str
+    scenario_name: str
     parameters: dict
 
 
@@ -51,17 +52,35 @@ async def get_layers() -> LayersList:
     return LayersList(categories=categories)
 
 
+@router.post('/{layer_category}/{layer_name}/{parameter}/choices')
+async def get_layer_parameter_choices(params: LayerParams, layer_category: str, layer_name: str, parameter: str):
+    layer_class = load_layer(layer_name, layer_category)
+
+    try:
+        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        choices = layer.get_parameter_choices(parameter, params.parameters)
+    except ValueError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return choices
+
+
 @router.post('/{layer_category}/{layer_name}/generate')
 async def generate_map_layer(params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
 
     try:
-        layer = layer_class(project=params.project, parameters=params.parameters)
+        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
-        print(e)
+        print("Missing Input files")
         raise HTTPException(status_code=400, detail="Missing input files")
+    except ValueError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return layer.generate_output()
+    return output
 
 
 @router.post('/{layer_category}/{layer_name}/check')
@@ -69,6 +88,7 @@ async def check_map_layer(params: LayerParams, layer_category: str, layer_name: 
     layer_class = load_layer(layer_name, layer_category)
 
     try:
-        layer_class(project=params.project, parameters=params.parameters)
+        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer.check_for_missing_input_files(params.parameters)
     except MissingInputDataException:
         raise HTTPException(status_code=400, detail="Missing input files")

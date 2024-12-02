@@ -1,11 +1,9 @@
 import json
-import os
 
 import pandas as pd
 import geopandas as gpd
 
-from cea.inputlocator import InputLocator
-from cea.interfaces.dashboard.map_layers.base import MapLayer
+from cea.interfaces.dashboard.map_layers.base import MapLayer, ParameterDefinition, FileRequirement, cache_output
 from cea.interfaces.dashboard.map_layers.thermal_network import ThermalNetworkCategory
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -16,53 +14,51 @@ class ThermalNetworkMapLayer(MapLayer):
     label = "Thermal Network"
     description = "Thermal Network Design"
 
-    @property
-    def input_file_locators(self):
-        scenario_name = self.parameters['scenario-name']
-        network_type = self.parameters.get('network-type', 'DC')
-        # FIXME: network_name is usually not used in the script
-        network_name = ""
-        print(network_type)
-        locator = InputLocator(os.path.join(self.project, scenario_name))
+    def _get_network_types(self):
+        return ["DC", "DH"]
 
+    def _get_network_layout_files(self, parameters):
+        network_type = parameters.get('network-type', 'DC')
+
+        # FIXME: network_name is usually not used in the script
         return [
-            (locator.get_network_layout_edges_shapefile,[network_type, network_name]),
-            (locator.get_network_layout_nodes_shapefile, [network_type, network_name]),
-            (locator.get_thermal_network_layout_massflow_edges_file, [network_type, network_name]),
-            # (locator.get_thermal_demand_csv_file, network_type, network_name),
-            # (locator.get_thermal_network_edge_list_file, network_type, network_name),
-            # (locator.get_network_thermal_loss_edges_file, network_type, network_name),
+            self.locator.get_network_layout_edges_shapefile(network_type, ""),
+            self.locator.get_network_layout_nodes_shapefile(network_type, ""),
+            self.locator.get_thermal_network_layout_massflow_edges_file(network_type, ""),
         ]
 
+    # TODO: Add width parameter
     @classmethod
     def expected_parameters(cls):
         return {
-            'scenario-name': {
-                "type": "string",
-                "description": "Scenario of the layer",
-            },
-            'network-type': {
-                "type": "string",
-                "selector": "choice",
-                "description": "Type of the network",
-                "default": "DC",
-                "choices": ["DC", "DH"]
-            },
-            # 'width-scale': {
-            #     "type": "float",
-            #     "selector": "input",
-            #     "description": "Scale factor for the width of the pipes",
-            #     "default": 1.0
-            # },
+            'network-type':
+                ParameterDefinition(
+                    "Network type",
+                    "string",
+                    description="Type of the network",
+                    options_generator="_get_network_types",
+                    selector="choice",
+                ),
         }
 
-    def generate_output(self):
-        scenario_name = self.parameters['scenario-name']
-        locator = InputLocator(os.path.join(self.project, scenario_name))
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Zone Buildings geometry",
+                file_locator="locator:get_zone_geometry",
+            ),
+            FileRequirement(
+                "Network layout",
+                file_locator="layer:_get_network_layout_files",
+                depends_on=["network-type"],
+            ),
+        ]
 
-        network_type = self.parameters.get('network-type', 'DC')
-        # FIXME: network_name is usually not used in the script
-        network_name = ""
+    @cache_output
+    def generate_data(self, parameters):
+        """Generates the output for this layer"""
+        network_type = parameters.get('network-type', 'DC')
 
         output = {
             "nodes": None,
@@ -74,9 +70,9 @@ class ThermalNetworkMapLayer(MapLayer):
             }
         }
 
-        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-        massflow_edges_path = locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
+        edges_path = self.locator.get_network_layout_edges_shapefile(network_type)
+        nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type)
+        massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, "")
 
         crs = get_geographic_coordinate_system()
         edges_df = gpd.read_file(edges_path).to_crs(crs).set_index("Name")

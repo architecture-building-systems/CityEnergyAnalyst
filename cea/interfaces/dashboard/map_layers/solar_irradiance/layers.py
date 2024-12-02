@@ -1,14 +1,12 @@
 import itertools
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 import fiona
 import pandas as pd
 from pyproj import CRS, Transformer
 
-from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
-from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output
+from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.solar_irradiance import SolarIrradiationCategory
 
 
@@ -18,51 +16,66 @@ class SolarIrradiationMapLayer(MapLayer):
     label = "Solar Irradiation [kWh/m2]"
     description = "Solar irradiation of building surfaces"
 
-    @property
-    def input_file_locators(self):
-        scenario_name = self.parameters['scenario-name']
-        locator = InputLocator(os.path.join(self.project, scenario_name))
-
+    def _get_sensor_metadata(self, _):
         # FIXME: Hardcoded to zone buildings for now
-        buildings = locator.get_zone_building_names()
+        buildings = self.locator.get_zone_building_names()
 
-        return ([(locator.get_radiation_metadata, [building]) for building in buildings] +
-                [(locator.get_radiation_building_sensors, [building]) for building in buildings])
+        return [self.locator.get_radiation_metadata(building) for building in buildings]
+
+    def _get_sensor_data(self, _):
+        # FIXME: Hardcoded to zone buildings for now
+        buildings = self.locator.get_zone_building_names()
+
+        return [self.locator.get_radiation_building_sensors(building) for building in buildings]
 
     @classmethod
     def expected_parameters(cls):
+        # TODO: Move to separate property e.g. data filter parameters
+
         return {
-            'scenario-name': {
-                "type": "string",
-                "description": "Scenario of the layer",
-            },
-            'period': {
-                "type": "array",
-                "selector": "time-series",
-                "description": "Period to generate the data (start, end) in days",
-                "default": [1, 365]
-            },
-            # TODO: Move to separate property e.g. data filter parameters
-            'threshold': {
-                "type": "array",
-                "filter": "range",
-                "selector": "threshold",
-                "description": "Thresholds for the layer",
-                "label": "Solar Irradiation Threshold [kWh/m2]",
-                "range": "total",
-                "default": [0, 3000]
-            },
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    default=[1, 365],
+                    description="Period to generate the data (start, end) in days",
+                    selector="time-series",
+                ),
+            'threshold':
+                ParameterDefinition(
+                    "Threshold",
+                    "array",
+                    default=[0, 3000],
+                    description="Thresholds for the layer",
+                    selector="threshold",
+                    range="total",
+                    filter="range",
+                ),
         }
 
-    @cache_output
-    def generate_output(self):
-        """Generates the output for this layer"""
-        scenario_name = self.parameters['scenario-name']
-        locator = InputLocator(os.path.join(self.project, scenario_name))
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Zone Buildings geometry",
+                file_locator="locator:get_zone_geometry",
+            ),
+            FileRequirement(
+                "Sensor metadata",
+                file_locator="layer:_get_sensor_metadata",
+            ),
+            FileRequirement(
+                "Sensor data",
+                file_locator="layer:_get_sensor_data",
+            ),
+        ]
 
+    @cache_output
+    def generate_data(self, parameters):
+        """Generates the output for this layer"""
         # FIXME: Hardcoded to zone buildings for now
-        buildings = locator.get_zone_building_names()
-        period = self.parameters['period']
+        buildings = self.locator.get_zone_building_names()
+        period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
         output = {
@@ -75,12 +88,13 @@ class SolarIrradiationMapLayer(MapLayer):
         }
 
         # Convert coordinates to WGS84
-        with fiona.open(locator.get_zone_geometry()) as src:
+        with fiona.open(self.locator.get_zone_geometry()) as src:
             transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
 
         def get_building_sensors(building):
-            metadata = pd.read_csv(locator.get_radiation_metadata(building)).set_index('SURFACE')
-            building_sensors = pd.read_feather(locator.get_radiation_building_sensors(building)) * 1 / 1000 # Convert W/m2 to kWh/m2
+            metadata = pd.read_csv(self.locator.get_radiation_metadata(building)).set_index('SURFACE')
+            building_sensors = pd.read_feather(
+                self.locator.get_radiation_building_sensors(building)) * 1 / 1000  # Convert W/m2 to kWh/m2
 
             # Get terrain elevation
             if "terrain_elevation" in metadata.columns:
@@ -92,9 +106,11 @@ class SolarIrradiationMapLayer(MapLayer):
             total_max = building_sensors.sum(numeric_only=True).max()
 
             if start < end:
-                period_sensor_values = building_sensors.iloc[start:end+1].sum(numeric_only=True)
+                period_sensor_values = building_sensors.iloc[start:end + 1].sum(numeric_only=True)
             else:
-                period_sensor_values = building_sensors.iloc[start:].sum(numeric_only=True) + building_sensors.iloc[:end+1].sum(numeric_only=True)
+                period_sensor_values = building_sensors.iloc[start:].sum(numeric_only=True) + building_sensors.iloc[
+                                                                                              :end + 1].sum(
+                    numeric_only=True)
             period_min = period_sensor_values.min()
             period_max = period_sensor_values.max()
 

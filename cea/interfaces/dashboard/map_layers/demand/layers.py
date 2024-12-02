@@ -1,12 +1,9 @@
-import os
-
 import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
 
-from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
-from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output
+from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
 
 
@@ -23,59 +20,68 @@ class DemandMapLayer(MapLayer):
         "Qww_sys_kWh": "Energy demand for domestic hot water [kWh]",
     }
 
-    @property
-    def input_file_locators(self):
-        scenario_name = self.parameters['scenario-name']
-        locator = InputLocator(os.path.join(self.project, scenario_name))
+    def _get_data_columns(self):
+        return list(self._data_columns.keys())
 
-        # FIXME: Hardcoded to zone buildings for now
-        buildings = locator.get_zone_building_names()
-
-        return [(locator.get_demand_results_file, [building]) for building in buildings] + [
-            (locator.get_zone_geometry, [])]
+    def _get_results_files(self, _):
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_demand_results_file(building) for building in buildings]
 
     @classmethod
     def expected_parameters(cls):
         return {
-            'scenario-name': {
-                "type": "string",
-                "description": "Scenario of the layer",
-            },
-            'data-column': {
-                "type": "string",
-                "selector": "choice",
-                "description": "Data column to use",
-                "default": list(cls._data_columns.keys())[0],
-                "choices": list(cls._data_columns.keys()),
-            },
-            'period': {
-                "type": "array",
-                "selector": "time-series",
-                "description": "Period to generate the data (start, end) in days",
-                "default": [1, 365]
-            },
-            'radius': {
-                "type": "number",
-                "filter": "radius",
-                "selector": "input",
-                "description": "Radius of hexagon bin in meters",
-                "range": [0, 100],
-                "default": 5
-            },
+            'data-column':
+                ParameterDefinition(
+                    "Data column",
+                    "string",
+                    default=[1, 365],
+                    description="Data column to use",
+                    options_generator="_get_data_columns",
+                    selector="choice",
+                ),
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    default=[1, 365],
+                    description="Period to generate the data (start, end) in days",
+                    selector="time-series",
+                ),
+            'radius':
+                ParameterDefinition(
+                    "Radius",
+                    "number",
+                    default=5,
+                    description="Radius of hexagon bin in meters",
+                    selector="input",
+                    range=[0, 100],
+                    filter="radius",
+                ),
         }
 
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Zone Buildings geometry",
+                file_locator="locator:get_zone_geometry",
+            ),
+            FileRequirement(
+                "Demand results",
+                file_locator="layer:_get_results_files",
+            ),
+        ]
+
     @cache_output
-    def generate_output(self):
+    def generate_data(self, parameters):
         """Generates the output for this layer"""
-        scenario_name = self.parameters['scenario-name']
-        locator = InputLocator(os.path.join(self.project, scenario_name))
 
         # FIXME: Hardcoded to zone buildings for now
-        buildings = locator.get_zone_building_names()
-        period = self.parameters['period']
+        buildings = self.locator.get_zone_building_names()
+        period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        data_column = self.parameters['data-column']
+        data_column = parameters['data-column']
 
         output = {
             "data": [],
@@ -87,7 +93,7 @@ class DemandMapLayer(MapLayer):
         }
 
         def get_building_demand(building, centroid):
-            demand = pd.read_csv(locator.get_demand_results_file(building), usecols=[data_column])[data_column]
+            demand = pd.read_csv(self.locator.get_demand_results_file(building), usecols=[data_column])[data_column]
 
             total_min = 0
             total_max = demand.sum()
@@ -103,7 +109,7 @@ class DemandMapLayer(MapLayer):
 
             return total_min, total_max, period_min, period_max, data
 
-        df = gpd.read_file(locator.get_zone_geometry()).set_index("Name").loc[buildings]
+        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("Name").loc[buildings]
         building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
         # with ThreadPoolExecutor() as executor:
