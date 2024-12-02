@@ -9,14 +9,14 @@ from cea.config import DEFAULT_CONFIG, Configuration
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
-from cea.interfaces.dashboard.map_layers.solar_potentials import SolarPotentialsCategory
+from cea.interfaces.dashboard.map_layers.renewable_energy_potentials import RenewableEnergyPotentialsCategory
 
 
 class SolarPotentialsLayer(MapLayer):
-    category = SolarPotentialsCategory
-    name = "solar-potentials"
-    label = "Energy / Heat Potential [kWh]"
-    description = "Solar potentials of buildings"
+    category = RenewableEnergyPotentialsCategory
+    name = "renewable-energy-potentials"
+    label = "Renewable Energy Potentials [kWh]"
+    description = "Renewable energy potentials of buildings"
 
     _technologies = {
         "PV": "Photovoltaic panels",
