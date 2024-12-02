@@ -33,7 +33,7 @@ class ThermalNetworkMapLayer(MapLayer):
         return {
             'network-type':
                 ParameterDefinition(
-                    "Network type",
+                    "Network Type",
                     "string",
                     description="Type of the network",
                     options_generator="_get_network_types",
@@ -45,11 +45,11 @@ class ThermalNetworkMapLayer(MapLayer):
     def file_requirements(cls):
         return [
             FileRequirement(
-                "Zone Buildings geometry",
+                "Zone Buildings Geometry",
                 file_locator="locator:get_zone_geometry",
             ),
             FileRequirement(
-                "Network layout",
+                "Network Layout",
                 file_locator="layer:_get_network_layout_files",
                 depends_on=["network-type"],
             ),

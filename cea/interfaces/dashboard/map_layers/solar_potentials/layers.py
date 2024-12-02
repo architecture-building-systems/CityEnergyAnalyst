@@ -82,7 +82,7 @@ class SolarPotentialsLayer(MapLayer):
                 ),
             'panel-type':
                 ParameterDefinition(
-                    "Panel type",
+                    "Panel Type",
                     "string",
                     description="Panel type of the layer",
                     options_generator="_get_panel_types",

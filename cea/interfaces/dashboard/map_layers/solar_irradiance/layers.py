@@ -57,15 +57,15 @@ class SolarIrradiationMapLayer(MapLayer):
     def file_requirements(cls):
         return [
             FileRequirement(
-                "Zone Buildings geometry",
+                "Zone Buildings Geometry",
                 file_locator="locator:get_zone_geometry",
             ),
             FileRequirement(
-                "Sensor metadata",
+                "Sensor Metadata",
                 file_locator="layer:_get_sensor_metadata",
             ),
             FileRequirement(
-                "Sensor data",
+                "Sensor Data",
                 file_locator="layer:_get_sensor_data",
             ),
         ]

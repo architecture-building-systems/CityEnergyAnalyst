@@ -32,7 +32,7 @@ class DemandMapLayer(MapLayer):
         return {
             'data-column':
                 ParameterDefinition(
-                    "Data column",
+                    "Data Column",
                     "string",
                     default=[1, 365],
                     description="Data column to use",
@@ -63,11 +63,11 @@ class DemandMapLayer(MapLayer):
     def file_requirements(cls):
         return [
             FileRequirement(
-                "Zone Buildings geometry",
+                "Zone Buildings Geometry",
                 file_locator="locator:get_zone_geometry",
             ),
             FileRequirement(
-                "Demand results",
+                "Demand Results",
                 file_locator="layer:_get_results_files",
             ),
         ]
