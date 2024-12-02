@@ -178,7 +178,6 @@ class MapLayer(abc.ABC):
         """Checks if all input files are present"""
         missing_input_files = set()
         required_files = self.get_required_files(parameters)
-        print(required_files)
 
         def add_missing_input_file(path):
             if not os.path.isfile(path):
