@@ -665,7 +665,7 @@ class InputLocator(object):
     def get_tree_geometry(self):
         shapefile_path = os.path.join(self.get_tree_geometry_folder(), 'trees.shp')
         check_cpg(shapefile_path)
-        return
+        return shapefile_path
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
