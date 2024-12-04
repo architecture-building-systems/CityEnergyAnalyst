@@ -1408,16 +1408,28 @@ def serial_filter_buildings(config, locator):
 # Execute advanced UBEM analytics
 
 def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, bool_use_acronym, list_selected_time_period):
-    list_metrics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
+    list_pv_analytics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                     'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings)
 
-    def aggregate_by_period(df, period, date_column='date'):
+    def replace_kwh_with_pv_analytic(string, pv_analytic):
         """
-        Aggregates a DataFrame by a given time period with special handling for certain column types:
-        - Columns containing '_m2' or 'people': Use .mean() and round.
-        - Other columns: Use .sum().
-        - Adds 'hour_start' and 'hour_end' columns for group start and end hour information.
+        Replaces the end of a string with 'a' if it ends with '_kWh'.
+
+        Parameters:
+        - string (str): The input string.
+
+        Returns:
+        - str: The modified string.
+        """
+        if string.endswith('_kWh'):
+            return string[:-4] + pv_analytic  # Remove '_kWh' and append 'a'
+        return string  # Return the string unchanged if condition not met
+
+    def calc_by_period(df_pv, df_demand, period, list_pv_analytics, date_column='date'):
+        """
+        Calculates the three pv analytics for a given time period and
+        adds 'hour_start' and 'hour_end' columns for group start and end hour information.
 
         Parameters:
         - df (pd.DataFrame): The input DataFrame.
@@ -1426,9 +1438,18 @@ def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, boo
 
         Returns:
         - pd.DataFrame: Aggregated DataFrame.
+
         """
+        # Merge df_pv and df_demand
+        df_demand = df_demand['GRID_kWh']
+        df = pd.concat([df_pv, df_demand], axis=1)   # Concatenate the DataFrames horizontally
+        df = df.loc[:, ~df.columns.duplicated()]    # Remove duplicate columns, keeping the first occurrence
+
         if df is None or df.empty:
             return None
+
+        # Remove 'PV_' in the strings of PV analytics
+        list_analytics = [item[3:] if item.startswith('PV_') else item for item in list_pv_analytics]
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
@@ -1444,9 +1465,7 @@ def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, boo
         )
 
         # Handle different periods
-        if period == 'hourly':
-            df['period'] = 'hour_' + df['period_hour']
-        elif period == 'daily':
+        if period == 'daily':
             df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
@@ -1460,41 +1479,47 @@ def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, boo
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
         # Initialize an aggregated DataFrame
-        aggregated_df = pd.DataFrame()
+        pv_analytics_df = pd.DataFrame()
 
         # Process columns based on their naming
         for col in df.columns:
             if col in [date_column, 'period', 'period_hour']:
                 continue
-
             else:
-                # Default to sum for other columns
-                aggregated_col = df.groupby('period')[col].sum()
-
-            aggregated_df[col] = aggregated_col
+                for pv_analytic in list_analytics:
+                    col_new = replace_kwh_with_pv_analytic(col, pv_analytic)
+                    if pv_analytic == 'solar_energy_penetration[-]':
+                        pv_analytic_col = calc_solar_energy_penetration_by_period(df, col)
+                        pv_analytics_df[col_new] = pv_analytic_col
+                    elif pv_analytic == 'self_consumption[-]':
+                        pv_analytic_col = calc_self_consumption_by_period(df, col)
+                        pv_analytics_df[col_new] = pv_analytic_col
+                    elif pv_analytic == 'self_sufficiency[-]':
+                        pv_analytic_col = calc_self_sufficiency_by_period(df, col)
+                        pv_analytics_df[col_new] = pv_analytic_col
 
         # Convert 'period_hour' to numeric (if it's not already)
         df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
 
         # Add hour_start and hour_end columns
         period_groups = df.groupby('period')
-        aggregated_df['hour_start'] = period_groups['period_hour'].first().values
-        aggregated_df['hour_end'] = period_groups['period_hour'].last().values + 1
+        pv_analytics_df['hour_start'] = period_groups['period_hour'].first().values
+        pv_analytics_df['hour_end'] = period_groups['period_hour'].last().values + 1
 
         # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-        aggregated_df = add_nominal_actual_and_coverage(aggregated_df)
+        pv_analytics_df = add_nominal_actual_and_coverage(pv_analytics_df)
 
         # Preserve the date_column for hourly or daily periods
         if period in ['hourly', 'daily']:
-            aggregated_df[date_column] = period_groups[date_column].first()
+            pv_analytics_df[date_column] = period_groups[date_column].first()
 
         # Drop temporary 'period_hour' column
-        if 'period_hour' in aggregated_df.columns:
-            aggregated_df.drop(columns=['period_hour'], inplace=True)
+        if 'period_hour' in pv_analytics_df.columns:
+            pv_analytics_df.drop(columns=['period_hour'], inplace=True)
 
         # Move the period column to the first column
-        cols = ['period'] + [col for col in aggregated_df.columns if col != 'period']
-        aggregated_df = aggregated_df[cols]
+        cols = ['period'] + [col for col in pv_analytics_df.columns if col != 'period']
+        aggregated_df = pv_analytics_df[cols]
 
         return aggregated_df
 
@@ -1511,7 +1536,6 @@ def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, boo
             df_daily = add_nominal_actual_and_coverage(df_daily)
             list_df.append(df_daily)
             list_time_period.append('daily')
-
 
 
 def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period,
