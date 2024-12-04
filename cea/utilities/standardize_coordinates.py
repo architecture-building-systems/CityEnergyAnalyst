@@ -1,5 +1,4 @@
 import warnings
-import os
 
 import geopandas
 import utm
