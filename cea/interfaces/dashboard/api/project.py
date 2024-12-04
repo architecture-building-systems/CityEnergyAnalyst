@@ -205,6 +205,9 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
             verify_input_geometry_zone(zone_df)
 
+            # Replace invalid characters in building name (characters that would affect path and csv files)
+            zone_df["Name"] = zone_df["Name"].str.replace(r'[\\\/\.,\s]', '_', regex=True)
+
             zone_path = locator.get_zone_geometry()
             locator.ensure_parent_folder_exists(zone_path)
             zone_df.to_file(zone_path)
