@@ -663,7 +663,9 @@ class InputLocator(object):
         return os.path.join(self.scenario, 'inputs', 'tree-geometry')
 
     def get_tree_geometry(self):
-        return os.path.join(self.scenario, 'inputs', 'tree-geometry', 'trees.shp')
+        shapefile_path = os.path.join(self.get_tree_geometry_folder(), 'trees.shp')
+        check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
@@ -677,18 +679,6 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    # def get_zone_csv(self):
-    #     """scenario/inputs/building-geometry/zone.csv"""
-    #     zone_csv_path = os.path.join(self.get_building_geometry_folder(), 'zone.csv')
-    #     check_cpg(zone_csv_path)
-    #     return zone_csv_path
-
-    # def get_zone_xlsx(self):
-    #     """scenario/inputs/building-geometry/zone.xlsx"""
-    #     zone_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'zone.xlsx')
-    #     check_cpg(zone_xlsx_path)
-    #     return zone_xlsx_path
-
     def get_surroundings_geometry(self):
         """scenario/inputs/building-geometry/surroundings.shp"""
         # NOTE: we renamed district.shp to surroundings.shp - this code will automatically upgrade old scenarios
@@ -700,21 +690,13 @@ class InputLocator(object):
         """Return the list of buildings in the Zone"""
         if not os.path.exists(self.get_zone_geometry()):
             return []
-        from geopandas import GeoDataFrame as gdf
-        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
+        import geopandas as gdf
+        zone_building_names = sorted(gdf.read_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
 
     def get_building_typology(self):
         """scenario/inputs/building-properties/typology.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
-
-    # def get_building_typology_csv(self):
-    #     """scenario/inputs/building-properties/typology.csv"""
-    #     return os.path.join(self.get_building_properties_folder(), 'typology.csv')
-
-    # def get_building_typology_xlsx(self):
-    #     """scenario/inputs/building-properties/typology.xlsx"""
-    #     return os.path.join(self.get_building_properties_folder(), 'typology.xlsx')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/supply_systems.dbf"""
@@ -1117,18 +1099,6 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    # def get_streets_csv(self):
-    #     """scenario/inputs/networks/streets.csv"""
-    #     streets_csv_path = os.path.join(self.get_building_geometry_folder(), 'streets.csv')
-    #     check_cpg(streets_csv_path)
-    #     return streets_csv_path
-    #
-    # def get_streets_xlsx(self):
-    #     """scenario/inputs/networks/streets.xlsx"""
-    #     streets_xlsx_path = os.path.join(self.get_building_geometry_folder(), 'streets.xlsx')
-    #     check_cpg(streets_xlsx_path)
-    #     return streets_xlsx_path
-
     # OUTPUTS
 
     # SOLAR-RADIATION
@@ -1302,11 +1272,39 @@ class InputLocator(object):
         return os.path.join(self.get_temporary_folder(), filename)
 
 
-def check_cpg(shapefile_path):
-    # ensures that the CPG file is the correct one
-    if os.path.isfile(shapefile_path):
-        from cea.utilities.standardize_coordinates import ensure_cpg_file
-        ensure_cpg_file(shapefile_path)
+def check_cpg(shapefile_path: str) -> None:
+    """Ensures that the accompanied CPG file is the correct, and create one if it does not exist"""
+    # Ignore if not file or does not exist
+    if not os.path.isfile(shapefile_path):
+        return
+
+    import fiona
+
+    # Use common encodings for .dbf files
+    encoding_list = ["ISO-8859-1", "UTF-8"]
+
+    cpg_file_path = f"{os.path.splitext(shapefile_path)[0]}.cpg"
+    if os.path.exists(cpg_file_path):
+        # If the CPG file exists, try to open it with the provided encoding (use None for original encoding)
+        encoding_list.insert(0, None)
+
+    for encoding in encoding_list:
+        try:
+            with fiona.open(shapefile_path, encoding=encoding) as layer:
+                # Access metadata to test encoding
+                _ = layer.schema['properties']
+
+                # Write the encoding to the CPG file if original encoding is not provided / invalid
+                if encoding is not None:
+                    print("Writing correct cpg")
+                    with open(cpg_file_path, "w") as cpg_file:
+                        cpg_file.write(encoding)
+
+                return
+        except UnicodeDecodeError as e:
+            print(f"Encoding '{encoding}' failed: {e}")
+
+    raise ValueError(f"Could not find a valid encoding for the .shp file '{shapefile_path}'.")
 
 
 class ReferenceCaseOpenLocator(InputLocator):
