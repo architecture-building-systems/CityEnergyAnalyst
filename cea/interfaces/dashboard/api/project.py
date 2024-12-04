@@ -39,6 +39,7 @@ GENERATE_TERRAIN_CEA = 'generate-terrain-cea'
 GENERATE_STREET_CEA = 'generate-street-cea'
 EMTPY_GEOMETRY = 'none'
 
+
 class ScenarioPath(BaseModel):
     project: str
     scenario_name: str
@@ -47,6 +48,7 @@ class ScenarioPath(BaseModel):
 class NewProject(BaseModel):
     project_name: str
     project_root: str
+
 
 class CreateScenario(BaseModel):
     project: str
@@ -79,7 +81,6 @@ class CreateScenario(BaseModel):
 
 @router.get('/')
 async def get_project_info(config: CEAConfig, project: str = None):
-
     if project is None:
         scenario_name = config.scenario_name
     else:
@@ -228,7 +229,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             surroundings_df.to_file(surroundings_path)
         else:
             # Copy surroundings using path
-            surroundings_df = geopandas.read_file(scenario_form.user_surroundings).to_crs(get_geographic_coordinate_system())
+            surroundings_df = geopandas.read_file(scenario_form.user_surroundings).to_crs(
+                get_geographic_coordinate_system())
             verify_input_geometry_surroundings(surroundings_df)
 
             surroundings_path = locator.get_surroundings_geometry()
@@ -261,10 +263,16 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
             # Check if typology index matches zone
             if not typology_df["Name"].equals(zone_df["Name"]):
+                only_in_zone = set(zone_df["Name"]).difference(typology_df["Name"])
+                only_in_typology = set(typology_df["Name"]).difference(zone_df["Name"])
+                zone_message =  f'zone has additional names: {", ".join(only_in_zone)} ' if only_in_zone else ''
+                typology_message = f'typology has additional names: {", ".join(only_in_typology)}' if only_in_typology else ''
+
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Building geometries (zone) and Building information (typology) do not match.'
-                           'Ensure the `Name` Columns of the two files are identical.',
+                    detail='Names found in Building geometries (zone) and Building information (typology) do not match. '
+                           'Ensure the `Name` columns of the two files are identical. '
+                            f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
                 )
 
             copy_typology(scenario_form.typology, locator)
@@ -285,7 +293,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Not enough information to generate typology file from zone file.'
                            'Check zone file for the required typology.',
-            )
+                )
 
             typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
             dataframe_to_dbf(typology_df, locator.get_building_typology())
@@ -312,7 +320,6 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(locator.get_street_network())
             street_df.to_file(locator.get_street_network())
 
-
     with tempfile.TemporaryDirectory() as tmp:
         # Create temporary project before copying to actual scenario path
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -327,10 +334,11 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             # Generate / Copy zone
             zone_df = create_zone(scenario_form, locator)
 
+            # Generate / Copy typology
+            create_typology(scenario_form, zone_df, locator)
+
             # Generate / Copy surroundings
             create_surroundings(scenario_form, zone_df, locator)
-
-            create_typology(scenario_form, zone_df, locator)
 
             # Run weather helper
             config.weather_helper.weather = scenario_form.weather
@@ -631,5 +639,3 @@ async def get_scenario_image(config: CEAConfig, project: str, scenario: str):
         image = base64.b64encode(imgFile.read())
 
     return {'image': image.decode("utf-8")}
-
-
