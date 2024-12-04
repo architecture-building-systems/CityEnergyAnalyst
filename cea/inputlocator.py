@@ -1273,15 +1273,38 @@ class InputLocator(object):
 
 
 def check_cpg(shapefile_path: str) -> None:
-    """Ensures that the CPG file is the correct one"""
-    # Ignore if not file
+    """Ensures that the accompanied CPG file is the correct, and create one if it does not exist"""
+    # Ignore if not file or does not exist
     if not os.path.isfile(shapefile_path):
         return
 
+    import fiona
+
+    # Use common encodings for .dbf files
+    encoding_list = ["ISO-8859-1", "UTF-8"]
+
     cpg_file_path = f"{os.path.splitext(shapefile_path)[0]}.cpg"
-    if not os.path.exists(cpg_file_path):
-        with open(cpg_file_path, "w") as cpg_file:
-            cpg_file.write("utf-8")
+    if os.path.exists(cpg_file_path):
+        # If the CPG file exists, try to open it with the provided encoding (use None for original encoding)
+        encoding_list.insert(0, None)
+
+    for encoding in encoding_list:
+        try:
+            with fiona.open(shapefile_path, encoding=encoding) as layer:
+                # Access metadata to test encoding
+                _ = layer.schema['properties']
+
+                # Write the encoding to the CPG file if original encoding is not provided / invalid
+                if encoding is not None:
+                    print("Writing correct cpg")
+                    with open(cpg_file_path, "w") as cpg_file:
+                        cpg_file.write(encoding)
+
+                return
+        except UnicodeDecodeError as e:
+            print(f"Encoding '{encoding}' failed: {e}")
+
+    raise ValueError(f"Could not find a valid encoding for the .shp file '{shapefile_path}'.")
 
 
 class ReferenceCaseOpenLocator(InputLocator):
