@@ -91,7 +91,6 @@ def assert_input_geometry_only_polygon(buildings_df):
 
 def check_duplicated_names(df):
     duplicated_names = df[NAME_COLUMN].duplicated()
-    print(duplicated_names.any(), df[duplicated_names])
     if duplicated_names.any():
         raise Exception(
             'Duplicated names in the input file: {names}'.format(names=', '.join(df[duplicated_names][NAME_COLUMN].values)))
