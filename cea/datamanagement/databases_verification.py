@@ -3,8 +3,6 @@ Databases verification
 This tool is used as to check the format of each database
 """
 
-
-
 from cea.schemas import schemas
 import pandas as pd
 import re
@@ -16,6 +14,7 @@ COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_
 COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
                          '3RD_USE_R']
+NAME_COLUMN = 'Name'
 
 
 def assert_columns_names(zone_df, columns):
@@ -90,6 +89,22 @@ def assert_input_geometry_only_polygon(buildings_df):
             'Some buildings are not of type "Polygon": {buildings}'.format(buildings=', '.join(invalid_buildings)))
 
 
+def check_duplicated_names(df):
+    duplicated_names = df[NAME_COLUMN].duplicated()
+    if duplicated_names.any():
+        raise Exception(
+            'Duplicated names in the input file: {names}'.format(names=', '.join(df[duplicated_names][NAME_COLUMN].values)))
+
+
+def check_na_values(df, columns=None):
+    if columns is not None:
+        df = df[columns]
+
+    na_columns = df.columns[df.isna().any()].tolist()
+    if na_columns:
+        raise ValueError(f'There are NA values detected in the following required columns: {", ".join(na_columns)}')
+
+
 def verify_input_geometry_zone(zone_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
@@ -99,6 +114,10 @@ def verify_input_geometry_zone(zone_df):
 
     # Verification 3. verify geometries only contain Polygon
     assert_input_geometry_only_polygon(zone_df)
+
+    check_na_values(zone_df, columns=COLUMNS_ZONE_GEOMETRY)
+
+    check_duplicated_names(zone_df)
 
 
 def verify_input_geometry_surroundings(surroundings_df):
@@ -115,6 +134,10 @@ def verify_input_geometry_surroundings(surroundings_df):
 def verify_input_typology(typology_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(typology_df, COLUMNS_ZONE_TYPOLOGY)
+
+    check_na_values(typology_df, columns=COLUMNS_ZONE_TYPOLOGY)
+
+    check_duplicated_names(typology_df)
 
 
 def verify_input_terrain(terrain_raster):
@@ -172,7 +195,7 @@ class InputFileValidator(object):
         missing_columns = [col for col in columns if col not in data.columns]
         extra_columns = [col for col in data.columns if col not in columns]
         return [[{'column': str(col)}, 'Column is missing'] for col in missing_columns] + \
-               [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
+            [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
 
     def assert_column_values(self, data, data_schema):
         """
