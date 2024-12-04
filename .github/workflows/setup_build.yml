@@ -108,7 +108,7 @@ jobs:
           compression-level: 0 
 
   build_mac_dmg:
-    runs-on: "macos-12"
+    runs-on: "macos-latest"
     steps:
       - uses: actions/checkout@v4
         with:
