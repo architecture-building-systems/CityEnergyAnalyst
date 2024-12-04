@@ -245,9 +245,6 @@ def get_building_properties(config):
         file_type = db_info['file_type']
         db_columns = db_info['columns']
 
-        if file_path is None:
-            print(locator_method, file_path)
-
         try:
             if file_type == 'shp':
                 table_df = geopandas.read_file(file_path)
