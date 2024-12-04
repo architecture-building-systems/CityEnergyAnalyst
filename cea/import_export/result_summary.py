@@ -1630,7 +1630,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
     list_list_df = []
     list_list_time_period = []
 
-    # Get the hourly DataFrame for the district
+    # For the district
     for list_useful_cea_results_pv in list_list_useful_cea_results_pv:
         df_pv = aggregate_or_combine_dataframes(True, list_useful_cea_results_pv)   #hourly DataFrame for all selected buildings - pv
         df_demand = aggregate_or_combine_dataframes(bool_use_acronym, list_list_useful_cea_results_demand[0])   #hourly DataFrame for all selected buildings - pv
@@ -1675,7 +1675,6 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
     # Write to disk
     results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True)
-
 
 
 def calc_solar_energy_penetration_by_period(df, col):
