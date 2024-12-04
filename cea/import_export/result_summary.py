@@ -164,20 +164,26 @@ def get_results_path(locator, cea_feature, list_buildings):
         list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    elif cea_feature == 'demand':
+    if cea_feature == 'demand':
         for building in list_buildings:
             path = locator.get_demand_results_file(building)
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    elif cea_feature == 'embodied_emissions':
+    if cea_feature == 'embodied_emissions':
         path = locator.get_lca_embodied()
         list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    elif cea_feature == 'operation_emissions':
+    if cea_feature == 'operation_emissions':
         path = locator.get_lca_operation()
         list_paths.append(path)
+        list_appendix.append(cea_feature)
+
+    if cea_feature == 'solar_irradiation':
+        for building in list_buildings:
+            path = locator.get_radiation_building(building)
+            list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'pv':
@@ -258,6 +264,10 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                    'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
         "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
         "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+        "solar_irradiation": ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]','irradiation_wall_north[kWh]',
+                              'irradiation_window_south[kWh]','irradiation_wall_south[kWh]',
+                              'irradiation_window_east[kWh]','irradiation_wall_east[kWh]',
+                              'irradiation_window_west[kWh]','irradiation_wall_west[kWh]'],
         "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
                'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
                'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
@@ -337,6 +347,15 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'embodied_emissions_building_construction[tonCO2-eq/yr]': ['GHG_sys_embodied_tonCO2yr'],
         'operation_emissions[tonCO2-eq/yr]': ['GHG_sys_tonCO2'],
         'operation_emissions_grid[tonCO2-eq/yr]': ['GRID_tonCO2'],
+        'irradiation_roof[kWh]': ['roofs_top_kW'],
+        'irradiation_window_north[kWh]': ['windows_north_kW'],
+        'irradiation_wall_north[kWh]': ['walls_north_kW'],
+        'irradiation_window_south[kWh]': ['windows_south_kW'],
+        'irradiation_wall_south[kWh]': ['walls_south_kW'],
+        'irradiation_window_east[kWh]': ['windows_east_kW'],
+        'irradiation_wall_east[kWh]': ['walls_east_kW'],
+        'irradiation_window_west[kWh]': ['windows_west_kW'],
+        'irradiation_wall_west[kWh]': ['walls_west_kW'],
         'PV_installed_area_total[m2]': ['Area_PV_m2'],
         'PV_electricity_total[kWh]': ['E_PV_gen_kWh'],
         'PV_installed_area_roof[m2]': ['PV_roofs_top_m2'],
@@ -1571,6 +1590,7 @@ def main(config):
 
     list_list_metrics_with_date = [
                         config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_solar_irradiation,
                         config.result_summary.metrics_photovoltaic_panels,
                         config.result_summary.metrics_photovoltaic_thermal_panels,
                         config.result_summary.metrics_solar_collectors_et,
@@ -1588,6 +1608,7 @@ def main(config):
 
     list_list_metrics_building = [
                         config.result_summary.metrics_building_energy_demand,
+                        config.result_summary.metrics_solar_irradiation,
                         config.result_summary.metrics_photovoltaic_panels,
                         config.result_summary.metrics_photovoltaic_thermal_panels,
                         config.result_summary.metrics_solar_collectors_et,
