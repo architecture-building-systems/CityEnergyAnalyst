@@ -210,7 +210,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
             zone_path = locator.get_zone_geometry()
             locator.ensure_parent_folder_exists(zone_path)
-            zone_df.to_file(zone_path)
+            zone_df[COLUMNS_ZONE_GEOMETRY + ['geometry']].to_file(zone_path)
 
         return zone_df
 
