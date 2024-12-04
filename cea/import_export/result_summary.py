@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 import cea.inputlocator
 from cea.utilities.dbf import dbf_to_dataframe
-# from cea.import_export.ubem_analytics import import ubem_analytics
+
 
 __author__ = "Zhongming Shi, Reynold Mok"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -261,7 +261,9 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
                'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
                'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
-               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'],
+               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
+               'PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
+               'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
         "pvt": ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]',
                 'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]',
                 'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]',
@@ -420,6 +422,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
             output_list.append(item)
 
     return output_list
+
 
 def add_period_columns(df, date_column='date'):
     """
@@ -1385,75 +1388,116 @@ def serial_filter_buildings(config, locator):
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_ubem_analytics(config, locator, hour_start, hour_end, folder_name):
-    """
-    Read CEA results over all scenarios in a project and produce commonly used UBEM analytics.
-    The list of UBEM analytics include:
+def calc_pv_analytics(config, locator, hour_start, hour_end, list_buildings, bool_use_acronym, list_selected_time_period):
+    list_metrics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
+                    'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
 
-    - EUI - Grid Electricity [kWh/m²]
-      - Annual
-    - EUI - Enduse Electricity [kWh/m²]
-      - Annual
-    - EUI - Cooling Demand [kWh/m²]
-      - Annual
-    - EUI - Space Cooling Demand [kWh/m²]
-      - Annual
-    - EUI - Heating Demand [kWh/m²]
-      - Annual
-    - EUI - Space Heating Demand [kWh/m²]
-      - Annual
-    - EUI - Domestic Hot Water Demand [kWh/m²]
-      - Annual
-    - PV Energy Penetration [-]
-      - Annual
-    - PV Self-Consumption [-]
-      - Annual
-    - PV Energy Sufficiency [-]
-      - Annual
-    - PV Self-Sufficiency [-]
-      - Annual
-    - PV Capacity Factor [-]
-      - Annual
-    - PV Specific Yield [-]
-      - Annual
-      - Winter, Spring, Summer, Autumn
-      - Winter+Hourly, Spring+Hourly, Summer+Hourly, Autumn+Hourly
-      - Daily
-      - Weekly
-      - Monthly
-    - PV System Emissions [kgCO₂]
-      - Annual
-    - PV Generation Intensity [kgCO₂/kWh]
-      - Annual
-      - Winter, Spring, Summer, Autumn
-      - Winter+Hourly, Spring+Hourly, Summer+Hourly, Autumn+Hourly
-      - Daily
-      - Weekly
-      - Monthly
-    - DH Plant Capacity Factor [-]
-      - Annual
-    - DH Pump Capacity Factor [-]
-      - Annual
-    - DC Plant Capacity Factor [-]
-      - Annual
-    - DC Pump Capacity Factor [-]
-      - Annual
-    """
+    def aggregate_by_period(df, period, date_column='date'):
+        """
+        Aggregates a DataFrame by a given time period with special handling for certain column types:
+        - Columns containing '_m2' or 'people': Use .mean() and round.
+        - Other columns: Use .sum().
+        - Adds 'hour_start' and 'hour_end' columns for group start and end hour information.
 
-    # The CEA Features that the current analytics feature supports
-    list_cea_feature = ['demand', 'pv', 'dh', 'dc']
+        Parameters:
+        - df (pd.DataFrame): The input DataFrame.
+        - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
+        - date_column (str): Name of the date column.
 
-    # Calculating EUIs
-    list_time_period = config.result_summary.aggregate_by_time_period
+        Returns:
+        - pd.DataFrame: Aggregated DataFrame.
+        """
+        if df is None or df.empty:
+            return None
 
-    return None
+        # Ensure the date column is in datetime format
+        if date_column not in df.columns:
+            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
+        if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
+            df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+            if df[date_column].isnull().all():
+                raise ValueError(f"Failed to convert '{date_column}' to datetime format. Check the input data.")
+
+        # Add labels for each hour
+        df['period_hour'] = df[date_column].apply(
+            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
+        )
+
+        # Handle different periods
+        if period == 'hourly':
+            df['period'] = 'hour_' + df['period_hour']
+        elif period == 'daily':
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
+        elif period == 'monthly':
+            df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
+            df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
+        elif period == 'seasonally':
+            df['period'] = df[date_column].dt.month.map(season_mapping)
+            df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
+        elif period == 'annually':
+            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+        else:
+            raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
+
+        # Initialize an aggregated DataFrame
+        aggregated_df = pd.DataFrame()
+
+        # Process columns based on their naming
+        for col in df.columns:
+            if col in [date_column, 'period', 'period_hour']:
+                continue
+
+            else:
+                # Default to sum for other columns
+                aggregated_col = df.groupby('period')[col].sum()
+
+            aggregated_df[col] = aggregated_col
+
+        # Convert 'period_hour' to numeric (if it's not already)
+        df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
+
+        # Add hour_start and hour_end columns
+        period_groups = df.groupby('period')
+        aggregated_df['hour_start'] = period_groups['period_hour'].first().values
+        aggregated_df['hour_end'] = period_groups['period_hour'].last().values + 1
+
+        # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+        aggregated_df = add_nominal_actual_and_coverage(aggregated_df)
+
+        # Preserve the date_column for hourly or daily periods
+        if period in ['hourly', 'daily']:
+            aggregated_df[date_column] = period_groups[date_column].first()
+
+        # Drop temporary 'period_hour' column
+        if 'period_hour' in aggregated_df.columns:
+            aggregated_df.drop(columns=['period_hour'], inplace=True)
+
+        # Move the period column to the first column
+        cols = ['period'] + [col for col in aggregated_df.columns if col != 'period']
+        aggregated_df = aggregated_df[cols]
+
+        return aggregated_df
+
+    # Get the hourly DataFrame for the district
+    for list_useful_cea_results in list_list_useful_cea_results:
+        df_aggregated_results_hourly = aggregate_or_combine_dataframes(bool_use_acronym, list_useful_cea_results)   #hourly DataFrame for all selected buildings
+
+        list_df = []
+        list_time_period = []
+
+        if 'daily' in list_selected_time_period:
+            df_daily = aggregate_by_period(df_aggregated_results_hourly, 'daily', date_column='date')
+            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+            df_daily = add_nominal_actual_and_coverage(df_daily)
+            list_df.append(df_daily)
+            list_time_period.append('daily')
 
 
-def calc_ubem_analytics_normalised(
-    locator, hour_start, hour_end, cea_feature, summary_folder,
-    list_time_period, bool_aggregate_by_building, bool_use_acronym,
-    bool_use_conditioned_floor_area_for_normalisation
-):
+
+def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period,
+                                   bool_aggregate_by_building, bool_use_acronym,
+                                   bool_use_conditioned_floor_area_for_normalisation):
     """
     Normalizes UBEM analytics based on floor area and writes the results.
     """
