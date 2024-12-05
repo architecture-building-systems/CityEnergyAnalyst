@@ -109,8 +109,12 @@ def parse_dat_weather_file(source_dat_file, output_epw_file):
                            f"-9999, -9999, -9999, -9999,{row['WR']}, {row['WG']}, 99, 9999, 9999, 9999,0, 999999999,0," \
                            f" -999,-999,-999\n"
                 epw_file.write(epw_line)
-    except Exception as e:
-        raise ValueError(f"Error parsing .dat-Datei: {e}")
++    except pd.errors.EmptyDataError as e:
++        raise ValueError("The .dat file is empty or has incorrect format") from e
++    except pd.errors.ParserError as e:
++        raise ValueError("Failed to parse the .dat file - invalid format") from e
++    except Exception as e:
++        raise ValueError(f"Unexpected error while parsing .dat file: {str(e)}") from e
 
 def main(config):
     """
