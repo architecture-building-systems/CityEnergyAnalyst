@@ -22,8 +22,8 @@ __status__ = "Production"
 
 def costs_main(locator, config):
     # get local variables
-    capital = config.costs.capital
-    operational = config.costs.operational
+    # capital = config.costs.capital
+    # operational = config.costs.operational
 
     # get demand
     demand = pd.read_csv(locator.get_total_demand())

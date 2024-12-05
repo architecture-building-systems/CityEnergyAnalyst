@@ -345,7 +345,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     mB_min_r = panel_properties_SC['mB_min_r']  # minimum flow rate per aperture area
     C_eff_Jperm2K = panel_properties_SC['C_eff']  # thermal capacitance of module [J/m2K]
     IAM_d = panel_properties_SC['IAM_d']  # incident angle modifier for diffuse radiation [-]
-    dP1 = panel_properties_SC['dP1']  # pressure drop [Pa/m2] at zero flow rate
+    # dP1 = panel_properties_SC['dP1']  # pressure drop [Pa/m2] at zero flow rate
     dP2 = panel_properties_SC['dP2']  # pressure drop [Pa/m2] at nominal flow rate (mB0)
     dP3 = panel_properties_SC['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties_SC['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
@@ -353,7 +353,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     aperature_area_ratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
     area_pv_module = panel_properties_PV['module_length_m'] ** 2
     Nseg = panel_properties_SC['Nseg']
-    T_max_C = panel_properties_SC['t_max']
+    # T_max_C = panel_properties_SC['t_max']
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
     misc_losses = panel_properties_PV['misc_losses']
@@ -393,9 +393,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     tilt_rad = radians(tilt_angle_deg)
     q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
                                             tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
-    counter = 0
-    Flag = False
-    Flag2 = False
+    # counter = 0
+    # Flag = False
+    # Flag2 = False
     for flow in range(6):
         Mo_seg = 1  # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
@@ -496,7 +496,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                       pipe_lengths['l_ext_mperm2'],
                                                                       aperture_area_m2, temperature_mean[flow],
                                                                       Tamb_vector_C, msc_max_kgpers)
-            supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
+            # supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
             auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
