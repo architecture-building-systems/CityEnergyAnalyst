@@ -39,6 +39,16 @@ class ThermalNetworkMapLayer(MapLayer):
                     options_generator="_get_network_types",
                     selector="choice",
                 ),
+            'scale':
+                ParameterDefinition(
+                    "Scale",
+                    "number",
+                    default=1,
+                    description="Scale of pipe width",
+                    selector="input",
+                    range=[0.1, 100],
+                    filter="scale",
+                ),
         }
 
     @classmethod

@@ -107,6 +107,16 @@ class SolarPotentialsLayer(MapLayer):
                     range=[0, 100],
                     filter="radius",
                 ),
+            'scale':
+                ParameterDefinition(
+                    "Scale",
+                    "number",
+                    default=1,
+                    description="Scale of hexagon bin height",
+                    selector="input",
+                    range=[0.1, 10],
+                    filter="scale",
+                ),
         }
 
     @classmethod
@@ -148,7 +158,7 @@ class SolarPotentialsLayer(MapLayer):
 
         def get_building_potential(building, centroid):
             if technology == "PV":
-                path =self.locator.PV_results(building, panel_type)
+                path = self.locator.PV_results(building, panel_type)
             elif technology == "PVT":
                 path = self.locator.PVT_results(building)
             elif technology == "SC":
