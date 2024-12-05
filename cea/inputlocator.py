@@ -175,7 +175,7 @@ class InputLocator(object):
 
     def get_export_results_summary_selected_building_file(self, summary_folder):
         """scenario/export/results/{folder_name}/selected_buildings.csv"""
-        return os.path.join(summary_folder, 'selected_buildings.csv')
+        return os.path.join(summary_folder, '_selected_buildings.csv')
 
     def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}"""

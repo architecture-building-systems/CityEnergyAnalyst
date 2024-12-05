@@ -746,7 +746,7 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 # Execute aggregation
 
 
-def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period, date_column='date'):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date'):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -761,13 +761,16 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
     - list: A list of three lists of DataFrames corresponding to the time periods:
         [hourly/annually results, monthly results, seasonally results].
     """
-    # Initialize separate lists for the results
-    hourly_annually_results = []
-    monthly_results = []
-    seasonally_results = []
+    list_list_df = []
+    for n in range(len(list_list_useful_cea_results)):
+        appendix = list_appendix[n]
+        list_useful_cea_results = list_list_useful_cea_results[n]
+        # Initialize separate lists for the results
+        hourly_annually_results = []
+        monthly_results = []
+        seasonally_results = []
 
-    for list_useful_cea_results in list_list_useful_cea_results:
-        hourly_annually_rows = []
+        annually_rows = []
         monthly_rows = []
         seasonally_rows = []
 
@@ -808,11 +811,11 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
                 row_sum['hour_start'] = df['period_hour'].iloc[0]
                 row_sum['hour_end'] = df['period_hour'].iloc[-1] + 1
                 row_sum.drop(labels=['period_month', 'period_season'], errors='ignore', inplace=True)
-                hourly_annually_rows.append(row_sum)
+                annually_rows.append(row_sum)
 
         # Create DataFrames for each time period
-        if hourly_annually_rows:
-            hourly_annually_df = pd.DataFrame(hourly_annually_rows)
+        if annually_rows:
+            hourly_annually_df = pd.DataFrame(annually_rows)
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
@@ -870,8 +873,11 @@ def exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list
                     )
                 seasonally_results.append(seasonally_df.reset_index(drop=True))
 
-    # Combine results into a single list
-    return [hourly_annually_results, monthly_results, seasonally_results], ['annually','monthly','seasonally']
+        list_list_df = [hourly_annually_results, monthly_results, seasonally_results]
+        list_time_resolution = ['annually', 'monthly', 'seasonally']
+
+        # Write to disk
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1674,12 +1680,11 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
     if bool_aggregate_by_building:
         # For each building
-
-        annually_results = []
-        seasonally_results = []
-        monthly_results = []
-
         for pv_type in range(len(list_list_useful_cea_results_pv)):
+
+            annually_results = []
+            seasonally_results = []
+            monthly_results = []
 
             appendix = list_appendix[pv_type]
             list_useful_cea_results_pv = list_list_useful_cea_results_pv[pv_type]
@@ -2028,10 +2033,10 @@ def main(config):
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            list_list_df_aggregate_building, list_time_resolution = exec_aggregate_building(bool_use_acronym, list_list_useful_cea_results, list_buildings, list_selected_time_period)
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_building, list_appendix, list_time_resolution, bool_analytics=False)  # Write to disk
+            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period)  # Write to disk
 
-    # Include analytics
+
+    # Include analytics, aggregate by time period and by building
     if bool_include_advanced_analytics:
         calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
         calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym)
