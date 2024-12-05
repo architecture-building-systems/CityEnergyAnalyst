@@ -1,8 +1,8 @@
 import itertools
 from concurrent.futures import ThreadPoolExecutor
 
-import fiona
 import pandas as pd
+import rasterio
 from pyproj import CRS, Transformer
 
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
@@ -87,9 +87,10 @@ class SolarIrradiationMapLayer(MapLayer):
             }
         }
 
-        # Convert coordinates to WGS84
-        with fiona.open(self.locator.get_zone_geometry()) as src:
-            transformer = Transformer.from_crs(src.crs, CRS.from_epsg(4326), always_xy=True)
+        # Convert coordinates to WGS84 based on terrain (sensor crs are based on terrain)
+        with rasterio.open(self.locator.get_terrain()) as src:
+            src_crs = src.crs
+        transformer = Transformer.from_crs(src_crs, CRS.from_epsg(4326), always_xy=True)
 
         def get_building_sensors(building):
             metadata = pd.read_csv(self.locator.get_radiation_metadata(building)).set_index('SURFACE')
