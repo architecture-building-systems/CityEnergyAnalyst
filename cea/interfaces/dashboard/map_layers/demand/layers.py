@@ -34,7 +34,6 @@ class DemandMapLayer(MapLayer):
                 ParameterDefinition(
                     "Data Column",
                     "string",
-                    default=[1, 365],
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
@@ -56,6 +55,16 @@ class DemandMapLayer(MapLayer):
                     selector="input",
                     range=[0, 100],
                     filter="radius",
+                ),
+            'scale':
+                ParameterDefinition(
+                    "Scale",
+                    "number",
+                    default=1,
+                    description="Scale of hexagon bin height",
+                    selector="input",
+                    range=[0.1, 10],
+                    filter="scale",
                 ),
         }
 
