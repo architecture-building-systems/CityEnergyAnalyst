@@ -86,16 +86,28 @@ def parse_dat_weather_file(source_dat_file, output_epw_file):
     print(f"Parsing .dat file: {source_dat_file}")
     try:
         weather_data = pd.read_csv(source_dat_file, sep="\s+", skiprows=6, header=None)
-        weather_data.columns = ['Year', 'Month', 'Day', 'Hour', 'Temperature', 'Radiation', 'WindSpeed', '...']
+        weather_data.columns = ['RW', 'HW', 'MM', 'DD', 'HH', 't', 'p', 'WR', 'WG', 'N', 'x', 'RF', 'B', 'D', 'A', 'E',
+                                'IL']
 
         # from dat to epw
         with open(output_epw_file, 'w') as epw_file:
-            # add EPW-Header
-            epw_file.write("LOCATION,Example,DEU,,,0,0,0\n")
+            epw_file.write("LOCATION,Weimar,-,DEU,SRC-TMYx,105550,50.983,11.317,1,268\n")
             epw_file.write("DESIGN CONDITIONS,0\n")
+            epw_file.write("TYPICAL/EXTREME PERIODS,0\n")
+            epw_file.write("GROUND TEMPERATURES,0\n")
+            epw_file.write("HOLIDAYS/DAYLIGHT SAVINGS,No,0,0,0\n")
+            epw_file.write("COMMENTS 1, converted from .dat to .epw by CEA\n")
+            epw_file.write("COMMENTS 2\n")
+            epw_file.write("DATA PERIODS,1,1,Data,Tuesday,1/1,12/31\n")
 
             for _, row in weather_data.iterrows():
-                epw_line = f"{row['Year']},{row['Month']},{row['Day']},{row['Hour']},...,{row['Temperature']},...\n"
+                mm = int(row['MM'])
+                dd = int(row['DD'])
+                hh = int(row['HH'])
+                epw_line = f"1958,{mm},{dd},{hh},60,B8E7B8B8?9?0?0?0?0?0?0B8B8B8B8?0?0F8F8A7E7, " \
+                           f"{row['t']},99,99,{row['RF']}, {row['p']}, 9999, {row['A']}, {row['D']}, {row['B']}, {row['D']}," \
+                           f"-9999, -9999, -9999, -9999,{row['WR']}, {row['WG']}, 99, 9999, 9999, 9999,0, 999999999,0," \
+                           f" -999,-999,-999\n"
                 epw_file.write(epw_line)
     except Exception as e:
         raise ValueError(f"Error parsing .dat-Datei: {e}")
