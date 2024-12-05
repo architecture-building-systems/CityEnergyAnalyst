@@ -158,11 +158,11 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
     # convert degree to radians
-    lat = radians(latitude)
-    g_rad = np.radians(solar_properties.g)
-    ha_rad = np.radians(solar_properties.ha)
+    # lat = radians(latitude)
+    # g_rad = np.radians(solar_properties.g)
+    # ha_rad = np.radians(solar_properties.ha)
     Sz_rad = np.radians(solar_properties.Sz)
-    Az_rad = np.radians(solar_properties.Az)
+    # Az_rad = np.radians(solar_properties.Az)
 
     # empty list to store results
     list_groups_area = [0 for i in range(number_groups)]
@@ -345,7 +345,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     n = constants.n  # refractive index of glass
     Pg = constants.Pg  # ground reflectance
     K = constants.K  # glazing extinction coefficient
-    NOCT = panel_properties_PV['PV_noct']
+    # NOCT = panel_properties_PV['PV_noct']
     a0 = panel_properties_PV['PV_a0']
     a1 = panel_properties_PV['PV_a1']
     a2 = panel_properties_PV['PV_a2']

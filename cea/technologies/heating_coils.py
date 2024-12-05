@@ -167,7 +167,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     tho =  Ta_sup_cs + 273
     tci = Tcs_sup_0 + 273
     ch = ma_sup_cs * C_A # WperC
-    ch_0 = ma_sup_0 * C_A # WperC
+    # ch_0 = ma_sup_0 * C_A # WperC
     thi_0 = Ta_re_0
     tho_0 = Ta_sup_0
     tci_0 = Tcs_sup_0 + 273

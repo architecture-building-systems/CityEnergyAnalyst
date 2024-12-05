@@ -84,10 +84,10 @@ def district_heating_network(locator,
         E_HP_PVT_req_W = storage_dispatch["E_HP_PVT_req_W"]
         E_HP_Server_req_W = storage_dispatch["E_HP_Server_req_W"]
 
-        Q_SC_ET_gen_W = storage_dispatch["Q_SC_ET_gen_W"]
-        Q_SC_FP_gen_W = storage_dispatch["Q_SC_FP_gen_W"]
-        Q_PVT_gen_W = storage_dispatch["Q_PVT_gen_W"]
-        Q_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
+        # Q_SC_ET_gen_W = storage_dispatch["Q_SC_ET_gen_W"]
+        # Q_SC_FP_gen_W = storage_dispatch["Q_SC_FP_gen_W"]
+        # Q_PVT_gen_W = storage_dispatch["Q_PVT_gen_W"]
+        # Q_Server_gen_W = storage_dispatch["Q_HP_Server_gen_W"]
 
         Q_Storage_gen_W = storage_dispatch["Q_Storage_gen_W"]
 

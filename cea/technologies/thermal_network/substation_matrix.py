@@ -856,11 +856,11 @@ def main(config):
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME
-    network = 'DH'  # FIXME
-    delta_cap_mass_flow = 0  # Assume all edge mass flows sufficiently high
-    cc_old_sh = 0  # not relevant here.
-    cc_old_dhw = 0
-    ch_old = 0
+    # network = 'DH'  # FIXME
+    # delta_cap_mass_flow = 0  # Assume all edge mass flows sufficiently high
+    # cc_old_sh = 0  # not relevant here.
+    # cc_old_dhw = 0
+    # ch_old = 0
 
     thermal_network.buildings_demands = determine_building_supply_temperatures(thermal_network.building_names, locator)
     thermal_network.substations_HEX_specs = substation_HEX_design_main(thermal_network.buildings_demands)

@@ -752,14 +752,14 @@ class Network(object):
         :rtype wnm_pipe_diameters: pd.DataFrame
         """
         # BUILD WATER NETWORK
-        thermal_network_folder = self._domain_locator.get_thermal_network_folder()
+        # thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             _file_location = os.path.join(tmpdir, f"{connectivity_string_for_files}_{self.identifier}")
 
             # Create empty .inp file for WaterNetworkModel
             inp_file = f"{_file_location}.inp"
-            with open(inp_file, "w") as f:
+            with open(inp_file, "w"):
                 pass
 
             # Create a water network model instance

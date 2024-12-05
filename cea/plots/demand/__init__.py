@@ -175,7 +175,7 @@ def main():
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
-    from cea.plots.cache import NullPlotCache, PlotCache, MemoryPlotCache
+    from cea.plots.cache import PlotCache, MemoryPlotCache
     import time
 
     def plot_the_whole_category(cache):
@@ -202,7 +202,7 @@ def main():
                     # plot the plot!
                     plot.plot()
 
-    null_plot_cache = NullPlotCache()
+    # null_plot_cache = NullPlotCache()
     plot_cache = PlotCache(config.project)
     memory_plot_cache = MemoryPlotCache(config.project)
     # test plots with cache
