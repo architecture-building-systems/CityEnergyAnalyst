@@ -162,7 +162,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE):
 
         if eta_therm_real == 0:
             eta_el = 0
-            Q_aux_W = 0
+            # Q_aux_W = 0
             break
 
     if MOIST_TYPE == "dry":

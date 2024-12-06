@@ -46,7 +46,7 @@ def main():
     import cea.inputlocator
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
-    buildings = config.plots.buildings
+    # buildings = config.plots.buildings
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
     EnergySupplyPlot(config.project, {'buildings': None,

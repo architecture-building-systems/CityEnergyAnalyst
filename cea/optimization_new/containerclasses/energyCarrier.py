@@ -167,7 +167,7 @@ class EnergyCarrier(object):
                              'feedstock data base. Please make sure the tabs are named correctly.')
 
         # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
-        energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
+        # energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
         for tab_name in referenced_tabs:
             cost_and_ghg = feedstock.parse(tab_name)
             EnergyCarrier._daily_ghg_profile[tab_name] = \

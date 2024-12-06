@@ -67,11 +67,21 @@ async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperti
 async def restore_default_config(config: CEAConfig, tool_name: str):
     """Restore the default configuration values for the CEA"""
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+    # Ensure that parameters that depend on scenario files will be parsed correctly
+    default_config.scenario = config.scenario
 
+    # Set the parameters to their default values
     for parameter in parameters_for_script(tool_name, config):
-        if parameter.name != 'scenario':
-            parameter.set(
-                default_config.sections[parameter.section.name].parameters[parameter.name].get())
+        if parameter.name == 'scenario':
+            continue
+
+        default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
+        # Don't set parameters that are not nullable and have an empty default value
+        if default_value == "" and (not hasattr(parameter, "nullable") or not parameter.nullable):
+            print(f"Skipping {parameter.name} since it has no default value")
+            continue
+
+        parameter.set(default_value)
     await config.save()
     return 'Success'
 
@@ -102,7 +112,8 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
     script_suggestions = set()
 
     for method_name, path in script.missing_input_files(config):
-        _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[method_name] else None
+        _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
+            method_name] else None
 
         if _script_suggestions is not None:
             script_suggestions.update(_script_suggestions)

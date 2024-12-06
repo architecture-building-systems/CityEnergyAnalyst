@@ -451,8 +451,8 @@ def thermal_network_simplified(locator, config, network_name=''):
     # pressure losses total
     # $ POSTPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
     flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
-    head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    head_loss_return_kWperm = head_loss_supply_kWperm.copy()
+    # head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    # head_loss_return_kWperm = head_loss_supply_kWperm.copy()
     pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     head_loss_return_kW = pressure_loss_supply_edge_kW.copy()
     head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)

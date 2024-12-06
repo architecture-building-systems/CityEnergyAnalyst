@@ -329,7 +329,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     mB_min_r = panel_properties['mB_min_r']  # minimum flow rate per aperture area
     C_eff_Jperm2K = panel_properties['C_eff']  # thermal capacitance of module [J/m2K]
     IAM_d = panel_properties['IAM_d']  # incident angle modifier for diffuse radiation [-]
-    dP1 = panel_properties['dP1']  # pressure drop [Pa/m2] at zero flow rate
+    # dP1 = panel_properties['dP1']  # pressure drop [Pa/m2] at zero flow rate
     dP2 = panel_properties['dP2']  # pressure drop [Pa/m2] at nominal flow rate (mB0)
     dP3 = panel_properties['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
@@ -938,7 +938,7 @@ def calc_Cinv_SC(Area_m2, locator, panel_type):
         SC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="SOLAR_THERMAL_PANELS")
         SC_cost_data = SC_cost_data[SC_cost_data['type'] == panel_type]
         cap_min = SC_cost_data['cap_min'].values[0]
-        cap_max = SC_cost_data['cap_max'].values[0]
+        # cap_max = SC_cost_data['cap_max'].values[0]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
         if Area_m2 <= cap_min:

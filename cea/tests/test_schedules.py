@@ -95,7 +95,7 @@ def calculate_mixed_use_archetype_values_results(locator):
     office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2p'])
     lab_occ = float(occ_densities.loc['LAB', 'Occ_m2p'])
     indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2p'])
-    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2p'])
+    # server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2p'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
@@ -130,12 +130,12 @@ def create_data():
     # calculate schedules
     building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
     bpr = building_properties['B1011']
-    list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
+    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
 
     # read weather file
-    weather_path = locator.get_weather_file()
-    weather_data = epwreader.epw_reader(weather_path)
+    # weather_path = locator.get_weather_file()
+    # weather_data = epwreader.epw_reader(weather_path)
 
     calculated_schedules = schedule_maker_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):

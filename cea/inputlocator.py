@@ -1188,7 +1188,6 @@ class InputLocator(object):
 
     def PVT_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
-        solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
         return os.path.join(self.solar_potential_folder_sensors(), '%s_PVT_sensors.csv' % building)
 
     # DEMAND

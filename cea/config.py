@@ -1240,6 +1240,7 @@ class ColumnChoiceParameter(ChoiceParameter):
             codes = df[self.column_name].unique()
             return list(codes)
         except FileNotFoundError as e:
+            # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
             raise FileNotFoundError(f'Could not find source file at {location}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e

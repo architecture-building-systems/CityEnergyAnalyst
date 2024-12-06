@@ -74,7 +74,7 @@ async def generate_map_layer(params: LayerParams, layer_category: str, layer_nam
         layer = layer_class(project=params.project, scenario_name=params.scenario_name)
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
-        print("Missing Input files")
+        print(e)
         raise HTTPException(status_code=400, detail="Missing input files")
     except ValueError as e:
         print(e)
@@ -90,5 +90,6 @@ async def check_map_layer(params: LayerParams, layer_category: str, layer_name: 
     try:
         layer = layer_class(project=params.project, scenario_name=params.scenario_name)
         layer.check_for_missing_input_files(params.parameters)
-    except MissingInputDataException:
+    except MissingInputDataException as e:
+        print(e)
         raise HTTPException(status_code=400, detail="Missing input files")
