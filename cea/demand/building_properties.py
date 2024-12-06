@@ -23,6 +23,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+
 # import constants
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -57,6 +59,11 @@ class BuildingProperties(object):
         self.building_names = building_names
         print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+        # reproject to projected coordinate system (in meters) to calculate area
+        lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+        prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())

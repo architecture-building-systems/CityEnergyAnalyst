@@ -24,6 +24,7 @@ from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 
 def disconnected_buildings_heating_main(locator, total_demand, building_names, config, prices, lca):
@@ -41,6 +42,11 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     """
     t0 = time.perf_counter()
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+    # reproject to projected coordinate system (in meters) to calculate area
+    lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+    prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')

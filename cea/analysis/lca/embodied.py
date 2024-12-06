@@ -26,6 +26,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+
 
 def lca_embodied(year_to_calculate, locator):
     """
@@ -102,6 +104,11 @@ def lca_embodied(year_to_calculate, locator):
     age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
+
+    # reproject to projected coordinate system (in meters) to calculate area
+    lat, lon = get_lat_lon_projected_shapefile(geometry_df)
+    geometry_df = geometry_df.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
