@@ -23,6 +23,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+
 
 def calc_geothermal_potential(locator, config):
     "A very simplified calculation based on the area available"
@@ -62,6 +64,11 @@ def calc_geothermal_potential(locator, config):
 def calc_area_buildings(locator, buildings_list):
     # initialize value
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+    # reproject to projected coordinate system (in meters) to calculate area
+    lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+    prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     prop_geometry['footprint'] = prop_geometry.area
 
     footprint = prop_geometry[prop_geometry["Name"].isin(buildings_list)]['footprint']

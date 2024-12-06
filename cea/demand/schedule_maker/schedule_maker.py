@@ -28,6 +28,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
+
 
 def schedule_maker_main(locator, config, building=None):
     # local variables
@@ -51,6 +53,11 @@ def schedule_maker_main(locator, config, building=None):
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+    # reproject to projected coordinate system (in meters) to calculate area
+    lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+    prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
     prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
