@@ -4,7 +4,6 @@ Classes of building properties
 
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
