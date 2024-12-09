@@ -2,7 +2,6 @@
 A tool to create a new project / scenario with the CEA.
 """
 import os
-from shutil import copyfile
 
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
