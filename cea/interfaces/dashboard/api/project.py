@@ -262,9 +262,12 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             verify_input_typology(typology_df)
 
             # Check if typology index matches zone
-            if not typology_df["Name"].equals(zone_df["Name"]):
-                only_in_zone = set(zone_df["Name"]).difference(typology_df["Name"])
-                only_in_typology = set(typology_df["Name"]).difference(zone_df["Name"])
+            zone_names = set(zone_df["Name"])
+            typology_names = set(typology_df["Name"])
+            if not zone_names == typology_names:
+                only_in_zone = zone_names.difference(typology_names)
+                only_in_typology = typology_names.difference(zone_names)
+
                 zone_message =  f'zone has additional names: {", ".join(only_in_zone)} ' if only_in_zone else ''
                 typology_message = f'typology has additional names: {", ".join(only_in_typology)}' if only_in_typology else ''
 

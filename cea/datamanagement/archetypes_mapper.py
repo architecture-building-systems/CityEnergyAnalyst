@@ -6,18 +6,14 @@ building properties algorithm
 # J. A. Fonseca  script development          22.03.15
 
 
-
-
-
-
 import numpy as np
 import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, get_lists_of_var_names_and_var_values
+from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
+    get_lists_of_var_names_and_var_values
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
-
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +25,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def archetypes_mapper(locator,
                       update_architecture_dbf,
                       update_air_conditioning_systems_dbf,
@@ -38,7 +33,6 @@ def archetypes_mapper(locator,
                       update_supply_systems_dbf,
                       update_schedule_operation_cea,
                       buildings):
-
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -66,6 +60,10 @@ def archetypes_mapper(locator,
     """
     # get occupancy and age files
     building_typology_df = dbf_to_dataframe(locator.get_building_typology())
+    db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
+        'STANDARD']
+
+    verify_building_standards(building_typology_df, db_standards)
 
     # validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
@@ -157,6 +155,7 @@ def supply_mapper(locator, building_typology_df):
               'type_dhw',
               'type_el']
     dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
+
 
 def aircon_mapper(locator, typology_df):
     air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
@@ -352,7 +351,8 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
         buildings
     """
 
-    list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names, list_var_values, properties_df)
+    list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names, list_var_values,
+                                                                            properties_df)
 
     properties_DB = properties_DB.set_index('code')
     for column in fields:
@@ -382,10 +382,18 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                         if use in [properties_df[var_name][building]]:
                             average += properties_df[var_value][building] * properties_DB[column][use]
 
-
                 properties_df.loc[building, column] = average
 
     return properties_df
+
+
+def verify_building_standards(building_typology_df, db_standards):
+    typology_standards = set(building_typology_df['STANDARD'].unique())
+    db_standards = set(db_standards)
+
+    if not typology_standards.issubset(db_standards):
+        diff = typology_standards.difference(db_standards)
+        raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
 
 
 def main(config):
