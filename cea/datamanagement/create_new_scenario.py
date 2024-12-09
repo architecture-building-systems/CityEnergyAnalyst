@@ -4,6 +4,7 @@ A tool to create a new project / scenario with the CEA.
 import os
 from shutil import copyfile
 
+import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 from osgeo import gdal
 
@@ -32,13 +33,24 @@ def copy_terrain(terrain_path, locator, lat, lon):
 
 
 def copy_typology(typology_path, locator):
-    # import file
-    occupancy_file = dbf_to_dataframe(typology_path)
-    occupancy_file_test = occupancy_file[COLUMNS_ZONE_TYPOLOGY]
+    if not os.path.isfile(typology_path):
+        raise Exception(f"Typology at {typology_path} does not exist")
+
+    _, ext = os.path.splitext(typology_path)
+
+    if ext == ".dbf":
+        df = dbf_to_dataframe(typology_path)
+    elif ext == ".xlsx":
+        df = pd.read_excel(typology_path)
+    else:
+        raise Exception("Typology file must be a .dbf or .xlsx file")
+
+    df = df[COLUMNS_ZONE_TYPOLOGY]
     # verify if input file is correct for CEA, if not an exception will be released
-    verify_input_typology(occupancy_file_test)
+    verify_input_typology(df)
+
     # create new file
-    copyfile(typology_path, locator.get_building_typology())
+    dataframe_to_dbf(df, locator.get_building_typology())
 
 def generate_default_typology(zone_geometry: Gdf, locator: cea.inputlocator.InputLocator):
     zone = zone_geometry.drop('geometry', axis=1)
