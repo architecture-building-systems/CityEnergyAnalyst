@@ -1,4 +1,4 @@
-__version__ = "4.0.0-alpha.17"
+__version__ = "4.0.0-alpha.18"
 
 class ConfigError(Exception):
     """Raised when the configuration of a tool contains some invalid values."""
