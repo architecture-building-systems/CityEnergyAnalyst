@@ -14,7 +14,7 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import schedule_maker_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 
@@ -59,7 +59,7 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
+        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('DATE')
 
         test_config = configparser.ConfigParser()
         test_config.read(get_test_config_path())

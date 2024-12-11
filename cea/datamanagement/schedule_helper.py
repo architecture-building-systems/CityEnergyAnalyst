@@ -35,7 +35,7 @@ COLUMN_NAMES_CEA_SCHEDULE = ['DAY',
                              'SERVERS']
 
 
-def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names=None, list_var_values=None):
+def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list_var_values=None):
     """
     Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
     combining the occupancy types as indicated in the inputs.
@@ -52,6 +52,7 @@ def calc_mixed_schedule(locator, building_typology_df, buildings, list_var_names
     :return:
     """
 
+    buildings = building_typology_df['Name']
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
     building_typology_df = building_typology_df.loc[building_typology_df['Name'].isin(buildings)]
@@ -286,7 +287,7 @@ def main(config):
     get_list_of_uses_in_case_study(building_typology_df)
 
     # calculate mixed schedules
-    calc_mixed_schedule(locator, building_typology_df, buildings=config.archetypes_mapper.buildings)
+    calc_mixed_schedule(locator, building_typology_df)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

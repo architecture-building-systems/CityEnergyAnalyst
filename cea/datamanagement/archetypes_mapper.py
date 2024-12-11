@@ -31,8 +31,7 @@ def archetypes_mapper(locator,
                       update_indoor_comfort_dbf,
                       update_internal_loads_dbf,
                       update_supply_systems_dbf,
-                      update_schedule_operation_cea,
-                      buildings):
+                      update_schedule_operation_cea):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -92,7 +91,7 @@ def archetypes_mapper(locator,
         internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
 
     if update_schedule_operation_cea:
-        calc_mixed_schedule(locator, building_typology_df, buildings)
+        calc_mixed_schedule(locator, building_typology_df)
 
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df)
@@ -411,7 +410,6 @@ def main(config):
     update_supply_systems_dbf = 'supply' in config.archetypes_mapper.input_databases
     update_schedule_operation_cea = 'schedules' in config.archetypes_mapper.input_databases
 
-    buildings = config.archetypes_mapper.buildings
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     archetypes_mapper(locator=locator,
@@ -420,8 +418,8 @@ def main(config):
                       update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                       update_internal_loads_dbf=update_internal_loads_dbf,
                       update_supply_systems_dbf=update_supply_systems_dbf,
-                      update_schedule_operation_cea=update_schedule_operation_cea,
-                      buildings=buildings)
+                      update_schedule_operation_cea=update_schedule_operation_cea
+                      )
 
 
 if __name__ == '__main__':

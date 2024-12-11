@@ -19,7 +19,7 @@ import zipfile
 import pandas as pd
 
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import schedule_maker_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader

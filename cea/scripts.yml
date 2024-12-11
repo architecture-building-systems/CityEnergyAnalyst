@@ -145,16 +145,16 @@ Solar radiation:
       - [ get_weather_file ]
 
 Demand forecasting:
-  - name: schedule-maker
+  - name: occupancy-helper
     label: Building occupancy
-    description: Use CEA models and input schedules to estimate the occupancy profile of buildings
+    description: Estimate the occupancy profile of buildings
     interfaces: [dashboard, cli]
-    module: cea.demand.schedule_maker.schedule_maker
+    module: cea.demand.occupancy_helper
     parameters: ['general:scenario',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'general:debug',
-                 schedule-maker]
+                 occupancy-helper]
     input-files:
       - [get_building_internal]
       - [get_building_comfort]

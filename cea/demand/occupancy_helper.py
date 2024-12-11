@@ -33,7 +33,7 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 
 def schedule_maker_main(locator, config, building=None):
     # local variables
-    buildings = config.schedule_maker.buildings
+    buildings = config.archetypes_mapper.buildings
     schedule_model = config.schedule_maker.schedule_model
 
     if schedule_model == 'deterministic':
@@ -274,7 +274,7 @@ def calc_schedules(locator,
     }
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
-    yearly_occupancy_schedules.to_csv(locator.get_schedule_model_file(building), index=False, na_rep='OFF',
+    yearly_occupancy_schedules.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
 
     # return final_dict
