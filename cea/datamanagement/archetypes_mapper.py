@@ -31,7 +31,9 @@ def archetypes_mapper(locator,
                       update_indoor_comfort_dbf,
                       update_internal_loads_dbf,
                       update_supply_systems_dbf,
-                      update_schedule_operation_cea):
+                      update_schedule_operation_cea,
+                      list_buildings
+                      ):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -57,17 +59,20 @@ def archetypes_mapper(locator,
     - indoor_comfort.shp
         describes the queried thermal properties of buildings
     """
-    # get occupancy and age files
+    # Get occupancy and age files
     building_typology_df = dbf_to_dataframe(locator.get_building_typology())
     db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
         'STANDARD']
 
     verify_building_standards(building_typology_df, db_standards)
 
-    # validate list of uses in case study
+    # Filter by selected buildings
+    building_typology_df = building_typology_df[building_typology_df['Name'].isin(list_buildings)]
+
+    # Validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
-    # get occupant densities from archetypes schedules
+    # Get occupant densities from archetypes schedules
     occupant_densities = {}
     occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
     for use in list_uses:
@@ -76,11 +81,11 @@ def archetypes_mapper(locator,
         else:
             occupant_densities[use] = 0.0
 
-    # get properties about the construction and architecture
+    # Get properties about the construction and architecture
     if update_architecture_dbf:
         architecture_mapper(locator, building_typology_df)
 
-    # get properties about types of HVAC systems
+    # Get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
         aircon_mapper(locator, building_typology_df)
 
@@ -411,6 +416,7 @@ def main(config):
     update_schedule_operation_cea = 'schedules' in config.archetypes_mapper.input_databases
 
     locator = cea.inputlocator.InputLocator(config.scenario)
+    list_buildings = config.archetypes_mapper.buildings
 
     archetypes_mapper(locator=locator,
                       update_architecture_dbf=update_architecture_dbf,
@@ -418,7 +424,8 @@ def main(config):
                       update_indoor_comfort_dbf=update_indoor_comfort_dbf,
                       update_internal_loads_dbf=update_internal_loads_dbf,
                       update_supply_systems_dbf=update_supply_systems_dbf,
-                      update_schedule_operation_cea=update_schedule_operation_cea
+                      update_schedule_operation_cea=update_schedule_operation_cea,
+                      list_buildings=list_buildings
                       )
 
 

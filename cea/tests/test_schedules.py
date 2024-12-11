@@ -14,7 +14,7 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.occupancy_helper import schedule_maker_main
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 
@@ -58,7 +58,7 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        schedule_maker_main(locator, config)
+        occupancy_helper_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('DATE')
 
         test_config = configparser.ConfigParser()
@@ -137,7 +137,7 @@ def create_data():
     # weather_path = locator.get_weather_file()
     # weather_data = epwreader.epw_reader(weather_path)
 
-    calculated_schedules = schedule_maker_main(locator, config)
+    calculated_schedules = occupancy_helper_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(

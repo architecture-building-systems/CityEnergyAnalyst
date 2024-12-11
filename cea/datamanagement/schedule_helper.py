@@ -43,8 +43,6 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
 
     :param cea.inputlocator.InputLocator locator: the locator to use
     :param building_typology_df: ``occupancy.dbf``, with an added column "mainuse"
-    :param buildings: the list of buildings to calculate the schedules for
-    :type buildings: list[str]
     :param list_var_names: List of column names in building_typology_df that contain the names of use-types being calculated
     :type list_var_names: list[str]
     :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names

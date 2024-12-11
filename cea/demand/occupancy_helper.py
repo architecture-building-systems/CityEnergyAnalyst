@@ -31,17 +31,17 @@ __status__ = "Production"
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 
-def schedule_maker_main(locator, config, building=None):
+def occupancy_helper_main(locator, config, building=None):
     # local variables
-    buildings = config.archetypes_mapper.buildings
-    schedule_model = config.schedule_maker.schedule_model
+    buildings = config.occupancy_helper.buildings
+    occupancy_model = config.occupancy_helper.occupancy_model
 
-    if schedule_model == 'deterministic':
+    if occupancy_model == 'deterministic':
         stochastic_schedule = False
-    elif schedule_model == 'stochastic':
+    elif occupancy_model == 'stochastic':
         stochastic_schedule = True
     else:
-        raise ValueError("Invalid schedule model: {schedule_model}".format(**locals()))
+        raise ValueError("Invalid schedule model: {occupancy_model}".format(**locals()))
 
     if building is not None:
         buildings = [building]  # this is to run the tests
@@ -473,13 +473,9 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
-    print('Running occupancy model  with schedule model=%s' % config.schedule_maker.schedule_model)
+    print('Running occupancy model  with schedule model=%s' % config.occupancy_helper.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
-    # CHECK DATABASE
-    if is_3_22(config.scenario):
-        raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
-        Please run Data migrator in Utilities.""")
-    schedule_maker_main(locator, config)
+    occupancy_helper_main(locator, config)
 
 
 if __name__ == '__main__':

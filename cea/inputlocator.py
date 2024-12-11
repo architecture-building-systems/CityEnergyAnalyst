@@ -737,7 +737,7 @@ class InputLocator(object):
         The following rows are three sets of HOUR 1-24, one set for each of DAY in {WEEKDAY, SATURDAY, SUNDAY}
 
         These weekly schedules are used by the schedule-maker script to create the schedules for each hour of the
-        year (``get_schedule_model_file``).
+        year (``get_occupancy_model_file``).
 
         Do not read this file yourself, instead, use :py:func`cea.utilities.schedule_reader.read_cea_schedule`
 
