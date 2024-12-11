@@ -104,7 +104,7 @@ def calc_schedules(locator,
     """
     Calculate the profile of occupancy, electricity demand and domestic hot water consumption from the input schedules.
     For variables that depend on the number of people (humidity gains, heat gains and ventilation demand), additional
-    schedules are created given the the number of people present at each time.
+    schedules are created given the number of people present at each time.
 
     Two occupant models are included: a deterministic one, which simply uses the schedules provided by the user; and a
     stochastic one, which is based on the two-state Markov chain model of Page et al. (2008). In the latter case,
