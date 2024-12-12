@@ -64,8 +64,8 @@ Data management:
   - name: weather-helper
     label: Weather helper
     description: |
-      Sets the weather file to use for simulation for a scenario. 
-      Fetches data from third party sources if no file is provided by the user.
+      Sets the weather file to use for Building solar radiation and Building energy demand. 
+      CEA fetches data from third party sources if no file is provided by user.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
