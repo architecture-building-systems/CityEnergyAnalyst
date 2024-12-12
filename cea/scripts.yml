@@ -74,7 +74,10 @@ Data management:
 
   - name: surroundings-helper
     label: Surroundings helper
-    description: Query geometry of surrounding buildings from Open Street Maps
+    description: |
+      Query geometry of surrounding buildings from OpenStreetMap, which is not always accurate.
+      
+      CEA uses the median of the other buildings in the surroundings, when information of a particular building (i.e. height and number of floors) is missing. When the information is missing for all buildings, CEA assumes 3 floors.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
