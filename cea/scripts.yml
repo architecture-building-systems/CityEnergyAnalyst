@@ -96,7 +96,7 @@ Data management:
 
   - name: streets-helper
     label: Streets helper
-    description: Query streets geometry from Open Street Maps
+    description: Query streets geometry from OpenStreetMap. CEA uses streets geometry for Thermal network Part I (layout) when designing a district thermal network.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
