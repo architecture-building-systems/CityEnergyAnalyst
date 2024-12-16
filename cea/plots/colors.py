@@ -45,14 +45,12 @@ COLORS_TO_RGB = {"red": "rgb(240,75,91)",
 
 
 def color_to_rgb(color):
-    try:
-        return COLORS_TO_RGB[color]
-    except KeyError:
-        import re
-        if re.match("rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", color):
-            # already an rgb formatted color
-            return color
-        return COLORS_TO_RGB["black"]
+    rgb = COLORS_TO_RGB.get(color)
+
+    if rgb is None:
+        raise ValueError(f"Color {color} not found.")
+
+    return rgb
 
 def rgb_to_hex(rgb_string):
     rgb_values = rgb_string.strip("rgb()").split(",")
@@ -60,9 +58,6 @@ def rgb_to_hex(rgb_string):
     return "#{:02x}{:02x}{:02x}".format(*rgb)
 
 def color_to_hex(color):
-    rgb = COLORS_TO_RGB.get(color)
-
-    if rgb is None:
-        raise ValueError(f"Color {color} not found.")
+    rgb = color_to_rgb(color)
 
     return rgb_to_hex(rgb)
