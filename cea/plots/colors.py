@@ -56,6 +56,8 @@ def color_to_rgb(color):
 
 def rgb_to_hex(rgb_string):
     rgb_values = rgb_string.strip("rgb()").split(",")
+    if len(rgb_values) != 3:
+        raise ValueError("RGB string must contain exactly 3 values")
     rgb = [max(0, min(255, int(val.strip()))) for val in rgb_values]
     return "#{:02x}{:02x}{:02x}".format(*rgb)
 
