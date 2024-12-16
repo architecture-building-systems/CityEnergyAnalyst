@@ -5,6 +5,7 @@ from pyproj import CRS
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
+from cea.plots.colors import color_to_hex
 
 
 class DemandMapLayer(MapLayer):
@@ -14,10 +15,34 @@ class DemandMapLayer(MapLayer):
     description = "Energy Demand of buildings"
 
     _data_columns = {
-        "E_sys_kWh": "Electricity Consumption [kWh]",
-        "Qcs_sys_kWh": "Energy demand for space cooling [kWh]",
-        "Qhs_sys_kWh": "Energy demand for space heating [kWh]",
-        "Qww_sys_kWh": "Energy demand for domestic hot water [kWh]",
+        "E_sys_kWh": {
+            "label": "Electricity Consumption [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("red_lighter"), color_to_hex("red")],
+                "points": 12
+            }
+        },
+        "Qcs_sys_kWh": {
+            "label": "Energy demand for space cooling [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                "points": 12
+            }
+        },
+        "Qhs_sys_kWh": {
+            "label": "Energy demand for space heating [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                "points": 12
+            }
+        },
+        "Qww_sys_kWh": {
+            "label": "Energy demand for domestic hot water [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                "points": 12
+            }
+        },
     }
 
     def _get_data_columns(self):
@@ -92,12 +117,16 @@ class DemandMapLayer(MapLayer):
 
         data_column = parameters['data-column']
 
+        if data_column not in self._data_columns.keys():
+            raise ValueError(f"Invalid data column: {data_column}")
+
         output = {
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": self._data_columns[data_column],
+                "label": self._data_columns[data_column]["label"],
                 "description": self.description,
+                "colours": self._data_columns[data_column]["colours"]
             }
         }
 
