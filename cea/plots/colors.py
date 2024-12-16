@@ -53,3 +53,16 @@ def color_to_rgb(color):
             # already an rgb formatted color
             return color
         return COLORS_TO_RGB["black"]
+
+def rgb_to_hex(rgb_string):
+    rgb_values = rgb_string.strip("rgb()").split(",")
+    rgb = [max(0, min(255, int(val.strip()))) for val in rgb_values]
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+def color_to_hex(color):
+    rgb = COLORS_TO_RGB.get(color)
+
+    if rgb is None:
+        raise ValueError(f"Color {color} not found.")
+
+    return rgb_to_hex(rgb)

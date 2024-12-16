@@ -5,6 +5,7 @@ import geopandas as gpd
 
 from cea.interfaces.dashboard.map_layers.base import MapLayer, ParameterDefinition, FileRequirement, cache_output
 from cea.interfaces.dashboard.map_layers.thermal_network import ThermalNetworkCategory
+from cea.plots.colors import color_to_hex
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 
@@ -69,6 +70,7 @@ class ThermalNetworkMapLayer(MapLayer):
     def generate_data(self, parameters):
         """Generates the output for this layer"""
         network_type = parameters.get('network-type', 'DC')
+        primary_colour = color_to_hex("blue") if network_type == "DC" else color_to_hex("red")
 
         output = {
             "nodes": None,
@@ -77,6 +79,13 @@ class ThermalNetworkMapLayer(MapLayer):
                 "name": self.name,
                 "label": self.label,
                 "description": self.description,
+                "colours": {
+                    "edges": primary_colour,
+                    "nodes": {
+                        "plant": primary_colour,
+                        "consumer": color_to_hex("white"),
+                    }
+                }
             }
         }
 

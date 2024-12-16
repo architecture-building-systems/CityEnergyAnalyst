@@ -84,6 +84,10 @@ class SolarIrradiationMapLayer(MapLayer):
                 "name": self.name,
                 "label": self.label,
                 "description": self.description,
+                "colours": {
+                    "colour_array": ['#2A7BB2', '#eb5025', '#f9e246'],
+                    "points": 12
+                }
             }
         }
 

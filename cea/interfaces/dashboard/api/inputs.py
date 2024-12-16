@@ -31,8 +31,6 @@ router = APIRouter()
 
 COLORS = {
     'surroundings': get_color_array('grey_light'),
-    'dh': get_color_array('red'),
-    'dc': get_color_array('blue'),
     'disconnected': get_color_array('white')
 }
 

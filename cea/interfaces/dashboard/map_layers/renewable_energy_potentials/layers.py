@@ -10,6 +10,7 @@ from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.renewable_energy_potentials import RenewableEnergyPotentialsCategory
+from cea.plots.colors import color_to_hex
 
 
 class SolarPotentialsLayer(MapLayer):
@@ -149,6 +150,10 @@ class SolarPotentialsLayer(MapLayer):
                 "name": self.name,
                 "label": self.label,
                 "description": self.description,
+                "colours": {
+                    "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                    "points": 12
+                }
             }
         }
 

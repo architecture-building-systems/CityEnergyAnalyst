@@ -6,6 +6,7 @@ from pyproj import CRS
 
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
+from cea.plots.colors import color_to_hex
 
 
 class EmissionsMapLayer(MapLayer):
@@ -109,6 +110,10 @@ class EmissionsMapLayer(MapLayer):
                 "name": self.name,
                 "label": f"Building Emissions: {emissions_type}",
                 "description": self.description,
+                "colours": {
+                    "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                    "points": 12
+                }
             }
         }
 
