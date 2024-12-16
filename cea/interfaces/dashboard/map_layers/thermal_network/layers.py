@@ -15,8 +15,10 @@ class ThermalNetworkMapLayer(MapLayer):
     label = "Thermal Network"
     description = "Thermal Network Design"
 
+    _network_types = ["DC", "DH"]
+
     def _get_network_types(self):
-        return ["DC", "DH"]
+        return self._network_types
 
     def _get_network_layout_files(self, parameters):
         network_type = parameters.get('network-type', 'DC')
@@ -70,6 +72,10 @@ class ThermalNetworkMapLayer(MapLayer):
     def generate_data(self, parameters):
         """Generates the output for this layer"""
         network_type = parameters.get('network-type', 'DC')
+
+        if network_type not in self._network_types:
+            raise ValueError(f"Invalid network type: {network_type}")
+
         primary_colour = color_to_hex("blue") if network_type == "DC" else color_to_hex("red")
 
         output = {
