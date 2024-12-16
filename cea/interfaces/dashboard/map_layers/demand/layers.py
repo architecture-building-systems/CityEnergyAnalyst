@@ -117,6 +117,9 @@ class DemandMapLayer(MapLayer):
 
         data_column = parameters['data-column']
 
+        if data_column not in self._data_columns.keys():
+            raise ValueError(f"Invalid data column: {data_column}")
+
         output = {
             "data": [],
             "properties": {
