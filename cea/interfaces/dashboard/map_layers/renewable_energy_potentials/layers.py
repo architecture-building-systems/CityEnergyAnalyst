@@ -151,7 +151,7 @@ class SolarPotentialsLayer(MapLayer):
                 "label": self.label,
                 "description": self.description,
                 "colours": {
-                    "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                    "colour_array": [color_to_hex("yellow_lighter"), color_to_hex("yellow")],
                     "points": 12
                 }
             }

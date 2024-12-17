@@ -17,12 +17,13 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-COLORS_TO_RGB = {"red": "rgb(240,75,91)",
-                 "red_light": "rgb(246,148,143)",
+COLORS_TO_RGB = {"red": "rgb(240,77,91)",
+                 "red_light": "rgb(246,149,143)",
                  "red_lighter": "rgb(252,217,210)",
+                 "red_dark": "rgb(191,98,96)",
                  "blue": "rgb(63,192,194)",
-                 "blue_light": "rgb(171,221,222)",
-                 "blue_lighter": "rgb(225,242,242)",
+                 "blue_light": "rgb(151,214,215)",
+                 "blue_lighter": "rgb(219,240,239)",
                  "yellow": "rgb(255,209,29)",
                  "yellow_light": "rgb(255,225,133)",
                  "yellow_lighter": "rgb(255,243,211)",
@@ -35,13 +36,13 @@ COLORS_TO_RGB = {"red": "rgb(240,75,91)",
                  "green": "rgb(126,199,143)",
                  "green_light": "rgb(178,219,183)",
                  "green_lighter": "rgb(227,241,228)",
-                 "grey": "rgb(68,76,83)",
-                 "grey_light": "rgb(126,127,132)",
-                 "black": "rgb(35,31,32)",
+                 "grey": "rgb(127,128,134)",
+                 "grey_light": "rgb(201,200,203)",
+                 "black": "rgb(69,77,84)",
                  "white": "rgb(255,255,255)",
                  "orange": "rgb(245,131,69)",
-                 "orange_light": "rgb(248,159,109)",
-                 "orange_lighter": "rgb(254,220,198)"}
+                 "orange_light": "rgb(250,177,133)",
+                 "orange_lighter": "rgb(254,226,207)"}
 
 
 def color_to_rgb(color):
