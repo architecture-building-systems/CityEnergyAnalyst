@@ -23,7 +23,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.settings import get_settings
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import secure_path, InvalidPathError
 from cea.plots.colors import color_to_rgb
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -124,7 +124,13 @@ async def create_new_project(new_project: NewProject):
     project_root = new_project.project_root
 
     if project_name and project_root:
-        project = secure_path(os.path.join(project_root, project_name))
+        try:
+            project = secure_path(os.path.join(project_root, project_name))
+        except InvalidPathError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Path `{project_root}` is not a valid path. Path is outside of project root.",
+            )
         try:
             os.makedirs(project, exist_ok=True)
         except OSError as e:

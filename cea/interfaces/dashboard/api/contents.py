@@ -99,7 +99,7 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
         secure_path(os.path.join(root_path, content_path))
         content_info = get_content_info(root_path, content_path, content_type, show_hidden=show_hidden)
         return content_info.as_dict()
-    except (ContentPathNotFound, InvalidPathError):
+    except ContentPathNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Path `{content_path}` does not exist",
@@ -108,4 +108,9 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Path `{content_path}` is not of type `{content_type.value}`",
+        )
+    except InvalidPathError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Path `{content_path}` is not a valid path. Path is outside of project root.",
         )
