@@ -8,7 +8,9 @@ from cea.interfaces.dashboard.settings import get_settings
 
 class InvalidPathError(Exception):
     """Raised when a path is invalid (e.g. outside or project root folder)"""
-
+    def __init__(self, path):
+        super().__init__(f"Path `{path}` is not a valid path. Path is outside of project root.")
+        self.path = path
 
 def secure_path(path: str) -> str:
     """
@@ -21,7 +23,7 @@ def secure_path(path: str) -> str:
 
         prefix = os.path.commonpath((project_root, real_path))
         if project_root != prefix:
-            raise InvalidPathError("Path is outside of project root")
+            raise InvalidPathError(path)
 
     return real_path
 
