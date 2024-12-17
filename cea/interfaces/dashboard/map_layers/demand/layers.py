@@ -15,31 +15,38 @@ class DemandMapLayer(MapLayer):
     description = "Energy Demand of buildings"
 
     _data_columns = {
+        "GRID_kWh": {
+            "label": "Grid Electricity Final-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("brown_lighter"), color_to_hex("brown")],
+                "points": 12
+            }
+        },
         "E_sys_kWh": {
-            "label": "Electricity Consumption [kWh]",
+            "label": "Electricity End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("green_lighter"), color_to_hex("green")],
+                "points": 12
+            }
+        },
+        "Qcs_sys_kWh": {
+            "label": "Space Cooling End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue_lighter"), color_to_hex("blue")],
+                "points": 12
+            }
+        },
+        "Qhs_sys_kWh": {
+            "label": "Space Heating End-Use [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("red_lighter"), color_to_hex("red")],
                 "points": 12
             }
         },
-        "Qcs_sys_kWh": {
-            "label": "Energy demand for space cooling [kWh]",
-            "colours": {
-                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
-                "points": 12
-            }
-        },
-        "Qhs_sys_kWh": {
-            "label": "Energy demand for space heating [kWh]",
-            "colours": {
-                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
-                "points": 12
-            }
-        },
         "Qww_sys_kWh": {
-            "label": "Energy demand for domestic hot water [kWh]",
+            "label": "Domestic Hot Water End-Use [kWh]",
             "colours": {
-                "colour_array": [color_to_hex("blue"), color_to_hex("red")],
+                "colour_array": [color_to_hex("orange_lighter"), color_to_hex("orange")],
                 "points": 12
             }
         },
