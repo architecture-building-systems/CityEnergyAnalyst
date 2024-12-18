@@ -18,6 +18,7 @@ def secure_path(path: str) -> str:
     """
     real_path = os.path.realpath(path)
 
+    # TODO: Remove dependency on settings
     if not get_settings().allow_path_transversal():
         project_root = os.path.realpath(get_settings().project_root)
 
