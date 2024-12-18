@@ -6,7 +6,7 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, status
 
 from cea.interfaces.dashboard.dependencies import CEAConfig
-from cea.interfaces.dashboard.utils import secure_path, InvalidPathError
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 router = APIRouter()
 
@@ -109,8 +109,8 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Path `{content_path}` is not of type `{content_type.value}`",
         )
-    except InvalidPathError:
+    except OutsideProjectRootError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Path `{content_path}` is not a valid path. Path is outside of project root.",
+            detail=str(e),
         )

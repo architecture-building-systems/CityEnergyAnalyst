@@ -23,7 +23,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.settings import get_settings
-from cea.interfaces.dashboard.utils import secure_path, InvalidPathError
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.plots.colors import color_to_rgb
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
