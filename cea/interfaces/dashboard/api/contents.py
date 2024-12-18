@@ -80,20 +80,19 @@ def get_content_info(content_path: str, content_type: ContentType,
     )
 
 
-@router.get('/')
-@router.get('/{content_path}')
+@router.get('')
+# @router.get('/{content_path}')
 async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
                        content_path: str = "", show_hidden: bool = False):
     """
     Get information of the content path provided
     """
-    root_path = ""
-    if project_root is not None:
-        root_path = project_root
+    if project_root is None:
+        project_root = ""
 
     try:
         # Check path first
-        full_path = secure_path(os.path.join(root_path, content_path))
+        full_path = secure_path(os.path.join(project_root, content_path))
         content_info = get_content_info(full_path, content_type, show_hidden=show_hidden)
         return content_info.as_dict()
     except ContentPathNotFound:
