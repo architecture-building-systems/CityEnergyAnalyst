@@ -4,7 +4,7 @@ import unittest
 
 import cea.config
 from cea.utilities import create_polygon
-from cea.datamanagement import zone_helper, surroundings_helper, terrain_helper, streets_helper, data_initializer, \
+from cea.datamanagement import zone_helper, surroundings_helper, terrain_helper, streets_helper, database_helper, \
     archetypes_mapper
 
 # Zug site coordinates

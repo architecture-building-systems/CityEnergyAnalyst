@@ -47,7 +47,7 @@ class TestScheduleCreation(unittest.TestCase):
         config.multiprocessing = False
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.data_initializer import main as data_initializer
+        from cea.datamanagement.database_helper import main as data_initializer
         config.data_initializer.databases_path = "CH"
         config.data_initializer.databases = ["archetypes", "assemblies", "components"]
         data_initializer(config)
@@ -122,7 +122,7 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.data_initializer import main as data_initializer
+    from cea.datamanagement.database_helper import main as data_initializer
     config.data_initializer.databases_path = "CH"
     config.data_initializer.databases = ["archetypes", "assemblies", "components"]
     data_initializer(config)

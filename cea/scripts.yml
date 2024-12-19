@@ -409,12 +409,12 @@ Utilities:
     input-files:
       - [ get_database_construction_standards ]
 
-  - name: data-initializer
-    label: Database initializer
-    description: Initialize databases for CEA
+  - name: database-helper
+    label: Database helper
+    description: Load in a CEA Database
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
+    module: cea.datamanagement.database_helper
+    parameters: ['general:scenario', database-helper]
 
   - name: create-new-scenario
     label: Create new scenario

@@ -41,7 +41,7 @@ def main(output_file):
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.data_initializer import main as data_initializer
+    from cea.datamanagement.database_helper import main as data_initializer
     config.data_initializer.databases_path = "CH"
     config.data_initializer.databases = ["archetypes", "assemblies", "components"]
     data_initializer(config)
