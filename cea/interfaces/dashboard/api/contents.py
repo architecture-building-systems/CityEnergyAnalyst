@@ -5,8 +5,8 @@ from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, status
 
-from cea.interfaces.dashboard.dependencies import CEAConfig
-from cea.interfaces.dashboard.utils import secure_path, InvalidPathError
+from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 router = APIRouter()
 
@@ -44,9 +44,9 @@ class ContentInfo:
         return asdict(self, dict_factory=self._dict_factory)
 
 
-def get_content_info(root_path: str, content_path: str, content_type: ContentType,
+def get_content_info(content_path: str, content_type: ContentType,
                      depth: int = 1, show_hidden: bool = False) -> ContentInfo:
-    full_path = os.path.join(root_path, content_path)
+    full_path = os.path.realpath(content_path)
     if not os.path.exists(full_path):
         raise ContentPathNotFound
 
@@ -62,7 +62,7 @@ def get_content_info(root_path: str, content_path: str, content_type: ContentTyp
             # ignore "hidden" items that start with "."
             for item in os.listdir(full_path) if not item.startswith(".") or show_hidden
         ]
-        contents = [get_content_info(root_path, os.path.join(content_path, _path).replace("\\", "/"), _type,
+        contents = [get_content_info(os.path.join(content_path, _path).replace("\\", "/"), _type,
                                      depth - 1, show_hidden)
                     for _path, _type in _contents]
 
@@ -80,26 +80,21 @@ def get_content_info(root_path: str, content_path: str, content_type: ContentTyp
     )
 
 
-@router.get('/')
-@router.get('/{content_path}')
-async def get_contents(config: CEAConfig, type: ContentType, root: str,
+@router.get('')
+async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
                        content_path: str = "", show_hidden: bool = False):
     """
     Get information of the content path provided
     """
-    content_type = type
-
-    if root is None:
-        root_path = config.server.project_root
-    else:
-        root_path = root
+    if project_root is None:
+        project_root = ""
 
     try:
         # Check path first
-        secure_path(os.path.join(root_path, content_path))
-        content_info = get_content_info(root_path, content_path, content_type, show_hidden=show_hidden)
+        full_path = secure_path(os.path.join(project_root, content_path))
+        content_info = get_content_info(full_path, content_type, show_hidden=show_hidden)
         return content_info.as_dict()
-    except (ContentPathNotFound, InvalidPathError):
+    except ContentPathNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Path `{content_path}` does not exist",
@@ -108,4 +103,9 @@ async def get_contents(config: CEAConfig, type: ContentType, root: str,
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Path `{content_path}` is not of type `{content_type.value}`",
+        )
+    except OutsideProjectRootError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
