@@ -100,8 +100,6 @@ async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
 
 @router.get('/')
 async def get_project_info(project_root: CEAProjectRoot, project: str) -> ProjectInfo:
-    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-
     if project_root is None:
         project_root = ""
 
@@ -119,6 +117,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
             detail=f'Project: "{project}" does not exist',
         )
 
+    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
     config.project = project
 
     project_info = {
