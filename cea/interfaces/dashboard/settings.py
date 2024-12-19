@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     project_root: Optional[str] = None
 
     def allow_path_transversal(self) -> bool:
+        """
+        Allow path transversal if project_root is set to empty string
+        """
         return self.project_root == ""
 
 
