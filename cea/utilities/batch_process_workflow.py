@@ -37,11 +37,14 @@ def exec_cea_commands(config, cea_scenario):
     :return:
     """
     # acquire the user-defined CEA commands
+    export_to_rhino_gh = config.batch_process_workflow.export_to_rhino_gh
+    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
+
     zone_csv_to_shp = config.batch_process_workflow.zone_csv_to_shp
     typology_csv_to_dbf = config.batch_process_workflow.typology_csv_to_dbf
     streets_csv_to_shp = config.batch_process_workflow.streets_csv_to_shp
 
-    data_initializer = config.batch_process_workflow.data_initializer
+    data_initializer = config.batch_process_workflow.database_initializer
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
     weather_helper = config.batch_process_workflow.weather_helper
     surroundings_helper = config.batch_process_workflow.surroundings_helper
@@ -65,10 +68,16 @@ def exec_cea_commands(config, cea_scenario):
 
     optimization = config.batch_process_workflow.optimization
 
-    result_summary = config.batch_process_workflow.result_summary
-    result_analytics = config.batch_process_workflow.result_analytics
+    results_summary_and_analytics = config.batch_process_workflow.results_summary_and_analytics
 
     # execute selected CEA commands
+    if export_to_rhino_gh:
+        subprocess.run(['cea', 'export-to-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+    if import_from_rhino_gh:
+        subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+
     if zone_csv_to_shp:
         zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.csv')
         if not os.path.exists(zone_csv_path):
@@ -175,14 +184,9 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'optimization-new', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
 
-    if result_summary:
-        subprocess.run(['cea', 'result-summary', '--all-scenarios', 'false'], env=my_env, check=True,
+    if results_summary_and_analytics:
+        subprocess.run(['cea', 'export-results-csv', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
-
-    if result_analytics:
-        subprocess.run(['cea', 'result-analytics', '--all-scenarios', 'false'], env=my_env, check=True,
-                       capture_output=True)
-
 
 
 def main(config):
@@ -203,13 +207,13 @@ def main(config):
     scenario_name = config.general.scenario_name
     project_boolean = config.batch_process_workflow.all_scenarios
 
-    # deciding to run all scenarios or the current the scenario only
+    # Deciding to run all scenarios or the current the scenario only
     if project_boolean:
         scenarios_list = os.listdir(project_path)
     else:
         scenarios_list = [scenario_name]
 
-    # loop over one or all scenarios under the project
+    # Loop over one or all scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
@@ -227,7 +231,6 @@ def main(config):
             if err_msg is not None:
                 print(err_msg.decode())
             raise e
-
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

@@ -896,7 +896,6 @@ class ScenarioNameParameter(ChoiceParameter):
     def _choices(self):
         return get_scenarios_list(self.config.project)
 
-
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
 
@@ -1164,6 +1163,10 @@ def get_systems_list(scenario_path):
             iterations.update(data_checkpoint['systems_to_show'])
     unique_iterations = [str(x) for x in iterations]
     return unique_iterations
+
+
+class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
+    pass
 
 
 def parse_string_to_list(line):
