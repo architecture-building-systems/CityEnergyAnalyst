@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 import traceback
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import geopandas
 import pandas as pd
@@ -21,9 +21,8 @@ from cea.datamanagement.create_new_scenario import generate_default_typology, co
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig
-from cea.interfaces.dashboard.settings import get_settings
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.plots.colors import color_to_rgb
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -79,40 +78,55 @@ class CreateScenario(BaseModel):
         return self.street == GENERATE_STREET_CEA
 
 
-@router.get('/')
-async def get_project_info(config: CEAConfig, project: str = None):
-    if project is None:
-        scenario_name = config.scenario_name
-    else:
-        project = secure_path(project)
-        if not os.path.exists(project):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'Project path: "{project}" does not exist',
-            )
-        config.project = project
-        scenario_name = None
+class ProjectInfo(BaseModel):
+    name: str
+    project: str
+    scenarios_list: List[str]
 
-    # FIXME: This exposes the project path to the frontend. Should be removed.
+
+class ConfigProjectInfo(BaseModel):
+    project: str
+    scenario: str
+
+
+@router.get('/config')
+async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
+    """Return the current project and scenario in the config"""
+    return ConfigProjectInfo(
+        project=config.project,
+        scenario=config.scenario_name,
+    )
+
+
+@router.get('/')
+async def get_project_info(project_root: CEAProjectRoot, project: str) -> ProjectInfo:
+    if project_root is None:
+        project_root = ""
+
+    try:
+        cea_project = secure_path(os.path.join(project_root, project))
+    except OutsideProjectRootError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    if not os.path.exists(cea_project):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Project: "{project}" does not exist',
+        )
+
+    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    config.project = project
+
     project_info = {
-        'project_name': os.path.basename(config.project),
-        'project': config.project,
-        'scenario_name': scenario_name,
+        'name': os.path.basename(config.project),
+        'project': project,
         'scenarios_list': list_scenario_names_for_project(config)
     }
 
-    # List projects if no path transversal is allowed
-    if not get_settings().allow_path_transversal():
-        def valid_project(project_name):
-            return not project_name.startswith(".")
-
-        projects = [
-            project_name for project_name in os.listdir(get_settings().project_root)
-            if valid_project(project_name)
-        ]
-        project_info['projects'] = projects
-
-    return project_info
+    return ProjectInfo(**project_info)
 
 
 @router.post('/')
@@ -120,25 +134,22 @@ async def create_new_project(new_project: NewProject):
     """
     Create new project folder
     """
-    project_name = new_project.project_name
-    project_root = new_project.project_root
-
-    if project_name and project_root:
-        project = secure_path(os.path.join(project_root, project_name))
-        try:
-            os.makedirs(project, exist_ok=True)
-        except OSError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
-            )
-
-        return {'message': 'Project folder created', 'project': project}
-    else:
+    try:
+        project = secure_path(os.path.join(new_project.project_root, new_project.project_name))
+    except OutsideProjectRootError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Parameters not valid - project_name: {project_name}, project_root: {project_root}',
+            detail=str(e),
         )
+    try:
+        os.makedirs(project, exist_ok=True)
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return {'message': 'Project folder created', 'project': project}
 
 
 @router.put('/')
@@ -268,14 +279,14 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
                 only_in_zone = zone_names.difference(typology_names)
                 only_in_typology = typology_names.difference(zone_names)
 
-                zone_message =  f'zone has additional names: {", ".join(only_in_zone)} ' if only_in_zone else ''
+                zone_message = f'zone has additional names: {", ".join(only_in_zone)} ' if only_in_zone else ''
                 typology_message = f'typology has additional names: {", ".join(only_in_typology)}' if only_in_typology else ''
 
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Names found in Building geometries (zone) and Building information (typology) do not match. '
                            'Ensure the `Name` columns of the two files are identical. '
-                            f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
+                           f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
                 )
 
             copy_typology(scenario_form.typology, locator)

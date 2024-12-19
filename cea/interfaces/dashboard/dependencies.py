@@ -107,9 +107,14 @@ async def get_worker_processes():
 def get_worker_url():
     return get_settings().worker_url
 
+def get_project_root():
+    return get_settings().project_root
+
 
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAJobs = Annotated[dict, Depends(get_jobs)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAWorkerUrl = Annotated[dict, Depends(get_worker_url)]
+CEAProjectRoot = Annotated[dict, Depends(get_project_root)]
+CEAServerSettings = Annotated[dict, Depends(get_settings)]
