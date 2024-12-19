@@ -81,7 +81,6 @@ def get_content_info(content_path: str, content_type: ContentType,
 
 
 @router.get('')
-# @router.get('/{content_path}')
 async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
                        content_path: str = "", show_hidden: bool = False):
     """
