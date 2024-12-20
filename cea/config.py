@@ -895,7 +895,7 @@ class ScenarioNameParameter(ChoiceParameter):
     @property
     def _choices(self):
         choices = get_scenarios_list(self.config.project)
-        if self.exclude_current and self.config.scenario_name:
+        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
             choices.remove(self.config.scenario_name)
 
         return choices
