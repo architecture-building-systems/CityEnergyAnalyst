@@ -111,7 +111,7 @@ class EmissionsMapLayer(MapLayer):
                 "label": f"GHG Emissions: {emissions_type}",
                 "description": self.description,
                 "colours": {
-                    "colour_array": [color_to_hex("grey_light"), color_to_hex("black")],
+                    "colour_array": [color_to_hex("grey_lighter"), color_to_hex("black")],
                     "points": 12
                 }
             }
