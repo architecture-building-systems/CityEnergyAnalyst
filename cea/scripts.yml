@@ -51,6 +51,13 @@ Import & Export:
 
 Data management:
 
+  - name: database-helper
+    label: Database helper
+    description: Load in a CEA Database
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.database_helper
+    parameters: ['general:scenario', database-helper]
+
   - name: archetypes-mapper
     label: Archetypes mapper
     description: Assign building properties and systems types from the Archetypes Database
@@ -368,20 +375,6 @@ Optimization:
 
 Utilities:
 
-  - name: dbf-to-csv-to-dbf
-    label: DBF to CSV to DBF
-    description: dbf => csv (xlsx) => dbf
-    interfaces: [cli, dashboard]
-    module: cea.utilities.dbf
-    parameters: ['general:scenario', dbf-tools]
-
-  - name: shp-to-csv-to-shp
-    label: SHP to CSV to SHP
-    description: shp => csv (xlsx) => shp
-    interfaces: [ cli, dashboard ]
-    module: cea.utilities.shapefile
-    parameters: [ 'general:scenario', shapefile-tools]
-
   - name: sensitivity-analysis-sampler
     label: Generate samples for SA
     description: Generate samples for sensitivity analysis using Sobol Method
@@ -409,12 +402,19 @@ Utilities:
     input-files:
       - [ get_database_construction_standards ]
 
-  - name: database-helper
-    label: Database helper
-    description: Load in a CEA Database
+  - name: dbf-to-csv-to-dbf
+    label: DBF to CSV to DBF
+    description: dbf => csv (xlsx) => dbf
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.database_helper
-    parameters: ['general:scenario', database-helper]
+    module: cea.utilities.dbf
+    parameters: ['general:scenario', dbf-tools]
+
+  - name: shp-to-csv-to-shp
+    label: SHP to CSV to SHP
+    description: shp => csv (xlsx) => shp
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.shapefile
+    parameters: [ 'general:scenario', shapefile-tools]
 
   - name: create-new-scenario
     label: Create new scenario

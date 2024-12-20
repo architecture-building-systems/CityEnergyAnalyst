@@ -96,6 +96,7 @@ def exec_cea_commands(config, cea_scenario):
 
     if radiation:
         subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
     if demand_forecasting:
         subprocess.run(['cea', 'schedule-maker', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
@@ -103,6 +104,7 @@ def exec_cea_commands(config, cea_scenario):
 
     if emissions:
         subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
     if system_costs:
         subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
@@ -110,14 +112,11 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'photovoltaic', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if solar_sc:
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'FP', '--scenario', cea_scenario],
+        subprocess.run(['cea', 'solar-collector', '--scenario', cea_scenario],
                        env=my_env, check=True, capture_output=True)
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'ET', '--scenario', cea_scenario],
-                       env=my_env, check=True, capture_output=True)
+
     if solar_pvt:
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'FP', '--scenario', cea_scenario],
-                       env=my_env, check=True, capture_output=True)
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'ET', '--scenario', cea_scenario],
+        subprocess.run(['cea', 'photovoltaic-thermal', '--scenario', cea_scenario],
                        env=my_env, check=True, capture_output=True)
 
     if shallow_geothermal:
@@ -166,10 +165,14 @@ def main(config):
     scenario_name = config.general.scenario_name
     scenarios_list = config.batch_process_workflow.scenarios_to_simulate
     scenario_reference = config.from_rhino_gh.reference_scenario_name
+    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
 
-    # Remove the reference scenario from the list of scenarios to simulate
-    if scenario_reference is not None:
-        scenarios_list = [scenario for scenario in scenarios_list if scenario != scenario_reference]
+    # Remove the reference scenario from the list of scenarios to simulate, when importing from Rhino/Grasshopper is enabled
+    if import_from_rhino_gh:
+        if scenario_reference is None:
+            raise ValueError("Specify the reference-Scenario name under Tab Import from Rhino/Grasshopper.")
+        else:
+            scenarios_list = [scenario for scenario in scenarios_list if scenario != scenario_reference]
 
     # Loop over one or all scenarios under the project
     for scenario in scenarios_list:
