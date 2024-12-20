@@ -878,7 +878,7 @@ class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
     def initialize(self, parser):
-        pass
+        self.exclude_current = parser.get(self.section.name, f"{self.name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -894,7 +894,11 @@ class ScenarioNameParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        return get_scenarios_list(self.config.project)
+        choices = get_scenarios_list(self.config.project)
+        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
+            choices.remove(self.config.scenario_name)
+
+        return choices
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
@@ -1150,7 +1154,7 @@ def get_scenarios_list(project_path: str) -> List[str]:
                     folder_name != "__pycache__",
                     folder_name != "__MACOSX"])
 
-    return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
+    return sorted([folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)])
 
 
 def get_systems_list(scenario_path):
