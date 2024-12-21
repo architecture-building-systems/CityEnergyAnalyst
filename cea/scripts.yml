@@ -276,7 +276,7 @@ Life Cycle Analysis:
       - [get_building_supply]
 
   - name: system-costs
-    label: System Costs
+    label: Energy Supply System Costs
     description: Calculate the costs for energy supply systems.
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
