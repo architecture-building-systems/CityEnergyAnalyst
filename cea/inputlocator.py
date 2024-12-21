@@ -736,8 +736,8 @@ class InputLocator(object):
         Second row contains 13 columns (MONTHLY_MULTIPLIER, <jan-multiplier>, <feb-multiplier>, etc.)
         The following rows are three sets of HOUR 1-24, one set for each of DAY in {WEEKDAY, SATURDAY, SUNDAY}
 
-        These weekly schedules are used by the schedule-maker script to create the schedules for each hour of the
-        year (``get_schedule_model_file``).
+        These weekly schedules are used by the occupancy-helper script to create the schedules for each hour of the
+        year (``get_occupancy_model_file``).
 
         Do not read this file yourself, instead, use :py:func`cea.utilities.schedule_reader.read_cea_schedule`
 
@@ -746,22 +746,22 @@ class InputLocator(object):
         """
         return os.path.join(self.get_building_weekly_schedules_folder(), '{}.csv'.format(building))
 
-    def get_schedule_model_folder(self):
+    def get_occupancy_model_folder(self):
         """scenario/outputs/data/occupancy
-        Folder to store occupancy schedules to.
+        Folder to store occupancy to.
         """
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'occupancy')
 
-    def get_schedule_model_file(self, building):
+    def get_occupancy_model_file(self, building):
         """
         scenario/outputs/data/occupancy/{building}.csv
 
-        This file contains schedules of occupancy, appliance use, etc of each building.
-        Schedules are 8760 values per year
-        :param building: The building to get the schedule file for.
+        This file contains occupancy information of each building.
+        Occupancy info has 8760 values per year
+        :param building: The building to get the occupancy file for.
         :return:
         """
-        return os.path.join(self.get_schedule_model_folder(), '{}.csv'.format(building))
+        return os.path.join(self.get_occupancy_model_folder(), '{}.csv'.format(building))
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""

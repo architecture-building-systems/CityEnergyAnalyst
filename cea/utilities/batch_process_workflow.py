@@ -96,6 +96,15 @@ def exec_cea_commands(config, cea_scenario):
 
     if radiation:
         subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+    if demand_forecasting:
+        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+        subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
+    if emissions:
+        subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+    if system_costs:
+        subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if solar_pv:
         subprocess.run(['cea', 'photovoltaic', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
