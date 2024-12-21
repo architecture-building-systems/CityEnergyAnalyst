@@ -150,8 +150,6 @@ def geometry_extractor_osm(locator, config):
 
     # local variables:
     buffer_m = config.surroundings_helper.buffer
-    buildings_height = config.surroundings_helper.height_ag
-    buildings_floors = config.surroundings_helper.floors_ag
     shapefile_out_path = locator.get_surroundings_geometry()
     zone = gdf.from_file(locator.get_zone_geometry())
 
@@ -179,7 +177,7 @@ def geometry_extractor_osm(locator, config):
         result = generate_empty_surroundings(surroundings.crs)
     else:
         # clean attributes of height, name and number of floors
-        result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
+        result = clean_attributes(surroundings, key="CEA")
         result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
         result = clean_geometries(result)
 
