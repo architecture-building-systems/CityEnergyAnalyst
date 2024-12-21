@@ -5,6 +5,7 @@ from pyproj import CRS
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
+from cea.plots.colors import color_to_hex
 
 
 class DemandMapLayer(MapLayer):
@@ -14,10 +15,41 @@ class DemandMapLayer(MapLayer):
     description = "Energy Demand of buildings"
 
     _data_columns = {
-        "E_sys_kWh": "Electricity Consumption [kWh]",
-        "Qcs_sys_kWh": "Energy demand for space cooling [kWh]",
-        "Qhs_sys_kWh": "Energy demand for space heating [kWh]",
-        "Qww_sys_kWh": "Energy demand for domestic hot water [kWh]",
+        "GRID_kWh": {
+            "label": "Grid Electricity Final-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("brown_lighter"), color_to_hex("brown")],
+                "points": 12
+            }
+        },
+        "E_sys_kWh": {
+            "label": "Electricity End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("green_lighter"), color_to_hex("green")],
+                "points": 12
+            }
+        },
+        "Qcs_sys_kWh": {
+            "label": "Space Cooling End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue_lighter"), color_to_hex("blue")],
+                "points": 12
+            }
+        },
+        "Qhs_sys_kWh": {
+            "label": "Space Heating End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("red_lighter"), color_to_hex("red")],
+                "points": 12
+            }
+        },
+        "Qww_sys_kWh": {
+            "label": "Domestic Hot Water End-Use [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("orange_lighter"), color_to_hex("orange")],
+                "points": 12
+            }
+        },
     }
 
     def _get_data_columns(self):
@@ -92,12 +124,16 @@ class DemandMapLayer(MapLayer):
 
         data_column = parameters['data-column']
 
+        if data_column not in self._data_columns.keys():
+            raise ValueError(f"Invalid data column: {data_column}")
+
         output = {
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": self._data_columns[data_column],
+                "label": self._data_columns[data_column]["label"],
                 "description": self.description,
+                "colours": self._data_columns[data_column]["colours"]
             }
         }
 

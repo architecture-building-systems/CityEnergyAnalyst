@@ -18,6 +18,17 @@ from cea.inputlocator import InputLocator
 # locator_func_args = Collection[str]
 
 @dataclass()
+class ColourGradient:
+    color_array: List[str]
+    points: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "color_array": self.color_array,
+            "points": self.points
+        }
+
+@dataclass()
 class FileRequirement:
     """
     Defines the requirements for input files based on selected parameters

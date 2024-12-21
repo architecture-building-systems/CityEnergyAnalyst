@@ -6,16 +6,17 @@ from pyproj import CRS
 
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
+from cea.plots.colors import color_to_hex
 
 
 class EmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "life-cycle-analysis"
-    label = "Building Emissions"
-    description = "Building Emissions"
+    label = "GHG Emissions"
+    description = "GHG Emissions"
 
     def _get_emissions_types(self):
-        return ["embodied", "operation"]
+        return ["embodied", "operational"]
 
     def _get_data_columns(self, parameters: dict) -> Optional[list]:
         results_path = self._get_results_files(parameters)
@@ -32,7 +33,7 @@ class EmissionsMapLayer(MapLayer):
         emissions_type = parameters['emissions-type']
         if emissions_type == "embodied":
             return self.locator.get_lca_embodied()
-        elif emissions_type == "operation":
+        elif emissions_type == "operational":
             return self.locator.get_lca_operation()
         else:
             raise ValueError(f"Invalid emissions type: {emissions_type}")
@@ -107,8 +108,12 @@ class EmissionsMapLayer(MapLayer):
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": f"Building Emissions: {emissions_type}",
+                "label": f"GHG Emissions: {emissions_type}",
                 "description": self.description,
+                "colours": {
+                    "colour_array": [color_to_hex("grey_light"), color_to_hex("black")],
+                    "points": 12
+                }
             }
         }
 
@@ -117,7 +122,7 @@ class EmissionsMapLayer(MapLayer):
 
         if emissions_type == "embodied":
             results_path = self.locator.get_lca_embodied()
-        elif emissions_type == "operation":
+        elif emissions_type == "operational":
             results_path = self.locator.get_lca_operation()
         else:
             raise ValueError(f"Invalid emissions type: {emissions_type}")

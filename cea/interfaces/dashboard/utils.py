@@ -6,9 +6,11 @@ from typing import List, Any, Type
 from cea.interfaces.dashboard.settings import get_settings
 
 
-class InvalidPathError(Exception):
-    """Raised when a path is invalid (e.g. outside or project root folder)"""
-
+class OutsideProjectRootError(Exception):
+    """Raised when a path is outside or project root folder"""
+    def __init__(self, path):
+        super().__init__(f"Path `{path}` is not a valid path.")
+        self.path = path
 
 def secure_path(path: str) -> str:
     """
@@ -16,12 +18,13 @@ def secure_path(path: str) -> str:
     """
     real_path = os.path.realpath(path)
 
+    # TODO: Remove dependency on settings
     if not get_settings().allow_path_transversal():
         project_root = os.path.realpath(get_settings().project_root)
 
         prefix = os.path.commonpath((project_root, real_path))
         if project_root != prefix:
-            raise InvalidPathError("Path is outside of project root")
+            raise OutsideProjectRootError(path)
 
     return real_path
 
