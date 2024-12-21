@@ -161,16 +161,16 @@ Renewable Energy Potential Assessment:
       - [get_demand_results_file, building_name]
 
 Energy Demand Forecasting:
-  - name: schedule-maker
+  - name: occupancy-helper
     label: Building Occupancy
     description: Use CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
-    module: cea.demand.schedule_maker.schedule_maker
+    module: cea.demand.occupancy_helper
     parameters: ['general:scenario',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'general:debug',
-                 schedule-maker]
+                 occupancy-helper]
     input-files:
       - [get_building_internal]
       - [get_building_comfort]
