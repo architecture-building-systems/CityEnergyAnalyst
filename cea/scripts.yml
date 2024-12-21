@@ -154,6 +154,9 @@ Demand forecasting:
     interfaces: [dashboard, cli]
     module: cea.demand.occupancy_helper
     parameters: ['general:scenario',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'general:debug',
                  occupancy-helper]
     input-files:
       - [get_building_internal]
