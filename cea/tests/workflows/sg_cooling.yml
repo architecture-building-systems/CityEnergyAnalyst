@@ -9,7 +9,7 @@
 - config: .
   "general:scenario-name": baseline
 
-- script: data-initializer
+- script: database-helper
   parameters:
     databases-path: SG
     databases: [archetypes, assemblies, components]
