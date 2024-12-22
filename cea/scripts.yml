@@ -383,14 +383,14 @@ Utilities:
       - [ get_database_construction_standards ]
 
   - name: dbf-to-csv-to-dbf
-    label: DBF to CSV to DBF
+    label: .dbf to .csv to .dbf
     description: dbf => csv (xlsx) => dbf
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', dbf-tools]
 
   - name: shp-to-csv-to-shp
-    label: SHP to CSV to SHP
+    label: .shp to .csv to .shp
     description: shp => csv (xlsx) => shp
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
