@@ -20,7 +20,6 @@ dependencies:
 - numpy-financial
 - osmnx=1.8
 - pip
-- pillow # Make sure that Pillow is installed instead of PIL for staticmap
 - psutil
 - pvlib-python
 - python=3.8 # Held back by wntr version
@@ -44,6 +43,5 @@ dependencies:
 - git
 - yarn=4 # Use latest version of yarn
 - pip:
-  - staticmap
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
