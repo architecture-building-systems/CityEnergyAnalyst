@@ -10,8 +10,6 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, status, Request, Path, Depends
 from pydantic import BaseModel
 from shapely.geometry import shape
-from fastapi.concurrency import run_in_threadpool
-from staticmap import StaticMap, Polygon
 
 import cea.config
 import cea.api
@@ -23,7 +21,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.plots.colors import color_to_rgb
+
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -571,85 +569,3 @@ async def delete(config: CEAConfig, scenario: str):
 
 class ZoneFileNotFound(ValueError):
     """Raised when a zone file is not found."""
-
-
-def generate_scenario_image(config, scenario: str, image_path: str, building_limit: int = 500):
-    locator = cea.inputlocator.InputLocator(os.path.join(config.project, scenario))
-    zone_path = locator.get_zone_geometry()
-
-    if not os.path.isfile(zone_path):
-        raise ZoneFileNotFound
-
-    zone_modified = os.path.getmtime(zone_path)
-    if not os.path.isfile(image_path):
-        image_modified = 0
-    else:
-        image_modified = os.path.getmtime(image_path)
-
-    if zone_modified > image_modified:
-        print(f'Generating preview image for scenario: {scenario}')
-        # Make sure .cache folder exists
-        os.makedirs(os.path.dirname(image_path), exist_ok=True)
-
-        zone_df = geopandas.read_file(zone_path)
-        zone_df = zone_df.to_crs(get_geographic_coordinate_system())
-        polygons = zone_df['geometry']
-
-        m = StaticMap(256, 160, url_template='http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png')
-        if len(polygons) <= building_limit:
-            polygons = [list(polygons.geometry.exterior[row_id].coords) for row_id in range(polygons.shape[0])]
-            for polygon in polygons:
-                out = Polygon(polygon, color_to_rgb('purple'), 'black', False)
-                m.add_polygon(out)
-        else:
-            print(f'Number of buildings({len(polygons)}) exceed building limit({building_limit}): '
-                  f'Generating simplified image')
-            # Generate only the shape outline of the zone area
-            convex_hull = polygons.unary_union.convex_hull
-            polygon = convex_hull.exterior.coords
-            out = Polygon(polygon, None, color_to_rgb('purple'), False)
-            m.add_polygon(out)
-
-        image = m.render()
-        image.save(image_path)
-
-
-@router.get('/scenario/{scenario}/image')
-async def get_scenario_image(config: CEAConfig, project: str, scenario: str):
-    if project is not None:
-        project = secure_path(project)
-        if not os.path.exists(project):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'Project path: "{project}" does not exist',
-            )
-        config.project = project
-
-    choices = list_scenario_names_for_project(config)
-
-    if scenario not in choices:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Scenario does not exist',
-        )
-
-    cache_path = os.path.join(config.project, '.cache')
-    image_path = os.path.join(cache_path, scenario + '.png')
-    try:
-        await run_in_threadpool(lambda: generate_scenario_image(config, scenario, image_path))
-    except ZoneFileNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Zone file not found',
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
-
-    import base64
-    with open(image_path, 'rb') as imgFile:
-        image = base64.b64encode(imgFile.read())
-
-    return {'image': image.decode("utf-8")}
