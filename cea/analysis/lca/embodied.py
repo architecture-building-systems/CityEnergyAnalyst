@@ -101,17 +101,16 @@ def lca_embodied(year_to_calculate, locator):
     """
 
     # local variables
-    age_df = dbf_to_dataframe(locator.get_building_typology())
     architecture_df = dbf_to_dataframe(locator.get_building_architecture())
-    geometry_df = Gdf.from_file(locator.get_zone_geometry())
+    zone_df = Gdf.from_file(locator.get_zone_geometry())
 
     # reproject to projected coordinate system (in meters) to calculate area
-    lat, lon = get_lat_lon_projected_shapefile(geometry_df)
-    geometry_df = geometry_df.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+    lat, lon = get_lat_lon_projected_shapefile(zone_df)
+    zone_df = zone_df.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
-    geometry_df['footprint'] = geometry_df.area
-    geometry_df['perimeter'] = geometry_df.length
-    geometry_df = geometry_df.drop('geometry', axis=1)
+    zone_df['footprint'] = zone_df.area
+    zone_df['perimeter'] = zone_df.length
+    zone_df = zone_df.drop('geometry', axis=1)
 
     # local variables
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
@@ -176,9 +175,7 @@ def lca_embodied(year_to_calculate, locator):
 
 
     # DataFrame with joined data for all categories
-    data_merged_df = geometry_df.merge(age_df, on='Name').merge(surface_properties,
-                                                                on='Name').merge(architecture_df,
-                                                                on='Name')
+    data_merged_df = zone_df.merge(surface_properties, on='Name').merge(architecture_df,on='Name')
 
     # calculate building geometry
     ## total window area
