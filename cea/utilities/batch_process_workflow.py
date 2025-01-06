@@ -8,7 +8,6 @@ This was originally explored and created for the ETH MiBS IDP 2023.
 import os
 import subprocess
 import sys
-
 import cea.config
 import time
 
@@ -127,7 +126,7 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if demand_forecasting:
-        subprocess.run(['cea', 'schedule-maker', '--scenario', cea_scenario], env=my_env, check=True,
+        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
         subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
@@ -172,15 +171,6 @@ def main(config):
     project_path = config.general.project
     scenario_name = config.general.scenario_name
     scenarios_list = config.batch_process_workflow.scenarios_to_simulate
-    scenario_reference = config.from_rhino_gh.reference_scenario_name
-    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
-
-    # Remove the reference scenario from the list of scenarios to simulate, when importing from Rhino/Grasshopper is enabled
-    if import_from_rhino_gh:
-        if scenario_reference is None:
-            raise ValueError("Specify the reference-Scenario name under Tab Import from Rhino/Grasshopper.")
-        else:
-            scenarios_list = [scenario for scenario in scenarios_list if scenario != scenario_reference]
 
     # Loop over one or all scenarios under the project
     for scenario in scenarios_list:
@@ -195,7 +185,6 @@ def main(config):
             exec_cea_commands(config, cea_scenario)
         except subprocess.CalledProcessError as e:
             print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}")
-            print("Error Message:")
             err_msg = e.stderr
             if err_msg is not None:
                 print(err_msg.decode())
