@@ -11,6 +11,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
     get_lists_of_var_names_and_var_values
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
@@ -60,7 +61,7 @@ def archetypes_mapper(locator,
         describes the queried thermal properties of buildings
     """
     # Get occupancy and age files
-    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
+    building_typology_df = dbf_to_dataframe(locator.get_zone_geometry())[COLUMNS_ZONE_TYPOLOGY]
     db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
         'STANDARD']
 
