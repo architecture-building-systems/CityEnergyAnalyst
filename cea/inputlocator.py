@@ -181,6 +181,7 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}"""
         return os.path.join(summary_folder, cea_feature)
 
+
     def get_export_results_summary_cea_feature_time_resolution_file(self, summary_folder, cea_feature, appendix,
                                                                     time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
