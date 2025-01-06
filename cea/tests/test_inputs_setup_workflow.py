@@ -22,7 +22,7 @@ class TestInputSetupWorkflowCase(unittest.TestCase):
         self.config.create_polygon.coordinates = POLYGON_COORDINATES
         self.config.create_polygon.filename = 'site'
 
-        data_initializer.main(self.config)
+        database_helper.main(self.config)
         create_polygon.main(self.config)
         # TODO: Mock osmnx.footprints_from_polygon
         zone_helper.main(self.config)
