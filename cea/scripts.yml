@@ -242,7 +242,7 @@ Energy Supply System Optimisation:
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
                  thermal-network-optimization]
 
-  - name: decentralised
+  - name: decentralized
     label: Supply System Part I (decentralised)
     description: Optimise energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
