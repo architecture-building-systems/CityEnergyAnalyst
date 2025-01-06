@@ -71,7 +71,8 @@ class BuildingProperties(object):
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
 
-        prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
+        prop_zone = dbf_to_dataframe(locator.get_zone_geometry())
+        prop_typology = prop_zone['Name', 'YEAR', 'STANDARD', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R'].set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
             prop_typology.drop('REFERENCE', axis=1, inplace=True)

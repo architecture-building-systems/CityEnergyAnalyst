@@ -15,6 +15,8 @@ COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
                          '3RD_USE_R']
 NAME_COLUMN = 'Name'
+COLUMNS_ZONE = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
+                'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 
 
 def assert_columns_names(zone_df, columns):

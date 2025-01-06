@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.dbf import dataframe_to_dbf
@@ -341,11 +341,9 @@ def zone_helper(locator, config):
     include_building_parts = config.zone_helper.include_building_parts
     fix_overlapping = config.zone_helper.fix_overlapping_geometries
     zone_output_path = locator.get_zone_geometry()
-    typology_output_path = locator.get_building_typology()
 
     # ensure folders exist
     locator.ensure_parent_folder_exists(zone_output_path)
-    locator.ensure_parent_folder_exists(typology_output_path)
 
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
@@ -355,7 +353,7 @@ def zone_helper(locator, config):
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
     calculate_typology_file(
-        locator, zone_df, year_construction, occupancy_type, typology_output_path)
+        locator, zone_df, year_construction, occupancy_type, zone_output_path)
 
 
 def calc_category(standard_db, year_array):
@@ -375,12 +373,11 @@ def calc_category(standard_db, year_array):
     return category
 
 
-def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, occupancy_output_path):
+def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, output_path):
     """
     This script fills in the typology.dbf file with one occupancy type
     :param zone_df:
     :param occupancy_type:
-    :param occupancy_output_path:
     :return:
     """
     # calculate construction year
@@ -428,10 +425,14 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
               'Applying `MULTI_RES` as default type.')
         typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
 
+    zone_df = zone_df[COLUMNS_ZONE_GEOMETRY]
+    merged_df = pd.merge(zone_df, typology_df, on='Name', how='inner')
+    merged_df = merged_df.set_index('Name').reset_index()
+
     # export typology.dbf
     fields = COLUMNS_ZONE_TYPOLOGY
     dataframe_to_dbf(
-        typology_df[fields + ['REFERENCE']], occupancy_output_path)
+        merged_df[fields + ['REFERENCE']], output_path)
 
 
 def parse_year(year: Union[str, int]) -> int:

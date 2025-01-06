@@ -279,7 +279,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # get occupancy and age files
-    building_typology_df = dbf_to_dataframe(locator.get_building_typology())
+    building_typology_df = dbf_to_dataframe(locator.get_zone_geometry())
 
     # validate list of uses in case study
     get_list_of_uses_in_case_study(building_typology_df)
