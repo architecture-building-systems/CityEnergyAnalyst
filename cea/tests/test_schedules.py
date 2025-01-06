@@ -14,7 +14,7 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 
@@ -47,7 +47,7 @@ class TestScheduleCreation(unittest.TestCase):
         config.multiprocessing = False
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.data_initializer import main as data_initializer
+        from cea.datamanagement.database_helper import main as data_initializer
         config.data_initializer.databases_path = "CH"
         config.data_initializer.databases = ["archetypes", "assemblies", "components"]
         data_initializer(config)
@@ -58,8 +58,8 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
+        occupancy_helper_main(locator, config)
+        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('DATE')
 
         test_config = configparser.ConfigParser()
         test_config.read(get_test_config_path())
@@ -122,7 +122,7 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.data_initializer import main as data_initializer
+    from cea.datamanagement.database_helper import main as data_initializer
     config.data_initializer.databases_path = "CH"
     config.data_initializer.databases = ["archetypes", "assemblies", "components"]
     data_initializer(config)
@@ -137,7 +137,7 @@ def create_data():
     # weather_path = locator.get_weather_file()
     # weather_data = epwreader.epw_reader(weather_path)
 
-    calculated_schedules = schedule_maker_main(locator, config)
+    calculated_schedules = occupancy_helper_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(

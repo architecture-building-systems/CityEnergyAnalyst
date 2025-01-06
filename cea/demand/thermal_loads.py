@@ -366,7 +366,7 @@ def initialize_inputs(bpr, weather_data, locator):
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
-    occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
+    occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_p']
     tsd['ve_lps'] = occupancy_yearly_schedules['Ve_lps']

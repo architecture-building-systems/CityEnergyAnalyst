@@ -1169,6 +1169,10 @@ def get_systems_list(scenario_path):
     return unique_iterations
 
 
+class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
+    pass
+
+
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
     if line is None:
