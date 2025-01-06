@@ -10,6 +10,7 @@ import pandas as pd
 import cea
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.schedule_reader import read_cea_schedule, save_cea_schedule
@@ -279,7 +280,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # get occupancy and age files
-    building_typology_df = dbf_to_dataframe(locator.get_zone_geometry())
+    building_typology_df = dbf_to_dataframe(locator.get_zone_geometry())[COLUMNS_ZONE_TYPOLOGY]
 
     # validate list of uses in case study
     get_list_of_uses_in_case_study(building_typology_df)
