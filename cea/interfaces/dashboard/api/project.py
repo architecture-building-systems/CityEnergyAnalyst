@@ -340,8 +340,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         locator = cea.inputlocator.InputLocator(config.scenario)
 
         try:
-            # Run database_initializer to copy databases to input
-            cea.api.data_initializer(config, databases_path=scenario_form.database)
+            # Run database-helper to copy databases to input
+            cea.api.database_helper(config, databases_path=scenario_form.database)
 
             # Generate / Copy zone
             zone_df = create_zone(scenario_form, locator)
@@ -414,14 +414,14 @@ async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
 
         locator = cea.inputlocator.InputLocator(config.scenario)
 
-        # Run database_initializer to copy databases to input
+        # Run database-helper to copy databases to input
         if databases_path is not None:
             try:
-                cea.api.data_initializer(config, databases_path=databases_path)
+                cea.api.database_helper(config, databases_path=databases_path)
             except Exception as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f'data_initializer: {e}',
+                    detail=f'database_helper: {e}',
                 ) from e
 
         if input_data == 'import':

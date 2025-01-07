@@ -47,10 +47,10 @@ class TestScheduleCreation(unittest.TestCase):
         config.multiprocessing = False
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.database_helper import main as data_initializer
-        config.data_initializer.databases_path = "CH"
-        config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-        data_initializer(config)
+        from cea.datamanagement.database_helper import main as database_helper
+        config.database_helper.databases_path = "CH"
+        config.database_helper.databases = ["archetypes", "assemblies", "components"]
+        database_helper(config)
 
         building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
         bpr = building_properties['B1011']
@@ -122,10 +122,10 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.database_helper import main as data_initializer
-    config.data_initializer.databases_path = "CH"
-    config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-    data_initializer(config)
+    from cea.datamanagement.database_helper import main as database_helper
+    config.database_helper.databases_path = "CH"
+    config.database_helper.databases = ["archetypes", "assemblies", "components"]
+    database_helper(config)
 
     # calculate schedules
     building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))

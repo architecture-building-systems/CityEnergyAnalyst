@@ -2374,7 +2374,7 @@ get_costs_operation_file:
   used_by: []
 get_database_air_conditioning_systems:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/assemblies/HVAC.xlsx
   file_type: xls
   schema:
@@ -2699,7 +2699,7 @@ get_database_air_conditioning_systems:
   - demand
 get_database_construction_standards:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
   file_type: xlsx
   schema:
@@ -3040,7 +3040,7 @@ get_database_construction_standards:
 
 get_database_conversion_systems:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/components/CONVERSION.xlsx
   file_type: xls
   schema:
@@ -5337,7 +5337,7 @@ get_database_conversion_systems:
   - solar_collector
 get_database_distribution_systems:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/components/DISTRIBUTION.xlsx
   file_type: xls
   schema:
@@ -5396,7 +5396,7 @@ get_database_distribution_systems:
   - thermal_network
 get_database_envelope_systems:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/assemblies/ENVELOPE.xlsx
   file_type: xls
   schema:
@@ -5663,7 +5663,7 @@ get_database_envelope_systems:
   - occupancy_helper
 get_database_feedstocks:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/components/FEEDSTOCKS.xlsx
   file_type: xls
   schema:
@@ -6035,7 +6035,7 @@ get_database_feedstocks:
   - optimization
 get_database_standard_schedules_use:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/archetypes/schedules/RESTAURANT.csv
   file_type: schedule
   schema:
@@ -7228,7 +7228,7 @@ get_database_standard_schedules_use:
   - archetypes_mapper
 get_database_supply_assemblies:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/assemblies/SUPPLY.xlsx
   file_type: xls
   schema:
@@ -7600,7 +7600,7 @@ get_database_supply_assemblies:
   - system_costs
 get_database_use_types_properties:
   created_by:
-  - data_initializer
+  - database_helper
   file_path: inputs/technology/archetypes/use_types/USE_TYPE_PROPERTIES.xlsx
   file_type: xls
   schema:
