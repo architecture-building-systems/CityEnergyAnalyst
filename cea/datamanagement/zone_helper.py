@@ -15,10 +15,9 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, COLUMNS_ZONE
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_GEOMETRY, COLUMNS_ZONE
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
-from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
     get_lat_lon_projected_shapefile
 
@@ -63,12 +62,12 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
-        print('Note that the number of floors is extracted from OpenStreetMap.'
+        print('Note that the number of floors is extracted from OpenStreetMap. '
               'If not found, CEA uses the median in the surroundings. '
-              'When no data is available, CEA assumes 4 floors per building (3 above, 1 below ground).'
+              'When no data is available, CEA assumes 4 floors per building (3 above, 1 below ground). '
               'Ensure the number of floors is accurate before proceeding with any simulations.')
 
-        print('Note that CEA assumes the floor height is 3 meters.'
+        print('Note that CEA assumes the floor height is 3 meters. '
               'Modify before proceeding with any simulations.')
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
@@ -349,10 +348,10 @@ def zone_helper(locator, config):
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
     typology_df = calculate_typology_file(
-        locator, zone_df, year_construction, occupancy_type, zone_output_path)
+        locator, zone_df, year_construction, occupancy_type)
 
     # write zone.shp file
-    write_zone_shp(zone_df, typology_df, poly, locator)
+    write_zone_shp(typology_df, poly, locator)
 
 def calc_category(standard_db, year_array):
     def category_assignment(year):
@@ -371,7 +370,7 @@ def calc_category(standard_db, year_array):
     return category
 
 
-def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, output_path):
+def calculate_typology_file(locator, zone_df, year_construction, occupancy_type):
     """
     This script fills in the typology.dbf file with one occupancy type
     :param zone_df:
@@ -385,24 +384,24 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
     # calculate the most likely construction standard
     standard_database = pd.read_excel(
         locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
-    typology_df['STANDARD'] = calc_category(
-        standard_database, typology_df['YEAR'].values)
+    typology_df['const_type'] = calc_category(
+        standard_database, typology_df['year'].values)
 
     # Calculate the most likely use type
-    typology_df['1ST_USE'] = "NONE"
-    typology_df['1ST_USE_R'] = 1.0
-    typology_df['2ND_USE'] = "NONE"
-    typology_df['2ND_USE_R'] = 0.0
-    typology_df['3RD_USE'] = "NONE"
-    typology_df['3RD_USE_R'] = 0.0
+    typology_df['use_type1'] = "NONE"
+    typology_df['use_type1_r'] = 1.0
+    typology_df['use_type2'] = "NONE"
+    typology_df['use_type2_r'] = 0.0
+    typology_df['use_type3'] = "NONE"
+    typology_df['use_type3_r'] = 0.0
     if occupancy_type == "Get it from open street maps":
         # for OSM building/amenity types with a clear CEA use type, this use type is assigned
         in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
-        zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+        zone_df.loc[in_categories, 'use_type_1'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
         if 'amenity' in zone_df.columns:
             # assign use type by building category first, then by amenity (more specific)
             in_categories = zone_df['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
-            zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+            zone_df.loc[in_categories, 'use_type_1'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
         if 'amenity' in zone_df.columns:
@@ -411,38 +410,33 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         else:
             in_unconditioned_categories = zone_df['category'].isin(
                 OTHER_OSM_CATEGORIES_UNCONDITIONED)
-        zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
+        zone_df.loc[in_unconditioned_categories, 'use_type_1'] = "PARKING"
     else:
-        typology_df['1ST_USE'] = occupancy_type
+        typology_df['use_type_1'] = occupancy_type
 
     # all remaining building use types are assigned by the mode of the use types in the entire case study
     try:
-        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
-            typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
+        typology_df.loc[typology_df['use_type_1'] == "NONE", 'use_type_1'] = \
+            typology_df.loc[~typology_df['use_type_1'].isin(['NONE', 'PARKING']), 'use_type_1'].mode()[0]
     except KeyError:
         print('No building type could be found in the OSM-database for the selected zone. '
               'Applying `MULTI_RES` as default type.')
-        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
+        typology_df.loc[typology_df['use_type_1'] == "NONE", 'use_type_1'] = "MULTI_RES"
 
     return typology_df
 
-def write_zone_shp(zone_df, typology_df, poly, locator):
-
+def write_zone_shp(typology_df, poly, locator):
 
     # get the projected coordinate system
     poly = poly.to_crs(get_geographic_coordinate_system())
     lat, lon = get_lat_lon_projected_shapefile(poly)
 
-    zone_df = zone_df[COLUMNS_ZONE_GEOMETRY]
-    merged_df = pd.merge(zone_df, typology_df, on='name', how='inner')
-    merged_df = merged_df.set_index('name').reset_index()
-
     # clean up attributes
-    cleaned_shapefile = merged_df[COLUMNS_ZONE]
+    cleaned_shapefile = typology_df[COLUMNS_ZONE]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save shapefile to zone.shp
-    cleaned_shapefile.to_file(locator.get_zone_path())
+    cleaned_shapefile.to_file(locator.get_zone_geometry())
 
 
 def parse_year(year: Union[str, int]) -> int:
@@ -480,27 +474,21 @@ def calculate_age(zone_df, year_construction):
     :return:
     """
     if year_construction is None:
-        print('Warning! you have not indicated a year of construction for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all), '
-              'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
-              'if we do not get any data we assume all buildings being constructed in the year 2000')
+        print('Note that CEA is importing data from OpenStreetMap. '
+              'If data unavailable for some buildings, CEA uses the median in the surroundings, '
+              'If data unavailable for all buildings, CEA assumes all buildings were constructed in 2020.')
         list_of_columns = zone_df.columns
         if "start_date" not in list_of_columns:  # this field describes the construction year of buildings
             zone_df["start_date"] = 2000
-            zone_df['reference'] = "CEA - assumption"
-        else:
-            zone_df['reference'] = [
-                "OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
         data_age = [np.nan if x is np.nan else parse_year(
             x) for x in zone_df['start_date']]
         # median so we get close to the worse case
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))
-        zone_df["YEAR"] = [
+        zone_df["year"] = [
             int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
-        zone_df['YEAR'] = year_construction
-        zone_df['reference'] = "CEA - assumption"
+        zone_df['year'] = year_construction
 
     return zone_df
 

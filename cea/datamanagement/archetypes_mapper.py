@@ -68,7 +68,7 @@ def archetypes_mapper(locator,
     verify_building_standards(building_typology_df, db_standards)
 
     # Filter by selected buildings
-    building_typology_df = building_typology_df[building_typology_df['Name'].isin(list_buildings)]
+    building_typology_df = building_typology_df[building_typology_df['name'].isin(list_buildings)]
 
     # Validate list of uses in case study
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
@@ -106,9 +106,9 @@ def archetypes_mapper(locator,
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INDOOR_COMFORT')
     # define comfort
-    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='1ST_USE', right_on='code')
+    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='code')
     # write to shapefile
-    fields = ['Name',
+    fields = ['name',
               'Tcs_set_C',
               'Ths_set_C',
               'Tcs_setb_C',
@@ -127,9 +127,9 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     internal_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
     # define comfort
-    prop_internal_df = building_typology_df.merge(internal_DB, left_on='1ST_USE', right_on='code')
+    prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='code')
     # write to shapefile
-    fields = ['Name',
+    fields = ['name',
               'Occ_m2p',
               'Qs_Wp',
               'X_ghp',
@@ -153,8 +153,8 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 def supply_mapper(locator, building_typology_df):
     supply_DB = pd.read_excel(locator.get_database_construction_standards(), 'SUPPLY_ASSEMBLIES')
-    prop_supply_df = building_typology_df.merge(supply_DB, left_on='STANDARD', right_on='STANDARD')
-    fields = ['Name',
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='STANDARD')
+    fields = ['name',
               'type_cs',
               'type_hs',
               'type_dhw',
@@ -165,9 +165,9 @@ def supply_mapper(locator, building_typology_df):
 def aircon_mapper(locator, typology_df):
     air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
     # define HVAC systems types
-    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='STANDARD', right_on='STANDARD')
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='STANDARD')
     # write to shapefile
-    fields = ['Name',
+    fields = ['name',
               'type_cs',
               'type_hs',
               'type_dhw',
@@ -182,8 +182,8 @@ def aircon_mapper(locator, typology_df):
 
 def architecture_mapper(locator, typology_df):
     architecture_DB = pd.read_excel(locator.get_database_construction_standards(), 'ENVELOPE_ASSEMBLIES')
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='STANDARD')
-    fields = ['Name',
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='STANDARD')
+    fields = ['name',
               'Hs_ag',
               'Hs_bg',
               'Ns',
@@ -223,11 +223,11 @@ def calc_mainuse(uses_df, uses):
     """
 
     # print a warning if there are equal shares of more than one "main" use
-    # check if 'Name' is already the index, this is necessary because the function is used in data-helper
+    # check if 'name' is already the index, this is necessary because the function is used in data-helper
     #  and in building properties
-    if uses_df.index.name not in ['Name']:
+    if uses_df.index.name not in ['name']:
         # this is the behavior in data-helper
-        indexed_df = uses_df.set_index('Name')
+        indexed_df = uses_df.set_index('name')
     else:
         # this is the behavior in building-properties
         indexed_df = uses_df.copy()
@@ -327,7 +327,7 @@ def get_prop_architecture(typology_df, architecture_DB):
     :rtype prop_architecture_df: DataFrame
     """
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='STANDARD', right_on='STANDARD')
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='STANDARD')
     return prop_architecture_df
 
 
@@ -393,7 +393,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
 
 
 def verify_building_standards(building_typology_df, db_standards):
-    typology_standards = set(building_typology_df['STANDARD'].unique())
+    typology_standards = set(building_typology_df['const_type'].unique())
     db_standards = set(db_standards)
 
     if not typology_standards.issubset(db_standards):

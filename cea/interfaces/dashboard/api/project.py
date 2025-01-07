@@ -192,7 +192,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         )
 
     def create_zone(scenario_form, locator):
-        # Generate / Copy zone and surroundings
+        # Generate zone from OSM
         if scenario_form.should_generate_zone():
             site_geojson = scenario_form.generate_zone
             site_df = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
@@ -205,6 +205,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
+
+        # Copy zone from user-input
         else:
             # Copy zone using path
             zone_df = geopandas.read_file(scenario_form.user_zone).to_crs(get_geographic_coordinate_system())
@@ -217,7 +219,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             verify_input_geometry_zone(zone_df)
 
             # Replace invalid characters in building name (characters that would affect path and csv files)
-            zone_df["Name"] = zone_df["Name"].str.replace(r'[\\\/\.,\s]', '_', regex=True)
+            zone_df["name"] = zone_df["name"].str.replace(r'[\\\/\.,\s]', '_', regex=True)
 
             zone_path = locator.get_zone_geometry()
             locator.ensure_parent_folder_exists(zone_path)
@@ -269,15 +271,15 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         verify_input_typology(df)
 
         # merge the typology with the zone
-        merged_gdf = zone_gdf.merge(df, on='Name', how='left')
+        merged_gdf = zone_gdf.merge(df, on='name', how='left')
 
         # create new file
         merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
 
 
     def create_typology(scenario_form, locator):
-        # Only process typology if zone is not generated
-        if scenario_form.should_generate_zone():    # From OSM
+        # Only process typology if zone is not generated from OSM
+        if scenario_form.should_generate_zone():
             return
 
         if scenario_form.typology is not None:
@@ -307,8 +309,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Names found in Building geometries (zone) and Building information (typology) do not match. '
-                           'Ensure the `Name` columns of the two files are identical. '
+                    detail='Building names found in Building geometries (zone) and Building information (typology) do not match. '
+                           'Ensure the `name` columns of the two files are identical. '
                            f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
                 )
 
@@ -325,7 +327,6 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         driver = gdal.GetDriverByName('GTiff')
         verify_input_terrain(terrain)
         driver.CreateCopy(locator.get_terrain(), terrain)
-
 
     def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():

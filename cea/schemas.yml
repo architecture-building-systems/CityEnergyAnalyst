@@ -1528,7 +1528,7 @@ get_building_air_conditioning:
   file_type: dbf
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1622,7 +1622,7 @@ get_building_architecture:
   file_type: dbf
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1797,7 +1797,7 @@ get_building_comfort:
   file_type: dbf
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1852,7 +1852,7 @@ get_building_internal:
   file_type: dbf
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1945,7 +1945,7 @@ get_building_supply:
   file_type: dbf
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1997,97 +1997,7 @@ get_building_supply:
   - demand
   - emissions
   - system_costs
-get_building_typology:
-  created_by:
-  - data_migrator
-  file_path: inputs/building-properties/typology.dbf
-  file_type: dbf
-  schema:
-    columns:
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      YEAR:
-        description: Construction year
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
-      STANDARD:
-        description: Construction Standard (relates to "code" in Supply Assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_construction_standards
-            sheet: STANDARD_DEFINITION
-            column: STANDARD
-      1ST_USE:
-        description: First (Main) Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-      1ST_USE_R:
-        description: Fraction of gross floor area for first Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      2ND_USE:
-        description: Second Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-          none_value: NONE
-      2ND_USE_R:
-        description: Fraction of gross floor area for second Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      3RD_USE:
-        description: Third Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-          none_value: NONE
-      3RD_USE_R:
-        description: Fraction of gross floor area for third Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      REFERENCE:
-        description: Reference to data (if any)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        nullable: true
-  used_by:
-  - archetypes_mapper
-  - demand
-  - emissions
+
 get_building_weekly_schedules:
   created_by:
   - archetypes_mapper
@@ -16139,7 +16049,7 @@ get_zone_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -16170,55 +16080,82 @@ get_zone_geometry:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
+      year:
+        description: Construction year
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      const_type:
+        description: Construction Standard (relates to "code" in Supply Assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_construction_standards
+            sheet: STANDARD_DEFINITION
+            column: STANDARD
+      use_type1:
+        description: First (Main) Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+      use_type1_r:
+        description: Fraction of gross floor area for first Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      use_type2:
+        description: Second Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
+      use_type2_r:
+        description: Fraction of gross floor area for second Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      use_type3:
+        description: Third Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
+      use_type3_r:
+        description: Fraction of gross floor area for third Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
       geometry:
         description: Shapefile POLYGON
         type: Polygon
         unit: 'NA'
         values: 'NA'
-      REFERENCE:
+      reference:
         description: Reference to data (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      house_no:
-        description: House number in the address(if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      street:
-        description: Street name in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      postcode:
-        description: Postal code in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      house_name:
-        description: House name (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      resi_type:
-        description: Residential type, if Singapore's HDB or not (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      city:
-        description: City name in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      country:
-        description: Country (2-digit) code in the address (if any)
         type: string
         unit: 'NA'
         values: alphanumeric

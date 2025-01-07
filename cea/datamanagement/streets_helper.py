@@ -26,7 +26,7 @@ __status__ = "Production"
 def calc_bounding_box(locator):
     # connect both files and avoid repetition
     data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
-    data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
+    data_dis = data_dis.loc[~data_dis["name"].isin(data_zone["name"])]
     data = pd.concat([
         data_zone.to_crs(get_geographic_coordinate_system()),
         data_dis.to_crs(get_geographic_coordinate_system())

@@ -12,10 +12,10 @@ from cea.utilities.schedule_reader import get_all_schedule_names
 
 COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'construction_type', 'use_type_1', 'use_type_ratio', 'use_type_2', 'use_type_2_ratio', 'use_type_3', 'use_type_3_ratio']
+COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type', 'use_type1_r', 'use_type2', 'use_type2_r', 'use_type3', 'use_type3_r']
 NAME_COLUMN = 'name'
-COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference',
-                'year', 'construction_type', 'use_type_1', 'use_type_ratio', 'use_type_2', 'use_type_2_ratio', 'use_type_3', 'use_type_3_ratio',
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference', 'geometry',
+                'year', 'const_type', 'use_type1', 'use_type1_r', 'use_type2', 'use_type2_r', 'use_type3', 'use_type3_r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
@@ -85,7 +85,7 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
 
 def assert_input_geometry_only_polygon(buildings_df):
     not_polygon = buildings_df.geometry.type != 'Polygon'
-    invalid_buildings = buildings_df[not_polygon]['Name'].values
+    invalid_buildings = buildings_df[not_polygon]['name'].values
     if len(invalid_buildings):
         raise Exception(
             'Some buildings are not of type "Polygon": {buildings}'.format(buildings=', '.join(invalid_buildings)))

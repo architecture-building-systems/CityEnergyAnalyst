@@ -695,10 +695,6 @@ class InputLocator(object):
         zone_building_names = sorted(gdf.read_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
 
-    def get_building_typology(self):
-        """scenario/inputs/building-properties/typology.dbf"""
-        return os.path.join(self.get_building_properties_folder(), 'typology.dbf')
-
     def get_building_supply(self):
         """scenario/inputs/building-properties/supply_systems.dbf"""
         return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')

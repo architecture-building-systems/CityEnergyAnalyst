@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def generate_empty_surroundings(crs) -> gdf:
-    return gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=crs)
+    return gdf(columns=["name", "height_ag", "floors_ag"], geometry=[], crs=crs)
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
@@ -109,10 +109,10 @@ def clean_attributes(shapefile, key):
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
-    shapefile["Name"] = [key + str(x + 1000) for x in
+    shapefile["name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
+        ["name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 
