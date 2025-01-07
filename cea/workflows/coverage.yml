@@ -9,7 +9,7 @@
 - script: mkdir
   parameters:
     directory: "{general:project}/{general:scenario-name}/inputs/building-geometry"
-- script: data-initializer
+- script: database-helper
   parameters:
     databases-path: CH
 - script: create-polygon
@@ -87,7 +87,7 @@
 - script: mkdir
   parameters:
     directory: "{general:project}/{general:scenario-name}/inputs/building-geometry"
-- script: data-initializer
+- script: database-helper
   parameters:
     databases-path: SG
 - script: create-polygon

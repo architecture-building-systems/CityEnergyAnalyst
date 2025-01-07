@@ -39,10 +39,10 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.database_helper import main as data_initializer
-        cls.config.data_initializer.databases_path = "CH"
-        cls.config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-        data_initializer(cls.config)
+        from cea.datamanagement.database_helper import main as database_helper
+        cls.config.database_helper.databases_path = "CH"
+        cls.config.database_helper.databases = ["archetypes", "assemblies", "components"]
+        database_helper(cls.config)
 
         # run properties script
         import cea.datamanagement.archetypes_mapper

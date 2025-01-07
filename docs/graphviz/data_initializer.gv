@@ -1,4 +1,4 @@
-digraph data_initializer {
+digraph database_helper {
     rankdir="LR";
     graph [overlap=false, fontname=arial];
     node [shape=box, style=filled, color=white, fontsize=15, fontname=arial, fixedsize=true, width=5];
@@ -13,7 +13,7 @@ digraph data_initializer {
         "inputs"->"process"[style=invis]
         "process"->"outputs"[style=invis]
     }
-    "data_initializer"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
+    "database_helper"[style=filled, color=white, fillcolor="#3FC0C2", shape=note, fontsize=20, fontname=arial];
     subgraph cluster_0_out {
         style = filled;
         color = "#aadcdd";
@@ -58,13 +58,13 @@ digraph data_initializer {
         label="technology/archetypes/use_types";
         get_database_use_types_properties[label="USE_TYPE_PROPERTIES.xlsx"];
     }
-    "data_initializer" -> get_database_air_conditioning_systems[label="(get_database_air_conditioning_systems)"];
-    "data_initializer" -> get_database_construction_standards[label="(get_database_construction_standards)"];
-    "data_initializer" -> get_database_conversion_systems[label="(get_database_conversion_systems)"];
-    "data_initializer" -> get_database_distribution_systems[label="(get_database_distribution_systems)"];
-    "data_initializer" -> get_database_envelope_systems[label="(get_database_envelope_systems)"];
-    "data_initializer" -> get_database_feedstocks[label="(get_database_feedstocks)"];
-    "data_initializer" -> get_database_standard_schedules_use[label="(get_database_standard_schedules_use)"];
-    "data_initializer" -> get_database_supply_assemblies[label="(get_database_supply_assemblies)"];
-    "data_initializer" -> get_database_use_types_properties[label="(get_database_use_types_properties)"];
+    "database_helper" -> get_database_air_conditioning_systems[label="(get_database_air_conditioning_systems)"];
+    "database_helper" -> get_database_construction_standards[label="(get_database_construction_standards)"];
+    "database_helper" -> get_database_conversion_systems[label="(get_database_conversion_systems)"];
+    "database_helper" -> get_database_distribution_systems[label="(get_database_distribution_systems)"];
+    "database_helper" -> get_database_envelope_systems[label="(get_database_envelope_systems)"];
+    "database_helper" -> get_database_feedstocks[label="(get_database_feedstocks)"];
+    "database_helper" -> get_database_standard_schedules_use[label="(get_database_standard_schedules_use)"];
+    "database_helper" -> get_database_supply_assemblies[label="(get_database_supply_assemblies)"];
+    "database_helper" -> get_database_use_types_properties[label="(get_database_use_types_properties)"];
     }
