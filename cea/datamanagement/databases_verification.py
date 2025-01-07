@@ -10,12 +10,11 @@ import re
 from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
-COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
-COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
-                         '3RD_USE_R']
-NAME_COLUMN = 'Name'
-COLUMNS_ZONE = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
+COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
+COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'construction_type', 'use_type_1', 'use_type_ratio', 'use_type_2', 'use_type_2_ratio', 'use_type_3', 'use_type_3_ratio']
+NAME_COLUMN = 'name'
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 
 

@@ -4,7 +4,7 @@ A tool to create a new project / scenario with the CEA.
 import os
 
 import pandas as pd
-from geopandas import GeoDataFrame as Gdf
+import geopandas as gpd
 from osgeo import gdal
 
 import cea.config
@@ -31,7 +31,11 @@ def copy_terrain(terrain_path, locator, lat, lon):
     driver.CreateCopy(locator.get_terrain(), terrain)
 
 
-def copy_typology(typology_path, locator):
+def add_typology(typology_path, locator):
+
+    # Load the shapefile into a GeoDataFrame
+    zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
     if not os.path.isfile(typology_path):
         raise Exception(f"Typology at {typology_path} does not exist")
 
@@ -48,20 +52,11 @@ def copy_typology(typology_path, locator):
     # verify if input file is correct for CEA, if not an exception will be released
     verify_input_typology(df)
 
-    # create new file
-    dataframe_to_dbf(df, locator.get_building_typology())
+    # merge the typology with the zone
+    merged_gdf = zone_gdf.merge(df, on='Name', how='left')
 
-def generate_default_typology(zone_geometry: Gdf, locator: cea.inputlocator.InputLocator):
-    zone = zone_geometry.drop('geometry', axis=1)
-    zone['STANDARD'] = 'STANDARD1'
-    zone['YEAR'] = 2020
-    zone['1ST_USE'] = 'MULTI_RES'
-    zone['1ST_USE_R'] = 1.0
-    zone['2ND_USE'] = "NONE"
-    zone['2ND_USE_R'] = 0.0
-    zone['3RD_USE'] = "NONE"
-    zone['3RD_USE_R'] = 0.0
-    dataframe_to_dbf(zone[COLUMNS_ZONE_TYPOLOGY], locator.get_building_typology())
+    # create new file
+    merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
 
 
 def create_new_scenario(locator, config):
