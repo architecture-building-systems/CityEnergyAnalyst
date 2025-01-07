@@ -118,8 +118,7 @@ async def start_job(worker_processes: CEAWorkerProcesses, worker_url: CEAWorkerU
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print("tools/route_start: {job_id}".format(**locals()))
     process = subprocess.Popen([
-        "python", "-m", "cea.worker", f"{job_id}",
-        "--url", f"{worker_url}"
+        "python", "-m", "cea.worker", f"{job_id}", f"{worker_url}"
     ])
     await worker_processes.set(job_id, process.pid)
     return job_id
