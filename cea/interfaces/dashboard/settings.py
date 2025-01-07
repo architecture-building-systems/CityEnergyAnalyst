@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     host: Optional[str] = None
     port: Optional[int] = None
     cors_origin: str = "*"
-    worker_url: Optional[str] = None
     project_root: Optional[str] = None
 
     def allow_path_transversal(self) -> bool:
