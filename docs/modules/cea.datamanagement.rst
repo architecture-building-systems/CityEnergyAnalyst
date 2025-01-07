@@ -33,10 +33,10 @@ cea.datamanagement.create\_new\_scenario module
    :undoc-members:
    :show-inheritance:
 
-cea.datamanagement.data\_initializer module
+cea.datamanagement.data\_helper module
 -------------------------------------------
 
-.. automodule:: cea.datamanagement.data_initializer
+.. automodule:: cea.datamanagement.database_helper
    :members:
    :undoc-members:
    :show-inheritance:

@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def data_initializer(locator,
+def database_helper(locator,
                      databases_path,
                      initialize_archetypes_database=True,
                      initialize_components_database=True,
@@ -63,7 +63,7 @@ def main(config):
     initialize_components_database = 'components' in config.database_helper.databases
     initialize_assemblies_database = 'assemblies' in config.database_helper.databases
 
-    data_initializer(locator=locator,
+    database_helper(locator=locator,
                      databases_path=config.database_helper.databases_path,
                      initialize_archetypes_database=initialize_archetypes_database,
                      initialize_components_database=initialize_components_database,

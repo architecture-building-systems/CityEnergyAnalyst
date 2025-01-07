@@ -58,7 +58,7 @@ def main(_=None):
         input_methods_fp.write(template.render(schemas=input_locators))
     # write intermediate_input_methods
     intermediate_input_locators = {lm: schemas[lm] for lm in schemas if
-                                   'data_initializer' in schemas[lm]['created_by'] or 'archetypes_mapper' in
+                                   'database_helper' in schemas[lm]['created_by'] or 'archetypes_mapper' in
                                    schemas[lm]['created_by']}
     with open(os.path.join(documentation_dir, "intermediate_input_methods.rst"), "w") as intermediate_input_methods_fp:
         intermediate_input_methods_fp.write(template.render(schemas=intermediate_input_locators))
