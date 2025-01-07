@@ -104,7 +104,7 @@ async def get_worker_processes():
     return AsyncDictCache(_cache, "worker_processes")
 
 
-def get_worker_url():
+def get_server_url():
     host = get_settings().host
     port = get_settings().port
     worker_url = f"http://{host}:{port}/server"
@@ -119,6 +119,6 @@ CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAJobs = Annotated[dict, Depends(get_jobs)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
-CEAWorkerUrl = Annotated[dict, Depends(get_worker_url)]
+CEAServerUrl = Annotated[dict, Depends(get_server_url)]
 CEAProjectRoot = Annotated[dict, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
