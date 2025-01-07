@@ -19,10 +19,6 @@ def main(config):
     if settings.port is None:
         settings.port = config.server.port
 
-    if settings.worker_url is None:
-        settings.worker_url = config.worker.url
-        config_dict["worker_url"] = config.worker.url
-
     if settings.project_root is None:
         settings.project_root = config.server.project_root
         config_dict["project_root"] = config.server.project_root

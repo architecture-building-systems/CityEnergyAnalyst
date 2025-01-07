@@ -105,7 +105,11 @@ async def get_worker_processes():
 
 
 def get_worker_url():
-    return get_settings().worker_url
+    host = get_settings().host
+    port = get_settings().port
+    worker_url = f"http://{host}:{port}/server"
+    return worker_url
+
 
 def get_project_root():
     return get_settings().project_root
