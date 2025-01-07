@@ -53,7 +53,7 @@ async def get_job_info(jobs: CEAJobs, job_id: str):
 async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
     """Post a new job to the list of jobs to complete"""
     args = payload
-    print("NewJob: args={args}".format(**locals()))
+    print(f"NewJob: args={args}")
 
     async def next_id():
         """
@@ -116,7 +116,7 @@ async def set_job_error(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerP
 @router.post('/start/{job_id}')
 async def start_job(worker_processes: CEAWorkerProcesses, worker_url: CEAWorkerUrl, jobs: CEAJobs, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
-    print("tools/route_start: {job_id}".format(**locals()))
+    print(f"tools/route_start: {job_id}")
     process = subprocess.Popen([
         "python", "-m", "cea.worker", f"{job_id}", f"{worker_url}"
     ])
@@ -145,14 +145,14 @@ async def kill_job(jobid, worker_processes):
     pid = await worker_processes.get(jobid)
     # using code from here: https://stackoverflow.com/a/4229404/2260
     # to terminate child processes too
-    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=pid))
+    print(f"killing child processes of {jobid} ({pid})")
     try:
         process = psutil.Process(pid)
     except psutil.NoSuchProcess:
         return
     children = process.children(recursive=True)
     for child in children:
-        print("-- killing child {pid}".format(pid=child.pid))
+        print(f"-- killing child {pid}")
         child.kill()
     process.kill()
     await worker_processes.delete(jobid)
