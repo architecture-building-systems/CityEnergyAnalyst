@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, COLUMNS_ZONE
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.dbf import dataframe_to_dbf
@@ -345,12 +345,14 @@ def zone_helper(locator, config):
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
                               fix_overlapping, include_building_parts,
-                              poly, zone_output_path)
+                              poly)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
-    calculate_typology_file(
+    typology_df = calculate_typology_file(
         locator, zone_df, year_construction, occupancy_type, zone_output_path)
 
+    # write zone.shp file
+    write_zone_shp(zone_df, typology_df, poly, locator)
 
 def calc_category(standard_db, year_array):
     def category_assignment(year):
@@ -422,18 +424,25 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
               'Applying `MULTI_RES` as default type.')
         typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
 
+    return typology_df
+
+def write_zone_shp(zone_df, typology_df, poly, locator):
+
+
+    # get the projected coordinate system
+    poly = poly.to_crs(get_geographic_coordinate_system())
+    lat, lon = get_lat_lon_projected_shapefile(poly)
+
     zone_df = zone_df[COLUMNS_ZONE_GEOMETRY]
     merged_df = pd.merge(zone_df, typology_df, on='name', how='inner')
     merged_df = merged_df.set_index('name').reset_index()
 
     # clean up attributes
-    cleaned_shapefile = merged_df[
-        ["name", "height_ag", "floors_ag", "height_bg", "floors_bg",
-         "reference", 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']]
+    cleaned_shapefile = merged_df[COLUMNS_ZONE]
     cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # save shapefile to zone.shp
-    cleaned_shapefile.to_file(zone_out_path)
+    cleaned_shapefile.to_file(locator.get_zone_path())
 
 
 def parse_year(year: Union[str, int]) -> int:
@@ -497,9 +506,8 @@ def calculate_age(zone_df, year_construction):
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    fix_overlapping, include_building_parts, poly, zone_out_path):
-    poly = poly.to_crs(get_geographic_coordinate_system())
-    lat, lon = get_lat_lon_projected_shapefile(poly)
+                    fix_overlapping, include_building_parts, poly):
+
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
     shapefile = osmnx.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:

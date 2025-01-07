@@ -14,8 +14,9 @@ COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_
 COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'construction_type', 'use_type_1', 'use_type_ratio', 'use_type_2', 'use_type_2_ratio', 'use_type_3', 'use_type_3_ratio']
 NAME_COLUMN = 'name'
-COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
-                'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference',
+                'year', 'construction_type', 'use_type_1', 'use_type_ratio', 'use_type_2', 'use_type_2_ratio', 'use_type_3', 'use_type_3_ratio',
+                'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
 def assert_columns_names(zone_df, columns):

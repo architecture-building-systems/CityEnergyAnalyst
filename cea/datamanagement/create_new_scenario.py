@@ -70,7 +70,6 @@ def create_new_scenario(locator, config):
     # the folders _before_ we try copying to them
     locator.ensure_parent_folder_exists(locator.get_zone_geometry())
     locator.ensure_parent_folder_exists(locator.get_terrain())
-    locator.ensure_parent_folder_exists(locator.get_building_typology())
     locator.ensure_parent_folder_exists(locator.get_street_network())
 
     # import file

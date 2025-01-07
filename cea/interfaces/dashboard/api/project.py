@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import traceback
 from typing import Dict, Any, Optional, List
+from osgeo import gdal
 
 import geopandas
 import pandas as pd
@@ -15,15 +16,15 @@ import cea.config
 import cea.api
 import cea.inputlocator
 from cea.databases import get_regions, databases_folder_path
-from cea.datamanagement.create_new_scenario import copy_terrain, add_typology
+import geopandas as gpd
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.utilities.dbf import dbf_to_dataframe
 
-from cea.utilities.dbf import dataframe_to_dbf
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
 router = APIRouter()
 
@@ -246,6 +247,34 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
+    def add_typology(typology_path, locator):
+
+        # Load the shapefile into a GeoDataFrame
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
+        if not os.path.isfile(typology_path):
+            raise Exception(f"Typology at {typology_path} does not exist")
+
+        _, ext = os.path.splitext(typology_path)
+
+        if ext == ".dbf":
+            df = dbf_to_dataframe(typology_path)
+        elif ext == ".xlsx":
+            df = pd.read_excel(typology_path)
+        else:
+            raise Exception("Typology file must be a .dbf or .xlsx file")
+
+        df = df[COLUMNS_ZONE_TYPOLOGY]
+        # verify if input file is correct for CEA, if not an exception will be released
+        verify_input_typology(df)
+
+        # merge the typology with the zone
+        merged_gdf = zone_gdf.merge(df, on='Name', how='left')
+
+        # create new file
+        merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
+
+
     def create_typology(scenario_form, locator):
         # Only process typology if zone is not generated
         if scenario_form.should_generate_zone():    # From OSM
@@ -289,6 +318,15 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
                                 detail='User to provide Building information: construction year, '
                                        'construction type, use types and their ratios.',
                                 )
+
+    def copy_terrain(terrain_path, locator, lat, lon):
+        terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
+        locator.ensure_parent_folder_exists(locator.get_terrain())
+        driver = gdal.GetDriverByName('GTiff')
+        verify_input_terrain(terrain)
+        driver.CreateCopy(locator.get_terrain(), terrain)
+
+
     def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
             # Run terrain helper
