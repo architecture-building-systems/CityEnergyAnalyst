@@ -16,7 +16,6 @@ from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
-from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -46,9 +45,9 @@ def occupancy_helper_main(locator, config, building=None):
         buildings = [building]  # this is to run the tests
 
     # get variables of indoor comfort and internal loads
-    internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('name')
-    indoor_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('name')
-    architecture = dbf_to_dataframe(locator.get_building_architecture()).set_index('name')
+    internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
+    indoor_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
+    architecture = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())

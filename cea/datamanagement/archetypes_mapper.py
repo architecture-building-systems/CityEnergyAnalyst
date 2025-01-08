@@ -121,8 +121,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
                                                         occupant_densities,
                                                         list_uses,
                                                         comfort_DB)
-    dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
-
+    prop_comfort_df_merged[fields].to_csv(locator.get_building_comfort(), index=False)
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_internal())
@@ -149,7 +148,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
                                                          occupant_densities,
                                                          list_uses,
                                                          internal_DB)
-    dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+    prop_internal_df_merged[fields].to_csv(locator.get_building_internal(), index=False)
 
 
 def supply_mapper(locator, building_typology_df):
@@ -161,8 +160,7 @@ def supply_mapper(locator, building_typology_df):
               'type_hs',
               'type_dhw',
               'type_el']
-    dataframe_to_dbf(prop_supply_df[fields], locator.get_building_supply())
-
+    prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
 
 def aircon_mapper(locator, typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
@@ -180,7 +178,7 @@ def aircon_mapper(locator, typology_df):
               'heat_ends',
               'cool_starts',
               'cool_ends']
-    dataframe_to_dbf(prop_HVAC_df[fields], locator.get_building_air_conditioning())
+    prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
 
 
 def architecture_mapper(locator, typology_df):
@@ -206,8 +204,7 @@ def architecture_mapper(locator, typology_df):
               'type_wall',
               'type_win',
               'type_shade']
-    dataframe_to_dbf(prop_architecture_df[fields], locator.get_building_architecture())
-
+    prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
 
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)

@@ -48,7 +48,7 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
-    geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
+    geothermal_potential_data = pd.read_csv(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')
     geothermal_potential_data['Area_geo'] = geothermal_potential_data['Area']
     weather_path = locator.get_weather_file()

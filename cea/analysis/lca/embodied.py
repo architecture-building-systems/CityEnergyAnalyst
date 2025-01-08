@@ -15,7 +15,6 @@ import cea.config
 import cea.inputlocator
 from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, \
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
-from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -101,7 +100,7 @@ def lca_embodied(year_to_calculate, locator):
     """
 
     # local variables
-    architecture_df = dbf_to_dataframe(locator.get_building_architecture())
+    architecture_df = pd.read_csv(locator.get_building_architecture())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
 
     # reproject to projected coordinate system (in meters) to calculate area

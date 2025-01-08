@@ -129,7 +129,7 @@ class Building(object):
         # load the building supply systems file as a class variable
         if Building._base_supply_systems.empty:
             building_supply_systems_file = file_locator.get_building_supply()
-            Building._base_supply_systems = dbf.dbf_to_dataframe(building_supply_systems_file)
+            Building._base_supply_systems = pd.read_csv(building_supply_systems_file)
 
         # fetch the base supply system for the building according to the building supply systems file
         base_supply_system_info = Building._base_supply_systems[Building._base_supply_systems['Name'] == self.identifier]

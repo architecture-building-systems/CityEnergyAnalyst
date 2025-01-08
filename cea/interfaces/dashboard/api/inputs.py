@@ -255,7 +255,7 @@ def get_building_properties(config):
                     table_df.set_index('name').to_json(orient='index'))
             else:
                 assert file_type == 'dbf', 'Unexpected database type: %s' % file_type
-                table_df = cea.utilities.dbf.dbf_to_dataframe(file_path)
+                table_df = pd.read_csv(file_path)
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
                 store['tables'][db] = json.loads(

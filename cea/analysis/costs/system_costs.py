@@ -172,7 +172,7 @@ def calc_scale_costs(value, flag_scale):
 
 
 def get_databases(demand, locator):
-    supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
+    supply_systems = pd.read_csv(locator.get_building_supply()).drop('geometry', axis=1)
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     factors_heating = data_all_in_one_systems['HEATING']
     factors_dhw = data_all_in_one_systems['HOT_WATER']

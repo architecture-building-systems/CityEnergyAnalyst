@@ -40,7 +40,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
     """
 
     # local variables
-    architectural_properties = gpd.GeoDataFrame.from_file(locator.get_building_architecture())
+    architectural_properties = pd.read_csv(locator.get_building_architecture())
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW").set_index("code")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF").set_index("code")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL").set_index("code")

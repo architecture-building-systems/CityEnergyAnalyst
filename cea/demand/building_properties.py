@@ -12,7 +12,6 @@ from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
-from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 
 __author__ = "Gabriel Happle"
@@ -70,17 +69,16 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('name')
-        prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-
-        prop_zone = dbf_to_dataframe(locator.get_zone_geometry())
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
+        prop_zone = pd.read_csv(locator.get_zone_geometry())
         prop_typology = prop_zone[COLUMNS_ZONE_TYPOLOGY].set_index('name')
         # Drop 'REFERENCE' column if it exists
         if 'reference' in prop_typology:
             prop_typology.drop('reference', axis=1, inplace=True)
-        prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
-        prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('name')
-        prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('name')
-        prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
+        prop_architectures = pd.read_csv(locator.get_building_architecture()).set_index('name')
+        prop_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
+        prop_internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
+        prop_supply_systems_building = pd.read_csv(locator.get_building_supply()).set_index('name')
 
         # GET SYSTEMS EFFICIENCIES
         prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index('name')

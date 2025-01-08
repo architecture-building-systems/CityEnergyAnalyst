@@ -9,7 +9,6 @@ import cea.config
 import time
 from datetime import datetime
 import cea.inputlocator
-from cea.utilities.dbf import dbf_to_dataframe
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -1310,7 +1309,7 @@ def determine_building_main_use(df_typology):
 
 def get_building_year_standard_main_use_type(locator):
 
-    zone_dbf = dbf_to_dataframe(locator.get_zone_geometry())
+    zone_dbf = pd.read_csv(locator.get_zone_geometry())
     df = determine_building_main_use(zone_dbf)
     df['construction_standard'] = zone_dbf['STANDARD']
     df['construction_year'] = zone_dbf['YEAR']
