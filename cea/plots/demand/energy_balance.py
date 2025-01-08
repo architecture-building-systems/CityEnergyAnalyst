@@ -61,7 +61,7 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     @property
     def data_frame_month(self):
         if self.__data_frame_month is None:
-            gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
+            gfa_m2 = self.yearly_loads.set_index('name').loc[self.buildings[0]]['GFA_m2']
             hourly_loads_for_buildings = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
             self.__data_frame_month = calc_monthly_energy_balance(hourly_loads_for_buildings, gfa_m2)
         return self.__data_frame_month
