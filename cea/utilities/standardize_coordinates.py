@@ -44,7 +44,13 @@ def get_geographic_coordinate_system():
 
 def get_projected_coordinate_system(lat, lon):
     easting, northing, zone_number, zone_letter = utm.from_latlon(lat, lon)
-    epsg = f"326{zone_number}" if lon >= 0 else f"327{zone_number}"
+
+    # Calculate EPSG code
+    # UTM North zones: 32601-32660
+    # UTM South zones: 32701-32760
+
+    is_northern = zone_letter >= 'N'
+    epsg = f"326{zone_number}" if is_northern else f"327{zone_number}"
 
     return CRS.from_epsg(int(epsg)).to_wkt()
 
