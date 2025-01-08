@@ -10,16 +10,16 @@ The following file is used by these scripts: ``archetypes_mapper``, ``demand``, 
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``1ST_USE``, "First (Main) Use type of the building"
-    ``1ST_USE_R``, "Fraction of gross floor area for first Use Type"
-    ``2ND_USE``, "Second Use type of the building"
-    ``2ND_USE_R``, "Fraction of gross floor area for second Use Type"
-    ``3RD_USE``, "Third Use type of the building"
-    ``3RD_USE_R``, "Fraction of gross floor area for third Use Type"
-    ``Name``, "Unique building ID. It must start with a letter."
-    ``REFERENCE``, "Reference to data (if any)"
-    ``STANDARD``, "Construction Standard (relates to ""code"" in Supply Assemblies)"
-    ``YEAR``, "Construction year"
+    ``use_type1``, "First (Main) Use type of the building"
+    ``use_type1r``, "Fraction of gross floor area for first Use Type"
+    ``use_type2``, "Second Use type of the building"
+    ``use_type2r``, "Fraction of gross floor area for second Use Type"
+    ``use_type3``, "Third Use type of the building"
+    ``use_type3r``, "Fraction of gross floor area for third Use Type"
+    ``name``, "Unique building ID. It must start with a letter."
+    ``reference``, "Reference to data (if any)"
+    ``const_type``, "Construction Standard (relates to ""code"" in Supply Assemblies)"
+    ``year``, "Construction year"
     
 
 

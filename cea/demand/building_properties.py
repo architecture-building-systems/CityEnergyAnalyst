@@ -8,6 +8,7 @@ from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
@@ -72,7 +73,7 @@ class BuildingProperties(object):
         prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
 
         prop_zone = dbf_to_dataframe(locator.get_zone_geometry())
-        prop_typology = prop_zone['Name', 'YEAR', 'STANDARD', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R'].set_index('Name')
+        prop_typology = prop_zone[COLUMNS_ZONE_TYPOLOGY].set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_typology:
             prop_typology.drop('REFERENCE', axis=1, inplace=True)

@@ -692,7 +692,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_zone_geometry()):
             return []
         import geopandas as gdf
-        zone_building_names = sorted(gdf.read_file(self.get_zone_geometry())['Name'].values)
+        zone_building_names = sorted(gdf.read_file(self.get_zone_geometry())['name'].values)
         return zone_building_names
 
     def get_building_supply(self):
@@ -836,7 +836,7 @@ class InputLocator(object):
             import pandas as pd
             nodes_df = pd.read_csv(nodes_csv)
             is_plant = nodes_df['Type'] == 'PLANT'
-            return nodes_df[is_plant]['Name'].to_list()
+            return nodes_df[is_plant]['name'].to_list()
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):

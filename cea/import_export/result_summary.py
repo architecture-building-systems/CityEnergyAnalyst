@@ -1293,15 +1293,15 @@ def determine_building_main_use(df_typology):
 
     # Determine the main use type and its ratio
     result['main_use'] = df_typology.apply(
-        lambda row: row['1ST_USE'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
-                    row['2ND_USE'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
-                    row['3RD_USE'],
+        lambda row: row['use_type1'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
+                    row['use_type2'] if row['use_type2r'] >= row['use_type3r'] else
+                    row['use_type3'],
         axis=1
     )
     result['main_use_ratio'] = df_typology.apply(
-        lambda row: row['1ST_USE_R'] if row['1ST_USE_R'] >= max(row['2ND_USE_R'], row['3RD_USE_R']) else
-                    row['2ND_USE_R'] if row['2ND_USE_R'] >= row['3RD_USE_R'] else
-                    row['3RD_USE_R'],
+        lambda row: row['use_type1r'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
+                    row['use_type2r'] if row['use_type2r'] >= row['use_type3r'] else
+                    row['use_type3r'],
         axis=1
     )
 

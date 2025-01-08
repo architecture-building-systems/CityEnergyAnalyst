@@ -8,13 +8,12 @@ building properties algorithm
 
 import numpy as np
 import pandas as pd
-
+import geopandas as gpd
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
     get_lists_of_var_names_and_var_values
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
+from cea.utilities.dbf import dataframe_to_dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -61,7 +60,7 @@ def archetypes_mapper(locator,
         describes the queried thermal properties of buildings
     """
     # Get occupancy and age files
-    building_typology_df = dbf_to_dataframe(locator.get_zone_geometry())[COLUMNS_ZONE_TYPOLOGY]
+    building_typology_df = gpd.read_file(locator.get_zone_geometry())
     db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
         'STANDARD']
 
@@ -104,6 +103,7 @@ def archetypes_mapper(locator,
 
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
+    locator.ensure_parent_folder_exists(locator.get_building_comfort())
     comfort_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INDOOR_COMFORT')
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='code')
@@ -125,6 +125,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
 
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
+    locator.ensure_parent_folder_exists(locator.get_building_internal())
     internal_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
     # define comfort
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='code')
@@ -152,6 +153,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 
 def supply_mapper(locator, building_typology_df):
+    locator.ensure_parent_folder_exists(locator.get_building_supply())
     supply_DB = pd.read_excel(locator.get_database_construction_standards(), 'SUPPLY_ASSEMBLIES')
     prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='STANDARD')
     fields = ['name',
@@ -163,6 +165,7 @@ def supply_mapper(locator, building_typology_df):
 
 
 def aircon_mapper(locator, typology_df):
+    locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
     air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
     # define HVAC systems types
     prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='STANDARD')
@@ -181,6 +184,7 @@ def aircon_mapper(locator, typology_df):
 
 
 def architecture_mapper(locator, typology_df):
+    locator.ensure_parent_folder_exists(locator.get_building_architecture())
     architecture_DB = pd.read_excel(locator.get_database_construction_standards(), 'ENVELOPE_ASSEMBLIES')
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='STANDARD')
     fields = ['name',

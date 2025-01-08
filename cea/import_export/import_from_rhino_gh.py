@@ -69,8 +69,6 @@ def exec_import_csv_from_rhino(locator):
     if os.path.isfile(zone_csv_path):
         os.makedirs(building_geometry_path, exist_ok=True)
         csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path, polygon=True)
-        df = pd.read_csv(zone_csv_path)
-        list_buildings = df['Name'].to_list()
 
     else:
         raise ValueError("""The minimum requirement - zone_from.csv is missing. Create the file using Rhino/Grasshopper.""")

@@ -94,8 +94,7 @@ def clean_attributes(shapefile, key):
     data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
     data_osm_floors_joined = int(
         math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-    shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
-                              data_floors_sum_with_nan]
+    shapefile["floors_ag"] = [int(x) if not pd.isna(x) else data_osm_floors_joined for x in data_floors_sum_with_nan]
     shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
     # add description

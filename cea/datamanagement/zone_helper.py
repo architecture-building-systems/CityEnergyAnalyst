@@ -172,7 +172,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # in OSM, "amenities" (where available) supersede "building" categories
         in_categories = shapefile['amenity'].isin(
             OSM_BUILDING_CATEGORIES.keys())
-        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(
+        shapefile.loc[in_categories, 'use_type1'] = shapefile[in_categories]['amenity'].map(
             OSM_BUILDING_CATEGORIES)
 
     shapefile["name"] = [key + str(x + 1000) for x in
@@ -389,19 +389,19 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type)
 
     # Calculate the most likely use type
     typology_df['use_type1'] = "NONE"
-    typology_df['use_type1_r'] = 1.0
+    typology_df['use_type1r'] = 1.0
     typology_df['use_type2'] = "NONE"
-    typology_df['use_type2_r'] = 0.0
+    typology_df['use_type2r'] = 0.0
     typology_df['use_type3'] = "NONE"
-    typology_df['use_type3_r'] = 0.0
+    typology_df['use_type3r'] = 0.0
     if occupancy_type == "Get it from open street maps":
         # for OSM building/amenity types with a clear CEA use type, this use type is assigned
         in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
-        zone_df.loc[in_categories, 'use_type_1'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+        zone_df.loc[in_categories, 'use_type1'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
         if 'amenity' in zone_df.columns:
             # assign use type by building category first, then by amenity (more specific)
             in_categories = zone_df['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
-            zone_df.loc[in_categories, 'use_type_1'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+            zone_df.loc[in_categories, 'use_type1'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
         if 'amenity' in zone_df.columns:
@@ -410,18 +410,18 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type)
         else:
             in_unconditioned_categories = zone_df['category'].isin(
                 OTHER_OSM_CATEGORIES_UNCONDITIONED)
-        zone_df.loc[in_unconditioned_categories, 'use_type_1'] = "PARKING"
+        zone_df.loc[in_unconditioned_categories, 'use_type1'] = "PARKING"
     else:
-        typology_df['use_type_1'] = occupancy_type
+        typology_df['use_type1'] = occupancy_type
 
     # all remaining building use types are assigned by the mode of the use types in the entire case study
     try:
-        typology_df.loc[typology_df['use_type_1'] == "NONE", 'use_type_1'] = \
-            typology_df.loc[~typology_df['use_type_1'].isin(['NONE', 'PARKING']), 'use_type_1'].mode()[0]
+        typology_df.loc[typology_df['use_type1'] == "NONE", 'use_type1'] = \
+            typology_df.loc[~typology_df['use_type1'].isin(['NONE', 'PARKING']), 'use_type1'].mode()[0]
     except KeyError:
         print('No building type could be found in the OSM-database for the selected zone. '
               'Applying `MULTI_RES` as default type.')
-        typology_df.loc[typology_df['use_type_1'] == "NONE", 'use_type_1'] = "MULTI_RES"
+        typology_df.loc[typology_df['use_type1'] == "NONE", 'use_type1'] = "MULTI_RES"
 
     return typology_df
 

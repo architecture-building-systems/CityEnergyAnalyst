@@ -249,17 +249,17 @@ def get_building_properties(config):
                     table_df.drop(columns='geometry'))
                 if 'geometry' in db_columns:
                     del db_columns['geometry']
-                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
-                    table_df['REFERENCE'] = None
+                if 'reference' in db_columns and 'reference' not in table_df.columns:
+                    table_df['reference'] = None
                 store['tables'][db] = json.loads(
-                    table_df.set_index('Name').to_json(orient='index'))
+                    table_df.set_index('name').to_json(orient='index'))
             else:
                 assert file_type == 'dbf', 'Unexpected database type: %s' % file_type
                 table_df = cea.utilities.dbf.dbf_to_dataframe(file_path)
-                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
-                    table_df['REFERENCE'] = None
+                if 'reference' in db_columns and 'reference' not in table_df.columns:
+                    table_df['reference'] = None
                 store['tables'][db] = json.loads(
-                    table_df.set_index('Name').to_json(orient='index'))
+                    table_df.set_index('name').to_json(orient='index'))
 
             columns = {}
             for column_name, column in db_columns.items():
@@ -347,8 +347,8 @@ def df_to_json(file_location):
             lat, lon = get_lat_lon_projected_shapefile(table_df)
             crs = get_projected_coordinate_system(lat, lon)
 
-        if "Name" in table_df.columns:
-            table_df['Name'] = table_df['Name'].astype('str')
+        if "name" in table_df.columns:
+            table_df['name'] = table_df['name'].astype('str')
 
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())

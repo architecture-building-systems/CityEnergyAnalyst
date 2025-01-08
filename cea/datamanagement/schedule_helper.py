@@ -51,10 +51,11 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     :return:
     """
 
-    buildings = building_typology_df['Name']
+    buildings = building_typology_df['name']
+    locator.ensure_parent_folder_exists(locator.get_building_weekly_schedules(buildings[0]))
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
-    building_typology_df = building_typology_df.loc[building_typology_df['Name'].isin(buildings)]
+    building_typology_df = building_typology_df.loc[building_typology_df['name'].isin(buildings)]
     list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names,
                                                                             list_var_values,
                                                                             building_typology_df)
@@ -63,7 +64,7 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
     internal_loads = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
-    building_typology_df.set_index('Name', inplace=True)
+    building_typology_df.set_index('name', inplace=True)
     internal_loads = internal_loads.set_index('code')
 
     occupant_densities = {}
@@ -209,7 +210,7 @@ def get_list_of_uses_in_case_study(building_typology_df):
     :rtype: pandas.DataFrame.Index
     """
     list_var_names, list_var_values = get_lists_of_var_names_and_var_values(
-        list_var_names=["1ST_USE", '2ND_USE', '3RD_USE'], list_var_values=["1ST_USE_R", '2ND_USE_R', '3RD_USE_R'],
+        list_var_names=["use_type1", 'use_type2', 'use_type3'], list_var_values=["use_type1r", 'use_type2r', 'use_type3r'],
         building_typology_df=building_typology_df)
 
     # validate list of uses
@@ -231,9 +232,9 @@ def get_lists_of_var_names_and_var_values(list_var_names, list_var_values, build
     '''
 
     if list_var_names is None:
-        list_var_names = ["1ST_USE", '2ND_USE', '3RD_USE']
+        list_var_names = ["use_type1", 'use_type2', 'use_type3']
     if list_var_values is None:
-        list_var_values = ["1ST_USE_R", '2ND_USE_R', '3RD_USE_R']
+        list_var_values = ["use_type1r", 'use_type2r', 'use_type3r']
     if len([c for c in building_typology_df.columns if '_USE_R' in c]) > len(list_var_values):
         list_var_values = [c for c in building_typology_df.columns if '_USE_R' in c]
         list_var_names = ['_'.join(c.split('_')[0:2]) for c in list_var_values]

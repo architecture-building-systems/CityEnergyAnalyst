@@ -329,7 +329,7 @@ PVT_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID.
         type: string
         unit: '[-]'
@@ -865,7 +865,7 @@ PV_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1314,7 +1314,7 @@ SC_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID.
         type: string
         unit: '[-]'
@@ -2173,7 +2173,7 @@ get_costs_operation_file:
         unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -7891,7 +7891,7 @@ get_demand_results_file:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -8551,7 +8551,7 @@ get_lca_embodied:
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -8668,7 +8668,7 @@ get_lca_mobility:
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -8971,7 +8971,7 @@ get_lca_operation:
         unit: '[MJ/m2-yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -9373,7 +9373,7 @@ get_network_layout_edges_shapefile:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique network pipe ID.
         type: string
         unit: 'NA'
@@ -9413,7 +9413,7 @@ get_network_layout_nodes_shapefile:
         type: string
         unit: 'NA'
         values: alphanumeric
-      Name:
+      name:
         description: Unique node ID. e.g. "NODE1"
         type: string
         unit: 'NA'
@@ -9709,7 +9709,7 @@ get_optimization_district_scale_cooling_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -10285,7 +10285,7 @@ get_optimization_building_scale_cooling_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -10317,7 +10317,7 @@ get_optimization_building_scale_heating_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -11282,7 +11282,7 @@ get_optimization_slave_building_connectivity:
         values: '{0...1}'
         min: 0
         max: 1
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.)
         type: string
         unit: 'NA'
@@ -12858,7 +12858,7 @@ get_optimization_substations_total_file:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -14030,7 +14030,7 @@ get_radiation_materials:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -14358,7 +14358,7 @@ get_surroundings_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -14397,7 +14397,7 @@ get_tree_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique tree ID.
         type: string
         unit: 'NA'
@@ -14463,7 +14463,7 @@ get_thermal_network_edge_list_file:
   file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique network pipe ID.
         type: string
         unit: 'NA'
@@ -14550,7 +14550,7 @@ get_thermal_network_node_types_csv_file:
   file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique network node ID.
         type: string
         unit: 'NA'
@@ -15087,7 +15087,7 @@ get_total_demand:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -16106,7 +16106,7 @@ get_zone_geometry:
             path: get_database_use_types_properties
             sheet: INTERNAL_LOADS
             column: code
-      use_type1_r:
+      use_type1r:
         description: Fraction of gross floor area for first Use Type
         type: float
         unit: '[m2/m2]'
@@ -16124,7 +16124,7 @@ get_zone_geometry:
             sheet: INTERNAL_LOADS
             column: code
           none_value: NONE
-      use_type2_r:
+      use_type2r:
         description: Fraction of gross floor area for second Use Type
         type: float
         unit: '[m2/m2]'
@@ -16142,7 +16142,7 @@ get_zone_geometry:
             sheet: INTERNAL_LOADS
             column: code
           none_value: NONE
-      use_type3_r:
+      use_type3r:
         description: Fraction of gross floor area for third Use Type
         type: float
         unit: '[m2/m2]'
