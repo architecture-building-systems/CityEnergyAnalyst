@@ -9,6 +9,7 @@ dependencies:
 #- pillow
 - sphinx
 - sphinx_rtd_theme
+- graphviz
 #- pip:
 #  - utm
 #  - pyyaml
