@@ -100,8 +100,8 @@ class ThermalNetworkMapLayer(MapLayer):
         massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, "")
 
         crs = get_geographic_coordinate_system()
-        edges_df = gpd.read_file(edges_path).to_crs(crs).set_index("Name")
-        nodes_df = gpd.read_file(nodes_path).to_crs(crs).set_index("Name")
+        edges_df = gpd.read_file(edges_path).to_crs(crs).set_index("name")
+        nodes_df = gpd.read_file(nodes_path).to_crs(crs).set_index("name")
         massflow_edges_df = pd.read_csv(massflow_edges_path)
 
         edges_df["peak_mass_flow"] = massflow_edges_df.max().round(1)

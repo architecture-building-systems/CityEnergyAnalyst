@@ -47,9 +47,9 @@ def disconnected_buildings_heating_main(locator, total_demand, building_names, c
     lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
     prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
-    geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
+    geometry = pd.DataFrame({'name': prop_geometry.name, 'Area': prop_geometry.area})
     geothermal_potential_data = pd.read_csv(locator.get_building_supply())
-    geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')
+    geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='name')
     geothermal_potential_data['Area_geo'] = geothermal_potential_data['Area']
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -283,7 +283,7 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     optSearch.fill(number_of_objectives)
     Best = np.zeros((number_of_configurations, 1))
     # Check the GHP area constraint for configuration 4-13
-    geothermal_potential = geothermal_potential_data.set_index('Name')
+    geothermal_potential = geothermal_potential_data.set_index('name')
     for i in range(10):
         QGHP = (1 - i / 10.0) * Qnom_W
         areaAvail = geothermal_potential.loc[building_name, 'Area_geo']

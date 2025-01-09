@@ -154,7 +154,7 @@ class DemandMapLayer(MapLayer):
 
             return total_min, total_max, period_min, period_max, data
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("Name").loc[buildings]
+        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
         building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
         # with ThreadPoolExecutor() as executor:

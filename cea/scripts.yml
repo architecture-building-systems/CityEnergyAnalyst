@@ -229,6 +229,32 @@ Thermal Network Design:
       - [get_database_conversion_systems]
       - [get_weather_file]
 
+
+Life Cycle Analysis:
+
+  - name: emissions
+    label: Emissions
+    description: Calculate the embodied and operational emissions of buildings.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_building_supply]
+
+  - name: system-costs
+    label: Energy Supply System Costs
+    description: Calculate the costs for energy supply systems.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.costs.system_costs
+    parameters: ['general:scenario', costs]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+
+
 Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
@@ -256,30 +282,6 @@ Energy Supply System Optimisation:
     input-files:
       - [get_street_network]
       - [get_total_demand]
-
-Life Cycle Analysis:
-
-  - name: emissions
-    label: Emissions
-    description: Calculate the embodied and operational emissions of buildings.
-    interfaces: [cli, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_architecture]
-      - [get_zone_geometry]
-      - [get_building_supply]
-
-  - name: system-costs
-    label: Energy Supply System Costs
-    description: Calculate the costs for energy supply systems.
-    interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
 
 
 Data Management:

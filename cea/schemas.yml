@@ -9378,12 +9378,12 @@ get_network_layout_edges_shapefile:
         type: string
         unit: 'NA'
         values: alphanumeric
-      Pipe_DN:
+      pipe_DN:
         description: Classifies nominal pipe diameters (DN) into typical bins.
         type: string
         unit: 'NA'
         values: alphanumeric
-      Type_mat:
+      type_mat:
         description: Material type
         type: string
         unit: 'NA'
@@ -13422,13 +13422,13 @@ get_new_optimization_optimal_network_layout_file:
         type: Point or LineString
         unit: 'NA'
         values: 'NA'
-      Building:
+      building:
         description: Building identifier (only for Point objects that represent a building's connection to the network,
           'nan' for LineString objects)
         type: string
         unit: 'NA'
         values: alphanumeric
-      Type:
+      type:
         description: Type of node (only for Point objects, 'nan' for LineString objects)
         type: string
         unit: 'NA'
@@ -13439,12 +13439,12 @@ get_new_optimization_optimal_network_layout_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-      Type_mat:
+      type_mat:
         description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
         type: string
         unit: 'NA'
         values: 'NA'
-      Pipe_DN:
+      pipe_DN:
         description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
         type: float
         unit: '[mm]'
@@ -13778,7 +13778,7 @@ get_new_optimization_debugging_network_tracker_file:
           type: string
           unit: 'NA'
           values: alphanumeric
-        Type:
+        type:
           description: Type of node (only for Point objects, 'nan' for LineString objects)
           type: string
           unit: 'NA'
@@ -13789,12 +13789,12 @@ get_new_optimization_debugging_network_tracker_file:
           unit: '[m]'
           values: '{0.0...n}'
           min: 0.0
-        Type_mat:
+        type_mat:
           description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
           type: string
           unit: 'NA'
           values: 'NA'
-        Pipe_DN:
+        tipe_DN:
           description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
           type: float
           unit: '[mm]'
@@ -14474,14 +14474,14 @@ get_thermal_network_edge_list_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-      Pipe_DN:
+      pipe_DN:
         description: Nominal pipe diameter (e.g. DN100 refers to pipes of approx.
           100 mm in diameter)
         type: int
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      Type_mat:
+      type_mat:
         description: Material of the pipes
         type: string
         unit: 'NA'

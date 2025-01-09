@@ -437,9 +437,9 @@ The following file is used by these scripts: ``thermal_network``
 
     ``geometry``, "Geometry"
     ``length_m``, "length of this edge"
-    ``Name``, "Unique network pipe ID."
-    ``Pipe_DN``, "Classifies nominal pipe diameters (DN) into typical bins."
-    ``Type_mat``, "Material type"
+    ``name``, "Unique network pipe ID."
+    ``pipe_DN``, "Classifies nominal pipe diameters (DN) into typical bins."
+    ``type_mat``, "Material type"
     
 
 
@@ -454,10 +454,10 @@ The following file is used by these scripts: ``thermal_network``
 .. csv-table::
     :header: "Variable", "Description"
 
-    ``Building``, "Unique building ID. e.g. ""B01"""
+    ``building``, "Unique building ID. e.g. ""B01"""
     ``geometry``, "Geometry"
-    ``Name``, "Unique node ID. e.g. ""NODE1"""
-    ``Type``, "Type of node."
+    ``name``, "Unique node ID. e.g. ""NODE1"""
+    ``type``, "Type of node."
     
 
 
@@ -1759,9 +1759,9 @@ The following file is used by these scripts: ``optimization``
 
     ``D_int_m``, "Internal pipe diameter for the nominal diameter"
     ``length_m``, "Length of each pipe in the network"
-    ``Name``, "Unique network pipe ID."
-    ``Pipe_DN``, "Nominal pipe diameter (e.g. DN100 refers to pipes of approx. 100 mm in diameter)"
-    ``Type_mat``, "Material of the pipes"
+    ``name``, "Unique network pipe ID."
+    ``pipe_DN``, "Nominal pipe diameter (e.g. DN100 refers to pipes of approx. 100 mm in diameter)"
+    ``type_mat``, "Material of the pipes"
     
 
 
