@@ -188,8 +188,7 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
                     # Make sure index name is 'Name;
                     table_df.index.name = 'name'
                     table_df = table_df.reset_index()
-
-                    cea.utilities.dbf.dataframe_to_dbf(table_df, location)
+                    table_df.to_csv(location, index=False)
                     out['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
 
             else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)

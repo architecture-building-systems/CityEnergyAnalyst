@@ -2522,7 +2522,7 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
         # drop column with coordinates from all_nodes_df
         all_nodes_df = all_nodes_df.drop('coordinates', axis=1)
     t_substation_supply = all_nodes_df[all_nodes_df.building != 'NONE'].set_index(['building'])
-    t_substation_supply = t_substation_supply.drop('t', axis=1)
+    t_substation_supply = t_substation_supply.drop('type', axis=1)
     return t_substation_supply.T
 
 

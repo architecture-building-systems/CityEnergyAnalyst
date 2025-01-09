@@ -130,51 +130,50 @@ def lca_embodied(year_to_calculate, locator):
     df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
     df6.rename({'GHG_biogenic_wall_kgCO2m2': 'GHG_biogenic_part_kgCO2m2'}, inplace=True, axis=1)
 
-    fields1 = ['Name', "GHG_win_kgCO2m2"]
-    fields2= ['Name', "GHG_biogenic_win_kgCO2m2"]
-    fields3 = ['Name', "Service_Life_win"]
-    fields4 = ['Name', "GHG_roof_kgCO2m2"]
-    fields5 = ['Name', "GHG_biogenic_roof_kgCO2m2"]
-    fields6 = ['Name', "Service_Life_roof"]
-    fields7 = ['Name', "GHG_wall_kgCO2m2"]
-    fields8 = ['Name', "GHG_biogenic_wall_kgCO2m2"]
-    fields9 = ['Name', "Service_Life_wall"]
-    fields10 = ['Name', "GHG_floor_kgCO2m2"]
-    fields11 = ['Name', "GHG_biogenic_floor_kgCO2m2"]
-    fields12 = ['Name', "Service_Life_floor"]
-    fields13 = ['Name', "GHG_base_kgCO2m2"]
-    fields14 = ['Name', "GHG_biogenic_base_kgCO2m2"]
+    fields1 = ['name', "GHG_win_kgCO2m2"]
+    fields2 = ['name', "GHG_biogenic_win_kgCO2m2"]
+    fields3 = ['name', "Service_Life_win"]
+    fields4 = ['name', "GHG_roof_kgCO2m2"]
+    fields5 = ['name', "GHG_biogenic_roof_kgCO2m2"]
+    fields6 = ['name', "Service_Life_roof"]
+    fields7 = ['name', "GHG_wall_kgCO2m2"]
+    fields8 = ['name', "GHG_biogenic_wall_kgCO2m2"]
+    fields9 = ['name', "Service_Life_wall"]
+    fields10 = ['name', "GHG_floor_kgCO2m2"]
+    fields11 = ['name', "GHG_biogenic_floor_kgCO2m2"]
+    fields12 = ['name', "Service_Life_floor"]
+    fields13 = ['name', "GHG_base_kgCO2m2"]
+    fields14 = ['name', "GHG_biogenic_base_kgCO2m2"]
     df5.rename({'Service_Life_floor': 'Service_Life_base'}, inplace=True, axis=1)
-    fields15 = ['Name', "Service_Life_base"]
-    fields16 = ['Name', "GHG_part_kgCO2m2"]
-    fields17 = ['Name', "GHG_biogenic_part_kgCO2m2"]
+    fields15 = ['name', "Service_Life_base"]
+    fields16 = ['name', "GHG_part_kgCO2m2"]
+    fields17 = ['name', "GHG_biogenic_part_kgCO2m2"]
     df6.rename({'Service_Life_wall': 'Service_Life_part'}, inplace=True, axis=1)
-    fields18 = ['Name', "Service_Life_part"]
-
+    fields18 = ['name', "Service_Life_part"]
 
 
     surface_properties = df1[fields1].merge(df1[fields2],
-                                          on='Name').merge(df1[fields3],
-                                          on='Name').merge(df2[fields4],
-                                          on='Name').merge(df2[fields5],
-                                          on='Name').merge(df2[fields6],
-                                          on='Name').merge(df3[fields7],
-                                          on='Name').merge(df3[fields8],
-                                          on='Name').merge(df3[fields9],
-                                          on='Name').merge(df4[fields10],
-                                          on='Name').merge(df4[fields11],
-                                          on='Name').merge(df4[fields12],
-                                          on='Name').merge(df5[fields13],
-                                          on='Name').merge(df5[fields14],
-                                          on='Name').merge(df5[fields15],
-                                          on='Name').merge(df6[fields16],
-                                          on='Name').merge(df6[fields17],
-                                          on='Name').merge(df6[fields18],
-                                          on='Name')
+                                          on='name').merge(df1[fields3],
+                                          on='name').merge(df2[fields4],
+                                          on='name').merge(df2[fields5],
+                                          on='name').merge(df2[fields6],
+                                          on='name').merge(df3[fields7],
+                                          on='name').merge(df3[fields8],
+                                          on='name').merge(df3[fields9],
+                                          on='name').merge(df4[fields10],
+                                          on='name').merge(df4[fields11],
+                                          on='name').merge(df4[fields12],
+                                          on='name').merge(df5[fields13],
+                                          on='name').merge(df5[fields14],
+                                          on='name').merge(df5[fields15],
+                                          on='name').merge(df6[fields16],
+                                          on='name').merge(df6[fields17],
+                                          on='name').merge(df6[fields18],
+                                          on='name')
 
 
     # DataFrame with joined data for all categories
-    data_merged_df = zone_df.merge(surface_properties, on='Name').merge(architecture_df,on='Name')
+    data_merged_df = zone_df.merge(surface_properties, on='name').merge(architecture_df, on='name')
 
     # calculate building geometry
     ## total window area
@@ -260,7 +259,7 @@ def calculate_contributions(df, year_to_calculate):
     embodied_system = 'GHG_technical_system_tonCO2'
 
     ## calculate how many years before the calculation year the building was built in
-    df['delta_year'] = year_to_calculate - df['YEAR']
+    df['delta_year'] = year_to_calculate - df['year']
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
     df['confirm'] = df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
 
@@ -341,7 +340,7 @@ def calculate_contributions(df, year_to_calculate):
     df['GHG_sys_uptake_kgCO2m2yr'] = (df[total_column_uptake]*1000) / df['GFA_m2'] # ton-CO2 eq to kg
 
     # the total and specific embodied emissions are returned
-    result = df[['Name','GFA_m2','GHG_sys_embodied_tonCO2yr', 'GHG_sys_uptake_tonCO2yr',
+    result = df[['name','GFA_m2','GHG_sys_embodied_tonCO2yr', 'GHG_sys_uptake_tonCO2yr',
                 'GHG_sys_embodied_kgCO2m2yr', 'GHG_sys_uptake_kgCO2m2yr', 'GHG_window_tonCO2','uptake_window_tonCO2',
                  'GHG_wall_tonCO2', 'uptake_wall_tonCO2', 'GHG_floor_tonCO2',
                  'uptake_floor_tonCO2', 'GHG_base_tonCO2', 'uptake_base_tonCO2', 'GHG_roof_tonCO2',
