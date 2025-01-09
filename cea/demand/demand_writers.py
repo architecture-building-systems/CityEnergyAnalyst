@@ -187,7 +187,7 @@ class YearlyDemandWriter:
             else:
                 aggregated_hourly_results_df += hourly_results_per_building
 
-        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['Name', 'x_int'])
+        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['name', 'x_int'])
 
         # save hourly results
         aggregated_hourly_results_df.to_csv(locator.get_total_demand_hourly('csv'),

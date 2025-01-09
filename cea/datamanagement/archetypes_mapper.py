@@ -13,7 +13,6 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
     get_lists_of_var_names_and_var_values
-from cea.utilities.dbf import dataframe_to_dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

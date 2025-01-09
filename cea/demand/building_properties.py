@@ -8,7 +8,7 @@ from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
@@ -69,16 +69,16 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('name')
-        prop_hvac = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
-        prop_zone = pd.read_csv(locator.get_zone_geometry())
-        prop_typology = prop_zone[COLUMNS_ZONE_TYPOLOGY].set_index('name')
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning())
+        zone_gdf = Gdf.from_file(locator.get_zone_geometry())
+        prop_typology = zone_gdf[COLUMNS_ZONE_TYPOLOGY].set_index('name')
         # Drop 'REFERENCE' column if it exists
         if 'reference' in prop_typology:
             prop_typology.drop('reference', axis=1, inplace=True)
-        prop_architectures = pd.read_csv(locator.get_building_architecture()).set_index('name')
+        prop_architectures = pd.read_csv(locator.get_building_architecture())
         prop_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
         prop_internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
-        prop_supply_systems_building = pd.read_csv(locator.get_building_supply()).set_index('name')
+        prop_supply_systems_building = pd.read_csv(locator.get_building_supply())
 
         # GET SYSTEMS EFFICIENCIES
         prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index('name')
@@ -673,9 +673,8 @@ def get_properties_supply_sytems(locator, properties_supply):
     fields_emission_dhw = ['name', 'source_dhw', 'scale_dhw', 'eff_dhw']
     fields_emission_el = ['name', 'source_el', 'scale_el', 'eff_el']
 
-    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                on='name').merge(
-        df_emission_dhw[fields_emission_dhw], on='name').merge(df_emission_electricity[fields_emission_el], on='name')
+    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling], on='name')\
+        .merge(df_emission_dhw[fields_emission_dhw], on='name').merge(df_emission_electricity[fields_emission_el], on='name')
 
     return result
 
@@ -753,7 +752,7 @@ def get_properties_technical_systems(locator, prop_hvac):
     df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
     df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
-    fields_emission_heating = ['n', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
+    fields_emission_heating = ['name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
                                'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']

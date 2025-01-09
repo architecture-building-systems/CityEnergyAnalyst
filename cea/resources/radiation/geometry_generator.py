@@ -462,6 +462,11 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
             normals_wall.append(standard_normal)
             wall_intersects.append(1)
         else:
+            try:    # Ensure wwr is a float
+                wwr = float(wwr)
+            except ValueError:
+                raise ValueError(f"Invalid value for wwr: {wwr}. It must be a numeric value.")
+
             # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
                 # for window

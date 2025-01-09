@@ -1524,8 +1524,8 @@ SC_totals:
 get_building_air_conditioning:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/air_conditioning_systems.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/air_conditioning_systems.csv
+  file_type: csv
   schema:
     columns:
       name:
@@ -1618,8 +1618,8 @@ get_building_air_conditioning:
 get_building_architecture:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/architecture.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/architecture.csv
+  file_type: csv
   schema:
     columns:
       name:
@@ -1793,8 +1793,8 @@ get_building_architecture:
 get_building_comfort:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/indoor_comfort.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/indoor_comfort.csv
+  file_type: csv
   schema:
     columns:
       name:
@@ -1848,8 +1848,8 @@ get_building_comfort:
 get_building_internal:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/internal_loads.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/internal_loads.csv
+  file_type: csv
   schema:
     columns:
       name:
@@ -1941,8 +1941,8 @@ get_building_internal:
 get_building_supply:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/supply_systems.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/supply_systems.csv
+  file_type: csv
   schema:
     columns:
       name:
