@@ -477,7 +477,7 @@ default:
     description: dashboard
     interfaces: [cli]
     module: cea.interfaces.dashboard.dashboard
-    parameters: ['general:debug', 'server', 'worker']
+    parameters: ['general:debug', 'server']
 
   - name: excel-to-shapefile
     label: excel-to-shapefile
