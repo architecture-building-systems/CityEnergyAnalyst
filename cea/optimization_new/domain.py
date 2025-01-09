@@ -194,7 +194,7 @@ class Domain(object):
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = set(toolbox.population(n = algorithm.population - 1))
+        population = set(toolbox.population(n=algorithm.population - 1))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
