@@ -9,6 +9,7 @@ import cea.config
 import time
 from datetime import datetime
 import cea.inputlocator
+import geopandas as gpd
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -491,7 +492,7 @@ def add_period_columns(df, date_column='date'):
     - season_names (list of str): List of season names in order.
     - month_names (list of str): List of month names in order.
     - season_mapping (dict): Mapping of month to season.
-    - date_column (str): Name of the column containing datetime values.
+    - date_column (str): name of the column containing datetime values.
 
     Returns:
     - pd.DataFrame: The original DataFrame with additional columns ['period_month', 'period_season'].
@@ -586,7 +587,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 else:
                     # Slice the useful columns
-                    selected_columns = ['Name'] + list_cea_column_names
+                    selected_columns = ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
                     list_dataframes.append(df)  # Add the DataFrame to the list
@@ -634,6 +635,36 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
     column_sets = [set(df.columns) - {'date'} for df in list_dataframes]
     all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
+    def combine_dataframes(list_dataframes):
+        """
+        Combine a list of DataFrames horizontally. If a 'date' column exists in two or more DataFrames, it aligns them;
+        otherwise, it combines them without alignment.
+        """
+        # Check for the 'date' column in all DataFrames
+        has_date_column = [df for df in list_dataframes if 'date' in df.columns]
+
+        if has_date_column:
+            # Combine on 'date' for DataFrames that have it
+            combined_df = has_date_column[0].copy()
+            for df in has_date_column[1:]:
+                combined_df = pd.merge(combined_df, df, on='date', how='outer')
+
+            # Add DataFrames without 'date' as-is
+            no_date_column = [df for df in list_dataframes if 'date' not in df.columns]
+            for df in no_date_column:
+                combined_df = pd.concat([combined_df, df], axis=1)
+        else:
+            # If none of the DataFrames have 'date', concatenate them directly
+            combined_df = pd.concat(list_dataframes, axis=1)
+
+        # Sort by 'date' if it exists
+        if 'date' in combined_df.columns:
+            combined_df.sort_values(by='date', inplace=True)
+            combined_df.reset_index(drop=True, inplace=True)
+
+        return combined_df
+
+
     if all_columns_match:
         # Aggregate DataFrames with the same columns
         aggregated_df = list_dataframes[0].copy()
@@ -663,17 +694,7 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
         return aggregated_df
 
     else:
-        # Combine DataFrames horizontally on 'date'
-        combined_df = list_dataframes[0].copy()
-        for df in list_dataframes[1:]:
-            combined_df = pd.merge(combined_df, df, on='date', how='outer')
-
-        # Sort by 'date' and reset the index
-        combined_df.sort_values(by='date', inplace=True)
-        combined_df.reset_index(drop=True, inplace=True)
-
-        if not bool_use_acronym:
-            combined_df.columns = map_metrics_and_cea_columns(combined_df.columns, direction="columns_to_metrics")
+        combined_df = combine_dataframes(list_dataframes)
 
         return combined_df
 
@@ -818,7 +839,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
-                hourly_annually_df.insert(0, 'Name', list_buildings)
+                hourly_annually_df.insert(0, 'name', list_buildings)
                 if not bool_use_acronym:
                     hourly_annually_df.columns = map_metrics_and_cea_columns(
                         hourly_annually_df.columns, direction="columns_to_metrics"
@@ -833,7 +854,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 monthly_df = add_nominal_actual_and_coverage(monthly_df)
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
                 list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
-                monthly_df.insert(0, 'Name', list_buildings_series)
+                monthly_df.insert(0, 'name', list_buildings_series)
                 if not bool_use_acronym:
                     monthly_df.columns = map_metrics_and_cea_columns(
                         monthly_df.columns, direction="columns_to_metrics"
@@ -865,7 +886,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
                 list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
-                seasonally_df.insert(0, 'Name', list_buildings_series)
+                seasonally_df.insert(0, 'name', list_buildings_series)
                 if not bool_use_acronym:
                     seasonally_df.columns = map_metrics_and_cea_columns(
                         seasonally_df.columns, direction="columns_to_metrics"
@@ -954,7 +975,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
         Parameters:
         - df (pd.DataFrame): The input DataFrame.
         - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
-        - date_column (str): Name of the date column.
+        - date_column (str): name of the date column.
 
         Returns:
         - pd.DataFrame: Aggregated DataFrame.
@@ -1252,11 +1273,11 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings):
     """
     Filters rows in all DataFrames within a nested list of DataFrames,
-    keeping only rows where the 'Name' column matches any value in list_buildings.
+    keeping only rows where the 'name' column matches any value in list_buildings.
 
     Parameters:
     - list_list_useful_cea_results (list of lists of pd.DataFrame): Nested list of DataFrames.
-    - list_buildings (list of str): List of building names to filter by in the 'Name' column.
+    - list_buildings (list of str): List of building names to filter by in the 'name' column.
 
     Returns:
     - list of list of pd.DataFrame: Nested list of filtered DataFrames with the same shape as the input.
@@ -1267,8 +1288,8 @@ def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_resul
     for dataframe_list in list_list_useful_cea_results:
         filtered_list = []
         for df in dataframe_list:
-            if 'Name' in df.columns:
-                filtered_df = df[df['Name'].isin(list_buildings)]
+            if 'name' in df.columns:
+                filtered_df = df[df['name'].isin(list_buildings)]
 
                 if not bool_use_acronym:
                     filtered_df.columns = map_metrics_and_cea_columns(filtered_df.columns, direction="columns_to_metrics")
@@ -1276,8 +1297,8 @@ def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_resul
                 filtered_list.append(filtered_df)
 
             else:
-                # If the 'Name' column does not exist, append an empty DataFrame
-                print("Skipping a DataFrame as it does not contain the 'Name' column.")
+                # If the 'name' column does not exist, append an empty DataFrame
+                print("Skipping a DataFrame as it does not contain the 'name' column.")
                 filtered_list.append(pd.DataFrame())
         list_list_useful_cea_results_buildings.append(filtered_list)
 
@@ -1288,7 +1309,7 @@ def determine_building_main_use(df_typology):
 
     # Create a new DataFrame to store results
     result = pd.DataFrame()
-    result['Name'] = df_typology['Name']
+    result['name'] = df_typology['name']
 
     # Determine the main use type and its ratio
     result['main_use'] = df_typology.apply(
@@ -1309,10 +1330,10 @@ def determine_building_main_use(df_typology):
 
 def get_building_year_standard_main_use_type(locator):
 
-    zone_dbf = pd.read_csv(locator.get_zone_geometry())
+    zone_dbf = gpd.read_file(locator.get_zone_geometry())
     df = determine_building_main_use(zone_dbf)
-    df['construction_standard'] = zone_dbf['STANDARD']
-    df['construction_year'] = zone_dbf['YEAR']
+    df['construction_type'] = zone_dbf['const_type']
+    df['construction_year'] = zone_dbf['year']
 
     return df
 
@@ -1365,11 +1386,11 @@ def filter_by_standard(df_typology, list_standard):
     - pd.DataFrame: Filtered DataFrame with rows where 'standard' matches any item in list_standard.
 
     Raises:
-    - ValueError: If 'standard' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'const_type' column is not found or if the filtered DataFrame is empty.
     """
 
     # Filter rows where 'standard' matches any value in list_standard
-    filtered_df = df_typology[df_typology['construction_standard'].isin(list_standard)]
+    filtered_df = df_typology[df_typology['construction_type'].isin(list_standard)]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
@@ -1432,23 +1453,23 @@ def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
 
 def filter_by_building_names(df_typology, list_buildings):
     """
-    Filters rows in the DataFrame where the 'Name' column matches any item in the given list.
+    Filters rows in the DataFrame where the 'name' column matches any item in the given list.
 
     Parameters:
-    - df_typology (pd.DataFrame): The input DataFrame containing a 'Name' column.
+    - df_typology (pd.DataFrame): The input DataFrame containing a 'name' column.
     - list_buildings (list of str): List of building names to filter for.
 
     Returns:
-    - pd.DataFrame: Filtered DataFrame with rows where 'Name' matches any item in list_buildings.
+    - pd.DataFrame: Filtered DataFrame with rows where 'name' matches any item in list_buildings.
 
     Raises:
-    - ValueError: If 'Name' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'name' column is not found or if the filtered DataFrame is empty.
     """
-    if 'Name' not in df_typology.columns:
-        raise ValueError("'Name' column not found in the DataFrame.")
+    if 'name' not in df_typology.columns:
+        raise ValueError("'name' column not found in the DataFrame.")
 
-    # Filter rows where 'Name' is in list_buildings
-    filtered_df = df_typology[df_typology['Name'].isin(list_buildings)]
+    # Filter rows where 'name' is in list_buildings
+    filtered_df = df_typology[df_typology['name'].isin(list_buildings)]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
@@ -1522,7 +1543,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         Parameters:
         - df (pd.DataFrame): The input DataFrame.
         - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
-        - date_column (str): Name of the date column.
+        - date_column (str): name of the date column.
 
         Returns:
         - pd.DataFrame: Aggregated DataFrame.
@@ -1726,7 +1747,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                 if not annually_df.empty:
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                     annually_df = add_nominal_actual_and_coverage(annually_df)
-                    annually_df.insert(0, 'Name', list_buildings)
+                    annually_df.insert(0, 'name', list_buildings)
                     annually_results.append(annually_df.reset_index(drop=True))
 
             if monthly_rows:
@@ -1737,7 +1758,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                     monthly_df = add_nominal_actual_and_coverage(monthly_df)
                     list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
                     list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
-                    monthly_df.insert(0, 'Name', list_buildings_series)
+                    monthly_df.insert(0, 'name', list_buildings_series)
                     monthly_results.append(monthly_df.reset_index(drop=True))
 
             if seasonally_rows:
@@ -1748,7 +1769,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                     seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
                     list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
                     list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
-                    seasonally_df.insert(0, 'Name', list_buildings_series)
+                    seasonally_df.insert(0, 'name', list_buildings_series)
                     seasonally_results.append(seasonally_df.reset_index(drop=True))
 
             list_list_df = [annually_results, monthly_results, seasonally_results]
@@ -1932,8 +1953,8 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
                 result_buildings = pd.merge(
                     df_buildings,
-                    df_architecture[['Name', area_column]],
-                    on='Name', how='inner'
+                    df_architecture[['name', area_column]],
+                    on='name', how='inner'
                 )
                 for col in list_metrics:
                     if col in result_buildings.columns:
@@ -2058,12 +2079,12 @@ def main(config):
 
     # Get the list of selected buildings
     df_buildings = serial_filter_buildings(config, locator)
-    list_buildings = df_buildings['Name'].to_list()
+    list_buildings = df_buildings['name'].to_list()
 
     # Get the GFA of the selected buildings
     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
     list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='Name', how='inner')
+    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
 
     # Join the two Dataframes storing the architectural information of the selected buildings, and write to disk
     buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
