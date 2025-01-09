@@ -300,7 +300,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
-    selected_node["name"] = "NODE" + str(new_mst_nodes.Name.count())
+    selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
     selected_node["Type"] = "PLANT"
     new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
     new_mst_nodes.reset_index(inplace=True, drop=True)
