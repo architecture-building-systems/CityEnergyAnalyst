@@ -1125,7 +1125,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                                                                                'difference of',
                       max(abs(mass_flow_edge - m_old)), '.')
                 break
-        # print('Looped massflows converged after ', iterations, ' iterations.')
 
     else:  # no loops
         # remove one equation (at plant node) to build a well-determined matrix, A.
@@ -1158,7 +1157,7 @@ def calc_assign_diameter(max_flow, pipe_catalog):
         return 'DN20'  # the smallest pipe
     elif max_flow > pipe_catalog['mdot_max_kgs'].max():
         raise ValueError(
-            'A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
+            'One or more of the pipes diameters you indicated' '\n'
             'are not in the pipe catalog!, please make sure your input network matches the piping catalog,' '\n'
             'otherwise :P')
     else:

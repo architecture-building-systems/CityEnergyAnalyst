@@ -547,7 +547,7 @@ def thermal_network_simplified(locator, config, network_name=''):
     network_edges_df = dbf_to_dataframe(
         locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
     network_edges_df = network_edges_df.merge(edge_df, left_on='name', right_on='name', suffixes=('_x', ''))
-    network_edges_df = network_edges_df.drop(['pipe_DN_x', 'type_mat_x', 'name', 'length_m_x'], axis=1)
+    network_edges_df = network_edges_df.drop(['pipe_DN_x', 'type_mat_x', 'length_m_x'], axis=1)
     dataframe_to_dbf(network_edges_df,
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 
