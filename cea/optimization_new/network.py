@@ -413,7 +413,7 @@ class Network(object):
         # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
         building_identifiers = [building.identifier for building in domain.buildings]
         building_locations = [building.location for building in domain.buildings]
-        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'],
+        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
         # create a potential network grid with orthogonal connections between buildings and their closest street

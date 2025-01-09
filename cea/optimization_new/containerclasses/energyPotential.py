@@ -1,7 +1,7 @@
 """
 Energy Potential Class:
 defines the energy potential corresponding to a certain energy carrier in the optimisation domain:
-- The building's unique identifier (i.e. 'Name' from the input editor)
+- The building's unique identifier (i.e. 'name' from the input editor)
 - The building's location
 - The demand profile of the building
 """

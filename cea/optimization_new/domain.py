@@ -82,7 +82,7 @@ class Domain(object):
         """
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = shp_file.name
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
         network_type = self.config.optimization_new.network_type

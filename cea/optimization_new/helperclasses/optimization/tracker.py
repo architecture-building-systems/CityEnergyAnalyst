@@ -2,7 +2,7 @@
 This Building Class defines a building in the domain analysed by the optimisation script.
 
 The buildings described using the Building Class bundle all properties relevant for the optimisation, including:
-- The building's unique identifier (i.e. 'Name' from the input editor)
+- The building's unique identifier (i.e. 'name' from the input editor)
 - The building's location
 - The demand profile of the building
 """
