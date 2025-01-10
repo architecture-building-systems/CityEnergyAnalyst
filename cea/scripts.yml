@@ -360,7 +360,7 @@ Utilities:
   - name: cea4-format-helper
     label: CEA-4 Format Helper
     description: "Verifies the inputs are in the correct format for CEA-4.
-                  Migrates late CEA-3 inputs when detected - Note the process of migration is not reversible.
+                  Migrates Late-CEA-3 inputs when detected - Note the process of migration is not reversible.
                   "
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper
