@@ -156,7 +156,7 @@ def exec_cea_commands(config, cea_scenario):
 
 def main(config):
     """
-    Batch processing all scenarios under a project.
+    Batch processing all selectedscenarios under a project.
 
     :param config: the configuration object to use
     :type config: cea.config.Configuration
