@@ -61,7 +61,7 @@ def path_to_input_file_without_db_3(scenario, item):
 ## --------------------------------------------------------------------------------------------------------------------
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
-def merge_then_replace_shapefile_dbf(scenario, item, new_dataframe):
+def replace_shapefile_dbf(scenario, item, new_dataframe, list_attributes_3):
     """
     Replace the DBF file of a shapefile with the contents of a new DataFrame,
     ensuring matching of `['Name']` in the shapefile and `['name']` in the new DataFrame.
@@ -71,7 +71,9 @@ def merge_then_replace_shapefile_dbf(scenario, item, new_dataframe):
     """
     # Load the original shapefile
     shapefile_path = path_to_input_file_without_db_3(scenario, item)
-    gdf = gpd.read_file(shapefile_path + ".shp")
+    gdf = gpd.read_file(shapefile_path)
+    list_attributes_3_without_name = [item for item in list_attributes_3 if item != 'name']
+    gdf = gdf.drop(columns=list_attributes_3_without_name, errors='ignore')
 
     # Perform an inner join to match rows based on ['Name'] and ['name']
     merged = gdf.merge(new_dataframe, how='outer', left_on='Name', right_on='name')
@@ -120,30 +122,44 @@ def migrate_cea3_to_cea4(scenario):
     list_missing_files_shp_building_geometry = dict_missing.get('building-geometry')
     list_missing_files_typology = verify_file_exists(scenario, ['typology'])
     list_missing_attributes_zone_4 = dict_missing.get('zone')
+    list_missing_attributes_surroundings_4 = dict_missing.get('surroundings')
 
     if 'zone' not in list_missing_files_shp_building_geometry:
         list_missing_attributes_zone_3 = verify_shp(scenario, 'zone', COLUMNS_ZONE_3)
         if not list_missing_attributes_zone_3 and list_missing_attributes_zone_4:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp follows the CEA-3 format.')
-            zone_df = gpd.read_file(path_to_input_file_without_db_3(scenario, 'zone'))
-            zone_df.rename(columns=columns_mapping_dict_name, inplace=True)
+            zone_df_3 = gpd.read_file(path_to_input_file_without_db_3(scenario, 'zone'))
+            zone_df_3.rename(columns=columns_mapping_dict_name, inplace=True)
             if 'typology' not in list_missing_files_typology:
                 list_missing_attributes_typology_3 = verify_csv(scenario, 'typology', COLUMNS_TYPOLOGY_3)
                 if not list_missing_attributes_typology_3 and list_missing_attributes_zone_4:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'typology.shp follows the CEA-3 format.')
                     typology_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'typology'))
-                    zone_df_4 = pd.merge(zone_df, typology_df, left_on=['name'], right_on=["Name"], how='left')
-                    zone_df_4.drop(columns=['Name'], inplace=True)
                     typology_df.rename(columns=columns_mapping_dict_typology, inplace=True)
+                    zone_df_4 = pd.merge(zone_df_3, typology_df, left_on=['name'], right_on=["Name"], how='left')
+                    zone_df_4.drop(columns=['Name'], inplace=True)
 
-                    # Merge, replace, and remove.
-                    merge_then_replace_shapefile_dbf(scenario, 'zone', typology_df)
+                    # Replace, and remove.
+                    replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
                     os.remove(path_to_input_file_without_db_3(scenario, 'typology'))
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 zone.shp has been removed.')
                 else:
                     raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'typology.shp does not follow the CEA-3 format. CEA cannot proceed with migration.')
         elif list_missing_attributes_zone_3 and not list_missing_attributes_zone_4:
-            print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp follows the CEA-4 format.')
+            print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp already follows the CEA-4 format.')
         else:
-            raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with migration.')
+            raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.')
+
+    if 'surroundings' not in list_missing_files_shp_building_geometry:
+        list_missing_attributes_surroundings_3 = verify_shp(scenario, 'surroundings', COLUMNS_SURROUNDINGS_3)
+        if not list_missing_attributes_surroundings_3 and list_missing_attributes_surroundings_4:
+            print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'surroundings.shp follows the CEA-3 format.')
+            surroundings_df_3 = gpd.read_file(path_to_input_file_without_db_3(scenario, 'surroundings'))
+            surroundings_df_4 = surroundings_df_3.rename(columns=columns_mapping_dict_name, inplace=True)
+            replace_shapefile_dbf(scenario, 'surroundings', surroundings_df_4, COLUMNS_SURROUNDINGS_3)
+
+        elif list_missing_attributes_surroundings_3 and not list_missing_attributes_surroundings_4:
+            print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'surroundings.shp already follows the CEA-4 format.')
+        else:
+            raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'surroundings.shp follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.')
