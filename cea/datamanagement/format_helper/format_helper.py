@@ -3,12 +3,12 @@ Main script of the formate helper that activates the verification and migration 
 
 """
 
-import cea.inputlocator
+import cea.config
 import os
+import subprocess
+import sys
 import cea.config
 import time
-import geopandas as gpd
-
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -18,6 +18,27 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+## --------------------------------------------------------------------------------------------------------------------
+## Get the environment and set up the subprocess
+## --------------------------------------------------------------------------------------------------------------------
+
+
+# adding CEA to the environment
+# Fix for running in PyCharm for users using micromamba
+my_env = os.environ.copy()
+my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
+
+def exec_cea_format_helper(config, cea_scenario):
+    # auto-migrate from CEA-3 to CEA-4
+    bool_migrate = config.format_helper.migrate_from_cea_3
+    if bool_migrate:
+        subprocess.run(['cea', 'cea4_migrate', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+    else:
+        subprocess.run(['cea', 'cea4_verify', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -40,21 +61,26 @@ def main(config):
 
     project_path = config.general.project
     scenario_name = config.general.scenario_name
-    scenarios_list = config.batch_process_workflow.scenarios_to_simulate
+    scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
+    bool_migrate = config.format_helper.migrate_from_cea_3
 
-    # Loop over one or all scenarios under the project
+    # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
             continue
 
         cea_scenario = os.path.join(project_path, scenario)
-        print(f'Executing CEA simulations on {cea_scenario}.')
+        if bool_migrate:
+            print(f'Executing CEA input data verification and migration on {cea_scenario}.')
+        else:
+            print(f'Executing CEA input data verification on {cea_scenario}.')
+
         try:
             # executing CEA commands
-            exec_cea_commands(config, cea_scenario)
+            exec_cea_format_helper(config, cea_scenario)
         except subprocess.CalledProcessError as e:
-            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}")
+            print(f"CEA input data verification and migration failed at `{scenario_name}`")
             err_msg = e.stderr
             if err_msg is not None:
                 print(err_msg.decode())
@@ -62,7 +88,7 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire batch processing sequence is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %d.2 seconds' % time_elapsed)
 
 
 if __name__ == '__main__':

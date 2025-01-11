@@ -172,7 +172,7 @@ def main(config):
     scenario_name = config.general.scenario_name
     scenarios_list = config.batch_process_workflow.scenarios_to_simulate
 
-    # Loop over one or all scenarios under the project
+    # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
