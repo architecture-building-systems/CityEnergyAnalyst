@@ -279,7 +279,7 @@ def cea4_verify(scenario):
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in supply_systems.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
-            
+
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists(scenario, ['terrain'])
     if list_missing_files_terrain:
