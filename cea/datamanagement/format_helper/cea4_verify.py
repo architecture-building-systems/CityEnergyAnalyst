@@ -22,12 +22,12 @@ __status__ = "Production"
 
 
 ## --------------------------------------------------------------------------------------------------------------------
-## The paths to the input files
+## The paths to the input files for CEA-4
 ## --------------------------------------------------------------------------------------------------------------------
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-def path_to_input_file_without_db(scenario, item):
+def path_to_input_file_without_db_4(scenario, item):
 
     if item == "zone":
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "zone.shp")
@@ -44,7 +44,7 @@ def path_to_input_file_without_db(scenario, item):
     elif item == "supply_systems":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "supply_systems.csv")
     elif item == 'streets':
-        path_to_input_file = os.path.join(scenario, "inputs", "networks", "streets.csv")
+        path_to_input_file = os.path.join(scenario, "inputs", "networks", "streets.shp")
     elif item == 'terrain':
         path_to_input_file = os.path.join(scenario, "inputs", "topography", "terrain.tif")
     elif item == 'weather':
@@ -70,7 +70,7 @@ def verify_shp(scenario, item, required_attributes):
         A list of missing attributes, or an empty list if all attributes are present.
     """
     # Construct the shapefile path
-    shapefile_path = path_to_input_file_without_db(scenario, item)
+    shapefile_path = path_to_input_file_without_db_4(scenario, item)
 
     # Check if the shapefile exists
     if not os.path.isfile(shapefile_path):
@@ -104,7 +104,7 @@ def verify_csv(scenario, item, required_columns):
         A list of missing columns, or an empty list if all columns are present.
     """
     # Construct the CSV file path
-    csv_path = path_to_input_file_without_db(scenario, item)
+    csv_path = path_to_input_file_without_db_4(scenario, item)
 
     # Check if the CSV file exists
     if not os.path.isfile(csv_path):
@@ -138,7 +138,7 @@ def verify_file_exists(scenario, items):
     """
     list_missing_files = []
     for file in items:
-        path = path_to_input_file_without_db(scenario, file)
+        path = path_to_input_file_without_db_4(scenario, file)
         if not os.path.isfile(path):
             list_missing_files.append(file)
     return list_missing_files
@@ -155,7 +155,7 @@ def verify_name_duplicates(scenario, item):
         list: A list of duplicate names, or an empty list if no duplicates are found.
     """
     # Construct the CSV file path
-    file_path = path_to_input_file_without_db(scenario, item)
+    file_path = path_to_input_file_without_db_4(scenario, item)
 
     # Check file type and load as a DataFrame
     if file_path.endswith('.csv'):
@@ -188,26 +188,26 @@ def cea4_verify(scenario):
 
     #1. about zone.shp and surroundings.shp
     SHAPEFILES = ['zone', 'surroundings']
-    COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
+    COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                     'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
-    COLUMNS_SURROUNDINGS = ['name', 'height_ag', 'floors_ag']
+    COLUMNS_SURROUNDINGS_4 = ['name', 'height_ag', 'floors_ag']
 
     list_missing_attributes_zone = []
     list_missing_attributes_surroundings = []
 
-    list_missing_files_shp_building_geometries = verify_file_exists(scenario, SHAPEFILES)
-    if list_missing_files_shp_building_geometries:
+    list_missing_files_shp_building_geometry = verify_file_exists(scenario, SHAPEFILES)
+    if list_missing_files_shp_building_geometry:
         print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure .shp file(s) are present in the building-geometries folder: {missing_files_shp_building_geometries}'.format(missing_files_shp_building_geometries=list_missing_files_shp_building_geometries))
-    if 'zone' not in list_missing_files_shp_building_geometries:
-        list_missing_attributes_zone = verify_shp(scenario, 'zone', COLUMNS_ZONE)
+    if 'zone' not in list_missing_files_shp_building_geometry:
+        list_missing_attributes_zone = verify_shp(scenario, 'zone', COLUMNS_ZONE_4)
         if list_missing_attributes_zone:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
             if 'name' in list_missing_attributes_zone:
                 list_names_duplicated = verify_name_duplicates(scenario, 'zone')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-    if 'surroundings' not in list_missing_files_shp_building_geometries:
-        list_missing_attributes_surroundings = verify_shp(scenario, 'surroundings', COLUMNS_SURROUNDINGS)
+    if 'surroundings' not in list_missing_files_shp_building_geometry:
+        list_missing_attributes_surroundings = verify_shp(scenario, 'surroundings', COLUMNS_SURROUNDINGS_4)
         if list_missing_attributes_surroundings:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
 
@@ -291,13 +291,14 @@ def cea4_verify(scenario):
 
     list_missing_files_streets = verify_file_exists(scenario, ['streets'])
     if list_missing_files_streets:
-        print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure streets.shp are present in the typography folder. Consider running Streets Helper under Data Management, when thermal networks analysis is required.')
+        print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure streets.shp are present in the typography folder. Consider running Streets Helper under Data Management, if Thermal-Networks analysis is required.')
 
     #4. verify the DB under the "inputs/technology/" folder
     list_missing_files_db = []
 
     # Compile the results
     dict_missing = {
+        'building-geometry': list_missing_files_shp_building_geometry,
         'zone': list_missing_attributes_zone,
         'surroundings': list_missing_attributes_surroundings,
         'building-properties': list_missing_files_csv_building_properties,
@@ -319,6 +320,7 @@ def cea4_verify(scenario):
               'are all verified as present and compatible with the current version of CEA-4.'
         )
 
+    return dict_missing
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -329,11 +331,10 @@ def cea4_verify(scenario):
 def main(config):
     # Start the timer
     t0 = time.perf_counter()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Execute the verification
-    dict_missing = cea4_verify(scenario=config.scenario)
+    cea4_verify(scenario=config.scenario)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
