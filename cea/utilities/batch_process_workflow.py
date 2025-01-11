@@ -184,7 +184,7 @@ def main(config):
             # executing CEA commands
             exec_cea_commands(config, cea_scenario)
         except subprocess.CalledProcessError as e:
-            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}")
+            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}.")
             err_msg = e.stderr
             if err_msg is not None:
                 print(err_msg.decode())
