@@ -220,7 +220,8 @@ def migrate_cea3_to_cea4(scenario):
         list_missing_columns_air_conditioning = verify_dbf(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_3)
         if list_missing_columns_air_conditioning:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure column(s) are present in the air_conditioning.dbf: {missing_columns_air_conditioning}'.format(missing_columns_air_conditioning=list_missing_columns_air_conditioning))
-            if 'Name' in list_missing_columns_air_conditioning:
+        else:
+            if 'Name' not in list_missing_columns_air_conditioning:
                 list_names_duplicated = verify_name_duplicates(scenario, 'air_conditioning')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in air_conditioning.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
@@ -234,7 +235,8 @@ def migrate_cea3_to_cea4(scenario):
         list_missing_columns_architecture = verify_dbf(scenario, 'architecture', COLUMNS_ARCHITECTURE_3)
         if list_missing_columns_architecture:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure column(s) are present in the architecture.dbf: {missing_columns_architecture}'.format(missing_columns_architecture=list_missing_columns_architecture))
-            if 'Name' in list_missing_columns_architecture:
+        else:
+            if 'Name' not in list_missing_columns_architecture:
                 list_names_duplicated = verify_name_duplicates(scenario, 'architecture')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in architecture.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
@@ -248,7 +250,8 @@ def migrate_cea3_to_cea4(scenario):
         list_missing_columns_indoor_comfort = verify_dbf(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_3)
         if list_missing_columns_indoor_comfort:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure column(s) are present in the air_conditioning.dbf: {missing_columns_indoor_comfort}'.format(missing_columns_indoor_comfort=list_missing_columns_indoor_comfort))
-            if 'Name' in list_missing_columns_indoor_comfort:
+        else:
+            if 'Name' not in list_missing_columns_indoor_comfort:
                 list_names_duplicated = verify_name_duplicates(scenario, 'indoor_comfort')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in indoor_comfort.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
@@ -262,7 +265,8 @@ def migrate_cea3_to_cea4(scenario):
         list_missing_columns_internal_loads = verify_dbf(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_3)
         if list_missing_columns_internal_loads:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure column(s) are present in the internal_loads.dbf: {missing_columns_internal_loads}'.format(missing_columns_internal_loads=list_missing_columns_internal_loads))
-            if 'Name' in list_missing_columns_internal_loads:
+        else:
+            if 'Name' not in list_missing_columns_internal_loads:
                 list_names_duplicated = verify_name_duplicates(scenario, 'internal_loads')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in internal_loads.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
@@ -276,7 +280,8 @@ def migrate_cea3_to_cea4(scenario):
         list_missing_columns_supply_systems = verify_dbf(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3)
         if list_missing_columns_supply_systems:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure column(s) are present in the supply_systems.dbf: {missing_columns_supply_systems}'.format(missing_columns_supply_systems=list_missing_columns_supply_systems))
-            if 'Name' in list_missing_columns_supply_systems:
+        else:
+            if 'Name' not in list_missing_columns_supply_systems:
                 list_names_duplicated = verify_name_duplicates(scenario, 'supply_systems')
                 if list_names_duplicated:
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure name(s) are unique in supply_systems.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
