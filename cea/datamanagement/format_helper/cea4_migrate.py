@@ -61,6 +61,30 @@ def path_to_input_file_without_db_3(scenario, item):
 ## --------------------------------------------------------------------------------------------------------------------
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
+def merge_then_replace_shapefile_dbf(scenario, item, new_dataframe):
+    """
+    Replace the DBF file of a shapefile with the contents of a new DataFrame,
+    ensuring matching of `['Name']` in the shapefile and `['name']` in the new DataFrame.
+
+    :param shapefile_path: Path to the shapefile (without file extension).
+    :param new_dataframe: pandas DataFrame with the new data to replace the DBF file.
+    """
+    # Load the original shapefile
+    shapefile_path = path_to_input_file_without_db_3(scenario, item)
+    gdf = gpd.read_file(shapefile_path + ".shp")
+
+    # Perform an inner join to match rows based on ['Name'] and ['name']
+    merged = gdf.merge(new_dataframe, how='outer', left_on='Name', right_on='name')
+
+    # Ensure all geometries are preserved
+    if len(merged) != len(gdf):
+        raise ValueError("Not all rows in the GeoDataFrame have a matching entry in the new DataFrame.")
+
+    # Drop duplicate or unnecessary columns, keeping only the new attributes
+    new_gdf = merged.drop(columns=['Name'], errors='ignore')
+
+    # Save the updated shapefile
+    new_gdf.to_file(shapefile_path, driver="ESRI Shapefile")
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -111,6 +135,12 @@ def migrate_cea3_to_cea4(scenario):
                     zone_df_4 = pd.merge(zone_df, typology_df, left_on=['name'], right_on=["Name"], how='left')
                     zone_df_4.drop(columns=['Name'], inplace=True)
                     typology_df.rename(columns=columns_mapping_dict_typology, inplace=True)
+
+                    # Merge, replace, and remove.
+                    merge_then_replace_shapefile_dbf(scenario, 'zone', typology_df)
+                    print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
+                    os.remove(path_to_input_file_without_db_3(scenario, 'typology'))
+                    print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 zone.shp has been removed.')
                 else:
                     raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'typology.shp does not follow the CEA-3 format. CEA cannot proceed with migration.')
         elif list_missing_attributes_zone_3 and not list_missing_attributes_zone_4:
