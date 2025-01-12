@@ -209,19 +209,19 @@ def migrate_cea3_to_cea4(scenario):
     scenario_name = os.path.basename(scenario)
 
     # Print: Start
-    div_len = 37 - len(scenario_name)
-    print('-' * 50)
+    div_len = 47 - len(scenario_name)
+    print('-' * 60)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     #0. verify if everything is already in the correct format for CEA-4
     dict_missing = cea4_verify(scenario)
     if all(not value for value in dict_missing.values()):
-        print("✓" * 3)
-        print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
-              'input building-geometries ShapeFiles: [zone and surroundings], '
-              'input building-properties .csv files: {csv_building_properties}'.format(csv_building_properties=CSV_BUILDING_PROPERTIES_4),
-              '.'
-              )
+        pass
+        # print("✓" * 3)
+        # print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
+        #       'input building-geometries ShapeFiles: [zone and surroundings], '
+        #       'input building-properties .csv files: {csv_building_properties}.'.format(csv_building_properties=CSV_BUILDING_PROPERTIES_4),
+        #       )
         # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
 
     else:
@@ -252,7 +252,7 @@ def migrate_cea3_to_cea4(scenario):
                         zone_df_4.drop(columns=['Name'], inplace=True)
                         zone_df_4 = zone_df_4[COLUMNS_ZONE_4]
                         replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
-                        print('CEA-3 zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
+                        print('zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
                     else:
                         raise ValueError('typology.shp exists but does not follow the CEA-3 format. CEA cannot proceed with the data migration. '
                                          'Check the following column(s) for CEA-3 format: {list_missing_attributes_typology_3}'.format(list_missing_attributes_typology_3=list_missing_attributes_typology_3)
@@ -273,7 +273,7 @@ def migrate_cea3_to_cea4(scenario):
                 surroundings_df = gpd.read_file(path_to_input_file_without_db_3(scenario, 'surroundings'))
                 surroundings_df.rename(columns=columns_mapping_dict_name, inplace=True)
                 replace_shapefile_dbf(scenario, 'surroundings', surroundings_df, COLUMNS_SURROUNDINGS_3)
-                print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 surroundings.shp has been migrated to CEA-4 format.')
+                print('surroundings.shp has been migrated to CEA-4 format.')
 
             elif list_missing_attributes_surroundings_3 and not list_missing_attributes_surroundings_4:
                 pass
@@ -378,7 +378,7 @@ def migrate_cea3_to_cea4(scenario):
 
 
         # Print: End
-        print("-" * 50)
+        print("-" * 60)
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
@@ -404,7 +404,7 @@ def main(config):
 
     # Print: End
     # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
-    print('+' * 50)
+    print('+' * 60)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
