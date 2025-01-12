@@ -9,7 +9,7 @@ import subprocess
 import sys
 import cea.config
 import time
-from cea.datamanagement.format_helper.cea4_verify import cea4_verify
+from cea.datamanagement.format_helper.cea4_verify import cea4_verify, print_verification_results_4
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 
 __author__ = "Zhongming Shi"
@@ -35,14 +35,19 @@ my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
 def exec_cea_format_helper(config, cea_scenario):
     # auto-migrate from CEA-3 to CEA-4
     bool_migrate = config.format_helper.migrate_from_cea_3
-    if bool_migrate:
+    scenario_name = os.path.basename(cea_scenario)
+
+    if not bool_migrate:
         # subprocess.run(['cea', 'cea4_migrate', '--scenario', cea_scenario], env=my_env, check=True,capture_output=True)
-        cea4_verify(cea_scenario)
+        dict_missing = cea4_verify(cea_scenario, print_results=True)
+        print_verification_results_4(scenario_name, dict_missing)
 
     else:
         # subprocess.run(['cea', 'cea4_verify', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
         migrate_cea3_to_cea4(cea_scenario)
-        cea4_verify(cea_scenario)
+        dict_missing = cea4_verify(cea_scenario)
+        print_verification_results_4(scenario_name, dict_missing)
+
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -66,11 +71,19 @@ def main(config):
     project_path = config.general.project
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
 
+    print('+' * 60)
+    print('Format Helper is batch-processing the data verification and migration for Scenarios: {scenarios_list}.'.format(scenarios_list=scenarios_list))
+
     # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
             continue
+
+        # Print: Start
+        div_len = 47 - len(scenario)
+        print('+' * 60)
+        print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 
         cea_scenario = os.path.join(project_path, scenario)
         # executing CEA commands
@@ -78,7 +91,7 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('+' * 50)
+    print('+' * 60)
     print('The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %d.2 seconds' % time_elapsed)
 
 

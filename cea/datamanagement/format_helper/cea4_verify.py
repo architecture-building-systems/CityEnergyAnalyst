@@ -381,7 +381,7 @@ def main(config):
 
     # Print: Start
     div_len = 47 - len(scenario_name)
-    print('-' * 60)
+    print('+' * 60)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification

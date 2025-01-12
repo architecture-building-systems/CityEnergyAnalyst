@@ -205,14 +205,6 @@ def verify_file_exists_3(scenario, items):
 
 def migrate_cea3_to_cea4(scenario):
 
-    # Get the scenario name
-    scenario_name = os.path.basename(scenario)
-
-    # Print: Start
-    div_len = 47 - len(scenario_name)
-    print('-' * 60)
-    print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
-
     #0. verify if everything is already in the correct format for CEA-4
     dict_missing = cea4_verify(scenario)
     if all(not value for value in dict_missing.values()):
@@ -392,6 +384,11 @@ def main(config):
 
     scenario = config.scenario
     scenario_name = os.path.basename(scenario)
+
+    # Print: Start
+    div_len = 47 - len(scenario_name)
+    print('-' * 60)
+    print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification
     migrate_cea3_to_cea4(scenario)
