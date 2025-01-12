@@ -5,7 +5,6 @@ Main script of the formate helper that activates the verification and migration 
 
 import cea.config
 import os
-import subprocess
 import sys
 import cea.config
 import time

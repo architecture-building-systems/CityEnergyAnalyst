@@ -3,7 +3,6 @@ Verify the format of the input data for CEA-4 model.
 
 """
 
-import cea.inputlocator
 import os
 import cea.config
 import time

@@ -3,13 +3,13 @@ Mirgate the format of the input data to CEA-4 format after verification.
 
 """
 
-import cea.inputlocator
+
 import os
 import cea.config
 import time
 import pandas as pd
 import geopandas as gpd
-import sys
+
 
 
 __author__ = "Zhongming Shi"
@@ -21,7 +21,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, CSV_BUILDING_PROPERTIES_4, \
+from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4
 from cea.utilities.dbf import dbf_to_dataframe
 
