@@ -20,7 +20,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, verify_file_exists, verify_csv, \
+from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, verify_csv, \
     verify_name_duplicates
 from cea.utilities.dbf import dbf_to_dataframe
 
@@ -89,6 +89,23 @@ def replace_shapefile_dbf(scenario, item, new_dataframe, list_attributes_3):
     # Save the updated shapefile
     new_gdf.to_file(shapefile_path, driver="ESRI Shapefile")
 
+def verify_file_exists_3(scenario, items):
+    """
+    Verify if the files in the provided list exist for a given scenario.
+
+    Parameters:
+        scenario (str): Path or identifier for the scenario.
+        items (list): List of file identifiers to check.
+
+    Returns:
+        list: A list of missing file identifiers, or an empty list if all files exist.
+    """
+    list_missing_files = []
+    for file in items:
+        path = path_to_input_file_without_db_3(scenario, file)
+        if not os.path.isfile(path):
+            list_missing_files.append(file)
+    return list_missing_files
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
@@ -170,7 +187,7 @@ def migrate_cea3_to_cea4(scenario):
                                      }
     # Verify missing files for CEA-3 format
     list_missing_files_shp_building_geometry = dict_missing.get('building-geometry')
-    list_missing_files_dbf_building_properties = verify_file_exists(scenario, CSV_BUILDING_PROPERTIES_3)
+    list_missing_files_dbf_building_properties = verify_file_exists_3(scenario, CSV_BUILDING_PROPERTIES_3)
     if list_missing_files_dbf_building_properties:
         print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
 
@@ -195,8 +212,10 @@ def migrate_cea3_to_cea4(scenario):
                     zone_df_4.drop(columns=['Name'], inplace=True)
                     replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
                     print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'CEA-3 zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
-            else:
-                    raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name), 'typology.shp does not follow the CEA-3 format. CEA cannot proceed with migration.')
+                else:
+                    raise ValueError('For Scenario: {scenario}, '.format(scenario=scenario_name),
+                                     'typology.shp does not follow the CEA-3 format. CEA cannot proceed with migration. '
+                                     'Check the following column(s) for CEA-3 format: {list_missing_attributes_typology_3}'.format(list_missing_attributes_typology_3=list_missing_attributes_typology_3))
         elif list_missing_attributes_zone_3 and not list_missing_attributes_zone_4:
             print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp already follows the CEA-4 format.')
         else:

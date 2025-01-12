@@ -49,6 +49,8 @@ def path_to_input_file_without_db_4(scenario, item):
         path_to_input_file = os.path.join(scenario, "inputs", "topography", "terrain.tif")
     elif item == 'weather':
         path_to_input_file = os.path.join(scenario, "inputs", "weather", "weather.epw")
+    else:
+        raise ValueError(f"Unknown item {item}")
 
     return path_to_input_file
 
@@ -125,7 +127,7 @@ def verify_csv(scenario, item, required_columns):
     return missing_columns
 
 
-def verify_file_exists(scenario, items):
+def verify_file_exists_4(scenario, items):
     """
     Verify if the files in the provided list exist for a given scenario.
 
@@ -195,7 +197,7 @@ def cea4_verify(scenario):
     list_missing_attributes_zone = []
     list_missing_attributes_surroundings = []
 
-    list_missing_files_shp_building_geometry = verify_file_exists(scenario, SHAPEFILES)
+    list_missing_files_shp_building_geometry = verify_file_exists_4(scenario, SHAPEFILES)
     if list_missing_files_shp_building_geometry:
         print('For Scenario: {scenario},'.format(scenario=scenario_name), 'ensure .shp file(s) are present in the building-geometries folder: {missing_files_shp_building_geometries}'.format(missing_files_shp_building_geometries=list_missing_files_shp_building_geometry))
     if 'zone' not in list_missing_files_shp_building_geometry:
@@ -234,7 +236,7 @@ def cea4_verify(scenario):
     list_missing_columns_internal_loads = []
     list_missing_columns_supply_systems = []
 
-    list_missing_files_csv_building_properties = verify_file_exists(scenario, CSV_BUILDING_PROPERTIES_4)
+    list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
     if list_missing_files_csv_building_properties:
         print('For Scenario: {scenario},'.format(scenario=scenario_name), 'ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
 
@@ -286,15 +288,15 @@ def cea4_verify(scenario):
 
 
     #3. verify if terrain.tif, weather.epw and streets.shp exist
-    list_missing_files_terrain = verify_file_exists(scenario, ['terrain'])
+    list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
     if list_missing_files_terrain:
         print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure terrain.tif are present in the typography folder. Consider running Terrain Helper under Data Management.')
 
-    list_missing_files_weather = verify_file_exists(scenario, ['weather'])
+    list_missing_files_weather = verify_file_exists_4(scenario, ['weather'])
     if list_missing_files_weather:
         print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure weather.epw are present in the typography folder. Consider running Weather Helper under Data Management.')
 
-    list_missing_files_streets = verify_file_exists(scenario, ['streets'])
+    list_missing_files_streets = verify_file_exists_4(scenario, ['streets'])
     if list_missing_files_streets:
         print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'ensure streets.shp are present in the typography folder. Consider running Streets Helper under Data Management, if Thermal-Networks analysis is required.')
 
@@ -320,8 +322,8 @@ def cea4_verify(scenario):
 
     if all(not value for value in dict_missing.values()):
         print('For Scenario: {scenario},'.format(scenario=scenario_name),
-              'input building-geometries ShapeFiles: [zone.shp and surroundings.shp], '
-              'input building-properties .csv files: {csv_building_properties}'.format(csv_building_properties=CSV_BUILDING_PROPERTIES),
+              'input building-geometries ShapeFiles: [zone and surroundings], '
+              'input building-properties .csv files: {csv_building_properties}'.format(csv_building_properties=CSV_BUILDING_PROPERTIES_4),
               'are all verified as present and compatible with the current version of CEA-4.'
         )
 
