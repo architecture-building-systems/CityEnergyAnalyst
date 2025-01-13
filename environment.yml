@@ -42,6 +42,7 @@ dependencies:
 - pyarrow
 - git
 - yarn=4 # Use latest version of yarn
+- python-multipart # Required by fastapi for file uploads
 - pip:
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions

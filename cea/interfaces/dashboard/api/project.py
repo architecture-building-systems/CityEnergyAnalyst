@@ -1,15 +1,20 @@
 import glob
+import json
 import os
 import shutil
 import tempfile
 import traceback
-from typing import Dict, Any, Optional, List
+from contextlib import asynccontextmanager
+from typing import Dict, Any, Optional, List, Union
 
 import geopandas
 import pandas as pd
-from fastapi import APIRouter, HTTPException, status, Request, Path, Depends
+from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
+from geopandas import GeoDataFrame
+from starlette.datastructures import UploadFile as _UploadFile
 from pydantic import BaseModel
 from shapely.geometry import shape
+from typing_extensions import Annotated
 
 import cea.config
 import cea.api
@@ -50,15 +55,77 @@ class NewProject(BaseModel):
 class CreateScenario(BaseModel):
     project: str
     scenario_name: str
-    database: str
-    user_zone: str
-    user_surroundings: str
-    generate_zone: Optional[dict] = None
+    database: Union[str, UploadFile]
+    user_zone: Union[str, UploadFile]
+    user_surroundings: Union[str, UploadFile]
+    generate_zone: Optional[str] = None
     generate_surroundings: Optional[int] = None
-    typology: Optional[str] = None
-    weather: str
-    terrain: str
-    street: str
+    typology: Optional[Union[str, UploadFile]] = None
+    weather: Union[str, UploadFile]
+    terrain: Union[str, UploadFile]
+    street: Union[str, UploadFile]
+
+    @staticmethod
+    async def _get_file_path(file: Union[str, UploadFile], directory: str, filename: str) -> str:
+        if isinstance(file, str):
+            return file
+
+        elif isinstance(file, _UploadFile):
+            filepath = os.path.join(directory, filename)
+            with open(filepath, "wb") as f:
+                f.write(await file.read())
+            return filepath
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'Could not retrieve {filename}',
+            )
+
+    @staticmethod
+    async def _get_geometry_data(file: Union[str, UploadFile], filename: str) -> GeoDataFrame:
+        source = file
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if isinstance(source, _UploadFile):
+
+                def extract_zip(filestream: bytes, destination: str) -> None:
+                    import zipfile
+                    from io import BytesIO
+
+                    with zipfile.ZipFile(BytesIO(filestream)) as zf:
+                        zf.extractall(destination)
+
+                extract_zip(await source.read(), tmpdir)
+
+                source = os.path.join(tmpdir, filename)
+                if not os.path.exists(source):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f'Could not find {filename} in zip file',
+                    )
+
+            data = geopandas.read_file(source).to_crs(get_geographic_coordinate_system())
+        return data
+
+    async def get_zone_file(self):
+        return await self._get_geometry_data(self.user_zone, "zone.shp")
+
+    async def get_surroundings_file(self):
+        return await self._get_geometry_data(self.user_surroundings, "surroundings.shp")
+
+    async def get_street_file(self):
+        return await self._get_geometry_data(self.street, "street.shp")
+
+    @asynccontextmanager
+    async def get_weather_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            yield await self._get_file_path(self.weather, tmpdir, "weather.epw")
+
+    @asynccontextmanager
+    async def get_terrain_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            yield await self._get_file_path(self.terrain, tmpdir, "terrain.tif")
 
     def should_generate_zone(self) -> bool:
         return self.user_zone == GENERATE_ZONE_CEA
@@ -180,8 +247,7 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2')
-async def create_new_scenario_v2(scenario_form: CreateScenario):
-    print(f'ScenarioForm: {scenario_form}')
+async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()]):
     new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
 
     if os.path.exists(new_scenario_path):
@@ -190,10 +256,10 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             detail=f'Scenario already exists - project: {scenario_form.project}, scenario_name: {scenario_form.scenario_name}',
         )
 
-    def create_zone(scenario_form, locator):
+    async def create_zone(scenario_form, locator):
         # Generate / Copy zone and surroundings
         if scenario_form.should_generate_zone():
-            site_geojson = scenario_form.generate_zone
+            site_geojson = json.loads(scenario_form.generate_zone)
             site_df = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
                                              geometry=[shape(site_geojson['features'][0]['geometry'])])
             site_path = locator.get_site_polygon()
@@ -206,7 +272,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             zone_df = geopandas.read_file(locator.get_zone_geometry())
         else:
             # Copy zone using path
-            zone_df = geopandas.read_file(scenario_form.user_zone).to_crs(get_geographic_coordinate_system())
+            zone_df = await scenario_form.get_zone_file()
 
             # Make sure zone column names are in correct case
             zone_df.columns = [col.lower() for col in zone_df.columns]
@@ -224,7 +290,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
         return zone_df
 
-    def create_surroundings(scenario_form, zone_df, locator):
+    async def create_surroundings(scenario_form, zone_df, locator):
         if scenario_form.should_generate_surroundings():
             # Generate using surroundings helper
             config.surroundings_helper.buffer = scenario_form.generate_surroundings
@@ -238,8 +304,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             surroundings_df.to_file(surroundings_path)
         else:
             # Copy surroundings using path
-            surroundings_df = geopandas.read_file(scenario_form.user_surroundings).to_crs(
-                get_geographic_coordinate_system())
+            surroundings_df = await scenario_form.get_surroundings_file()
             verify_input_geometry_surroundings(surroundings_df)
 
             surroundings_path = locator.get_surroundings_geometry()
@@ -311,7 +376,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             dataframe_to_dbf(typology_df, locator.get_building_typology())
             print(f'Typology file created at {locator.get_building_typology()}')
 
-    def create_terrain(scenario_form, zone_df, locator):
+    async def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
             # Run terrain helper
             cea.api.terrain_helper(config)
@@ -320,15 +385,17 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             centroid = zone_df.dissolve().centroid.values[0]
             lat, lon = centroid.y, centroid.x
             locator.ensure_parent_folder_exists(locator.get_terrain())
-            copy_terrain(scenario_form.terrain, locator, lat, lon)
 
-    def create_street(scenario_form, locator):
+            async with scenario_form.get_terrain_file() as terrain_path:
+                copy_terrain(terrain_path, locator, lat, lon)
+
+    async def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
             # Run street helper
             cea.api.streets_helper(config)
         elif scenario_form.street != EMTPY_GEOMETRY:
             # Copy street using path
-            street_df = geopandas.read_file(scenario_form.street).to_crs(get_geographic_coordinate_system())
+            street_df = await scenario_form.get_street_file()
             locator.ensure_parent_folder_exists(locator.get_street_network())
             street_df.to_file(locator.get_street_network())
 
@@ -344,23 +411,24 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             cea.api.database_helper(config, databases_path=scenario_form.database)
 
             # Generate / Copy zone
-            zone_df = create_zone(scenario_form, locator)
+            zone_df = await create_zone(scenario_form, locator)
 
             # Generate / Copy typology
             create_typology(scenario_form, zone_df, locator)
 
             # Generate / Copy surroundings
-            create_surroundings(scenario_form, zone_df, locator)
+            await create_surroundings(scenario_form, zone_df, locator)
 
             # Run weather helper
-            config.weather_helper.weather = scenario_form.weather
-            cea.api.weather_helper(config)
+            async with scenario_form.get_weather_file() as weather_path:
+                config.weather_helper.weather = weather_path
+                cea.api.weather_helper(config)
 
             # Generate / Copy terrain
-            create_terrain(scenario_form, zone_df, locator)
+            await create_terrain(scenario_form, zone_df, locator)
 
             # Generate / Copy street
-            create_street(scenario_form, locator)
+            await create_street(scenario_form, locator)
 
             # Run archetypes mapper
             cea.api.archetypes_mapper(config)
