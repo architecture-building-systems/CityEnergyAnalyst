@@ -67,7 +67,7 @@ def main(config):
             continue
 
         # Print: Start
-        div_len = 47 - len(scenario)
+        div_len = 37 - len(scenario)
         print('+' * 60)
         print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 

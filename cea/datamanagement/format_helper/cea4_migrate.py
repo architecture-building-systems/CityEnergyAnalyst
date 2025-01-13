@@ -392,8 +392,8 @@ def main(config):
     scenario_name = os.path.basename(scenario)
 
     # Print: Start
-    div_len = 47 - len(scenario_name)
-    print('-' * 60)
+    div_len = 37 - len(scenario_name)
+    print('-' * 50)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification

@@ -331,7 +331,7 @@ def cea4_verify(scenario, print_results=False):
 
     # Print: End
     if print_results:
-        print("-" * 60)
+        print("-" * 50)
 
     return dict_missing
 
@@ -351,7 +351,7 @@ def main(config):
     scenario_name = os.path.basename(scenario)
 
     # Print: Start
-    div_len = 47 - len(scenario_name)
+    div_len = 37 - len(scenario_name)
     print('+' * 60)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
