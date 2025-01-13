@@ -19,7 +19,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.utilities.dbf import dbf_to_csv_xlsx
 from cea.utilities.shapefile import shapefile_to_csv_xlsx
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 

@@ -15,7 +15,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_GEOMETRY, COLUMNS_ZONE
+from cea.datamanagement.databases_verification import COLUMNS_ZONE
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \

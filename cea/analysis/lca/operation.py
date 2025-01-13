@@ -6,10 +6,7 @@ Non-renewable primary energy and GHG_kgCO2MJ emissions model algorithm for build
 
 
 import os
-
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
-
 import cea.config
 import cea.inputlocator
 

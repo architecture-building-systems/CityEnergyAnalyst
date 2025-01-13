@@ -8,7 +8,6 @@ import os
 import cea.config
 import shutil
 import time
-import pandas as pd
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.utilities.dbf import csv_xlsx_to_dbf
 from cea.utilities.shapefile import csv_xlsx_to_shapefile

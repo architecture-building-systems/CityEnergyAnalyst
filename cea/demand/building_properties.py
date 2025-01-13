@@ -8,7 +8,7 @@ from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height

@@ -21,7 +21,6 @@ import cea.utilities.parallel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
-from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
