@@ -303,7 +303,7 @@ def migrate_cea3_to_cea4(scenario):
 
         #2. about the .dbf files in the building-properties folde to be mirgrated to .csv files
         if 'air_conditioning' not in list_missing_files_dbf_building_properties:
-            migrate_dbf_to_csv('air_conditioning', COLUMNS_AIR_CONDITIONING_3)
+            migrate_dbf_to_csv(scenario,'air_conditioning', COLUMNS_AIR_CONDITIONING_3)
 
         if 'architecture' not in list_missing_files_dbf_building_properties:
             migrate_dbf_to_csv(scenario, 'architecture', COLUMNS_ARCHITECTURE_3)
@@ -311,12 +311,18 @@ def migrate_cea3_to_cea4(scenario):
         if 'indoor_comfort' not in list_missing_files_dbf_building_properties:
             migrate_dbf_to_csv(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_3)
 
+        if 'internal_loads' not in list_missing_files_dbf_building_properties:
+            migrate_dbf_to_csv(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_3)
+
         if 'supply_systems' not in list_missing_files_dbf_building_properties:
             migrate_dbf_to_csv(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3)
 
         if 'typology' not in list_missing_files_dbf_building_properties:
-            os.remove(path_to_input_file_without_db_3(scenario, 'typology'))
-            print('typology.dbf has been removed as it is no longer needed by CEA-4.')
+            typology_path = path_to_input_file_without_db_3(scenario, 'typology')
+            if os.path.exists(typology_path):
+                os.remove(typology_path)
+                print('typology.dbf has been removed as it is no longer needed by CEA-4.')
+
 
         #3. about the Database
 

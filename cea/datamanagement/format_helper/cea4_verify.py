@@ -214,6 +214,30 @@ def print_verification_results_4(scenario_name, dict_missing):
               )
 
 
+def verify_csv_file(scenario, item, required_columns, print_results=False):
+    """
+    Verify a CSV file's columns and name uniqueness.
+
+    Args:
+        scenario: The scenario path
+        item: The item name (e.g., 'air_conditioning')
+        required_columns: List of required columns
+        print_results: Whether to print verification results
+
+    Returns:
+        list: List of missing columns
+    """
+    list_missing_columns = verify_csv_4(scenario, item, required_columns)
+    if list_missing_columns:
+        if print_results:
+            print(f'Ensure column(s) are present in the {item}.csv: {list_missing_columns}')
+    else:
+        if 'name' not in list_missing_columns:
+            list_names_duplicated = verify_name_duplicates_4(scenario, item)
+            if list_names_duplicated and print_results:
+                print(f'Ensure name(s) are unique in {item}.csv: {list_names_duplicated} is duplicated.')
+    return list_missing_columns
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -259,61 +283,19 @@ def cea4_verify(scenario, print_results=False):
             print('Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
 
     if 'air_conditioning' not in list_missing_files_csv_building_properties:
-        list_missing_columns_air_conditioning = verify_csv_4(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_4)
-        if list_missing_columns_air_conditioning:
-            if print_results:
-                print('Ensure column(s) are present in the air_conditioning.csv: {missing_columns_air_conditioning}'.format(missing_columns_air_conditioning=list_missing_columns_air_conditioning))
-        else:
-            if 'name' not in list_missing_columns_air_conditioning:
-                list_names_duplicated = verify_name_duplicates_4(scenario, 'air_conditioning')
-                if list_names_duplicated:
-                    if print_results:
-                        print('Ensure name(s) are unique in air_conditioning.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-    if 'architecture' not in list_missing_files_csv_building_properties:
-        list_missing_columns_architecture = verify_csv_4(scenario, 'architecture', COLUMNS_ARCHITECTURE_4)
-        if list_missing_columns_architecture:
-            if print_results:
-                print('Ensure column(s) are present in the architecture.csv: {missing_columns_architecture}'.format(missing_columns_architecture=list_missing_columns_architecture))
-        else:
-            if 'name' not in list_missing_columns_architecture:
-                list_names_duplicated = verify_name_duplicates_4(scenario, 'architecture')
-                if list_names_duplicated:
-                    if print_results:
-                        print('Ensure name(s) are unique in architecture.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-    if 'indoor_comfort' not in list_missing_files_csv_building_properties:
-        list_missing_columns_indoor_comfort = verify_csv_4(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_4)
-        if list_missing_columns_indoor_comfort:
-            if print_results:
-                print('Ensure column(s) are present in the indoor_comfort.csv: {missing_columns_indoor_comfort}'.format(missing_columns_indoor_comfort=list_missing_columns_indoor_comfort))
-        else:
-            if 'name' not in list_missing_columns_indoor_comfort:
-                list_names_duplicated = verify_name_duplicates_4(scenario, 'indoor_comfort')
-                if list_names_duplicated:
-                    if print_results:
-                        print('Ensure name(s) are unique in indoor_comfort.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-    if 'internal_loads' not in list_missing_files_csv_building_properties:
-        list_missing_columns_internal_loads = verify_csv_4(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_4)
-        if list_missing_columns_internal_loads:
-            if print_results:
-                print('Ensure column(s) are present in the internal_loads.csv: {missing_columns_internal_loads}'.format(missing_columns_internal_loads=list_missing_columns_internal_loads))
-        else:
-            if 'name' not in list_missing_columns_internal_loads:
-                list_names_duplicated = verify_name_duplicates_4(scenario, 'internal_loads')
-                if list_names_duplicated:
-                    if print_results:
-                        print('Ensure name(s) are unique in internal_loads.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-    if 'supply_systems' not in list_missing_files_csv_building_properties:
-        list_missing_columns_supply_systems = verify_csv_4(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_4)
-        if list_missing_columns_supply_systems:
-            if print_results:
-                print('Ensure column(s) are present in the supply_systems.csv: {missing_columns_supply_systems}'.format(missing_columns_supply_systems=list_missing_columns_supply_systems))
-        else:
-           if 'name' not in list_missing_columns_supply_systems:
-                list_names_duplicated = verify_name_duplicates_4(scenario, 'supply_systems')
-                if list_names_duplicated:
-                    if print_results:
-                        print('Ensure name(s) are unique in supply_systems.csv: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
+        list_missing_columns_air_conditioning = verify_csv_file(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_4, print_results=False)
 
+    if 'architecture' not in list_missing_files_csv_building_properties:
+        list_missing_columns_architecture = verify_csv_file(scenario, 'architecture', COLUMNS_ARCHITECTURE_4, print_results=False)
+
+    if 'indoor_comfort' not in list_missing_files_csv_building_properties:
+        list_missing_columns_indoor_comfort = verify_csv_file(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_4, print_results=False)
+
+    if 'internal_loads' not in list_missing_files_csv_building_properties:
+        list_missing_columns_internal_loads = verify_csv_file(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_4, print_results=False)
+
+    if 'supply_systems' not in list_missing_files_csv_building_properties:
+        list_missing_columns_supply_systems = verify_csv_file(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_4, print_results=False)
 
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
