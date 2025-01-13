@@ -65,9 +65,6 @@ def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.
         cols = dbf.header
 
     data = dbf.read()
-    print(f"DBF Header: {dbf.header}")
-    print(f"Data Shape: {len(data)} rows, {len(data[0]) if data else 0} columns")
-    print(data)
     df = pd.DataFrame(data, columns=dbf.header)
     dbf.close()
 
