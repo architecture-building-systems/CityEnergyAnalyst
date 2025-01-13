@@ -64,7 +64,7 @@ def main(config):
     # Start the timer
     t0 = time.perf_counter()
 
-    assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
+    assert os.path.exists(config.general.project), 'input file not found: %s' % config.general.project
 
     project_path = config.general.project
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
