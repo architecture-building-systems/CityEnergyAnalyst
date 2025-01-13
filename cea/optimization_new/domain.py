@@ -94,6 +94,7 @@ class Domain(object):
                     continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
+                building.check_demand_energy_carrier()
                 self.buildings.append(building)
 
         return self.buildings
@@ -597,19 +598,18 @@ class Domain(object):
 
     def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
+        Component.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
         Fitness.initialize_class_variables(self)
 
     def _initialize_energy_system_descriptor_classes(self):
-        print("1. Creating available supply system components...")
-        Component.initialize_class_variables(self)
-        print("2. Finding possible network paths (this may take a while)...")
+        print("1. Finding possible network paths (this may take a while)...")
         Network.initialize_class_variables(self)
-        print("3. Establishing district energy system structure...")
+        print("2. Establishing district energy system structure...")
         DistrictEnergySystem.initialize_class_variables(self)
         SupplySystemStructure.initialize_class_variables(self)
         SupplySystem.initialize_class_variables(self)
-        print("4. Defining possible connectivity vectors...")
+        print("3. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
     def _initialize_algorithm_helper_classes(self):

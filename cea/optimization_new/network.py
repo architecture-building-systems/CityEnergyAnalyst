@@ -383,7 +383,7 @@ class Network(object):
         self.network_piping['length_m'] = 0.0
         for index, pipe_type in self.network_piping.iterrows():
             using_type = self.network_edges.apply(lambda row: row['type_mat'] == pipe_type['type_mat'] and
-                                                              row['pipe_DN'] == pipe_type['type_DN'], axis=1)
+                                                              row['pipe_DN'] == pipe_type['pipe_DN'], axis=1)
             self.network_piping['length_m'][index] = self.network_edges['length_m'][using_type].sum()
         self._calculate_piping_cost()
 
@@ -668,7 +668,7 @@ class Network(object):
         self.network_nodes = self.network_nodes.rename(index=lambda x: "NODE" + str(x))
 
         # do some checks to see that the building names was not compromised
-        if len(connected_buildings_coords_list) != (len(self.network_nodes['Building'].unique()) - 1):
+        if len(connected_buildings_coords_list) != (len(self.network_nodes['building'].unique()) - 1):
             raise ValueError('There was an error while populating the nodes fields. '
                              'One or more buildings could not be matched to nodes of the network. '
                              'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
@@ -707,7 +707,7 @@ class Network(object):
         :type anchor_building: str (e.g. 'B1022')
         """
         # create new node
-        building_node = self.network_nodes[self.network_nodes['Building'] == anchor_building].index[0]
+        building_node = self.network_nodes[self.network_nodes['building'] == anchor_building].index[0]
         network_connection = self.network_edges[self.network_edges['start node'] == building_node]
         if network_connection.empty:
             network_connection = self.network_edges[self.network_edges['end node'] == building_node]
@@ -794,7 +794,7 @@ class Network(object):
             consumer_nodes = []
             for node_name, node in self.network_nodes.iterrows():
                 if node["type"] == "CONSUMER":
-                    demand_pattern = generate_demand_pattern(node['Building'])
+                    demand_pattern = generate_demand_pattern(node['building'])
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
                     consumer_nodes.append(node_name)
                     wn.add_junction(str(node_name),
@@ -888,7 +888,7 @@ class Network(object):
         """
         Calculate piping cost for a fully built network.
         """
-        piping_unit_cost_dict = {pipe_type['pipe_DN']: pipe_type['Inv_USD2015perm']
+        piping_unit_cost_dict = {pipe_type['Pipe_DN']: pipe_type['Inv_USD2015perm']
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
         piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])

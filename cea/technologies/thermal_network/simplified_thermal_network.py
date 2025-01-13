@@ -150,7 +150,7 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
     selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
-    pipe_DN = selection_of_catalog['pipe_DN'].values[0]
+    pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
     D_ins_m = selection_of_catalog['D_ins_m'].values[0]
 

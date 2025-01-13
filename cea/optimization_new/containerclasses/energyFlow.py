@@ -210,3 +210,12 @@ class EnergyFlow(object):
                                      self.profile.clip(upper=profile_threshold))
 
         return new_energy_flow
+
+    def isolate_peak(self):
+        """
+        Return an energy flow with only the peak value of the original energy flow profile.
+        """
+        new_energy_flow = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
+                                     pd.Series([self.profile.max()], index=[self.profile.idxmax()]))
+
+        return new_energy_flow
