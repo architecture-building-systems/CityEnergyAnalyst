@@ -282,21 +282,17 @@ def cea4_verify(scenario, print_results=False):
         if print_results:
             print('Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
 
-    if 'air_conditioning' not in list_missing_files_csv_building_properties:
-        list_missing_columns_air_conditioning = verify_csv_file(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_4, print_results=False)
-
-    if 'architecture' not in list_missing_files_csv_building_properties:
-        list_missing_columns_architecture = verify_csv_file(scenario, 'architecture', COLUMNS_ARCHITECTURE_4, print_results=False)
-
-    if 'indoor_comfort' not in list_missing_files_csv_building_properties:
-        list_missing_columns_indoor_comfort = verify_csv_file(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_4, print_results=False)
-
-    if 'internal_loads' not in list_missing_files_csv_building_properties:
-        list_missing_columns_internal_loads = verify_csv_file(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_4, print_results=False)
-
-    if 'supply_systems' not in list_missing_files_csv_building_properties:
-        list_missing_columns_supply_systems = verify_csv_file(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_4, print_results=False)
-
+    for item, columns in [
+        ('air_conditioning', COLUMNS_AIR_CONDITIONING_4),
+        ('architecture', COLUMNS_ARCHITECTURE_4),
+        ('indoor_comfort', COLUMNS_INDOOR_COMFORT_4),
+        ('internal_loads', COLUMNS_INTERNAL_LOADS_4),
+        ('supply_systems', COLUMNS_SUPPLY_SYSTEMS_4)
+    ]:
+        if item not in list_missing_files_csv_building_properties:
+            locals()[f'list_missing_columns_{item}'] = verify_csv_file(
+                scenario, item, columns, print_results=print_results
+            )
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
     if list_missing_files_terrain:
