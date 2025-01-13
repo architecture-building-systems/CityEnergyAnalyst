@@ -141,8 +141,8 @@ ThermalNetwork.edge_df
 
 :Columns: - initially:
 
-            - Type_mat
-            - Pipe_DN
+            - type_mat
+            - pipe_DN
             - geometry
             - coordinates
             - pipe length
@@ -151,14 +151,14 @@ ThermalNetwork.edge_df
 
           - later:
 
-            - Type_mat
-            - Pipe_DN_x
+            - type_mat
+            - pipe_DN_x
             - geometry
             - coordinates
             - pipe length
             - start node
             - end node
-            - Pipe_DN_y
+            - pipe_DN_y
             - D_ext_m
             - D_int_m
             - D_ins_m
@@ -273,7 +273,7 @@ ThermalNetwork.pipe_properties
 :type: DataFrame
 :shape: (8, number_of_edges)
 :Columns: All Edges ([PIPE0, ...])
-:Index:      - Pipe_DN
+:Index:      - pipe_DN
              - D_ext_m
              - D_int_m
              - D_ins_m

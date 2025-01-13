@@ -839,7 +839,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     # TODO: documentation
 
     # sort dataframe for name of building for default orientation generation
-    df_prop_surfaces.sort_values('Name')
+    df_prop_surfaces.sort_values('name')
     # default values
     # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal
@@ -848,7 +848,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     free_height = df_prop_surfaces['Freeheight']
     height_ag = df_prop_surfaces['height_ag']
     length_shape = df_prop_surfaces['Shape_Leng']
-    name = df_prop_surfaces['Name']
+    name = df_prop_surfaces['name']
 
     # calculate number of exposed floors per facade
     num_floors_free_height = (free_height / 3).astype('int')  # floor height is 3 m

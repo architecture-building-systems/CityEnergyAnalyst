@@ -13,6 +13,7 @@ import pandas as pd
 
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
@@ -99,7 +100,7 @@ def calculate_mixed_use_archetype_values_results(locator):
     calculated_results = calculate_average_multiuse(
         fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
-                                   columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghp', 'El_Wm2', 'Occ_m2p']),
+                                   columns=[COLUMNS_ZONE_TYPOLOGY]),
         occupant_densities={'OFFICE': 1.0 / office_occ, 'LAB': 1.0 / lab_occ, 'INDUSTRIAL': 1.0 / indus_occ, 'SERVERRROOM': 1.0},
         list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
         properties_DB=pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')

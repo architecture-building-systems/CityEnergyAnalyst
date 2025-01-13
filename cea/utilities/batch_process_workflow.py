@@ -156,7 +156,7 @@ def exec_cea_commands(config, cea_scenario):
 
 def main(config):
     """
-    Batch processing all scenarios under a project.
+    Batch processing all selectedscenarios under a project.
 
     :param config: the configuration object to use
     :type config: cea.config.Configuration
@@ -172,7 +172,7 @@ def main(config):
     scenario_name = config.general.scenario_name
     scenarios_list = config.batch_process_workflow.scenarios_to_simulate
 
-    # Loop over one or all scenarios under the project
+    # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
@@ -184,7 +184,7 @@ def main(config):
             # executing CEA commands
             exec_cea_commands(config, cea_scenario)
         except subprocess.CalledProcessError as e:
-            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}")
+            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}.")
             err_msg = e.stderr
             if err_msg is not None:
                 print(err_msg.decode())

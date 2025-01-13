@@ -329,7 +329,7 @@ PVT_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID.
         type: string
         unit: '[-]'
@@ -865,7 +865,7 @@ PV_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1314,7 +1314,7 @@ SC_total_buildings:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID.
         type: string
         unit: '[-]'
@@ -1524,11 +1524,11 @@ SC_totals:
 get_building_air_conditioning:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/air_conditioning_systems.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/air_conditioning_systems.csv
+  file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1618,11 +1618,11 @@ get_building_air_conditioning:
 get_building_architecture:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/architecture.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/architecture.csv
+  file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1793,11 +1793,11 @@ get_building_architecture:
 get_building_comfort:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/indoor_comfort.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/indoor_comfort.csv
+  file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1848,11 +1848,11 @@ get_building_comfort:
 get_building_internal:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/internal_loads.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/internal_loads.csv
+  file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1941,11 +1941,11 @@ get_building_internal:
 get_building_supply:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/supply_systems.dbf
-  file_type: dbf
+  file_path: inputs/building-properties/supply_systems.csv
+  file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -1997,97 +1997,7 @@ get_building_supply:
   - demand
   - emissions
   - system_costs
-get_building_typology:
-  created_by:
-  - data_migrator
-  file_path: inputs/building-properties/typology.dbf
-  file_type: dbf
-  schema:
-    columns:
-      Name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-      YEAR:
-        description: Construction year
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
-      STANDARD:
-        description: Construction Standard (relates to "code" in Supply Assemblies)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_construction_standards
-            sheet: STANDARD_DEFINITION
-            column: STANDARD
-      1ST_USE:
-        description: First (Main) Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-      1ST_USE_R:
-        description: Fraction of gross floor area for first Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      2ND_USE:
-        description: Second Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-          none_value: NONE
-      2ND_USE_R:
-        description: Fraction of gross floor area for second Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      3RD_USE:
-        description: Third Use type of the building
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        choice:
-          lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
-            column: code
-          none_value: NONE
-      3RD_USE_R:
-        description: Fraction of gross floor area for third Use Type
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1.0}'
-        min: 0.0
-        max: 1.0
-      REFERENCE:
-        description: Reference to data (if any)
-        type: string
-        unit: '[-]'
-        values: alphanumeric
-        nullable: true
-  used_by:
-  - archetypes_mapper
-  - demand
-  - emissions
+
 get_building_weekly_schedules:
   created_by:
   - archetypes_mapper
@@ -2263,7 +2173,7 @@ get_costs_operation_file:
         unit: "[$USD(2015)/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: '[-]'
@@ -7981,7 +7891,7 @@ get_demand_results_file:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -8641,7 +8551,7 @@ get_lca_embodied:
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -8758,7 +8668,7 @@ get_lca_mobility:
         unit: "[ton CO2-eq/yr]"
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -9061,7 +8971,7 @@ get_lca_operation:
         unit: '[MJ/m2-yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -9463,17 +9373,17 @@ get_network_layout_edges_shapefile:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique network pipe ID.
         type: string
         unit: 'NA'
         values: alphanumeric
-      Pipe_DN:
+      pipe_DN:
         description: Classifies nominal pipe diameters (DN) into typical bins.
         type: string
         unit: 'NA'
         values: alphanumeric
-      Type_mat:
+      type_mat:
         description: Material type
         type: string
         unit: 'NA'
@@ -9503,7 +9413,7 @@ get_network_layout_nodes_shapefile:
         type: string
         unit: 'NA'
         values: alphanumeric
-      Name:
+      name:
         description: Unique node ID. e.g. "NODE1"
         type: string
         unit: 'NA'
@@ -9799,7 +9709,7 @@ get_optimization_district_scale_cooling_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -10375,7 +10285,7 @@ get_optimization_building_scale_cooling_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -10407,7 +10317,7 @@ get_optimization_building_scale_heating_capacity:
         unit: '[W]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter
         type: string
         unit: 'NA'
@@ -11372,7 +11282,7 @@ get_optimization_slave_building_connectivity:
         values: '{0...1}'
         min: 0
         max: 1
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.)
         type: string
         unit: 'NA'
@@ -12948,7 +12858,7 @@ get_optimization_substations_total_file:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -13512,13 +13422,13 @@ get_new_optimization_optimal_network_layout_file:
         type: Point or LineString
         unit: 'NA'
         values: 'NA'
-      Building:
+      building:
         description: Building identifier (only for Point objects that represent a building's connection to the network,
           'nan' for LineString objects)
         type: string
         unit: 'NA'
         values: alphanumeric
-      Type:
+      type:
         description: Type of node (only for Point objects, 'nan' for LineString objects)
         type: string
         unit: 'NA'
@@ -13529,12 +13439,12 @@ get_new_optimization_optimal_network_layout_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-      Type_mat:
+      type_mat:
         description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
         type: string
         unit: 'NA'
         values: 'NA'
-      Pipe_DN:
+      pipe_DN:
         description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
         type: float
         unit: '[mm]'
@@ -13868,7 +13778,7 @@ get_new_optimization_debugging_network_tracker_file:
           type: string
           unit: 'NA'
           values: alphanumeric
-        Type:
+        type:
           description: Type of node (only for Point objects, 'nan' for LineString objects)
           type: string
           unit: 'NA'
@@ -13879,12 +13789,12 @@ get_new_optimization_debugging_network_tracker_file:
           unit: '[m]'
           values: '{0.0...n}'
           min: 0.0
-        Type_mat:
+        type_mat:
           description: Material type code of pipe segment (only for LineString objects, 'nan' for Point objects)
           type: string
           unit: 'NA'
           values: 'NA'
-        Pipe_DN:
+        tipe_DN:
           description: Nominal diameter of pipe segment (only for LineString objects, 'nan' for Point objects)
           type: float
           unit: '[mm]'
@@ -14120,7 +14030,7 @@ get_radiation_materials:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -14448,7 +14358,7 @@ get_surroundings_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -14487,7 +14397,7 @@ get_tree_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique tree ID.
         type: string
         unit: 'NA'
@@ -14553,7 +14463,7 @@ get_thermal_network_edge_list_file:
   file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique network pipe ID.
         type: string
         unit: 'NA'
@@ -14564,14 +14474,14 @@ get_thermal_network_edge_list_file:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
-      Pipe_DN:
+      pipe_DN:
         description: Nominal pipe diameter (e.g. DN100 refers to pipes of approx.
           100 mm in diameter)
         type: int
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      Type_mat:
+      type_mat:
         description: Material of the pipes
         type: string
         unit: 'NA'
@@ -14640,7 +14550,7 @@ get_thermal_network_node_types_csv_file:
   file_type: csv
   schema:
     columns:
-      Name:
+      name:
         description: Unique network node ID.
         type: string
         unit: 'NA'
@@ -15177,7 +15087,7 @@ get_total_demand:
         unit: '[MWh/yr]'
         values: '{0.0...n}'
         min: 0.0
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -16139,7 +16049,7 @@ get_zone_geometry:
   file_type: shp
   schema:
     columns:
-      Name:
+      name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
@@ -16170,55 +16080,82 @@ get_zone_geometry:
         unit: '[m]'
         values: '{0.0...n}'
         min: 0.0
+      year:
+        description: Construction year
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      const_type:
+        description: Construction Standard (relates to "code" in Supply Assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_construction_standards
+            sheet: STANDARD_DEFINITION
+            column: STANDARD
+      use_type1:
+        description: First (Main) Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+      use_type1r:
+        description: Fraction of gross floor area for first Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      use_type2:
+        description: Second Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
+      use_type2r:
+        description: Fraction of gross floor area for second Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      use_type3:
+        description: Third Use type of the building
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+        choice:
+          lookup:
+            path: get_database_use_types_properties
+            sheet: INTERNAL_LOADS
+            column: code
+          none_value: NONE
+      use_type3r:
+        description: Fraction of gross floor area for third Use Type
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
       geometry:
         description: Shapefile POLYGON
         type: Polygon
         unit: 'NA'
         values: 'NA'
-      REFERENCE:
+      reference:
         description: Reference to data (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      house_no:
-        description: House number in the address(if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      street:
-        description: Street name in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      postcode:
-        description: Postal code in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      house_name:
-        description: House name (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      resi_type:
-        description: Residential type, if Singapore's HDB or not (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      city:
-        description: City name in the address (if any)
-        type: string
-        unit: 'NA'
-        values: alphanumeric
-        nullable: true
-      country:
-        description: Country (2-digit) code in the address (if any)
         type: string
         unit: 'NA'
         values: alphanumeric

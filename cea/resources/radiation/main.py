@@ -40,7 +40,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
     """
 
     # local variables
-    architectural_properties = gpd.GeoDataFrame.from_file(locator.get_building_architecture())
+    architectural_properties = pd.read_csv(locator.get_building_architecture())
     surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW").set_index("code")
     surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF").set_index("code")
     surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL").set_index("code")
@@ -61,7 +61,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
         return df
 
     # query data
-    building_names = architectural_properties['Name']
+    building_names = architectural_properties['name']
     df1 = match_code('type_win', surface_database_windows[['G_win']])
     df2 = match_code('type_roof', surface_database_roof[['r_roof']])
     df3 = match_code('type_wall', surface_database_walls[['r_wall']])
@@ -72,7 +72,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
 
     surface_properties = pd.concat([building_names, df1, df2, df3], axis=1)
 
-    return surface_properties.set_index('Name').round(decimals=2)
+    return surface_properties.set_index('name').round(decimals=2)
 
 
 def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
@@ -172,7 +172,7 @@ def main(config):
     print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
     terrain_raster = gdal.Open(locator.get_terrain())
-    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('Name')
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
 
     (geometry_terrain,
      zone_building_names,

@@ -47,11 +47,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
     * ``scenario/outputs/data/demand``
 
-      * ``${Name}.csv`` for each building
+      * ``${name}.csv`` for each building
 
     * temporary folder (as returned by ``tempfile.gettempdir()``)
 
-      * ``${Name}T.csv`` for each building
+      * ``${name}T.csv`` for each building
 
     daren-thomas: as far as I can tell, these are the only side-effects.
 

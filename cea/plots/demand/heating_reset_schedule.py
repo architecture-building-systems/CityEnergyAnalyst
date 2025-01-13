@@ -36,7 +36,7 @@ class HeatingResetSchedulePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+        return self.hourly_loads[self.hourly_loads['name'].isin(self.buildings)]
 
     def calc_graph(self):
         traces = []

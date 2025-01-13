@@ -6,10 +6,7 @@ Non-renewable primary energy and GHG_kgCO2MJ emissions model algorithm for build
 
 
 import os
-
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
-
 import cea.config
 import cea.inputlocator
 
@@ -49,7 +46,7 @@ def lca_operation(locator):
     ## get demand results for the scenario
     demand = pd.read_csv(locator.get_total_demand())
     ## get the supply systems for each building in the scenario
-    supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
+    supply_systems = pd.read_csv(locator.get_building_supply())
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     factors_heating = data_all_in_one_systems['HEATING']
@@ -79,10 +76,10 @@ def lca_operation(locator):
     electricity_factors = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'GHG_kgCO2MJ']]
 
-    heating = supply_systems.merge(demand, on='Name').merge(heating_factors, left_on='type_hs', right_on='code_x')
-    dhw = supply_systems.merge(demand, on='Name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')
-    cooling = supply_systems.merge(demand, on='Name').merge(cooling_factors, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='Name').merge(electricity_factors, left_on='type_el',
+    heating = supply_systems.merge(demand, on='name').merge(heating_factors, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='name').merge(cooling_factors, left_on='type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='name').merge(electricity_factors, left_on='type_el',
                                                                 right_on='code_x')
 
     ## calculate the operational primary energy and emissions for heating services
@@ -93,7 +90,7 @@ def lca_operation(locator):
                         (Qhs_flag, 'OIL_hs_MWhyr', 'OIL_hs', 'Af_m2'),
                         (Qhs_flag, 'WOOD_hs_MWhyr', 'WOOD_hs', 'Af_m2')]
     for x in heating_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
+        fields_to_plot = ['name', 'GFA_m2', x[2] + '_tonCO2']
         # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
         heating[fields_to_plot[2]] = heating[x[1]] * heating['GHG_kgCO2MJ'] * 3.6
 
@@ -106,7 +103,7 @@ def lca_operation(locator):
                     (Qww_flag, 'WOOD_ww_MWhyr', 'WOOD_ww')]
 
     for x in dhw_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
+        fields_to_plot = ['name', 'GFA_m2', x[2] + '_tonCO2']
         # calculate the total (t GHG_kgCO2MJ-eq) and specific (kg GHG_kgCO2MJ-eq/m2) operational greenhouse gas emissions (O_ghg_)
         dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['GHG_kgCO2MJ'] * 3.6
 
@@ -115,19 +112,19 @@ def lca_operation(locator):
                         (Qcs_flag, 'DC_cdata_MWhyr', 'DC_cdata'),
                         (Qcs_flag, 'DC_cre_MWhyr', 'DC_cre')]
     for x in cooling_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
+        fields_to_plot = ['name', 'GFA_m2', x[2] + '_tonCO2']
         cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['GHG_kgCO2MJ'] * 3.6
 
     ## calculate the operational primary energy and emissions for electrical services
     electrical_services = [(E_flag, 'GRID_MWhyr', 'GRID'),
                            (E_flag, 'PV_MWhyr', 'PV')]
     for x in electrical_services:
-        fields_to_plot = ['Name', 'GFA_m2', x[2] + '_tonCO2']
+        fields_to_plot = ['name', 'GFA_m2', x[2] + '_tonCO2']
         electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['GHG_kgCO2MJ'] * 3.6
 
     # create a dataframe with the results for each energy service
-    result = heating.merge(dhw, on='Name', suffixes=['_a', '_b']).merge(cooling, on='Name', suffixes=['a', '_b']).merge(
-        electricity, on='Name')
+    result = heating.merge(dhw, on='name', suffixes=['_a', '_b']).merge(cooling, on='name', suffixes=['a', '_b']).merge(
+        electricity, on='name')
     result.rename(columns={'GFA_m2_x': 'GFA_m2'}, inplace=True)
 
     # calculate the total operational non-renewable primary energy demand and emissions as a sum of the results for each
@@ -160,7 +157,7 @@ def lca_operation(locator):
     result['GHG_sys_tonCO2'] = result['GHG_sys_building_scale_tonCO2'] + result['GHG_sys_district_scale_tonCO2']
 
     # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot = ['Name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_building_scale_tonCO2',
+    fields_to_plot = ['name', 'GFA_m2', 'GHG_sys_tonCO2', 'GHG_sys_building_scale_tonCO2',
                       'GHG_sys_district_scale_tonCO2'] + fields_to_plot
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f', na_rep='nan')
 

@@ -249,7 +249,7 @@ def near_analysis(building_centroids, street_network, crs):
     # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
     nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
 
-    df = gdf({"Name": building_centroids["Name"]}, geometry=nearest_points, crs=crs)
+    df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=crs)
     return df
 
 
@@ -332,7 +332,7 @@ def create_terminals(building_centroids, crs, street_network):
     all_points = pd.concat([near_points.to_crs(crs), building_centroids.to_crs(crs)])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
-    lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
+    lines_to_buildings = all_points.groupby(['name'])['geometry'].apply(lambda x: LineString(x.tolist()))
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
     lines_to_buildings = pd.concat([lines_to_buildings, street_network]).reset_index(drop=True)

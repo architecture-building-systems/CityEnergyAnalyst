@@ -14,7 +14,6 @@ Import & Export:
     parameters: ['general:scenario', to-rhino-gh]
     input-files:
       - [get_zone_geometry]
-      - [get_building_typology]
 
   - name: import-from-rhino-gh
     label: Import from Rhino/Grasshopper
@@ -38,7 +37,6 @@ Import & Export:
     parameters: ['general:scenario', result-summary]
     input-files:
       - [get_zone_geometry]
-      - [get_building_typology]
 
 
 Solar Radiation Analysis:
@@ -195,7 +193,6 @@ Energy Demand Forecasting:
       - [get_building_comfort]
       - [get_building_internal]
       - [get_building_architecture]
-      - [get_building_typology]
       - [get_building_air_conditioning]
       - [get_building_supply]
       - [get_building_weekly_schedules, building_name]
@@ -232,6 +229,32 @@ Thermal Network Design:
       - [get_database_conversion_systems]
       - [get_weather_file]
 
+
+Life Cycle Analysis:
+
+  - name: emissions
+    label: Emissions
+    description: Calculate the embodied and operational emissions of buildings.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_building_supply]
+
+  - name: system-costs
+    label: Energy Supply System Costs
+    description: Calculate the costs for energy supply systems.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.costs.system_costs
+    parameters: ['general:scenario', costs]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+
+
 Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
@@ -260,31 +283,6 @@ Energy Supply System Optimisation:
       - [get_street_network]
       - [get_total_demand]
 
-Life Cycle Analysis:
-
-  - name: emissions
-    label: Emissions
-    description: Calculate the embodied and operational emissions of buildings.
-    interfaces: [cli, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_architecture]
-      - [get_building_typology]
-      - [get_zone_geometry]
-      - [get_building_supply]
-
-  - name: system-costs
-    label: Energy Supply System Costs
-    description: Calculate the costs for energy supply systems.
-    interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-
 
 Data Management:
 
@@ -303,7 +301,6 @@ Data Management:
     parameters: ['general:scenario', archetypes-mapper]
     input-files:
       - [get_zone_geometry]
-      - [get_building_typology]
 
   - name: weather-helper
     label: Weather Helper
@@ -356,6 +353,34 @@ Data Management:
 
 
 Utilities:
+
+  - name: cea4-format-helper
+    label: CEA-4 Format Helper
+    description: |
+      Verifies the inputs are in the correct format for CEA-4.
+      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.format_helper.format_helper
+    parameters: ['general:scenario',format-helper]
+
+  - name: cea4-migrate
+    label: CEA-4 Format Helper - Migrate
+    description: |
+      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+
+    interfaces: [cli]
+    module: cea.datamanagement.format_helper.cea4_migrate
+    parameters: ['general:scenario']
+
+  - name: cea4-verify
+    label: CEA-4 Format Helper - Verify
+    description: |
+      Verifies the inputs are in the correct format for CEA-4.
+
+    interfaces: [cli]
+    module: cea.datamanagement.format_helper.cea4_verify
+    parameters: ['general:scenario']
 
   - name: sensitivity-analysis-sampler
     label: Generate Samples for Sensitivity Analysis (SA)

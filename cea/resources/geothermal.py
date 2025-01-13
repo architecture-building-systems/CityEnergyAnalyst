@@ -71,7 +71,7 @@ def calc_area_buildings(locator, buildings_list):
 
     prop_geometry['footprint'] = prop_geometry.area
 
-    footprint = prop_geometry[prop_geometry["Name"].isin(buildings_list)]['footprint']
+    footprint = prop_geometry[prop_geometry["name"].isin(buildings_list)]['footprint']
     area_below_buildings = footprint.sum()
 
     return area_below_buildings

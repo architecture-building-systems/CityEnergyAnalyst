@@ -27,7 +27,7 @@ class EmissionsMapLayer(MapLayer):
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
-        return sorted(list(columns - {"Name", "GFA_m2"}))
+        return sorted(list(columns - {"name", "GFA_m2"}))
 
     def _get_results_files(self, parameters: dict) -> str:
         emissions_type = parameters['emissions-type']
@@ -117,7 +117,7 @@ class EmissionsMapLayer(MapLayer):
             }
         }
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("Name").loc[buildings]
+        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
         building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
         if emissions_type == "embodied":
@@ -127,7 +127,7 @@ class EmissionsMapLayer(MapLayer):
         else:
             raise ValueError(f"Invalid emissions type: {emissions_type}")
 
-        emissions_df = pd.read_csv(results_path, usecols=["Name", data_column], index_col="Name")[data_column].loc[
+        emissions_df = pd.read_csv(results_path, usecols=["name", data_column], index_col="name")[data_column].loc[
             buildings]
 
         output['data'] = [{"position": [centroid.x, centroid.y], "value": emissions} for centroid, emissions in

@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def generate_empty_surroundings(crs) -> gdf:
-    return gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=crs)
+    return gdf(columns=["name", "height_ag", "floors_ag"], geometry=[], crs=crs)
 
 
 def calc_surrounding_area(zone_gdf, buffer_m):
@@ -94,8 +94,7 @@ def clean_attributes(shapefile, key):
     data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
     data_osm_floors_joined = int(
         math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-    shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
-                              data_floors_sum_with_nan]
+    shapefile["floors_ag"] = [int(x) if not pd.isna(x) else data_osm_floors_joined for x in data_floors_sum_with_nan]
     shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
     # add description
@@ -109,10 +108,10 @@ def clean_attributes(shapefile, key):
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
-    shapefile["Name"] = [key + str(x + 1000) for x in
+    shapefile["name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
+        ["name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 

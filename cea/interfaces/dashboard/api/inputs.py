@@ -37,7 +37,6 @@ COLORS = {
 # List of input databases (db_name, locator/schema_key)
 INPUT_DATABASES = [
     ('zone', 'get_zone_geometry'),
-    ('typology', 'get_building_typology'),
     ('architecture', 'get_building_architecture'),
     ('internal-loads', 'get_building_internal'),
     ('indoor-comfort', 'get_building_comfort'),
@@ -182,20 +181,19 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
                     table_df = pd.DataFrame(table_df.drop(columns='geometry'))
-                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
-                elif file_type == 'dbf':
+                    out['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
+                elif file_type == 'csv':
                     table_df = pd.read_json(json.dumps(tables[db]), orient='index')
 
                     # Make sure index name is 'Name;
-                    table_df.index.name = 'Name'
+                    table_df.index.name = 'name'
                     table_df = table_df.reset_index()
-
-                    cea.utilities.dbf.dataframe_to_dbf(table_df, location)
-                    out['tables'][db] = json.loads(table_df.set_index('Name').to_json(orient='index'))
+                    table_df.to_csv(location, index=False)
+                    out['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
 
             else:  # delete file if empty unless it is surroundings (allow for empty surroundings file)
                 if db == "surroundings":
-                    table_df = geopandas.GeoDataFrame(columns=["Name", "height_ag", "floors_ag"], geometry=[],
+                    table_df = geopandas.GeoDataFrame(columns=["name", "height_ag", "floors_ag"], geometry=[],
                                                       crs=get_geographic_coordinate_system())
                     table_df.to_file(location)
 
@@ -250,22 +248,21 @@ def get_building_properties(config):
                     table_df.drop(columns='geometry'))
                 if 'geometry' in db_columns:
                     del db_columns['geometry']
-                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
-                    table_df['REFERENCE'] = None
+                if 'reference' in db_columns and 'reference' not in table_df.columns:
+                    table_df['reference'] = None
                 store['tables'][db] = json.loads(
-                    table_df.set_index('Name').to_json(orient='index'))
+                    table_df.set_index('name').to_json(orient='index'))
             else:
-                assert file_type == 'dbf', 'Unexpected database type: %s' % file_type
-                table_df = cea.utilities.dbf.dbf_to_dataframe(file_path)
-                if 'REFERENCE' in db_columns and 'REFERENCE' not in table_df.columns:
-                    table_df['REFERENCE'] = None
+                table_df = pd.read_csv(file_path)
+                if 'reference' in db_columns and 'reference' not in table_df.columns:
+                    table_df['reference'] = None
                 store['tables'][db] = json.loads(
-                    table_df.set_index('Name').to_json(orient='index'))
+                    table_df.set_index('name').to_json(orient='index'))
 
             columns = {}
             for column_name, column in db_columns.items():
                 columns[column_name] = {}
-                if column_name == 'REFERENCE':
+                if column_name == 'refeference':
                     continue
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
@@ -300,7 +297,7 @@ def get_network(config, network_type):
         building_connectivity = get_building_connectivity(locator)
         network_type = network_type.upper()
         connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
-            network_type)] == 1]['Name'].values.tolist()
+            network_type)] == 1]['name'].values.tolist()
         network_name = 'today'
 
         # Do not calculate if no connected buildings
@@ -348,8 +345,8 @@ def df_to_json(file_location):
             lat, lon = get_lat_lon_projected_shapefile(table_df)
             crs = get_projected_coordinate_system(lat, lon)
 
-        if "Name" in table_df.columns:
-            table_df['Name'] = table_df['Name'].astype('str')
+        if "name" in table_df.columns:
+            table_df['name'] = table_df['name'].astype('str')
 
         # make sure that the geojson is coded in latitude / longitude
         out = table_df.to_crs(get_geographic_coordinate_system())
