@@ -20,16 +20,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-## --------------------------------------------------------------------------------------------------------------------
-## Get the environment and set up the subprocess
-## --------------------------------------------------------------------------------------------------------------------
-
-
-# adding CEA to the environment
-# Fix for running in PyCharm for users using micromamba
-my_env = os.environ.copy()
-my_env['PATH'] = f"{os.path.dirname(sys.executable)}:{my_env['PATH']}"
-
 def exec_cea_format_helper(config, cea_scenario):
     # auto-migrate from CEA-3 to CEA-4
     bool_migrate = config.format_helper.migrate_from_cea_3
@@ -45,7 +35,6 @@ def exec_cea_format_helper(config, cea_scenario):
         migrate_cea3_to_cea4(cea_scenario)
         dict_missing = cea4_verify(cea_scenario)
         print_verification_results_4(scenario_name, dict_missing)
-
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -70,7 +59,7 @@ def main(config):
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
 
     print('+' * 60)
-    print('Format Helper is batch-processing the data verification and migration for Scenarios: {scenarios_list}.'.format(scenarios_list=scenarios_list))
+    print(f'Format Helper is batch-processing the data verification and migration for Scenarios: {scenarios_list}.')
 
     # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
@@ -90,7 +79,8 @@ def main(config):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('+' * 60)
-    print('The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+    print(
+        'The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
