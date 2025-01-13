@@ -4,7 +4,6 @@ Main script of the formate helper that activates the verification and migration 
 """
 
 import os
-import sys
 import cea.config
 import time
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, print_verification_results_4
