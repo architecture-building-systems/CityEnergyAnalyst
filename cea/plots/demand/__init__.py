@@ -150,7 +150,7 @@ class DemandPlotBase(PlotBase):
     @property
     def data(self):
         if not hasattr(self, '_data'):
-            self._data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+            self._data = self.yearly_loads[self.yearly_loads['name'].isin(self.buildings)]
         return self._data
 
 

@@ -39,7 +39,7 @@ def calc_sewage_heat_exchanger(locator, config):
     twaste = []
     mXt = []
     counter = 0
-    names = pd.read_csv(locator.get_total_demand()).Name
+    names = pd.read_csv(locator.get_total_demand()).name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
     V_lps_external = config.sewage.sewage_water_district

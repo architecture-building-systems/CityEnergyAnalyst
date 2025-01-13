@@ -10,11 +10,13 @@ import re
 from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
-COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
-COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
-                         '3RD_USE_R']
-NAME_COLUMN = 'Name'
+COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
+COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
+NAME_COLUMN = 'name'
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference', 'geometry',
+                'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
+                'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
 def assert_columns_names(zone_df, columns):
@@ -83,7 +85,7 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
 
 def assert_input_geometry_only_polygon(buildings_df):
     not_polygon = buildings_df.geometry.type != 'Polygon'
-    invalid_buildings = buildings_df[not_polygon]['Name'].values
+    invalid_buildings = buildings_df[not_polygon]['name'].values
     if len(invalid_buildings):
         raise Exception(
             'Some buildings are not of type "Polygon": {buildings}'.format(buildings=', '.join(invalid_buildings)))

@@ -53,7 +53,7 @@ class PeakLoadSupplyPlot(cea.plots.demand.DemandPlotBase):
             for field in analysis_fields:
                 y = dataframe[field]
                 name = NAMING[field]
-                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=dataframe["name"], y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
             return traces
 

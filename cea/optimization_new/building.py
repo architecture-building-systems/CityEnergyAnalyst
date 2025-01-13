@@ -2,7 +2,7 @@
 This Building Class defines a building in the domain analysed by the optimisation script.
 
 The buildings described using the Building Class bundle all properties relevant for the optimisation, including:
-- The building's unique identifier (i.e. 'Name' from the input editor)
+- The building's unique identifier (i.e. 'name' from the input editor)
 - The building's location
 - The demand profile of the building
 """
@@ -17,7 +17,6 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 import pandas as pd
-from cea.utilities import dbf
 from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
@@ -113,7 +112,7 @@ class Building(object):
         """
         if self.location is None:
             self.crs = domain_shp_file.crs
-            self.footprint = domain_shp_file[domain_shp_file.Name == self.identifier].geometry.iloc[0]
+            self.footprint = domain_shp_file[domain_shp_file.name == self.identifier].geometry.iloc[0]
             self.location = self.footprint.representative_point()
         else:
             pass
@@ -129,10 +128,10 @@ class Building(object):
         # load the building supply systems file as a class variable
         if Building._base_supply_systems.empty:
             building_supply_systems_file = file_locator.get_building_supply()
-            Building._base_supply_systems = dbf.dbf_to_dataframe(building_supply_systems_file)
+            Building._base_supply_systems = pd.read_csv(building_supply_systems_file)
 
         # fetch the base supply system for the building according to the building supply systems file
-        base_supply_system_info = Building._base_supply_systems[Building._base_supply_systems['Name'] == self.identifier]
+        base_supply_system_info = Building._base_supply_systems[Building._base_supply_systems['name'] == self.identifier]
         if base_supply_system_info.empty:
             raise ValueError(f"Please make sure supply systems file specifies a base-case supply system for all "
                              f"buildings. No information could be found on building '{self.identifier}'.")

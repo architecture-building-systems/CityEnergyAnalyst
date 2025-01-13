@@ -24,9 +24,9 @@ Edges.shp
     :align: center
 
 - **Shape**: Polyline (Geometry Type)
-- **Type_mat (String)**: material of the pipes (default T1), more types can be found in technologies>systems>thermal_networks.xls
-- **Pipe_DN (String)**: 150 (this is an initial guess, it will be updated after the simulation).
-- **Type (String)**: Pipe number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``"PIPE"&[FID]``).
+- **type_mat (String)**: material of the pipes (default T1), more types can be found in technologies>systems>thermal_networks.xls
+- **pipe_DN (String)**: 150 (this is an initial guess, it will be updated after the simulation).
+- **type (String)**: Pipe number, the number has to be exactly the same as the FID (use ``Field calculator`` in ArcGIS, type ``"PIPE"&[FID]``).
 
 Nodes.shp
 ---------

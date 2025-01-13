@@ -178,12 +178,12 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
 
     print('Calculating terrain intersection of building geometries')
-    zone_buildings_df = zone_df.set_index('Name')
+    zone_buildings_df = zone_df.set_index('name')
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
 
-    surroundings_buildings_df = surroundings_df.set_index('Name')
+    surroundings_buildings_df = surroundings_df.set_index('name')
     surroundings_building_names = surroundings_buildings_df.index.values
     surroundings_building_solid_list, _ = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
                                                                elevation_map, num_processes)
@@ -462,6 +462,11 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
             normals_wall.append(standard_normal)
             wall_intersects.append(1)
         else:
+            try:    # Ensure wwr is a float
+                wwr = float(wwr)
+            except ValueError:
+                raise ValueError(f"Invalid value for wwr: {wwr}. It must be a numeric value.")
+
             # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
                 # for window
@@ -630,7 +635,7 @@ def geometry_main(config, zone_df, surroundings_df, trees_df, terrain_raster, ar
         zone_df, surroundings_df, trees_df, terrain_raster)
 
     # clear in case there are repeated buildings from zone in surroundings file
-    filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
+    filter_surrounding_buildings = ~surroundings_df["name"].isin(zone_df["name"])
     surroundings_df = surroundings_df[filter_surrounding_buildings]
 
     check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster)

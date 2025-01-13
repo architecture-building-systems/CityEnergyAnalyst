@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import traceback
 from typing import Dict, Any, Optional, List
+from osgeo import gdal
 
 import geopandas
 import pandas as pd
@@ -15,15 +16,15 @@ import cea.config
 import cea.api
 import cea.inputlocator
 from cea.databases import get_regions, databases_folder_path
-from cea.datamanagement.create_new_scenario import generate_default_typology, copy_typology, copy_terrain
+import geopandas as gpd
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.utilities.dbf import dbf_to_dataframe
 
-from cea.utilities.dbf import dataframe_to_dbf
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
 router = APIRouter()
 
@@ -191,7 +192,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
         )
 
     def create_zone(scenario_form, locator):
-        # Generate / Copy zone and surroundings
+        # Generate zone from OSM
         if scenario_form.should_generate_zone():
             site_geojson = scenario_form.generate_zone
             site_df = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
@@ -204,6 +205,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
+
+        # Copy zone from user-input
         else:
             # Copy zone using path
             zone_df = geopandas.read_file(scenario_form.user_zone).to_crs(get_geographic_coordinate_system())
@@ -216,7 +219,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             verify_input_geometry_zone(zone_df)
 
             # Replace invalid characters in building name (characters that would affect path and csv files)
-            zone_df["Name"] = zone_df["Name"].str.replace(r'[\\\/\.,\s]', '_', regex=True)
+            zone_df["name"] = zone_df["name"].str.replace(r'[\\\/\.,\s]', '_', regex=True)
 
             zone_path = locator.get_zone_geometry()
             locator.ensure_parent_folder_exists(zone_path)
@@ -246,16 +249,40 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
-    def create_typology(scenario_form, zone_df, locator):
-        # Only process typology if zone is not generated
+    def add_typology(typology_path, locator):
+
+        # Load the shapefile into a GeoDataFrame
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
+        if not os.path.isfile(typology_path):
+            raise Exception(f"Typology at {typology_path} does not exist")
+
+        _, ext = os.path.splitext(typology_path)
+
+        if ext == ".dbf":
+            df = dbf_to_dataframe(typology_path)
+        elif ext == ".xlsx":
+            df = pd.read_excel(typology_path)
+        else:
+            raise Exception("Typology file must be a .dbf or .xlsx file")
+
+        df = df[COLUMNS_ZONE_TYPOLOGY]
+        # verify if input file is correct for CEA, if not an exception will be released
+        verify_input_typology(df)
+
+        # merge the typology with the zone
+        merged_gdf = zone_gdf.merge(df, on='name', how='left')
+
+        # create new file
+        merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
+
+
+    def create_typology(scenario_form, locator):
+        # Only process typology if zone is not generated from OSM
         if scenario_form.should_generate_zone():
             return
 
-        locator.ensure_parent_folder_exists(locator.get_building_typology())
-        if scenario_form.should_generate_typology():
-            # Generate using default typology
-            generate_default_typology(zone_df, locator)
-        elif scenario_form.typology is not None:
+        if scenario_form.typology is not None:
             # Copy typology using path
             _, extension = os.path.splitext(scenario_form.typology)
             if extension == ".xlsx":
@@ -271,8 +298,8 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             verify_input_typology(typology_df)
 
             # Check if typology index matches zone
-            zone_names = set(zone_df["Name"])
-            typology_names = set(typology_df["Name"])
+            zone_names = set(zone_df["name"])
+            typology_names = set(typology_df["name"])
             if not zone_names == typology_names:
                 only_in_zone = zone_names.difference(typology_names)
                 only_in_typology = typology_names.difference(zone_names)
@@ -282,34 +309,24 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
 
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Names found in Building geometries (zone) and Building information (typology) do not match. '
-                           'Ensure the `Name` columns of the two files are identical. '
+                    detail='Building names found in Building geometries (zone) and Building information (typology) do not match. '
+                           'Ensure the `name` columns of the two files are identical. '
                            f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
                 )
 
-            copy_typology(scenario_form.typology, locator)
+            add_typology(scenario_form.typology, locator)
         else:
-            # Try extracting typology from zone
-            print('Trying to extract typology from zone')
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail='User to provide Building information: construction year, '
+                                       'construction type, use types and their ratios.',
+                                )
 
-            # Make sure typology column names are in correct case
-            zone_df.columns = [col.lower() for col in zone_df.columns]
-            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_TYPOLOGY}
-            zone_df.rename(columns=rename_dict, inplace=True)
-
-            try:
-                verify_input_typology(zone_df)
-            except Exception as e:
-                print(f'Could not extract typology from zone: {e}')
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Not enough information to generate typology file from zone file.'
-                           'Check zone file for the required typology.',
-                )
-
-            typology_df = zone_df[COLUMNS_ZONE_TYPOLOGY]
-            dataframe_to_dbf(typology_df, locator.get_building_typology())
-            print(f'Typology file created at {locator.get_building_typology()}')
+    def copy_terrain(terrain_path, locator, lat, lon):
+        terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
+        locator.ensure_parent_folder_exists(locator.get_terrain())
+        driver = gdal.GetDriverByName('GTiff')
+        verify_input_terrain(terrain)
+        driver.CreateCopy(locator.get_terrain(), terrain)
 
     def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
@@ -347,7 +364,7 @@ async def create_new_scenario_v2(scenario_form: CreateScenario):
             zone_df = create_zone(scenario_form, locator)
 
             # Generate / Copy typology
-            create_typology(scenario_form, zone_df, locator)
+            create_typology(scenario_form, locator)
 
             # Generate / Copy surroundings
             create_surroundings(scenario_form, zone_df, locator)

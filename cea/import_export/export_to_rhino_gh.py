@@ -19,7 +19,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.utilities.dbf import dbf_to_csv_xlsx
 from cea.utilities.shapefile import shapefile_to_csv_xlsx
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
@@ -57,7 +56,6 @@ def exec_export_csv_for_rhino(config, locator):
     # Export zone info including typology
     if bool_include_zone:
         shapefile_to_csv_xlsx(locator.get_zone_geometry(), output_path, 'zone_to.csv', new_crs)
-        dbf_to_csv_xlsx(locator.get_building_typology(), output_path, 'typology_to.csv')
 
     if bool_include_site and os.path.isfile(locator.get_site_polygon()):
         shapefile_to_csv_xlsx(locator.get_site_polygon(), output_path, 'site_to.csv', new_crs)
