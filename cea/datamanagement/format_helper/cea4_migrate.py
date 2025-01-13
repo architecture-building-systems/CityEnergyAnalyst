@@ -54,6 +54,7 @@ columns_mapping_dict_typology = {'YEAR': 'year',
                                  '3RD_USE': 'use_type3',
                                  '3RD_USE_R': 'use_type3r'
                                  }
+COLUMNS_ZONE_TYPOLOGY_3 = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-3
@@ -268,6 +269,7 @@ def migrate_cea3_to_cea4(scenario):
                     if not list_missing_attributes_typology_3 and list_missing_attributes_zone_4:
                         # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'typology.shp follows the CEA-3 format.')
                         typology_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'typology'))
+                        typology_df = typology_df[COLUMNS_ZONE_TYPOLOGY_3]
                         typology_df.rename(columns=columns_mapping_dict_typology, inplace=True)
                         zone_df_4 = pd.merge(zone_df_3, typology_df, left_on=['name'], right_on=["Name"], how='left')
                         zone_df_4.drop(columns=['Name'], inplace=True)
