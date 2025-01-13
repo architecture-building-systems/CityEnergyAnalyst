@@ -199,6 +199,31 @@ def verify_file_exists_3(scenario, items):
     return list_missing_files
 
 
+def migrate_dbf_to_csv(scenario, item, required_columns):
+    """
+    Migrate a DBF file to CSV format with column renaming.
+
+    Args:
+        scenario: The scenario path
+        item: The item name (e.g., 'air_conditioning')
+        required_columns: List of required columns
+    """
+    list_missing_columns = verify_dbf_3(scenario, item, required_columns)
+    if list_missing_columns:
+        print(f'Ensure column(s) are present in the {item}.dbf: {list_missing_columns}')
+    else:
+        if 'Name' not in list_missing_columns:
+            list_names_duplicated = verify_name_duplicates_3(scenario, item)
+            if list_names_duplicated:
+                print(f'Ensure name(s) are unique in {item}.dbf: {list_names_duplicated} is duplicated.')
+            else:
+                df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, item))
+                df.rename(columns=columns_mapping_dict_name, inplace=True)
+                df.rename(columns=columns_mapping_dict_typology, inplace=True)
+                df.to_csv(path_to_input_file_without_db_4(scenario, item), index=False)
+                os.remove(path_to_input_file_without_db_3(scenario, item))
+                print(f'{item}.dbf has been migrated from CEA-3 to CEA-4 format.')
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -278,89 +303,16 @@ def migrate_cea3_to_cea4(scenario):
 
         #2. about the .dbf files in the building-properties folde to be mirgrated to .csv files
         if 'air_conditioning' not in list_missing_files_dbf_building_properties:
-            list_missing_columns_air_conditioning = verify_dbf_3(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_3)
-            if list_missing_columns_air_conditioning:
-                print('Ensure column(s) are present in the air_conditioning.dbf: {missing_columns_air_conditioning}'.format(missing_columns_air_conditioning=list_missing_columns_air_conditioning))
-            else:
-                if 'Name' not in list_missing_columns_air_conditioning:
-                    list_names_duplicated = verify_name_duplicates_3(scenario, 'air_conditioning')
-                    if list_names_duplicated:
-                        print('Ensure name(s) are unique in air_conditioning.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-                    else:
-                        air_conditioning_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'air_conditioning'))
-                        air_conditioning_df.rename(columns=columns_mapping_dict_name, inplace=True)
-                        air_conditioning_df.rename(columns=columns_mapping_dict_typology, inplace=True)
-                        air_conditioning_df.to_csv(path_to_input_file_without_db_4(scenario, 'air_conditioning'), index=False)
-                        os.remove(path_to_input_file_without_db_3(scenario, 'air_conditioning'))
-                        print('air_conditioning.dbf has been migrated from CEA-3 to CEA-4 format.')
+            migrate_dbf_to_csv('air_conditioning', COLUMNS_AIR_CONDITIONING_3)
 
         if 'architecture' not in list_missing_files_dbf_building_properties:
-            list_missing_columns_architecture = verify_dbf_3(scenario, 'architecture', COLUMNS_ARCHITECTURE_3)
-            if list_missing_columns_architecture:
-                print('Ensure column(s) are present in the architecture.dbf: {missing_columns_architecture}'.format(missing_columns_architecture=list_missing_columns_architecture))
-            else:
-                if 'Name' not in list_missing_columns_architecture:
-                    list_names_duplicated = verify_name_duplicates_3(scenario, 'architecture')
-                    if list_names_duplicated:
-                        print('Ensure name(s) are unique in architecture.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-                    else:
-                        architecture_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'architecture'))
-                        architecture_df.rename(columns=columns_mapping_dict_name, inplace=True)
-                        architecture_df.rename(columns=columns_mapping_dict_typology, inplace=True)
-                        architecture_df.to_csv(path_to_input_file_without_db_4(scenario, 'architecture'), index=False)
-                        os.remove(path_to_input_file_without_db_3(scenario, 'architecture'))
-                        print('architecture.dbf has been migrated from CEA-3 to CEA-4 format.')
+            migrate_dbf_to_csv(scenario, 'architecture', COLUMNS_ARCHITECTURE_3)
 
         if 'indoor_comfort' not in list_missing_files_dbf_building_properties:
-            list_missing_columns_indoor_comfort = verify_dbf_3(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_3)
-            if list_missing_columns_indoor_comfort:
-                print('Ensure column(s) are present in the air_conditioning.dbf: {missing_columns_indoor_comfort}'.format(missing_columns_indoor_comfort=list_missing_columns_indoor_comfort))
-            else:
-                if 'Name' not in list_missing_columns_indoor_comfort:
-                    list_names_duplicated = verify_name_duplicates_3(scenario, 'indoor_comfort')
-                    if list_names_duplicated:
-                        print('Ensure name(s) are unique in indoor_comfort.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-                    else:
-                        indoor_comfort_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'indoor_comfort'))
-                        indoor_comfort_df.rename(columns=columns_mapping_dict_name, inplace=True)
-                        indoor_comfort_df.rename(columns=columns_mapping_dict_typology, inplace=True)
-                        indoor_comfort_df.to_csv(path_to_input_file_without_db_4(scenario, 'indoor_comfort'), index=False)
-                        os.remove(path_to_input_file_without_db_3(scenario, 'indoor_comfort'))
-                        print('indoor_comfort.dbf has been migrated from CEA-3 to CEA-4 format.')
-
-        if 'internal_loads' not in list_missing_files_dbf_building_properties:
-            list_missing_columns_internal_loads = verify_dbf_3(scenario, 'internal_loads', COLUMNS_INTERNAL_LOADS_3)
-            if list_missing_columns_internal_loads:
-                print('Ensure column(s) are present in the internal_loads.dbf: {missing_columns_internal_loads}'.format(missing_columns_internal_loads=list_missing_columns_internal_loads))
-            else:
-                if 'Name' not in list_missing_columns_internal_loads:
-                    list_names_duplicated = verify_name_duplicates_3(scenario, 'internal_loads')
-                    if list_names_duplicated:
-                        print('Ensure name(s) are unique in internal_loads.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-                    else:
-                        internal_loads_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'internal_loads'))
-                        internal_loads_df.rename(columns=columns_mapping_dict_name, inplace=True)
-                        internal_loads_df.rename(columns=columns_mapping_dict_typology, inplace=True)
-                        internal_loads_df.to_csv(path_to_input_file_without_db_4(scenario, 'internal_loads'), index=False)
-                        os.remove(path_to_input_file_without_db_3(scenario, 'internal_loads'))
-                        print('internal_loads.dbf has been migrated from CEA-3 to CEA-4 format.')
+            migrate_dbf_to_csv(scenario, 'indoor_comfort', COLUMNS_INDOOR_COMFORT_3)
 
         if 'supply_systems' not in list_missing_files_dbf_building_properties:
-            list_missing_columns_supply_systems = verify_dbf_3(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3)
-            if list_missing_columns_supply_systems:
-                print('Ensure column(s) are present in the supply_systems.dbf: {missing_columns_supply_systems}'.format(missing_columns_supply_systems=list_missing_columns_supply_systems))
-            else:
-                if 'Name' not in list_missing_columns_supply_systems:
-                    list_names_duplicated = verify_name_duplicates_3(scenario, 'supply_systems')
-                    if list_names_duplicated:
-                        print('Ensure name(s) are unique in supply_systems.dbf: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
-                    else:
-                        supply_systems_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'supply_systems'))
-                        supply_systems_df.rename(columns=columns_mapping_dict_name, inplace=True)
-                        supply_systems_df.rename(columns=columns_mapping_dict_typology, inplace=True)
-                        supply_systems_df.to_csv(path_to_input_file_without_db_4(scenario, 'supply_systems'), index=False)
-                        os.remove(path_to_input_file_without_db_3(scenario, 'supply_systems'))
-                        print('supply_systems.dbf has been migrated from CEA-3 to CEA-4 format.')
+            migrate_dbf_to_csv(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3)
 
         if 'typology' not in list_missing_files_dbf_building_properties:
             os.remove(path_to_input_file_without_db_3(scenario, 'typology'))
@@ -405,7 +357,7 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire process of data migration from CEA-3 to CEA-4 is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire process of data migration from CEA-3 to CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

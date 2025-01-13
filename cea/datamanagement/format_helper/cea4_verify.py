@@ -200,9 +200,6 @@ def verify_name_duplicates_4(scenario, item):
 
 def print_verification_results_4(scenario_name, dict_missing):
 
-    list_missing_files_shp_building_geometry = dict_missing.get('building-geometry')
-    list_missing_files_csv_building_properties = dict_missing.get('building-properties')
-
     if all(not value for value in dict_missing.values()):
         print("✓" * 3)
         print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
@@ -222,9 +219,6 @@ def print_verification_results_4(scenario_name, dict_missing):
 ## --------------------------------------------------------------------------------------------------------------------
 
 def cea4_verify(scenario, print_results=False):
-
-    #0. get the scenario name
-    scenario_name = os.path.basename(scenario)
 
     #1. about zone.shp and surroundings.shp
     list_missing_attributes_zone = []
@@ -395,7 +389,7 @@ def main(config):
     # Print: End
     # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
     print('+' * 60)
-    print('The entire process of CEA-4 format verification is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire process of CEA-4 format verification is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -91,7 +91,7 @@ def main(config):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('+' * 60)
-    print('The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
