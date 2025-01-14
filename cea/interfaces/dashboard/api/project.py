@@ -314,35 +314,7 @@ async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()
             locator.ensure_parent_folder_exists(surroundings_path)
             surroundings_df.to_file(surroundings_path)
 
-    def add_typology(typology_path, locator):
-
-        # Load the shapefile into a GeoDataFrame
-        zone_gdf = gpd.read_file(locator.get_zone_geometry())
-
-        if not os.path.isfile(typology_path):
-            raise Exception(f"Typology at {typology_path} does not exist")
-
-        _, ext = os.path.splitext(typology_path)
-
-        if ext == ".dbf":
-            df = dbf_to_dataframe(typology_path)
-        elif ext == ".xlsx":
-            df = pd.read_excel(typology_path)
-        else:
-            raise Exception("Typology file must be a .dbf or .xlsx file")
-
-        df = df[COLUMNS_ZONE_TYPOLOGY]
-        # verify if input file is correct for CEA, if not an exception will be released
-        verify_input_typology(df)
-
-        # merge the typology with the zone
-        merged_gdf = zone_gdf.merge(df, on='name', how='left')
-
-        # create new file
-        merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
-
-
-    def create_typology(scenario_form, locator):
+    def add_typology(scenario_form, zone_df, locator):
         # Only process typology if zone is not generated from OSM
         if scenario_form.should_generate_zone():
             return
@@ -350,10 +322,12 @@ async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()
         if scenario_form.typology is not None:
             # Copy typology using path
             _, extension = os.path.splitext(scenario_form.typology)
-            if extension == ".xlsx":
+            if extension == ".dbf":
+                typology_df = dbf_to_dataframe(scenario_form.typology)
+            elif extension == ".xlsx":
                 typology_df = pd.read_excel(scenario_form.typology)
             else:
-                typology_df = geopandas.read_file(scenario_form.typology)
+                raise Exception("Typology file must be a .dbf or .xlsx file")
 
             # Make sure typology column names are in correct case
             typology_df.columns = [col.lower() for col in typology_df.columns]
@@ -379,19 +353,16 @@ async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()
                            f'{zone_message}{"," if zone_message and typology_message else ""}{typology_message}',
                 )
 
-            add_typology(scenario_form.typology, locator)
+            # merge the typology with the zone
+            merged_gdf = zone_df.merge(typology_df, on='name', how='left')
+
+            # create new file
+            merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail='User to provide Building information: construction year, '
                                        'construction type, use types and their ratios.',
                                 )
-
-    def copy_terrain(terrain_path, locator, lat, lon):
-        terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-        locator.ensure_parent_folder_exists(locator.get_terrain())
-        driver = gdal.GetDriverByName('GTiff')
-        verify_input_terrain(terrain)
-        driver.CreateCopy(locator.get_terrain(), terrain)
 
     async def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
@@ -404,7 +375,11 @@ async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()
             locator.ensure_parent_folder_exists(locator.get_terrain())
 
             async with scenario_form.get_terrain_file() as terrain_path:
-                copy_terrain(terrain_path, locator, lat, lon)
+                # Ensure terrain is the same projection system
+                terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
+                driver = gdal.GetDriverByName('GTiff')
+                verify_input_terrain(terrain)
+                driver.CreateCopy(locator.get_terrain(), terrain)
 
     async def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
@@ -430,8 +405,8 @@ async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()
             # Generate / Copy zone
             zone_df = await create_zone(scenario_form, locator)
 
-            # Generate / Copy typology
-            create_typology(scenario_form, locator)
+            # Add typology to zone
+            add_typology(scenario_form, zone_df, locator)
 
             # Generate / Copy surroundings
             await create_surroundings(scenario_form, zone_df, locator)
