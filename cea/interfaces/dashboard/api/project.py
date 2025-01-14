@@ -163,7 +163,30 @@ async def get_project_choices(project_root: CEAProjectRoot):
             detail="Project root not defined",
         )
 
-    projects = [_path for _path in os.listdir(project_root) if os.path.isdir(os.path.join(project_root, _path))]
+    try:
+        projects = []
+        for _path in os.listdir(project_root):
+            full_path = os.path.join(project_root, _path)
+            if os.path.isdir(full_path) and os.access(full_path, os.R_OK):
+                # Optionally: Add validation that this is a valid project directory
+                projects.append(_path)
+        if not projects:
+            return {"projects": [], "warning": "No valid projects found in directory"}
+    except PermissionError:
+        raise HTTPException(
+            status_code=403,
+            detail="Permission denied accessing project root",
+        )
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Project root directory not found",
+        )
+    except OSError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read project root: {str(e)}",
+        )
     return {
         "projects": projects
     }
