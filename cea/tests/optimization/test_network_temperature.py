@@ -1,4 +1,4 @@
-import pytest
+import unittest
 
 class TestNetworkTemperature(unittest.TestCase):
     """Unit tests for the target functionality."""
