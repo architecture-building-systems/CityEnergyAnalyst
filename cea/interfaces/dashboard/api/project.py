@@ -6,29 +6,27 @@ import tempfile
 import traceback
 from contextlib import asynccontextmanager
 from typing import Dict, Any, Optional, List, Union
-from osgeo import gdal
 
 import geopandas
 import pandas as pd
 from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
 from geopandas import GeoDataFrame
-from starlette.datastructures import UploadFile as _UploadFile
+from osgeo import gdal
 from pydantic import BaseModel
 from shapely.geometry import shape
+from starlette.datastructures import UploadFile as _UploadFile
 from typing_extensions import Annotated
 
-import cea.config
 import cea.api
+import cea.config
 import cea.inputlocator
 from cea.databases import get_regions, databases_folder_path
-import geopandas as gpd
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
-
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
 router = APIRouter()
