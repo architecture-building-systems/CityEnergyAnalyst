@@ -48,7 +48,7 @@ class ScenarioPath(BaseModel):
 
 class NewProject(BaseModel):
     project_name: str
-    project_root: str
+    project_root: Optional[str] = None
 
 
 class CreateScenario(BaseModel):
@@ -153,6 +153,21 @@ class ConfigProjectInfo(BaseModel):
     scenario: str
 
 
+
+@router.get('/choices')
+async def get_project_choices(project_root: CEAProjectRoot):
+    """Return project choices based on the project root"""
+    if project_root is None or project_root == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Project root not defined",
+        )
+
+    projects = [_path for _path in os.listdir(project_root) if os.path.isdir(os.path.join(project_root, _path))]
+    return {
+        "projects": projects
+    }
+
 @router.get('/config')
 async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
     """Return the current project and scenario in the config"""
@@ -182,11 +197,11 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
         )
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    config.project = project
+    config.project = cea_project
 
     project_info = {
         'name': os.path.basename(config.project),
-        'project': project,
+        'project': config.project,
         'scenarios_list': list_scenario_names_for_project(config)
     }
 
@@ -194,12 +209,19 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
 
 
 @router.post('/')
-async def create_new_project(new_project: NewProject):
+async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject):
     """
     Create new project folder
     """
+    if new_project.project_root is None and project_root is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project root not defined",
+        )
+
+    _root = new_project.project_root or project_root
     try:
-        project = secure_path(os.path.join(new_project.project_root, new_project.project_name))
+        project = secure_path(os.path.join(_root, new_project.project_name))
     except OutsideProjectRootError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
