@@ -19,9 +19,9 @@ COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'ref
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
-def assert_columns_names(zone_df, columns):
+def assert_columns_names(dataframe: pd.DataFrame, columns):
     try:
-        zone_df[columns]
+        dataframe[columns]
     except ValueError:
         print(
             "one or more columns in the Zone or Surroundings input files is not compatible with CEA, please ensure the column" +
