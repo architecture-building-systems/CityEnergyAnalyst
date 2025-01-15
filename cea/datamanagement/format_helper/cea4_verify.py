@@ -230,12 +230,12 @@ def verify_csv_file(scenario, item, required_columns, print_results=False):
     list_missing_columns = verify_csv_4(scenario, item, required_columns)
     if list_missing_columns:
         if print_results:
-            print(f'+ Ensure column(s) are present in the {item}.csv: {list_missing_columns}')
+            print(f'! Ensure column(s) are present in the {item}.csv: {list_missing_columns}')
     else:
         if 'name' not in list_missing_columns:
             list_names_duplicated = verify_name_duplicates_4(scenario, item)
             if list_names_duplicated and print_results:
-                print(f'Ensure name(s) are unique in {item}.csv: {list_names_duplicated} is duplicated.')
+                print(f'! Ensure name(s) are unique in {item}.csv: {list_names_duplicated} is duplicated.')
     return list_missing_columns
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -253,22 +253,22 @@ def cea4_verify(scenario, print_results=False):
         list_missing_attributes_zone = verify_shp(scenario, 'zone', COLUMNS_ZONE_4)
         if list_missing_attributes_zone:
             if print_results:
-                print('+ Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
+                print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
             if 'name' not in list_missing_attributes_zone:
                 list_names_duplicated = verify_name_duplicates_4(scenario, 'zone')
                 if list_names_duplicated:
                     if print_results:
-                        print('+ Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
+                        print('! Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
     if 'surroundings' not in list_missing_files_shp_building_geometry:
         list_missing_attributes_surroundings = verify_shp(scenario, 'surroundings', COLUMNS_SURROUNDINGS_4)
         if list_missing_attributes_surroundings:
             if print_results:
-                print('+ Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
+                print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
             if 'name' not in list_missing_attributes_surroundings:
                 list_names_duplicated = verify_name_duplicates_4(scenario, 'surroundings')
                 if list_names_duplicated:
                     if print_results:
-                        print('+ Ensure name(s) are unique in surroundings.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
+                        print('! Ensure name(s) are unique in surroundings.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
     #2. about .csv files under the "inputs/building-properties" folder
     list_missing_columns_air_conditioning = []
@@ -280,7 +280,7 @@ def cea4_verify(scenario, print_results=False):
     list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
     if list_missing_files_csv_building_properties:
         if print_results:
-            print('+ Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
+            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
 
     for item, columns in [
         ('air_conditioning', COLUMNS_AIR_CONDITIONING_4),
@@ -297,17 +297,17 @@ def cea4_verify(scenario, print_results=False):
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
     if list_missing_files_terrain:
         if print_results:
-            print('+ Ensure terrain.tif are present in the typography folder. Consider running Terrain Helper under Data Management.')
+            print('! Ensure terrain.tif are present in the typography folder. Consider running Terrain Helper under Data Management.')
 
     list_missing_files_weather = verify_file_exists_4(scenario, ['weather'])
     if list_missing_files_weather:
         if print_results:
-            print('+ Ensure weather.epw are present in the weather folder. Consider running Weather Helper under Data Management.')
+            print('! Ensure weather.epw are present in the weather folder. Consider running Weather Helper under Data Management.')
 
     list_missing_files_streets = verify_file_exists_4(scenario, ['streets'])
     if list_missing_files_streets:
         if print_results:
-            print('+ Ensure streets.shp are present in the networks folder, if Thermal-Networks analysis is required. Consider running Streets Helper under Data Management. ')
+            print('! Ensure streets.shp are present in the networks folder, if Thermal-Networks analysis is required. Consider running Streets Helper under Data Management. ')
 
     #4. verify the DB under the "inputs/technology/" folder
     list_missing_files_db = []
