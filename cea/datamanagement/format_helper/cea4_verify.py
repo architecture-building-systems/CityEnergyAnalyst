@@ -302,12 +302,12 @@ def cea4_verify(scenario, print_results=False):
     list_missing_files_weather = verify_file_exists_4(scenario, ['weather'])
     if list_missing_files_weather:
         if print_results:
-            print('+ Ensure weather.epw are present in the typography folder. Consider running Weather Helper under Data Management.')
+            print('+ Ensure weather.epw are present in the weather folder. Consider running Weather Helper under Data Management.')
 
     list_missing_files_streets = verify_file_exists_4(scenario, ['streets'])
     if list_missing_files_streets:
         if print_results:
-            print('+ Ensure streets.shp are present in the typography folder. Consider running Streets Helper under Data Management, if Thermal-Networks analysis is required.')
+            print('+ Ensure streets.shp are present in the networks folder, if Thermal-Networks analysis is required. Consider running Streets Helper under Data Management. ')
 
     #4. verify the DB under the "inputs/technology/" folder
     list_missing_files_db = []
