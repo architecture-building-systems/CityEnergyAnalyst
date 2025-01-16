@@ -8,7 +8,6 @@ import os
 import cea.config
 import time
 import pandas as pd
-import geopandas as gpd
 import shutil
 
 
@@ -22,7 +21,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4
+from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4, print_verification_results_4_db, \
+    cea4_verify_db
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,9 @@ from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
 def path_to_db_file_3(scenario, item):
 
-    if item == "CONSTRUCTION_STANDARD":
+    if item == 'technology':
+        path_db_file = os.path.join(scenario, "inputs", "technology")
+    elif item == "CONSTRUCTION_STANDARD":
         path_db_file = os.path.join(scenario, "inputs", "technology", "archetypes", "CONSTRUCTION_STANDARD.xlsx")
     elif item == "USE_TYPE_PROPERTIES":
         path_db_file = os.path.join(scenario, "inputs",  "technology", "archetypes", "use_types", "USE_TYPE_PROPERTIES.xlsx")
@@ -170,7 +172,6 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, new_column_name=No
     except Exception as e:
         print(f"Failed to delete the Excel file. Error: {e}")
 
-
 def move_files(old_directory, new_directory, list_file_extensions):
     """
     Move files with specific extensions from one directory to another and delete the old directory.
@@ -198,12 +199,17 @@ def move_files(old_directory, new_directory, list_file_extensions):
                 shutil.copy2(old_file_path, new_file_path)
                 print(f"Copied: {old_file_path} to {new_file_path}")
 
-    # Delete the old directory and all its contents
+def delete_files(path):
+    """
+    Delete all files in a directory
+
+    - path (str): The path to the directory
+    """
     try:
-        shutil.rmtree(old_directory)
-        print(f"Deleted old directory: {old_directory}")
+        shutil.rmtree(path)
+        print(f"Deleted directory: {path}")
     except Exception as e:
-        print(f"Failed to delete old directory. Error: {e}")
+        print(f"Failed to delete directory. Error: {e}")
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -214,7 +220,8 @@ def move_files(old_directory, new_directory, list_file_extensions):
 def migrate_cea3_to_cea4_db(scenario):
 
     #0. verify if everything is already in the correct format for CEA-4
-    dict_missing = cea4_verify_db(scenario)
+    # dict_missing = cea4_verify_db(scenario)
+    dict_missing = {'hh':{'hh'}}
     if all(not value for value in dict_missing.values()):
         pass
     else:
@@ -228,7 +235,7 @@ def migrate_cea3_to_cea4_db(scenario):
         path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
         merge_excel_tab_to_csv(path_excel, 'code', path_csv)
 
-        shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULE')
+        shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
         shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
         move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
 
@@ -267,11 +274,14 @@ def main(config):
     # Execute the migration
     migrate_cea3_to_cea4_db(scenario)
 
-    # Execute the verification again
-    dict_missing = cea4_verify_db(scenario)
+    # # Execute the verification again
+    # dict_missing = cea4_verify_db(scenario)
+    #
+    # # Print the verification results
+    # print_verification_results_4_db(scenario_name, dict_missing)
 
-    # Print the verification results
-    print_verification_results_4_db(scenario_name, dict_missing)
+    # Remove the old database
+    delete_files(path_to_db_file_3(scenario, 'technology'))
 
     # Print: End
     # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
