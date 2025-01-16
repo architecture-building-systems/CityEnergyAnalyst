@@ -234,7 +234,7 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
-    description: Calculate the embodied and operational emissions of buildings.
+    description: This Feature calculates the embodied and operational emissions of buildings.
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -246,7 +246,7 @@ Life Cycle Analysis:
 
   - name: system-costs
     label: Energy Supply System Costs
-    description: Calculate the costs for energy supply systems.
+    description: This Feature calculates the costs for energy supply systems.
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
     parameters: ['general:scenario', costs]
@@ -258,8 +258,8 @@ Life Cycle Analysis:
 Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
-    label: Thermal Network Optimization
-    description: Optimize network design variables (plant locations, layout,...)
+    label: Thermal Network Optimisation
+    description: This Feature optimises network design variables (plant locations, layout,...).
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
@@ -267,7 +267,7 @@ Energy Supply System Optimisation:
 
   - name: decentralized
     label: Supply System Part I (decentralised)
-    description: Optimise energy supply systems for decentralised operation.
+    description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
@@ -276,7 +276,7 @@ Energy Supply System Optimisation:
 
   - name: optimization-new
     label: Supply System Part II (centralised)
-    description: Optimise energy supply systems for centralised operation.
+    description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
@@ -290,14 +290,14 @@ Data Management:
 
   - name: database-helper
     label: Database Helper
-    description: Load a CEA Database.
+    description: This Feature loads a CEA Database into the current Scenario.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.database_helper
     parameters: ['general:scenario', database-helper]
 
   - name: archetypes-mapper
     label: Archetypes Mapper
-    description: Assign building properties and systems types from the CEA Archetypes Database
+    description: This Feature populates building properties and systems types for buildings based on the CEA Archetypal Database.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
     parameters: ['general:scenario', archetypes-mapper]
@@ -307,8 +307,7 @@ Data Management:
   - name: weather-helper
     label: Weather Helper
     description: |
-      Set the weather file to use.
-      Fetches data from third party sources if no file is provided by the user.
+      This Feature fetches .epw weather data from third party sources if no file is provided by the user.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
@@ -317,7 +316,7 @@ Data Management:
 
   - name: surroundings-helper
     label: Surroundings Helper
-    description: Query geometry of surrounding buildings from OpenStreetMap.
+    description: This Feature queries geometry of surrounding buildings from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
@@ -326,7 +325,7 @@ Data Management:
 
   - name: terrain-helper
     label: Terrain Helper
-    description: Query topography data from third party sources.
+    description:  This Feature fetches .tif topography data from third party sources.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
@@ -336,7 +335,7 @@ Data Management:
 
   - name: streets-helper
     label: Streets Helper
-    description: Query streets geometry from OpenStreetMap.
+    description: This Feature queries streets geometry from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
@@ -345,7 +344,7 @@ Data Management:
 
   - name: trees-helper
     label: Trees Helper
-    description: Import tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
+    description: This Feature imports tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
     parameters: [ 'general:scenario', trees-helper ]
@@ -359,8 +358,8 @@ Utilities:
   - name: cea4-format-helper
     label: CEA-4 Format Helper
     description: |
-      Verifies the inputs are in the correct format for CEA-4.
-      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      This Feature verifies the inputs are in the correct format for CEA-4.
+      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper
@@ -369,7 +368,7 @@ Utilities:
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate
     description: |
-      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      This Feature migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
     interfaces: [cli]
     module: cea.datamanagement.format_helper.cea4_migrate
@@ -378,7 +377,7 @@ Utilities:
   - name: cea4-verify
     label: CEA-4 Format Helper - Verify
     description: |
-      Verifies the inputs are in the correct format for CEA-4.
+      This Feature verifies the inputs are in the correct format for CEA-4.
 
     interfaces: [cli]
     module: cea.datamanagement.format_helper.cea4_verify
@@ -386,53 +385,42 @@ Utilities:
 
   - name: sensitivity-analysis-sampler
     label: Generate Samples for Sensitivity Analysis (SA)
-    description: Generate samples for sensitivity analysis using Sobol Method.
+    description: This Feature generates samples for sensitivity analysis using Sobol Method.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
   - name: batch-process-workflow
     label: Batch Process Workflow
-    description: Batch process the current scenario or all scenarios under this project. Design the CEA workflow below.
+    description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
-  - name: data-migrator
-    label: Data migrator
-    description: "Migrate older scenario inputs to the latest version.
-                  Please consider running this for scenario created before v3.22.
-                  NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [ cli]
-    module: cea.datamanagement.data_migrator
-    parameters: [ 'general:scenario' ]
-    input-files:
-      - [ get_database_construction_standards ]
-
   - name: dbf-to-csv-to-dbf
     label: .dbf to .csv to .dbf
-    description: dbf => csv (xlsx) => dbf
+    description: This Feature converts files from .dbf to .csv (.xlsx) and back to .dbf.
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', dbf-tools]
 
   - name: shp-to-csv-to-shp
     label: .shp to .csv to .shp
-    description: shp => csv (xlsx) => shp
+    description: This Feature converts files from .shp to .csv (.xlsx) and back to .shp.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', shapefile-tools]
 
   - name: create-new-scenario
     label: Create a New Scenario
-    description: Create a new scenario.
+    description: This Feature facilitate creating a new scenario.
     interfaces: []
     module: cea.datamanagement.create_new_scenario
     parameters: [create-new-scenario]
 
   - name: rename-building
     label: Rename Building
-    description: Rename a building.
+    description: This Feature facilitates renaming a Building.
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
@@ -441,7 +429,7 @@ Utilities:
 
   - name: create-mixed-use-type
     label: Create mixed-use type
-    description: Creates a new use-type by aggregating values from a list of different use-types
+    description: This Feature facilitates creating a new use-type by aggregating values from a list of different use-types
     interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
