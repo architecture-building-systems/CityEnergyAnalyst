@@ -218,12 +218,12 @@ def migrate_cea3_to_cea4_db(scenario):
     if all(not value for value in dict_missing.values()):
         pass
     else:
-        #1. about archetypes
+        #1. about archetypes - construction types
         path_excel = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
         path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
         merge_excel_tab_to_csv(path_excel, 'STANDARD', path_csv, new_column_name='const_type')
 
-        #2. about use types
+        #2. about archetypes - use types
         path_excel = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
         path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
         merge_excel_tab_to_csv(path_excel, 'code', path_csv)
@@ -232,4 +232,4 @@ def migrate_cea3_to_cea4_db(scenario):
         shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
         move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
 
-        
+
