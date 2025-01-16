@@ -3,10 +3,10 @@ Import & Export:
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
     description: |
-      Export CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
+      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
       
       Download the .gh file via the link. Use the Grasshopper components to import the exported package into Rhino/Grasshopper. 
-      The .gh file requires two inputs: the path to this Project and this Scenario name.
+      The .gh file requires two inputs: the path to this Project and the name of this Scenario.
       
       https://www.cityenergyanalyst.com/s/to_cea_v400alpha20gh.zip
     interfaces: [cli, dashboard]
@@ -18,7 +18,7 @@ Import & Export:
   - name: import-from-rhino-gh
     label: Import from Rhino/Grasshopper
     description: |
-      Import Rhino/Grasshopper-generated files into CEA.
+      This Feature imports Rhino/Grasshopper-generated files into CEA.
       
       Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
@@ -31,7 +31,7 @@ Import & Export:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
-    description: Generate .csv files containing CEA results by building(s), time period(s), and metric(s).
+    description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
     parameters: ['general:scenario', result-summary]
@@ -42,7 +42,7 @@ Import & Export:
 Solar Radiation Analysis:
   - name: radiation
     label: Building Solar Radiation
-    description: Use DAYSIM to perform solar radiation analysis.
+    description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
@@ -58,10 +58,10 @@ Solar Radiation Analysis:
   - name: radiation-simplified
     label: Building Solar Radiation (simplified)
     description: |
-      This is a faster alternative to the original radiation script. 
+      This Feature is a faster alternative to the original radiation script. 
       It uses DAYSIM to calculate solar radiation from a sample of buildings in a scenario. 
       Please note that the accuracy of the results for facades is reduced.
-    interfaces: [ cli, dashboard ]
+    interfaces: [cli]
     module: cea.resources.radiation.simplified.main
     parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                   radiation, radiation-simplified ]
@@ -76,7 +76,7 @@ Solar Radiation Analysis:
 Renewable Energy Potential Assessment:
   - name: photovoltaic
     label: Photovoltaic (PV) Panels
-    description: Calculate electricity production from solar photovoltaic technologies
+    description: This Feature calculates PV electricity yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic
     parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
@@ -93,7 +93,7 @@ Renewable Energy Potential Assessment:
 
   - name: photovoltaic-thermal
     label: Photovoltaic-Thermal (PVT) Panels
-    description: Calculate electricity & heat production from photovoltaic / thermal technologies
+    description: This Feature calculates PVT electricity & heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
@@ -119,7 +119,7 @@ Renewable Energy Potential Assessment:
 
   - name: solar-collector
     label: Solar Collectors (SC)
-    description: Calculate heat production from solar collector technologies
+    description: This Feature calculates SC heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.solar_collector
     parameters: ['general:scenario', 'general:multiprocessing',
@@ -136,21 +136,21 @@ Renewable Energy Potential Assessment:
 
   - name: shallow-geothermal-potential
     label: Shallow Geothermal Potential
-    description: Calculate the heat extracted from a geothermal probes (up to 50 m length).
+    description: This Feature calculates the heat extracted from a geothermal probes (up to 50 m deep).
     interfaces: [cli, dashboard]
     module: cea.resources.geothermal
     parameters: ['general:scenario', shallow-geothermal]
 
   - name: water-body-potential
     label: Water Body Potential
-    description: Calculate the heat extracted from a lake or a water body.
+    description: This Feature calculates the heat extracted from a water body such as a lake or a reservoir.
     interfaces: [cli, dashboard]
     module: cea.resources.water_body_potential
     parameters: ['general:scenario', water-body]
 
   - name: sewage-potential
     label: Sewage Heat Potential
-    description: Calculate the heat extracted from the sewage heat exchanger.
+    description: This Feature calculates the heat extracted from sewage heat exchangers.
     interfaces: [cli, dashboard]
     module: cea.resources.sewage_heat_exchanger
     parameters: ['general:scenario', sewage]
@@ -161,7 +161,7 @@ Renewable Energy Potential Assessment:
 Energy Demand Forecasting:
   - name: occupancy-helper
     label: Building Occupancy
-    description: Use CEA models and input schedules to estimate the occupancy profile of buildings.
+    description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
     module: cea.demand.occupancy_helper
     parameters: ['general:scenario',
@@ -178,7 +178,7 @@ Energy Demand Forecasting:
 
   - name: demand
     label: Building Energy Demand
-    description: Use CEA models to forecast the energy demand of buildings.
+    description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
@@ -206,7 +206,7 @@ Thermal Network Design:
 
   - name: network-layout
     label: Thermal Network Part I (layout)
-    description: Create a potential layout of the network with the minimum spanning tree following the streets geometry.
+    description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
@@ -217,7 +217,7 @@ Thermal Network Design:
 
   - name: thermal-network
     label: Thermal Network Part II (simulation)
-    description: Solve the thermal hydraulic network.
+    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
@@ -234,7 +234,7 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
-    description: Calculate the embodied and operational emissions of buildings.
+    description: This Feature calculates the embodied and operational emissions of buildings.
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -246,7 +246,7 @@ Life Cycle Analysis:
 
   - name: system-costs
     label: Energy Supply System Costs
-    description: Calculate the costs for energy supply systems.
+    description: This Feature calculates the costs for energy supply systems.
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
     parameters: ['general:scenario', costs]
@@ -258,8 +258,8 @@ Life Cycle Analysis:
 Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
-    label: Thermal Network Optimization
-    description: Optimize network design variables (plant locations, layout,...)
+    label: Thermal Network Optimisation
+    description: This Feature optimises network design variables (plant locations, layout,...).
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
@@ -267,14 +267,16 @@ Energy Supply System Optimisation:
 
   - name: decentralized
     label: Supply System Part I (decentralised)
-    description: Optimise energy supply systems for decentralised operation.
+    description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
+    input-files:
+      - [get_total_demand]
 
   - name: optimization-new
     label: Supply System Part II (centralised)
-    description: Optimise energy supply systems for centralised operation.
+    description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
@@ -288,14 +290,14 @@ Data Management:
 
   - name: database-helper
     label: Database Helper
-    description: Load a CEA Database.
+    description: This Feature loads a CEA Database into the current Scenario.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.database_helper
     parameters: ['general:scenario', database-helper]
 
   - name: archetypes-mapper
     label: Archetypes Mapper
-    description: Assign building properties and systems types from the CEA Archetypes Database
+    description: This Feature populates building properties and systems types for buildings based on the CEA Archetypal Database.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
     parameters: ['general:scenario', archetypes-mapper]
@@ -305,8 +307,7 @@ Data Management:
   - name: weather-helper
     label: Weather Helper
     description: |
-      Set the weather file to use.
-      Fetches data from third party sources if no file is provided by the user.
+      This Feature fetches .epw weather data from third party sources if no file is provided by the user.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
@@ -315,7 +316,7 @@ Data Management:
 
   - name: surroundings-helper
     label: Surroundings Helper
-    description: Query geometry of surrounding buildings from OpenStreetMap.
+    description: This Feature queries geometry of surrounding buildings from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.surroundings_helper
     parameters: ['general:scenario', surroundings-helper]
@@ -324,7 +325,7 @@ Data Management:
 
   - name: terrain-helper
     label: Terrain Helper
-    description: Query topography data from third party sources.
+    description:  This Feature fetches .tif topography data from third party sources.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
     parameters: ['general:scenario', terrain-helper]
@@ -334,7 +335,7 @@ Data Management:
 
   - name: streets-helper
     label: Streets Helper
-    description: Query streets geometry from OpenStreetMap.
+    description: This Feature queries streets geometry from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.streets_helper
     parameters: ['general:scenario', streets-helper]
@@ -343,7 +344,7 @@ Data Management:
 
   - name: trees-helper
     label: Trees Helper
-    description: Import tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
+    description: This Feature imports tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
     parameters: [ 'general:scenario', trees-helper ]
@@ -357,8 +358,8 @@ Utilities:
   - name: cea4-format-helper
     label: CEA-4 Format Helper
     description: |
-      Verifies the inputs are in the correct format for CEA-4.
-      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      This Feature verifies the inputs are in the correct format for CEA-4.
+      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper
@@ -367,7 +368,7 @@ Utilities:
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate
     description: |
-      Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      This Feature migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
     interfaces: [cli]
     module: cea.datamanagement.format_helper.cea4_migrate
@@ -376,7 +377,7 @@ Utilities:
   - name: cea4-verify
     label: CEA-4 Format Helper - Verify
     description: |
-      Verifies the inputs are in the correct format for CEA-4.
+      This Feature verifies the inputs are in the correct format for CEA-4.
 
     interfaces: [cli]
     module: cea.datamanagement.format_helper.cea4_verify
@@ -384,53 +385,42 @@ Utilities:
 
   - name: sensitivity-analysis-sampler
     label: Generate Samples for Sensitivity Analysis (SA)
-    description: Generate samples for sensitivity analysis using Sobol Method.
+    description: This Feature generates samples for sensitivity analysis using Sobol Method.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
   - name: batch-process-workflow
     label: Batch Process Workflow
-    description: Batch process the current scenario or all scenarios under this project. Design the CEA workflow below.
+    description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
-  - name: data-migrator
-    label: Data migrator
-    description: "Migrate older scenario inputs to the latest version.
-                  Please consider running this for scenario created before v3.22.
-                  NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [ cli]
-    module: cea.datamanagement.data_migrator
-    parameters: [ 'general:scenario' ]
-    input-files:
-      - [ get_database_construction_standards ]
-
   - name: dbf-to-csv-to-dbf
     label: .dbf to .csv to .dbf
-    description: dbf => csv (xlsx) => dbf
+    description: This Feature converts files from .dbf to .csv (.xlsx) and back to .dbf.
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
     parameters: ['general:scenario', dbf-tools]
 
   - name: shp-to-csv-to-shp
     label: .shp to .csv to .shp
-    description: shp => csv (xlsx) => shp
+    description: This Feature converts files from .shp to .csv (.xlsx) and back to .shp.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', shapefile-tools]
 
   - name: create-new-scenario
     label: Create a New Scenario
-    description: Create a new scenario.
+    description: This Feature facilitate creating a new scenario.
     interfaces: []
     module: cea.datamanagement.create_new_scenario
     parameters: [create-new-scenario]
 
   - name: rename-building
     label: Rename Building
-    description: Rename a building.
+    description: This Feature facilitates renaming a Building.
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
@@ -439,7 +429,7 @@ Utilities:
 
   - name: create-mixed-use-type
     label: Create mixed-use type
-    description: Creates a new use-type by aggregating values from a list of different use-types
+    description: This Feature facilitates creating a new use-type by aggregating values from a list of different use-types
     interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
