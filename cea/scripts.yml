@@ -3,7 +3,7 @@ Import & Export:
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
     description: |
-      Export CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
+      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
       
       Download the .gh file via the link. Use the Grasshopper components to import the exported package into Rhino/Grasshopper. 
       The .gh file requires two inputs: the path to this Project and this Scenario name.
@@ -18,7 +18,7 @@ Import & Export:
   - name: import-from-rhino-gh
     label: Import from Rhino/Grasshopper
     description: |
-      Import Rhino/Grasshopper-generated files into CEA.
+      This Feature imports Rhino/Grasshopper-generated files into CEA.
       
       Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
@@ -31,7 +31,7 @@ Import & Export:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
-    description: Generate .csv files containing CEA results by building(s), time period(s), and metric(s).
+    description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
     parameters: ['general:scenario', result-summary]
@@ -42,7 +42,7 @@ Import & Export:
 Solar Radiation Analysis:
   - name: radiation
     label: Building Solar Radiation
-    description: Use DAYSIM to perform solar radiation analysis.
+    description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
@@ -58,7 +58,7 @@ Solar Radiation Analysis:
   - name: radiation-simplified
     label: Building Solar Radiation (simplified)
     description: |
-      This is a faster alternative to the original radiation script. 
+      This Feature is a faster alternative to the original radiation script. 
       It uses DAYSIM to calculate solar radiation from a sample of buildings in a scenario. 
       Please note that the accuracy of the results for facades is reduced.
     interfaces: [cli]
@@ -76,7 +76,7 @@ Solar Radiation Analysis:
 Renewable Energy Potential Assessment:
   - name: photovoltaic
     label: Photovoltaic (PV) Panels
-    description: Calculate electricity production from solar photovoltaic technologies
+    description: This Feature calculates PV electricity yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic
     parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
@@ -93,7 +93,7 @@ Renewable Energy Potential Assessment:
 
   - name: photovoltaic-thermal
     label: Photovoltaic-Thermal (PVT) Panels
-    description: Calculate electricity & heat production from photovoltaic / thermal technologies
+    description: This Feature calculates PVT electricity & heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
@@ -119,7 +119,7 @@ Renewable Energy Potential Assessment:
 
   - name: solar-collector
     label: Solar Collectors (SC)
-    description: Calculate heat production from solar collector technologies
+    description: This Feature calculates SC heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.solar_collector
     parameters: ['general:scenario', 'general:multiprocessing',
@@ -136,21 +136,21 @@ Renewable Energy Potential Assessment:
 
   - name: shallow-geothermal-potential
     label: Shallow Geothermal Potential
-    description: Calculate the heat extracted from a geothermal probes (up to 50 m length).
+    description: This Feature calculates the heat extracted from a geothermal probes (up to 50 m deep).
     interfaces: [cli, dashboard]
     module: cea.resources.geothermal
     parameters: ['general:scenario', shallow-geothermal]
 
   - name: water-body-potential
     label: Water Body Potential
-    description: Calculate the heat extracted from a lake or a water body.
+    description: This Feature calculates the heat extracted from a water body such as a lake or a reservoir.
     interfaces: [cli, dashboard]
     module: cea.resources.water_body_potential
     parameters: ['general:scenario', water-body]
 
   - name: sewage-potential
     label: Sewage Heat Potential
-    description: Calculate the heat extracted from the sewage heat exchanger.
+    description: This Feature calculates the heat extracted from sewage heat exchangers.
     interfaces: [cli, dashboard]
     module: cea.resources.sewage_heat_exchanger
     parameters: ['general:scenario', sewage]
@@ -161,7 +161,7 @@ Renewable Energy Potential Assessment:
 Energy Demand Forecasting:
   - name: occupancy-helper
     label: Building Occupancy
-    description: Use CEA models and input schedules to estimate the occupancy profile of buildings.
+    description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
     module: cea.demand.occupancy_helper
     parameters: ['general:scenario',
@@ -178,7 +178,7 @@ Energy Demand Forecasting:
 
   - name: demand
     label: Building Energy Demand
-    description: Use CEA models to forecast the energy demand of buildings.
+    description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
@@ -206,7 +206,7 @@ Thermal Network Design:
 
   - name: network-layout
     label: Thermal Network Part I (layout)
-    description: Create a potential layout of the network with the minimum spanning tree following the streets geometry.
+    description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
@@ -217,7 +217,7 @@ Thermal Network Design:
 
   - name: thermal-network
     label: Thermal Network Part II (simulation)
-    description: Solve the thermal hydraulic network.
+    description: This Feature solves the thermal hydraulic network.
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
@@ -271,6 +271,8 @@ Energy Supply System Optimisation:
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
+    input-files:
+      - [get_total_demand]
 
   - name: optimization-new
     label: Supply System Part II (centralised)
