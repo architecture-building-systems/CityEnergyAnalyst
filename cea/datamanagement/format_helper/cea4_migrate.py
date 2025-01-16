@@ -235,12 +235,6 @@ def migrate_cea3_to_cea4(scenario):
     dict_missing = cea4_verify(scenario)
     if all(not value for value in dict_missing.values()):
         pass
-        # print("✓" * 3)
-        # print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
-        #       'input building-geometries ShapeFiles: [zone and surroundings], '
-        #       'input building-properties .csv files: {csv_building_properties}.'.format(csv_building_properties=CSV_BUILDING_PROPERTIES_4),
-        #       )
-        # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
 
     else:
         # Verify missing files for CEA-3 and CEA-4 formats
