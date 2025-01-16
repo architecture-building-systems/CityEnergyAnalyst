@@ -55,3 +55,19 @@ def path_to_db_file_4(scenario, item):
     return path_db_file
 
 
+## --------------------------------------------------------------------------------------------------------------------
+## Helper functions
+## --------------------------------------------------------------------------------------------------------------------
+
+
+def print_verification_results_4_db(scenario_name, dict_missing):
+
+    if all(not value for value in dict_missing.values()):
+        print("✓" * 3)
+        print('The Database is verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
+              )
+    else:
+        print("!" * 3)
+        print('All or some of Database files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
+        print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` and run the script again. ')
+        print('- If you manually prepared the Database, check the log for missing files and/or incompatible columns. Modify your Database accordingly.')

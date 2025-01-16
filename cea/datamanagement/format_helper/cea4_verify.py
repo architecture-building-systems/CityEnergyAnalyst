@@ -210,7 +210,7 @@ def print_verification_results_4(scenario_name, dict_missing):
         print("!" * 3)
         print('All or some of input data files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
         print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` and run the script again. ')
-        print('- If you manually prepared the input data, check the log for missing files and/or incompatible columns. Modify your input data according to the log above.')
+        print('- If you manually prepared the input data, check the log for missing files and/or incompatible columns. Modify your input data accordingly.')
 
 
 def verify_csv_file(scenario, item, required_columns, print_results=False):

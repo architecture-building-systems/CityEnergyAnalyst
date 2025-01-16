@@ -232,4 +232,54 @@ def migrate_cea3_to_cea4_db(scenario):
         shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
         move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
 
+        #3. about assemblies
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'ENVELOPE'), path_to_db_file_4(scenario, 'ENVELOPE'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'HVAC'), path_to_db_file_4(scenario, 'HVAC'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'SUPPLY'), path_to_db_file_4(scenario, 'SUPPLY'))
 
+        #4. about components
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'CONVERSION'), path_to_db_file_4(scenario, 'CONVERSION'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'DISTRIBUTION'), path_to_db_file_4(scenario, 'DISTRIBUTION'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS'))
+
+        # Print: End
+        print('-' * 49)
+
+
+## --------------------------------------------------------------------------------------------------------------------
+## Main function
+## --------------------------------------------------------------------------------------------------------------------
+
+
+def main(config):
+    # Start the timer
+    t0 = time.perf_counter()
+    assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
+
+    scenario = config.scenario
+    scenario_name = os.path.basename(scenario)
+
+    # Print: Start
+    div_len = 37 - len(scenario_name)
+    print('-' * 39)
+    print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
+
+    # Execute the migration
+    migrate_cea3_to_cea4_db(scenario)
+
+    # Execute the verification again
+    dict_missing = cea4_verify_db(scenario)
+
+    # Print the verification results
+    print_verification_results_4_db(scenario_name, dict_missing)
+
+    # Print: End
+    # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
+    print('+' * 104)
+
+    # Print the time used for the entire processing
+    time_elapsed = time.perf_counter() - t0
+    print('The entire process of Database migration from CEA-3 to CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
