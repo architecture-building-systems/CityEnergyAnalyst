@@ -203,6 +203,7 @@ def delete_files(path):
     """
     Delete all files in a directory
 
+    Parameters:
     - path (str): The path to the directory
     """
     try:
