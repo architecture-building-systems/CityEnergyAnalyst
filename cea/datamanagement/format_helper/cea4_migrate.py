@@ -376,7 +376,7 @@ def migrate_cea3_to_cea4(scenario):
 
 
         # Print: End
-        print("-" * 60)
+        print('-' * 49)
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
@@ -393,7 +393,7 @@ def main(config):
 
     # Print: Start
     div_len = 37 - len(scenario_name)
-    print('-' * 50)
+    print('-' * 39)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification
@@ -407,7 +407,7 @@ def main(config):
 
     # Print: End
     # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
-    print('+' * 60)
+    print('+' * 104)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

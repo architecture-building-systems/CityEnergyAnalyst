@@ -57,7 +57,7 @@ def main(config):
     project_path = config.general.project
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
 
-    print('+' * 60)
+    print('+' * 39)
     print(f'Format Helper is batch-processing the data verification and migration for Scenarios: {scenarios_list}.')
 
     # Loop over one or all selected scenarios under the project
@@ -67,8 +67,8 @@ def main(config):
             continue
 
         # Print: Start
-        div_len = 37 - len(scenario)
-        print('+' * 60)
+        div_len = 91 - len(scenario)
+        print('+' * 104)
         print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 
         cea_scenario = os.path.join(project_path, scenario)
@@ -77,9 +77,9 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('+' * 60)
+    print('+' * 100)
     print(
-        'The entire batch processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+        'All processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
