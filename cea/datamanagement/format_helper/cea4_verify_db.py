@@ -33,7 +33,7 @@ def path_to_db_file_4(scenario, item):
 
     if item == "CONSTRUCTION_TYPE":
         path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "CONSTRUCTION_TYPE.xlsx")
-    elif item == "USE_TYPE_PROPERTIES":
+    elif item == "USE_TYPE":
         path_db_file = os.path.join(scenario, "inputs",  "database", "ARCHETYPES", "USE_TYPE.xlsx")
     elif item == "SCHEDULES":
         path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES")

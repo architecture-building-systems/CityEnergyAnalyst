@@ -9,6 +9,7 @@ import cea.config
 import time
 import pandas as pd
 import geopandas as gpd
+import shutil
 
 
 
@@ -20,6 +21,8 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -34,7 +37,7 @@ def path_to_db_file_3(scenario, item):
         path_db_file = os.path.join(scenario, "inputs", "technology", "archetypes", "CONSTRUCTION_STANDARD.xlsx")
     elif item == "USE_TYPE_PROPERTIES":
         path_db_file = os.path.join(scenario, "inputs",  "technology", "archetypes", "use_types", "USE_TYPE_PROPERTIES.xlsx")
-    elif item == "SCHEDULE":
+    elif item == "SCHEDULES":
         path_db_file = os.path.join(scenario, "inputs",  "technology", "archetypes", "use_types")
     elif item == "ENVELOPE":
         path_db_file = os.path.join(scenario, "inputs",  "technology", "assemblies", "ENVELOPE.xlsx")
@@ -94,7 +97,7 @@ def excel_tab_to_csv(path_excel, directory_csv):
         print(f"Failed to delete the Excel file. Error: {e}")
 
 
-def merge_excel_tab_to_csv(path_excel, column_name, directory_csv, csv_file_name, new_column_name=None):
+def merge_excel_tab_to_csv(path_excel, column_name, path_csv, new_column_name=None):
     """
     Merge all tabs of an Excel file horizontally based on a common column and save the result as a CSV file.
 
@@ -109,6 +112,7 @@ def merge_excel_tab_to_csv(path_excel, column_name, directory_csv, csv_file_name
     - None
     """
     # Ensure the output directory exists
+    directory_csv = os.path.dirname(path_csv)
     os.makedirs(directory_csv, exist_ok=True)
 
     # Read the Excel file
@@ -153,10 +157,9 @@ def merge_excel_tab_to_csv(path_excel, column_name, directory_csv, csv_file_name
         merged_df = merged_df[cols]
 
         # Save the merged DataFrame as a CSV file
-        output_path = os.path.join(directory_csv, csv_file_name)
         try:
-            merged_df.to_csv(output_path, index=False)
-            print(f"Saved merged DataFrame to {output_path}")
+            merged_df.to_csv(path_csv, index=False)
+            print(f"Saved merged DataFrame to {path_csv}")
         except Exception as e:
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
@@ -203,3 +206,30 @@ def move_files(old_directory, new_directory, list_file_extensions):
         print(f"Failed to delete old directory. Error: {e}")
 
 
+## --------------------------------------------------------------------------------------------------------------------
+## Migrate to CEA-4 format from CEA-3 format
+## --------------------------------------------------------------------------------------------------------------------
+
+
+def migrate_cea3_to_cea4_db(scenario):
+
+    #0. verify if everything is already in the correct format for CEA-4
+    dict_missing = cea4_verify_db(scenario)
+    if all(not value for value in dict_missing.values()):
+        pass
+    else:
+        #1. about archetypes
+        path_excel = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
+        path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
+        merge_excel_tab_to_csv(path_excel, 'STANDARD', path_csv, new_column_name='const_type')
+
+        #2. about use types
+        path_excel = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
+        path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
+        merge_excel_tab_to_csv(path_excel, 'code', path_csv)
+
+        shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULE')
+        shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
+        move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
+
+        
