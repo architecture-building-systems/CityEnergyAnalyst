@@ -217,7 +217,7 @@ Thermal Network Design:
 
   - name: thermal-network
     label: Thermal Network Part II (simulation)
-    description: This Feature solves the thermal hydraulic network.
+    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
