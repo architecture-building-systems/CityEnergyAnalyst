@@ -114,7 +114,6 @@ def verify_file_against_schema(scenario, item, self, verbose=True):
     - scenario (str): Path to the scenario.
     - item (str): Locator for the file to validate (e.g., 'get_zone_geometry').
     - self: Reference to the calling class/module.
-    - save_errors_to (str, optional): Path to save validation errors as a CSV file.
     - verbose (bool, optional): If True, print validation errors to the console.
 
     Returns:
@@ -137,21 +136,33 @@ def verify_file_against_schema(scenario, item, self, verbose=True):
     schema_columns = schema_section['schema']['columns']
     id_column = mapping_dict_input_item_to_id_column[item]
 
-    # Load the data file
-    try:
-        df = pd.read_csv(file_path)
-    except Exception as e:
-        raise ValueError(f"Failed to read file: {file_path}. Error: {e}")
+    # Determine file type and load the data
+    if file_path.endswith('.csv'):
+        try:
+            df = pd.read_csv(file_path)
+            col_attr = 'Column'
+        except Exception as e:
+            raise ValueError(f"Failed to read .csv file: {file_path}. Error: {e}")
+    elif file_path.endswith('.shp'):
+        try:
+            gdf = gpd.read_file(file_path)
+            df = pd.DataFrame(gdf.drop(columns='geometry'))  # Drop geometry to validate non-spatial data
+            col_attr = 'Attribute'
+        except Exception as e:
+            raise ValueError(f"Failed to read ShapeFile: {file_path}. Error: {e}")
+    else:
+        raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
 
     if id_column not in df.columns:
-        raise ValueError(f"ID column '{id_column}' is not present in the file.")
+        raise ValueError(f"A unique row identifier column such as (building) name or (component) code is not present in the file.")
 
     errors = []
+    missing_columns = []
 
     # Validation process
     for col_name, col_specs in schema_columns.items():
         if col_name not in df.columns:
-            errors.append({"Column": col_name, "Issue": "Missing column", "ID": None, "Value": None})
+            missing_columns.append(col_name)
             continue
 
         col_data = df[col_name]
@@ -168,32 +179,30 @@ def verify_file_against_schema(scenario, item, self, verbose=True):
 
         for idx in invalid[invalid].index:
             identifier = df.at[idx, id_column]
-            errors.append({"Column": col_name, "Issue": "Invalid type", "ID": identifier, "Value": col_data[idx]})
+            errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
 
         # Check range
         if 'min' in col_specs:
             out_of_range = col_data[col_data < col_specs['min']]
             for idx, value in out_of_range.iteritems():
                 identifier = df.at[idx, id_column]
-                errors.append({"Column": col_name, "Issue": f"Below minimum ({col_specs['min']})", "ID": identifier, "Value": value})
+                errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
 
         if 'max' in col_specs:
             out_of_range = col_data[col_data > col_specs['max']]
             for idx, value in out_of_range.iteritems():
                 identifier = df.at[idx, id_column]
-                errors.append({"Column": col_name, "Issue": f"Above maximum ({col_specs['max']})", "ID": identifier, "Value": value})
+                errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
     # Print results
     if errors:
         if verbose:
-            print(f"Validation errors for schema '{locator}':")
             for error in errors:
                 print(error)
     elif verbose:
-        print(f"Validation passed: All columns and values meet the schema '{locator}' requirements.")
+        print(f"Validation passed: All columns and values meet the CEA schema requirements.")
 
-    return errors
-
+    return missing_columns, errors
 
 
 def verify_shp(scenario, item, required_attributes):
@@ -371,7 +380,8 @@ def cea4_verify(scenario, print_results=False):
         if list_missing_attributes_zone:
             if print_results:
                 print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
-                print('! Check values in zone.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_zone))
+                if list_issues_against_schema_zone:
+                    print('! Check values in zone.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_zone))
                 if 'name' not in list_missing_attributes_zone:
                     list_names_duplicated = verify_name_duplicates_4(scenario, 'zone')
                     if list_names_duplicated:
@@ -383,7 +393,8 @@ def cea4_verify(scenario, print_results=False):
         if list_missing_attributes_surroundings:
             if print_results:
                 print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
-                print('! Check values in surroundings.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_surroundings))
+                if list_issues_against_schema_surroundings:
+                    print('! Check values in surroundings.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_surroundings))
                 if 'name' not in list_missing_attributes_surroundings:
                     list_names_duplicated = verify_name_duplicates_4(scenario, 'surroundings')
                     if list_names_duplicated:
@@ -391,11 +402,7 @@ def cea4_verify(scenario, print_results=False):
                             print('! Ensure name(s) are unique in surroundings.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
     #2. about .csv files under the "inputs/building-properties" folder
-    list_missing_columns_air_conditioning = []
-    list_missing_columns_architecture = []
-    list_missing_columns_indoor_comfort = []
-    list_missing_columns_internal_loads = []
-    list_missing_columns_supply_systems = []
+    dict_list_missing_columns_csv_building_properties = {}
 
     list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
     if list_missing_files_csv_building_properties:
@@ -404,7 +411,14 @@ def cea4_verify(scenario, print_results=False):
 
     for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
         if item not in list_missing_files_csv_building_properties:
-            locals()[f'Check values in {item}.csv'] = verify_file_against_schema(scenario, item, verbose=False)
+            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema(scenario, item, verbose=False)
+            dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
+            if print_results:
+                if list_missing_columns_csv_building_properties:
+                    print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_building_properties))
+                if list_issues_against_csv_building_properties:
+                    print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_building_properties))
+
 
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
@@ -431,11 +445,11 @@ def cea4_verify(scenario, print_results=False):
         'zone': list_missing_attributes_zone,
         'surroundings': list_missing_attributes_surroundings,
         'building-properties': list_missing_files_csv_building_properties,
-        'air_conditioning': list_missing_columns_air_conditioning,
-        'architecture': list_missing_columns_architecture,
-        'indoor_comfort': list_missing_columns_indoor_comfort,
-        'internal_loads': list_missing_columns_internal_loads,
-        'supply_systems': list_missing_columns_supply_systems,
+        'air_conditioning': dict_list_missing_columns_csv_building_properties['air_conditioning'],
+        'architecture': dict_list_missing_columns_csv_building_properties['architecture'],
+        'indoor_comfort': dict_list_missing_columns_csv_building_properties['indoor_comfort'],
+        'internal_loads': dict_list_missing_columns_csv_building_properties['internal_loads'],
+        'supply_systems': dict_list_missing_columns_csv_building_properties['supply_systems'],
         'terrain': list_missing_files_terrain,
         'weather': list_missing_files_weather,
         'streets': list_missing_files_streets,
