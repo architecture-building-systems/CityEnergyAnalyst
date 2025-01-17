@@ -261,19 +261,12 @@ def cea4_verify_db(scenario, print_results=False):
 
     dict_missing_db = {}
 
-    list_missing_files_csv_envelope_assemblies = verify_file_exists_4_db(scenario, ENVELOPE_ASSEMBLIES)
-    list_missing_files_csv_hvac_assemblies = verify_file_exists_4_db(scenario, HVAC_ASSEMBLIES)
-    list_missing_files_csv_supply_assemblies = verify_file_exists_4_db(scenario, SUPPLY_ASSEMBLIES)
-    list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, CONVERSION_COMPONENTS)
-    list_missing_files_csv_distribution_components = verify_file_exists_4_db(scenario, DISTRIBUTION_COMPONENTS)
-    list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, FEEDSTOCKS_COMPONENTS)
-
     #1. verify columns and values in .csv files for archetypes
     list_missing_files_csv_archetypes = verify_file_exists_4_db(scenario, ARCHETYPES)
     if list_missing_files_csv_archetypes:
         print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_archetypes))
         print('! CONSTRUCTION_TYPE.csv and USE_TYPE.csv are fundamental and should be present in the ARCHETYPES folder.')
-        print('! The Database verification is aborted.')
+        print('! The CEA-4 Database verification is aborted.')
         sys.exit(0)
 
     for item in ARCHETYPES:
@@ -304,7 +297,6 @@ def cea4_verify_db(scenario, print_results=False):
                 print('! Check values in {sheet}.csv: {list_issues_against_schema}'.format(sheet=sheet, list_issues_against_schema=list_issues_against_csv_schedules))
 
     #3. verify columns and values in .csv files for assemblies
-
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
         list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_assembly[ASSEMBLIES])
         if list_missing_files_csv:
@@ -314,10 +306,27 @@ def cea4_verify_db(scenario, print_results=False):
         list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, print_results)
         dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
 
-    #4. verify columns and values in .csv files for components
+    #4. verify columns and values in .csv files for components - conversion
     list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, ['CONVERSION'], CONVERSION_COMPONENTS)
-    list_missing_files_csv_distribution_components = verify_file_exists_4_db(scenario, ['DISTRIBUTION'], DISTRIBUTION_COMPONENTS)
+
     list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, ['FEEDSTOCKS'], FEEDSTOCKS_COMPONENTS)
+
+    #5. verify columns and values in .csv files for components - distribution
+    list_missing_files_csv_distribution_components = verify_file_exists_4_db(scenario, ['DISTRIBUTION'], DISTRIBUTION_COMPONENTS)
+    if list_missing_files_csv_distribution_components:
+        print('! Ensure .csv file(s) are present in the COMPONENTS folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_distribution_components))
+
+    list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, ['DISTRIBUTION'], verbose=False)
+    dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
+    if print_results:
+        if list_missing_columns_csv_distribution:
+            print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_distribution))
+        if list_issues_against_csv_distribution:
+            print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_distribution))
+        
+
+
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
