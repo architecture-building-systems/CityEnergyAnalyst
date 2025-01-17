@@ -236,9 +236,12 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     """
 
     def f(x):
+        # To filter the sensor points / hours with low radiation potential.
         if x <= 50:
+            # eliminate points when hourly production < 50 W/m2
             return 0
         else:
+            # keep sensors above min radiation
             return x
 
     # read radiation file
