@@ -184,9 +184,9 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         potential['PV_' + panel_orientation + '_E_kWh'] = 0
         potential['PV_' + panel_orientation + '_m2'] = 0
 
-    eff_nom = panel_properties_PV['PV_n']
+    eff_nom = panel_properties_PV['PV_n']  # nominal efficiency
 
-    Bref = panel_properties_PV['PV_Bref']
+    Bref = panel_properties_PV['PV_Bref']  # cell maximum power temperature coefficient
 
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
     for group in prop_observers.index.values:
