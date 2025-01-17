@@ -9,8 +9,6 @@ import time
 import geopandas as gpd
 import pandas as pd
 from cea.schemas import schemas
-import yaml
-import inspect
 import numpy as np
 
 __author__ = "Zhongming Shi"
@@ -90,7 +88,7 @@ def path_to_input_file_without_db_4(scenario, item):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def verify_file_against_schema(scenario, item, verbose=True):
+def verify_file_against_schema_4(scenario, item, verbose=True):
     """
     Validate a file against a schema section in a YAML file.
 
@@ -356,7 +354,7 @@ def cea4_verify(scenario, print_results=False):
     list_missing_files_shp_building_geometry = verify_file_exists_4(scenario, SHAPEFILES)
 
     if 'zone' not in list_missing_files_shp_building_geometry:
-        list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema(scenario, 'zone', verbose=False)
+        list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema_4(scenario, 'zone', verbose=False)
         if list_missing_attributes_zone:
             if print_results:
                 print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
@@ -369,7 +367,7 @@ def cea4_verify(scenario, print_results=False):
                             print('! Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
     if 'surroundings' not in list_missing_files_shp_building_geometry:
-        list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema(scenario, 'surroundings', verbose=False)
+        list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema_4(scenario, 'surroundings', verbose=False)
         if list_missing_attributes_surroundings:
             if print_results:
                 print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
@@ -391,7 +389,7 @@ def cea4_verify(scenario, print_results=False):
 
     for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
         if item not in list_missing_files_csv_building_properties:
-            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema(scenario, item, verbose=False)
+            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item, verbose=False)
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
             if print_results:
                 if list_missing_columns_csv_building_properties:
