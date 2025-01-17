@@ -320,10 +320,10 @@ def cea4_verify_db(scenario, print_results=False):
     dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
     if print_results:
         if list_missing_columns_csv_distribution:
-            print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_distribution))
+            print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}'.format(missing_columns=list_missing_columns_csv_distribution))
         if list_issues_against_csv_distribution:
-            print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_distribution))
-        
+            print('! Check values in DISTRIBUTION.csv: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_csv_distribution))
+
 
 
 
