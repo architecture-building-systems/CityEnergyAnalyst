@@ -14340,7 +14340,7 @@ get_street_network:
   schema:
     columns:
       Id:
-        description: Unique building ID. It must start with a letter.
+        description: Unique street ID. It must start with a letter.
         type: string
         unit: 'NA'
         values: alphanumeric

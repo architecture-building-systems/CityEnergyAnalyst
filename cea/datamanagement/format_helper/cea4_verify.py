@@ -8,7 +8,10 @@ import cea.config
 import time
 import geopandas as gpd
 import pandas as pd
-
+from cea.schemas import schemas
+import yaml
+import inspect
+import numpy as np
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -39,6 +42,31 @@ COLUMNS_INTERNAL_LOADS_4 = ['name',
                           'Vww_ldp', 'Vw_ldp', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
 COLUMNS_SUPPLY_SYSTEMS_4 = ['name',
                           'type_cs', 'type_hs', 'type_dhw', 'type_el']
+
+mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
+                                             'surroundings': 'get_surroundings_geometry',
+                                             'terrain': 'get_terrain',
+                                             'weather': 'get_weather',
+                                             'internal-loads': 'get_building_internal',
+                                             'air-conditioning': 'get_building_air_conditioning',
+                                             'supply_systems': 'get_building_supply',
+                                             'architecture': 'get_building_architecture',
+                                             'indoor-comfort': 'get_building_comfort',
+                                             'streets': 'get_street_network'
+                                             }
+
+mapping_dict_input_item_to_id_column = {'zone': 'name',
+                                        'surroundings': 'name',
+                                        'terrain': '',
+                                        'weather': '',
+                                        'internal-loads': 'name',
+                                        'air-conditioning': 'name',
+                                        'supply_systems': 'name',
+                                        'architecture': 'name',
+                                        'indoor-comfort': 'name',
+                                        'streets': ''
+                                        }
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-4
@@ -77,6 +105,96 @@ def path_to_input_file_without_db_4(scenario, item):
 ## --------------------------------------------------------------------------------------------------------------------
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
+
+def validate_file_against_schema(scenario, item, self):
+    """
+    Validate a file against a specific schema section in a YAML file.
+
+    Parameters:
+    - file_path (str): Path to the file to validate (assumed to be a CSV or similar).
+    - schema_path (str): Path to the schema YAML file.
+    - locator (str): Key in the YAML schema file to locate the correct schema (e.g., 'get_zone_geometry').
+    - id_column (str): Column name containing unique identifiers for error reporting (e.g., 'name').
+
+
+    Returns:
+    - None: Prints validation results or errors.
+    """
+
+    # Schema file path
+    schema_path = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
+    # Load schema from the YAML file
+    with open(schema_path, 'r') as schema_file:
+        schema = yaml.safe_load(schema_file)
+
+    # Get the file path to validate
+    file_path = path_to_input_file_without_db_4(scenario, item)
+
+    # Locate the schema using the locator
+    locator = mapping_dict_input_item_to_schema_locator[item]
+    if locator not in schema:
+        raise ValueError(f"Schema section '{locator}' not found in {schema_path}.")
+
+    schema_section = schema[locator]
+    schema_columns = schema_section['schema']['columns']
+
+    # Load the data file
+    try:
+        df = pd.read_csv(file_path)
+    except Exception as e:
+        raise ValueError(f"Failed to read file: {file_path}. Error: {e}")
+
+    id_column = mapping_dict_input_item_to_id_column[item]
+    if id_column not in df.columns:
+        raise ValueError(f"ID column '{id_column}' is not present in the file.")
+
+    errors = []
+
+    # Check for column existence and validate values
+    for col_name, col_specs in schema_columns.items():
+        if col_name not in df.columns:
+            errors.append(f"Missing column: {col_name}")
+            continue
+
+        col_data = df[col_name]
+
+        # Check type constraints
+        if col_specs['type'] == 'string':
+            if not col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x)).all():
+                errors.append(f"Column {col_name} contains non-string values.")
+
+        elif col_specs['type'] == 'int':
+            if not col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x)).all():
+                errors.append(f"Column {col_name} contains non-integer values.")
+
+        elif col_specs['type'] == 'float':
+            if not col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x)).all():
+                errors.append(f"Column {col_name} contains non-float values.")
+
+        # Check range constraints
+        if 'min' in col_specs:
+            out_of_range = col_data[col_data < col_specs['min']]
+            if not out_of_range.empty:
+                for idx, value in out_of_range.iteritems():
+                    identifier = df.at[idx, id_column]
+                    errors.append(f"Column {col_name}, Identifier {identifier}, Value {value}: Below minimum {col_specs['min']}.")
+
+        if 'max' in col_specs:
+            out_of_range = col_data[col_data > col_specs['max']]
+            if not out_of_range.empty:
+                for idx, value in out_of_range.iteritems():
+                    identifier = df.at[idx, id_column]
+                    errors.append(f"Column {col_name}, Identifier {identifier}, Value {value}: Above maximum {col_specs['max']}.")
+
+    # Print results
+    if errors:
+        print(f"Validation errors for schema '{locator}':")
+        for error in errors:
+            print(error)
+    else:
+        print(f"Validation passed: All columns and values meet the schema '{locator}' requirements.")
+
+
 
 def verify_shp(scenario, item, required_attributes):
     """
