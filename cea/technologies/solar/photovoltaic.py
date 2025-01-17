@@ -495,8 +495,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
-    optimal_angle_flat = calc_optimal_angle(180, latitude,
-                                            transmissivity)  # assume surface azimuth = 180 (N,E), south facing
+    optimal_angle_flat = solar_equations.calc_optimal_angle(
+        180, latitude, transmissivity)  # assume surface azimuth = 180 (N,E), south facing
     sensors_metadata_clean['tilt'] = np.vectorize(acos)(sensors_metadata_clean['Zdir'])  # surface tilt angle in rad
     sensors_metadata_clean['tilt'] = np.vectorize(degrees)(
         sensors_metadata_clean['tilt'])  # surface tilt angle in degrees
@@ -507,10 +507,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 
     optimal_spacing_flat = calc_optimal_spacing(worst_sh, worst_Az, optimal_angle_flat, module_length)
     sensors_metadata_clean['array_s'] = np.where(sensors_metadata_clean['tilt'] >= 5, 0, optimal_spacing_flat)
-    sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],
-                                                                                   sensors_metadata_clean['Ydir'],
-                                                                                   sensors_metadata_clean[
-                                                                                       'B'])  # degrees
+    sensors_metadata_clean['surface_azimuth'] = np.vectorize(solar_equations.calc_surface_azimuth)(
+        sensors_metadata_clean['Xdir'], sensors_metadata_clean['Ydir'], sensors_metadata_clean['B'])  # degrees
 
     # calculate the surface area required to install one pv panel on flat roofs with defined tilt angle and array spacing
     surface_area_flat = module_length * (
@@ -530,38 +528,6 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean['CATB'] = result[1]
     sensors_metadata_clean['CATGB'] = result[2]
     return sensors_metadata_clean
-
-
-def calc_optimal_angle(teta_z, latitude, transmissivity):
-    """
-    To calculate the optimal tilt angle of the solar panels.
-
-    :param teta_z: surface azimuth, 0 degree south (east negative) or 0 degree north (east positive)
-    :type teta_z: float
-    :param latitude: latitude of the case study site
-    :type latitude: float
-    :param transmissivity: clearness index [-]
-    :type transmissivity: float
-    :return abs(b): optimal tilt angle [radians]
-    :rtype abs(b): float
-
-    ..[Quinn et al., 2013] S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic
-    panels. 2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
-
-    """
-    if transmissivity <= 0.15:
-        gKt = 0.977
-    elif 0.15 < transmissivity <= 0.7:
-        gKt = 1.237 - 1.361 * transmissivity
-    else:
-        gKt = 0.273
-    Tad = 0.98  # transmittance-absorptance product of the diffuse radiation
-    Tar = 0.97  # transmittance-absorptance product of the reflected radiation
-    Pg = 0.2  # ground reflectance of 0.2
-    l = radians(latitude)
-    a = radians(teta_z)
-    b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))  # eq.(11)
-    return abs(b)
 
 
 def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
@@ -650,34 +616,6 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 #
 #     return CATteta_z, CATB, CATGB
 
-
-def calc_surface_azimuth(xdir, ydir, B):
-    """
-    Calculate surface azimuth from the surface normal vector (x,y,z) and tilt angle (B).
-    Following the geological sign convention, an azimuth of 0 and 360 degree represents north, 90 degree is east.
-
-    :param xdir: surface normal vector x in (x,y,z) representing east-west direction
-    :param ydir: surface normal vector y in (x,y,z) representing north-south direction
-    :param B: surface tilt angle in degree
-    :type xdir: float
-    :type ydir: float
-    :type B: float
-    :returns surface azimuth: the azimuth of the surface of a solar panel in degree
-    :rtype surface_azimuth: float
-    """
-    B = radians(B)
-    teta_z = degrees(asin(xdir / sin(B)))
-    # set the surface azimuth with on the sing convention (E,N)=(+,+)
-    if xdir < 0:
-        if ydir < 0:
-            surface_azimuth = 180 + teta_z  # (xdir,ydir) = (-,-)
-        else:
-            surface_azimuth = 360 + teta_z  # (xdir,ydir) = (-,+)
-    elif ydir < 0:
-        surface_azimuth = 180 + teta_z  # (xdir,ydir) = (+,-)
-    else:
-        surface_azimuth = teta_z  # (xdir,ydir) = (+,+)
-    return surface_azimuth  # degree
 
 
 # ============================

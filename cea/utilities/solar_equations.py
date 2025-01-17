@@ -631,7 +631,7 @@ def calc_surface_azimuth(xdir, ydir, B):
     """
     B = radians(B)
     teta_z = degrees(asin(xdir / sin(B)))
-    # set the surface azimuth with on the sing convention (E,N)=(+,+)
+    # set the surface azimuth with on the sign convention (E,N)=(+,+)
     if xdir < 0:
         if ydir < 0:
             surface_azimuth = 180 + teta_z  # (xdir,ydir) = (-,-)
