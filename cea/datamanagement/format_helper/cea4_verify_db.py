@@ -226,13 +226,13 @@ def verify_assembly(scenario, ASSEMBLIES, print_results=True):
     list_list_missing_columns_csv = []
     construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
     for assembly in ASSEMBLIES:
-        list_archetype_code = construction_type_df[dict_envelope[assembly]].tolist()
+        list_archetype_code = construction_type_df[dict_envelope[assembly]].tolist().unique()
         item_df = pd.read_csv(path_to_db_file_4(scenario, "ENVELOPE", assembly))
-        list_item_code = item_df['code'].tolist()
+        list_item_code = item_df['code'].tolist().unique()
         list_missing_item = list(set(list_archetype_code) - set(list_item_code))
         if list_missing_item:
             if print_results:
-                print('! Ensure {assembly} types exist in the {assembly}.csv: {list_missing_item}'.format(assembly=assembly, list_missing_item=list_missing_item))
+                print('! Ensure {assembly} type(s) are present in {assembly}.csv: {list_missing_item}'.format(assembly=assembly, list_missing_item=list_missing_item))
 
         list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, 'ENVELOPE', verbose=False, sheet_name=assembly)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
@@ -244,6 +244,27 @@ def verify_assembly(scenario, ASSEMBLIES, print_results=True):
 
     return list_list_missing_columns_csv
 
+def get_csv_filenames(folder_path):
+    """
+    Get the names of all .csv files in the specified folder.
+
+    Parameters:
+    - folder_path (str): Path to the folder.
+
+    Returns:
+    - List[str]: A list of file names without path and without extension.
+    """
+    if not os.path.isdir(folder_path):
+        raise ValueError(f"The provided path '{folder_path}' is not a valid directory.")
+
+    # List all .csv files and remove the extension
+    csv_filenames = [
+        os.path.splitext(file)[0]  # Remove the file extension
+        for file in os.listdir(folder_path)  # List files in the folder
+        if file.endswith('.csv')  # Check for .csv extension
+    ]
+
+    return csv_filenames
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
@@ -277,7 +298,7 @@ def cea4_verify_db(scenario, print_results=False):
                 if list_missing_columns_csv_archetypes:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_archetypes))
                 if list_issues_against_csv_archetypes:
-                    print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_archetypes))
+                    print('! Check value(s) in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
     use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
@@ -294,7 +315,7 @@ def cea4_verify_db(scenario, print_results=False):
             if list_missing_columns_csv_schedules:
                 print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}'.format(sheet=sheet, missing_columns=list_missing_columns_csv_schedules))
             if list_issues_against_csv_schedules:
-                print('! Check values in {sheet}.csv: {list_issues_against_schema}'.format(sheet=sheet, list_issues_against_schema=list_issues_against_csv_schedules))
+                print('! Check value(s) in {sheet}.csv: {list_issues_against_schema}'.format(sheet=sheet, list_issues_against_schema=list_issues_against_csv_schedules))
 
     #3. verify columns and values in .csv files for assemblies
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
@@ -322,11 +343,34 @@ def cea4_verify_db(scenario, print_results=False):
         if list_missing_columns_csv_distribution:
             print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}'.format(missing_columns=list_missing_columns_csv_distribution))
         if list_issues_against_csv_distribution:
-            print('! Check values in DISTRIBUTION.csv: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_csv_distribution))
+            print('! Check value(s) in DISTRIBUTION.csv: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_csv_distribution))
 
+    #6. verify columns and values in .csv files for components - feedstocks
+    list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, ['FEEDSTOCKS'], FEEDSTOCKS_COMPONENTS)
+    if list_missing_files_csv_feedstocks_components:
+        print('! Ensure .csv file(s) are present in the COMPONENTS folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_feedstocks_components))
 
+    list_feedstocks_supply = []
+    list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
+    for supply_type in SUPPLY_ASSEMBLIES:
+        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_assembly['SUPPLY']):
+            supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
+            list_feedstocks_supply.append(supply_df['feedstock'].unique())
+    list_missing_feedstocks = list(set(list_feedstocks_supply) - set(list_feedstocks_db))
+    if list_missing_feedstocks:
+        if print_results:
+            print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}'.format(list_missing_feedstocks=list_missing_feedstocks))
 
+    for sheet in list_feedstocks_db:
+        list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', verbose=False, sheet_name=sheet)
+        dict_missing_db['FEEDSTOCKS'] = list_missing_columns_csv_feedstocks
+        if print_results:
+            if list_missing_columns_csv_feedstocks:
+                print('! Ensure column(s) are present in {feedstocks}.csv: {missing_columns}'.format(feedstocks=sheet, missing_columns=list_missing_columns_csv_feedstocks))
+            if list_issues_against_csv_feedstocks:
+                print('! Check value(s) in {feedstocks}.csv: {list_issues_against_schema}'.format(feedstocks=sheet, list_issues_against_schema=list_issues_against_csv_feedstocks))
 
+    return dict_missing_db
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
