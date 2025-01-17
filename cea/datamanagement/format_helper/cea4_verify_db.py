@@ -23,8 +23,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-
+ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
+SCHEDULES = ['SCHEDULES']
+ENVELOPE_ASSEMBLIES = ['ENVELOPE']
+HVAC_ASSEMBLIES = ['HVAC']
+SUPPLY_ASSEMBLIES = ['SUPPLY']
+CONVERSION_COMPONENTS = ['CONVERSION']
+DISTRIBUTION_COMPONENTS = ['DISTRIBUTION']
+FEEDSTOCKS_COMPONENTS = ['FEEDSTOCKS']
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -94,14 +100,31 @@ def print_verification_results_4_db(scenario_name, dict_missing):
     else:
         print("!" * 3)
         print('All or some of Database files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
-        print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` and run the script again. ')
+        print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
         print('- If you manually prepared the Database, check the log for missing files and/or incompatible columns. Modify your Database accordingly.')
 
+def verify_file_exists_db_4(scenario, items, sheet_name=None):
+    """
+    Verify if the files in the provided list exist for a given scenario.
 
+    Parameters:
+        scenario (str): Path or identifier for the scenario.
+        items (list): List of file identifiers to check.
+
+    Returns:
+        list: A list of missing file identifiers, or an empty list if all files exist.
+    """
+    list_missing_files = []
+    for file in items:
+        path = path_to_db_file_4(scenario, file, sheet_name)
+        if not os.path.isfile(path):
+            list_missing_files.append(file)
+    return list_missing_files
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
+
 
 def cea4_verify_db(scenario, print_results=False):
     """
@@ -112,10 +135,34 @@ def cea4_verify_db(scenario, print_results=False):
     :return: a dictionary with the missing files
     """
 
-    #1. about zone.shp and surroundings.shp
+    #1. verify .csv files exist
     list_missing_attributes_zone = []
     list_missing_attributes_surroundings = []
-    list_missing_files_shp_building_geometry = verify_file_exists_4(scenario, SHAPEFILES)
+    list_missing_files_csv_archetypes = verify_file_exists_db_4(scenario, ARCHETYPES)
+    list_missing_files_csv_schedules = verify_file_exists_db_4(scenario, SCHEDULES)
+    list_missing_files_csv_envelope_assemblies = verify_file_exists_db_4(scenario, ENVELOPE_ASSEMBLIES)
+    list_missing_files_csv_hvac_assemblies = verify_file_exists_db_4(scenario, HVAC_ASSEMBLIES)
+    list_missing_files_csv_supply_assemblies = verify_file_exists_db_4(scenario, SUPPLY_ASSEMBLIES)
+    list_missing_files_csv_conversion_components = verify_file_exists_db_4(scenario, CONVERSION_COMPONENTS)
+    list_missing_files_csv_distribution_components = verify_file_exists_db_4(scenario, DISTRIBUTION_COMPONENTS)
+    list_missing_files_csv_feedstocks_components = verify_file_exists_db_4(scenario, FEEDSTOCKS_COMPONENTS)
+
+    #2. verify columns and values in .csv files
+
+    if list_missing_files_csv_building_properties:
+        if print_results:
+            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=list_missing_files_csv_building_properties))
+
+    for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
+        if item not in list_missing_files_csv_building_properties:
+            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema(scenario, item, verbose=False)
+            dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
+            if print_results:
+                if list_missing_columns_csv_building_properties:
+                    print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_building_properties))
+                if list_issues_against_csv_building_properties:
+                    print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_building_properties))
+
 
     return dict_missing
 
