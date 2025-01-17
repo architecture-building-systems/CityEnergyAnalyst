@@ -90,7 +90,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
+    panel_properties_PV = get_properties_PV_db(locator.get_database_conversion_systems(), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -123,7 +123,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude,
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, # latitude,
                                    panel_properties_PV)
 
         final.to_csv(locator.PV_results(building=building_name), index=True,
@@ -155,7 +155,8 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, # latitude, panel_properties_PV):
+                       panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
     """
@@ -165,12 +166,12 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
-    # convert degree to radians
-    lat = radians(latitude)
-    g_rad = np.radians(solar_properties.g)
-    ha_rad = np.radians(solar_properties.ha)
+    # # convert degree to radians
+    # lat = radians(latitude)
+    # g_rad = np.radians(solar_properties.g)
+    # ha_rad = np.radians(solar_properties.ha)
     Sz_rad = np.radians(solar_properties.Sz)
-    Az_rad = np.radians(solar_properties.Az)
+    # Az_rad = np.radians(solar_properties.Az)
 
     # empty list to store results
     list_groups_area = [0 for i in range(number_groups)]
@@ -198,11 +199,12 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
-        teta_z_deg = radians(teta_z_deg)  # surface azimuth
+        # teta_z_deg = radians(teta_z_deg)  # surface azimuth
+        teta_z_rad = radians(teta_z_deg)  # surface azimuth
 
         # calculate effective incident angles necessary
         teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, solar_properties.Az)
-        teta_rad = teta_rad = [radians(x) for x in teta_deg]
+        teta_rad = [radians(x) for x in teta_deg]
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
@@ -624,7 +626,7 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 # TODO: Delete when done
 
 
-def calc_properties_PV_db(database_path, config):
+def get_properties_PV_db(database_path, config):
     """
     To assign PV module properties according to panel types.
 

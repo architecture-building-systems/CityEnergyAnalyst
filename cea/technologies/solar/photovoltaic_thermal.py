@@ -19,7 +19,7 @@ import cea.utilities.parallel
 import cea.utilities.workerstream
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.solar import constants
-from cea.technologies.solar.photovoltaic import (calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
+from cea.technologies.solar.photovoltaic import (get_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
                                                     vectorize_calc_Eaux_SC, calc_optimal_mass_flow,
@@ -73,7 +73,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_database_conversion_systems(), config)
+    panel_properties_PV = get_properties_PV_db(locator.get_database_conversion_systems(), config)
     panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
     print('gathering properties of PVT collector panel for building %s' % building_name)
 
