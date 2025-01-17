@@ -106,37 +106,36 @@ def path_to_input_file_without_db_4(scenario, item):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def validate_file_against_schema(scenario, item, self):
+def validate_file_against_schema(scenario, item, self, verbose=True):
     """
-    Validate a file against a specific schema section in a YAML file.
+    Validate a file against a schema section in a YAML file.
 
     Parameters:
-    - file_path (str): Path to the file to validate (assumed to be a CSV or similar).
-    - schema_path (str): Path to the schema YAML file.
-    - locator (str): Key in the YAML schema file to locate the correct schema (e.g., 'get_zone_geometry').
-    - id_column (str): Column name containing unique identifiers for error reporting (e.g., 'name').
-
+    - scenario (str): Path to the scenario.
+    - item (str): Locator for the file to validate (e.g., 'get_zone_geometry').
+    - self: Reference to the calling class/module.
+    - save_errors_to (str, optional): Path to save validation errors as a CSV file.
+    - verbose (bool, optional): If True, print validation errors to the console.
 
     Returns:
-    - None: Prints validation results or errors.
+    - List[dict]: List of validation errors.
     """
 
     # Schema file path
     schema_path = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
-    # Load schema from the YAML file
     with open(schema_path, 'r') as schema_file:
         schema = yaml.safe_load(schema_file)
 
-    # Get the file path to validate
+    # File path and schema section
     file_path = path_to_input_file_without_db_4(scenario, item)
-
-    # Locate the schema using the locator
     locator = mapping_dict_input_item_to_schema_locator[item]
+
     if locator not in schema:
         raise ValueError(f"Schema section '{locator}' not found in {schema_path}.")
 
     schema_section = schema[locator]
     schema_columns = schema_section['schema']['columns']
+    id_column = mapping_dict_input_item_to_id_column[item]
 
     # Load the data file
     try:
@@ -144,55 +143,56 @@ def validate_file_against_schema(scenario, item, self):
     except Exception as e:
         raise ValueError(f"Failed to read file: {file_path}. Error: {e}")
 
-    id_column = mapping_dict_input_item_to_id_column[item]
     if id_column not in df.columns:
         raise ValueError(f"ID column '{id_column}' is not present in the file.")
 
     errors = []
 
-    # Check for column existence and validate values
+    # Validation process
     for col_name, col_specs in schema_columns.items():
         if col_name not in df.columns:
-            errors.append(f"Missing column: {col_name}")
+            errors.append({"Column": col_name, "Issue": "Missing column", "ID": None, "Value": None})
             continue
 
         col_data = df[col_name]
 
-        # Check type constraints
+        # Check type
         if col_specs['type'] == 'string':
-            if not col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x)).all():
-                errors.append(f"Column {col_name} contains non-string values.")
-
+            invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
         elif col_specs['type'] == 'int':
-            if not col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x)).all():
-                errors.append(f"Column {col_name} contains non-integer values.")
-
+            invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
         elif col_specs['type'] == 'float':
-            if not col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x)).all():
-                errors.append(f"Column {col_name} contains non-float values.")
+            invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
+        else:
+            invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
 
-        # Check range constraints
+        for idx in invalid[invalid].index:
+            identifier = df.at[idx, id_column]
+            errors.append({"Column": col_name, "Issue": "Invalid type", "ID": identifier, "Value": col_data[idx]})
+
+        # Check range
         if 'min' in col_specs:
             out_of_range = col_data[col_data < col_specs['min']]
-            if not out_of_range.empty:
-                for idx, value in out_of_range.iteritems():
-                    identifier = df.at[idx, id_column]
-                    errors.append(f"Column {col_name}, Identifier {identifier}, Value {value}: Below minimum {col_specs['min']}.")
+            for idx, value in out_of_range.iteritems():
+                identifier = df.at[idx, id_column]
+                errors.append({"Column": col_name, "Issue": f"Below minimum ({col_specs['min']})", "ID": identifier, "Value": value})
 
         if 'max' in col_specs:
             out_of_range = col_data[col_data > col_specs['max']]
-            if not out_of_range.empty:
-                for idx, value in out_of_range.iteritems():
-                    identifier = df.at[idx, id_column]
-                    errors.append(f"Column {col_name}, Identifier {identifier}, Value {value}: Above maximum {col_specs['max']}.")
+            for idx, value in out_of_range.iteritems():
+                identifier = df.at[idx, id_column]
+                errors.append({"Column": col_name, "Issue": f"Above maximum ({col_specs['max']})", "ID": identifier, "Value": value})
 
     # Print results
     if errors:
-        print(f"Validation errors for schema '{locator}':")
-        for error in errors:
-            print(error)
-    else:
+        if verbose:
+            print(f"Validation errors for schema '{locator}':")
+            for error in errors:
+                print(error)
+    elif verbose:
         print(f"Validation passed: All columns and values meet the schema '{locator}' requirements.")
+
+    return errors
 
 
 
