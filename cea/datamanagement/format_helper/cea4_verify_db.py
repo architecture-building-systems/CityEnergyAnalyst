@@ -35,6 +35,7 @@ FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRI
 dict_envelope = {'CONSTRUCTION': 'type_cons', 'TIGHTNESS': 'type_leak', 'FLOOR': 'type_floor', 'WALL': 'type_wall', 'WINDOW': 'type_win', 'SHADING': 'type_shade', 'ROOF': 'type_roof'}
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
+dict_assembly = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
 
 
 
@@ -304,16 +305,19 @@ def cea4_verify_db(scenario, print_results=False):
 
     #3. verify columns and values in .csv files for assemblies
 
-    list_missing_files_csv_envelope_assemblies = verify_file_exists_4_db(scenario, ["ENVELOPE"], ENVELOPE_ASSEMBLIES)
-    if list_missing_files_csv_envelope_assemblies:
-        if print_results:
-            print('! Ensure .csv file(s) are present in the ASSEMBLIES>ENVELOPE folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_envelope_assemblies))
-
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
+        list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_assembly[ASSEMBLIES])
+        if list_missing_files_csv:
+            if print_results:
+                print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=list_missing_files_csv))
+
         list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, print_results)
         dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
 
-
+    #4. verify columns and values in .csv files for components
+    list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, ['CONVERSION'], CONVERSION_COMPONENTS)
+    list_missing_files_csv_distribution_components = verify_file_exists_4_db(scenario, ['DISTRIBUTION'], DISTRIBUTION_COMPONENTS)
+    list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, ['FEEDSTOCKS'], FEEDSTOCKS_COMPONENTS)
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
