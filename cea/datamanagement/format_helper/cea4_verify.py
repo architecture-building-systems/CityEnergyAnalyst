@@ -470,7 +470,6 @@ def main(config):
     time_elapsed = time.perf_counter() - t0
 
     # Print: End
-    # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
     print('+' * 60)
     print('The entire process of CEA-4 format verification is now completed - time elapsed: %.2f seconds' % time_elapsed)
 

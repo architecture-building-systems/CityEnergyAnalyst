@@ -329,13 +329,34 @@ def cea4_verify_db(scenario, print_results=False):
 
     #4. verify columns and values in .csv files for components - conversion
     list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, ['CONVERSION'], CONVERSION_COMPONENTS)
+    if list_missing_files_csv_conversion_components:
+        print('! Ensure .csv file(s) are present in the COMPONENTS>CONVERSION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_conversion_components))
 
-    list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, ['FEEDSTOCKS'], FEEDSTOCKS_COMPONENTS)
+    list_conversion_supply = []
+    list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
+    for supply_type in ['HEATING', 'COOLING']:
+        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_assembly['SUPPLY']):
+            supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
+            list_conversion_supply.append(supply_df['primary_components', 'secondary_components', 'tertiary_components'].unique())
+            list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
+    list_missing_conversion = list(set(list_conversion_supply) - set(list_conversion_db))
+    if list_missing_conversion:
+        if print_results:
+            print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {list_missing_conversion}'.format(list_missing_conversion=list_missing_conversion))
+
+    for sheet in list_conversion_db:
+        list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', verbose=False, sheet_name=sheet)
+        dict_missing_db['CONVERSION'] = list_missing_columns_csv_conversion
+        if print_results:
+            if list_missing_columns_csv_conversion:
+                print('! Ensure column(s) are present in {conversion}.csv: {missing_columns}'.format(conversion=sheet, missing_columns=list_missing_columns_csv_conversion))
+            if list_issues_against_csv_conversion:
+                print('! Check value(s) in {conversion}.csv: {list_issues_against_schema}'.format(conversion=sheet, list_issues_against_schema=list_issues_against_csv_conversion))
 
     #5. verify columns and values in .csv files for components - distribution
     list_missing_files_csv_distribution_components = verify_file_exists_4_db(scenario, ['DISTRIBUTION'], DISTRIBUTION_COMPONENTS)
     if list_missing_files_csv_distribution_components:
-        print('! Ensure .csv file(s) are present in the COMPONENTS folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_distribution_components))
+        print('! Ensure .csv file(s) are present in the COMPONENTS>DISTRIBUTION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_distribution_components))
 
     list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, ['DISTRIBUTION'], verbose=False)
     dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
@@ -356,6 +377,7 @@ def cea4_verify_db(scenario, print_results=False):
         if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_assembly['SUPPLY']):
             supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
             list_feedstocks_supply.append(supply_df['feedstock'].unique())
+            list_feedstocks_supply = [item for sublist in list_feedstocks_supply for item in sublist]
     list_missing_feedstocks = list(set(list_feedstocks_supply) - set(list_feedstocks_db))
     if list_missing_feedstocks:
         if print_results:
@@ -392,16 +414,15 @@ def main(config):
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification
-    dict_missing = cea4_verify_db(scenario, print_results=True)
+    dict_missing_db = cea4_verify_db(scenario, print_results=True)
 
     # Print the results
-    # print_verification_results_4_db(scenario_name, dict_missing)
+    print_verification_results_4_db(scenario_name, dict_missing_db)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
 
     # Print: End
-    # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
     print('+' * 60)
     print('The entire process of CEA-4 format verification is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
