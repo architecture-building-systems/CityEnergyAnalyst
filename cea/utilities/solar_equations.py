@@ -780,7 +780,7 @@ def calc_worst_hour(latitude, weather_data, solar_window_solstice):
     return worst_hour
 
 
-def cal_radiation_type(group, hourly_radiation, weather_data):
+def calc_radiation_type(group, hourly_radiation, weather_data):
     radiation_Wperm2 = pd.DataFrame({'I_sol': hourly_radiation[group]})
     radiation_Wperm2['I_diffuse'] = weather_data.ratio_diffhout * radiation_Wperm2.I_sol  # calculate diffuse radiation
     radiation_Wperm2['I_direct'] = radiation_Wperm2['I_sol'] - radiation_Wperm2[

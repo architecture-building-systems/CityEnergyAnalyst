@@ -190,7 +190,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
     for group in prop_observers.index.values:
         # calculate radiation types (direct/diffuse) in group
-        radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
+        radiation_Wperm2 = solar_equations.calc_radiation_type(group, hourly_radiation, weather_data)
 
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']

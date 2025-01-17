@@ -220,7 +220,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         teta_z_rad = radians(teta_z_deg)  # surface azimuth
 
         # calculate radiation types (direct/diffuse) in group
-        radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation_Wperm2, weather_data)
+        radiation_Wperm2 = solar_equations.calc_radiation_type(group, hourly_radiation_Wperm2, weather_data)
 
         ## calculate absorbed solar irradiation on tilt surfaces
         # calculate effective indicent angles necessary

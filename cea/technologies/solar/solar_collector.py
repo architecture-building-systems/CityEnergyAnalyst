@@ -203,7 +203,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
 
     for group in range(number_groups):
         # calculate radiation types (direct/diffuse) in group
-        radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
+        radiation_Wperm2 = solar_equations.calc_radiation_type(group, hourly_radiation, weather_data)
 
         # load panel angles from each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']  # azimuth of panels of group
