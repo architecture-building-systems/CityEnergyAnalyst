@@ -36,7 +36,33 @@ dict_envelope = {'CONSTRUCTION': 'type_cons', 'TIGHTNESS': 'type_leak', 'FLOOR':
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_assembly = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
+mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'const_type',
+                                          'USE_TYPE': 'get_use_type_db',
+                                          'SCHEDULES': 'get_schedules_db',
+                                          'CONSTRUCTION': 'get_construction_db',
+                                          'FLOOR': 'get_floor_db',
+                                          'WALL': 'get_wall_db',
+                                          'WINDOW': 'get_window_db',
+                                          'SHADING': 'get_shading_db',
+                                          'ROOF': 'get_roof_db',
+                                          'TIGHTNESS': 'get_tightness_db',
+                                          'HVAC_CONTROLLER': 'get_hvac_controller_db',
+                                          'HVAC_COOLING': 'get_hvac_cooling_db',
+                                          'HVAC_HEATING': 'get_hvac_heating_db',
+                                          'HVAC_HOT_WATER': 'get_hvac_hot_water_db',
+                                          'HVAC_VENTILATION': 'get_hvac_ventilation_db',
+                                          'SUPPLY_COOLING': 'get_supply_cooling_db',
+                                          'SUPPLY_HEATING': 'get_supply_heating_db',
+                                          'SUPPLY_HOT_WATER': 'get_supply_hot_water_db',
+                                          'SUPPLY_ELECTRICITY': 'get_supply_electricity_db',
+                                          'CONVERSION': 'get_conversion_db',
+                                          'DISTRIBUTION': 'get_distribution_db',
+                                          'FEEDSTOCKS': 'get_feedstocks_db',
+                                          }
 
+mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'name'
+
+                                     }
 
 
 ## --------------------------------------------------------------------------------------------------------------------
