@@ -1889,9 +1889,10 @@ get_building_internal:
         min: 0.0
       Epro_Wm2:
         description: Peak specific electrical load due to industrial processes
-        type: string
+        type: float
         unit: '[W/m2]'
         values: '{0.0...n}'
+        min: 0.0
       Qcre_Wm2:
         description: Peak specific cooling load due to refrigeration (cooling rooms)
         type: float
@@ -1906,7 +1907,7 @@ get_building_internal:
         min: 0.0
       Ev_kWveh:
         description: Peak capacity of electric battery per vehicle
-        type: string
+        type: float
         unit: '[kW/veh]'
         values: '{0.0...n}'
         min: 0.0

@@ -47,11 +47,11 @@ mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'surroundings': 'get_surroundings_geometry',
                                              'terrain': 'get_terrain',
                                              'weather': 'get_weather',
-                                             'internal-loads': 'get_building_internal',
-                                             'air-conditioning': 'get_building_air_conditioning',
+                                             'internal_loads': 'get_building_internal',
+                                             'air_conditioning': 'get_building_air_conditioning',
                                              'supply_systems': 'get_building_supply',
                                              'architecture': 'get_building_architecture',
-                                             'indoor-comfort': 'get_building_comfort',
+                                             'indoor_comfort': 'get_building_comfort',
                                              'streets': 'get_street_network'
                                              }
 
@@ -59,11 +59,11 @@ mapping_dict_input_item_to_id_column = {'zone': 'name',
                                         'surroundings': 'name',
                                         'terrain': '',
                                         'weather': '',
-                                        'internal-loads': 'name',
-                                        'air-conditioning': 'name',
+                                        'internal_loads': 'name',
+                                        'air_conditioning': 'name',
                                         'supply_systems': 'name',
                                         'architecture': 'name',
-                                        'indoor-comfort': 'name',
+                                        'indoor_comfort': 'name',
                                         'streets': ''
                                         }
 
@@ -106,7 +106,7 @@ def path_to_input_file_without_db_4(scenario, item):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def verify_file_against_schema(scenario, item, self, verbose=True):
+def verify_file_against_schema(scenario, item, verbose=True):
     """
     Validate a file against a schema section in a YAML file.
 
@@ -119,18 +119,11 @@ def verify_file_against_schema(scenario, item, self, verbose=True):
     Returns:
     - List[dict]: List of validation errors.
     """
-
-    # Schema file path
-    schema_path = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
-    with open(schema_path, 'r') as schema_file:
-        schema = yaml.safe_load(schema_file)
+    schema = schemas()
 
     # File path and schema section
     file_path = path_to_input_file_without_db_4(scenario, item)
     locator = mapping_dict_input_item_to_schema_locator[item]
-
-    if locator not in schema:
-        raise ValueError(f"Schema section '{locator}' not found in {schema_path}.")
 
     schema_section = schema[locator]
     schema_columns = schema_section['schema']['columns']
@@ -184,15 +177,18 @@ def verify_file_against_schema(scenario, item, self, verbose=True):
         # Check range
         if 'min' in col_specs:
             out_of_range = col_data[col_data < col_specs['min']]
-            for idx, value in out_of_range.iteritems():
+            for idx, value in out_of_range.items():
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
 
         if 'max' in col_specs:
             out_of_range = col_data[col_data > col_specs['max']]
-            for idx, value in out_of_range.iteritems():
+            for idx, value in out_of_range.items():
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
+
+    # Rmove 'geometry' and 'reference' columns
+    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference']]
 
     # Print results
     if errors:
