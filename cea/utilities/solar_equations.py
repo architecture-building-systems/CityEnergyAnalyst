@@ -526,7 +526,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     else:
         CATteta_z = 6
     B = degrees(B)
-    if 0 < B <= 5:
+    if 0 <= B <= 5:
         CATB = 1  # flat roof
     elif 5 < B <= 15:
         CATB = 2  # tilted 5-15 degrees
