@@ -9,9 +9,8 @@ import cea.config
 import time
 import pandas as pd
 import numpy as np
-import geopandas as gpd
 from cea.schemas import schemas
-
+import sys
 
 
 __author__ = "Zhongming Shi"
@@ -26,13 +25,17 @@ __status__ = "Production"
 from cea.datamanagement.format_helper.cea4_verify import verify_file_against_schema_4
 
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
-SCHEDULES = ['SCHEDULES']
+SCHEDULES_FOLDER = ['SCHEDULES']
 ENVELOPE_ASSEMBLIES = ['CONSTRUCTION', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
 HVAC_ASSEMBLIES = ['CONTROLLER', 'HOT_WATER', 'HEATING', 'COOLING', 'VENTILATION']
 SUPPLY_ASSEMBLIES = ['COOLING', 'ELECTRICITY', 'HEATING', 'HOT_WATER']
 CONVERSION_COMPONENTS = ['CONVERSION']
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
+dict_envelope = {'CONSTRUCTION': 'type_cons', 'TIGHTNESS': 'type_leak', 'FLOOR': 'type_floor', 'WALL': 'type_wall', 'WINDOW': 'type_win', 'SHADING': 'type_shade', 'ROOF': 'type_roof'}
+ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
+COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
+
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -218,6 +221,29 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
     return list_missing_files
 
 
+def verify_assembly(scenario, ASSEMBLIES, print_results=True):
+    list_list_missing_columns_csv = []
+    construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
+    for assembly in ASSEMBLIES:
+        list_archetype_code = construction_type_df[dict_envelope[assembly]].tolist()
+        item_df = pd.read_csv(path_to_db_file_4(scenario, "ENVELOPE", assembly))
+        list_item_code = item_df['code'].tolist()
+        list_missing_item = list(set(list_archetype_code) - set(list_item_code))
+        if list_missing_item:
+            if print_results:
+                print('! Ensure {assembly} types exist in the {assembly}.csv: {list_missing_item}'.format(assembly=assembly, list_missing_item=list_missing_item))
+
+        list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, 'ENVELOPE', verbose=False, sheet_name=assembly)
+        list_list_missing_columns_csv.append(list_missing_columns_csv)
+        if print_results:
+            if list_missing_columns_csv:
+                print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}'.format(assembly=assembly, missing_columns=list_missing_columns_csv))
+            if list_issues_against_csv:
+                print('! Check values in {assembly}.csv: {list_issues_against_schema}'.format(assembly=assembly, list_issues_against_schema=list_issues_against_csv))
+
+    return list_list_missing_columns_csv
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -244,8 +270,10 @@ def cea4_verify_db(scenario, print_results=False):
     #1. verify columns and values in .csv files for archetypes
     list_missing_files_csv_archetypes = verify_file_exists_4_db(scenario, ARCHETYPES)
     if list_missing_files_csv_archetypes:
-        if print_results:
-            print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_archetypes))
+        print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_archetypes))
+        print('! CONSTRUCTION_TYPE.csv and USE_TYPE.csv are fundamental and should be present in the ARCHETYPES folder.')
+        print('! The Database verification is aborted.')
+        sys.exit(0)
 
     for item in ARCHETYPES:
         if item not in list_missing_files_csv_archetypes:
@@ -258,38 +286,34 @@ def cea4_verify_db(scenario, print_results=False):
                     print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
-    if 'USE_TYPE' not in list_missing_files_csv_archetypes:
-        use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
-        list_use_types = use_type_df['code'].tolist()
-        list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES, sheet_name=list_use_types)
-        if list_missing_files_csv_schedules:
-            if print_results:
-                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_schedules))
+    use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
+    list_use_types = use_type_df['code'].tolist()
+    list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types)
+    if list_missing_files_csv_schedules:
+        if print_results:
+            print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_schedules))
 
-        for sheet in list_use_types:
-            list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, SCHEDULES, verbose=False, sheet_name=sheet)
-            dict_missing_db[SCHEDULES] = list_missing_columns_csv_schedules
-            if print_results:
-                if list_missing_columns_csv_schedules:
-                    print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}'.format(sheet=sheet, missing_columns=list_missing_columns_csv_schedules))
-                if list_issues_against_csv_schedules:
-                    print('! Check values in {sheet}.csv: {list_issues_against_schema}'.format(sheet=sheet, list_issues_against_schema=list_issues_against_csv_schedules))
+    for sheet in list_use_types:
+        list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, SCHEDULES_FOLDER, verbose=False, sheet_name=sheet)
+        dict_missing_db[SCHEDULES_FOLDER] = list_missing_columns_csv_schedules
+        if print_results:
+            if list_missing_columns_csv_schedules:
+                print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}'.format(sheet=sheet, missing_columns=list_missing_columns_csv_schedules))
+            if list_issues_against_csv_schedules:
+                print('! Check values in {sheet}.csv: {list_issues_against_schema}'.format(sheet=sheet, list_issues_against_schema=list_issues_against_csv_schedules))
 
-    #3. verify columns and values in .csv files for envelope assemblies
-    if 'CONSTRUCTION_TYPE' not in list_missing_files_csv_archetypes:
-        list_missing_files_csv_envelope_assemblies = verify_file_exists_4_db(scenario, ENVELOPE_ASSEMBLIES)
+    #3. verify columns and values in .csv files for assemblies
 
-        construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
-        list_use_types = use_type_df['code'].tolist()
-        if list_missing_files_csv_envelope_assemblies:
-            if print_results:
-                print('! Ensure .csv file(s) are present in the ARCHETYPES>ENVELOPE_ASSEMBLIES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_envelope_assemblies))
+    list_missing_files_csv_envelope_assemblies = verify_file_exists_4_db(scenario, ["ENVELOPE"], ENVELOPE_ASSEMBLIES)
+    if list_missing_files_csv_envelope_assemblies:
+        if print_results:
+            print('! Ensure .csv file(s) are present in the ASSEMBLIES>ENVELOPE folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_envelope_assemblies))
 
-        for item in ENVELOPE_ASSEMBLIES:
-            if item not in list_missing_files_csv_envelope_assemblies:
-                list_missing_columns_csv_envelope_assemblies, list_issues_against_csv_envelope_assemblies = verify_file_against_schema_4_db(scenario, item, verbose=False)
-                dict_missing_db[item] = list_missing_columns_csv_envelope_assemblies
-    return dict_missing_db
+    for ASSEMBLIES in ASSEMBLIES_FOLDERS:
+        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, print_results)
+        dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
+
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
