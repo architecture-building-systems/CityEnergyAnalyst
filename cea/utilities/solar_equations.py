@@ -630,7 +630,11 @@ def calc_surface_azimuth(xdir, ydir, B):
 
     """
     B = radians(B)
-    teta_z = degrees(asin(xdir / sin(B)))
+    if B != 0:
+        teta_z = degrees(asin(xdir / sin(B))) # surface azimuth before adjusting for sign convention
+    else:
+        # for flat panels, surface azimuth doesn't matter
+        teta_z = 180
     # set the surface azimuth with on the sign convention (E,N)=(+,+)
     if xdir < 0:
         if ydir < 0:
