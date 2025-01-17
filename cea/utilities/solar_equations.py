@@ -396,9 +396,10 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, m
     #. Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
         same as the roof. Sensors on flat roofs are all south facing.
     """
+
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
-    optimal_angle_flat_rad = calc_optimal_angle(180, latitude,
-                                                solar_properties.trr_mean)  # assume surface azimuth = 180 (N,E), south facing
+    optimal_angle_flat_rad = calc_optimal_angle(0, latitude, solar_properties.trr_mean)
+        # assume surface azimuth is 0; the optimal angle will be the same for south- and north-facing panels
     sensors_metadata_clean['tilt_deg'] = np.vectorize(acos)(sensors_metadata_clean['Zdir'])  # surface tilt angle in rad
     sensors_metadata_clean['tilt_deg'] = np.vectorize(degrees)(
         sensors_metadata_clean['tilt_deg'])  # surface tilt angle in degrees
@@ -634,7 +635,7 @@ def calc_surface_azimuth(xdir, ydir, B):
         teta_z = degrees(asin(xdir / sin(B))) # surface azimuth before adjusting for sign convention
     else:
         # for flat panels, surface azimuth doesn't matter
-        teta_z = 180
+        teta_z = 0
     # set the surface azimuth with on the sign convention (E,N)=(+,+)
     if xdir < 0:
         if ydir < 0:
