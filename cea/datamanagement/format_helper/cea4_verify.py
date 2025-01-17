@@ -26,23 +26,7 @@ __status__ = "Production"
 SHAPEFILES = ['zone', 'surroundings']
 COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
-COLUMNS_SURROUNDINGS_4 = ['name', 'height_ag', 'floors_ag']
 CSV_BUILDING_PROPERTIES_4 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
-COLUMNS_AIR_CONDITIONING_4 = ['name',
-                            'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent',
-                            'heat_starts', 'heat_ends', 'cool_starts', 'cool_ends']
-COLUMNS_ARCHITECTURE_4 = ['name',
-                        'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                        'type_cons', 'type_leak', 'type_floor', 'type_part', 'type_base', 'type_roof', 'type_wall',
-                        'type_win', 'type_shade']
-COLUMNS_INDOOR_COMFORT_4 = ['name',
-                          'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lsp', 'RH_min_pc', 'RH_max_pc']
-COLUMNS_INTERNAL_LOADS_4 = ['name',
-                          'Occ_m2p', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Ev_kWveh', 'Qcre_Wm2',
-                          'Vww_ldp', 'Vw_ldp', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
-COLUMNS_SUPPLY_SYSTEMS_4 = ['name',
-                          'type_cs', 'type_hs', 'type_dhw', 'type_el']
-
 mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'surroundings': 'get_surroundings_geometry',
                                              'terrain': 'get_terrain',
