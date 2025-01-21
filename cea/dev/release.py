@@ -28,7 +28,7 @@ def update_credits(current_version: str, new_version: str):
     with open(contributors_template_path) as f:
         contributors = f.read()
 
-    credits_pattern = re.compile(rf"(<!-- credits -->)\n.*(- Version {current_version} - .+)\n", re.MULTILINE)
+    credits_pattern = re.compile(rf"(<!-- credits -->)\n.*(- Version ({current_version}|.+) - .+)\n", re.MULTILINE)
 
     date_today = datetime.datetime.today()
     new_version_line = f"- Version {new_version} - {date_today.strftime('%B %Y')}"
@@ -71,6 +71,9 @@ def main(config: cea.config.Configuration) -> None:
     current_version = __version__
 
     new_version = config.development.release_version
+
+    print(f"Current version: {current_version}")
+    print(f"New version: {new_version}")
 
     if not re.match(r"\d+\.\d+\.\d+", new_version):
         raise ValueError("Version number needs to be in Semantic Versioning format. e.g., 1.0.0")
