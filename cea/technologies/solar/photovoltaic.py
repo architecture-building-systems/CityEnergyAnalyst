@@ -5,7 +5,7 @@ Photovoltaic
 import os
 import time
 from itertools import repeat
-from math import radians, degrees, asin, sin, acos, cos, exp, tan, atan, ceil, log
+from math import radians, degrees, asin, sin, acos, cos, exp, tan, ceil, log
 from multiprocessing.dummy import Pool
 
 import numpy as np
