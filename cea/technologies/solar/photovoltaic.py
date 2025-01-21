@@ -123,8 +123,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, # latitude,
-                                   panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, panel_properties_PV)
 
         final.to_csv(locator.PV_results(building=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -155,8 +154,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, # latitude, panel_properties_PV):
-                       panel_properties_PV):
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
     """
@@ -166,12 +164,12 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
-    # # convert degree to radians
-    # lat = radians(latitude)
-    # g_rad = np.radians(solar_properties.g)
-    # ha_rad = np.radians(solar_properties.ha)
+    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
+    Az = solar_properties.Az - 180
+
+
+    # convert degree to radians
     Sz_rad = np.radians(solar_properties.Sz)
-    # Az_rad = np.radians(solar_properties.Az)
 
     # empty list to store results
     list_groups_area = [0 for i in range(number_groups)]
@@ -203,8 +201,12 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         teta_z_rad = radians(teta_z_deg)  # surface azimuth
 
         # calculate effective incident angles necessary
-        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, solar_properties.Az)
+        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
         teta_rad = [radians(x) for x in teta_deg]
+        # teta_rad = pd.Series(index=radiation_Wperm2.index,
+        #                      data=np.vectorize(calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_rad),
+        #                      name='aoi')
+
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
@@ -319,7 +321,7 @@ def calc_diffuseground_comp(tilt_radians):
 
     """
     tilt = degrees(tilt_radians)
-    teta_ed = 59.68 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
+    teta_ed = 59.7 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
     teta_eG = 90 - 0.5788 * tilt + 0.002693 * tilt ** 2  # [degrees] (5.4.1)
     return radians(teta_ed), radians(teta_eG)
 
@@ -363,8 +365,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']
 
-    # calculate ratio of beam radiation on a tilted plane
-    # to avoid inconvergence when I_sol = 0
+    # calculate ratio of beam radiation on a tilted plane to avoid inconvergence when I_sol = 0
     lim1 = radians(0)
     lim2 = radians(90)
     lim3 = radians(89.999)
@@ -386,13 +387,15 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
         Rb = 0  # Assume there is no direct radiation when the sun is close to the horizon.
 
     # calculate air mass modifier
-    m = 1 / cos(Sz)  # air mass
+    m = 1 / cos(Sz)  # air mass (1.5.1)
     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
     M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
+    # transmittance-absorptance product at normal incidence
+    Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
+
     # incidence angle modifier for direct (beam) radiation
     teta_r = asin(sin(teta) / n)  # refraction angle in radians(approximation according to Soteris A.) (5.1.4)
-    Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
     if teta < radians(90):  # 90 degrees in radians
         part1 = teta_r + teta
         part2 = teta_r - teta
@@ -420,7 +423,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
 
     # absorbed solar radiation
     absorbed_radiation_Wperm2 = M * Ta_n * (
-            kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+            kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * (I_sol * Pg) * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if absorbed_radiation_Wperm2 < 0.0:  # when points are 0 and too much losses
         # print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
@@ -488,12 +491,13 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
      surface azimuth, installed PV module area of each sensor point and the categories
     :rtype sensors_metadata_clean: dataframe
     :Assumptions:
-        1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
-           a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
-        2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
-           the worst hour of the year. The worst hour is a global variable defined by users.
-        3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
-           same as the roof. Sensors on flat roofs are all south facing.
+        1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is
+            on a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method
+            from Quinn et al.
+        2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth
+            at the worst hour of the year. The worst hour is a global variable defined by users.
+        3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is
+            the same as the roof. Sensors on flat roofs are all south facing.
 
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
