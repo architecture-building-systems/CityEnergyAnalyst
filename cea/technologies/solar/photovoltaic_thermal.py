@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from numba import jit
+import pvlib
 
 import cea.inputlocator
 import cea.utilities.parallel
@@ -174,11 +175,14 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
     T_in_C = get_t_in_pvt(config)
 
+    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
+    Az = solar_properties.Az - 180
+
     # convert degree to radians
-    lat_rad = radians(latitude)
-    g_rad = np.radians(solar_properties.g)
-    ha_rad = np.radians(solar_properties.ha)
     Sz_rad = np.radians(solar_properties.Sz)
+    # lat_rad = radians(latitude)
+    # g_rad = np.radians(solar_properties.g)
+    # ha_rad = np.radians(solar_properties.ha)
 
     # calculate equivalent length of pipes
     total_area_module_m2 = prop_observers['area_installed_module_m2'].sum()  # total area for panel installation
@@ -224,7 +228,9 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
 
         ## calculate absorbed solar irradiation on tilt surfaces
         # calculate effective incident angles necessary
-        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat_rad, ha_rad, tilt_rad, teta_z_rad)
+        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
+        teta_rad = [radians(x) for x in teta_deg]
+
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         # absorbed radiation and Tcell

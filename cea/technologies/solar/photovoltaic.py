@@ -167,7 +167,6 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
     Az = solar_properties.Az - 180
 
-
     # convert degree to radians
     Sz_rad = np.radians(solar_properties.Sz)
 
