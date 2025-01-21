@@ -223,7 +223,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         radiation_Wperm2 = solar_equations.calc_radiation_type(group, hourly_radiation_Wperm2, weather_data)
 
         ## calculate absorbed solar irradiation on tilt surfaces
-        # calculate effective indicent angles necessary
+        # calculate effective incident angles necessary
         teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat_rad, ha_rad, tilt_rad, teta_z_rad)
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 

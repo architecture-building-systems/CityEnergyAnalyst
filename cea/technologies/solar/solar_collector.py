@@ -305,7 +305,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     :type panel_properties: dict
     :param Tamb_vector_C: ambient temperatures
     :type Tamb_vector_C: Series
-    :param IAM_b: indicent andgle modifiers for direct(beam) radiation
+    :param IAM_b: incident andgle modifiers for direct(beam) radiation
     :type IAM_b: ndarray
     :param tilt_angle_deg: panel tilt angle
     :type tilt_angle_deg: float
