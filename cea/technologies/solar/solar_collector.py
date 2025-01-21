@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from numba import jit
+import pvlib
 
 import cea.config
 import cea.inputlocator
@@ -760,17 +761,22 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
             IAM_b = IAMT * IAML  # overall incidence angle modifier for beam radiation
         return IAM_b
 
+    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
+    Az = solar_properties.Az - 180
+
     # convert to radians
-    g_rad = np.radians(solar_properties.g)  # declination [rad]
-    ha_rad = np.radians(solar_properties.ha)  # hour angle [rad]
     Sz_rad = np.radians(solar_properties.Sz)  # solar zenith angle
-    Az_rad = np.radians(solar_properties.Az)  # solar azimuth angle [rad]
-    lat_rad = radians(latitude_deg)
+    Az_rad = np.radians(Az)  # solar_properties.Az)  # solar azimuth angle [rad]
+    # g_rad = np.radians(solar_properties.g)  # declination [rad]
+    # ha_rad = np.radians(solar_properties.ha)  # hour angle [rad]
+    # lat_rad = radians(latitude_deg)
     teta_z_rad = radians(teta_z_deg)
     tilt_rad = radians(tilt_angle_deg)
 
-    incidence_angle_rad = np.vectorize(solar_equations.calc_incident_angle_beam)(g_rad, lat_rad, ha_rad, tilt_rad,
-                                                                                 teta_z_rad)  # incident angle in radians
+    # incidence_angle_rad = np.vectorize(solar_equations.calc_incident_angle_beam)(g_rad, lat_rad, ha_rad, tilt_rad,
+    #                                                                              teta_z_rad)  # incident angle in radians
+    incidence_angle_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
+    incidence_angle_rad = [radians(x) for x in incidence_angle_deg]
 
     # calculate incident angles
     if type_SCpanel == 'FP':
