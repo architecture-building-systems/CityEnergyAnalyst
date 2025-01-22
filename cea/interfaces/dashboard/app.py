@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from cea.interfaces.dashboard.server.socketio import socket_app
@@ -19,9 +20,9 @@ async def lifespan(_: FastAPI):
     await server.shutdown_worker_processes()
 
 
-def get_cors_origins():
+def get_cors_origins() -> str:
     origin = get_settings().cors_origin
-    return [origin]
+    return origin
 
 
 app = FastAPI(lifespan=lifespan)
@@ -29,7 +30,7 @@ app = FastAPI(lifespan=lifespan)
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_cors_origins(),
+    allow_origins=[get_cors_origins()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,3 +43,15 @@ app.mount("/socket.io", socket_app, "socketio")
 app.include_router(api.router, prefix='/api')
 app.include_router(plots.router, prefix='/plots')
 app.include_router(server.router, prefix='/server')
+
+
+@app.exception_handler(Exception)
+async def uncaught_exception_handler(request, exc):
+    # TODO: Log this to logging service
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": f"Uncaught exception: {exc}"},
+        headers={
+            "Access-Control-Allow-Origin": get_cors_origins(),
+        }
+    )
