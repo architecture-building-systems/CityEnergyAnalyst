@@ -162,12 +162,12 @@ Cooling is always equal to CH database. The naming convention is the same as the
 
 #### Non-Residential types
 
-In the current status, there are non residential use types included. There is only a very heterogeneous data basis for non-residential buildings in Germany:
+In the current status, there are some non-residential use types included. There is only a very heterogeneous data basis for non-residential buildings in Germany:
 
 - DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
 - Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
 
-So, if the data is available in DIN 18599-13, this was added to the USE_TYPE_PROPERTIES excel, otherwise it was assumed to be equal to CH defaults. 
+So, if the data is available in DIN 18599-13, this was added to the USE_TYPE_PROPERTIES excel; otherwise, it was assumed to be equal to CH defaults. 
 
 #### Use type properties - internal loads
 
@@ -202,13 +202,13 @@ So, if the data is available in DIN 18599-13, this was added to the USE_TYPE_PRO
 #### Internal Load Calculations
 
 - Water usage School with shower: 250 Wh/m2/d $\times$ 3 m2/p / 23.28 Wh/l at 20 K temperature difference = 32.22 l/d/p [18599-13].
-- Water usage School with shower: 10.95 l/p/d [18599-13].
+- Water usage School without shower: 10.95 l/d/p [18599-13].
 - Assumed cold water usage equal to warmwater usage in School.
-- Warm water usage in office assumed equal to 2.5 l/p/d according to paper 'Fuentes, Elena, L. Arce, and Jaume Salom. "A review of domestic hot water consumption profiles for application in systems and buildings energy performance analysis." Renewable and Sustainable Energy Reviews 81 (2018): 1530-1547.
+- Warm water usage in office assumed equal to 2.5 l/d/p according to paper 'Fuentes, Elena, L. Arce, and Jaume Salom. "A review of domestic hot water consumption profiles for application in systems and buildings energy performance analysis." Renewable and Sustainable Energy Reviews 81 (2018): 1530-1547.
 - Restaurant assumed to be equal to: "Bürogebäude mit
 Gaststätte" of DIN 18599-13 -> 1500*1.2/23.28=77 l/d/p, cold water assumed equal.
 - Hotel left equal to CH.
-- Library: 30*5/23.28=6.44.
+- Library: 30*5/23.28=6.44 l/d/p.
 
 ## Assemblies
 
