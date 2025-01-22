@@ -9,7 +9,7 @@ import geopandas
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
 from fiona.errors import DriverError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.concurrency import run_in_threadpool
 
 import cea.inputlocator
@@ -140,15 +140,14 @@ async def get_all_inputs(config: CEAConfig):
         store['schedules'] = {}
 
         return store
-
     return await run_in_threadpool(fn)
 
 
 class InputForm(BaseModel):
-    tables: Dict[str, Any] = {}
-    geojsons: Dict[str, Any] = {}
-    crs: Dict[str, Any] = {}
-    schedules: Dict[str, Any] = {}
+    tables: Dict[str, Any] = Field(default_factory=dict)
+    geojsons: Dict[str, Any] = Field(default_factory=dict)
+    crs: Dict[str, Any] = Field(default_factory=dict)
+    schedules: Dict[str, Any] = Field(default_factory=dict)
 
 
 @router.put('/all-inputs')

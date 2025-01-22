@@ -202,11 +202,12 @@ async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
 
 @router.get('/')
 async def get_project_info(project_root: CEAProjectRoot, project: str) -> ProjectInfo:
-    if project_root is None:
-        project_root = ""
+    project_path = project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
 
     try:
-        cea_project = secure_path(os.path.join(project_root, project))
+        cea_project = secure_path(project_path)
     except OutsideProjectRootError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -262,11 +263,15 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
 
 
 @router.put('/')
-async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
+async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
     """
-    project = secure_path(scenario_path.project)
+    project_path = scenario_path.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    project = secure_path(project_path)
     scenario_name = scenario_path.scenario_name
 
     if project and scenario_name:
