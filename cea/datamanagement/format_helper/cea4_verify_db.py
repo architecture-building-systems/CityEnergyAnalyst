@@ -36,7 +36,7 @@ dict_envelope = {'CONSTRUCTION': 'type_cons', 'TIGHTNESS': 'type_leak', 'FLOOR':
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_assembly = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
-mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'const_type',
+mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_const_type_db',
                                           'USE_TYPE': 'get_use_type_db',
                                           'SCHEDULES': 'get_schedules_db',
                                           'CONSTRUCTION': 'get_construction_db',
