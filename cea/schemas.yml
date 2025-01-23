@@ -2283,6 +2283,682 @@ get_costs_operation_file:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
+
+
+get_database_assemblies_envelope_mass:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv
+  file_type: csv
+  schema:
+    columns:
+      Cm_Af:
+        description: Internal heat capacity per unit of air conditioned area. Defined
+          according to ISO 13790.
+        type: float
+        unit: '[J/Km2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Description:
+        description: Describes the Type of construction
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      code:
+        description: Type of construction
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_floor:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the Type of roof
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      GHG_floor_kgCO2m2:
+        description: Embodied emissions per m2 of floor.(entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      GHG_biogenic_floor_kgCO2m2:
+        description: Biogenic carbon storage per m2 of floor.(entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{-n...0.0}'
+        max: 0.0
+      U_base:
+        description: Thermal transmittance of floor including linear losses (+10%).
+          Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.1...n}'
+        min: 0.1
+      code:
+        description: Type of roof
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_roof:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the Type of roof
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      GHG_roof_kgCO2m2:
+        description: Embodied emissions per m2 of roof.(entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      GHG_biogenic_roof_kgCO2m2:
+        description: Biogenic carbon storage per m2 of roof.(entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{-n...0.0}'
+        max: 0.0
+      U_roof:
+        description: Thermal transmittance of windows including linear losses (+10%).
+          Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.1...n}'
+        min: 0.1
+      a_roof:
+        description: Solar absorption coefficient. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      code:
+        description: Type of roof
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      e_roof:
+        description: Emissivity of external surface. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      r_roof:
+        description: Reflectance in the Red spectrum. Defined according Radiance.
+          (long-wave)
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_shading:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the source of the benchmark standards.
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      code:
+        description: Type of shading
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      rf_sh:
+        description: Shading coefficient when shading device is active. Defined
+          according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_tightness:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the Type of tightness
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      code:
+        description: Type of tightness
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      n50:
+        description: Air exchanges per hour at a pressure of 50 Pa.
+        type: float
+        unit: '[1/h]'
+        values: '{0.0...10}'
+        min: 0.0
+        max: 10.0
+
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_wall:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the Type of wall
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      GHG_wall_kgCO2m2:
+        description: Embodied emissions per m2 of walls (entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      GHG_biogenic_wall_kgCO2m2:
+        description: Biogenic carbon storage per m2 of walls (entire building life cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{-n...0.0}'
+        max: 0.0
+      U_wall:
+        description: Thermal transmittance of windows including linear losses (+10%).
+          Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.1...n}'
+        min: 0.1
+      a_wall:
+        description: Solar absorption coefficient. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      code:
+        description: Type of wall
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      e_wall:
+        description: Emissivity of external surface. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      r_wall:
+        description: Reflectance in the Red spectrum. Defined according Radiance.
+          (long-wave)
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_envelope_window:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the source of the benchmark standards.
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      F_F:
+        description: Window frame fraction coefficient. Defined according to ISO
+          13790.
+        type: float
+        unit: '[m2-frame/m2-window]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      GHG_win_kgCO2m2:
+        description: Embodied emissions per m2 of windows.(entire building life
+          cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      GHG_biogenic_win_kgCO2m2:
+        description: Biogenic carbon storage per m2 of windows.(entire building life
+          cycle)
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        values: '{-n...0.0}'
+        max: 0.0
+      G_win:
+        description: Solar heat gain coefficient. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      U_win:
+        description: Thermal transmittance of windows including linear losses (+10%).
+          Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.1...n}'
+        min: 0.1
+      code:
+        description: Window type code to relate to other databases
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      e_win:
+        description: Emissivity of external surface. Defined according to ISO 13790.
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - demand
+  - radiation
+  - occupancy_helper
+
+get_database_assemblies_hvac_controller:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/HVAC/CONTROLLER.xls
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the type of controller
+        type: string
+        unit: '[-]'
+        values: '[-]'
+      code:
+        description: Unique ID of the controller
+        primary: true
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      dT_Qcs:
+        description: correction temperature of emission losses due to control system
+          of cooling
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+      dT_Qhs:
+        description: correction temperature of emission losses due to control system
+          of heating
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by:
+  - demand
+
+get_database_assemblies_hvac_cooling:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/HVAC/COOLING.xls
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the type of cooling system
+        type: string
+        unit: '[-]'
+        values: '[-]'
+      Qcsmax_Wm2:
+        description: 'Maximum heat flow permitted by cooling system per m2 gross
+          floor area '
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tc_sup_air_ahu_C:
+        description: Supply air temperature of the air-handling units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tc_sup_air_aru_C:
+        description: Supply air temperature of the air-recirculation units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tscs0_ahu_C:
+        description: Nominal supply temperature of the water side of the air-handling
+          units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tscs0_aru_C:
+        description: Nominal supply temperature of the water side of the air-recirculation
+          units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tscs0_scu_C:
+        description: Nominal supply temperature of the water side of the sensible
+          cooling units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      class_cs:
+        choice:
+          values:
+          - NONE
+          - CEILING_COOLING
+          - DECENTRALIZED_AC
+          - CENTRAL_AC
+          - HYBRID_AC
+          - FLOOR_COOLING
+        description: Type or class of the cooling system
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      code:
+        description: Unique ID of the heating system
+        primary: true
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      convection_cs:
+        description: Convective part of the power of the heating system in relation
+          to the total power
+        type: float
+        unit: '[-]'
+        values: '{0.0...1}'
+        min: 0.0
+        max: 1.0
+      dTcs0_ahu_C:
+        description: Nominal temperature increase on the water side of the air-handling
+          units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      dTcs0_aru_C:
+        description: Nominal temperature increase on the water side of the air-recirculation
+          units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      dTcs0_scu_C:
+        description: Nominal temperature increase on the water side of the sensible
+          cooling units
+        nullable: true
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      dTcs_C:
+        description: Set-point correction for space emission systems
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+
+used_by:
+  - demand
+
+get_database_assemblies_hvac_heating:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ASSEMBLIES/HVAC/COOLING.xls
+  file_type: csv
+  schema:
+    HEATING:
+      columns:
+        Description:
+          description: Description
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+        Qhsmax_Wm2:
+          description: 'Maximum heat flow permitted by heating system per m2 gross
+            floor area '
+          type: float
+          unit: '[W/m2]'
+          values: '{0.0...n}'
+          min: 0.0
+        Th_sup_air_ahu_C:
+          description: Supply air temperature of the air-recirculation units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        Th_sup_air_aru_C:
+          description: Supply air temperature of the air-handling units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        Tshs0_ahu_C:
+          description: Nominal supply temperature of the water side of the air-handling
+            units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        Tshs0_aru_C:
+          description: Nominal supply temperature of the water side of the air-recirculation
+            units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        Tshs0_shu_C:
+          description: Nominal supply temperature of the water side of the sensible
+            heating units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        class_hs:
+          choice:
+            values:
+            - NONE
+            - RADIATOR
+            - CENTRAL_AC
+            - FLOOR_HEATING
+          description: Type or class of the heating system
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+        code:
+          description: Unique ID of the heating system
+          primary: true
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+        convection_hs:
+          description: Convective part of the power of the heating system in relation
+            to the total power
+          type: float
+          unit: '[-]'
+          values: '{0.0...1}'
+          min: 0.0
+          max: 1.0
+        dThs0_ahu_C:
+          description: Nominal temperature increase on the water side of the air-handling
+            units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        dThs0_aru_C:
+          description: Nominal temperature increase on the water side of the air-recirculation
+            units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        dThs0_shu_C:
+          description: Nominal temperature increase on the water side of the sensible
+            heating units
+          nullable: true
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+          min: 0.0
+        dThs_C:
+          description: correction temperature of emission losses due to type of heating
+            system
+          type: float
+          unit: '[C]'
+          values: '{n...n}'
+    HOT_WATER:
+      columns:
+        Description:
+          description: Describes the Type of hot water supply system
+          type: string
+          unit: '[-]'
+          values: '[-]'
+        Qwwmax_Wm2:
+          description: 'Maximum heat flow permitted by hot water system per m2 gross
+            floor area '
+          min: 0.0
+          type: float
+          unit: '[W/m2]'
+          values: '{0.0...n}'
+        Tsww0_C:
+          description: Typical supply water temperature.
+          min: 0.0
+          type: float
+          unit: '[C]'
+          values: '{0.0...n}'
+        code:
+          description: Unique ID of the hot water supply system
+          primary: true
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+        class_dhw:
+          choice:
+            values:
+              - NONE
+              - HIGH_TEMP
+              - MEDIUM_TEMP
+              - LOW_TEMP
+          description: Type or class of the DHW system
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+    VENTILATION:
+      columns:
+        Description:
+          description: Describes the Type of ventilation
+          type: string
+          unit: '[-]'
+          values: '[-]'
+        ECONOMIZER:
+          description: Boolean, economizer on
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
+        HEAT_REC:
+          description: Boolean, heat recovery on
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
+        MECH_VENT:
+          description: Boolean, mechanical ventilation on
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
+        NIGHT_FLSH:
+          description: Boolean, night flush on
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
+        WIN_VENT:
+          description: Boolean, window ventilation on
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
+        code:
+          description: Unique ID of the type of ventilation
+          primary: true
+          type: string
+          unit: '[-]'
+          values: alphanumeric
+  used_by:
+  - demand
+
+
 get_database_air_conditioning_systems:
   created_by:
   - database_helper
@@ -2948,7 +3624,6 @@ get_database_construction_standards:
           values: alphanumeric
   used_by:
   - archetypes_mapper
-
 get_database_conversion_systems:
   created_by:
   - database_helper
