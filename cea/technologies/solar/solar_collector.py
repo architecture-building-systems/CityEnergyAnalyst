@@ -761,8 +761,11 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
             IAM_b = IAMT * IAML  # overall incidence angle modifier for beam radiation
         return IAM_b
 
-    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
-    Az = solar_properties.Az - 180
+    # Adjust sign convention: in Duffie (2013) collector azimuth facing equator = 0◦ (p. xxxiii)
+    if latitude_deg >= 0:
+        Az = solar_properties.Az - 180  # south is 0°, east is negative and west is positive (p. 13)
+    else:
+        Az = solar_properties.Az  # north is 0°
 
     # convert to radians
     Sz_rad = np.radians(solar_properties.Sz)  # solar zenith angle

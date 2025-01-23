@@ -123,7 +123,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, panel_properties_PV)
 
         final.to_csv(locator.PV_results(building=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -154,7 +154,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, panel_properties_PV):
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
     """
@@ -164,8 +164,11 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
-    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
-    Az = solar_properties.Az - 180
+    # Adjust sign convention: in Duffie (2013) collector azimuth facing equator = 0◦ (p. xxxiii)
+    if latitude >= 0:
+        Az = solar_properties.Az - 180  # south is 0°, east is negative and west is positive (p. 13)
+    else:
+        Az = solar_properties.Az  # north is 0°
 
     # convert degree to radians
     Sz_rad = np.radians(solar_properties.Sz)

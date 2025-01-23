@@ -175,8 +175,11 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
     T_in_C = get_t_in_pvt(config)
 
-    # Adjust sign convention: in Duffie (2013), south is 0°, east is negative and west is positive (p. 13)
-    Az = solar_properties.Az - 180
+    # Adjust sign convention: in Duffie (2013) collector azimuth facing equator = 0◦ (p. xxxiii)
+    if latitude >= 0:
+        Az = solar_properties.Az - 180  # south is 0°, east is negative and west is positive (p. 13)
+    else:
+        Az = solar_properties.Az  # north is 0°
 
     # convert degree to radians
     Sz_rad = np.radians(solar_properties.Sz)
