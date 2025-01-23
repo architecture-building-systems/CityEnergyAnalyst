@@ -5805,7 +5805,7 @@ get_database_components_distribution_thermal_grid:
   file_type: csv
   schema:
     columns:
-      Code:
+      code:
         description: pipe ID from the manufacturer
         primary: true
         type: string
@@ -6377,7 +6377,7 @@ get_database_archetypes_use_type:
   created_by:
   - database_helper
   file_path: inputs/database/ARCHETYPES/USE_TYPE.csv
-  file_type: xls
+  file_type: csv
   schema:
     columns:
       RH_max_pc:
@@ -10960,7 +10960,7 @@ get_database_distribution_systems:
   schema:
     THERMAL_GRID:
       columns:
-        Code:
+        code:
           description: pipe ID from the manufacturer
           primary: true
           type: string
@@ -21794,15 +21794,14 @@ get_zone_geometry:
         values: '{0...n}'
         min: 0
       const_type:
-        description: Construction Standard (relates to "code" in Supply Assemblies)
+        description: Construction Archetypes
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_construction_standards
-            sheet: STANDARD_DEFINITION
-            column: STANDARD
+            path: get_database_archetypes_construction_type
+            column: const_type
       use_type1:
         description: First (Main) Use type of the building
         type: string
@@ -21810,8 +21809,7 @@ get_zone_geometry:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
+            path: get_database_archetypes_use_type
             column: code
       use_type1r:
         description: Fraction of gross floor area for first Use Type
@@ -21827,8 +21825,7 @@ get_zone_geometry:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
+            path: get_database_archetypes_use_type
             column: code
           none_value: NONE
       use_type2r:
@@ -21845,8 +21842,7 @@ get_zone_geometry:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_use_types_properties
-            sheet: INTERNAL_LOADS
+            path: get_database_archetypes_use_type
             column: code
           none_value: NONE
       use_type3r:
