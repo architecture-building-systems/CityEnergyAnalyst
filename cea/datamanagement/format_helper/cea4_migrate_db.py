@@ -24,6 +24,12 @@ __status__ = "Production"
 from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4, print_verification_results_4_db, \
     cea4_verify_db
 
+rename_dict = {'STANDARD': 'const_type',
+               'YEAR_START': 'year_start',
+               'YEAR_END': 'year_end',
+               'type_cons': 'type_mass',
+               }
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-4
@@ -99,16 +105,16 @@ def excel_tab_to_csv(path_excel, directory_csv):
         print(f"Failed to delete the Excel file. Error: {e}")
 
 
-def merge_excel_tab_to_csv(path_excel, column_name, path_csv, new_column_name=None):
+def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
     """
     Merge all tabs of an Excel file horizontally based on a common column and save the result as a CSV file.
 
     Parameters:
     - path_excel (str): Path to the input Excel file.
     - column_name (str): The column used to merge the tabs.
-    - directory_csv (str): The directory to save the resulting CSV file.
-    - csv_file_name (str): The name of the output CSV file.
+    - path_csv (str): Path to save the resulting CSV file (includes file name).
     - new_column_name (str, optional): New name for the column used for merging. If provided, replaces column_name.
+    - rename_dict (dict, optional): Dictionary for renaming columns. Keys are old column names, values are new names.
 
     Returns:
     - None
@@ -117,41 +123,40 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, new_column_name=No
     directory_csv = os.path.dirname(path_csv)
     os.makedirs(directory_csv, exist_ok=True)
 
-    # Read the Excel file
     try:
+        # Read the Excel file
         excel_data = pd.ExcelFile(path_excel)
     except Exception as e:
         raise ValueError(f"Error reading Excel file: {e}")
 
-    # Initialize an empty DataFrame for merging
-    merged_df = None
+    merged_df = None  # Initialize an empty DataFrame for merging
+    key_column = column_name  # Determine key column name
 
-    # Update the key column name
-    if new_column_name:
-        key_column = new_column_name
-    else:
-        key_column = column_name
-
-    # Loop through each sheet and merge horizontally
     for sheet_name in excel_data.sheet_names:
         try:
             df = pd.read_excel(path_excel, sheet_name=sheet_name)
 
-            # Ensure the column_name exists
+            # Check if the key column exists in the current sheet
             if column_name not in df.columns:
                 raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'.")
 
-            # If a new column name is provided, rename it
-            df.rename(columns={column_name: key_column}, inplace=True)
+            # Rename columns based on the rename_dict
+            if rename_dict:
+                df.rename(columns=rename_dict, inplace=True)
 
-            # Merge with the existing DataFrame
+            # Add prefix for sheets ending with '_ASSEMBLIES'
+            if sheet_name.endswith("_ASSEMBLIES"):
+                prefix = sheet_name.replace("_ASSEMBLIES", "").lower()
+                df.columns = [f"{prefix}_{col}" if col != key_column else col for col in df.columns]
+
+            # Merge horizontally with the existing DataFrame
             if merged_df is None:
                 merged_df = df
             else:
                 merged_df = pd.merge(merged_df, df, on=key_column, how='outer')
 
         except Exception as e:
-            print(f"Failed to process sheet '{sheet_name}'. Error: {e}")
+            print(f"Warning: Failed to process sheet '{sheet_name}'. Error: {e}")
 
     # Ensure the key column is the first column
     if merged_df is not None:
@@ -165,12 +170,6 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, new_column_name=No
         except Exception as e:
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
-    # Delete the original Excel file
-    try:
-        os.remove(path_excel)
-        print(f"Deleted the Excel file: {path_excel}")
-    except Exception as e:
-        print(f"Failed to delete the Excel file. Error: {e}")
 
 def move_files(old_directory, new_directory, list_file_extensions):
     """
@@ -229,7 +228,7 @@ def migrate_cea3_to_cea4_db(scenario):
         #1. about archetypes - construction types
         path_excel = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
         path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
-        merge_excel_tab_to_csv(path_excel, 'STANDARD', path_csv, new_column_name='const_type')
+        merge_excel_tab_to_csv(path_excel, 'STANDARD', path_csv, rename_dict=rename_dict)
 
         #2. about archetypes - use types
         path_excel = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
