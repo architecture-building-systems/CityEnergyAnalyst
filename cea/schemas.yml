@@ -6373,6 +6373,140 @@ get_database_components_feedstocks_energy_carriers:
   - system_costs
   - optimization
 
+get_database_archetypes_use_type:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ARCHETYPES/USE_TYPE.csv
+  file_type: xls
+  schema:
+    columns:
+      RH_max_pc:
+        description: Upper bound of relative humidity
+        type: float
+        unit: '[%]'
+        values: '{0.0...n}'
+        min: 0.0
+      RH_min_pc:
+        description: Lower_bound of relative humidity
+        type: float
+        unit: '[%]'
+        values: '{0.0...n}'
+        min: 0.0
+      Tcs_set_C:
+        description: Setpoint temperature for cooling system
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+      Tcs_setb_C:
+        description: Setback point of temperature for cooling system
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+      Ths_set_C:
+        description: Setpoint temperature for heating system
+        type: float
+        unit: '[C]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ths_setb_C:
+        description: Setback point of temperature for heating system
+        type: float
+        unit: '[C]'
+        values: '{n...n}'
+      Ve_lsp:
+        description: Indoor quality requirements of indoor ventilation per person
+        type: float
+        unit: '[l/s]'
+        values: '{0.0...n}'
+        min: 0.0
+      code:
+        description: use type code (refers to building use type)
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      Ea_Wm2:
+        description: Peak specific electrical load due to computers and devices
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ed_Wm2:
+        description: Peak specific electrical load due to servers/data centres
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      El_Wm2:
+        description: Peak specific electrical load due to artificial lighting
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Epro_Wm2:
+        description: Peak specific electrical load due to industrial processes
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Ev_kWveh:
+        description: Peak capacity of electrical battery per vehicle
+        type: float
+        unit: '[kW/veh]'
+        values: '{0.0...n}'
+        min: 0.0
+      Occ_m2p:
+        description: Occupancy density
+        type: float
+        unit: '[m2/p]'
+        values: '{0.0...n}'
+        min: 0.0
+      Qcpro_Wm2:
+        description: Peak specific process cooling load
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Qcre_Wm2:
+        description: Peak specific cooling load due to refrigeration (cooling rooms)
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Qhpro_Wm2:
+        description: Peak specific process heating load
+        type: float
+        unit: '[W/m2]'
+        values: '{0.0...n}'
+        min: 0.0
+      Qs_Wp:
+        description: Peak sensible heat load of people
+        type: float
+        unit: '[W/p]'
+        values: '{0.0...n}'
+        min: 0.0
+      Vw_ldp:
+        description: Peak specific fresh water consumption (includes cold and hot
+          water)
+        type: float
+        unit: '[lpd]'
+        values: '{0.0...n}'
+        min: 0.0
+      Vww_ldp:
+        description: Peak specific daily hot water consumption
+        type: float
+        unit: '[lpd]'
+        values: '{0.0...n}'
+        min: 0.0
+      X_ghp:
+        description: Moisture released by occupancy at peak conditions
+        type: float
+        unit: '[g/h/p]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by:
+  - archetypes_mapper
+
 get_database_air_conditioning_systems:
   created_by:
   - database_helper
