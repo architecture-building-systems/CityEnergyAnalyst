@@ -5857,6 +5857,522 @@ get_database_components_distribution_thermal_grid:
   - optimization
   - thermal_network
 
+get_database_components_feedstocks_biogas:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/BIOGAS.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_coal:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/COAL.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_drybiomass:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/DRYBIOMASS.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_grid:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/GRID.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_hydrogen:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/HYDROGEN.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_naturalgas:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/NATURALGAS.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_oil:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/OIL.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_solar:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/SOLAR.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_wetbiomass:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/WETBIOMASS.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_wood:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/WOOD.csv
+  file_type: csv
+  schema:
+    columns:
+      GHG_kgCO2MJ:
+        description: Non-renewable Green House Gas Emissions factor
+        type: float
+        unit: '[kg CO2-eq/MJ-oil eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Opex_var_buy_USD2015kWh:
+        description: buying price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      Opex_var_sell_USD2015kWh:
+        description: selling price
+        min: 0.0
+        type: float
+        unit: '[USD-2015/kWh]'
+        values: '{0.0...n}'
+      hour:
+        description: hour of a 24 hour day
+        max: 23
+        min: 0
+        primary: true
+        type: int
+        unit: '[-]'
+        values: '{0...23}'
+      reference:
+        description: reference
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
+get_database_components_feedstocks_energy_carriers:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
+  file_type: csv
+  schema:
+    columns:
+      description:
+        description: written description of the energy carrier
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      code:
+        description: short code summarising the type (e.g. 'T') + the mean qualifier (e.g. '100') + descriptor (e.g. 'H')
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type:
+        description: type of energy characterising the energy carrier
+        type: string
+        unit: 'NA'
+        values: '{"chemical", "electrical", "radiation", "thermal"}'
+      subtype:
+        description: subtype characterising variation of an energy type
+        type: string
+        unit: 'NA'
+        values: '{"AC","air","biofuel","water","fossil","-"}'
+      qualifier:
+        description: criterion differentiating energy carriers of the same type
+        type: string
+        unit: 'NA'
+        values: '{"chemical composition", "voltage", "wavelength", "temperature"}'
+      unit_qual:
+        description: SI unit of the qualifier (if any)
+        type: string
+        unit: 'NA'
+        values: '{"", "V", "nm", "°C"}'
+      mean_qual:
+        description: mean value of the qualifier corresponding to the respective energy carrier
+        type: float
+        unit: 'NA'
+        values: '{-273.15...n}'
+      unit_cost_USD.kWh:
+        description: unit cost of the energy carrier
+        type: float
+        unit: '[USD/kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      unit_ghg_kgCO2.kWh:
+        description: green house gas intensity of the energy carrier
+        type: float
+        unit: '[kgCO2/kWh]'
+        values: '{0.0...n}'
+        min: 0.0
+      reference:
+        description: references to documents and articles values in the table were taken from
+        type: string
+        unit: 'NA'
+        values: 'NA'
+  used_by:
+  - decentralized
+  - emissions
+  - system_costs
+  - optimization
+
 get_database_air_conditioning_systems:
   created_by:
   - database_helper
