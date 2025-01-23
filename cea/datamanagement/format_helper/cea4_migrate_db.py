@@ -28,6 +28,7 @@ rename_dict = {'STANDARD': 'const_type',
                'YEAR_START': 'year_start',
                'YEAR_END': 'year_end',
                'type_cons': 'type_mass',
+               'Description': 'description',
                }
 
 
@@ -130,7 +131,11 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
         raise ValueError(f"Error reading Excel file: {e}")
 
     merged_df = None  # Initialize an empty DataFrame for merging
-    key_column = column_name  # Determine key column name
+
+    if rename_dict and column_name in rename_dict:
+        key_column = rename_dict[column_name]
+    else:
+        key_column = column_name  # Determine key column name
 
     for sheet_name in excel_data.sheet_names:
         try:

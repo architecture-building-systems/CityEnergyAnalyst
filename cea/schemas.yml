@@ -6514,28 +6514,28 @@ get_database_archetypes_construction_type:
   file_type: csv
   schema:
     columns:
-      Es:
+      envelope_Es:
         description: Fraction of gross floor area with electrical demands.
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Hs_ag:
+      envelope_Hs_ag:
         description: Fraction of above ground gross floor area air-conditioned.
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Hs_bg:
+      envelope_Hs_bg:
         description: 'Fraction of below ground gross floor area air-conditioned '
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Ns:
+      envelope_Ns:
         description: Fraction of net gross floor area.
         max: 1.0
         min: 0.0
@@ -6548,7 +6548,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_mass:
+      envelope_type_mass:
         choice:
           lookup:
             column: code
@@ -6558,7 +6558,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_floor:
+      envelope_type_floor:
         choice:
           lookup:
             column: code
@@ -6569,7 +6569,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_leak:
+      envelope_type_leak:
         choice:
           lookup:
             column: code
@@ -6578,7 +6578,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_part:
+      envelope_type_part:
         choice:
           lookup:
             column: code
@@ -6588,7 +6588,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_roof:
+      envelope_type_roof:
         choice:
           lookup:
             column: code
@@ -6597,7 +6597,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_shade:
+      envelope_type_shade:
         choice:
           lookup:
             column: code
@@ -6606,7 +6606,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_wall:
+      envelope_type_wall:
         choice:
           lookup:
             column: code
@@ -6616,7 +6616,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_win:
+      envelope_type_win:
         choice:
           lookup:
             column: code
@@ -6625,66 +6625,66 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      void_deck:
+      envelope_void_deck:
         description: Number of floors (from the ground up) with an open envelope
           (default = 0)
         min: 0
         type: int
         unit: '[-]'
         values: '{0...n}'
-      wwr_east:
+      envelope_wwr_east:
         description: Window to wall ratio in in facades facing east
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      wwr_north:
+      envelope_wwr_north:
         description: Window to wall ratio in in facades facing north
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      wwr_south:
+      envelope_wwr_south:
         description: Window to wall ratio in in facades facing south
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      wwr_west:
+      envelope_wwr_west:
         description: Window to wall ratio in in facades facing west
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      cool_ends:
+      hvac_cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         regex: ^\d{2}|\d{2}$
         type: string
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      cool_starts:
+      hvac_cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         regex: ^\d{2}|\d{2}$
         type: string
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      heat_ends:
+      hvac_heat_ends:
         description: End of the heating season - use 00|00 when there is none
         regex: ^\d{2}|\d{2}$
         type: string
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      heat_starts:
+      hvac_heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         regex: ^\d{2}|\d{2}$
         type: string
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      type_cs_hvac:
+      hvac_type_cs:
         choice:
           lookup:
             column: code
@@ -6693,7 +6693,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_ctrl_hvac:
+      hvac_type_ctrl:
         choice:
           lookup:
             column: code
@@ -6703,7 +6703,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_dhw_hvac:
+      hvac_type_dhw:
         choice:
           lookup:
             column: code
@@ -6713,7 +6713,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_hs_hvac:
+      hvac_type_hs:
         choice:
           lookup:
             column: code
@@ -6722,7 +6722,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_vent_hvac:
+      hvac_type_vent:
         choice:
           lookup:
             column: code
@@ -6751,7 +6751,7 @@ get_database_archetypes_construction_type:
         type: int
         unit: '[-]'
         values: '{0...n}'
-      type_cs_supply:
+      supply_type_cs:
         choice:
           lookup:
             column: code
@@ -6761,7 +6761,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_dhw_supply:
+      supply_type_dhw:
         choice:
           lookup:
             column: code
@@ -6771,7 +6771,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_el_supply:
+      supply_type_el:
         choice:
           lookup:
             column: code
@@ -6781,7 +6781,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      type_hs_supply:
+      supply_type_hs:
         choice:
           lookup:
             column: code
