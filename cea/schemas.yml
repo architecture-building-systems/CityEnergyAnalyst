@@ -6507,6 +6507,295 @@ get_database_archetypes_use_type:
   used_by:
   - archetypes_mapper
 
+get_database_archetypes_construction_type:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv
+  file_type: csv
+  schema:
+    columns:
+      Es:
+        description: Fraction of gross floor area with electrical demands.
+        max: 1.0
+        min: 0.0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      Hs_ag:
+        description: Fraction of above ground gross floor area air-conditioned.
+        max: 1.0
+        min: 0.0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      Hs_bg:
+        description: 'Fraction of below ground gross floor area air-conditioned '
+        max: 1.0
+        min: 0.0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      Ns:
+        description: Fraction of net gross floor area.
+        max: 1.0
+        min: 0.0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      const_type:
+        description: ' Unique ID of Construction Standard'
+        primary: true
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      type_mass:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_mass
+        description: Type of mass assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      type_floor:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_floor
+            sheet: FLOOR
+        description: Internal floor construction assembly (relates to "code" in
+          ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      type_leak:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_tightness
+        description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      type_part:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_wall
+        description: Internal partitions construction assembly (relates to "code"
+          in ENVELOPE assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_roof:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_roof
+        description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_shade:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_shading
+        description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_wall:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_wall
+        description: External wall construction assembly (relates to "code" in ENVELOPE
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_win:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_window
+        description: Window assembly (relates to "code" in ENVELOPE assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      void_deck:
+        description: Number of floors (from the ground up) with an open envelope
+          (default = 0)
+        min: 0
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+      wwr_east:
+        description: Window to wall ratio in in facades facing east
+        max: 1.0
+        min: 0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      wwr_north:
+        description: Window to wall ratio in in facades facing north
+        max: 1.0
+        min: 0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      wwr_south:
+        description: Window to wall ratio in in facades facing south
+        max: 1.0
+        min: 0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      wwr_west:
+        description: Window to wall ratio in in facades facing west
+        max: 1.0
+        min: 0
+        type: float
+        unit: '[m2/m2]'
+        values: '{0.0...1}'
+      cool_ends:
+        description: End of the cooling season - use 00|00 when there is none
+        regex: ^\d{2}|\d{2}$
+        type: string
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      cool_starts:
+        description: Start of the cooling season - use 00|00 when there is none
+        regex: ^\d{2}|\d{2}$
+        type: string
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      heat_ends:
+        description: End of the heating season - use 00|00 when there is none
+        regex: ^\d{2}|\d{2}$
+        type: string
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      heat_starts:
+        description: Start of the heating season - use 00|00 when there is none
+        regex: ^\d{2}|\d{2}$
+        type: string
+        unit: '[DD|MM]'
+        values: '{00|00...31|12}'
+      type_cs_hvac:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_hvac_cooling
+        description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_ctrl_hvac:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_hvac_controller
+        description: Type of heating and cooling control HVAC  assembly (relates
+          to "code" in HVAC assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_dhw_hvac:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_hvac_hot_water
+        description: Type of hot water HVAC assembly (relates to "code" in HVAC
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_hs_hvac:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_hvac_heating
+        description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_vent_hvac:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_hvac_ventilation
+        description: Type of ventilation HVAC assembly (relates to "code" in HVAC
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      description:
+        description: Description of the construction archetype
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      year_end:
+        description: Upper limit of year interval where the building properties
+          apply
+        min: 0
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+      year_start:
+        description: Lower limit of year interval where the building properties
+          apply
+        min: 0
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+      type_cs_supply:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_supply_cooling
+        description: Type of cooling supply assembly (refers to "code" in SUPPLY
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_dhw_supply:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_supply_hot_water
+        description: Type of hot water supply assembly (refers to "code" in SUPPLY
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_el_supply:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_supply_electricity
+        description: Type of electrical supply assembly (refers to "code" in SUPPLY
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      type_hs_supply:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_supply_heating
+        description: Type of heating supply assembly (refers to "code" in SUPPLY
+          assemblies)
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+    constraints:
+      year: year_start < year_end
+  used_by:
+  - archetypes_mapper
+
 get_database_air_conditioning_systems:
   created_by:
   - database_helper
