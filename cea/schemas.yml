@@ -5798,6 +5798,64 @@ get_database_conversion_vapor_compression_chillers:
   - decentralized
   - optimization
 
+get_database_components_distribution_thermal_grid:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/DISTRIBUTION/THERMAL_GRID.csv
+  file_type: csv
+  schema:
+    columns:
+      Code:
+        description: pipe ID from the manufacturer
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      D_ext_m:
+        description: external pipe diameter tolerance for the nominal diameter (DN)
+        type: float
+        unit: '[m]'
+        values: '{0.0...n}'
+        min: 0.0
+      D_ins_m:
+        description: maximum pipe diameter tolerance for the nominal diameter (DN)
+        type: float
+        unit: '[m]'
+        values: '{0.0...n}'
+        min: 0.0
+      D_int_m:
+        description: internal pipe diameter tolerance for the nominal diameter (DN)
+        type: float
+        unit: '[m]'
+        values: '{0.0...n}'
+        min: 0.0
+      Inv_USD2015perm:
+        description: Typical cost of investment for a given pipe diameter.
+        type: float
+        unit: '[$/m]'
+        values: '{0.0...n}'
+        min: 0.0
+      Pipe_DN:
+        description: Nominal pipe diameter
+        type: float
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0.0
+      Vdot_max_m3s:
+        description: maximum volumetric flow rate for the nominal diameter (DN)
+        type: float
+        unit: '[m3/s]'
+        values: '{0.0...n}'
+        min: 0.0
+      Vdot_min_m3s:
+        description: minimum volumetric flow rate for the nominal diameter (DN)
+        type: float
+        unit: '[m3/s]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by:
+  - optimization
+  - thermal_network
 
 get_database_air_conditioning_systems:
   created_by:
