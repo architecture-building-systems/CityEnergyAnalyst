@@ -21,8 +21,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4, print_verification_results_4_db, \
-    cea4_verify_db
+from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4
 
 rename_dict = {'STANDARD': 'const_type',
                'YEAR_START': 'year_start',
@@ -102,13 +101,6 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
             print(f"Saved {sheet_name} to {output_path}")
         except Exception as e:
             print(f"Failed to save sheet {sheet_name} as CSV. Error: {e}")
-
-    # Delete the Excel file
-    try:
-        os.remove(path_excel)
-        print(f"Deleted the Excel file: {path_excel}")
-    except Exception as e:
-        print(f"Failed to delete the Excel file. Error: {e}")
 
 
 def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
