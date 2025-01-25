@@ -173,32 +173,68 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
 
-def move_files(old_directory, new_directory, list_file_extensions):
+def move_txt_modify_csv_files(scenario):
     """
-    Move files with specific extensions from one directory to another and delete the old directory.
+    Move .txt files and process .csv files from one directory to another.
+    Also, compile specific rows from .csv files into a combined DataFrame.
 
     Parameters:
-    - old_directory (str): The path to the source directory.
-    - new_directory (str): The path to the target directory.
-    - list_file_extensions (list): List of file extensions to move (e.g., ['.txt', '.csv']).
+    - scenario: The scenario path.
 
     Returns:
     - None
     """
-    # Ensure the new directory exists
-    os.makedirs(new_directory, exist_ok=True)
+    # Paths
+    shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
+    shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
+    compiled_rows = []
 
-    # Iterate through the files in the old directory
-    for root, dirs, files in os.walk(old_directory):
+    # Ensure the target directory exists
+    os.makedirs(shedules_directory_4, exist_ok=True)
+
+    # Iterate through files in the source directory
+    for root, _, files in os.walk(shedules_directory_3):
         for file in files:
-            # Check if the file has one of the specified extensions
-            if any(file.endswith(ext) for ext in list_file_extensions):
-                old_file_path = os.path.join(root, file)
-                new_file_path = os.path.join(new_directory, file)
+            old_file_path = os.path.join(root, file)
+            new_file_path = os.path.join(shedules_directory_4, file)
 
-                # Copy the file to the new directory
+            # Handle .txt files: Move to new directory
+            if file.endswith('.txt'):
                 shutil.copy2(old_file_path, new_file_path)
-                print(f"Copied: {old_file_path} to {new_file_path}")
+                print(f"Copied .txt file: {old_file_path} to {new_file_path}")
+
+            # Handle .csv files: Process and save
+            elif file.endswith('.csv'):
+                try:
+                    # Read the CSV file
+                    df = pd.read_csv(old_file_path)
+                    use_type = os.path.splitext(file)[0]
+
+                    # Extract the second row for compilation
+                    if len(df) > 1:
+                        second_row = df.iloc[1].to_dict()
+                        second_row['use_type'] = use_type
+                        compiled_rows.append(second_row)
+
+                    # Clean and process the remaining data
+                    if len(df) > 2:
+                        schedules_df = df.iloc[2:].reset_index(drop=True)
+                        schedules_df.columns = schedules_df.iloc[0]
+                        schedules_df = schedules_df[1:].reset_index(drop=True)
+
+                        # Save the cleaned data
+                        schedules_df.to_csv(new_file_path, index=False)
+                        print(f"Processed and saved .csv file: {new_file_path}")
+                except Exception as e:
+                    print(f"Error processing file {file}: {e}")
+
+    # Create and save the compiled DataFrame
+    if compiled_rows:
+        compiled_multiplier_df = pd.DataFrame(compiled_rows, columns=['use_type', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+        compiled_multiplier_path = path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
+        print(f"Saved compiled the MONTHLY_MULTIPLIER info of all use types to: {compiled_multiplier_path}")
+
 
 def delete_files(path):
     """
@@ -236,10 +272,7 @@ def migrate_cea3_to_cea4_db(scenario):
         path_excel = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
         path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
         merge_excel_tab_to_csv(path_excel, 'code', path_csv)
-
-        shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
-        shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
-        move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
+        move_txt_modify_csv_files(scenario)
 
         #3. about assemblies
         excel_tab_to_csv(path_to_db_file_3(scenario, 'ENVELOPE'), path_to_db_file_4(scenario, 'ENVELOPE'), rename_dict=rename_dict)
