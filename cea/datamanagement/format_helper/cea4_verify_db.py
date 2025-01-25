@@ -83,6 +83,8 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
             path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES")
         else:
             path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "{use_type}.csv".format(use_type=sheet_name))
+    elif item == "MONTHLY_MULTIPLIER":
+        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "MONTHLY_MULTIPLIER.csv")
     elif item == "ENVELOPE":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "ENVELOPE")
