@@ -29,6 +29,7 @@ rename_dict = {'STANDARD': 'const_type',
                'YEAR_END': 'year_end',
                'type_cons': 'type_mass',
                'Description': 'description',
+               'REFERENCE': 'reference',
                }
 
 
@@ -71,13 +72,14 @@ def path_to_db_file_3(scenario, item):
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def excel_tab_to_csv(path_excel, directory_csv):
+def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
     """
     Converts each sheet of an Excel file into individual CSV files and deletes the Excel file.
 
     Parameters:
     - path_excel (str): The path to the input Excel file.
     - directory_csv (str): The directory where CSV files should be saved.
+    - rename_dict (dict, optional): Dictionary for renaming columns. Keys are old column names, values are new names.
     """
     # Ensure the output directory exists
     os.makedirs(directory_csv, exist_ok=True)
@@ -92,6 +94,9 @@ def excel_tab_to_csv(path_excel, directory_csv):
     for sheet_name in excel_data.sheet_names:
         try:
             df = pd.read_excel(path_excel, sheet_name=sheet_name)
+            # Rename columns based on the rename_dict
+            if rename_dict:
+                df.rename(columns=rename_dict, inplace=True)
             output_path = os.path.join(directory_csv, f"{sheet_name}.csv")
             df.to_csv(output_path, index=False)
             print(f"Saved {sheet_name} to {output_path}")
@@ -245,14 +250,14 @@ def migrate_cea3_to_cea4_db(scenario):
         move_files(shedules_directory_3, shedules_directory_4, ['.csv', '.txt'])
 
         #3. about assemblies
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'ENVELOPE'), path_to_db_file_4(scenario, 'ENVELOPE'))
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'HVAC'), path_to_db_file_4(scenario, 'HVAC'))
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'SUPPLY'), path_to_db_file_4(scenario, 'SUPPLY'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'ENVELOPE'), path_to_db_file_4(scenario, 'ENVELOPE'), rename_dict=rename_dict)
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'HVAC'), path_to_db_file_4(scenario, 'HVAC'), rename_dict=rename_dict)
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'SUPPLY'), path_to_db_file_4(scenario, 'SUPPLY'), rename_dict=rename_dict)
 
         #4. about components
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'CONVERSION'), path_to_db_file_4(scenario, 'CONVERSION'))
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'DISTRIBUTION'), path_to_db_file_4(scenario, 'DISTRIBUTION'))
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS'))
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'CONVERSION'), path_to_db_file_4(scenario, 'CONVERSION'), rename_dict=rename_dict)
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'DISTRIBUTION'), path_to_db_file_4(scenario, 'DISTRIBUTION'), rename_dict=rename_dict)
+        excel_tab_to_csv(path_to_db_file_3(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS'), rename_dict=rename_dict)
 
         # Print: End
         print('-' * 49)
