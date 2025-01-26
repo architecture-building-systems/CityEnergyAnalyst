@@ -31,6 +31,19 @@ rename_dict = {'STANDARD': 'const_type',
                'REFERENCE': 'reference',
                'Code': 'code',
                'Pipe_DN': 'pipe_DN',
+               'DAY':'day',
+               'HOUR':'hour',
+               'HOURS':'hours',
+               'HOURS_PER_DAY':'hours_per_day',
+               'OCCUPANCY':'occupancy',
+               'APPLIANCES':'appliances',
+               'LIGHTING':'lighting',
+               'WATER':'water',
+               'HEATING':'heating',
+               'COOLING':'cooling',
+               'PROCESSES':'processes',
+               'SERVERS':'servers',
+               'ELECTROMOBILITY':'electromobility',
                }
 
 
@@ -102,7 +115,7 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
             df.to_csv(output_path, index=False)
             print(f"Saved {sheet_name} to {output_path}")
         except Exception as e:
-            print(f"Failed to save sheet {sheet_name} as CSV. Error: {e}")
+            print(f"Failed to save sheet {sheet_name} as .csv format Error: {e}")
 
 
 def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
@@ -227,19 +240,8 @@ def move_txt_modify_csv_files(scenario):
                     # Extract rows 3 to 74
                     other_rows = rows[3:75]  # Remember Python indexing starts at 0
                     headers_schedules = rows[2]
-                    headers_schedules_dict = {'DAY':'day',
-                                              'HOUR':'hour',
-                                              'OCCUPANCY':'occupancy',
-                                              'APPLIANCES':'appliances',
-                                              'LIGHTING':'lighting',
-                                              'WATER':'water',
-                                              'HEATING':'heating',
-                                              'COOLING':'cooling',
-                                              'PROCESSES':'processes',
-                                              'SERVERS':'servers',
-                                              'ELECTROMOBILITY':'electromobility'}
                     schedules_df = pd.DataFrame(other_rows, columns=headers_schedules)
-                    schedules_df.rename(columns=headers_schedules_dict, inplace=True)
+                    schedules_df.rename(columns=rename_dict, inplace=True)
                     schedules_df = schedules_df.apply(pd.to_numeric, errors='ignore')
 
                     # Drop the original 'day' and 'hour' columns
