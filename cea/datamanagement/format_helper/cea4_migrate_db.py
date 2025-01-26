@@ -30,6 +30,7 @@ rename_dict = {'STANDARD': 'const_type',
                'Description': 'description',
                'REFERENCE': 'reference',
                'Code': 'code',
+               'Pipe_DN': 'pipe_DN',
                }
 
 
