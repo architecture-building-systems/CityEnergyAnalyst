@@ -139,12 +139,12 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC")
         else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC", "HVAC_{hvac_assemblies}.csv".format(hvac_assemblies=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC", "{hvac_assemblies}.csv".format(hvac_assemblies=sheet_name))
     elif item == "SUPPLY":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY")
         else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY", "SUPPLY_{supply_assemblies}.csv".format(supply_assemblies=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY", "{supply_assemblies}.csv".format(supply_assemblies=sheet_name))
     elif item == "CONVERSION":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION")
@@ -296,6 +296,8 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
                 list_missing_files.append(file)
         else:
             for sheet in sheet_name:
+                sheet = sheet.replace('HVAC_', '')
+                sheet = sheet.replace('SUPPLY_', '')
                 path = path_to_db_file_4(scenario, file, sheet)
                 if not os.path.isfile(path):
                     list_missing_files.append(sheet)
@@ -418,7 +420,7 @@ def cea4_verify_db(scenario, print_results=False):
     list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
     for supply_type in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
         if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
-            supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
+            supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
             list_conversion_supply.append(supply_df['primary_components', 'secondary_components', 'tertiary_components'].unique())
             list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
     list_missing_conversion = list(set(list_conversion_supply) - set(list_conversion_db))
