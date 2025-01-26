@@ -179,7 +179,7 @@ def verify_file_against_schema_4(scenario, item, verbose=True):
             for error in errors:
                 print(error)
     elif verbose:
-        print(f"Validation passed: All columns and values meet the CEA schema requirements.")
+        print(f"Validation passed: All columns and values meet the CEA (schema) requirements.")
 
     return missing_columns, errors
 

@@ -6799,1194 +6799,139 @@ get_database_archetypes_construction_type:
 get_database_archetypes_schedules:
   created_by:
   - database_helper
-  file_path: inputs/technology/archetypes/schedules/MULTI_RES.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MULTI_RES.csv
   file_type: csv
   schema:
-    APPLIANCES:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    COOLING:
-      columns:
-        1:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        2:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        3:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        4:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        5:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        6:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        7:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        8:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        9:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        10:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        11:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        12:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        13:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        14:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        15:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        16:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        17:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        18:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        19:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        20:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        21:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        22:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        23:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        24:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    ELECTROMOBILITY:
-      columns:
-        1:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        2:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        3:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        4:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        5:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        6:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        7:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        8:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        9:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        10:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        11:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        12:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        13:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        14:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        15:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        16:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        17:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        18:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        19:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        20:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        21:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        22:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        23:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        24:
-          description: Average number of electric vehicles in this hour
-          max: 10000
-          min: 0
-          type: int
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    HEATING:
-      columns:
-        1:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        2:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        3:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        4:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        5:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        6:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        7:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        8:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        9:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        10:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        11:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        12:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        13:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        14:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        15:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        16:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        17:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        18:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        19:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        20:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        21:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        22:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        23:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        24:
-          choice:
-            values:
-            - 'OFF'
-            - SETBACK
-            - SETPOINT
-          type: string
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    LIGHTING:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    METADATA:
-      columns:
-        metadata:
-          type: string
-    MONTHLY_MULTIPLIER:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-    OCCUPANCY:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    PROCESSES:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    SERVERS:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
-    WATER:
-      columns:
-        1:
-          max: 1.0
-          min: 0.0
-          type: float
-        2:
-          max: 1.0
-          min: 0.0
-          type: float
-        3:
-          max: 1.0
-          min: 0.0
-          type: float
-        4:
-          max: 1.0
-          min: 0.0
-          type: float
-        5:
-          max: 1.0
-          min: 0.0
-          type: float
-        6:
-          max: 1.0
-          min: 0.0
-          type: float
-        7:
-          max: 1.0
-          min: 0.0
-          type: float
-        8:
-          max: 1.0
-          min: 0.0
-          type: float
-        9:
-          max: 1.0
-          min: 0.0
-          type: float
-        10:
-          max: 1.0
-          min: 0.0
-          type: float
-        11:
-          max: 1.0
-          min: 0.0
-          type: float
-        12:
-          max: 1.0
-          min: 0.0
-          type: float
-        13:
-          max: 1.0
-          min: 0.0
-          type: float
-        14:
-          max: 1.0
-          min: 0.0
-          type: float
-        15:
-          max: 1.0
-          min: 0.0
-          type: float
-        16:
-          max: 1.0
-          min: 0.0
-          type: float
-        17:
-          max: 1.0
-          min: 0.0
-          type: float
-        18:
-          max: 1.0
-          min: 0.0
-          type: float
-        19:
-          max: 1.0
-          min: 0.0
-          type: float
-        20:
-          max: 1.0
-          min: 0.0
-          type: float
-        21:
-          max: 1.0
-          min: 0.0
-          type: float
-        22:
-          max: 1.0
-          min: 0.0
-          type: float
-        23:
-          max: 1.0
-          min: 0.0
-          type: float
-        24:
-          max: 1.0
-          min: 0.0
-          type: float
-        DAY:
-          description: Day of the week (weekday, saturday, or sunday)
-          choice:
-            values:
-            - WEEKDAY
-            - SATURDAY
-            - SUNDAY
-          primary: true
-          type: string
+    columns:
+      hour:
+        description: Day of the week (weekday, saturday, or sunday)
+        choice:
+          values:
+          - Weekday_00
+          - Weekday_01
+          - Weekday_02
+          - Weekday_03
+          - Weekday_04
+          - Weekday_05
+          - Weekday_06
+          - Weekday_07
+          - Weekday_08
+          - Weekday_09
+          - Weekday_10
+          - Weekday_11
+          - Weekday_12
+          - Weekday_13
+          - Weekday_14
+          - Weekday_15
+          - Weekday_16
+          - Weekday_17
+          - Weekday_18
+          - Weekday_19
+          - Weekday_20
+          - Weekday_21
+          - Weekday_22
+          - Weekday_23
+          - Saturday_00
+          - Saturday_01
+          - Saturday_02
+          - Saturday_03
+          - Saturday_04
+          - Saturday_05
+          - Saturday_06
+          - Saturday_07
+          - Saturday_08
+          - Saturday_09
+          - Saturday_10
+          - Saturday_11
+          - Saturday_12
+          - Saturday_13
+          - Saturday_14
+          - Saturday_15
+          - Saturday_16
+          - Saturday_17
+          - Saturday_18
+          - Saturday_19
+          - Saturday_20
+          - Saturday_21
+          - Saturday_22
+          - Saturday_23
+          - Sunday_00
+          - Sunday_01
+          - Sunday_02
+          - Sunday_03
+          - Sunday_04
+          - Sunday_05
+          - Sunday_06
+          - Sunday_07
+          - Sunday_08
+          - Sunday_09
+          - Sunday_10
+          - Sunday_11
+          - Sunday_12
+          - Sunday_13
+          - Sunday_14
+          - Sunday_15
+          - Sunday_16
+          - Sunday_17
+          - Sunday_18
+          - Sunday_19
+          - Sunday_20
+          - Sunday_21
+          - Sunday_22
+          - Sunday_23
+        primary: true
+        type: string
+      occupancy:
+        description: Occupancy
+        max: 1.0
+        min: 0.0
+        type: float
+      appliances:
+        description: Appliances
+        max: 1.0
+        min: 0.0
+        type: float
+      lighting:
+        description: Lighting
+        max: 1.0
+        min: 0.0
+        type: float
+      hot_water:
+        description: Domestic hot water
+        max: 1.0
+        min: 0.0
+        type: float
+      heating:
+        description: Space heating
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      cooling:
+        description: Space cooling
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      processes:
+        description: processes
+        max: 1.0
+        min: 0.0
+        type: float
+      servers:
+        description: Servers
+        max: 1.0
+        min: 0.0
+        type: float
+      electromobility:
+        description: Average number of electric vehicles in this hour
+        max: 10000
+        min: 0
+        type: int
   used_by:
   - archetypes_mapper
 

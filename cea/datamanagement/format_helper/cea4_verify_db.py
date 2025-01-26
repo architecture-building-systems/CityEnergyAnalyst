@@ -26,13 +26,13 @@ from cea.datamanagement.format_helper.cea4_verify import verify_file_against_sch
 
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
 SCHEDULES_FOLDER = ['SCHEDULES']
-ENVELOPE_ASSEMBLIES = ['CONSTRUCTION', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
+ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
 HVAC_ASSEMBLIES = ['CONTROLLER', 'HOT_WATER', 'HEATING', 'COOLING', 'VENTILATION']
 SUPPLY_ASSEMBLIES = ['COOLING', 'ELECTRICITY', 'HEATING', 'HOT_WATER']
 CONVERSION_COMPONENTS = ['CONVERSION']
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
-dict_envelope = {'CONSTRUCTION': 'type_cons', 'TIGHTNESS': 'type_leak', 'FLOOR': 'type_floor', 'WALL': 'type_wall', 'WINDOW': 'type_win', 'SHADING': 'type_shade', 'ROOF': 'type_roof'}
+dict_envelope = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor', 'WALL': 'envelope_type_wall', 'WINDOW': 'envelope_type_win', 'SHADING': 'envelope_type_shade', 'ROOF': 'envelope_type_roof'}
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_assembly = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
@@ -61,8 +61,9 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'FEEDSTOCKS': 'get_feedstocks_db',
                                           }
 
-mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'name'
-
+mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
+                                     'USE_TYPE':'code',
+                                     'SCHEDULES': 'hour'
                                      }
 
 
@@ -161,7 +162,8 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
         raise ValueError(f"Unsupported file type: {file_path}. Only .csv files are supported.")
 
     if id_column not in df.columns:
-        raise ValueError(f"A unique row identifier column such as (building) name or (component) code is not present in the file.")
+        print(f"! CEA was not able to verify {os.path.basename(file_path)} "
+              f"as a unique row identifier column such as (building) name or (component) code is not present.")
 
     errors = []
     missing_columns = []
@@ -201,7 +203,7 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
-    # Rmove 'geometry' and 'reference' columns
+    # Remove 'geometry' and 'reference' columns
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference']]
 
     # Print results
@@ -210,7 +212,7 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
             for error in errors:
                 print(error)
     elif verbose:
-        print(f"Validation passed: All columns and values meet the CEA schema requirements.")
+        print(f"Validation passed: All columns and values meet the CEA (schema) requirements.")
 
     return missing_columns, errors
 
@@ -257,7 +259,7 @@ def verify_assembly(scenario, ASSEMBLIES, print_results=True):
     list_list_missing_columns_csv = []
     construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
     for assembly in ASSEMBLIES:
-        list_archetype_code = construction_type_df[dict_envelope[assembly]].tolist().unique()
+        list_archetype_code = list(set(construction_type_df[dict_envelope[assembly]].tolist()))
         item_df = pd.read_csv(path_to_db_file_4(scenario, "ENVELOPE", assembly))
         list_item_code = item_df['code'].tolist().unique()
         list_missing_item = list(set(list_archetype_code) - set(list_item_code))
@@ -340,8 +342,8 @@ def cea4_verify_db(scenario, print_results=False):
             print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_schedules))
 
     for sheet in list_use_types:
-        list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, SCHEDULES_FOLDER, verbose=False, sheet_name=sheet)
-        dict_missing_db[SCHEDULES_FOLDER] = list_missing_columns_csv_schedules
+        list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, SCHEDULES_FOLDER[0], verbose=False, sheet_name=sheet)
+        dict_missing_db[SCHEDULES_FOLDER[0]] = list_missing_columns_csv_schedules
         if print_results:
             if list_missing_columns_csv_schedules:
                 print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}'.format(sheet=sheet, missing_columns=list_missing_columns_csv_schedules))
@@ -355,7 +357,7 @@ def cea4_verify_db(scenario, print_results=False):
             if print_results:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=list_missing_files_csv))
 
-        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, print_results)
+        list_list_missing_columns_csv = verify_assembly(scenario, dict_assembly[ASSEMBLIES], print_results)
         dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
 
     #4. verify columns and values in .csv files for components - conversion
