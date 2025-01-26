@@ -160,6 +160,9 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
         except Exception as e:
             print(f"Warning: Failed to process sheet '{sheet_name}'. Error: {e}")
 
+    # Get the file name without the extension
+    file_name = os.path.splitext(os.path.basename(path_csv))[0]
+
     # Ensure the key column is the first column
     if merged_df is not None:
         cols = [key_column] + [col for col in merged_df.columns if col != key_column]
@@ -168,7 +171,7 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
         # Save the merged DataFrame as a CSV file
         try:
             merged_df.to_csv(path_csv, index=False)
-            print(f"Saved merged DataFrame to {path_csv}")
+            print(f"Saved {file_name} to {path_csv}")
         except Exception as e:
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
@@ -201,59 +204,70 @@ def move_txt_modify_csv_files(scenario):
             # Handle .txt files: Move to new directory
             if file.endswith('.txt'):
                 shutil.copy2(old_file_path, new_file_path)
-                print(f"Copied .txt file: {old_file_path} to {new_file_path}")
+                print(f"Saved schedule_references.txt to {new_file_path}")
 
             # Handle .csv files: Process and save
             elif file.endswith('.csv'):
                 try:
                     # Read the CSV file
                     use_type = os.path.splitext(file)[0]
-                    with open(file, 'r') as f:
-                        rows = f.readlines()
+                    with open(old_file_path, 'r') as f:
+                        reader = csv.reader(f)
+                        rows = list(reader)
 
-                    # Extract the second row for compilation
-                    second_row = rows[1].to_dict()
+                    # Extract the second row for compilation: monthly multiplier
+                    headers_multiplier = ['use_type', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
                     second_row['use_type'] = use_type
                     compiled_rows.append(second_row)
 
                     # Clean and process the remaining data
-                    # Extract rows 3 to 75
-                    selected_lines = rows[2:75]  # Remember Python indexing starts at 0
+                    # Extract rows 3 to 74
+                    other_rows = rows[3:75]  # Remember Python indexing starts at 0
+                    headers_schedules = rows[2]
+                    headers_schedules_dict = {'DAY':'day',
+                                              'HOUR':'hour',
+                                              'OCCUPANCY':'occupancy',
+                                              'APPLIANCES':'appliances',
+                                              'LIGHTING':'lighting',
+                                              'WATER':'water',
+                                              'HEATING':'heating',
+                                              'COOLING':'cooling',
+                                              'PROCESSES':'processes',
+                                              'SERVERS':'servers',
+                                              'ELECTROMOBILITY':'electromobility'}
+                    schedules_df = pd.DataFrame(other_rows, columns=headers_schedules)
+                    schedules_df.rename(columns=headers_schedules_dict, inplace=True)
+                    schedules_df = schedules_df.apply(pd.to_numeric, errors='ignore')
 
-                    # Create DataFrame using row 3 as the column names
-                    column_names = selected_lines[0].strip().split(',')  # Adjust delimiter if necessary
-                    data_rows = [line.strip().split(',') for line in selected_lines[1:]]
-
-                    schedules_df = pd.DataFrame(data_rows, columns=column_names)
-
-                    # Drop 'DAY' and 'HOUR' columns
-                    if 'DAY' in schedules_df.columns:
-                        schedules_df.drop(columns=['DAY'], inplace=True)
-                    if 'HOUR' in schedules_df.columns:
-                        schedules_df.drop(columns=['HOUR'], inplace=True)
+                    # Drop the original 'day' and 'hour' columns
+                    if 'day' in schedules_df.columns:
+                        schedules_df.drop(columns=['day'], inplace=True)
+                    if 'hour' in schedules_df.columns:
+                        schedules_df.drop(columns=['hour'], inplace=True)
 
                     # Create the 'hour' column
                     hour_values = (
-                        ['WEEKDAY_{:02d}'.format(i) for i in range(24)] +
-                        ['SATURDAY_{:02d}'.format(i) for i in range(24)] +
-                        ['SUNDAY_{:02d}'.format(i) for i in range(24)]
+                        ['Weekday_{:02d}'.format(i) for i in range(24)] +
+                        ['Saturday_{:02d}'.format(i) for i in range(24)] +
+                        ['Sunday_{:02d}'.format(i) for i in range(24)]
                     )
 
-                    # Add the 'hour' column as a Series
+                    # Add the new 'hour' column as a Series
                     schedules_df.insert(0, 'hour', pd.Series(hour_values, index=schedules_df.index[:72]))
 
                     # Save the cleaned data
                     schedules_df.to_csv(new_file_path, index=False)
-                    print(f"Processed and saved .csv file: {new_file_path}")
+                    print(f"Saved {use_type} to {new_file_path}")
                 except Exception as e:
-                    print(f"Error processing file {file}: {e}")
+                    print(f"Error processing {use_type}: {e}")
 
     # Create and save the compiled DataFrame
     if compiled_rows:
-        compiled_multiplier_df = pd.DataFrame(compiled_rows, columns=['use_type', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+        compiled_multiplier_df = pd.DataFrame(compiled_rows)
         compiled_multiplier_path = path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
-        print(f"Saved compiled the MONTHLY_MULTIPLIER info of all use types to: {compiled_multiplier_path}")
+        print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
 
 
 def delete_files(path):
@@ -323,7 +337,7 @@ def main(config):
 
     # Print: Start
     div_len = 37 - len(scenario_name)
-    print('-' * 39)
+    print('-' * 50)
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the migration
