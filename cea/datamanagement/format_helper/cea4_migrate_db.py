@@ -9,7 +9,7 @@ import cea.config
 import time
 import pandas as pd
 import shutil
-
+import csv
 
 
 __author__ = "Zhongming Shi"
@@ -207,24 +207,44 @@ def move_txt_modify_csv_files(scenario):
             elif file.endswith('.csv'):
                 try:
                     # Read the CSV file
-                    df = pd.read_csv(old_file_path)
                     use_type = os.path.splitext(file)[0]
+                    with open(file, 'r') as f:
+                        rows = f.readlines()
 
                     # Extract the second row for compilation
-                    if len(df) > 1:
-                        second_row = df.iloc[1].to_dict()
-                        second_row['use_type'] = use_type
-                        compiled_rows.append(second_row)
+                    second_row = rows[1].to_dict()
+                    second_row['use_type'] = use_type
+                    compiled_rows.append(second_row)
 
                     # Clean and process the remaining data
-                    if len(df) > 2:
-                        schedules_df = df.iloc[2:].reset_index(drop=True)
-                        schedules_df.columns = schedules_df.iloc[0]
-                        schedules_df = schedules_df[1:].reset_index(drop=True)
+                    # Extract rows 3 to 75
+                    selected_lines = rows[2:75]  # Remember Python indexing starts at 0
 
-                        # Save the cleaned data
-                        schedules_df.to_csv(new_file_path, index=False)
-                        print(f"Processed and saved .csv file: {new_file_path}")
+                    # Create DataFrame using row 3 as the column names
+                    column_names = selected_lines[0].strip().split(',')  # Adjust delimiter if necessary
+                    data_rows = [line.strip().split(',') for line in selected_lines[1:]]
+
+                    schedules_df = pd.DataFrame(data_rows, columns=column_names)
+
+                    # Drop 'DAY' and 'HOUR' columns
+                    if 'DAY' in schedules_df.columns:
+                        schedules_df.drop(columns=['DAY'], inplace=True)
+                    if 'HOUR' in schedules_df.columns:
+                        schedules_df.drop(columns=['HOUR'], inplace=True)
+
+                    # Create the 'hour' column
+                    hour_values = (
+                        ['WEEKDAY_{:02d}'.format(i) for i in range(24)] +
+                        ['SATURDAY_{:02d}'.format(i) for i in range(24)] +
+                        ['SUNDAY_{:02d}'.format(i) for i in range(24)]
+                    )
+
+                    # Add the 'hour' column as a Series
+                    schedules_df.insert(0, 'hour', pd.Series(hour_values, index=schedules_df.index[:72]))
+
+                    # Save the cleaned data
+                    schedules_df.to_csv(new_file_path, index=False)
+                    print(f"Processed and saved .csv file: {new_file_path}")
                 except Exception as e:
                     print(f"Error processing file {file}: {e}")
 
