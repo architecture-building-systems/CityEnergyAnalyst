@@ -21,7 +21,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4
+from cea.datamanagement.format_helper.cea4_verify_db import path_to_db_file_4, cea4_verify_db, \
+    print_verification_results_4_db
 
 rename_dict = {'STANDARD': 'const_type',
                'YEAR_START': 'year_start',
@@ -88,7 +89,7 @@ def path_to_db_file_3(scenario, item):
 
 def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
     """
-    Converts each sheet of an Excel file into individual CSV files and deletes the Excel file.
+    Converts each sheet of an Excel file into individual CSV files.
 
     Parameters:
     - path_excel (str): The path to the input Excel file.
@@ -351,22 +352,33 @@ def main(config):
     # Execute the migration
     migrate_cea3_to_cea4_db(scenario)
 
-    # # Execute the verification again
-    # dict_missing = cea4_verify_db(scenario)
-    #
-    # # Print the verification results
-    # print_verification_results_4_db(scenario_name, dict_missing)
+    # Execute the verification again
+    dict_missing = cea4_verify_db(scenario)
 
-    # Remove the old database
-    delete_files(path_to_db_file_3(scenario, 'technology'))
+    # Print the verification results
+    print_verification_results_4_db(scenario_name, dict_missing)
 
-    # Print: End
-    # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
-    print('+' * 104)
+    # If verification is passed, remove the old database
+    if all(not value for value in dict_missing.values()):
+        delete_files(path_to_db_file_3(scenario, 'technology'))
+        # Print: End
+        # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
+        print('+' * 104)
 
-    # Print the time used for the entire processing
-    time_elapsed = time.perf_counter() - t0
-    print('The entire process of Database migration from CEA-3 to CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+        # Print the time used for the entire processing
+        time_elapsed = time.perf_counter() - t0
+        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+
+    # if verification is failed, keep the old database, remove the new one
+    else:
+        delete_files(path_to_db_file_4(scenario, 'database'))
+        # Print: End
+        # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
+        print('+' * 104)
+
+        # Print the time used for the entire processing
+        time_elapsed = time.perf_counter() - t0
+        print('The entire process of Database migration from CEA-3 to CEA-4 is not successful - time elapsed: %.2f seconds' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

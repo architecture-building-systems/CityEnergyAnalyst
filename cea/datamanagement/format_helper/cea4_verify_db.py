@@ -74,7 +74,9 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'name'
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
 def path_to_db_file_4(scenario, item, sheet_name=None):
 
-    if item == "CONSTRUCTION_TYPE":
+    if item == 'database':
+        path_db_file = os.path.join(scenario, "inputs", "database")
+    elif item == "CONSTRUCTION_TYPE":
         path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "CONSTRUCTION_TYPE.csv")
     elif item == "USE_TYPE":
         path_db_file = os.path.join(scenario, "inputs",  "database", "ARCHETYPES", "USE_TYPE.csv")
