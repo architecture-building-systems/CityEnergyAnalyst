@@ -29,6 +29,7 @@ rename_dict = {'STANDARD': 'const_type',
                'type_cons': 'type_mass',
                'Description': 'description',
                'REFERENCE': 'reference',
+               'Code': 'code',
                }
 
 
