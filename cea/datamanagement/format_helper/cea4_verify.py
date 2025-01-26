@@ -129,7 +129,8 @@ def verify_file_against_schema_4(scenario, item, verbose=True):
         raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
 
     if id_column not in df.columns:
-        raise ValueError(f"A unique row identifier column such as (building) name or (component) code is not present in the file.")
+        print(f"! CEA was not able to verify {os.path.basename(file_path)} "
+              f"as a unique row identifier column such as (building) name or (component) code is not present.")
 
     errors = []
     missing_columns = []
