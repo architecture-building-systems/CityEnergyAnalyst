@@ -66,7 +66,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'SUPPLY_HEATING': 'get_database_assemblies_supply_heating',
                                           'SUPPLY_HOT_WATER': 'get_database_assemblies_supply_hot_water',
                                           'SUPPLY_ELECTRICITY': 'get_database_assemblies_supply_electricity',
-                                          'ABSORPTION_CHILLERS': 'get_database_conversion_absorption_chillers',
+                                          'ABSORPTION_CHILLERS': 'get_database_components_conversion_absorption_chillers',
                                           'BOILERS': 'get_database_components_conversion_boilers',
                                           'BORE_HOLES': 'get_database_components_conversion_bore_holes',
                                           'COGENERATION_PLANTS': 'get_database_components_conversion_cogeneration_plants',
@@ -90,6 +90,9 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'USE_TYPE':'code',
                                      'SCHEDULES': 'hour',
                                      'ENVELOPE': 'code',
+                                     'CONVERSION': 'code',
+                                     'DISTRIBUTION': 'code',
+                                     'FEEDSTOCKS': 'code',
                                      }
 
 
@@ -135,10 +138,7 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         else:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION", "{conversion_components}.csv".format(conversion_components=sheet_name))
     elif item == "DISTRIBUTION":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION", "{distribution_components}.csv".format(distribution_components=sheet_name))
+        path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION", "THERMAL_GRID.csv")
     elif item == "FEEDSTOCKS":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS")
@@ -424,7 +424,7 @@ def cea4_verify_db(scenario, print_results=False):
     if list_missing_files_csv_distribution_components:
         print('! Ensure .csv file(s) are present in the COMPONENTS>DISTRIBUTION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_distribution_components))
 
-    list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, ['DISTRIBUTION'], verbose=False)
+    list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', verbose=False)
     dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
     if print_results:
         if list_missing_columns_csv_distribution:
