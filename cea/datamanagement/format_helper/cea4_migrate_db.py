@@ -231,7 +231,11 @@ def move_txt_modify_csv_files(scenario):
                         rows = list(reader)
 
                     # Extract the second row for compilation: monthly multiplier
-                    headers_multiplier = ['use_type', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    headers_multiplier = ['use_type',
+                                          'Jan', 'Feb', 'Mar',
+                                          'Apr', 'May', 'Jun',
+                                          'Jul', 'Aug', 'Sep',
+                                          'Oct', 'Nov', 'Dec']
                     second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
                     second_row['use_type'] = use_type
                     compiled_rows.append(second_row)
@@ -264,7 +268,7 @@ def move_txt_modify_csv_files(scenario):
                     schedules_df.to_csv(new_file_path, index=False)
                     print(f"Saved {use_type} to {new_file_path}")
                 except Exception as e:
-                    print(f"Error processing {use_type}: {e}")
+                    print(f"Error processing {file}: {e}")
 
     # Create and save the compiled DataFrame
     if compiled_rows:
