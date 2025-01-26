@@ -100,9 +100,11 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'USE_TYPE':'code',
                                      'SCHEDULES': 'hour',
                                      'ENVELOPE': 'code',
+                                     'HVAC': 'code',
+                                     'SUPPLY': 'code',
                                      'CONVERSION': 'code',
                                      'DISTRIBUTION': 'code',
-                                     'FEEDSTOCKS': 'code',
+                                     'FEEDSTOCKS': 'hour',
                                      }
 
 
@@ -136,12 +138,12 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC")
         else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC", "{hvac_assemblies}.csv".format(hvac_assemblies=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC", "HVAC_{hvac_assemblies}.csv".format(hvac_assemblies=sheet_name))
     elif item == "SUPPLY":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY")
         else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY", "{supply_assemblies}.csv".format(supply_assemblies=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY", "SUPPLY_{supply_assemblies}.csv".format(supply_assemblies=sheet_name))
     elif item == "CONVERSION":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION")
@@ -244,8 +246,8 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
-    # Remove 'geometry' and 'reference' columns
-    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference']]
+    # Relax from the descriptive columns which not used in the modelling
+    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'description', 'assumption']]
 
     # Print results
     if errors:

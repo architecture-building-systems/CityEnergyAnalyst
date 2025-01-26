@@ -5697,13 +5697,6 @@ get_database_components_conversion_unitary_air_conditioners:
         unit: '[-]'
         values: '{0.0...n}'
         min: 0.0
-      min_eff_rating:
-        description: 'Minimum efficiency rating according to prevalent standards or manufacturer catalogues, 
-                  expressed as a COP.'
-        type: float
-        unit: '[W_th/W_el]'
-        values: '{0.0...n}'
-        min: 0.0
       rated_COP_seasonal:
         description: minimum seasonal coefficient of performance of the air conditioner
         type: float

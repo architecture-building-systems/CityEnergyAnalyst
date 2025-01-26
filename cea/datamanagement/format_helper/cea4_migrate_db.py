@@ -100,6 +100,9 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
     # Ensure the output directory exists
     os.makedirs(directory_csv, exist_ok=True)
 
+    # Get the file name without the extension
+    file_name = os.path.splitext(os.path.basename(path_excel))[0]
+
     # Read the Excel file
     try:
         excel_data = pd.ExcelFile(path_excel)
@@ -113,7 +116,18 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
             # Rename columns based on the rename_dict
             if rename_dict:
                 df.rename(columns=rename_dict, inplace=True)
-            output_path = os.path.join(directory_csv, f"{sheet_name}.csv")
+
+            # Handle the special case of renaming
+            if sheet_name == 'CONSTRUCTION':
+                output_path = os.path.join(directory_csv, f"MASS.csv")
+            elif file_name == 'HVAC':
+                output_path = os.path.join(directory_csv, f"HVAC_{sheet_name}.csv")
+            elif file_name == 'SUPPLY':
+                output_path = os.path.join(directory_csv, f"SUPPLY_{sheet_name}.csv")
+            else:
+                output_path = os.path.join(directory_csv, f"{sheet_name}.csv")
+
+            # Save the file
             df.to_csv(output_path, index=False)
             print(f"Saved {sheet_name} to {output_path}")
         except Exception as e:
