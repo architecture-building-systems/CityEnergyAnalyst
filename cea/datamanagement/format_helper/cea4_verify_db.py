@@ -105,6 +105,7 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'CONVERSION': 'code',
                                      'DISTRIBUTION': 'code',
                                      'FEEDSTOCKS': 'hour',
+                                     'ENERGY_CARRIERS': 'code',
                                      }
 
 
@@ -192,7 +193,10 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
 
     schema_section = schema[locator]
     schema_columns = schema_section['schema']['columns']
-    id_column = mapping_dict_db_item_to_id_column[item]
+    if sheet_name == 'ENERGY_CARRIERS':
+        id_column = mapping_dict_db_item_to_id_column[sheet_name]
+    else:
+        id_column = mapping_dict_db_item_to_id_column[item]
 
     # Determine file type and load the data
     if file_path.endswith('.csv'):
