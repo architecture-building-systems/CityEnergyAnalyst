@@ -27,15 +27,21 @@ from cea.datamanagement.format_helper.cea4_verify import verify_file_against_sch
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
 SCHEDULES_FOLDER = ['SCHEDULES']
 ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
-HVAC_ASSEMBLIES = ['CONTROLLER', 'HOT_WATER', 'HEATING', 'COOLING', 'VENTILATION']
-SUPPLY_ASSEMBLIES = ['COOLING', 'ELECTRICITY', 'HEATING', 'HOT_WATER']
+HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
+SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
 CONVERSION_COMPONENTS = ['CONVERSION']
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
-dict_envelope = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor', 'WALL': 'envelope_type_wall', 'WINDOW': 'envelope_type_win', 'SHADING': 'envelope_type_shade', 'ROOF': 'envelope_type_roof'}
+dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor',
+                 'WALL': 'envelope_type_wall', 'WINDOW': 'envelope_type_win', 'SHADING': 'envelope_type_shade',
+                 'ROOF': 'envelope_type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOT_WATER': 'hvac_type_dhw',
+                 'HVAC_HEATING': 'hvac_type_hs', 'HVAC_COOLING': 'hvac_type_cs', 'HVAC_VENTILATION': 'hvac_type_vent',
+                 'SUPPLY_COOLING': 'supply_type_cs', 'SUPPLY_ELECTRICITY': 'supply_type_el', 'SUPPLY_HEATING': 'supply_type_hs',
+                 'SUPPLY_HOT_WATER': 'supply_type_dhw',
+                 }
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
-dict_assembly = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
+dict_ASSEMBLIES = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
                                           'USE_TYPE': 'get_database_archetypes_use_type',
                                           'SCHEDULES': 'get_database_archetypes_schedules',
@@ -63,7 +69,8 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
 
 mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'USE_TYPE':'code',
-                                     'SCHEDULES': 'hour'
+                                     'SCHEDULES': 'hour',
+                                     'ENVELOPE': 'code',
                                      }
 
 
@@ -145,7 +152,12 @@ def verify_file_against_schema_4_db(scenario, item, verbose=True, sheet_name=Non
 
     # File path and schema section
     file_path = path_to_db_file_4(scenario, item, sheet_name)
-    locator = mapping_dict_db_item_to_schema_locator[item]
+    if sheet_name is None:
+        locator = mapping_dict_db_item_to_schema_locator[item]
+    elif sheet_name is not None and item == 'SCHEDULES':
+        locator = mapping_dict_db_item_to_schema_locator[item]
+    else:
+        locator = mapping_dict_db_item_to_schema_locator[sheet_name]
 
     schema_section = schema[locator]
     schema_columns = schema_section['schema']['columns']
@@ -255,19 +267,21 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
     return list_missing_files
 
 
-def verify_assembly(scenario, ASSEMBLIES, print_results=True):
+def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results=True):
+    list_existing_files_csv = list(set(dict_ASSEMBLIES[ASSEMBLIES]) - set(list_missing_files_csv))
     list_list_missing_columns_csv = []
     construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
-    for assembly in ASSEMBLIES:
-        list_archetype_code = list(set(construction_type_df[dict_envelope[assembly]].tolist()))
-        item_df = pd.read_csv(path_to_db_file_4(scenario, "ENVELOPE", assembly))
-        list_item_code = item_df['code'].tolist().unique()
+    for assembly in list_existing_files_csv:
+        path_to_csv = path_to_db_file_4(scenario, ASSEMBLIES, assembly)
+        list_archetype_code = construction_type_df[dict_assembly[assembly]].unique().tolist()
+        item_df = pd.read_csv(path_to_csv)
+        list_item_code = item_df['code'].unique().tolist()
         list_missing_item = list(set(list_archetype_code) - set(list_item_code))
         if list_missing_item:
             if print_results:
                 print('! Ensure {assembly} type(s) are present in {assembly}.csv: {list_missing_item}'.format(assembly=assembly, list_missing_item=list_missing_item))
 
-        list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, 'ENVELOPE', verbose=False, sheet_name=assembly)
+        list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, ASSEMBLIES, verbose=False, sheet_name=assembly)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
         if print_results:
             if list_missing_columns_csv:
@@ -342,7 +356,7 @@ def cea4_verify_db(scenario, print_results=False):
             print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_schedules))
 
     for sheet in list_use_types:
-        list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, SCHEDULES_FOLDER[0], verbose=False, sheet_name=sheet)
+        list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', verbose=False, sheet_name=sheet)
         dict_missing_db[SCHEDULES_FOLDER[0]] = list_missing_columns_csv_schedules
         if print_results:
             if list_missing_columns_csv_schedules:
@@ -352,12 +366,12 @@ def cea4_verify_db(scenario, print_results=False):
 
     #3. verify columns and values in .csv files for assemblies
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
-        list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_assembly[ASSEMBLIES])
+        list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_ASSEMBLIES[ASSEMBLIES])
         if list_missing_files_csv:
             if print_results:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=list_missing_files_csv))
 
-        list_list_missing_columns_csv = verify_assembly(scenario, dict_assembly[ASSEMBLIES], print_results)
+        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results)
         dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
 
     #4. verify columns and values in .csv files for components - conversion
@@ -367,8 +381,8 @@ def cea4_verify_db(scenario, print_results=False):
 
     list_conversion_supply = []
     list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
-    for supply_type in ['HEATING', 'COOLING']:
-        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_assembly['SUPPLY']):
+    for supply_type in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
+        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
             supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
             list_conversion_supply.append(supply_df['primary_components', 'secondary_components', 'tertiary_components'].unique())
             list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
@@ -407,7 +421,7 @@ def cea4_verify_db(scenario, print_results=False):
     list_feedstocks_supply = []
     list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
     for supply_type in SUPPLY_ASSEMBLIES:
-        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_assembly['SUPPLY']):
+        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
             supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
             list_feedstocks_supply.append(supply_df['feedstock'].unique())
             list_feedstocks_supply = [item for sublist in list_feedstocks_supply for item in sublist]

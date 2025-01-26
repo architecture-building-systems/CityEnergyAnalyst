@@ -2299,7 +2299,7 @@ get_database_assemblies_envelope_mass:
         unit: '[J/Km2]'
         values: '{0.0...n}'
         min: 0.0
-      Description:
+      description:
         description: Describes the Type of construction
         type: string
         unit: 'NA'
@@ -2322,7 +2322,7 @@ get_database_assemblies_envelope_floor:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of roof
         type: string
         unit: 'NA'
@@ -2365,7 +2365,7 @@ get_database_assemblies_envelope_roof:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of roof
         type: string
         unit: 'NA'
@@ -2430,7 +2430,7 @@ get_database_assemblies_envelope_shading:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -2461,7 +2461,7 @@ get_database_assemblies_envelope_tightness:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of tightness
         type: string
         unit: 'NA'
@@ -2492,7 +2492,7 @@ get_database_assemblies_envelope_wall:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of wall
         type: string
         unit: 'NA'
@@ -2556,7 +2556,7 @@ get_database_assemblies_envelope_window:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -2656,7 +2656,7 @@ get_database_assemblies_hvac_cooling:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of cooling system
         type: string
         unit: '[-]'
@@ -2888,7 +2888,7 @@ get_database_assemblies_hvac_hot_water:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of hot water supply system
         type: string
         unit: '[-]'
@@ -2933,7 +2933,7 @@ get_database_assemblies_hvac_ventilation:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the Type of ventilation
         type: string
         unit: '[-]'
@@ -6931,7 +6931,7 @@ get_database_archetypes_schedules:
         description: Average number of electric vehicles in this hour
         max: 10000
         min: 0
-        type: int
+        type: float
   used_by:
   - archetypes_mapper
 
