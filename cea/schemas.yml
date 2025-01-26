@@ -3382,7 +3382,7 @@ get_database_components_conversion_absorption_chillers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: describes the Type of Absorption Chiller
         type: string
         unit: 'NA'
@@ -3603,7 +3603,7 @@ get_database_components_conversion_boilers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: describes the type of boiler
         type: string
         unit: 'NA'
@@ -3850,7 +3850,7 @@ get_database_components_conversion_cogeneration_plants:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: describes the type of combined-cycle gas turbine
         type: string
         unit: 'NA'
@@ -4010,7 +4010,7 @@ get_database_components_conversion_cooling_towers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: describes the type of cooling tower
         type: string
         unit: 'NA'
@@ -4156,7 +4156,7 @@ get_database_components_conversion_fuel_cells:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of fuel cell
         type: string
         unit: 'NA'
@@ -4261,7 +4261,7 @@ get_database_components_conversion_heat_exchangers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of heat exchanger
         type: string
         unit: 'NA'
@@ -4297,17 +4297,10 @@ get_database_components_conversion_heat_exchangers:
         values: '{0.0...n}'
       a:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
-          + d*ln(x) + e*x*ln*(x)  '
+          + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
         values: '{n...n}'
-      a_p:
-        description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
-          + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
-        type: float
-        unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
       assumption:
         description: items made by assumptions in this technology
         nullable: true
@@ -4316,28 +4309,14 @@ get_database_components_conversion_heat_exchangers:
         values: depends on the data availability
       b:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
-          + d*ln(x) + e*x*ln*(x)  '
-        type: float
-        unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
-      b_p:
-        description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
-          + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
         values: '{0.0...n}'
         min: 0.0
       c:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
-          + d*ln(x) + e*x*ln*(x)  '
-        type: float
-        unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
-      c_p:
-        description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
-          + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
         values: '{0.0...n}'
@@ -4368,27 +4347,14 @@ get_database_components_conversion_heat_exchangers:
         values: '{"USD-2015"}'
       d:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
-          + d*ln(x) + e*x*ln*(x)  '
+          + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
         values: '{0.0...n}'
         min: 0.0
-      d_p:
-        description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
-          + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
-        type: float
-        unit: '[-]'
-        values: '{n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
-          + d*ln(x) + e*x*ln*(x)  '
-        type: float
-        unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
-      e_p:
-        description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
-          + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
+          + d*ln(x) + e*x*ln*(x), here x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
         values: '{0.0...n}'
@@ -4433,7 +4399,7 @@ get_database_components_conversion_heat_pumps:
   file_type: csv
   schema:
       columns:
-        Description:
+        description:
           description: Describes the source of the heat pump
           type: string
           unit: 'NA'
@@ -4586,7 +4552,7 @@ get_database_components_conversion_bore_holes:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -4691,7 +4657,7 @@ get_database_components_conversion_hydraulic_pumps:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -4796,7 +4762,7 @@ get_database_components_conversion_photovoltaic_panels:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -4986,7 +4952,7 @@ get_database_components_conversion_photovoltaic_thermal_panels:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of photovoltaic thermal technology
         type: string
         unit: 'NA'
@@ -5092,7 +5058,7 @@ get_database_components_conversion_power_transformers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of power transformer
         type: string
         unit: 'NA'
@@ -5253,7 +5219,7 @@ get_database_components_conversion_solar_thermal_panels:
         unit: '[J/kgK]'
         values: '{0.0...n}'
         min: 0.0
-      Description:
+      description:
         description: Describes the type of solar collector
         type: string
         unit: 'NA'
@@ -5459,7 +5425,7 @@ get_database_components_conversion_thermal_energy_storages:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the thermal energy storage technology
         type: string
         unit: '[-]'
@@ -5626,7 +5592,7 @@ get_database_components_conversion_unitary_air_conditioners:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: describes the air conditioner unit
         type: string
         unit: 'NA'
@@ -5770,7 +5736,7 @@ get_database_components_conversion_vapor_compression_chillers:
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the source of the benchmark standards.
         type: string
         unit: 'NA'
@@ -5940,7 +5906,7 @@ get_database_components_distribution_thermal_grid:
         unit: '[$/m]'
         values: '{0.0...n}'
         min: 0.0
-      Pipe_DN:
+      pipe_DN:
         description: Nominal pipe diameter
         type: float
         unit: '[-]'
@@ -6452,21 +6418,9 @@ get_database_components_feedstocks_energy_carriers:
         values: '{"", "V", "nm", "°C"}'
       mean_qual:
         description: mean value of the qualifier corresponding to the respective energy carrier
-        type: float
+        type: float, int
         unit: 'NA'
         values: '{-273.15...n}'
-      unit_cost_USD.kWh:
-        description: unit cost of the energy carrier
-        type: float
-        unit: '[USD/kWh]'
-        values: '{0.0...n}'
-        min: 0.0
-      unit_ghg_kgCO2.kWh:
-        description: green house gas intensity of the energy carrier
-        type: float
-        unit: '[kgCO2/kWh]'
-        values: '{0.0...n}'
-        min: 0.0
       reference:
         description: references to documents and articles values in the table were taken from
         type: string

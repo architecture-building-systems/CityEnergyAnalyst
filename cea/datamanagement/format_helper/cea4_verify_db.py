@@ -83,7 +83,17 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'UNITARY_AIR_CONDITIONERS': 'get_database_components_conversion_unitary_air_conditioners',
                                           'VAPOR_COMPRESSION_CHILLERS': 'get_database_components_conversion_vapor_compression_chillers',
                                           'DISTRIBUTION': 'get_database_components_distribution_thermal_grid',
-                                          'FEEDSTOCKS': 'get_feedstocks_db',
+                                          'BIOGAS': 'get_database_components_feedstocks_biogas',
+                                          'COAL': 'get_database_components_feedstocks_coal',
+                                          'DRYBIOMASS': 'get_database_components_feedstocks_drybiomass',
+                                          'ENERGY_CARRIERS': 'get_database_components_feedstocks_energy_carriers',
+                                          'GRID': 'get_database_components_feedstocks_grid',
+                                          'HYDROGEN': 'get_database_components_feedstocks_hydrogen',
+                                          'NATURALGAS': 'get_database_components_feedstocks_naturalgas',
+                                          'OIL': 'get_database_components_feedstocks_oil',
+                                          'SOLAR': 'get_database_components_feedstocks_solar',
+                                          'WETBIOMASS': 'get_database_components_feedstocks_wetbiomass',
+                                          'WOOD': 'get_database_components_feedstocks_wood',
                                           }
 
 mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
