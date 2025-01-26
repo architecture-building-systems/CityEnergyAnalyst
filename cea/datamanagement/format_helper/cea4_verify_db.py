@@ -29,7 +29,11 @@ SCHEDULES_FOLDER = ['SCHEDULES']
 ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
 HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
 SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
-CONVERSION_COMPONENTS = ['CONVERSION']
+CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENERATION_PLANTS', 'COOLING_TOWERS',
+                         'FUEL_CELLS', 'HEAT_EXCHANGERS', 'HEAT_PUMPS', 'HYDRAULIC_PUMPS', 'PHOTOVOLTAIC_PANELS',
+                         'PHOTOVOLTAIC_THERMAL_PANELS', 'POWER_TRANSFORMERS', 'SOLAR_THERMAL_PANELS',
+                         'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
+                         ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
 dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor',
@@ -62,8 +66,23 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'SUPPLY_HEATING': 'get_database_assemblies_supply_heating',
                                           'SUPPLY_HOT_WATER': 'get_database_assemblies_supply_hot_water',
                                           'SUPPLY_ELECTRICITY': 'get_database_assemblies_supply_electricity',
-                                          'CONVERSION': 'get_conversion_db',
-                                          'DISTRIBUTION': 'get_distribution_db',
+                                          'ABSORPTION_CHILLERS': 'get_database_conversion_absorption_chillers',
+                                          'BOILERS': 'get_database_components_conversion_boilers',
+                                          'BORE_HOLES': 'get_database_components_conversion_bore_holes',
+                                          'COGENERATION_PLANTS': 'get_database_components_conversion_cogeneration_plants',
+                                          'COOLING_TOWERS': 'get_database_components_conversion_cooling_towers',
+                                          'FUEL_CELLS': 'get_database_components_conversion_fuel_cells',
+                                          'HEAT_EXCHANGERS': 'get_database_components_conversion_heat_exchangers',
+                                          'HEAT_PUMPS': 'get_database_components_conversion_heat_pumps',
+                                          'HYDRAULIC_PUMPS': 'get_database_components_conversion_hydraulic_pumps',
+                                          'PHOTOVOLTAIC_PANELS': 'get_database_components_conversion_photovoltaic_panels',
+                                          'PHOTOVOLTAIC_THERMAL_PANELS': 'get_database_components_conversion_photovoltaic_thermal_panels',
+                                          'POWER_TRANSFORMERS': 'get_database_components_conversion_power_transformers',
+                                          'SOLAR_THERMAL_PANELS': 'get_database_components_conversion_solar_thermal_panels',
+                                          'THERMAL_ENERGY_STORAGES': 'get_database_components_conversion_thermal_energy_storages',
+                                          'UNITARY_AIR_CONDITIONERS': 'get_database_components_conversion_unitary_air_conditioners',
+                                          'VAPOR_COMPRESSION_CHILLERS': 'get_database_components_conversion_vapor_compression_chillers',
+                                          'DISTRIBUTION': 'get_database_components_distribution_thermal_grid',
                                           'FEEDSTOCKS': 'get_feedstocks_db',
                                           }
 

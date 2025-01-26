@@ -3375,7 +3375,7 @@ get_database_assemblies_supply_hot_water:
   - emissions
   - system_costs
 
-get_database_conversion_absorption_chillers:
+get_database_components_conversion_absorption_chillers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/ABSORPTION_CHILLERS.csv
@@ -3596,7 +3596,7 @@ get_database_conversion_absorption_chillers:
   - decentralized
   - optimization
 
-get_database_conversion_boilers:
+get_database_components_conversion_boilers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/BOILERS.csv
@@ -3843,7 +3843,7 @@ get_database_conversion_boilers:
   - decentralized
   - optimization
 
-get_database_conversion_cogeneration_plants:
+get_database_components_conversion_cogeneration_plants:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/COGENERATION_PLANTS.csv
@@ -4003,7 +4003,7 @@ get_database_conversion_cogeneration_plants:
   - decentralized
   - optimization
 
-get_database_conversion_cooling_towers:
+get_database_components_conversion_cooling_towers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/COOLING_TOWERS.csv
@@ -4149,7 +4149,7 @@ get_database_conversion_cooling_towers:
   - decentralized
   - optimization
 
-get_database_conversion_fuel_cells:
+get_database_components_conversion_fuel_cells:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/FUEL_CELLS.csv
@@ -4254,7 +4254,7 @@ get_database_conversion_fuel_cells:
   - decentralized
   - optimization
 
-get_database_conversion_heat_exchangers:
+get_database_components_conversion_heat_exchangers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/HEAT_EXCHANGERS.csv
@@ -4426,7 +4426,7 @@ get_database_conversion_heat_exchangers:
   - decentralized
   - optimization
 
-get_database_conversion_heat_pumps:
+get_database_components_conversion_heat_pumps:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/HEAT_PUMPS.csv
@@ -4579,7 +4579,112 @@ get_database_conversion_heat_pumps:
   - decentralized
   - optimization
 
-get_database_conversion_hydraulic_pumps:
+get_database_components_conversion_bore_holes:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/CONVERSION/BORE_HOLES.csv
+  file_type: csv
+  schema:
+    columns:
+      Description:
+        description: Describes the source of the benchmark standards.
+        type: string
+        unit: 'NA'
+        values: 'NA'
+      IR_%:
+        description: interest rate charged on the loan for the capital cost
+        min: 0.0
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+      LT_yr:
+        description: lifetime of this technology
+        min: 0
+        type: int
+        unit: "[yr]"
+        values: '{0...n}'
+      O&M_%:
+        description: operation and maintenance cost factor (fraction of the investment
+          cost)
+        min: 0.0
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+      a:
+        description: 'parameter in the investment cost function, f(x) = a + b*x^c
+              + d*ln(x) + e*x*ln*(x), where x is the capacity '
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+        min: 0.0
+      assumption:
+        description: items made by assumptions in this technology
+        nullable: true
+        type: string
+        unit: 'NA'
+        values: depends on the data availability
+      b:
+        description: 'parameter in the investment cost function, f(x) = a + b*x^c
+              + d*ln(x) + e*x*ln*(x), where x is the capacity '
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+        min: 0.0
+      c:
+        description: 'parameter in the investment cost function, f(x) = a + b*x^c
+              + d*ln(x) + e*x*ln*(x), where x is the capacity '
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+        min: 0.0
+      cap_max:
+        description: 'maximum capacity '
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      cap_min:
+        description: minimum capacity
+        type: float
+        unit: '[W]'
+        values: '{0.0...n}'
+        min: 0.0
+      code:
+        description: identifier of each unique equipment
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      currency:
+        description: currency-year information of the investment cost function,
+          should be unified to USD
+        regex: ^[A-Z]{3}-\d{4}$
+        type: string
+        unit: NA
+        values: '{"USD-2015"}'
+      d:
+        description: 'parameter in the investment cost function, f(x) = a + b*x^c
+              + d*ln(x) + e*x*ln*(x), where x is the capacity '
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+        min: 0.0
+      e:
+        description: 'parameter in the investment cost function, f(x) = a + b*x^c
+              + d*ln(x) + e*x*ln*(x), where x is the capacity '
+        type: float
+        unit: '[-]'
+        values: '{0.0...n}'
+        min: 0.0
+      unit:
+        description: unit of the min/max capacity
+        type: string
+        unit: 'NA'
+        values: '{"W"}'
+  used_by:
+  - decentralized
+  - optimization
+
+get_database_components_conversion_hydraulic_pumps:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/HYDRAULIC_PUMPS.csv
@@ -4684,7 +4789,7 @@ get_database_conversion_hydraulic_pumps:
   - decentralized
   - optimization
 
-get_database_conversion_photovoltaic_panels:
+get_database_components_conversion_photovoltaic_panels:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/PHOTOVOLTAIC_PANELS.csv
@@ -4874,7 +4979,7 @@ get_database_conversion_photovoltaic_panels:
   - optimization
   - photovoltaic
 
-get_database_conversion_photovoltaic_thermal_panels:
+get_database_components_conversion_photovoltaic_thermal_panels:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/PHOTOVOLTAIC_THERMAL_PANELS.csv
@@ -4980,7 +5085,7 @@ get_database_conversion_photovoltaic_thermal_panels:
   - optimization
   - photovoltaic_thermal
 
-get_database_conversion_power_transformers:
+get_database_components_conversion_power_transformers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/POWER_TRANSFORMERS.csv
@@ -5129,7 +5234,7 @@ get_database_conversion_power_transformers:
   - decentralized
   - optimization
 
-get_database_conversion_solar_thermal_panels:
+get_database_components_conversion_solar_thermal_panels:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/SOLAR_THERMAL_PANELS.csv
@@ -5347,7 +5452,7 @@ get_database_conversion_solar_thermal_panels:
   - optimization
   - photovoltaic_thermal
 
-get_database_conversion_thermal_energy_storages:
+get_database_components_conversion_thermal_energy_storages:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/THERMAL_ENERGY_STORAGES.csv
@@ -5514,7 +5619,7 @@ get_database_conversion_thermal_energy_storages:
   - decentralized
   - optimization
 
-get_database_conversion_unitary_air_conditioners:
+get_database_components_conversion_unitary_air_conditioners:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/UNITARY_AIR_CONDITIONERS.csv
@@ -5658,7 +5763,7 @@ get_database_conversion_unitary_air_conditioners:
   - decentralized
   - optimization
 
-get_database_conversion_vapor_compression_chillers:
+get_database_components_conversion_vapor_compression_chillers:
   created_by:
   - database_helper
   file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR COMPRESSION CHILLERS.csv
