@@ -247,13 +247,13 @@ def move_txt_modify_csv_files(scenario):
                         rows = list(reader)
 
                     # Extract the second row for compilation: monthly multiplier
-                    headers_multiplier = ['use_type',
+                    headers_multiplier = ['code',
                                           'Jan', 'Feb', 'Mar',
                                           'Apr', 'May', 'Jun',
                                           'Jul', 'Aug', 'Sep',
                                           'Oct', 'Nov', 'Dec']
                     second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
-                    second_row['use_type'] = use_type
+                    second_row['code'] = use_type
                     compiled_rows.append(second_row)
 
                     # Clean and process the remaining data
