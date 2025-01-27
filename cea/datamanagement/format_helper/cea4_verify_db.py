@@ -296,8 +296,6 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
                 list_missing_files.append(file)
         else:
             for sheet in sheet_name:
-                sheet = sheet.replace('HVAC_', '')
-                sheet = sheet.replace('SUPPLY_', '')
                 path = path_to_db_file_4(scenario, file, sheet)
                 if not os.path.isfile(path):
                     list_missing_files.append(sheet)
@@ -421,7 +419,7 @@ def cea4_verify_db(scenario, print_results=False):
     for supply_type in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
         if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
             supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
-            list_conversion_supply.append(supply_df['primary_components', 'secondary_components', 'tertiary_components'].unique())
+            list_conversion_supply.append(np.unique(supply_df[['primary_components', 'secondary_components', 'tertiary_components']].values.flatten()))
             list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
     list_missing_conversion = list(set(list_conversion_supply) - set(list_conversion_db))
     if list_missing_conversion:
@@ -459,9 +457,10 @@ def cea4_verify_db(scenario, print_results=False):
     list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
     for supply_type in SUPPLY_ASSEMBLIES:
         if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
-            supply_df = pd.read_csv(path_to_db_file_4(scenario, supply_type))
-            list_feedstocks_supply.append(supply_df['feedstock'].unique())
-            list_feedstocks_supply = [item for sublist in list_feedstocks_supply for item in sublist]
+            supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
+            # Get the unique feedstocks
+            unique_feedstocks = np.unique(supply_df['feedstock'].dropna().values.flatten())
+            list_feedstocks_supply.extend(unique_feedstocks)  # Append directly to the list
     list_missing_feedstocks = list(set(list_feedstocks_supply) - set(list_feedstocks_db))
     if list_missing_feedstocks:
         if print_results:

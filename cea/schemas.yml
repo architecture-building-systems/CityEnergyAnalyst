@@ -2618,11 +2618,11 @@ get_database_assemblies_envelope_window:
 get_database_assemblies_hvac_controller:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/HVAC/CONTROLLER.xls
+  file_path: inputs/database/ASSEMBLIES/HVAC/HVAC_CONTROLLER.xls
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Describes the type of controller
         type: string
         unit: '[-]'
@@ -2652,7 +2652,7 @@ get_database_assemblies_hvac_controller:
 get_database_assemblies_hvac_cooling:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/HVAC/COOLING.xls
+  file_path: inputs/database/ASSEMBLIES/HVAC/HVAC_COOLING.xls
   file_type: csv
   schema:
     columns:
@@ -2769,11 +2769,11 @@ get_database_assemblies_hvac_cooling:
 get_database_assemblies_hvac_heating:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/HVAC/HEATING.xls
+  file_path: inputs/database/ASSEMBLIES/HVAC/HVAC_HEATING.xls
   file_type: csv
   schema:
     columns:
-      Description:
+      description:
         description: Description
         type: string
         unit: '[-]'
@@ -2975,7 +2975,7 @@ get_database_assemblies_hvac_ventilation:
 get_database_assemblies_supply_cooling:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/COOLING.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_COOLING.csv
   file_type: csv
   schema:
     columns:
@@ -2985,7 +2985,7 @@ get_database_assemblies_supply_cooling:
         type: float
         unit: '[USD2015/kW]'
         values: '{0.0...n}'
-      Description:
+      description:
         description: description
         type: string
         unit: 'NA'
@@ -3083,7 +3083,7 @@ get_database_assemblies_supply_cooling:
 get_database_assemblies_supply_electricity:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/ELECTRICITY.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv
   file_type: csv
   schema:
     columns:
@@ -3093,7 +3093,7 @@ get_database_assemblies_supply_electricity:
         type: float
         unit: '[USD2015/kW]'
         values: '{0.0...n}'
-      Description:
+      description:
         description: Description of Type of all in one system
         type: string
         unit: 'NA'
@@ -3177,7 +3177,7 @@ get_database_assemblies_supply_electricity:
 get_database_assemblies_supply_heating:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/HEATING.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv
   file_type: csv
   schema:
     columns:
@@ -3187,7 +3187,7 @@ get_database_assemblies_supply_heating:
         type: float
         unit: '[USD2015/kW]'
         values: '{0.0...n}'
-      Description:
+      description:
         description: Description of Type of all in one system
         type: string
         unit: 'NA'
@@ -3285,7 +3285,7 @@ get_database_assemblies_supply_heating:
 get_database_assemblies_supply_hot_water:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/HOT_WATER.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv
   file_type: csv
   schema:
     columns:
@@ -3295,7 +3295,7 @@ get_database_assemblies_supply_hot_water:
         type: float
         unit: '[USD2015/kW]'
         values: '{0.0...n}'
-      Description:
+      description:
         description: Description of Type of all in one system
         type: string
         unit: 'NA'
