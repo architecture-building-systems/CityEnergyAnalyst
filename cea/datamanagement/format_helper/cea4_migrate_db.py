@@ -316,8 +316,7 @@ def delete_files(path):
 def migrate_cea3_to_cea4_db(scenario):
 
     #0. verify if everything is already in the correct format for CEA-4
-    # dict_missing = cea4_verify_db(scenario)
-    dict_missing = {'hh':{'hh'}}
+    dict_missing = cea4_verify_db(scenario)
     if all(not value for value in dict_missing.values()):
         pass
     else:
@@ -382,7 +381,7 @@ def main(config):
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed and successful - time elapsed: %.2f seconds' % time_elapsed)
 
     # if verification is failed, keep the old database, remove the new one
     else:
