@@ -291,7 +291,7 @@ def print_verification_results_4_db(scenario_name, dict_missing):
 
     if all(not value for value in dict_missing.values()):
         print("✓" * 3)
-        print('The Database is verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name),
+        print('The Database is verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}.'.format(scenario=scenario_name),
               )
     else:
         print("!" * 3)
@@ -397,8 +397,9 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     - code_to_name (bool, optional): If True, convert codes to human-readable names. Default is False.
 
     Returns:
-    - list_missing_name (list): Names of missing components (if `code_to_name` is True).
-    - list_missing_code (list): Codes of missing components.
+    - dict: Dictionary with merged values for duplicate keys.
+        Keys are the names of missing components (if `code_to_name` is True).
+        Values are the codes of missing components.
     """
     # Initialize lists to store codes and names
     required_codes = []
@@ -431,7 +432,33 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     else:
         missing_names = required_codes
 
-    return missing_names, missing_codes
+    # Construct a dictionary with the merged values
+    dict_merged = create_dict_merge_values(missing_names, missing_codes)
+    return dict_merged
+
+
+def create_dict_merge_values(keys, values):
+    """
+    Create a dictionary from two lists, merging values with the same key,
+    and ensuring all values are stored as lists.
+
+    Parameters:
+    - keys: List of keys.
+    - values: List of values.
+
+    Returns:
+    - dict: Dictionary with merged values for duplicate keys.
+    """
+    result = {}
+    for key, value in zip(keys, values):
+        if key in result:
+            # If the key exists, append the value to the list
+            result[key].append(value)
+        else:
+            # If the key doesn't exist, create a new list for the value
+            result[key] = [value]
+    return result
+
 
 def convert_code_to_name(list_codes):
     # Remove all digits from each item in the list
@@ -442,6 +469,34 @@ def convert_code_to_name(list_codes):
     list_names = [dict_code_to_name[item] if item in dict_code_to_name else item for item in list_codes_alpha]
 
     return list_names
+
+def add_values_to_dict(existing_dict, key, values):
+    """
+    Add or append values to a dictionary key. If the key does not exist, it will be created.
+
+    Parameters:
+    - existing_dict (dict): The dictionary to update.
+    - key: The key where values should be added.
+    - values (list): A list of values to add.
+
+    Returns:
+    - None: Updates the dictionary in place.
+    """
+    if key not in existing_dict:
+        # If key does not exist, create it with the new values as a list
+        existing_dict[key] = values if isinstance(values, list) else [values]
+    else:
+        # If the key exists, extend the list of values
+        if not isinstance(existing_dict[key], list):
+            # Ensure the current value is a list
+            existing_dict[key] = [existing_dict[key]]
+        # Extend the list with the new values
+        if isinstance(values, list):
+            existing_dict[key].extend(values)
+        else:
+            existing_dict[key].append(values)
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -503,21 +558,18 @@ def cea4_verify_db(scenario, print_results=False):
         list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results)
         dict_missing_db[ASSEMBLIES] = [item for sublist in list_list_missing_columns_csv for item in sublist]
 
-
     #4. verify columns and values in .csv files for components - conversion
-    list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, ['CONVERSION'], CONVERSION_COMPONENTS)
-    if list_missing_files_csv_conversion_components:
-        print('! Ensure .csv file(s) are present in the COMPONENTS>CONVERSION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_conversion_components))
-
     list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
-    list_missing_names_conversion, list_missing_code_conversion = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_HEATING', 'SUPPLY_COOLING'], ['primary_components', 'secondary_components', 'tertiary_components'], 'CONVERSION', code_to_name=True)
-    if list_missing_names_conversion:
+    dict_missing_conversion = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_HEATING', 'SUPPLY_COOLING'], ['primary_components', 'secondary_components', 'tertiary_components'], 'CONVERSION', code_to_name=True)
+    if dict_missing_conversion:
+        list_missing_names_conversion = list(dict_missing_conversion.keys())
+        add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_names_conversion)
         if print_results:
-            print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {list_missing_conversion}'.format(list_missing_conversion=list_missing_names_conversion))
-
+            for key, values in dict_missing_conversion.items():
+                print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {missing_name_conversion}, with component(s) defined: {components}.'.format(missing_name_conversion=key, components=', '.join(map(str, values))))
     for sheet in list_conversion_db:
         list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', verbose=False, sheet_name=sheet)
-        dict_missing_db['CONVERSION'] = list_missing_columns_csv_conversion
+        add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_columns_csv_conversion)
         if print_results:
             if list_missing_columns_csv_conversion:
                 print('! Ensure column(s) are present in {conversion}.csv: {missing_columns}'.format(conversion=sheet, missing_columns=list_missing_columns_csv_conversion))
@@ -544,10 +596,11 @@ def cea4_verify_db(scenario, print_results=False):
         print('! Ensure .csv file(s) are present in the COMPONENTS folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_feedstocks_components))
 
     list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
-    _, list_missing_code_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS')
-    if list_missing_code_feedstocks:
+    dict_missing_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS')
+    if dict_missing_feedstocks:
         if print_results:
-            print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}'.format(list_missing_feedstocks=list_missing_feedstocks))
+            for key, _ in dict_missing_feedstocks.items():
+                print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}'.format(list_missing_feedstocks=key))
 
     for sheet in list_feedstocks_db:
         list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', verbose=False, sheet_name=sheet)
@@ -581,7 +634,7 @@ def main(config):
 
     # Execute the verification
     dict_missing_db = cea4_verify_db(scenario, print_results=True)
-
+    print(dict_missing_db)
 
     # Print the results
     print_verification_results_4_db(scenario_name, dict_missing_db)
