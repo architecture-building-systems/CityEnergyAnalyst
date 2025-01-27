@@ -170,7 +170,7 @@ def verify_file_against_schema_4(scenario, item, verbose=True):
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
-    # Rmove 'geometry' and 'reference' columns
+    # Remove 'geometry' and 'reference' columns
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference']]
 
     # Print results

@@ -207,6 +207,23 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
 
+def check_directory_contains_csv(directory_path):
+    """
+    Check if a directory exists and contains at least one .csv file.
+
+    Parameters:
+    - directory_path (str): The path to the directory.
+
+    Returns:
+    - bool: True if the directory exists and contains at least one .csv file, False otherwise.
+    """
+    if os.path.isdir(directory_path):
+        # Check for .csv files in the directory
+        for file in os.listdir(directory_path):
+            if file.endswith('.csv'):
+                return True
+    return False
+
 def move_txt_modify_csv_files(scenario):
     """
     Move .txt files and process .csv files from one directory to another.
@@ -222,6 +239,9 @@ def move_txt_modify_csv_files(scenario):
     shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
     shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
     compiled_rows = []
+
+    if not check_directory_contains_csv(shedules_directory_3):
+        return
 
     # Ensure the target directory exists
     os.makedirs(shedules_directory_4, exist_ok=True)
@@ -305,7 +325,7 @@ def delete_files(path):
         shutil.rmtree(path)
         # print(f"Deleted directory: {path}")
     except Exception as e:
-        print(f"Failed to delete directory. Error: {e}")
+        pass
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -320,26 +340,53 @@ def migrate_cea3_to_cea4_db(scenario):
     if all(not value for value in dict_missing.values()):
         pass
     else:
+        # Verify missing files for CEA-3 and CEA-4 formats
+        list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPE')
+        list_problems_use_type = dict_missing.get('USE_TYPE')
+        list_problems_schedules = dict_missing.get('SCHEDULES')
+        list_problems_envelope = dict_missing.get('ENVELOPE')
+        list_problems_hvac = dict_missing.get('HVAC')
+        list_problems_supply = dict_missing.get('SUPPLY')
+        list_problems_conversion = dict_missing.get('CONVERSION')
+        list_problems_distribution = dict_missing.get('DISTRIBUTION')
+        list_problems_feedstocks = dict_missing.get('FEEDSTOCKS')
+
         #1. about archetypes - construction types
-        path_excel = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
-        path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
-        merge_excel_tab_to_csv(path_excel, 'STANDARD', path_csv, rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
+        if list_problems_construction_type and os.path.isfile(path_3):
+            path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
+            merge_excel_tab_to_csv(path_3, 'STANDARD', path_csv, rename_dict=rename_dict)
 
         #2. about archetypes - use types
-        path_excel = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
-        path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
-        merge_excel_tab_to_csv(path_excel, 'code', path_csv)
-        move_txt_modify_csv_files(scenario)
+        path_3 = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
+        if list_problems_use_type and os.path.isfile(path_3):
+            path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
+            merge_excel_tab_to_csv(path_3, 'code', path_csv)
+
+        if list_problems_schedules:
+            move_txt_modify_csv_files(scenario)
 
         #3. about assemblies
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'ENVELOPE'), path_to_db_file_4(scenario, 'ENVELOPE'), rename_dict=rename_dict)
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'HVAC'), path_to_db_file_4(scenario, 'HVAC'), rename_dict=rename_dict)
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'SUPPLY'), path_to_db_file_4(scenario, 'SUPPLY'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'ENVELOPE')
+        if list_problems_envelope and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'ENVELOPE'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'HVAC')
+        if list_problems_hvac and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'HVAC'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'SUPPLY')
+        if list_problems_supply and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'SUPPLY'), rename_dict=rename_dict)
 
         #4. about components
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'CONVERSION'), path_to_db_file_4(scenario, 'CONVERSION'), rename_dict=rename_dict)
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'DISTRIBUTION'), path_to_db_file_4(scenario, 'DISTRIBUTION'), rename_dict=rename_dict)
-        excel_tab_to_csv(path_to_db_file_3(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'CONVERSION')
+        if list_problems_conversion and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'CONVERSION'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'DISTRIBUTION')
+        if list_problems_distribution and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'DISTRIBUTION'), rename_dict=rename_dict)
+        path_3 = path_to_db_file_3(scenario, 'FEEDSTOCKS')
+        if list_problems_feedstocks and os.path.isfile(path_3):
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'FEEDSTOCKS'), rename_dict=rename_dict)
 
         # Print: End
         print('-' * 49)
