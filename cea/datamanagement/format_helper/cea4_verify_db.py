@@ -477,6 +477,42 @@ def find_missing_values(file_path_1, column_name_1, file_path_2, column_name_2):
         raise ValueError(f"An error occurred: {e}")
 
 
+def find_missing_values_feedstocks(directory_path_1, file_path_2, column_name_2):
+    """
+    Checks if all unique values in column_name_1 of the first CSV file are present in column_name_2 of the second CSV file.
+
+    Parameters:
+    - file_path_1 (str): Path to the first CSV file.
+    - column_name_1 (str): Column name in the first CSV file to check.
+    - file_path_2 (str): Path to the second CSV file.
+    - column_name_2 (str): Column name in the second CSV file to check.
+
+    Returns:
+    - list: A list of missing items from column_name_1 that are not covered by column_name_2.
+    """
+    try:
+        # Load both CSV files
+        df2 = pd.read_csv(file_path_2)
+
+
+        # Get unique values from both columns
+        unique_values_1 = set(get_csv_filenames(directory_path_1))
+        unique_values_2 = set(df2[column_name_2].dropna().unique())
+
+        # Find missing items
+        missing_items = list(unique_values_1 - unique_values_2)
+
+        if 'ENERGY_CARRIERS' in missing_items:
+            missing_items.remove('ENERGY_CARRIERS')
+        if 'SOLAR' in missing_items:
+            missing_items.remove('SOLAR')
+
+        return missing_items
+    except Exception as e:
+        raise ValueError(f"An error occurred: {e}")
+
+
+
 def create_dict_merge_values(keys, values):
     """
     Create a dictionary by merging keys and values. Values for the same key are combined into a list.
@@ -593,7 +629,7 @@ def cea4_verify_db(scenario, print_results=False):
                     print('! Check value(s) in {item}.csv: {list_issues_against_schema}.'.format(item=item, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_archetypes))))
 
     #2. verify columns and values in .csv files for schedules
-    if not dict_missing_db['USE_TYPE']:
+    if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
         use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
         list_use_types = use_type_df['code'].tolist()
         list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types+['MONTHLY_MULTIPLIER'])
@@ -615,16 +651,19 @@ def cea4_verify_db(scenario, print_results=False):
                     print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
                 if list_issues_against_csv_schedules:
                     print('! Check value(s) in {sheet}.csv: {list_issues_against_schema}.'.format(sheet=sheet, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_schedules))))
+    else:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 
     #3. verify columns and values in .csv files for assemblies
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
         list_missing_files_csv_assemblies = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES])
+        add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_files_csv_assemblies)
         if list_missing_files_csv_assemblies:
             if print_results:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}.'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=', '.join(map(str, list_missing_files_csv_assemblies))))
 
         list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv_assemblies, print_results)
-        dict_missing_db[ASSEMBLIES] = [item for sublist in list_list_missing_columns_csv for item in sublist]
+        add_values_to_dict(dict_missing_db, ASSEMBLIES, [item for sublist in list_list_missing_columns_csv for item in sublist])
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
         # Verify is all values in the construction_type.csv file are defined in the assemblies.csv file
@@ -643,6 +682,8 @@ def cea4_verify_db(scenario, print_results=False):
             if print_results:
                 print('! Ensure .csv file(s) are present in the COMPONENTS>{COMPONENTS} folder: {list_missing_files_csv}.'.format(COMPONENTS=COMPONENTS, list_missing_files_csv=', '.join(map(str, list_missing_files_csv_components))))
             add_values_to_dict(dict_missing_db, COMPONENTS, list_missing_files_csv_components)
+        else:
+            add_values_to_dict(dict_missing_db, COMPONENTS, [])
 
     #5. verify columns and values in .csv files for components - conversion
     if not dict_missing_db['CONVERSION']:
@@ -695,7 +736,12 @@ def cea4_verify_db(scenario, print_results=False):
             if print_results:
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
-
+        if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
+            list_missing_energy_carriers = find_missing_values_feedstocks(path_to_db_file_4(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
+            if list_missing_energy_carriers:
+                if print_results:
+                    print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
+                add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
         for sheet in list_feedstocks_db:
             list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', verbose=False, sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_columns_csv_feedstocks)
