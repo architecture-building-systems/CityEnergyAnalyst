@@ -303,7 +303,7 @@ def delete_files(path):
     """
     try:
         shutil.rmtree(path)
-        print(f"Deleted directory: {path}")
+        # print(f"Deleted directory: {path}")
     except Exception as e:
         print(f"Failed to delete directory. Error: {e}")
 
@@ -386,14 +386,14 @@ def main(config):
 
     # if verification is failed, keep the old database, remove the new one
     else:
-        delete_files(path_to_db_file_4(scenario, 'database'))
+        # delete_files(path_to_db_file_4(scenario, 'database'))
         # Print: End
         # print("-" * 1 + ' Scenario: {scenario} - end '.format(scenario=scenario_name) + "-" * 50)
         print('+' * 104)
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The entire process of Database migration from CEA-3 to CEA-4 is not successful - time elapsed: %.2f seconds' % time_elapsed)
+        print('The process of Database migration from CEA-3 to CEA-4 is not entirely successful - time elapsed: %.2f seconds' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from cea.schemas import schemas
 import sys
-
+import re
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -45,7 +45,8 @@ dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak'
                  }
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
-dict_ASSEMBLIES = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES}
+dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
+                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': FEEDSTOCKS_COMPONENTS}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
                                           'USE_TYPE': 'get_database_archetypes_use_type',
                                           'SCHEDULES': 'get_database_archetypes_schedules',
@@ -82,7 +83,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'THERMAL_ENERGY_STORAGES': 'get_database_components_conversion_thermal_energy_storages',
                                           'UNITARY_AIR_CONDITIONERS': 'get_database_components_conversion_unitary_air_conditioners',
                                           'VAPOR_COMPRESSION_CHILLERS': 'get_database_components_conversion_vapor_compression_chillers',
-                                          'DISTRIBUTION': 'get_database_components_distribution_thermal_grid',
+                                          'THERMAL_GRID': 'get_database_components_distribution_thermal_grid',
                                           'BIOGAS': 'get_database_components_feedstocks_biogas',
                                           'COAL': 'get_database_components_feedstocks_coal',
                                           'DRYBIOMASS': 'get_database_components_feedstocks_drybiomass',
@@ -108,6 +109,25 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'ENERGY_CARRIERS': 'code',
                                      }
 
+dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
+                     'CT':'COOLING_TOWERS',
+                     'HEX':'HEAT_EXCHANGERS',
+                     'ACH':'ABSORPTION_CHILLERS',
+                     'BO':'BOILERS',
+                     'HP':'HEAT_PUMPS',
+                     'BH':'BORE_HOLES',
+                     'OEHR':'COGENERATION_PLANTS',
+                     'FU':'COGENERATION_PLANTS',
+                     'CCGT':'COGENERATION_PLANTS',
+                     'FC':'FUEL_CELLS',
+                     'PU':'HYDRAULIC_PUMPS',
+                     'PV':'PHOTOVOLTAIC_PANELS',
+                     'PVT':'PHOTOVOLTAIC_THERMAL_PANELS',
+                     'TR':'POWER_TRANSFORMERS',
+                     'SC': 'SOLAR_THERMAL_PANELS',
+                     'TES':'THERMAL_ENERGY_STORAGES',
+                     'AC':'UNITARY_AIR_CONDITIONERS',
+                     }
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-4
@@ -151,7 +171,10 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         else:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION", "{conversion_components}.csv".format(conversion_components=sheet_name))
     elif item == "DISTRIBUTION":
-        path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION", "THERMAL_GRID.csv")
+        if sheet_name is None:
+            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION")
+        else:
+            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION", "{conversion_components}.csv".format(conversion_components=sheet_name))
     elif item == "FEEDSTOCKS":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS")
@@ -303,7 +326,7 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
 
 
 def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results=True):
-    list_existing_files_csv = list(set(dict_ASSEMBLIES[ASSEMBLIES]) - set(list_missing_files_csv))
+    list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv))
     list_list_missing_columns_csv = []
     construction_type_df = pd.read_csv(path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE'))
     for assembly in list_existing_files_csv:
@@ -348,6 +371,77 @@ def get_csv_filenames(folder_path):
 
     return csv_filenames
 
+
+def verify_assemblies_components_exdist(scenario, item, list_subset_items, list_identifier_column_names, dict_code_to_name=None):
+    list_conversion_supply = []
+    list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
+    for supply_type in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
+        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES_COMPONENTS['SUPPLY']):
+            supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
+            list_conversion_supply.append(np.unique(supply_df[['primary_components', 'secondary_components', 'tertiary_components']].values.flatten()))
+            list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
+    list_missing = list(set(list_conversion_supply) - set(list_conversion_db))
+
+    return list_missing
+
+
+def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_items, list_assemblies_identifier_column_names, components_item, code_to_name=False):
+    """
+    Verify that all required components exist in the database and return missing components.
+
+    Parameters:
+    - scenario (str): Path to the scenario folder.
+    - category (str): High-level category of the components (e.g., 'SUPPLY').
+    - list_subset_items (list): Subsets of items to check for required components.
+    - list_identifier_column_names (str): Column(s) used as unique identifiers for required components.
+    - code_to_name (bool, optional): If True, convert codes to human-readable names. Default is False.
+
+    Returns:
+    - list_missing_name (list): Names of missing components (if `code_to_name` is True).
+    - list_missing_code (list): Codes of missing components.
+    """
+    # Initialize lists to store codes and names
+    required_codes = []
+    provided_codes = []
+
+    # Get the list of provided component names (e.g., from CSV files)
+    provided_names = get_csv_filenames(path_to_db_file_4(scenario, components_item))
+
+    if components_item == 'CONVERSION':
+        # Collect codes from provided components
+        for provided_name in provided_names:
+            provided_df = pd.read_csv(path_to_db_file_4(scenario, components_item, provided_name))
+            provided_codes.extend(np.unique(provided_df['code'].values).tolist())
+    elif components_item == 'FEEDSTOCKS':
+        provided_codes = provided_names
+
+    # Collect codes from required components
+    for subset_item in list_assemblies_subset_items:
+        if subset_item not in verify_file_exists_4_db(scenario, [assemblies_item], dict_ASSEMBLIES_COMPONENTS[assemblies_item]):
+            required_df = pd.read_csv(path_to_db_file_4(scenario, assemblies_item, subset_item))
+            required_codes.extend(np.unique(required_df[list_assemblies_identifier_column_names].values).tolist())
+
+    # Identify missing components
+    missing_codes = list(set(required_codes) - set(provided_codes))
+    missing_codes = [item for item in missing_codes if item not in ['NONE', '-']]
+
+    # Convert codes to names if requested
+    if code_to_name:
+        missing_names = convert_code_to_name(missing_codes)
+    else:
+        missing_names = required_codes
+
+    return missing_names, missing_codes
+
+def convert_code_to_name(list_codes):
+    # Remove all digits from each item in the list
+    list_codes_alpha = [re.sub(r'\d+', '', item) for item in list_codes]
+
+    # Map the cleaned codes to names using the dictionary
+    # If a code doesn't exist in the dictionary, keep the original code
+    list_names = [dict_code_to_name[item] if item in dict_code_to_name else item for item in list_codes_alpha]
+
+    return list_names
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -401,30 +495,25 @@ def cea4_verify_db(scenario, print_results=False):
 
     #3. verify columns and values in .csv files for assemblies
     for ASSEMBLIES in ASSEMBLIES_FOLDERS:
-        list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_ASSEMBLIES[ASSEMBLIES])
+        list_missing_files_csv = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES])
         if list_missing_files_csv:
             if print_results:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=list_missing_files_csv))
 
         list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results)
-        dict_missing_db[ASSEMBLIES] = list_list_missing_columns_csv
+        dict_missing_db[ASSEMBLIES] = [item for sublist in list_list_missing_columns_csv for item in sublist]
+
 
     #4. verify columns and values in .csv files for components - conversion
     list_missing_files_csv_conversion_components = verify_file_exists_4_db(scenario, ['CONVERSION'], CONVERSION_COMPONENTS)
     if list_missing_files_csv_conversion_components:
         print('! Ensure .csv file(s) are present in the COMPONENTS>CONVERSION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_conversion_components))
 
-    list_conversion_supply = []
     list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
-    for supply_type in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
-        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
-            supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
-            list_conversion_supply.append(np.unique(supply_df[['primary_components', 'secondary_components', 'tertiary_components']].values.flatten()))
-            list_conversion_supply = [item for sublist in list_conversion_supply for item in sublist]
-    list_missing_conversion = list(set(list_conversion_supply) - set(list_conversion_db))
-    if list_missing_conversion:
+    list_missing_names_conversion, list_missing_code_conversion = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_HEATING', 'SUPPLY_COOLING'], ['primary_components', 'secondary_components', 'tertiary_components'], 'CONVERSION', code_to_name=True)
+    if list_missing_names_conversion:
         if print_results:
-            print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {list_missing_conversion}'.format(list_missing_conversion=list_missing_conversion))
+            print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {list_missing_conversion}'.format(list_missing_conversion=list_missing_names_conversion))
 
     for sheet in list_conversion_db:
         list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', verbose=False, sheet_name=sheet)
@@ -440,29 +529,23 @@ def cea4_verify_db(scenario, print_results=False):
     if list_missing_files_csv_distribution_components:
         print('! Ensure .csv file(s) are present in the COMPONENTS>DISTRIBUTION folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_distribution_components))
 
-    list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', verbose=False)
-    dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
-    if print_results:
-        if list_missing_columns_csv_distribution:
-            print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}'.format(missing_columns=list_missing_columns_csv_distribution))
-        if list_issues_against_csv_distribution:
-            print('! Check value(s) in DISTRIBUTION.csv: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_csv_distribution))
+    for sheet in DISTRIBUTION_COMPONENTS:
+        list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', verbose=False, sheet_name=sheet)
+        dict_missing_db['DISTRIBUTION'] = list_missing_columns_csv_distribution
+        if print_results:
+            if list_missing_columns_csv_distribution:
+                print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}'.format(missing_columns=list_missing_columns_csv_distribution))
+            if list_issues_against_csv_distribution:
+                print('! Check value(s) in DISTRIBUTION.csv: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_csv_distribution))
 
     #6. verify columns and values in .csv files for components - feedstocks
     list_missing_files_csv_feedstocks_components = verify_file_exists_4_db(scenario, ['FEEDSTOCKS'], FEEDSTOCKS_COMPONENTS)
     if list_missing_files_csv_feedstocks_components:
         print('! Ensure .csv file(s) are present in the COMPONENTS folder: {list_missing_files_csv}'.format(list_missing_files_csv=list_missing_files_csv_feedstocks_components))
 
-    list_feedstocks_supply = []
     list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
-    for supply_type in SUPPLY_ASSEMBLIES:
-        if supply_type not in verify_file_exists_4_db(scenario, ['SUPPLY'], dict_ASSEMBLIES['SUPPLY']):
-            supply_df = pd.read_csv(path_to_db_file_4(scenario, 'SUPPLY', supply_type))
-            # Get the unique feedstocks
-            unique_feedstocks = np.unique(supply_df['feedstock'].dropna().values.flatten())
-            list_feedstocks_supply.extend(unique_feedstocks)  # Append directly to the list
-    list_missing_feedstocks = list(set(list_feedstocks_supply) - set(list_feedstocks_db))
-    if list_missing_feedstocks:
+    _, list_missing_code_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS')
+    if list_missing_code_feedstocks:
         if print_results:
             print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}'.format(list_missing_feedstocks=list_missing_feedstocks))
 
@@ -498,6 +581,7 @@ def main(config):
 
     # Execute the verification
     dict_missing_db = cea4_verify_db(scenario, print_results=True)
+
 
     # Print the results
     print_verification_results_4_db(scenario_name, dict_missing_db)
