@@ -536,12 +536,13 @@ def cea4_verify_db(scenario, print_results=False):
     list_use_types = use_type_df['code'].tolist()
     list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types)
     if list_missing_files_csv_schedules:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules)
         if print_results:
             print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=list_missing_files_csv_schedules))
 
     for sheet in list_use_types:
         list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', verbose=False, sheet_name=sheet)
-        dict_missing_db[SCHEDULES_FOLDER[0]] = list_missing_columns_csv_schedules
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
         if print_results:
             if list_missing_columns_csv_schedules:
                 print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=list_missing_columns_csv_schedules))
