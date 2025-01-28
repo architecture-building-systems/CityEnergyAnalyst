@@ -22,6 +22,19 @@ __status__ = "Production"
 
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db, print_verification_results_4_db
 
+def print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db):
+
+    if all(not value for value in dict_missing.values()) and all(not value for value in dict_missing_db.values()):
+        print("✓" * 3)
+        print('The Database and all input data are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}.'.format(scenario=scenario_name),
+              )
+    else:
+        print("!" * 3)
+        print('All or some of Database\'s and/or input data\'s files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
+        print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
+        print('- If the toggle `migrate_from_cea_3` is already set to `True` or you manually prepared the Database and the input data, check the log for missing files and/or incompatible columns. Modify your Database and/or input data accordingly.')
+
+
 
 def exec_cea_format_helper(config, scenario):
     # auto-migrate from CEA-3 to CEA-4
@@ -31,19 +44,14 @@ def exec_cea_format_helper(config, scenario):
     if not bool_migrate:
         dict_missing = cea4_verify(scenario, print_results=True)
         dict_missing_db = cea4_verify_db(scenario)
-
-        print_verification_results_4(scenario_name, dict_missing)
-        print_verification_results_4_db(scenario_name, dict_missing_db)
+        print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db)
 
     else:
         migrate_cea3_to_cea4(scenario)
         dict_missing = cea4_verify(scenario)
-
         migrate_cea3_to_cea4_db(scenario)
         dict_missing_db = cea4_verify_db(scenario)
-
-        print_verification_results_4(scenario_name, dict_missing)
-        print_verification_results_4_db(scenario_name, dict_missing_db)
+        print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db)
 
         if all(not value for value in dict_missing_db.values()):
             delete_files(path_to_db_file_3(scenario, 'technology'))

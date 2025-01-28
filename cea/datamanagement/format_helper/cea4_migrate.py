@@ -269,19 +269,19 @@ def migrate_cea3_to_cea4(scenario):
                         zone_df_4.drop(columns=['Name'], inplace=True)
                         zone_df_4 = zone_df_4[COLUMNS_ZONE_4]
                         replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
-                        print('+ zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
+                        print('! zone.shp and typology.dbf have been merged and migrated to CEA-4 format.')
                     else:
-                        raise ValueError('+ typology.dbf exists but does not follow the CEA-3 format. CEA cannot proceed with the data migration. '
+                        raise ValueError('! typology.dbf exists but does not follow the CEA-3 format. CEA cannot proceed with the data migration. '
                                          'Check the following column(s) for CEA-3 format: {list_missing_attributes_typology_3}'.format(list_missing_attributes_typology_3=list_missing_attributes_typology_3)
                                          )
                 else:
-                    print("+ CEA is unable to produce a zone.shp compatible to CEA-4 format. To enable the migration, ensure typology.dbf is present in building-properties folder for CEA-3 format.")
+                    print("! CEA is unable to produce a zone.shp compatible to CEA-4 format. To enable the migration, ensure typology.dbf is present in building-properties folder for CEA-3 format.")
 
             elif list_missing_attributes_zone_3 and not list_missing_attributes_zone_4:
                 pass
                 # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp already follows the CEA-4 format.')
             else:
-                raise ValueError('+ zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
+                raise ValueError('! zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
                                  'Check the following column(s) for CEA-3 format: {list_missing_attributes_zone_3}.'.format(list_missing_attributes_zone_3=list_missing_attributes_zone_3),
                                  'Check the following column(s) for CEA-4 format: {list_missing_attributes_zone_4}.'.format(list_missing_attributes_zone_4=list_missing_attributes_zone_4)
                                  )
