@@ -412,7 +412,7 @@ def cea4_verify(scenario, verbose=False):
     list_missing_files_streets = verify_file_exists_4(scenario, ['streets'])
     if list_missing_files_streets:
         if verbose:
-            print('! Ensure streets.shp are present in the networks folder, if Thermal-Networks analysis is required. Consider running Streets Helper under Data Management. ')
+            print('! Ensure streets.shp are present in the networks folder, if Thermal-Networks analysis is required. Consider running Streets Helper under Data Management.')
 
     #4. verify the DB under the "inputs/technology/" folder
     list_missing_files_db = []
