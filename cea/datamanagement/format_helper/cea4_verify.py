@@ -88,7 +88,7 @@ def path_to_input_file_without_db_4(scenario, item):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def verify_file_against_schema_4(scenario, item, verbose=True):
+def verify_file_against_schema_4(scenario, item, verbose=False):
     """
     Validate a file against a schema section in a YAML file.
 
@@ -128,13 +128,13 @@ def verify_file_against_schema_4(scenario, item, verbose=True):
     else:
         raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
 
-    if id_column not in df.columns:
-        if verbose:
-            print(f"! CEA was not able to verify {os.path.basename(file_path)} "
-                  f"as a unique row identifier column such as (building) name or (component) code is not present.")
-
     errors = []
     missing_columns = []
+
+    # if id_column not in df.columns:
+    #     if verbose:
+            # print(f"! CEA was not able to verify {os.path.basename(file_path)} "
+            #       f"as a unique row identifier column such as (building) name or (component) code is not present.")
 
     # Validation process
     for col_name, col_specs in schema_columns.items():
@@ -142,45 +142,45 @@ def verify_file_against_schema_4(scenario, item, verbose=True):
             missing_columns.append(col_name)
             continue
 
-        col_data = df[col_name]
+        if id_column not in missing_columns:
 
-        # Check type
-        if col_specs['type'] == 'string':
-            invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
-        elif col_specs['type'] == 'int':
-            invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
-        elif col_specs['type'] == 'float':
-            invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
-        else:
-            invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
+            col_data = df[col_name]
 
-        for idx in invalid[invalid].index:
-            identifier = df.at[idx, id_column]
-            errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
+            # Check type
+            if col_specs['type'] == 'string':
+                invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
+            elif col_specs['type'] == 'int':
+                invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
+            elif col_specs['type'] == 'float':
+                invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
+            else:
+                invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
 
-        # Check range
-        if 'min' in col_specs:
-            out_of_range = col_data[col_data < col_specs['min']]
-            for idx, value in out_of_range.items():
+            for idx in invalid[invalid].index:
                 identifier = df.at[idx, id_column]
-                errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
+                errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
 
-        if 'max' in col_specs:
-            out_of_range = col_data[col_data > col_specs['max']]
-            for idx, value in out_of_range.items():
-                identifier = df.at[idx, id_column]
-                errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
+            # Check range
+            if 'min' in col_specs:
+                out_of_range = col_data[col_data < col_specs['min']]
+                for idx, value in out_of_range.items():
+                    identifier = df.at[idx, id_column]
+                    errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
+
+            if 'max' in col_specs:
+                out_of_range = col_data[col_data > col_specs['max']]
+                for idx, value in out_of_range.items():
+                    identifier = df.at[idx, id_column]
+                    errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
     # Remove 'geometry' and 'reference' columns
-    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference']]
+    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'REFERENCE']]
 
     # Print results
     if errors:
         if verbose:
             for error in errors:
                 print(error)
-    elif verbose:
-        print(f"Validation passed: All columns and values meet the CEA (schema) requirements.")
 
     return missing_columns, errors
 
@@ -353,30 +353,30 @@ def cea4_verify(scenario, verbose=False):
     list_missing_files_shp_building_geometry = verify_file_exists_4(scenario, SHAPEFILES)
 
     if 'zone' not in list_missing_files_shp_building_geometry:
-        list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema_4(scenario, 'zone', verbose=False)
+        list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema_4(scenario, 'zone', verbose=verbose)
         if list_missing_attributes_zone:
             if verbose:
                 print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=list_missing_attributes_zone))
                 if list_issues_against_schema_zone:
                     print('! Check values in zone.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_zone))
-                if 'name' not in list_missing_attributes_zone:
-                    list_names_duplicated = verify_name_duplicates_4(scenario, 'zone')
-                    if list_names_duplicated:
-                        if verbose:
-                            print('! Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
+        if 'name' not in list_missing_attributes_zone:
+            list_names_duplicated = verify_name_duplicates_4(scenario, 'zone')
+            if list_names_duplicated:
+                if verbose:
+                    print('! Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
     if 'surroundings' not in list_missing_files_shp_building_geometry:
-        list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema_4(scenario, 'surroundings', verbose=False)
+        list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema_4(scenario, 'surroundings', verbose=verbose)
         if list_missing_attributes_surroundings:
             if verbose:
                 print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=list_missing_attributes_surroundings))
                 if list_issues_against_schema_surroundings:
                     print('! Check values in surroundings.shp: {list_issues_against_schema}'.format(list_issues_against_schema=list_issues_against_schema_surroundings))
-                if 'name' not in list_missing_attributes_surroundings:
-                    list_names_duplicated = verify_name_duplicates_4(scenario, 'surroundings')
-                    if list_names_duplicated:
-                        if verbose:
-                            print('! Ensure name(s) are unique in surroundings.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
+        if 'name' not in list_missing_attributes_surroundings:
+            list_names_duplicated = verify_name_duplicates_4(scenario, 'surroundings')
+            if list_names_duplicated:
+                if verbose:
+                    print('! Ensure name(s) are unique in surroundings.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=list_names_duplicated))
 
     #2. about .csv files under the "inputs/building-properties" folder
     dict_list_missing_columns_csv_building_properties = {}
@@ -388,14 +388,15 @@ def cea4_verify(scenario, verbose=False):
 
     for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
         if item not in list_missing_files_csv_building_properties:
-            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item, verbose=False)
+            list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item, verbose=verbose)
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
             if verbose:
                 if list_missing_columns_csv_building_properties:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=list_missing_columns_csv_building_properties))
                 if list_issues_against_csv_building_properties:
                     print('! Check values in {item}.csv: {list_issues_against_schema}'.format(item=item, list_issues_against_schema=list_issues_against_csv_building_properties))
-
+        else:
+            dict_list_missing_columns_csv_building_properties[item] = []
 
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])

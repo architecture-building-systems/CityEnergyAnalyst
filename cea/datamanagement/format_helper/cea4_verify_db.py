@@ -231,13 +231,13 @@ def verify_file_against_schema_4_db(scenario, item, verbose=False, sheet_name=No
     else:
         raise ValueError(f"Unsupported file type: {file_path}. Only .csv files are supported.")
 
-    if id_column not in df.columns:
-        if verbose:
-            print(f"! CEA was not able to verify {os.path.basename(file_path)} "
-                  f"as a unique row identifier column such as (building) name or (component) code is not present.")
-
     errors = []
     missing_columns = []
+
+    # if id_column not in df.columns:
+    #     if verbose:
+    #         print(f"! CEA was not able to verify {os.path.basename(file_path)} "
+    #               f"as a unique row identifier column such as (building) name or (component) code is not present.")
 
     # Validation process
     for col_name, col_specs in schema_columns.items():
@@ -245,34 +245,36 @@ def verify_file_against_schema_4_db(scenario, item, verbose=False, sheet_name=No
             missing_columns.append(col_name)
             continue
 
-        col_data = df[col_name]
+        if id_column not in missing_columns:
 
-        # Check type
-        if col_specs['type'] == 'string':
-            invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
-        elif col_specs['type'] == 'int':
-            invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
-        elif col_specs['type'] == 'float':
-            invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
-        else:
-            invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
+            col_data = df[col_name]
 
-        for idx in invalid[invalid].index:
-            identifier = df.at[idx, id_column]
-            errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
+            # Check type
+            if col_specs['type'] == 'string':
+                invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
+            elif col_specs['type'] == 'int':
+                invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
+            elif col_specs['type'] == 'float':
+                invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
+            else:
+                invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
 
-        # Check range
-        if 'min' in col_specs:
-            out_of_range = col_data[col_data < col_specs['min']]
-            for idx, value in out_of_range.items():
+            for idx in invalid[invalid].index:
                 identifier = df.at[idx, id_column]
-                errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
+                errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
 
-        if 'max' in col_specs:
-            out_of_range = col_data[col_data > col_specs['max']]
-            for idx, value in out_of_range.items():
-                identifier = df.at[idx, id_column]
-                errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
+            # Check range
+            if 'min' in col_specs:
+                out_of_range = col_data[col_data < col_specs['min']]
+                for idx, value in out_of_range.items():
+                    identifier = df.at[idx, id_column]
+                    errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
+
+            if 'max' in col_specs:
+                out_of_range = col_data[col_data > col_specs['max']]
+                for idx, value in out_of_range.items():
+                    identifier = df.at[idx, id_column]
+                    errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
 
     # Relax from the descriptive columns which not used in the modelling
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'description', 'assumption']]
