@@ -202,11 +202,12 @@ async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
 
 @router.get('/')
 async def get_project_info(project_root: CEAProjectRoot, project: str) -> ProjectInfo:
-    if project_root is None:
-        project_root = ""
+    project_path = project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
 
     try:
-        cea_project = secure_path(os.path.join(project_root, project))
+        cea_project = secure_path(project_path)
     except OutsideProjectRootError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -262,11 +263,15 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
 
 
 @router.put('/')
-async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
+async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
     """
-    project = secure_path(scenario_path.project)
+    project_path = scenario_path.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    project = secure_path(project_path)
     scenario_name = scenario_path.scenario_name
 
     if project and scenario_name:
@@ -291,13 +296,25 @@ async def update_project(config: CEAConfig, scenario_path: ScenarioPath):
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2')
-async def create_new_scenario_v2(scenario_form: Annotated[CreateScenario, Form()]):
-    new_scenario_path = secure_path(os.path.join(scenario_form.project, str(scenario_form.scenario_name).strip()))
+async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()]):
+    project_path = scenario_form.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    try:
+        cea_project = secure_path(project_path)
+    except OutsideProjectRootError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    new_scenario_path = secure_path(os.path.join(cea_project, str(scenario_form.scenario_name).strip()))
 
     if os.path.exists(new_scenario_path):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Scenario already exists - project: {scenario_form.project}, scenario_name: {scenario_form.scenario_name}',
+            detail=f'Scenario already exists - project: {cea_project}, scenario_name: {scenario_form.scenario_name}',
         )
 
     async def create_zone(scenario_form, locator):
