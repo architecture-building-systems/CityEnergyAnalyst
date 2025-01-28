@@ -415,7 +415,7 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     return dict_merged
 
 
-def verify_assemblies_exist(scenario, item, list_sheet_name, archetypes='CONSTRUCTION_TYPE'):
+def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_columns_construction_type,archetypes='CONSTRUCTION_TYPE'):
     """
     Verify whether all required archetypes exist in the provided assemblies.
 
@@ -437,8 +437,11 @@ def verify_assemblies_exist(scenario, item, list_sheet_name, archetypes='CONSTRU
         column_name_2 = 'code'
         column_name_1 = dict_assembly[sheet_name]
 
-        # Find missing items
-        list_missing_items = find_missing_values_column_column(file_path_1, column_name_1, file_path_2, column_name_2)
+        list_missing_items = []
+
+        if column_name_1 not in list_missing_columns_construction_type:
+            # Find missing items
+            list_missing_items = find_missing_values_column_column(file_path_1, column_name_1, file_path_2, column_name_2)
 
         if list_missing_items:
             list_list_missing_items.append(list_missing_items)
@@ -623,10 +626,11 @@ def cea4_verify_db(scenario, verbose=False):
 
     for item in ARCHETYPES:
         if item in list_missing_files_csv_archetypes:
-            dict_missing_db[item] = item
+            add_values_to_dict(dict_missing_db, item, item)
         else:
             list_missing_columns_csv_archetypes, list_issues_against_csv_archetypes = verify_file_against_schema_4_db(scenario, item, verbose=verbose)
-            dict_missing_db[item] = []
+            add_values_to_dict(dict_missing_db, item, list_missing_columns_csv_archetypes)
+            add_values_to_dict(dict_missing_db, item, list_issues_against_csv_archetypes)
             if verbose:
                 if list_missing_columns_csv_archetypes:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_archetypes))))
@@ -674,7 +678,7 @@ def cea4_verify_db(scenario, verbose=False):
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
         # Verify is all values in the construction_type.csv file are defined in the assemblies.csv file
-        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, archetypes='CONSTRUCTION_TYPE')
+        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPE'], archetypes='CONSTRUCTION_TYPE')
         list_missing_names_assemblies = list(dict_missing_assemblies.keys())
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_names_assemblies)
         if list_missing_names_assemblies:
