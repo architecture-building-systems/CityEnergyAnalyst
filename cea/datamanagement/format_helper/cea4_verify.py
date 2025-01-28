@@ -177,10 +177,10 @@ def verify_file_against_schema_4(scenario, item, verbose=False):
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'REFERENCE']]
 
     # Print results
-    if errors:
-        if verbose:
-            for error in errors:
-                print(error)
+    # if errors:
+    #     if verbose:
+    #         for error in errors:
+    #             print(error)
 
     return missing_columns, errors
 
