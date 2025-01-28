@@ -6,6 +6,8 @@ Main script of the formate helper that activates the verification and migration 
 import os
 import cea.config
 import time
+
+from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db, path_to_db_file_3, delete_files
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, print_verification_results_4
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 
@@ -18,24 +20,33 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db, print_verification_results_4_db
 
-def exec_cea_format_helper(config, cea_scenario):
+
+def exec_cea_format_helper(config, scenario):
     # auto-migrate from CEA-3 to CEA-4
     bool_migrate = config.format_helper.migrate_from_cea_3
-    scenario_name = os.path.basename(cea_scenario)
+    scenario_name = os.path.basename(scenario)
 
     if not bool_migrate:
-        # subprocess.run(['cea', 'cea4_migrate', '--scenario', cea_scenario], env=my_env, check=True,capture_output=True)
-        dict_missing = cea4_verify(cea_scenario, print_results=True)
+        dict_missing = cea4_verify(scenario, print_results=True)
+        dict_missing_db = cea4_verify_db(scenario)
+
         print_verification_results_4(scenario_name, dict_missing)
+        print_verification_results_4_db(scenario_name, dict_missing_db)
 
     else:
-        # subprocess.run(['cea', 'cea4_verify', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
-        migrate_cea3_to_cea4(cea_scenario)
-        dict_missing = cea4_verify(cea_scenario)
+        migrate_cea3_to_cea4(scenario)
+        dict_missing = cea4_verify(scenario)
+
+        migrate_cea3_to_cea4_db(scenario)
+        dict_missing_db = cea4_verify_db(scenario)
+
         print_verification_results_4(scenario_name, dict_missing)
+        print_verification_results_4_db(scenario_name, dict_missing_db)
 
-
+        if all(not value for value in dict_missing_db.values()):
+            delete_files(path_to_db_file_3(scenario, 'technology'))
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
 ## --------------------------------------------------------------------------------------------------------------------
@@ -78,8 +89,7 @@ def main(config):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('+' * 100)
-    print(
-        'All processing of data format verification (and migration) for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+    print('CEA\'s attempt to verify (and migrate) the input data nad Database for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 
 if __name__ == '__main__':

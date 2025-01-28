@@ -639,7 +639,7 @@ def cea4_verify_db(scenario, print_results=False):
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
         if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
             list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
-            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'USE_TYPE'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if print_results:
