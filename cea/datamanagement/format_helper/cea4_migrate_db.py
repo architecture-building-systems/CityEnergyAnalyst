@@ -88,7 +88,7 @@ def path_to_db_file_3(scenario, item):
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
+def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False):
     """
     Converts each sheet of an Excel file into individual CSV files.
 
@@ -129,12 +129,13 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None):
 
             # Save the file
             df.to_csv(output_path, index=False)
-            print(f"Saved {sheet_name} to {output_path}")
+            if verbose:
+                print(f"Saved {sheet_name} to {output_path}")
         except Exception as e:
             print(f"Failed to save sheet {sheet_name} as .csv format Error: {e}")
 
 
-def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
+def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None, verbose=False):
     """
     Merge all tabs of an Excel file horizontally based on a common column and save the result as a CSV file.
 
@@ -202,7 +203,8 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None):
         # Save the merged DataFrame as a CSV file
         try:
             merged_df.to_csv(path_csv, index=False)
-            print(f"Saved {file_name} to {path_csv}")
+            if verbose:
+                print(f"Saved {file_name} to {path_csv}")
         except Exception as e:
             print(f"Failed to save merged DataFrame as CSV. Error: {e}")
 
@@ -224,7 +226,7 @@ def check_directory_contains_csv(directory_path):
                 return True
     return False
 
-def move_txt_modify_csv_files(scenario):
+def move_txt_modify_csv_files(scenario, verbose=False):
     """
     Move .txt files and process .csv files from one directory to another.
     Also, compile specific rows from .csv files into a combined DataFrame.
@@ -255,7 +257,8 @@ def move_txt_modify_csv_files(scenario):
             # Handle .txt files: Move to new directory
             if file.endswith('.txt'):
                 shutil.copy2(old_file_path, new_file_path)
-                print(f"Saved schedule_references.txt to {new_file_path}")
+                if verbose:
+                    print(f"Saved schedule_references.txt to {new_file_path}")
 
             # Handle .csv files: Process and save
             elif file.endswith('.csv'):
@@ -302,7 +305,8 @@ def move_txt_modify_csv_files(scenario):
 
                     # Save the cleaned data
                     schedules_df.to_csv(new_file_path, index=False)
-                    print(f"Saved {use_type} to {new_file_path}")
+                    if verbose:
+                        print(f"Saved {use_type} to {new_file_path}")
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
@@ -311,10 +315,11 @@ def move_txt_modify_csv_files(scenario):
         compiled_multiplier_df = pd.DataFrame(compiled_rows)
         compiled_multiplier_path = path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
-        print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
+        if verbose:
+            print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
 
 
-def delete_files(path):
+def delete_files(path, verbose=False):
     """
     Delete all files in a directory
 
@@ -323,7 +328,8 @@ def delete_files(path):
     """
     try:
         shutil.rmtree(path)
-        # print(f"Deleted directory: {path}")
+        if verbose:
+            print(f"Deleted directory: {path}")
     except Exception as e:
         pass
 
@@ -415,6 +421,7 @@ def main(config):
 
     # Execute the verification again
     dict_missing = cea4_verify_db(scenario)
+    print(dict_missing)
 
     # Print the verification results
     print_verification_results_4_db(scenario_name, dict_missing)

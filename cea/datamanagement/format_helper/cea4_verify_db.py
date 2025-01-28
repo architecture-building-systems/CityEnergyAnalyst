@@ -325,13 +325,13 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
     return list_missing_files
 
 
-def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, print_results=True):
+def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, verbose=True):
     list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv))
     list_list_missing_columns_csv = []
     for assembly in list_existing_files_csv:
         list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, ASSEMBLIES, verbose=False, sheet_name=assembly)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
-        if print_results:
+        if verbose:
             if list_missing_columns_csv:
                 print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}'.format(assembly=assembly, missing_columns=list_missing_columns_csv))
             if list_issues_against_csv:
@@ -596,12 +596,12 @@ def add_values_to_dict(existing_dict, key, values):
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def cea4_verify_db(scenario, print_results=False):
+def cea4_verify_db(scenario, verbose=False):
     """
     Verify the database for the CEA-4 format.
 
     :param scenario: the scenario to verify
-    :param print_results: if True, print the results
+    :param verbose: if True, print the results
     :return: a dictionary with the missing files
     """
 
@@ -610,7 +610,7 @@ def cea4_verify_db(scenario, print_results=False):
     #1. verify columns and values in .csv files for archetypes
     list_missing_files_csv_archetypes = verify_file_exists_4_db(scenario, ARCHETYPES)
     if list_missing_files_csv_archetypes:
-        if print_results:
+        if verbose:
             print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_archetypes))))
             # print('! CONSTRUCTION_TYPE.csv and USE_TYPE.csv are fundamental and should be present in the ARCHETYPES folder.')
             # print('! The CEA-4 Database verification is aborted.')
@@ -622,7 +622,7 @@ def cea4_verify_db(scenario, print_results=False):
         else:
             list_missing_columns_csv_archetypes, list_issues_against_csv_archetypes = verify_file_against_schema_4_db(scenario, item, verbose=False)
             dict_missing_db[item] = []
-            if print_results:
+            if verbose:
                 if list_missing_columns_csv_archetypes:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_archetypes))))
                 if list_issues_against_csv_archetypes:
@@ -635,20 +635,20 @@ def cea4_verify_db(scenario, print_results=False):
         list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types+['MONTHLY_MULTIPLIER'])
         if list_missing_files_csv_schedules:
             add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules)
-            if print_results:
+            if verbose:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
         if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
             list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
             list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
-                if print_results:
+                if verbose:
                     print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_monthly_multiplier)
         for sheet in list_use_types:
             list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', verbose=False, sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
-            if print_results:
+            if verbose:
                 if list_missing_columns_csv_schedules:
                     print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
                 if list_issues_against_csv_schedules:
@@ -661,10 +661,10 @@ def cea4_verify_db(scenario, print_results=False):
         list_missing_files_csv_assemblies = verify_file_exists_4_db(scenario, [ASSEMBLIES], dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES])
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_files_csv_assemblies)
         if list_missing_files_csv_assemblies:
-            if print_results:
+            if verbose:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}.'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=', '.join(map(str, list_missing_files_csv_assemblies))))
 
-        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv_assemblies, print_results)
+        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv_assemblies, verbose)
         add_values_to_dict(dict_missing_db, ASSEMBLIES, [item for sublist in list_list_missing_columns_csv for item in sublist])
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
@@ -673,7 +673,7 @@ def cea4_verify_db(scenario, print_results=False):
         list_missing_names_assemblies = list(dict_missing_assemblies.keys())
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_names_assemblies)
         if list_missing_names_assemblies:
-            if print_results:
+            if verbose:
                 for key, values in dict_missing_assemblies.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>{ASSEMBLIES} folder: {missing_name_assemblies}, with assembly(ies) defined: {assemblies}.'.format(ASSEMBLIES=ASSEMBLIES, missing_name_assemblies=key, assemblies=', '.join(map(str, values))))
 
@@ -681,7 +681,7 @@ def cea4_verify_db(scenario, print_results=False):
     for COMPONENTS in COMPONENTS_FOLDERS:
         list_missing_files_csv_components = verify_file_exists_4_db(scenario, [COMPONENTS], dict_ASSEMBLIES_COMPONENTS[COMPONENTS])
         if list_missing_files_csv_components:
-            if print_results:
+            if verbose:
                 print('! Ensure .csv file(s) are present in the COMPONENTS>{COMPONENTS} folder: {list_missing_files_csv}.'.format(COMPONENTS=COMPONENTS, list_missing_files_csv=', '.join(map(str, list_missing_files_csv_components))))
             add_values_to_dict(dict_missing_db, COMPONENTS, list_missing_files_csv_components)
         else:
@@ -694,14 +694,14 @@ def cea4_verify_db(scenario, print_results=False):
         if dict_missing_conversion:
             list_missing_names_conversion = list(dict_missing_conversion.keys())
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_names_conversion)
-            if print_results:
+            if verbose:
                 for key, values in dict_missing_conversion.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {missing_name_conversion}, with component(s) defined: {components}.'.format(missing_name_conversion=key, components=', '.join(map(str, values))))
         for sheet in list_conversion_db:
             list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', verbose=False, sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_columns_csv_conversion)
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_issues_against_csv_conversion)
-            if print_results:
+            if verbose:
                 if list_missing_columns_csv_conversion:
                     print('! Ensure column(s) are present in {conversion}.csv: {missing_columns}.'.format(conversion=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_conversion))))
                 if list_issues_against_csv_conversion:
@@ -717,7 +717,7 @@ def cea4_verify_db(scenario, print_results=False):
             list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', verbose=False, sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'DISTRIBUTION', list_missing_columns_csv_distribution)
             add_values_to_dict(dict_missing_db, 'DISTRIBUTION', list_issues_against_csv_distribution)
-            if print_results:
+            if verbose:
                 if list_missing_columns_csv_distribution:
                     print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, list_missing_columns_csv_distribution))))
                 if list_issues_against_csv_distribution:
@@ -735,20 +735,20 @@ def cea4_verify_db(scenario, print_results=False):
         if dict_missing_feedstocks:
             list_missing_names_feedstocks = list(dict_missing_feedstocks.keys())
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_names_feedstocks)
-            if print_results:
+            if verbose:
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
             list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
             if list_missing_energy_carriers:
-                if print_results:
+                if verbose:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
                 add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
         for sheet in list_feedstocks_db:
             list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', verbose=False, sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_columns_csv_feedstocks)
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_issues_against_csv_feedstocks)
-            if print_results:
+            if verbose:
                 if list_missing_columns_csv_feedstocks:
                     print('! Ensure column(s) are present in {feedstocks}.csv: {missing_columns}.'.format(feedstocks=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_feedstocks))))
                 if list_issues_against_csv_feedstocks:
@@ -776,7 +776,7 @@ def main(config):
     print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario_name) + "-" * div_len)
 
     # Execute the verification
-    dict_missing_db = cea4_verify_db(scenario, print_results=True)
+    dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
     # Print the results
     print_verification_results_4_db(scenario_name, dict_missing_db)

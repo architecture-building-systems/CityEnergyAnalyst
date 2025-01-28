@@ -42,7 +42,7 @@ def exec_cea_format_helper(config, scenario):
     scenario_name = os.path.basename(scenario)
 
     if not bool_migrate:
-        dict_missing = cea4_verify(scenario, print_results=True)
+        dict_missing = cea4_verify(scenario, verbose=True)
         dict_missing_db = cea4_verify_db(scenario)
         print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db)
 
