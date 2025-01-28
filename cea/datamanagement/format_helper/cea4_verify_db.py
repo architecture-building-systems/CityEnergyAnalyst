@@ -435,7 +435,7 @@ def verify_assemblies_exist(scenario, item, list_sheet_name, archetypes='CONSTRU
         column_name_1 = dict_assembly[sheet_name]
 
         # Find missing items
-        list_missing_items = find_missing_values(file_path_1, column_name_1, file_path_2, column_name_2)
+        list_missing_items = find_missing_values_column_column(file_path_1, column_name_1, file_path_2, column_name_2)
 
         if list_missing_items:
             list_list_missing_items.append(list_missing_items)
@@ -447,7 +447,7 @@ def verify_assemblies_exist(scenario, item, list_sheet_name, archetypes='CONSTRU
     return dict_merged
 
 
-def find_missing_values(file_path_1, column_name_1, file_path_2, column_name_2):
+def find_missing_values_column_column(file_path_1, column_name_1, file_path_2, column_name_2):
     """
     Checks if all unique values in column_name_1 of the first CSV file are present in column_name_2 of the second CSV file.
 
@@ -477,7 +477,7 @@ def find_missing_values(file_path_1, column_name_1, file_path_2, column_name_2):
         raise ValueError(f"An error occurred: {e}")
 
 
-def find_missing_values_feedstocks(directory_path_1, file_path_2, column_name_2):
+def find_missing_values_directory_column(directory_path_1, file_path_2, column_name_2):
     """
     Checks if all unique values in column_name_1 of the first CSV file are present in column_name_2 of the second CSV file.
 
@@ -638,7 +638,9 @@ def cea4_verify_db(scenario, print_results=False):
             if print_results:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
         if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
-            list_missing_monthly_multiplier = find_missing_values(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'USE_TYPE'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+            list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if print_results:
                     print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
@@ -737,7 +739,7 @@ def cea4_verify_db(scenario, print_results=False):
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
-            list_missing_energy_carriers = find_missing_values_feedstocks(path_to_db_file_4(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
+            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
             if list_missing_energy_carriers:
                 if print_results:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
