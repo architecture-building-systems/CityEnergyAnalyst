@@ -298,7 +298,7 @@ def print_verification_results_4_db(scenario_name, dict_missing):
         print("!" * 3)
         print('All or some of Database files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
         print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
-        print('- If you manually prepared the Database, check the log for missing files and/or incompatible columns. Modify your Database accordingly.')
+        print('- If you manually prepared the Database, check the log for missing files and/or incompatible columns. Modify your Database accordingly. Otherwise, some or all CEA simulations will fail.')
 
 
 def verify_file_exists_4_db(scenario, items, sheet_name=None):
