@@ -420,8 +420,7 @@ def main(config):
     migrate_cea3_to_cea4_db(scenario)
 
     # Execute the verification again
-    dict_missing = cea4_verify_db(scenario)
-    print(dict_missing)
+    dict_missing = cea4_verify_db(scenario, verbose=True)
 
     # Print the verification results
     print_verification_results_4_db(scenario_name, dict_missing)

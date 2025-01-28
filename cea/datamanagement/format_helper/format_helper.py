@@ -43,14 +43,14 @@ def exec_cea_format_helper(config, scenario):
 
     if not bool_migrate:
         dict_missing = cea4_verify(scenario, verbose=True)
-        dict_missing_db = cea4_verify_db(scenario)
+        dict_missing_db = cea4_verify_db(scenario, verbose=True)
         print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db)
 
     else:
         migrate_cea3_to_cea4(scenario)
-        dict_missing = cea4_verify(scenario)
+        dict_missing = cea4_verify(scenario, verbose=True)
         migrate_cea3_to_cea4_db(scenario)
-        dict_missing_db = cea4_verify_db(scenario)
+        dict_missing_db = cea4_verify_db(scenario, verbose=True)
         print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db)
 
         if all(not value for value in dict_missing_db.values()):
