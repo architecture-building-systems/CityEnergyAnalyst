@@ -394,8 +394,8 @@ def migrate_cea3_to_cea4_db(scenario):
         if list_problems_feedstocks and os.path.isfile(path_3):
             excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'FEEDSTOCKS'), rename_dict=rename_dict)
 
-        # Print: End
-        print('-' * 49)
+        # # Print: End
+        # print('-' * 49)
 
 
 ## --------------------------------------------------------------------------------------------------------------------

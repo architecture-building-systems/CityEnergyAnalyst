@@ -20,26 +20,11 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db, print_verification_results_4_db
-
-def print_verification_results_4_format_helper(scenario_name, dict_missing, dict_missing_db):
-
-    if all(not value for value in dict_missing.values()) and all(not value for value in dict_missing_db.values()):
-        print("✓" * 3)
-        print('The Database and all input data are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}.'.format(scenario=scenario_name),
-              )
-    else:
-        print("!" * 3)
-        print('All or some of Database\'s and/or input data\'s files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
-        print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
-        print('- If the toggle `migrate_from_cea_3` is already set to `True` or you manually prepared the Database and the input data, check the log for missing files and/or incompatible columns. Modify your Database and/or input data accordingly.')
-
-
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 def exec_cea_format_helper(config, scenario):
     # auto-migrate from CEA-3 to CEA-4
     bool_migrate = config.format_helper.migrate_from_cea_3
-    scenario_name = os.path.basename(scenario)
 
     if not bool_migrate:
         dict_missing = cea4_verify(scenario, verbose=True)
@@ -55,6 +40,8 @@ def exec_cea_format_helper(config, scenario):
             delete_files(path_to_db_file_3(scenario, 'technology'))
 
     return dict_missing, dict_missing_db
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
 ## --------------------------------------------------------------------------------------------------------------------
@@ -76,8 +63,7 @@ def main(config):
     project_path = config.general.project
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
 
-    print('+' * 39)
-    print('Format Helper is batch-processing the data verification and migration for Scenarios: {scenarios_list}.'.format(scenarios_list=', '.join(scenarios_list)))
+    print('▼ Format Helper is batch-processing the data verification (and migration) for Scenario(s): {scenarios_list}.'.format(scenarios_list=', '.join(scenarios_list)))
 
     list_scenario_good = []
     list_scenario_problems = []
@@ -90,12 +76,13 @@ def main(config):
 
         # Print: Start
         div_len = 91 - len(scenario)
-        print('+' * 104)
+        print('━' * 104)
         print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 
         cea_scenario = os.path.join(project_path, scenario)
+
         # executing CEA commands
-        dict_missing, dict_missing_db =exec_cea_format_helper(config, cea_scenario)
+        dict_missing, dict_missing_db = exec_cea_format_helper(config, cea_scenario)
         dict_result = {**dict_missing, **dict_missing_db}
 
         if all(not value for value in dict_result.values()):
@@ -104,23 +91,21 @@ def main(config):
             list_scenario_problems.append(scenario)
             log.append(dict_result)
 
-    print('+' * 100)
-    print('+' * 100)
+    print('■' * 104)
     # Print the results
-    if list_scenario_good:
-        print("✓" * 3)
-        print('The Database and all input data are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}.'.format(scenario=', '.join(list_scenario_good)))
-
     if list_scenario_problems:
         print("!" * 3)
-        print('All or some of Database\'s and/or input data\'s files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=', '.join(list_scenario_problems)))
+        print('Attentions on Scenario(s): {scenario}, as all or some of Database\'s and/or input data\'s files/columns are missing or incompatible with CEA-4  '.format(scenario=', '.join(list_scenario_problems)))
         print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
         print('- If the toggle `migrate_from_cea_3` is already set to `True` or you manually prepared the Database and the input data, check the log for missing files and/or incompatible columns. Modify your Database and/or input data accordingly. Otherwise, all or some of the CEA simulations will fail.')
 
+    if list_scenario_good:
+        print("✓" * 3)
+        print('All set for Scenario(s): {scenario}, as their Database and input data are (now) fully compliant and compatible with CEA-4.'.format(scenario=', '.join(list_scenario_good)))
+
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('+' * 100)
-    print('+' * 100)
+    print('■' * 104)
     print('CEA\'s attempt to verify (and migrate) the Database and the input-data for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 

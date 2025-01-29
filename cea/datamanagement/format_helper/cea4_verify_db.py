@@ -336,9 +336,9 @@ def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, verbose=False)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
         if verbose:
             if list_missing_columns_csv:
-                print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}'.format(assembly=assembly, missing_columns=list_missing_columns_csv))
+                print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}'.format(assembly=assembly, missing_columns=', '.join(map(str, list_missing_columns_csv))))
             if list_issues_against_csv:
-                print('! Check values in {assembly}.csv: {list_issues_against_schema}'.format(assembly=assembly, list_issues_against_schema=list_issues_against_csv))
+                print('! Check values in {assembly}.csv: {list_issues_against_schema}'.format(assembly=assembly, list_issues_against_schema=', '.join(map(str, list_issues_against_csv))))
     return list_list_missing_columns_csv
 
 def get_csv_filenames(folder_path):

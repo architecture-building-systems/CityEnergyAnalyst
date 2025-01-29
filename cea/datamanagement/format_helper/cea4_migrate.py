@@ -366,8 +366,8 @@ def migrate_cea3_to_cea4(scenario):
                 print('typology.dbf has been removed as it is no longer needed by CEA-4.')
 
 
-        # Print: End
-        print('-' * 49)
+        # # Print: End
+        # print('-' * 49)
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Main function
