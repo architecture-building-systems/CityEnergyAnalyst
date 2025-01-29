@@ -95,18 +95,20 @@ def main(config):
     # Print the results
     if list_scenario_problems:
         print("!" * 3)
-        print('Attentions on Scenario(s): {scenario}, as all or some of their Database\'s and/or input data\'s files/columns are missing or not fully compliant and compatible with CEA-4  '.format(scenario=', '.join(list_scenario_problems)))
+        print('Attentions on Scenario(s): {scenario}.'.format(scenario=', '.join(list_scenario_problems)))
+        print('All or some of their Database\'s and/or input data\'s files/columns are missing or not fully compliant and compatible with CEA-4.')
         print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
         print('- If the toggle `migrate_from_cea_3` is already set to `True` or you manually prepared the Database and the input data, check the log for missing files and/or incompatible columns. Modify your Database and/or input data accordingly. Otherwise, all or some of the CEA simulations will fail.')
 
     if list_scenario_good:
         print("✓" * 3)
-        print('All set for Scenario(s): {scenario}, as their Database and input data are (now) fully compliant and compatible with CEA-4.'.format(scenario=', '.join(list_scenario_good)))
+        print('All set for Scenario(s): {scenario}.'.format(scenario=', '.join(list_scenario_good)))
+        print('Their Database and input data are (now) fully compliant and compatible with CEA-4.')
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('■' * 104)
-    print('CEA\'s attempt to verify (and migrate) the Database and the input-data for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+    print('CEA\'s attempt to verify (and migrate) the Database and the input data for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
