@@ -95,7 +95,7 @@ def main(config):
     # Print the results
     if list_scenario_problems:
         print("!" * 3)
-        print('Attentions on Scenario(s): {scenario}, as all or some of Database\'s and/or input data\'s files/columns are missing or incompatible with CEA-4  '.format(scenario=', '.join(list_scenario_problems)))
+        print('Attentions on Scenario(s): {scenario}, as all or some of their Database\'s and/or input data\'s files/columns are missing or not fully compliant and compatible with CEA-4  '.format(scenario=', '.join(list_scenario_problems)))
         print('- If you are migrating your input data from CEA-3 to CEA-4 format, set the toggle `migrate_from_cea_3` to `True` for Feature CEA-4 Format Helper and click on Run. ')
         print('- If the toggle `migrate_from_cea_3` is already set to `True` or you manually prepared the Database and the input data, check the log for missing files and/or incompatible columns. Modify your Database and/or input data accordingly. Otherwise, all or some of the CEA simulations will fail.')
 
