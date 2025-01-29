@@ -10,7 +10,6 @@ import time
 import pandas as pd
 import numpy as np
 from cea.schemas import schemas
-import sys
 import re
 
 __author__ = "Zhongming Shi"
@@ -22,7 +21,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify import verify_file_against_schema_4
 
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
 SCHEDULES_FOLDER = ['SCHEDULES']
@@ -190,7 +188,7 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def verify_file_against_schema_4_db(scenario, item, verbose=False, sheet_name=None):
+def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
     """
     Validate a file against a schema section in a YAML file.
 
@@ -262,30 +260,24 @@ def verify_file_against_schema_4_db(scenario, item, verbose=False, sheet_name=No
             for idx in invalid[invalid].index:
                 identifier = df.at[idx, id_column]
                 errors.append({col_attr: col_name, "Issue": "Invalid type", "Row": identifier, "Value": col_data[idx]})
+                errors.append(f"The {col_name} value for row {identifier} is invalid ({col_data[idx]}). Please check the data type.")
 
             # Check range
             if 'min' in col_specs:
                 out_of_range = col_data[col_data < col_specs['min']]
                 for idx, value in out_of_range.items():
                     identifier = df.at[idx, id_column]
-                    errors.append({col_attr: col_name, "Issue": f"Below minimum ({col_specs['min']})", "Row": identifier, "Value": value})
+                    errors.append(f"The {col_name} value for row {identifier} is too low ({value}). It should be at least {col_specs['min']}.")
 
             if 'max' in col_specs:
                 out_of_range = col_data[col_data > col_specs['max']]
                 for idx, value in out_of_range.items():
                     identifier = df.at[idx, id_column]
-                    errors.append({col_attr: col_name, "Issue": f"Above maximum ({col_specs['max']})", "Row": identifier, "Value": value})
+                    errors.append(f"The {col_name} value for row {identifier} is too high ({value}). It should be at most {col_specs['max']}.")
+
 
     # Relax from the descriptive columns which not used in the modelling
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'description', 'assumption']]
-
-    # Print results
-    if errors:
-        if verbose:
-            for error in errors:
-                print(error)
-    # elif verbose:
-    #     print(f"Verification passed: All columns and values meet the CEA (schema) requirements.")
 
     return missing_columns, errors
 
@@ -332,13 +324,14 @@ def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, verbose=False)
     list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv))
     list_list_missing_columns_csv = []
     for assembly in list_existing_files_csv:
-        list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, ASSEMBLIES, verbose=verbose, sheet_name=assembly)
+        list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, ASSEMBLIES, sheet_name=assembly)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
         if verbose:
             if list_missing_columns_csv:
                 print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}.'.format(assembly=assembly, missing_columns=', '.join(map(str, list_missing_columns_csv))))
             if list_issues_against_csv:
-                print('! Check values in {assembly}.csv: {list_issues_against_schema}.'.format(assembly=assembly, list_issues_against_schema=', '.join(map(str, list_issues_against_csv))))
+                print('! Check values in {assembly}.csv:')
+                print("\n".join(f"  {item}" for item in list_issues_against_csv))
     return list_list_missing_columns_csv
 
 def get_csv_filenames(folder_path):
@@ -628,14 +621,15 @@ def cea4_verify_db(scenario, verbose=False):
         if item in list_missing_files_csv_archetypes:
             add_values_to_dict(dict_missing_db, item, item)
         else:
-            list_missing_columns_csv_archetypes, list_issues_against_csv_archetypes = verify_file_against_schema_4_db(scenario, item, verbose=verbose)
+            list_missing_columns_csv_archetypes, list_issues_against_csv_archetypes = verify_file_against_schema_4_db(scenario, item)
             add_values_to_dict(dict_missing_db, item, list_missing_columns_csv_archetypes)
             add_values_to_dict(dict_missing_db, item, list_issues_against_csv_archetypes)
             if verbose:
                 if list_missing_columns_csv_archetypes:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_archetypes))))
                 if list_issues_against_csv_archetypes:
-                    print('! Check value(s) in {item}.csv: {list_issues_against_schema}.'.format(item=item, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_archetypes))))
+                    print('! Check value(s) in {item}.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
     if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
@@ -655,13 +649,14 @@ def cea4_verify_db(scenario, verbose=False):
                     print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_monthly_multiplier)
         for sheet in list_use_types:
-            list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', verbose=verbose, sheet_name=sheet)
+            list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
             if verbose:
                 if list_missing_columns_csv_schedules:
                     print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
                 if list_issues_against_csv_schedules:
-                    print('! Check value(s) in {sheet}.csv: {list_issues_against_schema}.'.format(sheet=sheet, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_schedules))))
+                    print('! Check value(s) in {sheet}.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
     else:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 
@@ -707,14 +702,15 @@ def cea4_verify_db(scenario, verbose=False):
                 for key, values in dict_missing_conversion.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {missing_name_conversion}, with component(s) defined: {components}.'.format(missing_name_conversion=key, components=', '.join(map(str, values))))
         for sheet in list_conversion_db:
-            list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', verbose=verbose, sheet_name=sheet)
+            list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_columns_csv_conversion)
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_issues_against_csv_conversion)
             if verbose:
                 if list_missing_columns_csv_conversion:
                     print('! Ensure column(s) are present in {conversion}.csv: {missing_columns}.'.format(conversion=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_conversion))))
                 if list_issues_against_csv_conversion:
-                    print('! Check value(s) in {conversion}.csv: {list_issues_against_schema}.'.format(conversion=sheet, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_conversion))))
+                    print('! Check value(s) in {conversion}.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_csv_conversion))
 
     #6. verify columns and values in .csv files for components - distribution
     if not dict_missing_db['DISTRIBUTION']:
@@ -723,14 +719,15 @@ def cea4_verify_db(scenario, verbose=False):
             print('! Ensure .csv file(s) are present in the COMPONENTS>DISTRIBUTION folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_distribution_components))))
 
         for sheet in DISTRIBUTION_COMPONENTS:
-            list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', verbose=verbose, sheet_name=sheet)
+            list_missing_columns_csv_distribution, list_issues_against_csv_distribution = verify_file_against_schema_4_db(scenario, 'DISTRIBUTION', sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'DISTRIBUTION', list_missing_columns_csv_distribution)
             add_values_to_dict(dict_missing_db, 'DISTRIBUTION', list_issues_against_csv_distribution)
             if verbose:
                 if list_missing_columns_csv_distribution:
                     print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, list_missing_columns_csv_distribution))))
                 if list_issues_against_csv_distribution:
-                    print('! Check value(s) in DISTRIBUTION.csv: {list_issues_against_schema}.'.format(list_issues_against_schema=', '.join(map(str, list_issues_against_csv_distribution))))
+                    print('! Check value(s) in DISTRIBUTION.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_csv_distribution))
 
     #7. verify columns and values in .csv files for components - feedstocks
     if not dict_missing_db['FEEDSTOCKS']:
@@ -754,14 +751,15 @@ def cea4_verify_db(scenario, verbose=False):
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
                 add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
         for sheet in list_feedstocks_db:
-            list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', verbose=verbose, sheet_name=sheet)
+            list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_columns_csv_feedstocks)
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_issues_against_csv_feedstocks)
             if verbose:
                 if list_missing_columns_csv_feedstocks:
                     print('! Ensure column(s) are present in {feedstocks}.csv: {missing_columns}.'.format(feedstocks=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_feedstocks))))
                 if list_issues_against_csv_feedstocks:
-                    print('! Check value(s) in {feedstocks}.csv: {list_issues_against_schema}.'.format(feedstocks=sheet, list_issues_against_schema=', '.join(map(str, list_issues_against_csv_feedstocks))))
+                    print('! Check value(s) in {feedstocks}.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_csv_feedstocks))
 
     return dict_missing_db
 
