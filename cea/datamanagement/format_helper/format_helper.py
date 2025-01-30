@@ -8,7 +8,7 @@ import cea.config
 import time
 
 from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db, path_to_db_file_3, delete_files
-from cea.datamanagement.format_helper.cea4_verify import cea4_verify, print_verification_results_4
+from cea.datamanagement.format_helper.cea4_verify import cea4_verify
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 
 __author__ = "Zhongming Shi"
