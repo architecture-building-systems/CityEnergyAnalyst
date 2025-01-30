@@ -60,8 +60,7 @@ def archetypes_mapper(locator,
     """
     # Get occupancy and age files
     building_typology_df = gpd.read_file(locator.get_zone_geometry())
-    db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
-        'STANDARD']
+    db_standards = pd.read_csv(locator.get_db4_archetypes_construction_type_csv())['const_type']    # this is named as standard due to the legacy from CEA-3
 
     verify_building_standards(building_typology_df, db_standards)
 
@@ -152,38 +151,38 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 def supply_mapper(locator, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_supply())
-    supply_DB = pd.read_excel(locator.get_database_construction_standards(), 'SUPPLY_ASSEMBLIES')
-    prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='STANDARD')
+    supply_DB = pd.read_csv(locator.get_db4_archetypes_construction_type_csv())
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
-              'type_cs',
-              'type_hs',
-              'type_dhw',
-              'type_el']
+              'supply_type_cs',
+              'supply_type_hs',
+              'supply_type_dhw',
+              'supply_type_el']
     prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
 
 def aircon_mapper(locator, typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
-    air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
+    air_conditioning_DB = pd.read_csv(locator.get_db4_archetypes_construction_type_csv())
     # define HVAC systems types
-    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='STANDARD')
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='const_type')
     # write to shapefile
     fields = ['name',
-              'type_cs',
-              'type_hs',
-              'type_dhw',
-              'type_ctrl',
-              'type_vent',
-              'heat_starts',
-              'heat_ends',
-              'cool_starts',
-              'cool_ends']
+              'hvac_type_cs',
+              'hvac_type_hs',
+              'hvac_type_dhw',
+              'hvac_type_ctrl',
+              'hvac_type_vent',
+              'hvac_heat_starts',
+              'hvac_heat_ends',
+              'hvac_cool_starts',
+              'hvac_cool_ends']
     prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
 
 
 def architecture_mapper(locator, typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_architecture())
-    architecture_DB = pd.read_excel(locator.get_database_construction_standards(), 'ENVELOPE_ASSEMBLIES')
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='STANDARD')
+    architecture_DB = pd.read_csv(locator.get_db4_archetypes_construction_type_csv())
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
               'Hs_ag',
               'Hs_bg',
