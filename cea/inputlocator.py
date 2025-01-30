@@ -610,10 +610,26 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES"""
         return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
 
+    def get_db4_construction_type_csv(self):
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION_TYPE.csv')
+
+    def get_db4_use_type_csv(self):
+        """scenario/inputs/database/ARCHETYPES/USE_TYPE.csv"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'USE_TYPE.csv')
+
     def get_db4_archetypes_schedules_folder(self):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
         return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
 
+    def get_db4_use_type_schedules_csv(self, use):
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES/{use}.csv"""
+        return os.path.join(self.get_database_use_types_folder(), use + '.csv')
+
+    def get_db4_use_type_monthly_multiplier_csv(self):
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
+        return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
+        
     def get_db4_assemblies_folder(self):
         """scenario/inputs/database/ASSEMBLIES"""
         return os.path.join(self.get_db4_folder(), 'ASSEMBLIES')
