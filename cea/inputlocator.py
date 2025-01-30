@@ -718,13 +718,29 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/CONVERSION"""
         return os.path.join(self.get_db4_components_folder(), 'CONVERSION')
 
+    def get_db4_components_conversion_conversion_technology_csv(self, conversion_technology):
+        """scenario/inputs/database/COMPONENTS/CONVERSION/{conversion_technology}.csv"""
+        return os.path.join(self.get_db4_components_conversion_folder(), conversion_technology + '.csv')
+
     def get_db4_components_distribution_folder(self):
         """scenario/inputs/database/COMPONENTS/DISTRIBUTION"""
         return os.path.join(self.get_db4_components_folder(), 'DISTRIBUTION')
 
+    def get_db4_components_distribution_thermal_grid_csv(self):
+        """scenario/inputs/database/COMPONENTS/DISTRIBUTION/THERMAL_GRID.csv"""
+        return os.path.join(self.get_db4_components_distribution_folder(), 'THERMAL_GRID.csv')
+
     def get_db4_components_feedstocks_folder(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
         return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
+
+    def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/{feedstocks}.csv"""
+        return os.path.join(self.get_db4_components_feedstocks_folder(), feedstocks + '.csv')
+
+    def get_db4_components_feedstocks_energy_carriers_csv(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
+        return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
 
     def get_database_construction_standards(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
