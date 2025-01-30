@@ -602,6 +602,50 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
+    def get_db4_folder(self):
+        """scenario/inputs/database/"""
+        return os.path.join(self.scenario, 'inputs', 'database')
+
+    def get_db4_archetypes_folder(self):
+        """scenario/inputs/database/ARCHETYPES"""
+        return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
+
+    def get_db4_archetypes_schedules_folder(self):
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
+
+    def get_db4_assemblies_folder(self):
+        """scenario/inputs/database/ASSEMBLIES"""
+        return os.path.join(self.get_db4_folder(), 'ASSEMBLIES')
+
+    def get_db4_assemblies_envelope_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'ENVELOPE')
+
+    def get_db4_assemblies_hvac_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'HVAC')
+
+    def get_db4_assemblies_supply_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'SUPPLY')
+
+    def get_db4_components_folder(self):
+        """scenario/inputs/database/COMPONENTS"""
+        return os.path.join(self.get_db4_folder(), 'COMPONENTS')
+
+    def get_db4_components_conversion_folder(self):
+        """scenario/inputs/database/COMPONENTS/CONVERSION"""
+        return os.path.join(self.get_db4_components_folder(), 'CONVERSION')
+
+    def get_db4_components_distribution_folder(self):
+        """scenario/inputs/database/COMPONENTS/DISTRIBUTION"""
+        return os.path.join(self.get_db4_components_folder(), 'DISTRIBUTION')
+
+    def get_db4_components_feedstocks_folder(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
+
     def get_database_construction_standards(self):
         """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
