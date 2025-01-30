@@ -345,7 +345,7 @@ def cea4_verify(scenario, verbose=False):
         list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema_4(scenario, 'zone')
         if list_missing_attributes_zone:
             if verbose:
-                print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}'.format(missing_attributes_zone=', '.join(map(str, list_missing_attributes_zone))))
+                print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}.'.format(missing_attributes_zone=', '.join(map(str, list_missing_attributes_zone))))
                 if list_issues_against_schema_zone:
                     print('! Check values in zone.shp:')
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_zone))
@@ -360,7 +360,7 @@ def cea4_verify(scenario, verbose=False):
         list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema_4(scenario, 'surroundings')
         if list_missing_attributes_surroundings:
             if verbose:
-                print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}'.format(missing_attributes_surroundings=', '.join(map(str, list_missing_attributes_surroundings))))
+                print('! Ensure attribute(s) are present in surroundings.shp: {missing_attributes_surroundings}.'.format(missing_attributes_surroundings=', '.join(map(str, list_missing_attributes_surroundings))))
                 if list_issues_against_schema_surroundings:
                     print('! Check values in surroundings.shp:')
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_surroundings))
@@ -376,7 +376,7 @@ def cea4_verify(scenario, verbose=False):
     list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
     if list_missing_files_csv_building_properties:
         if verbose:
-            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties))))
+            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}.'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties))))
 
     for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
         if item not in list_missing_files_csv_building_properties:
@@ -384,7 +384,7 @@ def cea4_verify(scenario, verbose=False):
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
             if verbose:
                 if list_missing_columns_csv_building_properties:
-                    print('! Ensure column(s) are present in {item}.csv: {missing_columns}'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_building_properties))))
+                    print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_building_properties))))
                 if list_issues_against_csv_building_properties:
                     print('! Check values in {item}.csv: ')
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_building_properties))

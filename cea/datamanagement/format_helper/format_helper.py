@@ -62,8 +62,12 @@ def main(config):
 
     project_path = config.general.project
     scenarios_list = config.format_helper.scenarios_to_verify_and_migrate
+    bool_migrate = config.format_helper.migrate_from_cea_3
 
-    print('▼ Format Helper is batch-processing the data verification (and migration) for Scenario(s): {scenarios_list}.'.format(scenarios_list=', '.join(scenarios_list)))
+    if bool_migrate:
+        print('▼ Format Helper is batch-processing the data migration from CEA-3 to CEA-4 for Scenario(s): {scenarios_list}.'.format(scenarios_list=', '.join(scenarios_list)))
+    else:
+        print('▼ Format Helper is batch-processing the data verification for Scenario(s): {scenarios_list}.'.format(scenarios_list=', '.join(scenarios_list)))
 
     list_scenario_good = []
     list_scenario_problems = []
@@ -77,7 +81,7 @@ def main(config):
         # Print: Start
         div_len = 91 - len(scenario)
         print('━' * 104)
-        print("-" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
+        print("▼" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 
         cea_scenario = os.path.join(project_path, scenario)
 
@@ -108,7 +112,10 @@ def main(config):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('■' * 104)
-    print('CEA\'s attempt to verify (and migrate) the Database and the input data for CEA-4 is now completed - time elapsed: %.2f seconds' % time_elapsed)
+    if bool_migrate:
+        print('CEA\'s attempt to migrate the Database and the input data for CEA-4 is now completed - time elapsed: %.2f seconds.' % time_elapsed)
+    else:
+        print('CEA\'s attempt to verify the Database and the input data for CEA-4 is now completed - time elapsed: %.2f seconds.' % time_elapsed)
 
 
 if __name__ == '__main__':
