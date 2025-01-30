@@ -610,11 +610,11 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES"""
         return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
 
-    def get_db4_construction_type_csv(self):
+    def get_db4_archetypes_construction_type_csv(self):
         """scenario/inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION_TYPE.csv')
 
-    def get_db4_use_type_csv(self):
+    def get_db4_archetypes_use_type_csv(self):
         """scenario/inputs/database/ARCHETYPES/USE_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_folder(), 'USE_TYPE.csv')
 
@@ -622,14 +622,14 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
         return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
 
-    def get_db4_use_type_schedules_csv(self, use):
+    def get_db4_archetypes_schedules_use_type_csv(self, use_type):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/{use}.csv"""
-        return os.path.join(self.get_database_use_types_folder(), use + '.csv')
+        return os.path.join(self.get_database_use_types_folder(), use_type + '.csv')
 
-    def get_db4_use_type_monthly_multiplier_csv(self):
+    def get_db4_archetypes_schedules_monthly_multiplier_csv(self):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
         return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
-        
+
     def get_db4_assemblies_folder(self):
         """scenario/inputs/database/ASSEMBLIES"""
         return os.path.join(self.get_db4_folder(), 'ASSEMBLIES')
@@ -638,13 +638,77 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE"""
         return os.path.join(self.get_db4_assemblies_folder(), 'ENVELOPE')
 
+    def get_db4_assemblies_envelope_floor_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'FLOOR.csv')
+
+    def get_db4_assemblies_envelope_window_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WINDOW.csv')
+
+    def get_db4_assemblies_envelope_mass_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'MASS.csv')
+
+    def get_db4_assemblies_envelope_tightness_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'TIGHTNESS.csv')
+
+    def get_db4_assemblies_envelope_roof_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ROOF.csv')
+
+    def get_db4_assemblies_envelope_shading_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'SHADING.csv')
+
+    def get_db4_assemblies_envelope_wall_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WALL.csv')
+
     def get_db4_assemblies_hvac_folder(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC"""
         return os.path.join(self.get_db4_assemblies_folder(), 'HVAC')
 
+    def get_db4_assemblies_hvac_controller_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_CONTROLLER.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_CONTROLLER.csv')
+
+    def get_db4_assemblies_hvac_heating_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HEATING.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HEATING.csv')
+
+    def get_db4_assemblies_hvac_cooling_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_COOLING.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_COOLING.csv')
+
+    def get_db4_assemblies_hvac_ventilation_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_VENTILATION.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_VENTILATION.csv')
+
+    def get_db4_assemblies_hvac_hot_water_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HOT_WATER.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HOT_WATER.csv')
+
     def get_db4_assemblies_supply_folder(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY"""
         return os.path.join(self.get_db4_assemblies_folder(), 'SUPPLY')
+
+    def get_db4_assemblies_supply_cooling_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_COOLING.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_COOLING.csv')
+
+    def get_db4_assemblies_supply_electricity_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_ELECTRICITY.csv')
+
+    def get_db4_assemblies_supply_heating_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HEATING.csv')
+
+    def get_db4_assemblies_supply_hot_water_csv(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOT_WATER.csv')
 
     def get_db4_components_folder(self):
         """scenario/inputs/database/COMPONENTS"""
