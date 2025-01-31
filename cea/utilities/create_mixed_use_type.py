@@ -66,8 +66,8 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
                                                   use_type_name, list_var_names, list_var_values)
 
     prop_df_c = properties_df.copy()
-    prop_df_c['Name'] = '0'  # Set a `Name` column as index for function to work
-    prop_df_c.set_index('Name', inplace=True)
+    prop_df_c['name'] = '0'  # Set a `Name` column as index for function to work
+    prop_df_c.set_index('name', inplace=True)
     schedule_data_all_uses = ScheduleData(locator)
     internal_loads = internal_loads_df.set_index('code')
     print("Calculating schedules...")
@@ -78,11 +78,10 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
 
     print("Writing to disk...")
     use_type_properties_path = locator.get_db4_archetypes_schedules_use_type_csv()
-    with pd.ExcelWriter(use_type_properties_path) as writer:
-        new_internal_loads_df.to_excel(writer, sheet_name='INTERNAL_LOADS', index=False)
-        new_indoor_comfort_df.to_excel(writer, sheet_name='INDOOR_COMFORT', index=False)
+    merged_df = pd.merge(new_internal_loads_df, new_indoor_comfort_df, on='code', how="outer")
+    merged_df.to_csv(use_type_properties_path, index=False)
 
-    schedule_path = os.path.join(locator.get_database_use_types_folder(), '{}.csv'.format(use_type_name))
+    schedule_path = locator.get_db4_archetypes_schedules_use_type_csv(use_type_name)
     save_cea_schedule(schedule_new_data, schedule_complementary_data, schedule_path)
 
 
@@ -117,9 +116,9 @@ def main(config):
     use_type_ratios_dict = {k: float(v) for k, v in [ratio.split('|') for ratio in use_type_ratios]}
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    use_type_properties_df = pd.read_excel(locator.get_database_use_types_properties(), sheet_name=None)
-    internal_loads_df = use_type_properties_df['INTERNAL_LOADS']
-    indoor_comfort_df = use_type_properties_df['INDOOR_COMFORT']
+    use_type_properties_df = pd.read_csv(locator.get_db4_archetypes_use_type_csv())
+    internal_loads_df = use_type_properties_df['code', 'Occ_m2p', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ed_Wm2', 'Vww_ldp', 'Vw_ldp', 'Qcre_Wm2', 'Qhpro_Wm2',	'Qcpro_Wm2', 'Ev_kWveh']
+    indoor_comfort_df = use_type_properties_df['code', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lsp', 'RH_min_pc', 'RH_max_pc']
 
     assert use_type_name not in internal_loads_df['code'].tolist() and use_type_name not in indoor_comfort_df['code'].tolist(), \
         'Use-type name {} already exists'.format(use_type_name)
