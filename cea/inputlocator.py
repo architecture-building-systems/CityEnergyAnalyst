@@ -622,7 +622,7 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
         return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
 
-    def get_db4_archetypes_schedules_use_type_csv(self, use_type):
+    def get_db4_archetypes_schedules_use_type_csv(self, use_type=None):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/{use}.csv"""
         return os.path.join(self.get_database_use_types_folder(), use_type + '.csv')
 
@@ -726,15 +726,15 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/DISTRIBUTION"""
         return os.path.join(self.get_db4_components_folder(), 'DISTRIBUTION')
 
-    def get_db4_components_distribution_thermal_grid_csv(self):
-        """scenario/inputs/database/COMPONENTS/DISTRIBUTION/THERMAL_GRID.csv"""
-        return os.path.join(self.get_db4_components_distribution_folder(), 'THERMAL_GRID.csv')
+    def get_db4_components_distribution_distribution_csv(self, distribution=None):
+        """scenario/inputs/database/COMPONENTS/DISTRIBUTION/{distribution}.csv"""
+        return os.path.join(self.get_db4_components_distribution_folder(), distribution + '.csv')
 
     def get_db4_components_feedstocks_folder(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
         return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
 
-    def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks):
+    def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks=None):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/{feedstocks}.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), feedstocks + '.csv')
 

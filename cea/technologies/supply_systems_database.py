@@ -24,7 +24,7 @@ class SupplySystemsDatabase(object):
         conversion_systems_worksheets,\
         distribution_systems_worksheets,\
         feedstocks_worksheets,\
-        energy_carriers_worksheet = self.read_excel(locator)
+        energy_carriers_worksheet = self.read_csv(locator)
 
         self.ENERGY_CARRIERS = energy_carriers_worksheet
         self.FEEDSTOCKS = feedstocks_worksheets
@@ -48,15 +48,15 @@ class SupplySystemsDatabase(object):
 
 
 
-    def read_excel(self, locator):
+    def read_csv(self, locator):
         """Read in the excel file, using the cache _locators"""
         global _locators
         if locator in _locators:
             conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet = _locators[locator]
         else:
-            conversion_systems_worksheets = pd.read_excel(locator.get_database_conversion_systems(), sheet_name=None)
-            distribution_systems_worksheets = pd.read_excel(locator.get_database_distribution_systems(), sheet_name=None)
-            feedstocks_worksheets = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
-            energy_carriers_worksheet = pd.read_excel(locator.get_database_feedstocks(), sheet_name='ENERGY_CARRIERS')
+            conversion_systems_worksheets = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv())
+            distribution_systems_worksheets = pd.read_csv(locator.get_db4_components_conversion_distribution_distribution_csv())
+            feedstocks_worksheets = pd.read_csv(locator.get_db4_components_conversion_feedstocks_feedstocks_csv())
+            energy_carriers_worksheet = pd.read_csv(locator.get_db4_components_feedstocks_energy_carriers_csv())
             _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet

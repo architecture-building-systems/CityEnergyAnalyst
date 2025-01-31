@@ -76,7 +76,7 @@ def calc_Cinv_HEX_hisaka(network_info):
     Used in thermal_network_optimization.
     """
     ## read in cost values from database
-    HEX_prices = pd.read_excel(network_info.locator.get_db4_components_conversion_conversion_technology_csv('HEAT'), index_col=0)
+    HEX_prices = pd.read_csv(network_info.locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'), index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
     c = HEX_prices['c']['District substation heat exchanger']
