@@ -112,10 +112,10 @@ def lca_embodied(year_to_calculate, locator):
     zone_df = zone_df.drop('geometry', axis=1)
 
     # local variables
-    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
-    surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
+    surface_database_windows = pd.read_csv(locator.get_db4_assemblies_envelope_window_csv())
+    surface_database_roof = pd.read_csv(locator.get_db4_assemblies_envelope_roof_csv())
+    surface_database_walls = pd.read_csv(locator.get_db4_assemblies_envelope_wall_csv())
+    surface_database_floors = pd.read_csv(locator.get_db4_assemblies_envelope_floor_csv())
 
 
     # query data

@@ -150,7 +150,7 @@ class Building(object):
             if energy_system_type == 'DH':
                 Building._supply_system_database = pd.read_csv(locator.get_db4_assemblies_supply_heating_csv())
             elif energy_system_type == 'DC':
-                Building._supply_system_database = ppd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
+                Building._supply_system_database = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
             else:
                 raise ValueError(f"'{energy_system_type}' is not a valid energy system type. No appropriate "
                                  f"'assemblies'-supply system database could therefore be loaded.")

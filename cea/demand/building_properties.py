@@ -738,12 +738,11 @@ def get_properties_technical_systems(locator, prop_hvac):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HEATING')
-    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'COOLING')
-    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HOT_WATER')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
-                                                              'CONTROLLER')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
+    prop_emission_heating = pd.read_csv(locator.get_db4_assemblies_hvac_heating_csv())
+    prop_emission_cooling = pd.read_csv(locator.get_db4_assemblies_hvac_cooling_csv())
+    prop_emission_dhw = pd.read_csv(locator.get_db4_assemblies_hvac_hot_water_csv())
+    prop_emission_control_heating_and_cooling = pd.read_csv(locator.get_db4_assemblies_hvac_controller_csv())
+    prop_ventilation_system_and_control = pd.read_csv(locator.get_db4_assemblies_hvac_ventilation_csv())
     df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
@@ -889,13 +888,13 @@ def get_envelope_properties(locator, prop_architecture):
                 'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
                     list(df_floor.loc[df_floor['code'].isna()]['name'])))
 
-    prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
-    prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
-    prop_floor = pd.read_excel(locator.get_database_envelope_systems(), 'FLOOR')
-    prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
-    prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
-    prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
+    prop_roof = pd.read_csv(locator.get_db4_assemblies_envelope_roof_csv())
+    prop_wall = pd.read_csv(locator.get_db4_assemblies_envelope_wall_csv())
+    prop_floor = pd.read_csv(locator.get_db4_assemblies_envelope_floor_csv())
+    prop_win = pd.read_csv(locator.get_db4_assemblies_envelope_window_csv())
+    prop_shading = pd.read_csv(locator.get_db4_assemblies_envelope_shading_csv())
+    prop_construction = pd.read_csv(locator.get_db4_assemblies_envelope_construction_csv())
+    prop_leakage = pd.read_csv(locator.get_db4_assemblies_envelope_tightness_csv())
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
@@ -1048,7 +1047,7 @@ def verify_hvac_system_combination(result, locator):
         building_name = result.loc[idx, 'name']
         class_cs = result.loc[idx, 'class_cs']
         type_vent = result.loc[idx,'type_vent']
-        hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
+        hvac_database = pd.read_csv(locator.get_db4_assemblies_hvac_ventilation_csv())
         mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
         list_exceptions.append(Exception(
             f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'

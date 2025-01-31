@@ -41,9 +41,9 @@ def read_surface_properties(locator) -> pd.DataFrame:
 
     # local variables
     architectural_properties = pd.read_csv(locator.get_building_architecture())
-    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW").set_index("code")
-    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF").set_index("code")
-    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL").set_index("code")
+    surface_database_windows = pd.read_csv(locator.get_db4_assemblies_envelope_window_csv()).set_index("code")
+    surface_database_roof = pd.read_csv(locator.get_db4_assemblies_envelope_roof_csv()).set_index("code")
+    surface_database_walls = pd.read_csv(locator.get_db4_assemblies_envelope_wall_csv()).set_index("code")
 
     errors = {}
     def match_code(property_code_column: str, code_value_df: pd.DataFrame) -> pd.DataFrame:
@@ -68,7 +68,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
 
     if len(errors) > 0:
         raise ValueError(f"The following building properties were not found in the database: {errors}. "
-                         f"Please check the ENVELOPE database: {locator.get_database_envelope_systems()}")
+                         f"Please check the ENVELOPE database: {locator.get_db4_assemblies_envelope_folder()}")
 
     surface_properties = pd.concat([building_names, df1, df2, df3], axis=1)
 
