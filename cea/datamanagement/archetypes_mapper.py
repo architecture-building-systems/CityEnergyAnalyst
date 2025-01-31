@@ -102,7 +102,7 @@ def archetypes_mapper(locator,
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_comfort())
-    comfort_DB = pd.read_csv(locator.get_db4_archetypes_schedules_use_type_csv())
+    comfort_DB = pd.read_csv(locator.get_db4_archetypes_use_type_csv())
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='code')
     # write to shapefile
@@ -123,7 +123,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_internal())
-    internal_DB = pd.read_csv(locator.get_db4_archetypes_schedules_use_type_csv())
+    internal_DB = pd.read_csv(locator.get_db4_archetypes_use_type_csv())
     # define comfort
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='code')
     # write to shapefile

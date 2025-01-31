@@ -624,7 +624,7 @@ class InputLocator(object):
 
     def get_db4_archetypes_schedules_use_type_csv(self, use_type=None):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/{use}.csv"""
-        return os.path.join(self.get_database_use_types_folder(), use_type + '.csv')
+        return os.path.join(self.get_db4_archetypes_schedules_folder(), use_type + '.csv')
 
     def get_db4_archetypes_schedules_monthly_multiplier_csv(self):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
