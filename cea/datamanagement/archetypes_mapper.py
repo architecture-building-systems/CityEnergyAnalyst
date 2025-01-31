@@ -72,7 +72,7 @@ def archetypes_mapper(locator,
 
     # Get occupant densities from archetypes schedules
     occupant_densities = {}
-    occ_densities = pd.read_csv(locator.get_db4_archetypes_schedules_use_type_csv()).set_index('code')
+    occ_densities = pd.read_csv(locator.get_db4_archetypes_use_type_csv()).set_index('code')
     for use in list_uses:
         if occ_densities.loc[use, 'Occ_m2p'] > 0.0:
             occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2p']
@@ -184,24 +184,24 @@ def architecture_mapper(locator, typology_df):
     architecture_DB = pd.read_csv(locator.get_db4_archetypes_construction_type_csv())
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
-              'Hs_ag',
-              'Hs_bg',
-              'Ns',
-              'Es',
-              'void_deck',
-              'wwr_north',
-              'wwr_west',
-              'wwr_east',
-              'wwr_south',
-              'type_cons',
-              'type_leak',
-              'type_floor',
-              'type_part',
-              'type_base',
-              'type_roof',
-              'type_wall',
-              'type_win',
-              'type_shade']
+              'envelope_Hs_ag',
+              'envelope_Hs_bg',
+              'envelope_Ns',
+              'envelope_Es',
+              'envelope_void_deck',
+              'envelope_wwr_north',
+              'envelope_wwr_west',
+              'envelope_wwr_east',
+              'envelope_wwr_south',
+              'envelope_type_mass',
+              'envelope_type_leak',
+              'envelope_type_floor',
+              'envelope_type_part',
+              'envelope_type_base',
+              'envelope_type_roof',
+              'envelope_type_wall',
+              'envelope_type_win',
+              'envelope_type_shade']
     prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
 
 def calc_code(code1, code2, code3, code4):
