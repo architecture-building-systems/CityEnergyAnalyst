@@ -30,7 +30,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca):
     hpCO2 = 0
     hpPrim = 0
 
-    boiler_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="BOILERS")
+    boiler_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('BOILERS'))
 
     if total_demand["Qhpro_sys_MWhyr"].sum()>0:
         df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]

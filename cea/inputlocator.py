@@ -718,7 +718,7 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/CONVERSION"""
         return os.path.join(self.get_db4_components_folder(), 'CONVERSION')
 
-    def get_db4_components_conversion_conversion_technology_csv(self, conversion_technology):
+    def get_db4_components_conversion_conversion_technology_csv(self, conversion_technology=None):
         """scenario/inputs/database/COMPONENTS/CONVERSION/{conversion_technology}.csv"""
         return os.path.join(self.get_db4_components_conversion_folder(), conversion_technology + '.csv')
 
@@ -771,10 +771,10 @@ class InputLocator(object):
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
-        if not os.path.exists(self.get_database_conversion_systems()):
+        if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="THERMAL_ENERGY_STORAGES")
+        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names

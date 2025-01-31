@@ -187,7 +187,7 @@ def get_results_path(locator, cea_feature, list_buildings):
         list_appendix.append(cea_feature)
 
     if cea_feature == 'pv':
-        database_pv = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv(), 'PHOTOVOLTAIC_PANELS')
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
