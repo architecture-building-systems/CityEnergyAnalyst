@@ -172,11 +172,10 @@ def calc_scale_costs(value, flag_scale):
 
 def get_databases(demand, locator):
     supply_systems = pd.read_csv(locator.get_building_supply())
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
-    factors_heating = data_all_in_one_systems['HEATING']
-    factors_dhw = data_all_in_one_systems['HOT_WATER']
-    factors_cooling = data_all_in_one_systems['COOLING']
-    factors_electricity = data_all_in_one_systems['ELECTRICITY']
+    factors_heating = pd.read_csv(locator.get_db4_assemblies_supply_heating_csv())
+    factors_dhw = pd.read_csv(locator.get_db4_assemblies_supply_hot_water_csv())
+    factors_cooling = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
+    factors_electricity = pd.read_csv(locator.get_db4_assemblies_supply_electricity_csv())
     factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
     # get the mean of all values for this
     factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
