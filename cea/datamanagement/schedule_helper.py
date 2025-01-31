@@ -62,7 +62,7 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     # get list of uses only with a valid value in building_occupancy_df
     list_uses = get_list_of_uses_in_case_study(building_typology_df)
 
-    internal_loads = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
+    internal_loads = pd.read_csv(locator.get_db4_archetypes_schedules_use_type_csv())
     building_typology_df.set_index('name', inplace=True)
     internal_loads = internal_loads.set_index('code')
 

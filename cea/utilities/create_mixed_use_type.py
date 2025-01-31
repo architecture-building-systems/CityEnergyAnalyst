@@ -77,7 +77,7 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
                                                                                 list_var_values, use_type_metadata)
 
     print("Writing to disk...")
-    use_type_properties_path = locator.get_database_use_types_properties()
+    use_type_properties_path = locator.get_db4_archetypes_schedules_use_type_csv()
     with pd.ExcelWriter(use_type_properties_path) as writer:
         new_internal_loads_df.to_excel(writer, sheet_name='INTERNAL_LOADS', index=False)
         new_indoor_comfort_df.to_excel(writer, sheet_name='INDOOR_COMFORT', index=False)

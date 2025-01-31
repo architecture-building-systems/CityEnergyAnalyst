@@ -400,13 +400,11 @@ async def put_input_database_data(config: CEAConfig, payload: Dict[str, Any]):
         for db_name in payload[db_type]:
             if db_name == 'USE_TYPES':
                 database_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
-                                      locator.get_database_use_types_properties())
+                                      locator.get_db4_archetypes_schedules_use_type_csv())
                 for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                     schedule_dict_to_file(
                         schedule_dict,
-                        locator.get_database_standard_schedules_use(
-                            archetype
-                        )
+                        locator.get_db4_archetypes_schedules_use_type_csv(archetype)
                     )
             else:
                 locator_method = DATABASES_SCHEMA_KEYS[db_name][0]
@@ -484,12 +482,45 @@ async def validate_input_database(config: CEAConfig):
     return out
 
 
-def database_dict_to_file(db_dict, db_path):
-    with pd.ExcelWriter(db_path) as writer:
+def database_dict_to_file(db_dict, csv_path):
+    """
+    Save a dictionary of DataFrames as a single CSV file, merging sheets horizontally on 'code' if available.
+
+    Parameters:
+    - db_dict (dict): Dictionary where keys are sheet names and values are DataFrames or lists of dicts.
+    - csv_path (str): Path to the output CSV file.
+
+    Returns:
+    - None
+    """
+    if not db_dict:
+        print("Warning: The database dictionary is empty. No file written.")
+        return
+
+    merged_df = None  # Initialize merged dataframe
+
+    try:
         for sheet_name, data in db_dict.items():
-            df = pd.DataFrame(data).dropna(axis=0, how='all')
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-    print('Database file written to {}'.format(db_path))
+            # Convert to DataFrame if it's a list of dictionaries
+            df = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data.copy()
+
+            # Determine merge method
+            if merged_df is None:
+                merged_df = df
+            else:
+                merge_column = "code" if "code" in df.columns and "code" in merged_df.columns else None
+                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat([merged_df, df], axis=1)
+
+        if merged_df is not None and not merged_df.empty:
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+            merged_df.to_csv(csv_path, index=False)
+            print(f"Database successfully saved to {csv_path}")
+        else:
+            print("Warning: No valid data to write. No CSV file created.")
+
+    except Exception as e:
+        print(f"Error writing database file: {e}")
 
 
 def schedule_dict_to_file(schedule_dict, schedule_path):
