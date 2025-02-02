@@ -440,10 +440,10 @@ class BuildingProperties(object):
 
 
 def calc_useful_areas(df):
-    df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
+    df['Aocc'] = df['GFA_m2'] * df['envelope_Ns']  # occupied floor area: all occupied areas in the building
     # conditioned area: areas that are heated/cooled
-    df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
-    df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
+    df['Af'] = df['GFA_ag_m2'] * df['envelope_Hs_ag'] + df['GFA_bg_m2'] * df['envelope_Hs_bg']
+    df['Aef'] = df['GFA_m2'] * df['envelope_Es']  # electrified area: share of gross floor area that is also electrified
     df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
     return df
 

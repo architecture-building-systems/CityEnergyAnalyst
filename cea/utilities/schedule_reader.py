@@ -31,22 +31,25 @@ def read_cea_schedule(locator, use_type=None, building=None):
     """
 
     metadata = 'meta-data'
+    # Get the twelve numbers of monthly multiplier as a list
     if use_type:
         path_to_monthly_multiplier = locator.get_db4_archetypes_schedules_monthly_multiplier_csv()
         path_to_schedule = locator.get_db4_archetypes_schedules_use_type_csv(use_type)
+        df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
+        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['code'] == use_type]
+        monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
+        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
     elif building:
         path_to_monthly_multiplier = locator.get_building_weekly_schedules_monthly_multiplier_csv()
         path_to_schedule = locator.get_building_weekly_schedules(building)
+        df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
+        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['code'] == building]
+        monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
+        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
     else:
         raise ValueError('Either use_type or building has to be not None.')
-
-    # Get the twelve numbers of monthly multiplier as a list
-    df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
-    df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['code'] == use_type]
-    monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
-    schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
     # Get the schedule data as a dictionary
     schedule_data = pd.read_csv(path_to_schedule).T
