@@ -605,10 +605,10 @@ def get_hours(bpr):
 
     if bpr.hvac['has-heating-season']:
         # if has heating season start simulating at [before] start of heating season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heat_starts'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['hvac_heat_starts'])
     elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
         # if has no heating season but cooling season start at [before] start of cooling season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cool_starts'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['hvac_cool_starts'])
     elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
         # no heating or cooling
         hour_start_simulation = 0

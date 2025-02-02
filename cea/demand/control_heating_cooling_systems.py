@@ -325,8 +325,8 @@ def is_cooling_season(t, bpr):
 
     if bpr.hvac['has-cooling-season']:
 
-        cooling_start = convert_date_to_hour(bpr.hvac['cool_starts'])
-        cooling_end = convert_date_to_hour(bpr.hvac['cool_ends']) + 23  # end at the last hour of the day
+        cooling_start = convert_date_to_hour(bpr.hvac['hvac_cool_starts'])
+        cooling_end = convert_date_to_hour(bpr.hvac['hvac_cool_ends']) + 23  # end at the last hour of the day
 
         # check if cooling season is at the end of the year (south hemisphere) or in the middle of the year (north)
         if cooling_start < cooling_end and \
