@@ -862,6 +862,11 @@ class InputLocator(object):
         """scenario/inputs/building-properties/schedules/"""
         return self._ensure_folder(self.get_building_properties_folder(), 'schedules')
 
+    def get_building_weekly_schedules_monthly_multiplier_csv(self):
+        """
+        scenario/inputs/building-properties/schedules/MONTHLY_MULTIPLIER.csv"""
+        return os.path.join(self.get_building_weekly_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
+
     def get_building_weekly_schedules(self, building):
         """
         scenario/inputs/building-properties/schedules/{building}.csv

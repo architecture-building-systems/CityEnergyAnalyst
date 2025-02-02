@@ -14,7 +14,7 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.datamanagement.schedule_helper import calc_single_mixed_schedule, ScheduleData
-from cea.utilities.schedule_reader import save_cea_schedule
+from cea.utilities.schedule_reader import save_cea_schedules
 
 
 __author__ = "Reynold Mok"
@@ -82,7 +82,7 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
     merged_df.to_csv(use_type_properties_path, index=False)
 
     schedule_path = locator.get_db4_archetypes_schedules_use_type_csv(use_type_name)
-    save_cea_schedule(schedule_new_data, schedule_complementary_data, schedule_path)
+    save_cea_schedules(schedule_new_data, schedule_path)
 
 
 def calculate_mixed_loads(properties_df, loads_df, occupant_densities, list_uses, use_type_name, list_var_names, list_var_values):

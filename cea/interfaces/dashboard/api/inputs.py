@@ -24,7 +24,7 @@ from cea.plots.supply_system.a_supply_system_map import get_building_connectivit
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe, \
-    read_cea_schedule, save_cea_schedule
+    read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 router = APIRouter()
@@ -222,7 +222,7 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
                     for schedule_type, schedule in schedule_data.items():
                         df[schedule_type] = schedule[day]
                     data = pd.concat([df, data], ignore_index=True)
-                save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+                save_cea_schedules(data.to_dict('list'), schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
 
         return out
@@ -363,9 +363,8 @@ def df_to_json(file_location):
 async def get_building_schedule(config: CEAConfig, building: str):
     locator = cea.inputlocator.InputLocator(config.scenario)
     try:
-        schedule_path = secure_path(locator.get_building_weekly_schedules(building))
-        schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-        df = pd.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+        schedule_data, schedule_complementary_data = read_cea_schedule(locator, use_type=None, building=building)
+        df = pd.DataFrame(schedule_data).set_index(['hour'])
         out = {'SCHEDULES': {
             schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
             for schedule_type in df.columns}}
