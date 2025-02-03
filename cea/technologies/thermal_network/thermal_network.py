@@ -1163,7 +1163,7 @@ def calc_assign_diameter(max_flow, pipe_catalog):
         length_catalogue = range(pipe_catalog['mdot_min_kgs'].count())
         for i in length_catalogue:
             if pipe_catalog.loc[i, 'mdot_min_kgs'] <= max_flow < pipe_catalog.loc[i, 'mdot_max_kgs']:
-                return pipe_catalog.loc[i, 'Code']
+                return pipe_catalog.loc[i, 'code']
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
@@ -1196,9 +1196,9 @@ def assign_pipes_to_edges(thermal_network):
     series_max_mass_flow = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
     pipe_properties_df = series_max_mass_flow.T.rename(columns={0: 'max_flow_kgs'})
     pipe_properties_df['name'] = pipe_properties_df.index
-    pipe_properties_df['Code'] = pipe_properties_df.apply(lambda x: calc_assign_diameter(x['max_flow_kgs'],
+    pipe_properties_df['code'] = pipe_properties_df.apply(lambda x: calc_assign_diameter(x['max_flow_kgs'],
                                                                                          pipe_catalog), axis=1)
-    pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='Code')
+    pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='code')
 
     # save to the existing file:
     network_edges_path = thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
@@ -3454,13 +3454,16 @@ def main(config):
     if network_model == 'simplified':
         for network_name in network_names:
             thermal_network_simplified(locator, config, network_name)
+        # Print the time used for the entire processing
+        time_elapsed = time.time() - start
+        print('The process of simplified thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
     else:
         for network_name in network_names:
             thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
             thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
-
-    print('done.')
-    print('total time: ', time.time() - start)
+        # Print the time used for the entire processing
+        time_elapsed = time.time() - start
+        print('The process of thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
 
 
 if __name__ == '__main__':

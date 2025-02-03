@@ -434,7 +434,7 @@ def main(config):
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed and successful - time elapsed: %.2f seconds' % time_elapsed)
+        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed and successful - time elapsed: %.2f seconds.' % time_elapsed)
 
     # if verification is failed, keep the old database, remove the new one
     else:
@@ -445,7 +445,7 @@ def main(config):
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The process of Database migration from CEA-3 to CEA-4 is not entirely successful - time elapsed: %.2f seconds' % time_elapsed)
+        print('The process of Database migration from CEA-3 to CEA-4 is not entirely successful - time elapsed: %.2f seconds.' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
