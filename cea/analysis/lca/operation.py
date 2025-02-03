@@ -52,7 +52,7 @@ def lca_operation(locator):
     factors_dhw = pd.read_csv(locator.get_db4_assemblies_supply_hot_water_csv())
     factors_cooling = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
     factors_electricity = pd.read_csv(locator.get_db4_assemblies_supply_electricity_csv())
-    factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
+    factors_resources = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=None))
     # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()
                                 if name != 'ENERGY_CARRIERS']

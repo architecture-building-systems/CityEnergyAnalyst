@@ -804,7 +804,7 @@ def write_aggregate_results(config, locator, building_names):
     aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=panel_type), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="Name",
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="name",
                                         float_format='%.2f', na_rep='nan')
 
 
