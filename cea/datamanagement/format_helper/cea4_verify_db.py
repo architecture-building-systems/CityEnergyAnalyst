@@ -96,7 +96,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           }
 
 mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
-                                     'USE_TYPE':'code',
+                                     'USE_TYPE':'use_type',
                                      'SCHEDULES': 'hour',
                                      'ENVELOPE': 'code',
                                      'HVAC': 'code',
@@ -634,15 +634,15 @@ def cea4_verify_db(scenario, verbose=False):
     #2. verify columns and values in .csv files for schedules
     if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
         use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
-        list_use_types = use_type_df['code'].tolist()
+        list_use_types = use_type_df['use_type'].tolist()
         list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types+['MONTHLY_MULTIPLIER'])
         if list_missing_files_csv_schedules:
             add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules)
             if verbose:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
         if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
-            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
-            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'use_type')
+            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if verbose:
@@ -657,6 +657,10 @@ def cea4_verify_db(scenario, verbose=False):
                 if list_issues_against_csv_schedules:
                     print('! Check value(s) in {sheet}.csv:')
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
+    elif 'use_type' in dict_missing_db['USE_TYPE']:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPE'])
+        if verbose:
+            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPE.csv.')
     else:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 

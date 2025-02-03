@@ -48,6 +48,9 @@ rename_dict = {'STANDARD': 'const_type',
                'unit ': 'unit',
                }
 
+rename_dict_2 = {'Code': 'use_type',
+                 'code': 'use_type',
+                 }
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-4
@@ -270,13 +273,13 @@ def move_txt_modify_csv_files(scenario, verbose=False):
                         rows = list(reader)
 
                     # Extract the second row for compilation: monthly multiplier
-                    headers_multiplier = ['code',
+                    headers_multiplier = ['use_type',
                                           'Jan', 'Feb', 'Mar',
                                           'Apr', 'May', 'Jun',
                                           'Jul', 'Aug', 'Sep',
                                           'Oct', 'Nov', 'Dec']
                     second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
-                    second_row['code'] = use_type
+                    second_row['use_type'] = use_type
                     compiled_rows.append(second_row)
 
                     # Clean and process the remaining data
@@ -367,7 +370,7 @@ def migrate_cea3_to_cea4_db(scenario):
         path_3 = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
         if list_problems_use_type and os.path.isfile(path_3):
             path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
-            merge_excel_tab_to_csv(path_3, 'code', path_csv)
+            merge_excel_tab_to_csv(path_3, 'code', path_csv, rename_dict=rename_dict_2)
 
         if list_problems_schedules:
             move_txt_modify_csv_files(scenario)

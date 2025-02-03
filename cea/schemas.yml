@@ -6471,7 +6471,7 @@ get_database_archetypes_use_type:
         unit: '[l/s]'
         values: '{0.0...n}'
         min: 0.0
-      code:
+      use_type:
         description: use type code (refers to building use type)
         primary: true
         type: string
