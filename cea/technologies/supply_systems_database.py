@@ -7,6 +7,7 @@ is to avoid reading this data (which is constant during the lifetime of a script
 
 
 import pandas as pd
+import os
 
 # keep track of locators previously seen so we don't re-read excel files twice
 _locators = {}
@@ -54,9 +55,37 @@ class SupplySystemsDatabase(object):
         if locator in _locators:
             conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet = _locators[locator]
         else:
-            conversion_systems_worksheets = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv())
-            distribution_systems_worksheets = pd.read_csv(locator.get_db4_components_conversion_distribution_distribution_csv())
-            feedstocks_worksheets = pd.read_csv(locator.get_db4_components_conversion_feedstocks_feedstocks_csv())
-            energy_carriers_worksheet = pd.read_csv(locator.get_db4_components_feedstocks_energy_carriers_csv())
+            conversion_systems_worksheets = {}
+            conversion_names = get_csv_filenames(locator.get_db4_components_conversion_folder())
+            for conversion_name in conversion_names:
+                conversion_systems_worksheets[conversion_name] = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv(conversion_technology=conversion_name))
+
+            distribution_systems_worksheets = {}
+            distribution_names = get_csv_filenames(locator.get_db4_components_distribution_folder())
+            for distribution_name in distribution_names:
+                distribution_systems_worksheets[distribution_name] = pd.read_csv(locator.get_db4_components_distribution_distribution_csv(distribution=distribution_name))
+
+            feedstocks_worksheets = {}
+            feedstocks_names = get_csv_filenames(locator.get_db4_components_feedstocks_folder())
+            feedstocks_names = [x for x in feedstocks_names if x != 'ENERGY_CARRIERS']
+            for feedstocks_name in feedstocks_names:
+                feedstocks_worksheets[feedstocks_name] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstocks_name))
+
+            energy_carriers_worksheet = {}
+            energy_carriers_worksheet['ENERGY_CARRIERS'] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks='ENERGY_CARRIERS'))
+
             _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
+
+
+def get_csv_filenames(directory):
+    """
+    Get all .csv file names (without extensions) under a given directory.
+
+    Parameters:
+    - directory (str): Path to the directory.
+
+    Returns:
+    - List[str]: List of CSV file names without extensions.
+    """
+    return [os.path.splitext(file)[0] for file in os.listdir(directory) if file.endswith('.csv')]
