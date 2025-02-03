@@ -68,7 +68,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_THERMAL_PANELS'), config)
     # print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -976,18 +976,18 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
     if config.solar.custom_tilt_angle:
-        print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
+        print('Running solar-collector with custom-tilt-angle = %s and panel-tilt-angle = %s' %
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
-        print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
+        print('Running solar-collector with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
+    print('Running solar-collector with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
-    panel_properties = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
+    panel_properties = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_THERMAL_PANELS'), config)
     panel_type = panel_properties['type']
 
     # weather data
