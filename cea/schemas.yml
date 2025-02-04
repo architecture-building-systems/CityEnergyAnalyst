@@ -6425,6 +6425,106 @@ get_database_components_feedstocks_energy_carriers:
   - system_costs
   - optimization
 
+get_database_archetypes_schedules_monthly_multiplier:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_SCHEDULE_COEFFICIENTS.csv.csv
+  file_type: csv
+  schema:
+    columns:
+      use_type:
+        description: use type code (refers to building use type)
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      Jan:
+        description: Monthly schedule coefficient for January
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Feb:
+        description: Monthly schedule coefficient for February
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Mar:
+        description: Monthly schedule coefficient for March
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Apr:
+        description: Monthly schedule coefficient for April
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      May:
+        description: Monthly schedule coefficient for May
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jun:
+        description: Monthly schedule coefficient for June
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jul:
+        description: Monthly schedule coefficient for July
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Aug:
+        description: Monthly schedule coefficient for August
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Sep:
+        description: Monthly schedule coefficient for September
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Oct:
+        description: Monthly schedule coefficient for October
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Nov:
+        description: Monthly schedule coefficient for November
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Dec:
+        description: Monthly schedule coefficient for December
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - archetypes_mapper
+
 get_database_archetypes_use_type:
   created_by:
   - database_helper
@@ -6851,7 +6951,7 @@ get_database_archetypes_construction_type:
 get_database_archetypes_schedules:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MULTI_RES.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/MULTI_RES.csv
   file_type: csv
   schema:
     columns:

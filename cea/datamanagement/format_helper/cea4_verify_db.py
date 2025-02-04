@@ -24,6 +24,7 @@ __status__ = "Production"
 
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
 SCHEDULES_FOLDER = ['SCHEDULES']
+SCHEDULES_LIBRARY_FOLDER = ['SCHEDULES_LIBRARY']
 ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
 HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
 SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
@@ -47,7 +48,8 @@ dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSE
                               'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': FEEDSTOCKS_COMPONENTS}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
                                           'USE_TYPE': 'get_database_archetypes_use_type',
-                                          'SCHEDULES': 'get_database_archetypes_schedules',
+                                          'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
+                                          'MONTHLY_MULTIPLIER': 'get_database_archetypes_schedules_monthly_multiplier',
                                           'CONSTRUCTION': 'get_database_assemblies_envelope_construction',
                                           'MASS': 'get_database_assemblies_envelope_mass',
                                           'FLOOR': 'get_database_assemblies_envelope_floor',
@@ -98,6 +100,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
 mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
                                      'USE_TYPE':'use_type',
                                      'SCHEDULES': 'hour',
+                                     'SCHEDULES_LIBRARY': 'hour',
                                      'ENVELOPE': 'code',
                                      'HVAC': 'code',
                                      'SUPPLY': 'code',
@@ -142,12 +145,14 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
     elif item == "USE_TYPE":
         path_db_file = os.path.join(scenario, "inputs",  "database", "ARCHETYPES", "USE_TYPE.csv")
     elif item == "SCHEDULES":
+        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES")
+    elif item == "SCHEDULES_LIBRARY":
         if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES")
+            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "SCHEDULES_LIBRARY")
         else:
-            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "{use_type}.csv".format(use_type=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "SCHEDULES_LIBRARY", "{use_type}.csv".format(use_type=sheet_name))
     elif item == "MONTHLY_MULTIPLIER":
-        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "MONTHLY_MULTIPLIER.csv")
+        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "MONTHLY_SCHEDULE_COEFFICIENTS.csv")
     elif item == "ENVELOPE":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "ENVELOPE")
@@ -176,8 +181,10 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
     elif item == "FEEDSTOCKS":
         if sheet_name is None:
             path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS")
+        elif sheet_name == "ENERGY_CARRIERS":
+            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS", "ENERGY_CARRIERS.csv")
         else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS", "{feedstocks_components}.csv".format(feedstocks_components=sheet_name))
+            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCK_LIBRARY", "{feedstocks_components}.csv".format(feedstocks_components=sheet_name))
     else:
         raise ValueError(f"Unknown item {item}")
 
@@ -207,7 +214,7 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
     file_path = path_to_db_file_4(scenario, item, sheet_name)
     if sheet_name is None:
         locator = mapping_dict_db_item_to_schema_locator[item]
-    elif sheet_name is not None and item == 'SCHEDULES':
+    elif sheet_name is not None and item == 'SCHEDULES_LIBRARY':
         locator = mapping_dict_db_item_to_schema_locator[item]
     else:
         locator = mapping_dict_db_item_to_schema_locator[sheet_name]
@@ -635,12 +642,17 @@ def cea4_verify_db(scenario, verbose=False):
     if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
         use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
         list_use_types = use_type_df['use_type'].tolist()
-        list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types+['MONTHLY_MULTIPLIER'])
-        if list_missing_files_csv_schedules:
-            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules)
+        list_missing_files_csv_schedules_library = verify_file_exists_4_db(scenario, SCHEDULES_LIBRARY_FOLDER, sheet_name=list_use_types)
+        list_missing_files_csv_schedules_monthly_multiplier = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=['MONTHLY_MULTIPLIER'])
+        if list_missing_files_csv_schedules_library:
+            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules_library)
             if verbose:
-                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
-        if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
+                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES>SCHEDULES_LIBRARY folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_library))))
+        if 'MONTHLY_MULTIPLIER' in list_missing_files_csv_schedules_monthly_multiplier:
+            add_values_to_dict(dict_missing_db, 'SCHEDULES', ['MONTHLY_MULTIPLIER'])
+            if verbose:
+                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_monthly_multiplier))))
+        else:
             list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'use_type')
             list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
@@ -649,14 +661,15 @@ def cea4_verify_db(scenario, verbose=False):
                     print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_monthly_multiplier)
         for sheet in list_use_types:
-            list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', sheet_name=sheet)
-            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
-            if verbose:
-                if list_missing_columns_csv_schedules:
-                    print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
-                if list_issues_against_csv_schedules:
-                    print('! Check value(s) in {sheet}.csv:')
-                    print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
+            if sheet not in list_missing_files_csv_schedules_library:
+                list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES_LIBRARY', sheet_name=sheet)
+                add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
+                if verbose:
+                    if list_missing_columns_csv_schedules:
+                        print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
+                    if list_issues_against_csv_schedules:
+                        print('! Check value(s) in {sheet}.csv:')
+                        print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
     elif 'use_type' in dict_missing_db['USE_TYPE']:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPE'])
         if verbose:
