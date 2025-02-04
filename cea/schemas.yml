@@ -20907,7 +20907,7 @@ get_zone_geometry:
         choice:
           lookup:
             path: get_database_archetypes_use_type
-            column: code
+            column: use_type
       use_type1r:
         description: Fraction of gross floor area for first Use Type
         type: float
@@ -20923,7 +20923,7 @@ get_zone_geometry:
         choice:
           lookup:
             path: get_database_archetypes_use_type
-            column: code
+            column: use_type
           none_value: NONE
       use_type2r:
         description: Fraction of gross floor area for second Use Type
@@ -20940,7 +20940,7 @@ get_zone_geometry:
         choice:
           lookup:
             path: get_database_archetypes_use_type
-            column: code
+            column: use_type
           none_value: NONE
       use_type3r:
         description: Fraction of gross floor area for third Use Type
