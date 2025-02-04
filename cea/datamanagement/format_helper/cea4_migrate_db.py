@@ -229,6 +229,33 @@ def check_directory_contains_csv(directory_path):
                 return True
     return False
 
+
+def move_file_to_directory(file_path, new_directory):
+    """
+    Move a file to a new directory if it exists.
+
+    Parameters:
+    - file_path (str): The full path of the file to be moved.
+    - new_directory (str): The destination directory where the file should be moved.
+
+    Returns:
+    - str: The new file path if moved, otherwise None.
+    """
+    if not os.path.isfile(file_path):
+        print(f"File not found, skipping: {file_path}")
+        return None
+
+    # Ensure the new directory exists
+    os.makedirs(new_directory, exist_ok=True)
+
+    # Construct the new file path
+    file_name = os.path.basename(file_path)
+    new_file_path = os.path.join(new_directory, file_name)
+
+    # Move the file
+    shutil.move(file_path, new_file_path)
+
+
 def move_txt_modify_csv_files(scenario, verbose=False):
     """
     Move .txt files and process .csv files from one directory to another.
@@ -241,21 +268,23 @@ def move_txt_modify_csv_files(scenario, verbose=False):
     - None
     """
     # Paths
-    shedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
-    shedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
+    schedules_directory_3 = path_to_db_file_3(scenario, 'SCHEDULES')
+    schedules_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES')
+    schedules_library_directory_4 = path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY')
     compiled_rows = []
 
-    if not check_directory_contains_csv(shedules_directory_3):
+    if not check_directory_contains_csv(schedules_directory_3):
         return
 
     # Ensure the target directory exists
-    os.makedirs(shedules_directory_4, exist_ok=True)
+    os.makedirs(schedules_directory_4, exist_ok=True)
+    os.makedirs(schedules_library_directory_4, exist_ok=True)
 
     # Iterate through files in the source directory
-    for root, _, files in os.walk(shedules_directory_3):
+    for root, _, files in os.walk(schedules_directory_3):
         for file in files:
             old_file_path = os.path.join(root, file)
-            new_file_path = os.path.join(shedules_directory_4, file)
+            new_file_path = os.path.join(schedules_library_directory_4, file)
 
             # Handle .txt files: Move to new directory
             if file.endswith('.txt'):
@@ -316,7 +345,7 @@ def move_txt_modify_csv_files(scenario, verbose=False):
     # Create and save the compiled DataFrame
     if compiled_rows:
         compiled_multiplier_df = pd.DataFrame(compiled_rows)
-        compiled_multiplier_path = path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_path = path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
         if verbose:
             print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
@@ -395,7 +424,9 @@ def migrate_cea3_to_cea4_db(scenario):
             excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'DISTRIBUTION'), rename_dict=rename_dict)
         path_3 = path_to_db_file_3(scenario, 'FEEDSTOCKS')
         if list_problems_feedstocks and os.path.isfile(path_3):
-            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'FEEDSTOCKS'), rename_dict=rename_dict)
+            excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), rename_dict=rename_dict)
+            move_file_to_directory(path_to_db_file_4(scenario, "FEEDSTOCKS_LIBRARY", "ENERGY_CARRIERS"), path_to_db_file_4(scenario, 'FEEDSTOCKS'))
+
 
         # # Print: End
         # print('-' * 49)

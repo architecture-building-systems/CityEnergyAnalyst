@@ -5924,7 +5924,7 @@ get_database_components_distribution_thermal_grid:
 get_database_components_feedstocks_biogas:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/BIOGAS.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/BIOGAS.csv
   file_type: csv
   schema:
     columns:
@@ -5969,7 +5969,7 @@ get_database_components_feedstocks_biogas:
 get_database_components_feedstocks_coal:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/COAL.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/COAL.csv
   file_type: csv
   schema:
     columns:
@@ -6014,7 +6014,7 @@ get_database_components_feedstocks_coal:
 get_database_components_feedstocks_drybiomass:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/DRYBIOMASS.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/DRYBIOMASS.csv
   file_type: csv
   schema:
     columns:
@@ -6059,7 +6059,7 @@ get_database_components_feedstocks_drybiomass:
 get_database_components_feedstocks_grid:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/GRID.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/GRID.csv
   file_type: csv
   schema:
     columns:
@@ -6104,7 +6104,7 @@ get_database_components_feedstocks_grid:
 get_database_components_feedstocks_hydrogen:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/HYDROGEN.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/HYDROGEN.csv
   file_type: csv
   schema:
     columns:
@@ -6149,7 +6149,7 @@ get_database_components_feedstocks_hydrogen:
 get_database_components_feedstocks_naturalgas:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/NATURALGAS.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/NATURALGAS.csv
   file_type: csv
   schema:
     columns:
@@ -6194,7 +6194,7 @@ get_database_components_feedstocks_naturalgas:
 get_database_components_feedstocks_oil:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/OIL.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/OIL.csv
   file_type: csv
   schema:
     columns:
@@ -6239,7 +6239,7 @@ get_database_components_feedstocks_oil:
 get_database_components_feedstocks_solar:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/SOLAR.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/SOLAR.csv
   file_type: csv
   schema:
     columns:
@@ -6284,7 +6284,7 @@ get_database_components_feedstocks_solar:
 get_database_components_feedstocks_wetbiomass:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/WETBIOMASS.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/WETBIOMASS.csv
   file_type: csv
   schema:
     columns:
@@ -6329,7 +6329,7 @@ get_database_components_feedstocks_wetbiomass:
 get_database_components_feedstocks_wood:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/WOOD.csv
+  file_path: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/WOOD.csv
   file_type: csv
   schema:
     columns:
