@@ -501,7 +501,8 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
 
 def get_choices(choice_properties, path):
     lookup = choice_properties['lookup']
-    df = pd.read_excel(path, lookup['sheet'])
+
+    df = pd.read_csv(path)
     choices = df[lookup['column']].tolist()
     out = []
     if 'none_value' in choice_properties:
