@@ -73,7 +73,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'), config)
+    panel_properties_PV = calc_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), config)
     panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
     # print('gathering properties of PVT collector panel for building %s' % building_name)
 
