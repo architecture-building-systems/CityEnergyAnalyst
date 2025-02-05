@@ -24,6 +24,7 @@ __status__ = "Production"
 
 ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
 SCHEDULES_FOLDER = ['SCHEDULES']
+SCHEDULES_LIBRARY_FOLDER = ['SCHEDULES_LIBRARY']
 ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
 HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
 SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
@@ -33,7 +34,7 @@ CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENE
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
-FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'ENERGY_CARRIERS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
+FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
 dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor',
                  'WALL': 'envelope_type_wall', 'WINDOW': 'envelope_type_win', 'SHADING': 'envelope_type_shade',
                  'ROOF': 'envelope_type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOT_WATER': 'hvac_type_dhw',
@@ -44,10 +45,11 @@ dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak'
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
-                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': FEEDSTOCKS_COMPONENTS}
+                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'], 'FEEDSTOCKS_LIBRARY': FEEDSTOCKS_COMPONENTS}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
                                           'USE_TYPE': 'get_database_archetypes_use_type',
-                                          'SCHEDULES': 'get_database_archetypes_schedules',
+                                          'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
+                                          'MONTHLY_MULTIPLIER': 'get_database_archetypes_schedules_monthly_multiplier',
                                           'CONSTRUCTION': 'get_database_assemblies_envelope_construction',
                                           'MASS': 'get_database_assemblies_envelope_mass',
                                           'FLOOR': 'get_database_assemblies_envelope_floor',
@@ -96,14 +98,16 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           }
 
 mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
-                                     'USE_TYPE':'code',
+                                     'USE_TYPE':'use_type',
                                      'SCHEDULES': 'hour',
+                                     'SCHEDULES_LIBRARY': 'hour',
                                      'ENVELOPE': 'code',
                                      'HVAC': 'code',
                                      'SUPPLY': 'code',
                                      'CONVERSION': 'code',
                                      'DISTRIBUTION': 'code',
                                      'FEEDSTOCKS': 'hour',
+                                     'FEEDSTOCKS_LIBRARY': 'hour',
                                      'ENERGY_CARRIERS': 'code',
                                      }
 
@@ -133,55 +137,55 @@ dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
+import os
+
 def path_to_db_file_4(scenario, item, sheet_name=None):
+    """
+    Generate the correct path to database files in CEA based on the scenario, item type, and sheet name.
 
-    if item == 'database':
-        path_db_file = os.path.join(scenario, "inputs", "database")
-    elif item == "CONSTRUCTION_TYPE":
-        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "CONSTRUCTION_TYPE.csv")
-    elif item == "USE_TYPE":
-        path_db_file = os.path.join(scenario, "inputs",  "database", "ARCHETYPES", "USE_TYPE.csv")
-    elif item == "SCHEDULES":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES")
-        else:
-            path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "{use_type}.csv".format(use_type=sheet_name))
-    elif item == "MONTHLY_MULTIPLIER":
-        path_db_file = os.path.join(scenario, "inputs", "database", "ARCHETYPES", "SCHEDULES", "MONTHLY_MULTIPLIER.csv")
-    elif item == "ENVELOPE":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "ENVELOPE")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "ENVELOPE", "{envelope_assemblies}.csv".format(envelope_assemblies=sheet_name))
-    elif item == "HVAC":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "HVAC", "{hvac_assemblies}.csv".format(hvac_assemblies=sheet_name))
-    elif item == "SUPPLY":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "ASSEMBLIES", "SUPPLY", "{supply_assemblies}.csv".format(supply_assemblies=sheet_name))
-    elif item == "CONVERSION":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "CONVERSION", "{conversion_components}.csv".format(conversion_components=sheet_name))
-    elif item == "DISTRIBUTION":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "DISTRIBUTION", "{conversion_components}.csv".format(conversion_components=sheet_name))
-    elif item == "FEEDSTOCKS":
-        if sheet_name is None:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS")
-        else:
-            path_db_file = os.path.join(scenario, "inputs",  "database", "COMPONENTS", "FEEDSTOCKS", "{feedstocks_components}.csv".format(feedstocks_components=sheet_name))
-    else:
-        raise ValueError(f"Unknown item {item}")
+    Parameters:
+    - scenario (str): The path to the scenario folder.
+    - item (str): The database item category (e.g., 'SCHEDULES', 'SUPPLY', 'CONVERSION', etc.).
+    - sheet_name (str, optional): The specific sheet name if needed.
 
-    return path_db_file
+    Returns:
+    - str: The full path to the requested database file.
+    """
+    base_path = os.path.join(scenario, "inputs", "database")
+
+    item_paths = {
+        "database": base_path,
+        "CONSTRUCTION_TYPE": os.path.join(base_path, "ARCHETYPES", "CONSTRUCTION_TYPE.csv"),
+        "USE_TYPE": os.path.join(base_path, "ARCHETYPES", "USE_TYPE.csv"),
+        "SCHEDULES": os.path.join(base_path, "ARCHETYPES", "SCHEDULES"),
+        "SCHEDULES_LIBRARY": os.path.join(base_path, "ARCHETYPES", "SCHEDULES", "SCHEDULES_LIBRARY"),
+        "ENVELOPE": os.path.join(base_path, "ASSEMBLIES", "ENVELOPE"),
+        "HVAC": os.path.join(base_path, "ASSEMBLIES", "HVAC"),
+        "SUPPLY": os.path.join(base_path, "ASSEMBLIES", "SUPPLY"),
+        "CONVERSION": os.path.join(base_path, "COMPONENTS", "CONVERSION"),
+        "DISTRIBUTION": os.path.join(base_path, "COMPONENTS", "DISTRIBUTION"),
+        "FEEDSTOCKS": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS"),
+        "FEEDSTOCKS_LIBRARY": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCKS_LIBRARY")
+    }
+
+    # Handle special sheet names for specific categories
+    special_sheets = {
+        ("SCHEDULES", "MONTHLY_MULTIPLIER"): os.path.join(item_paths["SCHEDULES"], "MONTHLY_SCHEDULE_COEFFICIENTS.csv"),
+        ("FEEDSTOCKS", "ENERGY_CARRIERS"): os.path.join(item_paths["FEEDSTOCKS"], "ENERGY_CARRIERS.csv"),
+    }
+
+    if (item, sheet_name) in special_sheets:
+        return special_sheets[(item, sheet_name)]
+
+    # If item exists in paths but requires a sheet name
+    if item in item_paths:
+        if sheet_name:
+            return os.path.join(item_paths[item], f"{sheet_name}.csv")
+        return item_paths[item]
+
+    raise ValueError(f"Unknown item '{item}'")
+
+
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -207,7 +211,7 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
     file_path = path_to_db_file_4(scenario, item, sheet_name)
     if sheet_name is None:
         locator = mapping_dict_db_item_to_schema_locator[item]
-    elif sheet_name is not None and item == 'SCHEDULES':
+    elif sheet_name is not None and item == 'SCHEDULES_LIBRARY':
         locator = mapping_dict_db_item_to_schema_locator[item]
     else:
         locator = mapping_dict_db_item_to_schema_locator[sheet_name]
@@ -334,6 +338,7 @@ def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, verbose=False)
                 print("\n".join(f"  {item}" for item in list_issues_against_csv))
     return list_list_missing_columns_csv
 
+
 def get_csv_filenames(folder_path):
     """
     Get the names of all .csv files in the specified folder.
@@ -345,16 +350,18 @@ def get_csv_filenames(folder_path):
     - List[str]: A list of file names without path and without extension.
     """
     if not os.path.isdir(folder_path):
-        raise ValueError(f"The provided path '{folder_path}' is not a valid directory.")
+        csv_filenames = []
 
-    # List all .csv files and remove the extension
-    csv_filenames = [
-        os.path.splitext(file)[0]  # Remove the file extension
-        for file in os.listdir(folder_path)  # List files in the folder
-        if file.endswith('.csv')  # Check for .csv extension
-    ]
+    else:
+        # List all .csv files and remove the extension
+        csv_filenames = [
+            os.path.splitext(file)[0]  # Remove the file extension
+            for file in os.listdir(folder_path)  # List files in the folder
+            if file.endswith('.csv')  # Check for .csv extension
+        ]
 
     return csv_filenames
+
 
 def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_items, list_assemblies_identifier_column_names, components_item, code_to_name=False):
     """
@@ -384,7 +391,7 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
         for provided_name in provided_names:
             provided_df = pd.read_csv(path_to_db_file_4(scenario, components_item, provided_name))
             provided_codes.extend(np.unique(provided_df['code'].values).tolist())
-    elif components_item == 'FEEDSTOCKS':
+    elif components_item == 'FEEDSTOCKS_LIBRARY':
         provided_codes = provided_names
 
     # Collect codes from required components
@@ -507,6 +514,8 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
             missing_items.remove('SOLAR')
         if 'MONTHLY_MULTIPLIER' in missing_items:
             missing_items.remove('MONTHLY_MULTIPLIER')
+        if 'MONTHLY_SCHEDULE_COEFFICIENTS' in missing_items:
+            missing_items.remove('MONTHLY_SCHEDULE_COEFFICIENTS')
 
         return missing_items
     except Exception as e:
@@ -634,29 +643,39 @@ def cea4_verify_db(scenario, verbose=False):
     #2. verify columns and values in .csv files for schedules
     if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
         use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
-        list_use_types = use_type_df['code'].tolist()
-        list_missing_files_csv_schedules = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=list_use_types+['MONTHLY_MULTIPLIER'])
-        if list_missing_files_csv_schedules:
-            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules)
+        list_use_types = use_type_df['use_type'].tolist()
+        list_missing_files_csv_schedules_library = verify_file_exists_4_db(scenario, SCHEDULES_LIBRARY_FOLDER, sheet_name=list_use_types)
+        list_missing_files_csv_schedules_monthly_multiplier = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=['MONTHLY_MULTIPLIER'])
+        if list_missing_files_csv_schedules_library:
+            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules_library)
             if verbose:
-                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules))))
-        if 'MONTHLY_MULTIPLIER' not in list_missing_files_csv_schedules:
-            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'code', path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
-            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES'), path_to_db_file_4(scenario, 'MONTHLY_MULTIPLIER'), 'code')
+                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES>SCHEDULES_LIBRARY folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_library))))
+        if 'MONTHLY_MULTIPLIER' in list_missing_files_csv_schedules_monthly_multiplier:
+            add_values_to_dict(dict_missing_db, 'SCHEDULES', ['MONTHLY_MULTIPLIER'])
+            if verbose:
+                print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_monthly_multiplier))))
+        else:
+            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
+            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if verbose:
                     print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_monthly_multiplier)
         for sheet in list_use_types:
-            list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES', sheet_name=sheet)
-            add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
-            if verbose:
-                if list_missing_columns_csv_schedules:
-                    print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
-                if list_issues_against_csv_schedules:
-                    print('! Check value(s) in {sheet}.csv:')
-                    print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
+            if sheet not in list_missing_files_csv_schedules_library:
+                list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES_LIBRARY', sheet_name=sheet)
+                add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
+                if verbose:
+                    if list_missing_columns_csv_schedules:
+                        print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
+                    if list_issues_against_csv_schedules:
+                        print('! Check value(s) in {sheet}.csv:')
+                        print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
+    elif 'use_type' in dict_missing_db['USE_TYPE']:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPE'])
+        if verbose:
+            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPE.csv.')
     else:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 
@@ -724,9 +743,9 @@ def cea4_verify_db(scenario, verbose=False):
             add_values_to_dict(dict_missing_db, 'DISTRIBUTION', list_issues_against_csv_distribution)
             if verbose:
                 if list_missing_columns_csv_distribution:
-                    print('! Ensure column(s) are present in DISTRIBUTION.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, list_missing_columns_csv_distribution))))
+                    print('! Ensure column(s) are present in THERMAL_GRID.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, list_missing_columns_csv_distribution))))
                 if list_issues_against_csv_distribution:
-                    print('! Check value(s) in DISTRIBUTION.csv:')
+                    print('! Check value(s) in THERMAL_GRID.csv:')
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_distribution))
 
     #7. verify columns and values in .csv files for components - feedstocks
@@ -736,30 +755,32 @@ def cea4_verify_db(scenario, verbose=False):
             print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(list_missing_files_csv_feedstocks_components)))
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_files_csv_feedstocks_components)
 
-        list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS'))
-        dict_missing_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS')
+        list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'))
+        dict_missing_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS_LIBRARY')
         if dict_missing_feedstocks:
             list_missing_names_feedstocks = list(dict_missing_feedstocks.keys())
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_names_feedstocks)
             if verbose:
                 for key, _ in dict_missing_feedstocks.items():
-                    print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
+                    print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
-            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
+            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
             if list_missing_energy_carriers:
                 if verbose:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
                 add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
-        for sheet in list_feedstocks_db:
-            list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS', sheet_name=sheet)
-            add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_columns_csv_feedstocks)
-            add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_issues_against_csv_feedstocks)
-            if verbose:
-                if list_missing_columns_csv_feedstocks:
-                    print('! Ensure column(s) are present in {feedstocks}.csv: {missing_columns}.'.format(feedstocks=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_feedstocks))))
-                if list_issues_against_csv_feedstocks:
-                    print('! Check value(s) in {feedstocks}.csv:')
-                    print("\n".join(f"  {item}" for item in list_issues_against_csv_feedstocks))
+        if list_feedstocks_db:
+            for sheet in list_feedstocks_db:
+                if sheet not in list_feedstocks_db:
+                    list_missing_columns_csv_feedstocks, list_issues_against_csv_feedstocks = verify_file_against_schema_4_db(scenario, 'FEEDSTOCKS_LIBRARY', sheet_name=sheet)
+                    add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_columns_csv_feedstocks)
+                    add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_issues_against_csv_feedstocks)
+                    if verbose:
+                        if list_missing_columns_csv_feedstocks:
+                            print('! Ensure column(s) are present in {feedstocks}.csv: {missing_columns}.'.format(feedstocks=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_feedstocks))))
+                        if list_issues_against_csv_feedstocks:
+                            print('! Check value(s) in {feedstocks}.csv:')
+                            print("\n".join(f"  {item}" for item in list_issues_against_csv_feedstocks))
 
     return dict_missing_db
 
