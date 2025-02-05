@@ -44,7 +44,7 @@ def read_cea_schedule(locator, use_type=None, building=None):
         path_to_monthly_multiplier = locator.get_building_weekly_schedules_monthly_multiplier_csv()
         path_to_schedule = locator.get_building_weekly_schedules(building)
         df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
-        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['ues_type'] == building]
+        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['building'] == building]
         monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
         schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
@@ -70,7 +70,7 @@ def save_cea_schedules(schedule_data, path_to_building_schedule):
 def save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier):
 
     # monthly multiplier
-    header = ['code'] + months
+    header = ['building'] + months
     df_monthly_multiplier = pd.DataFrame(data=lists_monthly_multiplier, columns=header)
     df_monthly_multiplier.to_csv(path_to_monthly_multiplier, index=False, float_format='%.2f')
 
