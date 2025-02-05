@@ -170,7 +170,7 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
 
     # Handle special sheet names for specific categories
     special_sheets = {
-        ("SCHEDULES", "MONTHLY_MULTIPLIER"): os.path.join(item_paths["SCHEDULES"], "MONTHLY_SCHEDULE_COEFFICIENTS.csv"),
+        ("SCHEDULES", "MONTHLY_MULTIPLIER"): os.path.join(item_paths["SCHEDULES"], "MONTHLY_MULTIPLIER.csv"),
         ("FEEDSTOCKS", "ENERGY_CARRIERS"): os.path.join(item_paths["FEEDSTOCKS"], "ENERGY_CARRIERS.csv"),
     }
 

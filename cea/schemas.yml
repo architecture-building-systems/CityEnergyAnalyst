@@ -6428,7 +6428,7 @@ get_database_components_feedstocks_energy_carriers:
 get_database_archetypes_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_SCHEDULE_COEFFICIENTS.csv.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv.csv
   file_type: csv
   schema:
     columns:

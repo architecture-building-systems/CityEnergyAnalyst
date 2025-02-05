@@ -63,7 +63,7 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
 
     internal_loads = pd.read_csv(locator.get_db4_archetypes_use_type_csv())
     building_typology_df.set_index('name', inplace=True)
-    internal_loads = internal_loads.set_index('code')
+    internal_loads = internal_loads.set_index('use_type')
 
     occupant_densities = {}
     for use in list_uses:
@@ -265,7 +265,7 @@ class ScheduleData(object):
 
     def fill_in_data(self):
         occupancy_types = []
-        for file_name in os.listdir(self.locator.get_db4_archetypes_schedules_folder()):
+        for file_name in os.listdir(self.locator.get_db4_archetypes_schedules_library_folder()):
             if file_name.endswith(".csv"):
                 use, _ = os.path.splitext(file_name)
                 if use != 'MONTHLY_MULTIPLIER':

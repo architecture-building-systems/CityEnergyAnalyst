@@ -622,9 +622,13 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
         return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
 
+    def get_db4_archetypes_schedules_library_folder(self):
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES', 'SCHEDULES_LIBRARY')
+
     def get_db4_archetypes_schedules_use_type_csv(self, use_type=None):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES/{use}.csv"""
-        return os.path.join(self.get_db4_archetypes_schedules_folder(), use_type + '.csv')
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/{use}.csv"""
+        return os.path.join(self.get_db4_archetypes_schedules_library_folder(), use_type + '.csv')
 
     def get_db4_archetypes_schedules_monthly_multiplier_csv(self):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
@@ -734,9 +738,13 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
         return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
 
+    def get_db4_components_feedstocks_library_folder(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS', 'FEEDSTOCKS_LIBRARY')
+
     def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks=None):
-        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/{feedstocks}.csv"""
-        return os.path.join(self.get_db4_components_feedstocks_folder(), feedstocks + '.csv')
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/{feedstocks}.csv"""
+        return os.path.join(self.get_db4_components_feedstocks_library_folder(), feedstocks + '.csv')
 
     def get_db4_components_feedstocks_energy_carriers_csv(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
