@@ -68,8 +68,7 @@ class SupplySystemsDatabase(object):
                 distribution_systems_worksheets[distribution_name] = pd.read_csv(locator.get_db4_components_distribution_distribution_csv(distribution=distribution_name))
 
             feedstocks_worksheets = {}
-            feedstocks_names = get_csv_filenames(locator.get_db4_components_feedstocks_folder())
-            feedstocks_names = [x for x in feedstocks_names if x != 'ENERGY_CARRIERS']
+            feedstocks_names = get_csv_filenames(locator.get_db4_components_feedstocks_library_folder())
             for feedstocks_name in feedstocks_names:
                 feedstocks_worksheets[feedstocks_name] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstocks_name))
 
