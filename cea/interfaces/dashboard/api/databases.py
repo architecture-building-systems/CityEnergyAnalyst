@@ -167,12 +167,14 @@ async def validate_database(data: ValidateDatabase):
                 dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
             if dict_missing_db:
-                missing_dbs = list(dict_missing_db.keys())
-                missing_dbs.sort()
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=json.dumps(dict_missing_db),
-                )
+                errors = {db: missing_files for db, missing_files in dict_missing_db.items() if missing_files}
+
+                if errors:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=json.dumps(errors),
+                    )
+
         except IOError as e:
             print(e)
             raise HTTPException(
