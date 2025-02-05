@@ -1533,7 +1533,7 @@ get_building_air_conditioning:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_cs:
+      hvac_type_cs:
         description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
@@ -1543,7 +1543,7 @@ get_building_air_conditioning:
             path: get_database_air_conditioning_systems
             sheet: COOLING
             column: code
-      type_hs:
+      hvac_type_hs:
         description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
@@ -1553,7 +1553,7 @@ get_building_air_conditioning:
             path: get_database_air_conditioning_systems
             sheet: HEATING
             column: code
-      type_dhw:
+      hvac_type_dhw:
         description: Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
@@ -1563,7 +1563,7 @@ get_building_air_conditioning:
             path: get_database_air_conditioning_systems
             sheet: HOT_WATER
             column: code
-      type_ctrl:
+      hvac_type_ctrl:
         description: Type of heating and cooling control HVAC  assembly (relates to
           "code" in HVAC assemblies)
         type: string
@@ -1574,7 +1574,7 @@ get_building_air_conditioning:
             path: get_database_air_conditioning_systems
             sheet: CONTROLLER
             column: code
-      type_vent:
+      hvac_type_vent:
         description: Type of ventilation HVAC assembly (relates to "code" in HVAC
           assemblies)
         type: string
@@ -1585,28 +1585,28 @@ get_building_air_conditioning:
             path: get_database_air_conditioning_systems
             sheet: VENTILATION
             column: code
-      heat_starts:
+      hvac_heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      heat_ends:
+      hvac_heat_ends:
         description: End of the heating season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      cool_starts:
+      hvac_cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      cool_ends:
+      hvac_cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
@@ -1627,70 +1627,70 @@ get_building_architecture:
         type: string
         unit: '[-]'
         values: alphanumeric
-      void_deck:
+      envelope_void_deck:
         description: Number of floors (from the ground up) with an open envelope (default
           = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      Es:
+      envelope_Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Hs_ag:
+      envelope_Hs_ag:
         description: Fraction of above ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Hs_bg:
+      envelope_Hs_bg:
         description: Fraction of below ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Ns:
+      envelope_Ns:
         description: Fraction of net gross floor area.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_north:
+      envelope_wwr_north:
         description: Window to wall ratio in in facades facing north
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_east:
+      envelope_wwr_east:
         description: Window to wall ratio in in facades facing east
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_south:
+      envelope_wwr_south:
         description: Window to wall ratio in in facades facing south
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_west:
+      envelope_wwr_west:
         description: Window to wall ratio in in facades facing west
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      type_cons:
+      envelope_type_mass:
         description: Type of construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1701,7 +1701,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: CONSTRUCTION
             column: code
-      type_leak:
+      envelope_type_leak:
         description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1711,7 +1711,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: TIGHTNESS
             column: code
-      type_roof:
+      envelope_type_roof:
         description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1721,7 +1721,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: ROOF
             column: code
-      type_shade:
+      envelope_type_shade:
         description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1731,7 +1731,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: SHADING
             column: code
-      type_wall:
+      envelope_type_wall:
         description: External wall construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1742,7 +1742,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
-      type_part:
+      envelope_type_part:
         description: Internal partitions construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1753,7 +1753,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: WALL
             column: code
-      type_floor:
+      envelope_type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1764,7 +1764,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
-      type_base:
+      envelope_type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1775,7 +1775,7 @@ get_building_architecture:
             path: get_database_envelope_systems
             sheet: FLOOR
             column: code
-      type_win:
+      envelope_type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1951,7 +1951,7 @@ get_building_supply:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_cs:
+      supply_type_cs:
         description: Type of cooling supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
@@ -1961,7 +1961,7 @@ get_building_supply:
             path: get_database_supply_assemblies
             sheet: COOLING
             column: code
-      type_dhw:
+      supply_type_dhw:
         description: Type of hot water supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
@@ -1972,7 +1972,7 @@ get_building_supply:
             path: get_database_supply_assemblies
             sheet: HOT_WATER
             column: code
-      type_el:
+      supply_type_el:
         description: Type of electrical supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
@@ -1983,7 +1983,7 @@ get_building_supply:
             path: get_database_supply_assemblies
             sheet: ELECTRICITY
             column: code
-      type_hs:
+      supply_type_hs:
         description: Type of heating supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
@@ -5200,10 +5200,10 @@ get_database_components_conversion_power_transformers:
   - decentralized
   - optimization
 
-get_database_components_conversion_solar_thermal_panels:
+get_database_components_conversion_solar_collectors:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/CONVERSION/SOLAR_THERMAL_PANELS.csv
+  file_path: inputs/database/COMPONENTS/CONVERSION/SOLAR_COLLECTORS.csv
   file_type: csv
   schema:
     columns:

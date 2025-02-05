@@ -30,7 +30,7 @@ HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_CO
 SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
 CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENERATION_PLANTS', 'COOLING_TOWERS',
                          'FUEL_CELLS', 'HEAT_EXCHANGERS', 'HEAT_PUMPS', 'HYDRAULIC_PUMPS', 'PHOTOVOLTAIC_PANELS',
-                         'PHOTOVOLTAIC_THERMAL_PANELS', 'POWER_TRANSFORMERS', 'SOLAR_THERMAL_PANELS',
+                         'PHOTOVOLTAIC_THERMAL_PANELS', 'POWER_TRANSFORMERS', 'SOLAR_COLLECTORS',
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
@@ -79,7 +79,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'PHOTOVOLTAIC_PANELS': 'get_database_components_conversion_photovoltaic_panels',
                                           'PHOTOVOLTAIC_THERMAL_PANELS': 'get_database_components_conversion_photovoltaic_thermal_panels',
                                           'POWER_TRANSFORMERS': 'get_database_components_conversion_power_transformers',
-                                          'SOLAR_THERMAL_PANELS': 'get_database_components_conversion_solar_thermal_panels',
+                                          'SOLAR_COLLECTORS': 'get_database_components_conversion_solar_collectors',
                                           'THERMAL_ENERGY_STORAGES': 'get_database_components_conversion_thermal_energy_storages',
                                           'UNITARY_AIR_CONDITIONERS': 'get_database_components_conversion_unitary_air_conditioners',
                                           'VAPOR_COMPRESSION_CHILLERS': 'get_database_components_conversion_vapor_compression_chillers',
@@ -126,7 +126,7 @@ dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
                      'PV':'PHOTOVOLTAIC_PANELS',
                      'PVT':'PHOTOVOLTAIC_THERMAL_PANELS',
                      'TR':'POWER_TRANSFORMERS',
-                     'SC': 'SOLAR_THERMAL_PANELS',
+                     'SC': 'SOLAR_COLLECTORS',
                      'TES':'THERMAL_ENERGY_STORAGES',
                      'AC':'UNITARY_AIR_CONDITIONERS',
                      }

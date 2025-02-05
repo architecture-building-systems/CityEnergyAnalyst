@@ -31,7 +31,7 @@ class SupplySystemsDatabase(object):
         self.FEEDSTOCKS = feedstocks_worksheets
         self.PIPING = distribution_systems_worksheets["THERMAL_GRID"]
         self.PHOTOVOLTAIC_PANELS = conversion_systems_worksheets["PHOTOVOLTAIC_PANELS"]
-        self.SOLAR_THERMAL_PANELS = conversion_systems_worksheets["SOLAR_THERMAL_PANELS"]
+        self.SOLAR_COLLECTORS = conversion_systems_worksheets["SOLAR_COLLECTORS"]
         self.PHOTOVOLTAIC_THERMAL_PANELS = conversion_systems_worksheets["PHOTOVOLTAIC_THERMAL_PANELS"]
         self.BOILERS = conversion_systems_worksheets["BOILERS"]
         self.COGENERATION_PLANTS = conversion_systems_worksheets["COGENERATION_PLANTS"]

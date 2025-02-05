@@ -45,7 +45,7 @@ class SolarPotentialsLayer(MapLayer):
             df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
             return df["code"].unique().tolist()
         elif technology == "SC":
-            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_THERMAL_PANELS'))
+            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
             return df["type"].unique().tolist()
 
         return None
