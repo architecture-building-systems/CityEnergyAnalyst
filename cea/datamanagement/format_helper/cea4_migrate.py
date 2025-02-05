@@ -67,7 +67,7 @@ columns_mapping_dict_envelope = {'Hs_ag': 'envelope_Hs_ag',
                                      'type_cons': 'envelope_type_mass',
                                      'type_leak': 'envelope_type_leak',
                                      'type_floor': 'envelope_type_floor',
-                                     'type_part': 'envelope_type_part',
+                                     'type_part': 'envelope_type_part', 'type_roof': 'envelope_type_roof',
                                      'type_base': 'envelope_type_base',
                                      'type_wall': 'envelope_type_wall',
                                      'type_win': 'envelope_type_win',
@@ -219,6 +219,7 @@ def replace_shapefile_dbf(scenario, item, new_dataframe, list_attributes_3):
     # Save the updated shapefile
     new_gdf.to_file(shapefile_path, driver="ESRI Shapefile")
 
+
 def verify_file_exists_3(scenario, items):
     """
     Verify if the files in the provided list exist for a given scenario.
@@ -238,7 +239,7 @@ def verify_file_exists_3(scenario, items):
     return list_missing_files
 
 
-def migrate_dbf_to_csv(scenario, item, required_columns, verbose=False):
+def migrate_dbf_to_csv(scenario, item, required_columns, columns_mapping_dict=None, verbose=False):
     """
     Migrate a DBF file to CSV format with column renaming.
 
@@ -258,11 +259,14 @@ def migrate_dbf_to_csv(scenario, item, required_columns, verbose=False):
             else:
                 df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, item))
                 df.rename(columns=columns_mapping_dict_name, inplace=True)
-                df.rename(columns=columns_mapping_dict_typology, inplace=True)
+                if columns_mapping_dict:
+                    df.rename(columns=columns_mapping_dict, inplace=True)
                 df.to_csv(path_to_input_file_without_db_4(scenario, item), index=False)
                 os.remove(path_to_input_file_without_db_3(scenario, item))
                 if verbose:
                     print(f'- {item}.dbf has been migrated from CEA-3 to CEA-4 format.')
+
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
@@ -352,21 +356,23 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
         #2. about the .dbf files in the building-properties folder to be migrated to .csv files
         if 'air_conditioning' in list_missing_files_csv_building_properties_4 and not list_missing_columns_air_conditioning_4:
             if 'air_conditioning' not in list_missing_files_dbf_building_properties_3:
-                migrate_dbf_to_csv(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_3, verbose=verbose)
+                migrate_dbf_to_csv(scenario, 'air_conditioning', COLUMNS_AIR_CONDITIONING_3, columns_mapping_dict_hvac, verbose=verbose)
             else:
                 print("! Ensure either air_conditioning.dbf or air_conditioning.csv is present in building-properties folder. Run Archetypes-Helper to generate air_conditioning.csv.")
         elif 'air_conditioning' not in list_missing_files_csv_building_properties_4 and list_missing_columns_air_conditioning_4:
-            print('! Ensure column(s) are present in air_conditioning.csv: {list_missing_columns_air_conditioning_4}.'.format(list_missing_columns_air_conditioning_4=list_missing_columns_air_conditioning_4))
+            if verbose:
+                print('! Ensure column(s) are present in air_conditioning.csv: {list_missing_columns_air_conditioning_4}.'.format(list_missing_columns_air_conditioning_4=list_missing_columns_air_conditioning_4))
         else:
             pass
 
         if 'architecture' in list_missing_files_csv_building_properties_4 and not list_missing_columns_architecture_4:
             if 'architecture' not in list_missing_files_dbf_building_properties_3:
-                migrate_dbf_to_csv(scenario, 'architecture', COLUMNS_ARCHITECTURE_3, verbose=verbose)
+                migrate_dbf_to_csv(scenario, 'architecture', COLUMNS_ARCHITECTURE_3, columns_mapping_dict_envelope, verbose=verbose)
             else:
                 print("! Ensure either architecture.dbf or architecture.csv is present in building-properties folder. Run Archetypes-Helper to generate architecture.csv.")
         elif 'architecture' not in list_missing_files_csv_building_properties_4 and list_missing_columns_architecture_4:
-            print('! Ensure column(s) are present in architecture.csv: {list_missing_columns_architecture_4}.'.format(list_missing_columns_architecture_4=list_missing_columns_architecture_4))
+            if verbose:
+                print('! Ensure column(s) are present in architecture.csv: {list_missing_columns_architecture_4}.'.format(list_missing_columns_architecture_4=list_missing_columns_architecture_4))
         else:
             pass
 
@@ -376,7 +382,8 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             else:
                 print("! Ensure either indoor_comfort.dbf or indoor_comfort.csv is present in building-properties folder. Run Archetypes-Helper to generate indoor_comfort.csv.")
         elif 'indoor_comfort' not in list_missing_files_csv_building_properties_4 and list_missing_columns_indoor_comfort_4:
-            print('! Ensure column(s) are present in indoor_comfort.csv: {list_missing_columns_indoor_comfort_4}.'.format(list_missing_columns_indoor_comfort_4=list_missing_columns_indoor_comfort_4))
+            if verbose:
+                print('! Ensure column(s) are present in indoor_comfort.csv: {list_missing_columns_indoor_comfort_4}.'.format(list_missing_columns_indoor_comfort_4=list_missing_columns_indoor_comfort_4))
         else:
             pass
 
@@ -386,17 +393,19 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             else:
                 print("! Ensure either internal_loads.dbf or internal_loads.csv is present in building-properties folder. Run Archetypes-Helper to generate internal_loads.csv.")
         elif 'internal_loads' not in list_missing_files_csv_building_properties_4 and list_missing_columns_internal_loads_4:
-            print('! Ensure column(s) are present in internal_loads.csv: {list_missing_columns_internal_loads_4}.'.format(list_missing_columns_internal_loads_4=list_missing_columns_internal_loads_4))
+            if verbose:
+                print('! Ensure column(s) are present in internal_loads.csv: {list_missing_columns_internal_loads_4}.'.format(list_missing_columns_internal_loads_4=list_missing_columns_internal_loads_4))
         else:
             pass
 
         if 'supply_systems' in list_missing_files_csv_building_properties_4 and not list_missing_columns_supply_systems_4:
             if 'supply_systems' not in list_missing_files_dbf_building_properties_3:
-                migrate_dbf_to_csv(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3, verbose=verbose)
+                migrate_dbf_to_csv(scenario, 'supply_systems', COLUMNS_SUPPLY_SYSTEMS_3, columns_mapping_dict_supply, verbose=verbose)
             else:
                 print("! Ensure either supply_systems.dbf or supply_systems.csv is present in building-properties folder. Run Archetypes-Helper to generate supply_systems.csv.")
         elif 'supply_systems' not in list_missing_files_csv_building_properties_4 and list_missing_columns_supply_systems_4:
-            print('! Ensure column(s) are present in supply_systems.csv: {list_missing_columns_supply_system_4}.'.format(list_missing_columns_supply_system_4=list_missing_columns_supply_systems_4))
+            if verbose:
+                print('! Ensure column(s) are present in supply_systems.csv: {list_missing_columns_supply_system_4}.'.format(list_missing_columns_supply_system_4=list_missing_columns_supply_systems_4))
         else:
             pass
 
