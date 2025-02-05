@@ -15,10 +15,12 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import re
+import sys
 
 import cea.config
 import cea.inputlocator
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
 import cea.utilities.workerstream
@@ -3434,6 +3436,23 @@ def read_properties_from_buildings(buildings_demands, property):
     return property_df
 
 
+def check_heating_cooling_demand(locator, config):
+    # local variables
+    network_type = config.thermal_network.network_type
+    total_demand = pd.read_csv(locator.get_total_demand())
+    if network_type == "DH":
+        buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+        buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
+        if not (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
+            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
+            sys.exit(1)
+
+    if network_type == "DC":
+        buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+        if not buildings_name_with_cooling:
+            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
+            sys.exit(1)
+
 # ============================
 # test
 # ============================
@@ -3459,6 +3478,7 @@ def main(config):
         print('The process of simplified thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
     else:
         for network_name in network_names:
+            check_heating_cooling_demand(locator, config)
             thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
             thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
         # Print the time used for the entire processing
