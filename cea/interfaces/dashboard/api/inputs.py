@@ -18,6 +18,7 @@ import cea.schemas
 import cea.scripts
 import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.utils import secure_path
@@ -436,14 +437,16 @@ async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
 
 @router.get('/databases/check')
 async def check_input_database(config: CEAConfig):
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    try:
-        locator.verify_database_template()
-    except IOError as e:
-        print(e)
+    """Check if the databases are valid"""
+    scenario = config.scenario
+    dict_missing_db = cea4_verify_db(scenario, verbose=True)
+
+    if dict_missing_db:
+        missing_dbs = list(dict_missing_db.keys())
+        missing_dbs.sort()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail= json.dumps(dict_missing_db),
         )
 
     return {'message': 'Database in path seems to be valid.'}
