@@ -267,6 +267,45 @@ def migrate_dbf_to_csv(scenario, item, required_columns, columns_mapping_dict=No
                     print(f'- {item}.dbf has been migrated from CEA-3 to CEA-4 format.')
 
 
+def update_header(scenario, item, columns_mapping_dict, list_missing_columns):
+    """
+    Update the column headers of a DBF file, rename columns based on mapping,
+    and return the missing columns after renaming.
+
+    Parameters:
+    - scenario (str): Path to the scenario.
+    - item (str): Identifier for the file.
+    - columns_mapping_dict (dict): Dictionary mapping old column names to new column names.
+    - list_missing_columns (list): List of expected columns that should be present.
+
+    Returns:
+    - list: Updated list of missing columns.
+    """
+    try:
+        # Read the DBF file into a DataFrame
+        df = pd.read_csv(path_to_input_file_without_db_4(scenario, item))
+
+        if df.empty:
+            print(f"Warning: {item} is empty. No changes made.")
+            return list_missing_columns  # Return original missing columns
+
+        # Rename columns
+        df.rename(columns=columns_mapping_dict, inplace=True)
+
+        # Save the updated DataFrame back to CSV
+        df.to_csv(path_to_input_file_without_db_4(scenario, item), index=False)
+
+        # Get the new list of headers
+        list_header = df.columns.tolist()
+
+        # Find the columns still missing after renaming
+        list_missing_new = sorted(set(list_missing_columns) - set(list_header))
+
+        return list_missing_new
+
+    except Exception as e:
+        print(f"Error updating header for {item}: {e}")
+        return list_missing_columns  # Return original missing columns in case of error
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
@@ -360,7 +399,8 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             else:
                 print("! Ensure either air_conditioning.dbf or air_conditioning.csv is present in building-properties folder. Run Archetypes-Helper to generate air_conditioning.csv.")
         elif 'air_conditioning' not in list_missing_files_csv_building_properties_4 and list_missing_columns_air_conditioning_4:
-            if verbose:
+            list_missing_columns_air_conditioning_4_updated = update_header(scenario,'air_conditioning', columns_mapping_dict_hvac, list_missing_columns_air_conditioning_4)
+            if verbose and list_missing_columns_air_conditioning_4_updated:
                 print('! Ensure column(s) are present in air_conditioning.csv: {list_missing_columns_air_conditioning_4}.'.format(list_missing_columns_air_conditioning_4=list_missing_columns_air_conditioning_4))
         else:
             pass
@@ -371,7 +411,8 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             else:
                 print("! Ensure either architecture.dbf or architecture.csv is present in building-properties folder. Run Archetypes-Helper to generate architecture.csv.")
         elif 'architecture' not in list_missing_files_csv_building_properties_4 and list_missing_columns_architecture_4:
-            if verbose:
+            list_missing_columns_architecture_4_updated = update_header(scenario,'architecture', columns_mapping_dict_envelope, list_missing_columns_architecture_4)
+            if verbose and list_missing_columns_architecture_4_updated:
                 print('! Ensure column(s) are present in architecture.csv: {list_missing_columns_architecture_4}.'.format(list_missing_columns_architecture_4=list_missing_columns_architecture_4))
         else:
             pass
@@ -404,7 +445,8 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             else:
                 print("! Ensure either supply_systems.dbf or supply_systems.csv is present in building-properties folder. Run Archetypes-Helper to generate supply_systems.csv.")
         elif 'supply_systems' not in list_missing_files_csv_building_properties_4 and list_missing_columns_supply_systems_4:
-            if verbose:
+            list_missing_columns_supply_systems_4_updated = update_header(scenario,'supply_systems', columns_mapping_dict_supply, list_missing_columns_supply_systems_4)
+            if verbose and list_missing_columns_supply_systems_4_updated:
                 print('! Ensure column(s) are present in supply_systems.csv: {list_missing_columns_supply_system_4}.'.format(list_missing_columns_supply_system_4=list_missing_columns_supply_systems_4))
         else:
             pass
