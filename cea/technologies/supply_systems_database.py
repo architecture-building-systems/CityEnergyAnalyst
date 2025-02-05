@@ -72,7 +72,7 @@ class SupplySystemsDatabase(object):
                 feedstocks_worksheets[feedstocks_name] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstocks_name))
 
             energy_carriers_worksheet = {}
-            energy_carriers_worksheet['ENERGY_CARRIERS'] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks='ENERGY_CARRIERS'))
+            energy_carriers_worksheet['ENERGY_CARRIERS'] = pd.read_csv(locator.get_db4_components_feedstocks_energy_carriers_csv())
 
             _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
