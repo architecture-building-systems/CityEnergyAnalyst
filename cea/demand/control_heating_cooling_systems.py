@@ -287,8 +287,8 @@ def is_heating_season(t, bpr):
 
     if bpr.hvac['has-heating-season']:
 
-        heating_start = convert_date_to_hour(bpr.hvac['heat_starts'])
-        heating_end = convert_date_to_hour(bpr.hvac['heat_ends']) + 23  # end at the last hour of the day
+        heating_start = convert_date_to_hour(bpr.hvac['hvac_heat_starts'])
+        heating_end = convert_date_to_hour(bpr.hvac['hvac_heat_ends']) + 23  # end at the last hour of the day
 
         # check if heating season is at the end of the year (north hemisphere) or in the middle of the year (south)
         if heating_start < heating_end and \
