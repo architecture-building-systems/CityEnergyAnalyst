@@ -9,6 +9,8 @@ is to avoid reading this data (which is constant during the lifetime of a script
 import pandas as pd
 import os
 
+from cea.datamanagement.format_helper.cea4_verify_db import get_csv_filenames
+
 # keep track of locators previously seen so we don't re-read excel files twice
 _locators = {}
 
@@ -78,14 +80,4 @@ class SupplySystemsDatabase(object):
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
 
 
-def get_csv_filenames(directory):
-    """
-    Get all .csv file names (without extensions) under a given directory.
 
-    Parameters:
-    - directory (str): Path to the directory.
-
-    Returns:
-    - List[str]: List of CSV file names without extensions.
-    """
-    return [os.path.splitext(file)[0] for file in os.listdir(directory) if file.endswith('.csv')]

@@ -127,7 +127,7 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
                 output_path = os.path.join(directory_csv, f"HVAC_{sheet_name}.csv")
             elif file_name == 'SUPPLY':
                 output_path = os.path.join(directory_csv, f"SUPPLY_{sheet_name}.csv")
-            elif sheet_name == 'SOLAR_COLLECTORS':
+            elif sheet_name == 'SOLAR_THERMAL_PANELS':
                 output_path = os.path.join(directory_csv, f"SOLAR_COLLECTORS.csv")
             else:
                 output_path = os.path.join(directory_csv, f"{sheet_name}.csv")
