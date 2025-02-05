@@ -19,6 +19,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.datamanagement.format_helper.cea4_verify_db import get_csv_filenames
+
 
 def lca_operation(locator):
     """
@@ -52,7 +54,11 @@ def lca_operation(locator):
     factors_dhw = pd.read_csv(locator.get_db4_assemblies_supply_hot_water_csv())
     factors_cooling = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
     factors_electricity = pd.read_csv(locator.get_db4_assemblies_supply_electricity_csv())
-    factors_resources = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=None))
+
+    factors_resources = {}
+    list_feedstocks = get_csv_filenames(locator.get_db4_components_feedstocks_library_folder())
+    for feedstock in list_feedstocks:
+        factors_resources[feedstock] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstock))
     # get the mean of all values for this
     factors_resources_simple = [(name, values['GHG_kgCO2MJ'].mean()) for name, values in factors_resources.items()
                                 if name != 'ENERGY_CARRIERS']
@@ -75,10 +81,10 @@ def lca_operation(locator):
     electricity_factors = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'GHG_kgCO2MJ']]
 
-    heating = supply_systems.merge(demand, on='name').merge(heating_factors, left_on='type_hs', right_on='code_x')
-    dhw = supply_systems.merge(demand, on='name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')
-    cooling = supply_systems.merge(demand, on='name').merge(cooling_factors, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='name').merge(electricity_factors, left_on='type_el',
+    heating = supply_systems.merge(demand, on='name').merge(heating_factors, left_on='supply_type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='name').merge(dhw_factors, left_on='supply_type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='name').merge(cooling_factors, left_on='supply_type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='name').merge(electricity_factors, left_on='supply_type_el',
                                                                 right_on='code_x')
 
     ## calculate the operational primary energy and emissions for heating services
