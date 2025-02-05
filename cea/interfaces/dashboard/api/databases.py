@@ -148,7 +148,7 @@ class ValidateDatabase(BaseModel):
 
 
 @router.post("/validate")
-async def validate_database(config: CEAConfig, data: ValidateDatabase):
+async def validate_database(data: ValidateDatabase):
     """Validate the given databases (only checks if the folder structure is correct)"""
     if data.type == 'path':
         if data.path is None:
@@ -157,7 +157,7 @@ async def validate_database(config: CEAConfig, data: ValidateDatabase):
         try:
             # FIXME: Update verify_database_template to be able to verify databases from a path
             with tempfile.TemporaryDirectory() as tmpdir:
-                scenario = os.path.join(tmpdir, data.path)
+                scenario = os.path.join(tmpdir, "scenario")
                 db_path = os.path.join(scenario, "inputs", "database")
                 os.makedirs(db_path, exist_ok=True)
 
