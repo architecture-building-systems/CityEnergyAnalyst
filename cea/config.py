@@ -1216,6 +1216,8 @@ class ColumnChoiceParameter(ChoiceParameter):
         Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary
         """
         kwargs = dict()
+        if value is None:
+            return kwargs
 
         try:
             value = value.strip()
@@ -1234,7 +1236,7 @@ class ColumnChoiceParameter(ChoiceParameter):
         self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
         self.column_name = parser.get(self.section.name, f"{self.name}.column")
         self.sheet_name = parser.get(self.section.name, f"{self.name}.sheet", fallback=None)
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback={})
+        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None)
 )
 
     @property
