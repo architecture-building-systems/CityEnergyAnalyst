@@ -54,6 +54,44 @@ columns_mapping_dict_typology = {'YEAR': 'year',
                                  '3RD_USE': 'use_type3',
                                  '3RD_USE_R': 'use_type3r'
                                  }
+
+columns_mapping_dict_envelope = {'Hs_ag': 'envelope_Hs_ag',
+                                     'Hs_bg': 'envelope_Hs_bg',
+                                     'Ns': 'envelope_Ns',
+                                     'Es': 'envelope_Es',
+                                     'void_deck': 'envelope_void_deck',
+                                     'wwr_north': 'envelope_wwr_north',
+                                     'wwr_south': 'envelope_wwr_south',
+                                     'wwr_east': 'envelope_wwr_east',
+                                     'wwr_west': 'envelope_wwr_west',
+                                     'type_cons': 'envelope_type_mass',
+                                     'type_leak': 'envelope_type_leak',
+                                     'type_floor': 'envelope_type_floor',
+                                     'type_part': 'envelope_type_part',
+                                     'type_base': 'envelope_type_base',
+                                     'type_wall': 'envelope_type_wall',
+                                     'type_win': 'envelope_type_win',
+                                     'type_shade': 'envelope_type_shade',
+                                     }
+
+
+columns_mapping_dict_hvac = {'type_cs': 'hvac_type_cs',
+                             'type_hs': 'hvac_type_hs',
+                             'type_dhw': 'hvac_type_dhw',
+                             'type_ctrl': 'hvac_type_ctrl',
+                             'type_vent': 'hvac_type_vent',
+                             'cool_starts': 'hvac_cool_starts',
+                             'cool_ends': 'hvac_cool_ends',
+                             'heat_starts': 'hvac_heat_starts',
+                             'heat_ends': 'hvac_heat_ends',
+                             }
+
+columns_mapping_dict_supply = {'type_cs': 'supply_type_cs',
+                               'type_hs': 'supply_type_hs',
+                               'type_dhw': 'supply_type_dhw',
+                               'type_el': 'supply_type_el',
+                               }
+
 COLUMNS_ZONE_TYPOLOGY_3 = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 
 ## --------------------------------------------------------------------------------------------------------------------
