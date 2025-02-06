@@ -770,7 +770,7 @@ def cea4_verify_db(scenario, verbose=False):
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
-            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstocks_file', column_name_2_3='cost_and_ghg_tab')
+            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstock_file', column_name_2_3='cost_and_ghg_tab')
             if list_missing_energy_carriers:
                 if verbose:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))

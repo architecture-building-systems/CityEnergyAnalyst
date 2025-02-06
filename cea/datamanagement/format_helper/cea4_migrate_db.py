@@ -46,7 +46,7 @@ rename_dict = {'STANDARD': 'const_type',
                'SERVERS':'servers',
                'ELECTROMOBILITY':'electromobility',
                'unit ': 'unit',
-               'cost_and_ghg_tab': 'feedstocks_file',
+               'cost_and_ghg_tab': 'feedstock_file',
                }
 
 rename_dict_2 = {'Code': 'use_type',
