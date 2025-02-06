@@ -77,11 +77,11 @@ def create_mixed_use_type(locator, internal_loads_df, indoor_comfort_df,
                                                                                 list_var_values, use_type_metadata)
 
     print("Writing to disk...")
-    use_type_properties_path = locator.get_db4_archetypes_schedules_use_type_csv()
+    use_type_properties_path = locator.get_database_archetypes_schedules()
     merged_df = pd.merge(new_internal_loads_df, new_indoor_comfort_df, on='code', how="outer")
     merged_df.to_csv(use_type_properties_path, index=False)
 
-    schedule_path = locator.get_db4_archetypes_schedules_use_type_csv(use_type_name)
+    schedule_path = locator.get_database_archetypes_schedules(use_type_name)
     save_cea_schedules(schedule_new_data, schedule_path)
 
 
@@ -116,7 +116,7 @@ def main(config):
     use_type_ratios_dict = {k: float(v) for k, v in [ratio.split('|') for ratio in use_type_ratios]}
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    use_type_properties_df = pd.read_csv(locator.get_db4_archetypes_use_type_csv())
+    use_type_properties_df = pd.read_csv(locator.get_database_archetypes_use_type())
     internal_loads_df = use_type_properties_df['code', 'Occ_m2p', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ed_Wm2', 'Vww_ldp', 'Vw_ldp', 'Qcre_Wm2', 'Qhpro_Wm2',	'Qcpro_Wm2', 'Ev_kWveh']
     indoor_comfort_df = use_type_properties_df['code', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lsp', 'RH_min_pc', 'RH_max_pc']
 

@@ -401,11 +401,11 @@ async def put_input_database_data(config: CEAConfig, payload: Dict[str, Any]):
         for db_name in payload[db_type]:
             if db_name == 'USE_TYPES':
                 database_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
-                                      locator.get_db4_archetypes_schedules_use_type_csv())
+                                      locator.get_database_archetypes_schedules())
                 for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                     schedule_dict_to_file(
                         schedule_dict,
-                        locator.get_db4_archetypes_schedules_use_type_csv(archetype)
+                        locator.get_database_archetypes_schedules(archetype)
                     )
             else:
                 locator_method = DATABASES_SCHEMA_KEYS[db_name][0]
