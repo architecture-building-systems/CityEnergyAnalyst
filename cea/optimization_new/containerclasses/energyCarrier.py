@@ -161,7 +161,7 @@ class EnergyCarrier(object):
                 return float(x)
             except ValueError:
                 raise ValueError(f'Invalid qualifier value for energy carrier. Could not convert {x} to float.')
-        energy_carriers_overview = pd.read_csv(locator.get_db4_components_feedstocks_energy_carriers_csv(),
+        energy_carriers_overview = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers(),
                                                converters={'mean_qual': to_numeric})
 
         # Correct potential basic format errors if there are any

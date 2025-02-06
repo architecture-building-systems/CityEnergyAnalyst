@@ -395,7 +395,7 @@ class Network(object):
         Network._load_pot_network(domain)
         Network._set_potential_network_terminals(domain)
         Network._set_building_operation_parameters(domain)
-        Network._pipe_catalog = pd.read_csv(Network._domain_locator.get_db4_components_distribution_distribution_csv('THERMAL_GRID'))
+        Network._pipe_catalog = pd.read_csv(Network._domain_locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
 
     @staticmethod
     def _load_pot_network(domain):

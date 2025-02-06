@@ -1190,7 +1190,7 @@ def assign_pipes_to_edges(thermal_network):
     """
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_csv(thermal_network.locator.get_db4_components_distribution_distribution_csv('THERMAL_GRID'))
+    pipe_catalog = pd.read_csv(thermal_network.locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
 
