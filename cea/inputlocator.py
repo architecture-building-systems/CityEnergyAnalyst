@@ -678,19 +678,19 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY"""
         return os.path.join(self.get_db4_assemblies_folder(), 'SUPPLY')
 
-    def get_db4_assemblies_supply_cooling_csv(self):
+    def get_database_assemblies_supply_cooling(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_COOLING.csv"""
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_COOLING.csv')
 
-    def get_db4_assemblies_supply_electricity_csv(self):
+    def get_database_assemblies_supply_electricity(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv"""
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_ELECTRICITY.csv')
 
-    def get_db4_assemblies_supply_heating_csv(self):
+    def get_database_assemblies_supply_heating(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv"""
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HEATING.csv')
 
-    def get_db4_assemblies_supply_hot_water_csv(self):
+    def get_database_assemblies_supply_hot_water(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv"""
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOT_WATER.csv')
 

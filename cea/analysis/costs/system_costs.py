@@ -174,10 +174,10 @@ def calc_scale_costs(value, flag_scale):
 
 def get_databases(demand, locator):
     supply_systems = pd.read_csv(locator.get_building_supply())
-    factors_heating = pd.read_csv(locator.get_db4_assemblies_supply_heating_csv())
-    factors_dhw = pd.read_csv(locator.get_db4_assemblies_supply_hot_water_csv())
-    factors_cooling = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
-    factors_electricity = pd.read_csv(locator.get_db4_assemblies_supply_electricity_csv())
+    factors_heating = pd.read_csv(locator.get_database_assemblies_supply_heating())
+    factors_dhw = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+    factors_cooling = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+    factors_electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity())
 
     factors_resources = {}
     list_feedstocks = get_csv_filenames(locator.get_db4_components_feedstocks_library_folder())

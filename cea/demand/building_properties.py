@@ -647,10 +647,10 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    supply_heating = pd.read_csv(locator.get_db4_assemblies_supply_heating_csv())
-    supply_dhw = pd.read_csv(locator.get_db4_assemblies_supply_hot_water_csv())
-    supply_cooling = pd.read_csv(locator.get_db4_assemblies_supply_cooling_csv())
-    supply_electricity = pd.read_csv(locator.get_db4_assemblies_supply_electricity_csv())
+    supply_heating = pd.read_csv(locator.get_database_assemblies_supply_heating())
+    supply_dhw = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+    supply_cooling = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+    supply_electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity())
 
     df_emission_heating = properties_supply.merge(supply_heating, left_on='supply_type_hs', right_on='code')
     df_emission_cooling = properties_supply.merge(supply_cooling, left_on='supply_type_cs', right_on='code')
