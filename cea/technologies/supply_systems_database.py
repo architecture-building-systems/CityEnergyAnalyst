@@ -65,7 +65,7 @@ class SupplySystemsDatabase(object):
             distribution_systems_worksheets = {}
             distribution_names = get_csv_filenames(locator.get_db4_components_distribution_folder())
             for distribution_name in distribution_names:
-                distribution_systems_worksheets[distribution_name] = pd.read_csv(locator.get_db4_components_distribution_distribution_csv(distribution=distribution_name))
+                distribution_systems_worksheets[distribution_name] = pd.read_csv(locator.get_database_components_distribution_thermal_grid(distribution=distribution_name))
 
             feedstocks_worksheets = {}
             feedstocks_names = get_csv_filenames(locator.get_db4_components_feedstocks_library_folder())
@@ -73,7 +73,7 @@ class SupplySystemsDatabase(object):
                 feedstocks_worksheets[feedstocks_name] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstocks_name))
 
             energy_carriers_worksheet = {}
-            energy_carriers_worksheet['ENERGY_CARRIERS'] = pd.read_csv(locator.get_db4_components_feedstocks_energy_carriers_csv())
+            energy_carriers_worksheet['ENERGY_CARRIERS'] = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
 
             _locators[locator] = conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
         return conversion_systems_worksheets, distribution_systems_worksheets, feedstocks_worksheets, energy_carriers_worksheet
