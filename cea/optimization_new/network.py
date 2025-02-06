@@ -887,7 +887,7 @@ class Network(object):
         """
         Calculate piping cost for a fully built network.
         """
-        piping_unit_cost_dict = {pipe_type['Pipe_DN']: pipe_type['Inv_USD2015perm']
+        piping_unit_cost_dict = {pipe_type['pipe_DN']: pipe_type['Inv_USD2015perm']
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
         piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])

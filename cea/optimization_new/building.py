@@ -138,9 +138,9 @@ class Building(object):
             raise ValueError(f"Please make sure supply systems file specifies a base-case supply system for all "
                              f"buildings. No information could be found on building '{self.identifier}'.")
         elif energy_system_type == 'DH':
-            self._stand_alone_supply_system_code = base_supply_system_info['type_hs'].values[0]
+            self._stand_alone_supply_system_code = base_supply_system_info['supply_type_hs'].values[0]
         elif energy_system_type == 'DC':
-            self._stand_alone_supply_system_code = base_supply_system_info['type_cs'].values[0]
+            self._stand_alone_supply_system_code = base_supply_system_info['supply_type_cs'].values[0]
         else:
             raise ValueError(f"'{energy_system_type}' is not a valid energy system type. The relevant base supply "
                              f"system for building '{self.identifier}' could therefore not be assigned.")
