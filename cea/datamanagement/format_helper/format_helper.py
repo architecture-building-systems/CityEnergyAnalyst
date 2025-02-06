@@ -20,7 +20,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db, path_to_db_file_4
+
 
 def exec_cea_format_helper(config, scenario):
     # auto-migrate from CEA-3 to CEA-4
@@ -31,6 +32,7 @@ def exec_cea_format_helper(config, scenario):
         dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
     else:
+        delete_files(path_to_db_file_4(scenario, 'database'))
         migrate_cea3_to_cea4(scenario)
         dict_missing = cea4_verify(scenario, verbose=True)
         migrate_cea3_to_cea4_db(scenario)

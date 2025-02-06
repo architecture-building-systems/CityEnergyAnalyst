@@ -497,6 +497,7 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
     Returns:
     - list: A list of missing items from column_name_1 that are not covered by column_name_2.
     """
+    update_column = []
     try:
         # Load both CSV files
         df2 = pd.read_csv(file_path_2)
@@ -510,6 +511,7 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
                 raise ValueError("An older column name from CEA-3 is necessary here.")
             else:
                 unique_values_2 = set(df2[column_name_2_3].dropna().unique())
+                update_column = [column_name_2_3]
 
         # Find missing items
         missing_items = list(unique_values_1 - unique_values_2)
@@ -522,8 +524,7 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
             missing_items.remove('MONTHLY_MULTIPLIER')
         if 'MONTHLY_SCHEDULE_COEFFICIENTS' in missing_items:
             missing_items.remove('MONTHLY_SCHEDULE_COEFFICIENTS')
-
-        return missing_items
+        return missing_items, update_column
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
 
@@ -662,7 +663,7 @@ def cea4_verify_db(scenario, verbose=False):
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_monthly_multiplier))))
         else:
             list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
-            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
+            list_missing_monthly_multiplier_schedules, _ = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if verbose:
@@ -770,11 +771,13 @@ def cea4_verify_db(scenario, verbose=False):
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
-            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstock_file', column_name_2_3='cost_and_ghg_tab')
+            list_missing_energy_carriers, update_column = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstock_file', column_name_2_3='cost_and_ghg_tab')
             if list_missing_energy_carriers:
                 if verbose:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
                 add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
+            if update_column:
+                add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', update_column)
         if list_feedstocks_db:
             for sheet in list_feedstocks_db:
                 if sheet not in list_feedstocks_db:
