@@ -622,7 +622,7 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE"""
         return os.path.join(self.get_db4_assemblies_folder(), 'ENVELOPE')
 
-    def get_db4_assemblies_envelope_floor_csv(self):
+    def get_database_assemblies_envelope_floor(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'FLOOR.csv')
 
@@ -630,7 +630,7 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WINDOW.csv')
 
-    def get_db4_assemblies_envelope_mass_csv(self):
+    def get_database_assemblies_envelope_mass(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'MASS.csv')
 

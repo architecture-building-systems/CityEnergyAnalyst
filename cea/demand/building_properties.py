@@ -890,10 +890,10 @@ def get_envelope_properties(locator, prop_architecture):
 
     prop_roof = pd.read_csv(locator.get_db4_assemblies_envelope_roof_csv())
     prop_wall = pd.read_csv(locator.get_db4_assemblies_envelope_wall_csv())
-    prop_floor = pd.read_csv(locator.get_db4_assemblies_envelope_floor_csv())
+    prop_floor = pd.read_csv(locator.get_database_assemblies_envelope_floor())
     prop_win = pd.read_csv(locator.get_db4_assemblies_envelope_window_csv())
     prop_shading = pd.read_csv(locator.get_db4_assemblies_envelope_shading_csv())
-    prop_construction = pd.read_csv(locator.get_db4_assemblies_envelope_mass_csv())
+    prop_construction = pd.read_csv(locator.get_database_assemblies_envelope_mass())
     prop_leakage = pd.read_csv(locator.get_db4_assemblies_envelope_tightness_csv())
 
     df_construction = prop_architecture.merge(prop_construction, left_on='envelope_type_mass', right_on='code', how='left')
