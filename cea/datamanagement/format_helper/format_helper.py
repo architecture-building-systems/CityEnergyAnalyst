@@ -32,7 +32,7 @@ def exec_cea_format_helper(config, scenario):
         dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
     else:
-        delete_files(path_to_db_file_4(scenario, 'database'))
+        # delete_files(path_to_db_file_4(scenario, 'database'))
         migrate_cea3_to_cea4(scenario)
         dict_missing = cea4_verify(scenario, verbose=True)
         migrate_cea3_to_cea4_db(scenario)

@@ -41,9 +41,9 @@ def read_surface_properties(locator) -> pd.DataFrame:
 
     # local variables
     architectural_properties = pd.read_csv(locator.get_building_architecture())
-    surface_database_windows = pd.read_csv(locator.get_db4_assemblies_envelope_window_csv()).set_index("code")
-    surface_database_roof = pd.read_csv(locator.get_db4_assemblies_envelope_roof_csv()).set_index("code")
-    surface_database_walls = pd.read_csv(locator.get_db4_assemblies_envelope_wall_csv()).set_index("code")
+    surface_database_windows = pd.read_csv(locator.get_database_assemblies_envelope_window()).set_index("code")
+    surface_database_roof = pd.read_csv(locator.get_database_assemblies_envelope_roof()).set_index("code")
+    surface_database_walls = pd.read_csv(locator.get_database_assemblies_envelope_wall()).set_index("code")
 
     errors = {}
     def match_code(property_code_column: str, code_value_df: pd.DataFrame) -> pd.DataFrame:

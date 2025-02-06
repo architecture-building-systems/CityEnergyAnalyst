@@ -626,7 +626,7 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'FLOOR.csv')
 
-    def get_db4_assemblies_envelope_window_csv(self):
+    def get_database_assemblies_envelope_window(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WINDOW.csv')
 
@@ -634,19 +634,19 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'MASS.csv')
 
-    def get_db4_assemblies_envelope_tightness_csv(self):
+    def get_database_assemblies_envelope_tightness(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'TIGHTNESS.csv')
 
-    def get_db4_assemblies_envelope_roof_csv(self):
+    def get_database_assemblies_envelope_roof(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ROOF.csv')
 
-    def get_db4_assemblies_envelope_shading_csv(self):
+    def get_database_assemblies_envelope_shading(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'SHADING.csv')
 
-    def get_db4_assemblies_envelope_wall_csv(self):
+    def get_database_assemblies_envelope_wall(self):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WALL.csv')
 
@@ -654,23 +654,23 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/HVAC"""
         return os.path.join(self.get_db4_assemblies_folder(), 'HVAC')
 
-    def get_db4_assemblies_hvac_controller_csv(self):
+    def get_database_assemblies_hvac_controller(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_CONTROLLER.csv"""
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_CONTROLLER.csv')
 
-    def get_db4_assemblies_hvac_heating_csv(self):
+    def get_database_assemblies_hvac_heating(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HEATING.csv"""
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HEATING.csv')
 
-    def get_db4_assemblies_hvac_cooling_csv(self):
+    def get_database_assemblies_hvac_cooling(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_COOLING.csv"""
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_COOLING.csv')
 
-    def get_db4_assemblies_hvac_ventilation_csv(self):
+    def get_database_assemblies_hvac_ventilation(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_VENTILATION.csv"""
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_VENTILATION.csv')
 
-    def get_db4_assemblies_hvac_hot_water_csv(self):
+    def get_database_assemblies_hvac_hot_water(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HOT_WATER.csv"""
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HOT_WATER.csv')
 
