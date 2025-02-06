@@ -742,33 +742,6 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
 
-    def get_database_construction_standards(self):
-        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_archetypes_folder(), 'CONSTRUCTION_STANDARD.xlsx')
-
-    def get_database_use_types_properties(self):
-        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_database_use_types_folder(), 'USE_TYPE_PROPERTIES.xlsx')
-
-    def get_database_supply_assemblies(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xlsx')
-
-    def get_database_air_conditioning_systems(self):
-        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xlsx')
-
-    def get_database_envelope_systems(self):
-        """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xlsx')
-
-    def get_database_conversion_systems(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xlsx')
-
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
         if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
@@ -778,16 +751,6 @@ class InputLocator(object):
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
-
-    def get_database_distribution_systems(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xlsx')
-
-    def get_database_feedstocks(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xlsx')
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
