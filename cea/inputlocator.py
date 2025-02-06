@@ -590,7 +590,7 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES"""
         return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
 
-    def get_db4_archetypes_construction_type_csv(self):
+    def database_archetypes_construction_type(self):
         """scenario/inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION_TYPE.csv')
 
