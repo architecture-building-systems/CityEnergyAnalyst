@@ -6414,6 +6414,11 @@ get_database_components_feedstocks_energy_carriers:
         type: float, int
         unit: 'NA'
         values: '{-273.15...n}'
+      feedstock_file:
+        description: reference to the file in the feedstock library containing cost and emissions of this energy carrier
+        type: string
+        unit: 'NA'
+        values: 'NA'
       reference:
         description: references to documents and articles values in the table were taken from
         type: string

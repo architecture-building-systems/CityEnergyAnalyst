@@ -732,6 +732,12 @@ class InputLocator(object):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/{feedstocks}.csv"""
         return os.path.join(self.get_db4_components_feedstocks_library_folder(), feedstocks + '.csv')
 
+    def get_db4_components_feedstocks_all(self):
+        """return: dict of scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv"""
+        csv_file_names = [os.path.splitext(file)[0] for file in
+                          os.listdir(self.get_db4_components_feedstocks_library_folder()) if file.endswith('.csv')]
+        return {name: self.get_db4_components_feedstocks_feedstocks_csv(name) for name in csv_file_names}
+
     def get_db4_components_feedstocks_energy_carriers_csv(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
