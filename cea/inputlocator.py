@@ -594,7 +594,7 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION_TYPE.csv')
 
-    def get_db4_archetypes_use_type_csv(self):
+    def get_database_archetypes_use_type(self):
         """scenario/inputs/database/ARCHETYPES/USE_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_folder(), 'USE_TYPE.csv')
 
@@ -606,11 +606,11 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY"""
         return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES', 'SCHEDULES_LIBRARY')
 
-    def get_db4_archetypes_schedules_use_type_csv(self, use_type=None):
+    def get_database_archetypes_schedules(self, use_type=None):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/{use}.csv"""
         return os.path.join(self.get_db4_archetypes_schedules_library_folder(), use_type + '.csv')
 
-    def get_db4_archetypes_schedules_monthly_multiplier_csv(self):
+    def get_database_archetypes_schedules_monthly_multiplier(self):
         """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
         return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
 

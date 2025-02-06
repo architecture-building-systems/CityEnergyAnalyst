@@ -33,7 +33,7 @@ def read_cea_schedule(locator, use_type=None, building=None):
     metadata = 'meta-data'
     # Get the twelve numbers of monthly multiplier as a list
     if use_type:
-        path_to_monthly_multiplier = locator.get_db4_archetypes_schedules_monthly_multiplier_csv()
+        path_to_monthly_multiplier = locator.get_database_archetypes_schedules_monthly_multiplier()
         path_to_schedule = locator.get_database_archetypes_schedules(use_type)
         df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
         df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['use_type'] == use_type]
