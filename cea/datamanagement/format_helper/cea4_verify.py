@@ -85,7 +85,7 @@ def path_to_input_file_without_db_4(scenario, item, building_name=None):
         path_to_input_file = os.path.join(scenario, "inputs", "weather", "weather.epw")
     elif item == 'schedules':
         if building_name is None:
-            raise ValueError(f"A list of building names must be provided for {item}.")
+            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules')
         else:
             path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules', "{building}.csv".format(building=building_name))
     elif item == 'MONTHLY_MULTIPLIERS':
@@ -488,7 +488,6 @@ def cea4_verify(scenario, verbose=False):
                     add_values_to_dict(dict_list_missing_items_building_properties_schedules, schedule, list_issues_against_schema_schedules)
                     print('! Check values in {schedule}.csv:'.format(schedule=schedule))
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules))
-            list_missing_columns_building_properties_schedules.append(dict_list_missing_items_building_properties_schedules)
     if not list_missing_files_csv_building_properties_schedules_monthly_multipliers:
         list_missing_columns_schedules_monthly_multipliers, list_issues_against_schema_schedules_monthly_multipliers = verify_file_against_schema_4(scenario, 'monthly-multipliers')
         if list_missing_columns_schedules_monthly_multipliers:
@@ -525,7 +524,7 @@ def cea4_verify(scenario, verbose=False):
         'surroundings': list_missing_attributes_surroundings,
         'building-properties': list_missing_files_csv_building_properties,
         'schedules': list_missing_files_csv_building_properties_schedules,
-        'buildings':  list_missing_columns_building_properties_schedules,
+        'buildings':  dict_list_missing_items_building_properties_schedules,
         'monthly_multipliers': list_missing_columns_schedules_monthly_multipliers,
         'air_conditioning': dict_list_missing_columns_csv_building_properties['air_conditioning'],
         'architecture': dict_list_missing_columns_csv_building_properties['architecture'],

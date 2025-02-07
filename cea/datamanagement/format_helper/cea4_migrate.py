@@ -2,8 +2,7 @@
 Mirgate the format of the input data to CEA-4 format after verification.
 
 """
-
-
+import csv
 import os
 import cea.config
 import time
@@ -21,8 +20,10 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4
+from cea.datamanagement.format_helper.cea4_verify_db import check_directory_contains_csv
 from cea.utilities.dbf import dbf_to_dataframe
 
 COLUMNS_ZONE_3 = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
@@ -100,7 +101,7 @@ COLUMNS_ZONE_TYPOLOGY_3 = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-def path_to_input_file_without_db_3(scenario, item):
+def path_to_input_file_without_db_3(scenario, item,building_name=None):
 
     if item == "zone":
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "zone.shp")
@@ -124,6 +125,11 @@ def path_to_input_file_without_db_3(scenario, item):
         path_to_input_file = os.path.join(scenario, "inputs", "topography", "terrain.tif")
     elif item == 'weather':
         path_to_input_file = os.path.join(scenario, "inputs", "weather", "weather.epw")
+    elif item == 'schedules':
+        if building_name is None:
+            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules')
+        else:
+            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules', "{building}.csv".format(building=building_name))
     else:
         raise ValueError(f"Unknown item {item}")
 
@@ -307,6 +313,95 @@ def update_header(scenario, item, columns_mapping_dict, list_missing_columns):
         print(f"Error updating header for {item}: {e}")
         return list_missing_columns  # Return original missing columns in case of error
 
+
+def modify_csv_files(scenario, verbose=False):
+    """
+    Process .csv files from one directory to another.
+    Also, compile specific rows from .csv files into a combined DataFrame.
+
+    Parameters:
+    - scenario: The scenario path.
+
+    Returns:
+    - None
+    """
+    # Paths
+    schedules_directory_3 = path_to_input_file_without_db_3(scenario, 'schedules')
+    schedules_directory_4 = path_to_input_file_without_db_4(scenario, 'schedules')
+    compiled_rows = []
+
+    if not check_directory_contains_csv(schedules_directory_3):
+        return
+
+    # Ensure the target directory exists
+    os.makedirs(schedules_directory_4, exist_ok=True)
+
+    # Iterate through files in the source directory
+    for root, _, files in os.walk(schedules_directory_3):
+        for file in files:
+            old_file_path = os.path.join(root, file)
+            new_file_path = os.path.join(schedules_directory_4, file)
+
+            # Handle .csv files: Process and save
+            if file.endswith('.csv'):
+                try:
+                    # Read the CSV file
+                    use_type = os.path.splitext(file)[0]
+                    with open(old_file_path, 'r') as f:
+                        reader = csv.reader(f)
+                        rows = list(reader)
+
+                    # Extract the second row for compilation: monthly multiplier
+                    headers_multiplier = ['use_type',
+                                          'Jan', 'Feb', 'Mar',
+                                          'Apr', 'May', 'Jun',
+                                          'Jul', 'Aug', 'Sep',
+                                          'Oct', 'Nov', 'Dec']
+                    second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
+                    second_row['use_type'] = use_type
+                    compiled_rows.append(second_row)
+
+                    # Clean and process the remaining data
+                    # Extract rows 3 to 74
+                    other_rows = rows[3:75]  # Remember Python indexing starts at 0
+                    headers_schedules = rows[2]
+                    schedules_df = pd.DataFrame(other_rows, columns=headers_schedules)
+                    schedules_df.rename(columns=rename_dict, inplace=True)
+                    schedules_df = schedules_df.apply(pd.to_numeric, errors='ignore')
+
+                    # Drop the original 'day' and 'hour' columns
+                    if 'day' in schedules_df.columns:
+                        schedules_df.drop(columns=['day'], inplace=True)
+                    if 'hour' in schedules_df.columns:
+                        schedules_df.drop(columns=['hour'], inplace=True)
+
+                    # Create the 'hour' column
+                    hour_values = (
+                        ['Weekday_{:02d}'.format(i) for i in range(24)] +
+                        ['Saturday_{:02d}'.format(i) for i in range(24)] +
+                        ['Sunday_{:02d}'.format(i) for i in range(24)]
+                    )
+
+                    # Add the new 'hour' column as a Series
+                    schedules_df.insert(0, 'hour', pd.Series(hour_values, index=schedules_df.index[:72]))
+
+                    # Save the cleaned data
+                    schedules_df.to_csv(new_file_path, index=False)
+                    if verbose:
+                        print(f"Saved {use_type} to {new_file_path}")
+                except Exception as e:
+                    print(f"Error processing {file}: {e}")
+
+    # Create and save the compiled DataFrame
+    if compiled_rows:
+        compiled_multiplier_df = pd.DataFrame(compiled_rows)
+        compiled_multiplier_path = path_to_input_file_without_db_4(scenario, 'schedules', 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
+        if verbose:
+            print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
+
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -323,6 +418,7 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
         list_missing_files_shp_building_geometry_4 = dict_missing.get('building-geometry')
         list_missing_files_dbf_building_properties_3 = verify_file_exists_3(scenario, CSV_BUILDING_PROPERTIES_3)
         list_missing_files_csv_building_properties_4 = dict_missing.get('building-properties')
+        list_missing_files_csv_building_properties_schedules_4 = dict_missing.get('schedules')
 
         # Verify missing attributes/columns for CEA-4 format
         list_missing_attributes_zone_4 = dict_missing.get('zone')
@@ -332,6 +428,8 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
         list_missing_columns_indoor_comfort_4 = dict_missing.get('indoor_comfort')
         list_missing_columns_internal_loads_4 = dict_missing.get('internal_loads')
         list_missing_columns_supply_systems_4 = dict_missing.get('supply_systems')
+        list_missing_columns_building_properties_schedules_buildings_4 = dict_missing.get('buildings')
+        list_missing_columns_building_properties_schedules_monthly_multipliers_4 = dict_missing.get('monthly_multipliers')
 
         #1. about zone.shp and surroundings.shp
         if 'zone' not in list_missing_files_shp_building_geometry_4:
@@ -457,6 +555,19 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                 os.remove(typology_path)
                 if verbose:
                     print('- typology.dbf has been removed as it is no longer needed by CEA-4.')
+
+        #3. about .csv files under the "inputs/building-properties/schedules" folder
+        if list_missing_files_csv_building_properties_schedules_4:
+            if list_missing_files_csv_building_properties_schedules_4 == ['MONTHLY_MULTIPLIER']:
+                modify_csv_files(scenario, verbose=False)
+            else:
+                print('! Missing .csv files in building-properties/schedules folder: {building}.'.format(building=', '.join(map(str, list_missing_files_csv_building_properties_schedules_4))))
+                print('! Run Archetypes Mapper to create the missing .csv files.')
+        else:
+            if list_missing_columns_building_properties_schedules_buildings_4 or list_missing_columns_building_properties_schedules_monthly_multipliers_4:
+                print('! Missing data in .csv files:')
+                print('! Run Archetypes Mapper to create new .csv files completing the missing data.')
+
 
 
         # # Print: End
