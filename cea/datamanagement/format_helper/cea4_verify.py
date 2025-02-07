@@ -35,7 +35,9 @@ mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'supply_systems': 'get_building_supply',
                                              'architecture': 'get_building_architecture',
                                              'indoor_comfort': 'get_building_comfort',
-                                             'streets': 'get_street_network'
+                                             'streets': 'get_street_network',
+                                             'schedules': 'get_building_weekly_schedules',
+                                             'MONTHLY_MULTIPLIERS': 'get_building_property_schedules_monthly_multiplier'
                                              }
 
 mapping_dict_input_item_to_id_column = {'zone': 'name',
@@ -47,7 +49,9 @@ mapping_dict_input_item_to_id_column = {'zone': 'name',
                                         'supply_systems': 'name',
                                         'architecture': 'name',
                                         'indoor_comfort': 'name',
-                                        'streets': ''
+                                        'streets': '',
+                                        'schedules': 'hour',
+                                        'MONTHLY_MULTIPLIERS': 'code'
                                         }
 
 
@@ -57,7 +61,7 @@ mapping_dict_input_item_to_id_column = {'zone': 'name',
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-def path_to_input_file_without_db_4(scenario, item, building_names=None):
+def path_to_input_file_without_db_4(scenario, item, building_name=None):
 
     if item == "zone":
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "zone.shp")
@@ -80,10 +84,10 @@ def path_to_input_file_without_db_4(scenario, item, building_names=None):
     elif item == 'weather':
         path_to_input_file = os.path.join(scenario, "inputs", "weather", "weather.epw")
     elif item == 'schedules':
-        if building_names is None:
+        if building_name is None:
             raise ValueError(f"A list of building names must be provided for {item}.")
         else:
-            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules', "{buildings}.csv".format(buildings=building_names))
+            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules', "{building}.csv".format(building=building_name))
     elif item == 'MONTHLY_MULTIPLIERS':
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "schedules", "MONTHLY_MULTIPLIERS.csv")
     else:
@@ -112,7 +116,10 @@ def verify_file_against_schema_4(scenario, item, building_name=None):
     schema = schemas()
 
     # File path and schema section
-    file_path = path_to_input_file_without_db_4(scenario, item, building_name=building_name)
+    if building_name is None:
+        file_path = path_to_input_file_without_db_4(scenario, item)
+    else:
+        file_path = path_to_input_file_without_db_4(scenario, item, building_name=building_name)
     locator = mapping_dict_input_item_to_schema_locator[item]
 
     schema_section = schema[locator]
@@ -465,6 +472,8 @@ def cea4_verify(scenario, verbose=False):
     list_missing_files_csv_building_properties_schedules_building = verify_file_exists_4(scenario, ['schedules'], list_names_zone)
     list_missing_files_csv_building_properties_schedules_monthly_multipliers = verify_file_exists_4(scenario, ['MONTHLY_MULTIPLIERS'])
     list_missing_files_csv_building_properties_schedules = list_missing_files_csv_building_properties_schedules_building + list_missing_files_csv_building_properties_schedules_monthly_multipliers
+    add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'schedules', list_missing_files_csv_building_properties_schedules_building)
+    add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multipliers', list_missing_files_csv_building_properties_schedules_monthly_multipliers)
     if list_missing_files_csv_building_properties_schedules:
         if verbose:
             print('! Ensure .csv file(s) are present in building-properties/schedules folder: {list_missing_files_csv_building_properties_schedules}.'.format(list_missing_files_csv_building_properties_schedules=', '.join(map(str, list_missing_files_csv_building_properties_schedules))))
@@ -476,17 +485,17 @@ def cea4_verify(scenario, verbose=False):
         if list_missing_columns_schedules:
             add_values_to_dict(list_missing_items_building_properties_schedules, schedule, list_missing_columns_schedules)
             if verbose:
-                print('! Ensure column(s) are present in {schedule}.csv: {missing_attributes_surroundings}.'.format(schedule=schedule, missing_attributes_surroundings=', '.join(map(str, list_missing_attributes_surroundings))))
+                print('! Ensure column(s) are present in {schedule}.csv: {missing_attributes_surroundings}.'.format(schedule=schedule, missing_attributes_surroundings=', '.join(map(str, list_missing_columns_schedules))))
                 if list_issues_against_schema_schedules:
                     add_values_to_dict(list_missing_items_building_properties_schedules, schedule, list_issues_against_schema_schedules)
                     print('! Check values in {schedule}.csv:'.format(schedule=schedule))
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules))
-    dict_list_missing_items_building_properties_schedules_monthly_multiplier['schedules'] = list_missing_items_building_properties_schedules
+    add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'schedules', list_missing_items_building_properties_schedules)
     if not list_missing_files_csv_building_properties_schedules_monthly_multipliers:
         list_missing_columns_schedules_monthly_multipliers, list_issues_against_schema_schedules_monthly_multipliers = verify_file_against_schema_4(scenario, 'monthly-multipliers')
         if list_missing_columns_schedules_monthly_multipliers:
-            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multiplier', list_missing_columns_schedules_monthly_multipliers)
-            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multiplier', list_issues_against_schema_schedules_monthly_multipliers)
+            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multipliers', list_missing_columns_schedules_monthly_multipliers)
+            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multipliers', list_issues_against_schema_schedules_monthly_multipliers)
             if verbose:
                 print('! Ensure column(s) are present in monthly-multipliers.csv: {missing_attributes_surroundings}.'.format(missing_attributes_surroundings=', '.join(map(str, list_missing_columns_schedules_monthly_multipliers))))
                 if list_issues_against_schema_schedules_monthly_multipliers:
@@ -518,7 +527,7 @@ def cea4_verify(scenario, verbose=False):
         'surroundings': list_missing_attributes_surroundings,
         'building-properties': list_missing_files_csv_building_properties,
         'schedules': dict_list_missing_items_building_properties_schedules_monthly_multiplier['schedules'],
-        'monthly_multiplier': dict_list_missing_items_building_properties_schedules_monthly_multiplier['monthly_multiplier'],
+        'monthly_multipliers': dict_list_missing_items_building_properties_schedules_monthly_multiplier['monthly_multipliers'],
         'air_conditioning': dict_list_missing_columns_csv_building_properties['air_conditioning'],
         'architecture': dict_list_missing_columns_csv_building_properties['architecture'],
         'indoor_comfort': dict_list_missing_columns_csv_building_properties['indoor_comfort'],

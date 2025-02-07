@@ -2006,16 +2006,135 @@ get_building_weekly_schedules:
   file_type: csv
   schema:
     columns:
-      METADATA:
-        description: TODO
+      hour:
+        description: Day of the week (weekday, saturday, or sunday)
+        choice:
+          values:
+          - Weekday_00
+          - Weekday_01
+          - Weekday_02
+          - Weekday_03
+          - Weekday_04
+          - Weekday_05
+          - Weekday_06
+          - Weekday_07
+          - Weekday_08
+          - Weekday_09
+          - Weekday_10
+          - Weekday_11
+          - Weekday_12
+          - Weekday_13
+          - Weekday_14
+          - Weekday_15
+          - Weekday_16
+          - Weekday_17
+          - Weekday_18
+          - Weekday_19
+          - Weekday_20
+          - Weekday_21
+          - Weekday_22
+          - Weekday_23
+          - Saturday_00
+          - Saturday_01
+          - Saturday_02
+          - Saturday_03
+          - Saturday_04
+          - Saturday_05
+          - Saturday_06
+          - Saturday_07
+          - Saturday_08
+          - Saturday_09
+          - Saturday_10
+          - Saturday_11
+          - Saturday_12
+          - Saturday_13
+          - Saturday_14
+          - Saturday_15
+          - Saturday_16
+          - Saturday_17
+          - Saturday_18
+          - Saturday_19
+          - Saturday_20
+          - Saturday_21
+          - Saturday_22
+          - Saturday_23
+          - Sunday_00
+          - Sunday_01
+          - Sunday_02
+          - Sunday_03
+          - Sunday_04
+          - Sunday_05
+          - Sunday_06
+          - Sunday_07
+          - Sunday_08
+          - Sunday_09
+          - Sunday_10
+          - Sunday_11
+          - Sunday_12
+          - Sunday_13
+          - Sunday_14
+          - Sunday_15
+          - Sunday_16
+          - Sunday_17
+          - Sunday_18
+          - Sunday_19
+          - Sunday_20
+          - Sunday_21
+          - Sunday_22
+          - Sunday_23
+        primary: true
         type: string
-        unit: TODO
-        values: TODO
-      MONTHLY_MULTIPLIER:
-        description: Monthly probabilities of occupancy throughout the year
+      occupancy:
+        description: Occupancy
+        max: 1.0
+        min: 0.0
         type: float
-        unit: '[-]'
-        values: '{0.0...n}'
+      appliances:
+        description: Appliances
+        max: 1.0
+        min: 0.0
+        type: float
+      lighting:
+        description: Lighting
+        max: 1.0
+        min: 0.0
+        type: float
+      hot_water:
+        description: Domestic hot water
+        max: 1.0
+        min: 0.0
+        type: float
+      heating:
+        description: Space heating
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      cooling:
+        description: Space cooling
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      processes:
+        description: processes
+        max: 1.0
+        min: 0.0
+        type: float
+      servers:
+        description: Servers
+        max: 1.0
+        min: 0.0
+        type: float
+      electromobility:
+        description: Average number of electric vehicles in this hour
+        max: 10000
+        min: 0
+        type: float
   used_by:
   - demand
   - occupancy_helper
@@ -6431,6 +6550,106 @@ get_database_components_feedstocks_energy_carriers:
   - optimization
 
 get_database_archetypes_schedules_monthly_multiplier:
+  created_by:
+  - database_helper
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv.csv
+  file_type: csv
+  schema:
+    columns:
+      use_type:
+        description: use type code (refers to building use type)
+        primary: true
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      Jan:
+        description: Monthly schedule coefficient for January
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Feb:
+        description: Monthly schedule coefficient for February
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Mar:
+        description: Monthly schedule coefficient for March
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Apr:
+        description: Monthly schedule coefficient for April
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      May:
+        description: Monthly schedule coefficient for May
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jun:
+        description: Monthly schedule coefficient for June
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jul:
+        description: Monthly schedule coefficient for July
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Aug:
+        description: Monthly schedule coefficient for August
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Sep:
+        description: Monthly schedule coefficient for September
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Oct:
+        description: Monthly schedule coefficient for October
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Nov:
+        description: Monthly schedule coefficient for November
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Dec:
+        description: Monthly schedule coefficient for December
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - archetypes_mapper
+
+get_building_property_schedules_monthly_multiplier:
   created_by:
   - database_helper
   file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv.csv
