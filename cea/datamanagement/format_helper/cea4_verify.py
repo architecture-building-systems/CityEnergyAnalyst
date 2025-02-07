@@ -24,7 +24,8 @@ __status__ = "Production"
 SHAPEFILES = ['zone', 'surroundings']
 COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
-CSV_BUILDING_PROPERTIES_4 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
+CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
+CSV_BUILDING_PROPERTIES_4 = ['hvac', 'architecture', 'indoor_comfort', 'internal_loads', 'supply']
 mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'surroundings': 'get_surroundings_geometry',
                                              'terrain': 'get_terrain',
@@ -56,7 +57,7 @@ mapping_dict_input_item_to_id_column = {'zone': 'name',
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-def path_to_input_file_without_db_4(scenario, item):
+def path_to_input_file_without_db_4(scenario, item, building_names=None):
 
     if item == "zone":
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "zone.shp")
@@ -78,6 +79,13 @@ def path_to_input_file_without_db_4(scenario, item):
         path_to_input_file = os.path.join(scenario, "inputs", "topography", "terrain.tif")
     elif item == 'weather':
         path_to_input_file = os.path.join(scenario, "inputs", "weather", "weather.epw")
+    elif item == 'schedules':
+        if building_names is None:
+            raise ValueError(f"A list of building names must be provided for {item}.")
+        else:
+            path_to_input_file = os.path.join(scenario, "inputs", "building-properties", 'schedules', "{buildings}.csv".format(buildings=building_names))
+    elif item == 'MONTHLY_MULTIPLIERS':
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "schedules", "MONTHLY_MULTIPLIERS.csv")
     else:
         raise ValueError(f"Unknown item {item}")
 
@@ -88,7 +96,7 @@ def path_to_input_file_without_db_4(scenario, item):
 ## Helper functions
 ## --------------------------------------------------------------------------------------------------------------------
 
-def verify_file_against_schema_4(scenario, item):
+def verify_file_against_schema_4(scenario, item, building_name=None):
     """
     Validate a file against a schema section in a YAML file.
 
@@ -104,7 +112,7 @@ def verify_file_against_schema_4(scenario, item):
     schema = schemas()
 
     # File path and schema section
-    file_path = path_to_input_file_without_db_4(scenario, item)
+    file_path = path_to_input_file_without_db_4(scenario, item, building_name=building_name)
     locator = mapping_dict_input_item_to_schema_locator[item]
 
     schema_section = schema[locator]
@@ -242,7 +250,7 @@ def verify_csv_4(scenario, item, required_columns):
     return missing_columns
 
 
-def verify_file_exists_4(scenario, items):
+def verify_file_exists_4(scenario, items, building_names=None):
     """
     Verify if the files in the provided list exist for a given scenario.
 
@@ -255,9 +263,15 @@ def verify_file_exists_4(scenario, items):
     """
     list_missing_files = []
     for file in items:
-        path = path_to_input_file_without_db_4(scenario, file)
-        if not os.path.isfile(path):
-            list_missing_files.append(file)
+        if building_names is None:
+            path = path_to_input_file_without_db_4(scenario, file, building_names)
+            if not os.path.isfile(path):
+                list_missing_files.append(file)
+        else:
+            for building_name in building_names:
+                path = path_to_input_file_without_db_4(scenario, file, building_name)
+                if not os.path.isfile(path):
+                    list_missing_files.append(file)
     return list_missing_files
 
 
@@ -330,6 +344,33 @@ def verify_csv_file(scenario, item, required_columns, verbose=False):
                 print(f'! Ensure name(s) are unique in {item}.csv: {list_names_duplicated} is duplicated.')
     return list_missing_columns
 
+
+def get_shapefile_names(scenario):
+    """
+    Reads a shapefile and returns a list of unique names from the 'name' column.
+
+    Parameters:
+    - scenario: The scenario path
+
+    Returns:
+    - list: A list of names from the 'name' column.
+    """
+    shapefile_path = path_to_input_file_without_db_4(scenario, 'zone')
+    try:
+        # Load the shapefile
+        gdf = gpd.read_file(shapefile_path)
+
+        # Ensure 'name' column exists
+        if 'name' not in gdf.columns:
+            raise ValueError(f"'name' column not found in {shapefile_path}")
+
+        # Extract and return the list of names
+        return gdf['name'].dropna().astype(str).unique().tolist()
+
+    except Exception as e:
+        print(f"Error reading shapefile: {e}")
+        return []
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -343,18 +384,20 @@ def cea4_verify(scenario, verbose=False):
 
     if 'zone' not in list_missing_files_shp_building_geometry:
         list_missing_attributes_zone, list_issues_against_schema_zone = verify_file_against_schema_4(scenario, 'zone')
+        list_names_zone = get_shapefile_names(scenario)
         if list_missing_attributes_zone:
             if verbose:
                 print('! Ensure attribute(s) are present in zone.shp: {missing_attributes_zone}.'.format(missing_attributes_zone=', '.join(map(str, list_missing_attributes_zone))))
                 if list_issues_against_schema_zone:
                     print('! Check values in zone.shp:')
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_zone))
-
         if 'name' not in list_missing_attributes_zone:
             list_names_duplicated = verify_name_duplicates_4(scenario, 'zone')
             if list_names_duplicated:
                 if verbose:
                     print('! Ensure name(s) are unique in zone.shp: {list_names_duplicated} is duplicated.'.format(list_names_duplicated=', '.join(map(str, list_names_duplicated))))
+    else:
+        list_names_zone = []
 
     if 'surroundings' not in list_missing_files_shp_building_geometry:
         list_missing_attributes_surroundings, list_issues_against_schema_surroundings = verify_file_against_schema_4(scenario, 'surroundings')
@@ -373,12 +416,12 @@ def cea4_verify(scenario, verbose=False):
     #2. about .csv files under the "inputs/building-properties" folder
     dict_list_missing_columns_csv_building_properties = {}
 
-    list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
+    list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_3)
     if list_missing_files_csv_building_properties:
         if verbose:
             print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}.'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties))))
 
-    for item in ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']:
+    for item in CSV_BUILDING_PROPERTIES_3:
         if item not in list_missing_files_csv_building_properties:
             list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item)
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
@@ -390,7 +433,24 @@ def cea4_verify(scenario, verbose=False):
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_building_properties))
         else:
             dict_list_missing_columns_csv_building_properties[item] = []
-
+    #2A. about .csv files under the "inputs/building-properties/schedules" folder
+    dict_list_missing_columns_csv_building_properties_schedules = {}
+    list_missing_files_csv_building_properties_schedules_building = verify_file_exists_4(scenario, ['schedules'], list_names_zone)
+    list_missing_files_csv_building_properties_schedules_monthly_multipliers = verify_file_exists_4(scenario, ['MONTHLY_MULTIPLIERS'])
+    list_missing_files_csv_building_properties_schedules = list_missing_files_csv_building_properties_schedules_building + list_missing_files_csv_building_properties_schedules_monthly_multipliers
+    if list_missing_files_csv_building_properties_schedules:
+        if verbose:
+            print('! Ensure .csv file(s) are present in building-properties/schedules folder: {list_missing_files_csv_building_properties_schedules}.'.format(list_missing_files_csv_building_properties_schedules=', '.join(map(str, list_missing_files_csv_building_properties_schedules))))
+    # Schedules that exist in schedules folder
+    list_files_csv_building_properties_schedules = [item for item in list_names_zone if item not in list_missing_files_csv_building_properties_schedules]
+    for schedule in list_files_csv_building_properties_schedules:
+        list_missing_columns_schedules, list_issues_against_schema_schedules = verify_file_against_schema_4(scenario, 'schedules', building_name=schedule)
+        if list_missing_columns_schedules:
+            if verbose:
+                print('! Ensure column(s) are present in {schedule}.csv: {missing_attributes_surroundings}.'.format(schedule=schedule, missing_attributes_surroundings=', '.join(map(str, list_missing_attributes_surroundings))))
+                if list_issues_against_schema_schedules:
+                    print('! Check values in {schedule}.csv:'.format(schedule=schedule))
+                    print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules))
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
     if list_missing_files_terrain:
