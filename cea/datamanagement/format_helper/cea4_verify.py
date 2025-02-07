@@ -371,6 +371,33 @@ def get_shapefile_names(scenario):
         print(f"Error reading shapefile: {e}")
         return []
 
+
+def add_values_to_dict(existing_dict, key, values):
+    """
+    Add or append values to a dictionary key. If the key does not exist, it will be created.
+
+    Parameters:
+    - existing_dict (dict): The dictionary to update.
+    - key: The key where values should be added.
+    - values (list): A list of values to add.
+
+    Returns:
+    - None: Updates the dictionary in place.
+    """
+    if key not in existing_dict:
+        # If key does not exist, create it with the new values as a list
+        existing_dict[key] = values if isinstance(values, list) else [values]
+    else:
+        # If the key exists, extend the list of values
+        if not isinstance(existing_dict[key], list):
+            # Ensure the current value is a list
+            existing_dict[key] = [existing_dict[key]]
+        # Extend the list with the new values
+        if isinstance(values, list):
+            existing_dict[key].extend(values)
+        else:
+            existing_dict[key].append(values)
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -434,7 +461,7 @@ def cea4_verify(scenario, verbose=False):
         else:
             dict_list_missing_columns_csv_building_properties[item] = []
     #2A. about .csv files under the "inputs/building-properties/schedules" folder
-    dict_list_missing_columns_csv_building_properties_schedules = {}
+    dict_list_missing_items_building_properties_schedules_monthly_multiplier = {}
     list_missing_files_csv_building_properties_schedules_building = verify_file_exists_4(scenario, ['schedules'], list_names_zone)
     list_missing_files_csv_building_properties_schedules_monthly_multipliers = verify_file_exists_4(scenario, ['MONTHLY_MULTIPLIERS'])
     list_missing_files_csv_building_properties_schedules = list_missing_files_csv_building_properties_schedules_building + list_missing_files_csv_building_properties_schedules_monthly_multipliers
@@ -442,15 +469,29 @@ def cea4_verify(scenario, verbose=False):
         if verbose:
             print('! Ensure .csv file(s) are present in building-properties/schedules folder: {list_missing_files_csv_building_properties_schedules}.'.format(list_missing_files_csv_building_properties_schedules=', '.join(map(str, list_missing_files_csv_building_properties_schedules))))
     # Schedules that exist in schedules folder
+    list_missing_items_building_properties_schedules = {}
     list_files_csv_building_properties_schedules = [item for item in list_names_zone if item not in list_missing_files_csv_building_properties_schedules]
     for schedule in list_files_csv_building_properties_schedules:
         list_missing_columns_schedules, list_issues_against_schema_schedules = verify_file_against_schema_4(scenario, 'schedules', building_name=schedule)
         if list_missing_columns_schedules:
+            add_values_to_dict(list_missing_items_building_properties_schedules, schedule, list_missing_columns_schedules)
             if verbose:
                 print('! Ensure column(s) are present in {schedule}.csv: {missing_attributes_surroundings}.'.format(schedule=schedule, missing_attributes_surroundings=', '.join(map(str, list_missing_attributes_surroundings))))
                 if list_issues_against_schema_schedules:
+                    add_values_to_dict(list_missing_items_building_properties_schedules, schedule, list_issues_against_schema_schedules)
                     print('! Check values in {schedule}.csv:'.format(schedule=schedule))
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules))
+    dict_list_missing_items_building_properties_schedules_monthly_multiplier['schedules'] = list_missing_items_building_properties_schedules
+    if not list_missing_files_csv_building_properties_schedules_monthly_multipliers:
+        list_missing_columns_schedules_monthly_multipliers, list_issues_against_schema_schedules_monthly_multipliers = verify_file_against_schema_4(scenario, 'monthly-multipliers')
+        if list_missing_columns_schedules_monthly_multipliers:
+            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multiplier', list_missing_columns_schedules_monthly_multipliers)
+            add_values_to_dict(dict_list_missing_items_building_properties_schedules_monthly_multiplier, 'monthly_multiplier', list_issues_against_schema_schedules_monthly_multipliers)
+            if verbose:
+                print('! Ensure column(s) are present in monthly-multipliers.csv: {missing_attributes_surroundings}.'.format(missing_attributes_surroundings=', '.join(map(str, list_missing_columns_schedules_monthly_multipliers))))
+                if list_issues_against_schema_schedules_monthly_multipliers:
+                    print('! Check values in monthly-multipliers.csv:')
+                    print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules_monthly_multipliers))
     #3. verify if terrain.tif, weather.epw and streets.shp exist
     list_missing_files_terrain = verify_file_exists_4(scenario, ['terrain'])
     if list_missing_files_terrain:
@@ -476,6 +517,8 @@ def cea4_verify(scenario, verbose=False):
         'zone': list_missing_attributes_zone,
         'surroundings': list_missing_attributes_surroundings,
         'building-properties': list_missing_files_csv_building_properties,
+        'schedules': dict_list_missing_items_building_properties_schedules_monthly_multiplier['schedules'],
+        'monthly_multiplier': dict_list_missing_items_building_properties_schedules_monthly_multiplier['monthly_multiplier'],
         'air_conditioning': dict_list_missing_columns_csv_building_properties['air_conditioning'],
         'architecture': dict_list_missing_columns_csv_building_properties['architecture'],
         'indoor_comfort': dict_list_missing_columns_csv_building_properties['indoor_comfort'],
