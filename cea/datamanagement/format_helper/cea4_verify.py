@@ -469,7 +469,6 @@ def cea4_verify(scenario, verbose=False):
             dict_list_missing_columns_csv_building_properties[item] = []
     #2A. about .csv files under the "inputs/building-properties/schedules" folder
     list_missing_columns_building_properties_schedules = []
-    list_missing_columns_building_properties_monthly_multipliers = []
     list_missing_files_csv_building_properties_schedules_building = verify_file_exists_4(scenario, ['schedules'], list_names_zone)
     list_missing_files_csv_building_properties_schedules_monthly_multipliers = verify_file_exists_4(scenario, ['MONTHLY_MULTIPLIERS'])
     list_missing_files_csv_building_properties_schedules = list_missing_files_csv_building_properties_schedules_building + list_missing_files_csv_building_properties_schedules_monthly_multipliers
