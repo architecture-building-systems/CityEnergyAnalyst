@@ -26,6 +26,11 @@ COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
 CSV_BUILDING_PROPERTIES_4 = ['hvac', 'architecture', 'indoor_comfort', 'internal_loads', 'supply']
+dict_mapping_building_properties = {'air_conditioning': 'hvac',
+                                    'architecture': 'envelope',
+                                    'indoor_comfort': 'indoor_comfort',
+                                    'internal_loads': 'internal_loads',
+                                    'supply_systems': 'supply'}
 mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'surroundings': 'get_surroundings_geometry',
                                              'terrain': 'get_terrain',
@@ -68,15 +73,15 @@ def path_to_input_file_without_db_4(scenario, item, building_name=None):
     elif item == "surroundings":
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "surroundings.shp")
     elif item == "air_conditioning":
-        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "air_conditioning.csv")
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "hvac.csv")
     elif item == "architecture":
-        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "architecture.csv")
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "envelope.csv")
     elif item == "indoor_comfort":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "indoor_comfort.csv")
     elif item == "internal_loads":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "internal_loads.csv")
     elif item == "supply_systems":
-        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "supply_systems.csv")
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "supply.csv")
     elif item == 'streets':
         path_to_input_file = os.path.join(scenario, "inputs", "networks", "streets.shp")
     elif item == 'terrain':
@@ -450,13 +455,14 @@ def cea4_verify(scenario, verbose=False):
     #2. about .csv files under the "inputs/building-properties" folder
     dict_list_missing_columns_csv_building_properties = {}
 
-    list_missing_files_csv_building_properties = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_3)
-    if list_missing_files_csv_building_properties:
+    list_missing_files_csv_building_properties_3 = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_3)
+    list_missing_files_csv_building_properties_4 = [dict_mapping_building_properties[item] if item in dict_mapping_building_properties else item for item in list_missing_files_csv_building_properties_3]
+    if list_missing_files_csv_building_properties_4:
         if verbose:
-            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}.'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties))))
+            print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}.'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties_4))))
 
     for item in CSV_BUILDING_PROPERTIES_3:
-        if item not in list_missing_files_csv_building_properties:
+        if item not in list_missing_files_csv_building_properties_3:
             list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item)
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
             if verbose:
@@ -521,7 +527,7 @@ def cea4_verify(scenario, verbose=False):
         'building-geometry': list_missing_files_shp_building_geometry,
         'zone': list_missing_attributes_zone,
         'surroundings': list_missing_attributes_surroundings,
-        'building-properties': list_missing_files_csv_building_properties,
+        'building-properties': list_missing_files_csv_building_properties_4,
         'schedules': list_missing_files_csv_building_properties_schedules,
         'buildings':  dict_list_missing_items_building_properties_schedules,
         'monthly_multipliers': list_missing_columns_schedules_monthly_multipliers,
