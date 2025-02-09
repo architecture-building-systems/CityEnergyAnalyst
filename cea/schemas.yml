@@ -6552,7 +6552,7 @@ get_database_components_feedstocks_energy_carriers:
 get_database_archetypes_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv
   file_type: csv
   schema:
     columns:
@@ -6652,13 +6652,12 @@ get_database_archetypes_schedules_monthly_multiplier:
 get_building_property_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv.csv
+  file_path: inputs/building-properties/schedules/MONTHLY_MULTIPLIER.csv
   file_type: csv
   schema:
     columns:
-      use_type:
-        description: use type code (refers to building use type)
-        primary: true
+      name:
+        description: Unique building ID. It must start with a letter.
         type: string
         unit: 'NA'
         values: alphanumeric
@@ -12697,7 +12696,7 @@ get_demand_results_file:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      DATE:
+      date:
         description: Time stamp for each day of the year ascending in hour intervals.
         type: date
         unit: '[datetime]'

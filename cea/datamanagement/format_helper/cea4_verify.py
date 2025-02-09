@@ -271,7 +271,7 @@ def verify_file_exists_4(scenario, items, building_names=None):
     list_missing_files = []
     for file in items:
         if building_names is None:
-            path = path_to_input_file_without_db_4(scenario, file, building_names)
+            path = path_to_input_file_without_db_4(scenario, file)
             if not os.path.isfile(path):
                 list_missing_files.append(file)
         else:
@@ -468,7 +468,6 @@ def cea4_verify(scenario, verbose=False):
         else:
             dict_list_missing_columns_csv_building_properties[item] = []
     #2A. about .csv files under the "inputs/building-properties/schedules" folder
-    list_missing_columns_building_properties_schedules = []
     list_missing_files_csv_building_properties_schedules_building = verify_file_exists_4(scenario, ['schedules'], list_names_zone)
     list_missing_files_csv_building_properties_schedules_monthly_multipliers = verify_file_exists_4(scenario, ['MONTHLY_MULTIPLIERS'])
     list_missing_files_csv_building_properties_schedules = list_missing_files_csv_building_properties_schedules_building + list_missing_files_csv_building_properties_schedules_monthly_multipliers
@@ -489,7 +488,7 @@ def cea4_verify(scenario, verbose=False):
                     print('! Check values in {schedule}.csv:'.format(schedule=schedule))
                     print("\n".join(f"  {item}" for item in list_issues_against_schema_schedules))
     if not list_missing_files_csv_building_properties_schedules_monthly_multipliers:
-        list_missing_columns_schedules_monthly_multipliers, list_issues_against_schema_schedules_monthly_multipliers = verify_file_against_schema_4(scenario, 'monthly-multipliers')
+        list_missing_columns_schedules_monthly_multipliers, list_issues_against_schema_schedules_monthly_multipliers = verify_file_against_schema_4(scenario, 'MONTHLY_MULTIPLIERS')
         if list_missing_columns_schedules_monthly_multipliers:
             if verbose:
                 print('! Ensure column(s) are present in monthly-multipliers.csv: {missing_attributes_surroundings}.'.format(missing_attributes_surroundings=', '.join(map(str, list_missing_columns_schedules_monthly_multipliers))))

@@ -343,22 +343,22 @@ def modify_csv_files(scenario, verbose=False):
             new_file_path = os.path.join(schedules_directory_4, file)
 
             # Handle .csv files: Process and save
-            if file.endswith('.csv'):
+            if file.endswith('.csv') and file != 'MONTHLY_MULTIPLIERS.csv':
                 try:
                     # Read the CSV file
-                    use_type = os.path.splitext(file)[0]
+                    building_name = os.path.splitext(file)[0]
                     with open(old_file_path, 'r') as f:
                         reader = csv.reader(f)
                         rows = list(reader)
 
                     # Extract the second row for compilation: monthly multiplier
-                    headers_multiplier = ['use_type',
+                    headers_multiplier = ['name',
                                           'Jan', 'Feb', 'Mar',
                                           'Apr', 'May', 'Jun',
                                           'Jul', 'Aug', 'Sep',
                                           'Oct', 'Nov', 'Dec']
                     second_row = {headers_multiplier[i]: value for i, value in enumerate(rows[1])}
-                    second_row['use_type'] = use_type
+                    second_row['name'] = building_name
                     compiled_rows.append(second_row)
 
                     # Clean and process the remaining data
@@ -388,14 +388,14 @@ def modify_csv_files(scenario, verbose=False):
                     # Save the cleaned data
                     schedules_df.to_csv(new_file_path, index=False)
                     if verbose:
-                        print(f"Saved {use_type} to {new_file_path}")
+                        print(f"Saved {building_name} to {new_file_path}")
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
     # Create and save the compiled DataFrame
     if compiled_rows:
         compiled_multiplier_df = pd.DataFrame(compiled_rows)
-        compiled_multiplier_path = path_to_input_file_without_db_4(scenario, 'schedules', 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_path = path_to_input_file_without_db_4(scenario, 'schedules', 'MONTHLY_MULTIPLIERS')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
         if verbose:
             print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
@@ -558,7 +558,7 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
 
         #3. about .csv files under the "inputs/building-properties/schedules" folder
         if list_missing_files_csv_building_properties_schedules_4:
-            if list_missing_files_csv_building_properties_schedules_4 == ['MONTHLY_MULTIPLIER']:
+            if list_missing_files_csv_building_properties_schedules_4 == ['MONTHLY_MULTIPLIERS']:
                 modify_csv_files(scenario, verbose=False)
             else:
                 print('! Missing .csv files in building-properties/schedules folder: {building}.'.format(building=', '.join(map(str, list_missing_files_csv_building_properties_schedules_4))))
@@ -567,8 +567,6 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             if list_missing_columns_building_properties_schedules_buildings_4 or list_missing_columns_building_properties_schedules_monthly_multipliers_4:
                 print('! Missing data in .csv files:')
                 print('! Run Archetypes Mapper to create new .csv files completing the missing data.')
-
-
 
         # # Print: End
         # print('-' * 49)
