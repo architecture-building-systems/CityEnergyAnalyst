@@ -26,6 +26,7 @@ COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
 CSV_BUILDING_PROPERTIES_4 = ['hvac', 'architecture', 'indoor_comfort', 'internal_loads', 'supply']
+CSV_BUILDING_PROPERTIES_3_CSV = ['air_conditioning_csv', 'architecture_csv', 'supply_systems_csv']
 dict_mapping_building_properties = {'air_conditioning': 'hvac',
                                     'architecture': 'envelope',
                                     'indoor_comfort': 'indoor_comfort',
@@ -373,11 +374,12 @@ def get_shapefile_names(scenario):
         gdf = gpd.read_file(shapefile_path)
 
         # Ensure 'name' column exists
-        if 'name' not in gdf.columns:
-            raise ValueError(f"'name' column not found in {shapefile_path}")
-
-        # Extract and return the list of names
-        return gdf['name'].dropna().astype(str).unique().tolist()
+        if 'name' in gdf.columns:
+            return gdf['name'].dropna().astype(str).unique().tolist()
+        elif 'Name' in gdf.columns:
+            return gdf['Name'].dropna().astype(str).unique().tolist()
+        else:
+            raise ValueError(f"neither 'name' nor 'Name' column not found in {shapefile_path}")
 
     except Exception as e:
         print(f"Error reading shapefile: {e}")
