@@ -319,7 +319,7 @@ def print_verification_results_4(scenario_name, dict_missing):
 
     if all(not value for value in dict_missing.values()):
         print("✓" * 3)
-        print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}, including:'.format(scenario=scenario_name))
+        print('All inputs are verified as present and compatible with the current version of CEA-4 for Scenario: {scenario}.'.format(scenario=scenario_name))
     else:
         print("!" * 3)
         print('All or some of input data files/columns are missing or incompatible with the current version of CEA-4 for Scenario: {scenario}. '.format(scenario=scenario_name))
