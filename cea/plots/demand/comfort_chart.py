@@ -295,7 +295,7 @@ def calc_data(data_frame, locator):
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     building_name = data_frame.name[0]
-    air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
+    air_con_data = pd.read_csv(locator.get_building_hvac()).set_index('name')
     has_winter = verify_has_season(building_name,
                                    air_con_data.loc[building_name, 'heat_starts'],
                                    air_con_data.loc[building_name, 'heat_ends'])

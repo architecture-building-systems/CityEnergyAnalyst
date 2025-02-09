@@ -119,7 +119,7 @@ def main(config):
     print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
     terrain_raster = gdal.Open(locator.get_terrain())
-    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_envelope()).set_index('name')
 
     (geometry_terrain,
      zone_building_names,

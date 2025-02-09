@@ -100,7 +100,7 @@ def lca_embodied(year_to_calculate, locator):
     """
 
     # local variables
-    architecture_df = pd.read_csv(locator.get_building_architecture())
+    architecture_df = pd.read_csv(locator.get_building_envelope())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
 
     # reproject to projected coordinate system (in meters) to calculate area
