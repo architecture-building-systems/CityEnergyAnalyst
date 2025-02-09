@@ -48,7 +48,7 @@ def occupancy_helper_main(locator, config, building=None):
     # get variables of indoor comfort and internal loads
     internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
     indoor_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
-    architecture = pd.read_csv(locator.get_building_architecture()).set_index('name')
+    architecture = pd.read_csv(locator.get_building_envelope()).set_index('name')
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())

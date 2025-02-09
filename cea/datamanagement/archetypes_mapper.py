@@ -161,7 +161,7 @@ def supply_mapper(locator, building_typology_df):
     prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
 
 def aircon_mapper(locator, typology_df):
-    locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
+    locator.ensure_parent_folder_exists(locator.get_building_hvac())
     air_conditioning_DB = pd.read_csv(locator.database_archetypes_construction_type())
     # define HVAC systems types
     prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='const_type')
@@ -176,11 +176,11 @@ def aircon_mapper(locator, typology_df):
               'hvac_heat_ends',
               'hvac_cool_starts',
               'hvac_cool_ends']
-    prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
+    prop_HVAC_df[fields].to_csv(locator.get_building_hvac(), index=False)
 
 
 def architecture_mapper(locator, typology_df):
-    locator.ensure_parent_folder_exists(locator.get_building_architecture())
+    locator.ensure_parent_folder_exists(locator.get_building_envelope())
     architecture_DB = pd.read_csv(locator.database_archetypes_construction_type())
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
@@ -202,7 +202,7 @@ def architecture_mapper(locator, typology_df):
               'envelope_type_wall',
               'envelope_type_win',
               'envelope_type_shade']
-    prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
+    prop_architecture_df[fields].to_csv(locator.get_building_envelope(), index=False)
 
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
