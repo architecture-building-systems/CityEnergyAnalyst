@@ -40,7 +40,7 @@ def read_surface_properties(locator) -> pd.DataFrame:
     """
 
     # local variables
-    architectural_properties = pd.read_csv(locator.get_building_envelope())
+    architectural_properties = pd.read_csv(locator.get_building_architecture())
     surface_database_windows = pd.read_csv(locator.get_database_assemblies_envelope_window()).set_index("code")
     surface_database_roof = pd.read_csv(locator.get_database_assemblies_envelope_roof()).set_index("code")
     surface_database_walls = pd.read_csv(locator.get_database_assemblies_envelope_wall()).set_index("code")
@@ -172,7 +172,7 @@ def main(config):
     print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
     terrain_raster = gdal.Open(locator.get_terrain())
-    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_envelope()).set_index('name')
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
 
     (geometry_terrain,
      zone_building_names,

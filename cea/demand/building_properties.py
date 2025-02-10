@@ -69,13 +69,13 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('name')
-        prop_hvac = pd.read_csv(locator.get_building_hvac())
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning())
         zone_gdf = Gdf.from_file(locator.get_zone_geometry())
         prop_typology = zone_gdf[COLUMNS_ZONE_TYPOLOGY].set_index('name')
         # Drop 'REFERENCE' column if it exists
         if 'reference' in prop_typology:
             prop_typology.drop('reference', axis=1, inplace=True)
-        prop_architectures = pd.read_csv(locator.get_building_envelope())
+        prop_architectures = pd.read_csv(locator.get_building_architecture())
         prop_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
         prop_internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
         prop_supply_systems_building = pd.read_csv(locator.get_building_supply())

@@ -1487,7 +1487,7 @@ def serial_filter_buildings(config, locator):
     list_buildings = config.result_summary.buildings
     integer_year_start = config.result_summary.filter_buildings_by_year_start
     integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_standard
+    list_standard = config.result_summary.filter_buildings_by_construction_type
     list_main_use_type = config.result_summary.filter_buildings_by_use_type
     ratio_main_use_type = config.result_summary.min_ratio_as_main_use
 

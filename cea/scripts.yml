@@ -28,6 +28,7 @@ Import & Export:
     interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
+    input-files:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
@@ -87,7 +88,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_photovoltaic_panels]
       - [get_weather_file]
 
   - name: photovoltaic-thermal
@@ -113,7 +114,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_photovoltaic_thermal_panels]
       - [get_weather_file]
 
   - name: solar-collector
@@ -130,7 +131,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_solar_collectors]
       - [get_weather_file]
 
   - name: shallow-geothermal-potential
@@ -187,8 +188,17 @@ Energy Demand Forecasting:
                  demand]
     input-files:
       - [get_weather_file]
-      - [get_database_envelope_systems]
-      - [get_database_air_conditioning_systems]
+      - [get_database_assemblies_envelope_mass]
+      - [get_database_assemblies_envelope_tightness]
+      - [get_database_assemblies_envelope_floor]
+      - [get_database_assemblies_envelope_wall]
+      - [get_database_assemblies_envelope_window]
+      - [get_database_assemblies_envelope_shading]
+      - [get_database_assemblies_envelope_roof]
+      - [get_database_assemblies_hvac_controller]
+      - [get_database_assemblies_hvac_cooling]
+      - [get_database_assemblies_hvac_heating]
+      - [get_database_assemblies_hvac_hot_water]
       - [get_building_comfort]
       - [get_building_internal]
       - [get_building_architecture]
@@ -225,7 +235,14 @@ Thermal Network Design:
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_absorption_chillers]
+      - [get_database_components_conversion_boilers]
+      - [get_database_components_conversion_cooling_towers]
+      - [get_database_components_conversion_fuel_cells]
+      - [get_database_components_conversion_heat_exchangers]
+      - [get_database_components_conversion_thermal_energy_storages]
+      - [get_database_components_conversion_thermal_grids]
+      - [get_database_components_conversion_vapor_compression_chillers]
       - [get_weather_file]
 
 
