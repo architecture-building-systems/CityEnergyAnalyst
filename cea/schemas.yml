@@ -1618,7 +1618,7 @@ get_building_air_conditioning:
 get_building_architecture:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/architecture.csv
+  file_path: inputs/building-properties/envelope.csv
   file_type: csv
   schema:
     columns:
@@ -2138,6 +2138,7 @@ get_building_weekly_schedules:
   used_by:
   - demand
   - occupancy_helper
+
 get_costs_operation_file:
   created_by:
   - system_costs
@@ -2402,7 +2403,6 @@ get_costs_operation_file:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
-
 
 get_database_assemblies_envelope_mass:
   created_by:

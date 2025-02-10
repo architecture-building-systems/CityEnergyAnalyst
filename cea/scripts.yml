@@ -48,9 +48,8 @@ Solar Radiation Analysis:
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
     input-files:
-      - [get_database_envelope_systems]
-      - [get_surroundings_geometry]
       - [get_building_architecture]
+      - [get_surroundings_geometry]
       - [get_zone_geometry]
       - [get_terrain]
       - [get_weather_file]

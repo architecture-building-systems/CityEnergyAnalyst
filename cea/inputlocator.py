@@ -611,8 +611,8 @@ class InputLocator(object):
         return os.path.join(self.get_db4_archetypes_schedules_library_folder(), use_type + '.csv')
 
     def get_database_archetypes_schedules_monthly_multiplier(self):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv"""
-        return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
+        """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIERS.csv"""
+        return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIERS.csv')
 
     def get_db4_assemblies_folder(self):
         """scenario/inputs/database/ASSEMBLIES"""
@@ -827,8 +827,8 @@ class InputLocator(object):
 
     def get_building_weekly_schedules_monthly_multiplier_csv(self):
         """
-        scenario/inputs/building-properties/schedules/MONTHLY_MULTIPLIER.csv"""
-        return os.path.join(self.get_building_weekly_schedules_folder(), 'MONTHLY_MULTIPLIER.csv')
+        scenario/inputs/building-properties/schedules/MONTHLY_MULTIPLIERS.csv"""
+        return os.path.join(self.get_building_weekly_schedules_folder(), 'MONTHLY_MULTIPLIERS.csv')
 
     def get_building_weekly_schedules(self, building):
         """
