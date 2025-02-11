@@ -64,7 +64,7 @@ def main(config):
         update_trace_data(config, locator, results_set, script_name,
                           script_start, trace_data)
     print(trace_data)
-    scripts = sorted(set([td[1] for td in trace_data]))
+    # scripts = sorted(set([td[1] for td in trace_data]))
     config.restricted_to = None
 
     meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)

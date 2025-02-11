@@ -3,7 +3,7 @@ name: Pull Request Tests
 on:
   pull_request:
     types: [opened, synchronize]
-    branches: [master]
+    branches: [master, release-**]
 
 jobs:
   check_environment_yml:

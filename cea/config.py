@@ -14,6 +14,8 @@ import re
 import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 
+import pandas as pd
+
 import cea.inputlocator
 import cea.plugin
 from cea.utilities import unique
@@ -463,6 +465,13 @@ class PathParameter(Parameter):
         return str(os.path.normpath(os.path.abspath(os.path.expanduser(value))))
 
 
+class NullablePathParameter(PathParameter):
+    def decode(self, value):
+        if value == '':
+            return value
+        return super().decode(value)
+
+
 class FileParameter(Parameter):
     """Describes a file in the system."""
 
@@ -784,7 +793,8 @@ class DatabasePathParameter(Parameter):
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
-                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
+                         if
+                         os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
 
     def encode(self, value):
         return str(value)
@@ -868,7 +878,7 @@ class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
     def initialize(self, parser):
-        pass
+        self.exclude_current = parser.get(self.section.name, f"{self.name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -884,8 +894,11 @@ class ScenarioNameParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        return get_scenarios_list(self.config.project)
+        choices = get_scenarios_list(self.config.project)
+        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
+            choices.remove(self.config.scenario_name)
 
+        return choices
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
@@ -934,8 +947,10 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         if isinstance(value, str):
             raise ValueError(f"Bad value for encode of parameter {self.name}")
+
+        valid_choices = set(self._choices)
         for choice in value:
-            if str(choice) not in self._choices:
+            if str(choice) not in valid_choices:
                 raise ValueError(f"Invalid parameter value {value} for {self.name}, choose from: {self._choices}")
         return ', '.join(map(str, value))
 
@@ -943,7 +958,8 @@ class MultiChoiceParameter(ChoiceParameter):
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
-        return [choice for choice in choices if choice in self._choices]
+        valid_choices = set(self._choices)
+        return [choice for choice in choices if choice in valid_choices]
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
@@ -1132,11 +1148,13 @@ def get_scenarios_list(project_path: str) -> List[str]:
         """
         folder_path = os.path.join(project_path, folder_name)
 
+        # TODO: Use .gitignore to ignore scenarios
         return all([os.path.isdir(folder_path),
                     not folder_name.startswith('.'),
-                    folder_name != "__pycache__"])
+                    folder_name != "__pycache__",
+                    folder_name != "__MACOSX"])
 
-    return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
+    return sorted([folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)])
 
 
 def get_systems_list(scenario_path):
@@ -1149,6 +1167,10 @@ def get_systems_list(scenario_path):
             iterations.update(data_checkpoint['systems_to_show'])
     unique_iterations = [str(x) for x in iterations]
     return unique_iterations
+
+
+class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
+    pass
 
 
 def parse_string_to_list(line):
@@ -1180,6 +1202,59 @@ def parse_string_coordinate_list(string_tuples):
         coordinates_list.append(coord_tuple)
 
     return coordinates_list
+
+
+class ColumnChoiceParameter(ChoiceParameter):
+    extension_readers = {
+        '.xlsx': pd.read_excel,
+        '.csv': pd.read_csv,
+    }
+
+    def initialize(self, parser):
+        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
+        self.column_name = parser.get(self.section.name, f"{self.name}.column")
+        self.sheet_name = parser.get(self.section.name, f"{self.name}.sheet", fallback=None)
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to PV codes
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        try:
+            location = getattr(locator, self.locator_method)()
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+
+        ext = os.path.splitext(location)[1]
+        if ext not in self.extension_readers:
+            raise ValueError(f'Invalid file type {ext}, expected one of {self.extension_readers.keys()}')
+
+        reader = self.extension_readers[ext]
+
+        try:
+            if ext == '.xlsx':
+                if self.sheet_name is None:
+                    raise ValueError(f'Sheet name not specified for parameter {self.section.name}.{self.name}')
+
+                df = reader(location, sheet_name=self.sheet_name)
+            else:
+                df = reader(location)
+
+            if self.column_name not in df.columns:
+                raise ValueError(f'Column {self.column_name} not found in source file')
+
+            codes = df[self.column_name].unique()
+            return list(codes)
+        except FileNotFoundError as e:
+            # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
+            raise FileNotFoundError(f'Could not find source file at {location}') from e
+        except Exception as e:
+            raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
+
+
+class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
+    pass
 
 
 def validate_coord_tuple(coord_tuple):

@@ -12,12 +12,10 @@ import cea.inputlocator
 import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
-from cea.datamanagement.data_migrator import is_3_22
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
-from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,34 +26,41 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
-def schedule_maker_main(locator, config, building=None):
+
+def occupancy_helper_main(locator, config, building=None):
     # local variables
-    buildings = config.schedule_maker.buildings
-    schedule_model = config.schedule_maker.schedule_model
+    buildings = config.occupancy_helper.buildings
+    occupancy_model = config.occupancy_helper.occupancy_model
 
-    if schedule_model == 'deterministic':
+    if occupancy_model == 'deterministic':
         stochastic_schedule = False
-    elif schedule_model == 'stochastic':
+    elif occupancy_model == 'stochastic':
         stochastic_schedule = True
     else:
-        raise ValueError("Invalid schedule model: {schedule_model}".format(**locals()))
+        raise ValueError("Invalid schedule model: {occupancy_model}".format(**locals()))
 
     if building is not None:
         buildings = [building]  # this is to run the tests
 
     # get variables of indoor comfort and internal loads
-    internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
-    indoor_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
-    architecture = dbf_to_dataframe(locator.get_building_architecture()).set_index('Name')
+    internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
+    indoor_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
+    architecture = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+    # reproject to projected coordinate system (in meters) to calculate area
+    lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+    prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
     prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
     prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
-    prop_geometry = prop_geometry.merge(architecture, on='Name').set_index('Name')
+    prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
     prop_geometry = calc_useful_areas(prop_geometry)
 
     # get calculation year from weather file
@@ -97,7 +102,7 @@ def calc_schedules(locator,
     """
     Calculate the profile of occupancy, electricity demand and domestic hot water consumption from the input schedules.
     For variables that depend on the number of people (humidity gains, heat gains and ventilation demand), additional
-    schedules are created given the the number of people present at each time.
+    schedules are created given the number of people present at each time.
 
     Two occupant models are included: a deterministic one, which simply uses the schedules provided by the user; and a
     stochastic one, which is based on the two-state Markov chain model of Page et al. (2008). In the latter case,
@@ -267,7 +272,7 @@ def calc_schedules(locator,
     }
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
-    yearly_occupancy_schedules.to_csv(locator.get_schedule_model_file(building), index=False, na_rep='OFF',
+    yearly_occupancy_schedules.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
 
     # return final_dict
@@ -466,13 +471,9 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
-    print('Running occupancy model  with schedule model=%s' % config.schedule_maker.schedule_model)
+    print('Running occupancy model  with schedule model=%s' % config.occupancy_helper.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
-    # CHECK DATABASE
-    if is_3_22(config.scenario):
-        raise ValueError("""The data format of indoor comfort has been changed after v3.22. 
-        Please run Data migrator in Utilities.""")
-    schedule_maker_main(locator, config)
+    occupancy_helper_main(locator, config)
 
 
 if __name__ == '__main__':

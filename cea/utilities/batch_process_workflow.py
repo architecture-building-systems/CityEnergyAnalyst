@@ -8,7 +8,6 @@ This was originally explored and created for the ETH MiBS IDP 2023.
 import os
 import subprocess
 import sys
-
 import cea.config
 import time
 
@@ -37,11 +36,10 @@ def exec_cea_commands(config, cea_scenario):
     :return:
     """
     # acquire the user-defined CEA commands
-    zone_csv_to_shp = config.batch_process_workflow.zone_csv_to_shp
-    typology_csv_to_dbf = config.batch_process_workflow.typology_csv_to_dbf
-    streets_csv_to_shp = config.batch_process_workflow.streets_csv_to_shp
+    export_to_rhino_gh = config.batch_process_workflow.export_to_rhino_gh
+    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
 
-    data_initializer = config.batch_process_workflow.data_initializer
+    database_helper = config.batch_process_workflow.database_helper
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
     weather_helper = config.batch_process_workflow.weather_helper
     surroundings_helper = config.batch_process_workflow.surroundings_helper
@@ -55,7 +53,8 @@ def exec_cea_commands(config, cea_scenario):
     system_costs = config.batch_process_workflow.system_costs
 
     solar_pv = config.batch_process_workflow.solar_potential_pv
-    solar_other = config.batch_process_workflow.solar_potential_other
+    solar_pvt = config.batch_process_workflow.solar_potential_pvt
+    solar_sc = config.batch_process_workflow.solar_potential_sc
     shallow_geothermal = config.batch_process_workflow.shallow_geothermal_potential
     water_body = config.batch_process_workflow.water_body_potential
     sewage_heat = config.batch_process_workflow.sewage_heat_potential
@@ -63,40 +62,20 @@ def exec_cea_commands(config, cea_scenario):
     thermal_network_layout = config.batch_process_workflow.thermal_network_layout
     thermal_network_operation = config.batch_process_workflow.thermal_network_operation
 
-    optimization = config.batch_process_workflow.optimization
+    optimisation = config.batch_process_workflow.optimisation
 
-    result_summary = config.batch_process_workflow.result_summary
-    result_analytics = config.batch_process_workflow.result_analytics
+    results_summary_and_analytics = config.batch_process_workflow.results_summary_and_analytics
 
     # execute selected CEA commands
-    if zone_csv_to_shp:
-        zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.csv')
-        if not os.path.exists(zone_csv_path):
-            zone_csv_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.xlsx')
-        zone_out_path = os.path.join(cea_scenario, 'inputs/building-geometry')
+    if export_to_rhino_gh:
+        subprocess.run(['cea', 'export-to-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+    if import_from_rhino_gh:
+        subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
 
-        subprocess.run(['cea', 'shp-to-csv-to-shp',
-                        '--scenario', cea_scenario,
-                        '--input-file', zone_csv_path,
-                        '--output-file-name', 'zone.shp',
-                        '--output-path', zone_out_path,
-                        # '--reference-shapefile', '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'true',
-                        ], env=my_env, check=True, capture_output=True)
-
-    if typology_csv_to_dbf:
-        typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.csv')
-        if not os.path.exists(typology_csv_path):
-            typology_csv_path = os.path.join(cea_scenario, 'inputs/building-properties/typology.xlsx')
-        typology_out_path = os.path.join(cea_scenario, 'inputs/building-properties')
-        subprocess.run(['cea', 'dbf-to-csv-to-dbf', '--scenario', cea_scenario,
-                        '--input-file', typology_csv_path,
-                        '--output-file-name', 'typology.dbf',
-                        '--output-path', typology_out_path,
-                        ], env=my_env, check=True, capture_output=True)
-
-    if data_initializer:
-        subprocess.run(['cea', 'data-initializer', '--scenario', cea_scenario], env=my_env, check=True,
+    if database_helper:
+        subprocess.run(['cea', 'data-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
     if archetypes_mapper:
         subprocess.run(['cea', 'archetypes-mapper', '--scenario', cea_scenario], env=my_env, check=True,
@@ -114,25 +93,10 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'streets-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
 
-    if streets_csv_to_shp:
-        streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.csv')
-        if not os.path.exists(streets_csv_path):
-            streets_csv_path = os.path.join(cea_scenario, 'inputs/networks/streets.xlsx')
-        streets_out_path = os.path.join(cea_scenario, 'inputs/networks')
-        reference_shapefile_path = os.path.join(cea_scenario, 'inputs/building-geometry/zone.shp')
-        subprocess.run(['cea', 'shp-to-csv-to-shp', '--scenario', cea_scenario,
-                        '--input-file', '{streets_csv_path}'.format(streets_csv_path=streets_csv_path),
-                        '--output-file-name', 'streets.shp',
-                        '--output-path', '{streets_out_path}'.format(streets_out_path=streets_out_path),
-                        '--reference-shapefile',
-                        '{reference_shapefile_path}'.format(reference_shapefile_path=reference_shapefile_path),
-                        '--polygon', 'false',
-                        ], env=my_env, check=True, capture_output=True)
-
     if radiation:
         subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
     if demand_forecasting:
-        subprocess.run(['cea', 'schedule-maker', '--scenario', cea_scenario], env=my_env, check=True,
+        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
         subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
@@ -143,15 +107,15 @@ def exec_cea_commands(config, cea_scenario):
 
     if solar_pv:
         subprocess.run(['cea', 'photovoltaic', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
-    if solar_other:
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'FP', '--scenario', cea_scenario],
+
+    if solar_sc:
+        subprocess.run(['cea', 'solar-collector', '--scenario', cea_scenario],
                        env=my_env, check=True, capture_output=True)
-        subprocess.run(['cea', 'solar-collector', '--type-scpanel', 'ET', '--scenario', cea_scenario],
+
+    if solar_pvt:
+        subprocess.run(['cea', 'photovoltaic-thermal', '--scenario', cea_scenario],
                        env=my_env, check=True, capture_output=True)
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'FP', '--scenario', cea_scenario],
-                       env=my_env, check=True, capture_output=True)
-        subprocess.run(['cea', 'photovoltaic-thermal', '--type-scpanel', 'ET', '--scenario', cea_scenario],
-                       env=my_env, check=True, capture_output=True)
+
     if shallow_geothermal:
         subprocess.run(['cea', 'shallow-geothermal-potential', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
@@ -159,8 +123,12 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'water-body-potential', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
     if sewage_heat:
-        subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True,
+        subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
+    if demand_forecasting:
+        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
+        subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if thermal_network_layout:
         subprocess.run(['cea', 'network-layout', '--scenario', cea_scenario], env=my_env, check=True,
@@ -169,25 +137,26 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'thermal-network', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
 
-    if optimization:
+    if optimisation:
         subprocess.run(['cea', 'decentralized', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
         subprocess.run(['cea', 'optimization-new', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
 
-    if result_summary:
-        subprocess.run(['cea', 'result-summary', '--all-scenarios', 'false'], env=my_env, check=True,
-                       capture_output=True)
+    if emissions:
+        subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
-    if result_analytics:
-        subprocess.run(['cea', 'result-analytics', '--all-scenarios', 'false'], env=my_env, check=True,
-                       capture_output=True)
+    if system_costs:
+        subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
+    if results_summary_and_analytics:
+        subprocess.run(['cea', 'export-results-csv', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
 
 
 def main(config):
     """
-    Batch processing all scenarios under a project.
+    Batch processing all selectedscenarios under a project.
 
     :param config: the configuration object to use
     :type config: cea.config.Configuration
@@ -201,15 +170,9 @@ def main(config):
 
     project_path = config.general.project
     scenario_name = config.general.scenario_name
-    project_boolean = config.batch_process_workflow.all_scenarios
+    scenarios_list = config.batch_process_workflow.scenarios_to_simulate
 
-    # deciding to run all scenarios or the current the scenario only
-    if project_boolean:
-        scenarios_list = os.listdir(project_path)
-    else:
-        scenarios_list = [scenario_name]
-
-    # loop over one or all scenarios under the project
+    # Loop over one or all selected scenarios under the project
     for scenario in scenarios_list:
         # Ignore hidden directories
         if scenario.startswith('.') or os.path.isfile(os.path.join(project_path, scenario)):
@@ -221,13 +184,11 @@ def main(config):
             # executing CEA commands
             exec_cea_commands(config, cea_scenario)
         except subprocess.CalledProcessError as e:
-            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}")
-            print("Error Message:")
+            print(f"CEA simulation for scenario `{scenario_name}` failed at script: {e.cmd[1]}.")
             err_msg = e.stderr
             if err_msg is not None:
                 print(err_msg.decode())
             raise e
-
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

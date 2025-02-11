@@ -314,7 +314,7 @@ class Network(object):
             head_loss_supply_network_Pa[column] = head_loss_supply_network_Pa[column] * length_m
 
         # ...at the substations
-        consumer_nodes = self.network_nodes[self.network_nodes['Type'] == 'CONSUMER'].index.to_list()
+        consumer_nodes = self.network_nodes[self.network_nodes['type'] == 'CONSUMER'].index.to_list()
         head_loss_substations_ft = wnm_results.node['head'][consumer_nodes].abs()
         head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
@@ -378,12 +378,12 @@ class Network(object):
         self.network_losses = thermal_losses_supply_kWh.sum(axis=1) * 2 - accumulated_head_loss_total_kW.values
 
         # aggregate network piping information
-        self.network_piping = self.network_edges[['Type_mat', 'Pipe_DN']].drop_duplicates()
+        self.network_piping = self.network_edges[['type_mat', 'pipe_DN']].drop_duplicates()
         self.network_piping.reset_index(inplace=True, drop=True)
         self.network_piping['length_m'] = 0.0
         for index, pipe_type in self.network_piping.iterrows():
-            using_type = self.network_edges.apply(lambda row: row['Type_mat'] == pipe_type['Type_mat'] and
-                                                              row['Pipe_DN'] == pipe_type['Pipe_DN'], axis=1)
+            using_type = self.network_edges.apply(lambda row: row['type_mat'] == pipe_type['type_mat'] and
+                                                              row['pipe_DN'] == pipe_type['pipe_DN'], axis=1)
             self.network_piping['length_m'][index] = self.network_edges['length_m'][using_type].sum()
         self._calculate_piping_cost()
 
@@ -413,7 +413,7 @@ class Network(object):
         # join building locations (shapely.POINTS) and the corresponding identifiers in a DataFrame
         building_identifiers = [building.identifier for building in domain.buildings]
         building_locations = [building.location for building in domain.buildings]
-        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'Name'],
+        buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
@@ -647,10 +647,10 @@ class Network(object):
         thermal network operation (simplified_thermal_network.py).
 
         :return self.network_edges: GeoDataFrame structure for thermal network edges.
-                                    ['geometry', 'length', 'Type_mat'(dummy), 'Pipe_DN'(dummy), 'start_node', 'end_node']
+                                    ['geometry', 'length', 'type_mat'(dummy), 'pipe_DN'(dummy), 'start_node', 'end_node']
                                     index: PIPEi
         :return self.network_nodes: GeoDataFrame structure for nodes of the thermal network.
-                                    ['geometry', 'coordinates', 'Building', 'Type']
+                                    ['geometry', 'coordinates', 'building', 'type']
                                     index: NODEi
         """
 
@@ -662,20 +662,20 @@ class Network(object):
 
         self.network_nodes['coordinates'] = self.network_nodes['geometry'].apply(
             lambda x: (x.coords[0][0], x.coords[0][1]))
-        self.network_nodes['Building'] = self.network_nodes['coordinates'].apply(lambda x: populate_fields(x))
-        self.network_nodes['Type'] = self.network_nodes['Building'].apply(
+        self.network_nodes['building'] = self.network_nodes['coordinates'].apply(lambda x: populate_fields(x))
+        self.network_nodes['type'] = self.network_nodes['building'].apply(
             lambda x: 'CONSUMER' if x != "NONE" else "NONE")
         self.network_nodes = self.network_nodes.rename(index=lambda x: "NODE" + str(x))
 
         # do some checks to see that the building names was not compromised
-        if len(connected_buildings_coords_list) != (len(self.network_nodes['Building'].unique()) - 1):
+        if len(connected_buildings_coords_list) != (len(self.network_nodes['building'].unique()) - 1):
             raise ValueError('There was an error while populating the nodes fields. '
                              'One or more buildings could not be matched to nodes of the network. '
                              'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
         # POPULATE FIELDS IN EDGES
-        self.network_edges.loc[:, 'Type_mat'] = TYPE_MAT_DEFAULT
-        self.network_edges.loc[:, 'Pipe_DN'] = PIPE_DIAMETER_DEFAULT
+        self.network_edges.loc[:, 'type_mat'] = TYPE_MAT_DEFAULT
+        self.network_edges.loc[:, 'pipe_DN'] = PIPE_DIAMETER_DEFAULT
         self.network_edges = self.network_edges.rename(index=lambda x: "PIPE" + str(x))
         # assign edge properties
         self.network_edges['start node'] = ''
@@ -707,7 +707,7 @@ class Network(object):
         :type anchor_building: str (e.g. 'B1022')
         """
         # create new node
-        building_node = self.network_nodes[self.network_nodes['Building'] == anchor_building].index[0]
+        building_node = self.network_nodes[self.network_nodes['building'] == anchor_building].index[0]
         network_connection = self.network_edges[self.network_edges['start node'] == building_node]
         if network_connection.empty:
             network_connection = self.network_edges[self.network_edges['end node'] == building_node]
@@ -721,7 +721,7 @@ class Network(object):
         plant_terminal['coordinates'][0] = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
         plant_terminal_node = "NODE" + str(len(self.network_nodes.index))
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
-        plant_terminal['Type'][0] = "PLANT"
+        plant_terminal['type'][0] = "PLANT"
 
         self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
@@ -729,8 +729,8 @@ class Network(object):
         point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
         point2 = (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
         line = LineString((point1, point2))
-        plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'Type_mat': TYPE_MAT_DEFAULT,
-                                'Pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
+        plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'type_mat': TYPE_MAT_DEFAULT,
+                                'pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],
                                crs=Network._coordinate_reference_system)
@@ -752,14 +752,14 @@ class Network(object):
         :rtype wnm_pipe_diameters: pd.DataFrame
         """
         # BUILD WATER NETWORK
-        thermal_network_folder = self._domain_locator.get_thermal_network_folder()
+        # thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             _file_location = os.path.join(tmpdir, f"{connectivity_string_for_files}_{self.identifier}")
 
             # Create empty .inp file for WaterNetworkModel
             inp_file = f"{_file_location}.inp"
-            with open(inp_file, "w") as f:
+            with open(inp_file, "w"):
                 pass
 
             # Create a water network model instance
@@ -793,8 +793,8 @@ class Network(object):
             # add nodes
             consumer_nodes = []
             for node_name, node in self.network_nodes.iterrows():
-                if node["Type"] == "CONSUMER":
-                    demand_pattern = generate_demand_pattern(node['Building'])
+                if node["type"] == "CONSUMER":
+                    demand_pattern = generate_demand_pattern(node['building'])
                     base_demand_m3s = building_base_demand_m3s[demand_pattern]
                     consumer_nodes.append(node_name)
                     wn.add_junction(str(node_name),
@@ -802,7 +802,7 @@ class Network(object):
                                     demand_pattern=demand_pattern,
                                     elevation=self.configuration_defaults['thermal_transfer_unit_design_head_m'],
                                     coordinates=node["coordinates"])
-                elif node["Type"] == "PLANT":
+                elif node["type"] == "PLANT":
                     base_head = int(self.configuration_defaults['thermal_transfer_unit_design_head_m'] * 1.2)
                     start_node = str(node_name)
                     name_node_plant = start_node
@@ -838,20 +838,20 @@ class Network(object):
             wnm_results = sim.run_sim(file_prefix=_file_location)
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
-            Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
+            pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
                                                                          velocity_ms=self.configuration_defaults[
                                                                              'peak_load_velocity_ms'],
                                                                          peak_load_percentage=
                                                                          self.configuration_defaults[
                                                                              'peak_load_percentage'])
                                                        for flow in max_volume_flow_rates_m3s])
-            pipe_dn = pd.Series(Pipe_DN, pipe_names)
+            pipe_dn = pd.Series(pipe_DN, pipe_names)
             wnm_pipe_diameters = pd.DataFrame({'D_int_m': D_int_m, 'D_ext_m': D_ext_m, 'D_ins_m': D_ins_m},
                                               index=pipe_names)
 
             # 2nd ITERATION GET PRESSURE POINTS AND MASS FLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
             # modify diameter and run simulations
-            self.network_edges['Pipe_DN'] = pipe_dn
+            self.network_edges['pipe_DN'] = pipe_dn
             self.network_edges['D_int_m'] = D_int_m
             for edge_name, edge in self.network_edges.iterrows():
                 pipe = wn.get_link(str(edge_name))
@@ -890,7 +890,7 @@ class Network(object):
         """
         piping_unit_cost_dict = {pipe_type['Pipe_DN']: pipe_type['Inv_USD2015perm']
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
-        piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['Pipe_DN']] * pipe_segment['length_m']
+        piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])
         annualised_piping_cost = piping_cost_aggregated / self.configuration_defaults['network_lifetime_yrs']
 

@@ -4,7 +4,6 @@ costs according to supply systems
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
 import itertools
 import cea.config
 import cea.inputlocator
@@ -22,8 +21,8 @@ __status__ = "Production"
 
 def costs_main(locator, config):
     # get local variables
-    capital = config.costs.capital
-    operational = config.costs.operational
+    # capital = config.costs.capital
+    # operational = config.costs.operational
 
     # get demand
     demand = pd.read_csv(locator.get_total_demand())
@@ -91,7 +90,7 @@ def costs_main(locator, config):
                 result[value] += result[field]
 
     # add name and create dataframe
-    result.update({'Name': demand.Name.values})
+    result.update({'name': demand.name.values})
     result_out = pd.DataFrame(result)
 
     # save dataframe
@@ -172,7 +171,7 @@ def calc_scale_costs(value, flag_scale):
 
 
 def get_databases(demand, locator):
-    supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
+    supply_systems = pd.read_csv(locator.get_building_supply())
     data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
     factors_heating = data_all_in_one_systems['HEATING']
     factors_dhw = data_all_in_one_systems['HOT_WATER']
@@ -202,10 +201,10 @@ def get_databases(demand, locator):
     electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
-    dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
-    cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    heating = supply_systems.merge(demand, on='name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='name').merge(electricity_costs, left_on='type_el', right_on='code_x')
     return cooling, dhw, electricity, heating
 
 

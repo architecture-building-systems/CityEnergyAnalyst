@@ -13,8 +13,9 @@ import pandas as pd
 
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 
@@ -47,10 +48,10 @@ class TestScheduleCreation(unittest.TestCase):
         config.multiprocessing = False
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.data_initializer import main as data_initializer
-        config.data_initializer.databases_path = "CH"
-        config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-        data_initializer(config)
+        from cea.datamanagement.database_helper import main as database_helper
+        config.database_helper.databases_path = "CH"
+        config.database_helper.databases = ["archetypes", "assemblies", "components"]
+        database_helper(config)
 
         building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
         bpr = building_properties['B1011']
@@ -58,8 +59,8 @@ class TestScheduleCreation(unittest.TestCase):
         bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
-        schedule_maker_main(locator, config)
-        calculated_schedules = pd.read_csv(locator.get_schedule_model_file('B1011')).set_index('DATE')
+        occupancy_helper_main(locator, config)
+        calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('DATE')
 
         test_config = configparser.ConfigParser()
         test_config.read(get_test_config_path())
@@ -95,11 +96,11 @@ def calculate_mixed_use_archetype_values_results(locator):
     office_occ = float(occ_densities.loc['OFFICE', 'Occ_m2p'])
     lab_occ = float(occ_densities.loc['LAB', 'Occ_m2p'])
     indus_occ = float(occ_densities.loc['INDUSTRIAL', 'Occ_m2p'])
-    server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2p'])
+    # server_occ = float(occ_densities.loc['SERVERROOM', 'Occ_m2p'])
     calculated_results = calculate_average_multiuse(
         fields=['X_ghp', 'El_Wm2'],
         properties_df=pd.DataFrame(data=[['B1011', 'OFFICE', 0.5, 'SERVERROOM', 0.5, 'NONE', 0.0, 0.0, 0.0, 0.0], ['B1012', 'OFFICE', 0.6, 'LAB', 0.2, 'INDUSTRIAL', 0.2, 0.0, 0.0, 0.0]],
-                                   columns=['Name', "1ST_USE", "1ST_USE_R", '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R', 'X_ghp', 'El_Wm2', 'Occ_m2p']),
+                                   columns=[COLUMNS_ZONE_TYPOLOGY]),
         occupant_densities={'OFFICE': 1.0 / office_occ, 'LAB': 1.0 / lab_occ, 'INDUSTRIAL': 1.0 / indus_occ, 'SERVERRROOM': 1.0},
         list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
         properties_DB=pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')).set_index('Name')
@@ -122,22 +123,22 @@ def create_data():
     locator = ReferenceCaseOpenLocator()
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.data_initializer import main as data_initializer
-    config.data_initializer.databases_path = "CH"
-    config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-    data_initializer(config)
+    from cea.datamanagement.database_helper import main as database_helper
+    config.database_helper.databases_path = "CH"
+    config.database_helper.databases = ["archetypes", "assemblies", "components"]
+    database_helper(config)
 
     # calculate schedules
     building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
     bpr = building_properties['B1011']
-    list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
+    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
 
     # read weather file
-    weather_path = locator.get_weather_file()
-    weather_data = epwreader.epw_reader(weather_path)
+    # weather_path = locator.get_weather_file()
+    # weather_data = epwreader.epw_reader(weather_path)
 
-    calculated_schedules = schedule_maker_main(locator, config)
+    calculated_schedules = occupancy_helper_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(

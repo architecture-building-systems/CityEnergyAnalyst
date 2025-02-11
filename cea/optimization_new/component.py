@@ -1008,14 +1008,14 @@ class HeatExchanger(PassiveComponent):
         HeatExchanger.conversion_matrix = pd.DataFrame(data=[], index=all_thermal_ecs, columns=all_thermal_ecs)
 
         he_primary_side_ecs = {heat_exchanger['code']:
-                                   EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['medium_in'],
-                                                                               heat_exchanger['T_max_operating'],
-                                                                               heat_exchanger['T_min_operating'])
+                                   EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['T_max_operating'],
+                                                                               heat_exchanger['T_min_operating'],
+                                                                               heat_exchanger['medium_in'])
                                    for index, heat_exchanger in heat_exchangers_db.iterrows()}
         he_secondary_side_ecs = {heat_exchanger['code']:
-                                     EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['medium_out'],
-                                                                                 heat_exchanger['T_max_operating'],
-                                                                                 heat_exchanger['T_min_operating'])
+                                     EnergyCarrier.all_thermal_ecs_between_temps(heat_exchanger['T_max_operating'],
+                                                                                 heat_exchanger['T_min_operating'],
+                                                                                 heat_exchanger['medium_out'])
                                     for index, heat_exchanger in heat_exchangers_db.iterrows()}
 
         for ec_in in all_thermal_ecs:

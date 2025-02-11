@@ -35,7 +35,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, lca):
     if total_demand["Qhpro_sys_MWhyr"].sum()>0:
         df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]
 
-        for name in df.Name :
+        for name in df.name :
             # Extract process heat needs
             Qhpro_sys_kWh = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
 

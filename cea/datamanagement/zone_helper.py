@@ -15,11 +15,11 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
+from cea.datamanagement.databases_verification import COLUMNS_ZONE
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
-from cea.utilities.dbf import dataframe_to_dbf
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -62,15 +62,13 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
     if buildings_height is None and buildings_floors is None:
-        print('Warning! You have not indicated number of floors above ground for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all), '
-              'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
-              'if we do not get any data we assume 4 floors per building (3 above, 1 below ground)')
+        print('Note that the number of floors is extracted from OpenStreetMap. '
+              'If not found, CEA uses the median in the surroundings. '
+              'When no data is available, CEA assumes 4 floors per building (3 above, 1 below ground). '
+              'Ensure the number of floors is accurate before proceeding with any simulations.')
 
-        print('Warning! You have not indicated height above ground for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all), '
-              'if we do not find data in OSM for a particular building, we estimate it based on the number of floors, '
-              'multiplied by a pre-defined floor-to-floor height (set to 3m by default)')
+        print('Note that CEA assumes the floor height is 3 meters. '
+              'Modify before proceeding with any simulations.')
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
@@ -79,21 +77,18 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
-        if 'building:levels' not in list_of_columns:
+        if 'building:levels' not in list_of_columns or pd.isnull(shapefile['building:levels']).all():
             # if 'building:levels' is not in the database, make an assumption
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
-        elif pd.isnull(shapefile['building:levels']).all():
             # if 'building:levels' are all NaN, make an assumption
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
+            shapefile['building:levels'] = 3 * no_buildings
+            shapefile['reference'] = ["CEA Assumption"] * no_buildings
         elif 'height' in list_of_columns:
             # if either the 'building:levels' or the building 'height' are available, take them from OSM
-            shapefile['REFERENCE'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
+            shapefile['reference'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
                                       (~shapefile['building:levels'].isna()) | (shapefile['height'] > 0)]
         else:
             # if only the 'building:levels' are available, take them from OSM
-            shapefile['REFERENCE'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
+            shapefile['reference'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
                                       ~shapefile['building:levels'].isna()]
         if 'roof:levels' not in list_of_columns:
             shapefile['roof:levels'] = 0
@@ -146,7 +141,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
         shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
     else:
-        shapefile['REFERENCE'] = "User - assumption"
+        shapefile['reference'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
@@ -176,10 +171,10 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # in OSM, "amenities" (where available) supersede "building" categories
         in_categories = shapefile['amenity'].isin(
             OSM_BUILDING_CATEGORIES.keys())
-        shapefile.loc[in_categories, '1ST_USE'] = shapefile[in_categories]['amenity'].map(
+        shapefile.loc[in_categories, 'use_type1'] = shapefile[in_categories]['amenity'].map(
             OSM_BUILDING_CATEGORIES)
 
-    shapefile["Name"] = [key + str(x + 1000) for x in
+    shapefile["name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion
     shapefile.reset_index(inplace=True, drop=True)
 
@@ -300,12 +295,12 @@ def fix_overlapping_geoms(buildings, zone):
                 elif (buildings.height_ag[ovrlp_bldg_index] <= -buildings.height_bg[building_index]) or \
                     (buildings.height_ag[building_index] <= -buildings.height_bg[ovrlp_bldg_index]):
                     pass  # no vertical overlap
-                elif (buildings.REFERENCE[ovrlp_bldg_index] == "OSM - as it is") & \
-                     (buildings.REFERENCE[building_index] != "OSM - as it is"):  # Give OSM priority
+                elif (buildings.reference[ovrlp_bldg_index] == "OSM - as it is") & \
+                     (buildings.reference[building_index] != "OSM - as it is"):  # Give OSM priority
                     buildings.geometry[building_index] = \
                         buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
-                elif (buildings.REFERENCE[building_index] == "OSM - as it is") & \
-                     (buildings.REFERENCE[ovrlp_bldg_index] != "OSM - as it is"):  # Give OSM priority
+                elif (buildings.reference[building_index] == "OSM - as it is") & \
+                     (buildings.reference[ovrlp_bldg_index] != "OSM - as it is"):  # Give OSM priority
                     buildings.geometry[ovrlp_bldg_index] = \
                         buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) <= \
@@ -340,22 +335,22 @@ def zone_helper(locator, config):
     include_building_parts = config.zone_helper.include_building_parts
     fix_overlapping = config.zone_helper.fix_overlapping_geometries
     zone_output_path = locator.get_zone_geometry()
-    typology_output_path = locator.get_building_typology()
 
     # ensure folders exist
     locator.ensure_parent_folder_exists(zone_output_path)
-    locator.ensure_parent_folder_exists(typology_output_path)
 
     # get zone.shp file and save in folder location
     zone_df = polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height,
                               buildings_height_below_ground,
                               fix_overlapping, include_building_parts,
-                              poly, zone_output_path)
+                              poly)
 
     # USE_A zone.shp file contents to get the contents of occupancy.dbf and age.dbf
-    calculate_typology_file(
-        locator, zone_df, year_construction, occupancy_type, typology_output_path)
+    typology_df = calculate_typology_file(
+        locator, zone_df, year_construction, occupancy_type)
 
+    # write zone.shp file
+    write_zone_shp(typology_df, poly, locator)
 
 def calc_category(standard_db, year_array):
     def category_assignment(year):
@@ -374,38 +369,38 @@ def calc_category(standard_db, year_array):
     return category
 
 
-def calculate_typology_file(locator, zone_df, year_construction, occupancy_type, occupancy_output_path):
+def calculate_typology_file(locator, zone_df, year_construction, occupancy_type):
     """
     This script fills in the typology.dbf file with one occupancy type
     :param zone_df:
     :param occupancy_type:
-    :param occupancy_output_path:
     :return:
     """
+
     # calculate construction year
     typology_df = calculate_age(zone_df, year_construction)
 
     # calculate the most likely construction standard
     standard_database = pd.read_excel(
         locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')
-    typology_df['STANDARD'] = calc_category(
-        standard_database, typology_df['YEAR'].values)
+    typology_df['const_type'] = calc_category(
+        standard_database, typology_df['year'].values)
 
     # Calculate the most likely use type
-    typology_df['1ST_USE'] = "NONE"
-    typology_df['1ST_USE_R'] = 1.0
-    typology_df['2ND_USE'] = "NONE"
-    typology_df['2ND_USE_R'] = 0.0
-    typology_df['3RD_USE'] = "NONE"
-    typology_df['3RD_USE_R'] = 0.0
+    typology_df['use_type1'] = "NONE"
+    typology_df['use_type1r'] = 1.0
+    typology_df['use_type2'] = "NONE"
+    typology_df['use_type2r'] = 0.0
+    typology_df['use_type3'] = "NONE"
+    typology_df['use_type3r'] = 0.0
     if occupancy_type == "Get it from open street maps":
         # for OSM building/amenity types with a clear CEA use type, this use type is assigned
         in_categories = zone_df['category'].isin(OSM_BUILDING_CATEGORIES.keys())
-        zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
+        zone_df.loc[in_categories, 'use_type1'] = zone_df[in_categories]['category'].map(OSM_BUILDING_CATEGORIES)
         if 'amenity' in zone_df.columns:
             # assign use type by building category first, then by amenity (more specific)
             in_categories = zone_df['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
-            zone_df.loc[in_categories, '1ST_USE'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
+            zone_df.loc[in_categories, 'use_type1'] = zone_df[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
         # for un-conditioned OSM building categories without a clear CEA use type, "PARKING" is assigned
         if 'amenity' in zone_df.columns:
@@ -414,23 +409,33 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type,
         else:
             in_unconditioned_categories = zone_df['category'].isin(
                 OTHER_OSM_CATEGORIES_UNCONDITIONED)
-        zone_df.loc[in_unconditioned_categories, '1ST_USE'] = "PARKING"
+        zone_df.loc[in_unconditioned_categories, 'use_type1'] = "PARKING"
     else:
-        typology_df['1ST_USE'] = occupancy_type
+        typology_df['use_type1'] = occupancy_type
 
     # all remaining building use types are assigned by the mode of the use types in the entire case study
     try:
-        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = \
-            typology_df.loc[~typology_df['1ST_USE'].isin(['NONE', 'PARKING']), '1ST_USE'].mode()[0]
+        typology_df.loc[typology_df['use_type1'] == "NONE", 'use_type1'] = \
+            typology_df.loc[~typology_df['use_type1'].isin(['NONE', 'PARKING']), 'use_type1'].mode()[0]
     except KeyError:
         print('No building type could be found in the OSM-database for the selected zone. '
               'Applying `MULTI_RES` as default type.')
-        typology_df.loc[typology_df['1ST_USE'] == "NONE", '1ST_USE'] = "MULTI_RES"
+        typology_df.loc[typology_df['use_type1'] == "NONE", 'use_type1'] = "MULTI_RES"
 
-    # export typology.dbf
-    fields = COLUMNS_ZONE_TYPOLOGY
-    dataframe_to_dbf(
-        typology_df[fields + ['REFERENCE']], occupancy_output_path)
+    return typology_df
+
+def write_zone_shp(typology_df, poly, locator):
+
+    # get the projected coordinate system
+    poly = poly.to_crs(get_geographic_coordinate_system())
+    lat, lon = get_lat_lon_projected_shapefile(poly)
+
+    # clean up attributes
+    cleaned_shapefile = typology_df[COLUMNS_ZONE]
+    cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
+
+    # save shapefile to zone.shp
+    cleaned_shapefile.to_file(locator.get_zone_geometry())
 
 
 def parse_year(year: Union[str, int]) -> int:
@@ -468,36 +473,28 @@ def calculate_age(zone_df, year_construction):
     :return:
     """
     if year_construction is None:
-        print('Warning! you have not indicated a year of construction for the buildings, '
-              'we are importing data from Open Street Maps (It might not be accurate at all), '
-              'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
-              'if we do not get any data we assume all buildings being constructed in the year 2000')
+        print('Note that CEA is importing data from OpenStreetMap. '
+              'If data unavailable for some buildings, CEA uses the median in the surroundings, '
+              'If data unavailable for all buildings, CEA assumes all buildings were constructed in 2020.')
         list_of_columns = zone_df.columns
         if "start_date" not in list_of_columns:  # this field describes the construction year of buildings
             zone_df["start_date"] = 2000
-            zone_df['REFERENCE'] = "CEA - assumption"
-        else:
-            zone_df['REFERENCE'] = [
-                "OSM - median" if x is np.nan else "OSM - as it is" for x in zone_df['start_date']]
 
         data_age = [np.nan if x is np.nan else parse_year(
             x) for x in zone_df['start_date']]
         # median so we get close to the worse case
         data_osm_floors_joined = int(math.ceil(np.nanmedian(data_age)))
-        zone_df["YEAR"] = [
+        zone_df["year"] = [
             int(x) if x is not np.nan else data_osm_floors_joined for x in data_age]
     else:
-        zone_df['YEAR'] = year_construction
-        zone_df['REFERENCE'] = "CEA - assumption"
+        zone_df['year'] = year_construction
 
     return zone_df
 
 
 def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    fix_overlapping, include_building_parts, poly, zone_out_path):
-    poly = poly.to_crs(get_geographic_coordinate_system())
-    lon = poly.geometry[0].centroid.coords.xy[0][0]
-    lat = poly.geometry[0].centroid.coords.xy[1][0]
+                    fix_overlapping, include_building_parts, poly):
+
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
     shapefile = osmnx.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
     if include_building_parts:
@@ -535,16 +532,7 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # building cutting another one into pieces and remove any unusable geometry types (e.g., LineString)
         shapefile = flatten_geometries(shapefile)
         # reassign building names to account for exploded MultiPolygons
-        shapefile["Name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
-
-    # clean up attributes
-    cleaned_shapefile = shapefile[
-        ["Name", "height_ag", "floors_ag", "height_bg", "floors_bg", "description", "category", "geometry",
-         "REFERENCE", 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']]
-    cleaned_shapefile = cleaned_shapefile.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-    
-    # save shapefile to zone.shp
-    cleaned_shapefile.to_file(zone_out_path)
+        shapefile["name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
     return shapefile
 

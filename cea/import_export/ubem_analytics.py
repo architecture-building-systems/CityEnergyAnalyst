@@ -54,9 +54,6 @@ The list of UBEM metrics include:
 """
 
 import os
-import pathlib
-
-# import warnings
 import numpy as np
 import pandas as pd
 import cea.config
@@ -521,8 +518,6 @@ def exec_read_and_analyse(cea_scenario):
     """
     # create an empty DataFrame to store all the results
     analytics_results_dict = dict()
-    scenario_name = pathlib.Path(cea_scenario).name
-    analytics_results_dict['scenario_name'] = scenario_name
 
     # intialise the controls and start adding default controls assuming everything can be run
     control_dict = {

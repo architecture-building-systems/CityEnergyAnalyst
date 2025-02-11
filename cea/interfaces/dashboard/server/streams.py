@@ -3,40 +3,32 @@ streams: maintain a list of streams containing ``cea-worker`` output for jobs.
 
 FIXME: when does this data get cleared?
 """
+from collections import defaultdict
 
-from flask import request, current_app
-from flask_restx import Namespace, Resource
+from fastapi import APIRouter, Request
 
-__author__ = "Daren Thomas"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+from cea.interfaces.dashboard.server.socketio import sio
 
-api = Namespace('Streams', description='A collection of output from cea-worker processes')
+router = APIRouter()
 
 # map jobid to a list of messages
-streams = {}
+streams = defaultdict(list)
 
 
-@api.route("/read/<int:jobid>")
-class ReadStream(Resource):
-    def get(self, jobid):
-        try:
-            return ''.join(streams[jobid])
-        except KeyError:
-            return ''
+@router.get("/read/{job_id}")
+async def read_stream(job_id: str):
+    try:
+        return ''.join(streams[job_id])
+    except KeyError:
+        return ''
 
 
-@api.route("/write/<int:jobid>")
-class WriteStream(Resource):
-    def put(self, jobid):
-        msg = request.get_data(as_text=True)
-        streams.setdefault(jobid, []).append(msg)
+@router.put("/write/{job_id}")
+async def write_stream(job_id: str, request: Request):
+    body = await request.body()
+    message = body.decode("utf-8")
 
-        # emit the message using socket.io
-        current_app.socketio.emit('cea-worker-message', {"message": msg, "jobid": jobid})
-        print("\n/server/streams/write/<{jobid}>: {msg}".format(**locals()), end='')
+    streams[job_id].append(message)
+
+    # emit the message using socket.io
+    await sio.emit('cea-worker-message', {"message": message, "jobid": job_id})

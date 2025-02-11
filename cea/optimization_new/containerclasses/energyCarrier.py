@@ -29,6 +29,7 @@ class EnergyCarrier(object):
     _thermal_energy_carriers = {}
     _electrical_energy_carriers = {}
     _combustible_energy_carriers = {}
+    ambient_thermal_energy_carrier = None
     _feedstock_tab = {}
     _daily_ghg_profile = {}             # in kg CO2 eq. per kWh
     _daily_buy_price_profile = {}       # in USD (2015) per kWh
@@ -145,6 +146,7 @@ class EnergyCarrier(object):
         EnergyCarrier._extract_thermal_energy_carriers()
         EnergyCarrier._extract_electrical_energy_carriers()
         EnergyCarrier._extract_combustible_energy_carriers()
+        EnergyCarrier._establish_thermal_environment_energy_carrier(domain.weather)
 
     @staticmethod
     def _load_energy_carriers(locator):
@@ -167,7 +169,7 @@ class EnergyCarrier(object):
                              'feedstock data base. Please make sure the tabs are named correctly.')
 
         # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
-        energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
+        # energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
         for tab_name in referenced_tabs:
             cost_and_ghg = feedstock.parse(tab_name)
             EnergyCarrier._daily_ghg_profile[tab_name] = \
@@ -216,6 +218,15 @@ class EnergyCarrier(object):
                 all_combustible_energy_carriers[all_combustible_energy_carriers['subtype'] == subtype]
         if len(EnergyCarrier._electrical_energy_carriers) == 0:
             raise ValueError('No electrical energy carriers could be found in the energy carriers data base.')
+
+    @staticmethod
+    def _establish_thermal_environment_energy_carrier(weather):
+        """
+        Determine the thermal energy carrier that corresponds to the ambient temperature of the environment.
+        """
+        ambient_temperature = weather['drybulb_C'].mean()
+        EnergyCarrier.ambient_thermal_energy_carrier = \
+            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
 
     @staticmethod
     def get_thermal_ecs_of_subtype(subtype):
@@ -313,32 +324,68 @@ class EnergyCarrier(object):
         return energy_carrier_code
 
     @staticmethod
-    def all_thermal_ecs_between_temps(energy_carrier_subtype, high_temperature, low_temperature):
+    def all_thermal_ecs_between_temps(temperature_1, temperature_2, energy_carrier_subtype='all'):
         """
         Get all thermal energy carriers that either fall in the range of or between two predetermined temperatures
         for a given thermal energy carrier type.
 
+        :param temperature_1: higher one of the two temperatures defining the range, in °C
+        :type temperature_1: float
+        :param temperature_2: lower one of the two temperatures defining the range, in °C
+        :type temperature_2: float
         :param energy_carrier_subtype: type of the thermal energy carrier (usually thermal energy carrier medium)
         :type energy_carrier_subtype: str
-        :param high_temperature: higher one of the two temperatures defining the range, in °C
-        :type high_temperature: float
-        :param low_temperature: lower one of the two temperatures defining the range, in °C
-        :type low_temperature: float
         :return thermal_ecs_between_temps: list of codes of the corresponding thermal energy carriers that correspond to
                                            the prescribed range.
         :rtype thermal_ecs_between_temps: list of str
         """
-        if np.isnan(high_temperature) and np.isnan(low_temperature):
-            thermal_ecs_between_temps = []
-        elif not np.isnan(high_temperature) and not np.isnan(low_temperature):
-            top_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, high_temperature))
-            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, low_temperature))
-            thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
-            thermal_ecs_between_temps = [energy_carrier['code']
-                                         for row, energy_carrier in thermal_ecs_of_subtype.iterrows()
-                                         if (top_of_range_ec.mean_qual >= energy_carrier['mean_qual'] >= bottom_of_range_ec.mean_qual)]
-        else:
+        if np.isnan(temperature_1) and np.isnan(temperature_2):
+            return []
+        elif np.isnan(temperature_1) or np.isnan(temperature_2):
             raise ValueError('Please make sure the boundaries of the indicated temperature range are valid.')
+
+        high_temperature, low_temperature = max(temperature_1, temperature_2), min(temperature_1, temperature_2)
+
+        if energy_carrier_subtype == 'all':
+            ec_subtype_list = list(EnergyCarrier._thermal_energy_carriers.keys())
+        elif energy_carrier_subtype in EnergyCarrier._thermal_energy_carriers:
+            ec_subtype_list = [energy_carrier_subtype]
+        else:
+            raise ValueError('Please make sure the indicated thermal energy carrier subtype is valid.')
+
+        return EnergyCarrier._filter_thermal_ecs_between_temps(low_temperature, high_temperature, ec_subtype_list)
+
+    @staticmethod
+    def _filter_thermal_ecs_between_temps(low_temperature, high_temperature, subtypes):
+        """
+        Filter the list of all thermal energy carriers for those that correspond to one of the specified subtypes and
+        fall within the specified temperature range.
+
+        :param low_temperature: Low temperature in °C
+        :type low_temperature: float
+        :param high_temperature: High temperature in °C
+        :type high_temperature: float
+        :param subtypes: Energy carrier subtypes
+        :type subtypes: list
+        :return: Codes of the corresponding thermal energy carriers
+        :rtype: list
+        """
+        equivalent_discrete_low_temps = {
+            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
+            for ec_subtype in subtypes
+        }
+        equivalent_discrete_high_temps = {
+            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
+            for ec_subtype in subtypes
+        }
+
+        thermal_ecs_between_temps = [
+            energy_carrier['code']
+            for ec_subtype in subtypes
+            for _, energy_carrier in EnergyCarrier._thermal_energy_carriers[ec_subtype].iterrows()
+            if equivalent_discrete_low_temps[ec_subtype] <= energy_carrier['mean_qual'] <=
+               equivalent_discrete_high_temps[ec_subtype]
+        ]
 
         return thermal_ecs_between_temps
 
@@ -442,35 +489,60 @@ class EnergyCarrier(object):
         return energy_carrier_codes
 
     @staticmethod
-    def get_ghg_for_timestep(energy_carrier_code, timestep):
+    def fetch_ghg_emissions(energy_carrier_code, energy_flow_profile):
         """
-        Return the unit greenhouse gas emissions of a specific energy carrier and a given timestep from the database.
+
         """
         if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
+        data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        return EnergyCarrier._daily_ghg_profile[tab_name][timestep.hour]
+        if data_tab_name == '-':
+            return (0.0 for _ in energy_flow_profile)
+        elif data_tab_name not in EnergyCarrier._daily_ghg_profile.keys():
+            raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. GHG emissions '
+                             f'could not be fetched for the energy carrier "{energy_carrier_code}".')
+        else:
+            positive_flow_profile = energy_flow_profile.replace(list(energy_flow_profile[energy_flow_profile<0]), 0)
+            ghg_emissions_profile = (energy * EnergyCarrier._daily_ghg_profile[data_tab_name][timestep.hour]
+                                     for timestep, energy in positive_flow_profile.items())
+            return ghg_emissions_profile
 
     @staticmethod
-    def get_price_for_timestep(energy_carrier_code, timestep, mode='buy'):
+    def fetch_cost(energy_carrier_code, energy_flow_profile):
         """
-        Return the unit sell or buy price of a specific energy carrier and a given timestep from the database.
+
         """
         if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
+        data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        if mode == 'buy':
-            unit_price = EnergyCarrier._daily_buy_price_profile[tab_name][timestep.hour]
-        elif mode == 'sell':
-            unit_price = EnergyCarrier._daily_sell_price_profile[tab_name][timestep.hour]
+        if data_tab_name == '-':
+            return (0.0 for _ in energy_flow_profile)
+        elif data_tab_name not in set(list(EnergyCarrier._daily_buy_price_profile.keys()) +
+                                      list(EnergyCarrier._daily_sell_price_profile.keys())):
+            raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. Costs could '
+                             f'not be fetched for the energy carrier "{energy_carrier_code}".')
         else:
-            raise ValueError('Please specify whether the energy carrier is sold or bought at the given timestep.')
+            return sum(EnergyCarrier.get_price_for_timestep(data_tab_name, timestep, energy)
+                       for timestep, energy in energy_flow_profile.items())
 
-        return unit_price
+    @staticmethod
+    def get_price_for_timestep(data_tab_name, timestep, energy_demand):
+        """
+        Return the sell or buy price for a given quantity of energy and a given timestep from the database.
+        """
+        if energy_demand >= 0: # i.e. energy is bought
+            unit_price = EnergyCarrier._daily_buy_price_profile[data_tab_name][timestep.hour]
+        elif energy_demand < 0: # i.e. energy is sold
+            unit_price = EnergyCarrier._daily_sell_price_profile[data_tab_name][timestep.hour]
+        else:
+            raise ValueError('Can\'t determine whether energy is bought or sold. Please make sure the energy demand is '
+                             f'calculated correctly. Energy demand was: {energy_demand} for timestep {timestep}.')
+
+        return unit_price * energy_demand
 
     @staticmethod
     def _bind_feedstock_tab(energy_carrier_code):

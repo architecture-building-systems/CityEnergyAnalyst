@@ -61,8 +61,8 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     @property
     def data_frame_month(self):
         if self.__data_frame_month is None:
-            gfa_m2 = self.yearly_loads.set_index('Name').loc[self.buildings[0]]['GFA_m2']
-            hourly_loads_for_buildings = self.hourly_loads[self.hourly_loads['Name'].isin(self.buildings)]
+            gfa_m2 = self.yearly_loads.set_index('name').loc[self.buildings[0]]['GFA_m2']
+            hourly_loads_for_buildings = self.hourly_loads[self.hourly_loads['name'].isin(self.buildings)]
             self.__data_frame_month = calc_monthly_energy_balance(hourly_loads_for_buildings, gfa_m2)
         return self.__data_frame_month
 
@@ -85,7 +85,7 @@ class EnergyBalancePlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         """
         data_frame_month = self.data_frame_month
         # create table arrays
-        name_month = np.append(data_frame_month.index, ['YEAR'])
+        name_month = np.append(data_frame_month.index, ['year'])
         total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
         total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
         balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
@@ -126,7 +126,7 @@ def calc_table(data_frame_month):
     """
 
     # create table arrays
-    name_month = np.append(data_frame_month.index, ['YEAR'])
+    name_month = np.append(data_frame_month.index, ['year'])
     total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
     total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
     balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))

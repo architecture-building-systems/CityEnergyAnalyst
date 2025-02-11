@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def data_initializer(locator,
+def database_helper(locator,
                      databases_path,
                      initialize_archetypes_database=True,
                      initialize_components_database=True,
@@ -55,16 +55,16 @@ def main(config):
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
 
-    print('Running data-intializer with scenario = %s' % config.scenario)
-    print('Running data-intializer with databases located in = %s' % config.data_initializer.databases_path)
+    print('Running database-helper with scenario = %s' % config.scenario)
+    print('Running database-helper with databases located in = %s' % config.database_helper.databases_path)
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    initialize_archetypes_database = 'archetypes' in config.data_initializer.databases
-    initialize_components_database = 'components' in config.data_initializer.databases
-    initialize_assemblies_database = 'assemblies' in config.data_initializer.databases
+    initialize_archetypes_database = 'archetypes' in config.database_helper.databases
+    initialize_components_database = 'components' in config.database_helper.databases
+    initialize_assemblies_database = 'assemblies' in config.database_helper.databases
 
-    data_initializer(locator=locator,
-                     databases_path=config.data_initializer.databases_path,
+    database_helper(locator=locator,
+                     databases_path=config.database_helper.databases_path,
                      initialize_archetypes_database=initialize_archetypes_database,
                      initialize_components_database=initialize_components_database,
                      initialize_assemblies_database=initialize_assemblies_database

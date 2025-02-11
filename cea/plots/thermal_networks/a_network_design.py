@@ -41,7 +41,7 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
         edges_df = geopandas.GeoDataFrame.from_file(
             self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name)).to_crs(
             get_geographic_coordinate_system())
-        edges_df["_LineWidth"] = 0.1 * edges_df["Pipe_DN"]
+        edges_df["_LineWidth"] = 0.1 * edges_df["pipe_DN"]
         edges_df["length_m"] = edges_df["length_m"].round(1)
 
         # color the edges based on aggregated pipe heat loss
@@ -60,12 +60,12 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
             edges_df["Peak Thermal losses [W/m]"] = yearly_thermal_loss.values
 
         # figure out colors
-        p_loss_min = edges_df.Pipe_DN.min()
-        p = edges_df.Pipe_DN.max()
+        p_loss_min = edges_df.pipe_DN.min()
+        p = edges_df.pipe_DN.max()
         min_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("white")]
         max_rgb_mpl = [remap(c, 0.0, 255.0, 0.0, 1.0) for c in get_color_array("red")]
 
-        edges_df["_FillColor"] = edges_df.Pipe_DN.apply(
+        edges_df["_FillColor"] = edges_df.pipe_DN.apply(
             lambda p_loss: json.dumps(
                 [remap(x, 0.0, 1.0, 0.0, 255.0)
                  for x in color_fader_rgb(min_rgb_mpl, max_rgb_mpl,
