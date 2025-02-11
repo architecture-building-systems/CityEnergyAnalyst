@@ -2407,7 +2407,7 @@ get_costs_operation_file:
 get_database_assemblies_envelope_mass:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_MASS.csv
   file_type: csv
   schema:
     columns:
@@ -2437,7 +2437,7 @@ get_database_assemblies_envelope_mass:
 get_database_assemblies_envelope_floor:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_FLOOR.csv
   file_type: csv
   schema:
     columns:
@@ -2480,7 +2480,7 @@ get_database_assemblies_envelope_floor:
 get_database_assemblies_envelope_roof:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_ROOF.csv
   file_type: csv
   schema:
     columns:
@@ -2545,7 +2545,7 @@ get_database_assemblies_envelope_roof:
 get_database_assemblies_envelope_shading:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_SHADING.csv
   file_type: csv
   schema:
     columns:
@@ -2576,7 +2576,7 @@ get_database_assemblies_envelope_shading:
 get_database_assemblies_envelope_tightness:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_TIGHTNESS.csv
   file_type: csv
   schema:
     columns:
@@ -2607,7 +2607,7 @@ get_database_assemblies_envelope_tightness:
 get_database_assemblies_envelope_wall:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv
   file_type: csv
   schema:
     columns:
@@ -2671,7 +2671,7 @@ get_database_assemblies_envelope_wall:
 get_database_assemblies_envelope_window:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WINDOW.csv
   file_type: csv
   schema:
     columns:
@@ -3003,7 +3003,7 @@ get_database_assemblies_hvac_heating:
 get_database_assemblies_hvac_hot_water:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/HVAC/HOT_WATER.csv
+  file_path: inputs/database/ASSEMBLIES/HVAC/HVAC_HOTWATER.csv
   file_type: csv
   schema:
     columns:
@@ -3404,7 +3404,7 @@ get_database_assemblies_supply_heating:
 get_database_assemblies_supply_hot_water:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOTWATER.csv
   file_type: csv
   schema:
     columns:
@@ -6552,7 +6552,7 @@ get_database_components_feedstocks_energy_carriers:
 get_database_archetypes_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIER.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIERS.csv
   file_type: csv
   schema:
     columns:
@@ -6652,7 +6652,7 @@ get_database_archetypes_schedules_monthly_multiplier:
 get_building_property_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/building-properties/schedules/MONTHLY_MULTIPLIER.csv
+  file_path: inputs/building-properties/schedules/MONTHLY_MULTIPLIERS.csv
   file_type: csv
   schema:
     columns:
@@ -6751,7 +6751,7 @@ get_building_property_schedules_monthly_multiplier:
 get_database_archetypes_use_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/USE_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/USE/USE_TYPE.csv
   file_type: csv
   schema:
     columns:
@@ -6885,7 +6885,7 @@ get_database_archetypes_use_type:
 get_database_archetypes_construction_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPE.csv
   file_type: csv
   schema:
     columns:
@@ -7174,7 +7174,7 @@ get_database_archetypes_construction_type:
 get_database_archetypes_schedules:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/MULTI_RES.csv
+  file_path: inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/MULTI_RES.csv
   file_type: csv
   schema:
     columns:

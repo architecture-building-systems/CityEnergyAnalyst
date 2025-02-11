@@ -590,28 +590,35 @@ class InputLocator(object):
         """scenario/inputs/database/ARCHETYPES"""
         return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
 
-    def database_archetypes_construction_type(self):
-        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv"""
-        return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION_TYPE.csv')
+    def get_db4_archetypes_construction_folder(self):
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION')
 
+    def database_archetypes_construction_type(self):
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPE.csv"""
+        return os.path.join(self.get_db4_archetypes_construction_folder(), 'CONSTRUCTION_TYPE.csv')
+
+    def get_db4_archetypes_use_folder(self):
+        """scenario/inputs/database/ARCHETYPES/USE"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'USE')
     def get_database_archetypes_use_type(self):
-        """scenario/inputs/database/ARCHETYPES/USE_TYPE.csv"""
-        return os.path.join(self.get_db4_archetypes_folder(), 'USE_TYPE.csv')
+        """scenario/inputs/database/ARCHETYPES/USE/USE_TYPE.csv"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'USE_TYPE.csv')
 
     def get_db4_archetypes_schedules_folder(self):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES"""
-        return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES')
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'SCHEDULES')
 
     def get_db4_archetypes_schedules_library_folder(self):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY"""
-        return os.path.join(self.get_db4_archetypes_folder(), 'SCHEDULES', 'SCHEDULES_LIBRARY')
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'SCHEDULES', 'SCHEDULES_LIBRARY')
 
     def get_database_archetypes_schedules(self, use_type=None):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/{use}.csv"""
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/{use}.csv"""
         return os.path.join(self.get_db4_archetypes_schedules_library_folder(), use_type + '.csv')
 
     def get_database_archetypes_schedules_monthly_multiplier(self):
-        """scenario/inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIERS.csv"""
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/MONTHLY_MULTIPLIERS.csv"""
         return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIERS.csv')
 
     def get_db4_assemblies_folder(self):
@@ -623,32 +630,32 @@ class InputLocator(object):
         return os.path.join(self.get_db4_assemblies_folder(), 'ENVELOPE')
 
     def get_database_assemblies_envelope_floor(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'FLOOR.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_FLOOR.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_FLOOR.csv')
 
     def get_database_assemblies_envelope_window(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WINDOW.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WINDOW.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_WINDOW.csv')
 
     def get_database_assemblies_envelope_mass(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'MASS.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_MASS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_MASS.csv')
 
     def get_database_assemblies_envelope_tightness(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'TIGHTNESS.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_TIGHTNESS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_TIGHTNESS.csv')
 
     def get_database_assemblies_envelope_roof(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ROOF.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_ROOF.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_ROOF.csv')
 
     def get_database_assemblies_envelope_shading(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'SHADING.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_SHADING.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_SHADING.csv')
 
     def get_database_assemblies_envelope_wall(self):
-        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv"""
-        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'WALL.csv')
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_WALL.csv')
 
     def get_db4_assemblies_hvac_folder(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC"""
@@ -671,8 +678,8 @@ class InputLocator(object):
         return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_VENTILATION.csv')
 
     def get_database_assemblies_hvac_hot_water(self):
-        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HOT_WATER.csv"""
-        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HOT_WATER.csv')
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HOTWATER.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HOTWATER.csv')
 
     def get_db4_assemblies_supply_folder(self):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY"""
@@ -691,8 +698,8 @@ class InputLocator(object):
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HEATING.csv')
 
     def get_database_assemblies_supply_hot_water(self):
-        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv"""
-        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOT_WATER.csv')
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOTWATER.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOTWATER.csv')
 
     def get_database_components_folder(self):
         """scenario/inputs/database/COMPONENTS"""

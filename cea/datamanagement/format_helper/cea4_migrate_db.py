@@ -122,12 +122,18 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
                 df.rename(columns=rename_dict, inplace=True)
 
             # Handle the special case of renaming
-            if sheet_name == 'CONSTRUCTION':
-                output_path = os.path.join(directory_csv, "MASS.csv")
-            elif file_name == 'HVAC':
+            if file_name == 'ENVELOPE' and sheet_name == 'CONSTRUCTION':
+                output_path = os.path.join(directory_csv, "ENVELOPE_MASS.csv")
+            elif file_name == 'ENVELOPE' and sheet_name != 'CONSTRUCTION':
+                output_path = os.path.join(directory_csv, f"ENVELOPE_{sheet_name}.csv")
+            elif file_name == 'HVAC' and sheet_name != 'HOT_WATER':
                 output_path = os.path.join(directory_csv, f"HVAC_{sheet_name}.csv")
-            elif file_name == 'SUPPLY':
+            elif file_name == 'HVAC' and sheet_name == 'HOT_WATER':
+                output_path = os.path.join(directory_csv, "HVAC_HOTWATER.csv")
+            elif file_name == 'SUPPLY' and sheet_name != 'HOT_WATER':
                 output_path = os.path.join(directory_csv, f"SUPPLY_{sheet_name}.csv")
+            elif file_name == 'SUPPLY' and sheet_name == 'HOT_WATER':
+                output_path = os.path.join(directory_csv, "SUPPLY_HOTWATER.csv")
             elif sheet_name == 'SOLAR_THERMAL_PANELS':
                 output_path = os.path.join(directory_csv, f"SOLAR_COLLECTORS.csv")
             else:
@@ -348,10 +354,10 @@ def move_txt_modify_csv_files(scenario, verbose=False):
     # Create and save the compiled DataFrame
     if compiled_rows:
         compiled_multiplier_df = pd.DataFrame(compiled_rows)
-        compiled_multiplier_path = path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_path = path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
         if verbose:
-            print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
+            print(f"Saved MONTHLY_MULTIPLIERS to: {compiled_multiplier_path}")
 
 
 def delete_files(path, verbose=False):
