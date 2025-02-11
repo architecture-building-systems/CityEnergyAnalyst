@@ -637,13 +637,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
             if list_missing_files_csv_building_properties_schedules_4 == ['MONTHLY_MULTIPLIERS']:
                 modify_csv_files(scenario, verbose=False)
             else:
-                print('! Missing .csv files in building-properties/schedules folder: {building}.'.format(building=', '.join(map(str, list_missing_files_csv_building_properties_schedules_4))))
-                print('! Run Archetypes Mapper to create the missing .csv files.')
+                print('! Ensure .csv file(s) are present building-properties/schedules folder: {building}. Run Archetypes Mapper to generate the missing .csv files.'.format(building=', '.join(map(str, list_missing_files_csv_building_properties_schedules_4))))
         else:
-            if list_missing_columns_building_properties_schedules_buildings_4 or list_missing_columns_building_properties_schedules_monthly_multipliers_4:
-                print('! Missing data in .csv files:')
-                print('! Run Archetypes Mapper to create new .csv files completing the missing data.')
-
+            if list_missing_columns_building_properties_schedules_buildings_4:
+                print('! Ensure column(s) are present in the (schedule) .csv file of each building in building-properties/schedules folder: {columns}. Run Archetypes Mapper to generate the missing columns.'.format(columns=', '.join(map(str, list_missing_columns_building_properties_schedules_buildings_4))))
+            elif list_missing_columns_building_properties_schedules_monthly_multipliers_4:
+                print('! Ensure column(s) are present in MONTHLY_MULTIPLIERS.csv in building-properties/schedules folder: {columns}. Run Archetypes Mapper to generate the missing columns.'.format(columns=', '.join(map(str, list_missing_columns_building_properties_schedules_monthly_multipliers_4))))
         # # Print: End
         # print('-' * 49)
 

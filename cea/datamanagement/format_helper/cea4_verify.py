@@ -113,84 +113,86 @@ def verify_file_against_schema_4(scenario, item, building_name=None):
     Parameters:
     - scenario (str): Path to the scenario.
     - item (str): Locator for the file to validate (e.g., 'get_zone_geometry').
-    - self: Reference to the calling class/module.
-    - verbose (bool, optional): If True, print validation errors to the console.
+    - building_name (str, optional): If provided, validates a specific building file.
 
     Returns:
-    - List[dict]: List of validation errors.
+    - Tuple[List[str], List[str]]: Missing columns and validation error messages.
     """
     schema = schemas()
 
-    # File path and schema section
+    # Determine file path
     if building_name is None:
         file_path = path_to_input_file_without_db_4(scenario, item)
     else:
         file_path = path_to_input_file_without_db_4(scenario, item, building_name=building_name)
-    locator = mapping_dict_input_item_to_schema_locator[item]
 
-    schema_section = schema[locator]
-    schema_columns = schema_section['schema']['columns']
+    locator = mapping_dict_input_item_to_schema_locator[item]
+    schema_section = schema.get(locator, {})
+    schema_columns = schema_section.get('schema', {}).get('columns', {})
     id_column = mapping_dict_input_item_to_id_column[item]
 
     # Determine file type and load the data
-    if file_path.endswith('.csv'):
-        try:
+    try:
+        if file_path.endswith('.csv'):
             df = pd.read_csv(file_path)
             col_attr = 'Column'
-        except Exception as e:
-            raise ValueError(f"Failed to read .csv file: {file_path}. Error: {e}")
-    elif file_path.endswith('.shp'):
-        try:
+        elif file_path.endswith('.shp'):
             gdf = gpd.read_file(file_path)
-            df = pd.DataFrame(gdf.drop(columns='geometry'))  # Drop geometry to validate non-spatial data
+            df = pd.DataFrame(gdf.drop(columns=['geometry'], errors='ignore'))  # Drop geometry safely
             col_attr = 'Attribute'
-        except Exception as e:
-            raise ValueError(f"Failed to read ShapeFile: {file_path}. Error: {e}")
-    else:
-        raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
+        else:
+            raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
+    except Exception as e:
+        raise ValueError(f"Failed to read file: {file_path}. Error: {e}")
 
     errors = []
-    missing_columns = []
+    missing_columns = [col for col in schema_columns if col not in df.columns]
+
+    # Remove 'geometry' and 'reference' from missing columns
+    missing_columns = [col for col in missing_columns if col.lower() not in ['geometry', 'reference']]
+
+    # Ensure ID column exists before using it
+    if id_column not in df.columns:
+        errors.append(f"- Missing required ID column: '{id_column}'.")
+        return missing_columns, errors  # Stop further validation if ID column is missing
 
     # Validation process
     for col_name, col_specs in schema_columns.items():
         if col_name not in df.columns:
-            missing_columns.append(col_name)
-            continue
+            continue  # Already captured in `missing_columns`
 
-        if id_column not in missing_columns:
+        col_data = df[col_name]
 
-            col_data = df[col_name]
+        # Type validation
+        expected_type = col_specs.get('type')
+        if expected_type == 'string':
+            invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
+        elif expected_type == 'int':
+            invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
+        elif expected_type == 'float':
+            invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
+        else:
+            invalid = pd.Series(False, index=col_data.index)  # Skip unknown types
 
-            # Check type
-            if col_specs['type'] == 'string':
-                invalid = ~col_data.apply(lambda x: isinstance(x, str) or pd.isnull(x))
-            elif col_specs['type'] == 'int':
-                invalid = ~col_data.apply(lambda x: isinstance(x, (int, np.integer)) or pd.isnull(x))
-            elif col_specs['type'] == 'float':
-                invalid = ~col_data.apply(lambda x: isinstance(x, (float, int, np.floating, np.integer)) or pd.isnull(x))
-            else:
-                invalid = pd.Series(False, index=col_data.index)  # Unknown types are skipped
+        for idx in invalid[invalid].index:
+            identifier = df.at[idx, id_column]
+            errors.append(f"- The {col_name} value for row {identifier} is invalid ({col_data[idx]}). Please check the data type.")
 
-            for idx in invalid[invalid].index:
+        # Range validation
+        min_value = col_specs.get('min')
+        max_value = col_specs.get('max')
+
+        if min_value is not None:
+            out_of_range = col_data[col_data < min_value]
+            for idx, value in out_of_range.items():
                 identifier = df.at[idx, id_column]
-                errors.append(f"- The {col_name} value for row {identifier} is invalid ({col_data[idx]}). Please check the data type.")
+                errors.append(f"- The {col_name} value for row {identifier} is too low ({value}). It should be at least {min_value}.")
 
-            # Check range
-            if 'min' in col_specs:
-                out_of_range = col_data[col_data < col_specs['min']]
-                for idx, value in out_of_range.items():
-                    identifier = df.at[idx, id_column]
-                    errors.append(f"- The {col_name} value for row {identifier} is too low ({value}). It should be at least {col_specs['min']}.")
-
-            if 'max' in col_specs:
-                out_of_range = col_data[col_data > col_specs['max']]
-                for idx, value in out_of_range.items():
-                    identifier = df.at[idx, id_column]
-                    errors.append(f"- The {col_name} value for row {identifier} is too high ({value}). It should be at most {col_specs['max']}.")
-
-    # Remove 'geometry' and 'reference' columns
-    missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'REFERENCE']]
+        if max_value is not None:
+            out_of_range = col_data[col_data > max_value]
+            for idx, value in out_of_range.items():
+                identifier = df.at[idx, id_column]
+                errors.append(f"- The {col_name} value for row {identifier} is too high ({value}). It should be at most {max_value}.")
 
     return missing_columns, errors
 
@@ -284,7 +286,7 @@ def verify_file_exists_4(scenario, items, building_names=None):
             for building_name in building_names:
                 path = path_to_input_file_without_db_4(scenario, file, building_name)
                 if not os.path.isfile(path):
-                    list_missing_files.append(file)
+                    list_missing_files.append(building_name)
     return list_missing_files
 
 
