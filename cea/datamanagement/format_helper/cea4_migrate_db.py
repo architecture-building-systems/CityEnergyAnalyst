@@ -112,8 +112,13 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
     except Exception as e:
         raise ValueError(f"Error reading Excel file: {e}")
 
+    errors = []
+    success_count = 0
+    total_sheets = 0
+
     # Loop through each sheet and save as a CSV
     for sheet_name in excel_data.sheet_names:
+        total_sheets += 1
         try:
             df = pd.read_excel(path_excel, sheet_name=sheet_name)
             # Rename columns based on the rename_dict
@@ -132,11 +137,17 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
 
             # Save the file
             df.to_csv(output_path, index=False)
+            success_count += 1
             if verbose:
                 print(f"Saved {sheet_name} to {output_path}")
         except Exception as e:
-            print(f"Failed to save sheet {sheet_name} as .csv format Error: {e}")
-
+            errors.append(f"Sheet {sheet_name}: {str(e)}")
+    if verbose:
+        print(f"Converted {success_count}/{total_sheets} sheets successfully")
+    if errors:
+        print("Errors encountered:")
+        for error in errors:
+            print(f"- {error}")
 
 def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None, verbose=False):
     """
