@@ -3,6 +3,7 @@ import os
 import pathlib
 import shutil
 import traceback
+import warnings
 from typing import Dict, Any
 
 import geopandas
@@ -501,7 +502,17 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
 
 def get_choices(choice_properties, path):
     lookup = choice_properties['lookup']
-    df = pd.read_excel(path, lookup['sheet'])
+
+    # TODO: Remove this once all databases are in .csv format
+    if lookup['path'].endswith('.xlsx'):
+        warnings.warn('Databases are in .xlsx format. This will be deprecated in the future. Please use .csv instead.')
+        df = pd.read_excel(path, lookup['sheet'])
+    else:
+        df = pd.read_csv(path)
+
+    if lookup['column'] not in df.columns:
+        raise ValueError(f"column {lookup['column']} not found in {path}: check the file or schemas")
+
     choices = df[lookup['column']].tolist()
     out = []
     if 'none_value' in choice_properties:

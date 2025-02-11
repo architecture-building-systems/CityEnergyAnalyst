@@ -77,12 +77,11 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
-        if 'building:levels' not in list_of_columns:
+        if 'building:levels' not in list_of_columns or pd.isnull(shapefile['building:levels']).all():
             # if 'building:levels' is not in the database, make an assumption
-            shapefile['building:levels'] = [3] * no_buildings
-        elif pd.isnull(shapefile['building:levels']).all():
             # if 'building:levels' are all NaN, make an assumption
-            shapefile['building:levels'] = [3] * no_buildings
+            shapefile['building:levels'] = 3 * no_buildings
+            shapefile['reference'] = ["CEA Assumption"] * no_buildings
         elif 'height' in list_of_columns:
             # if either the 'building:levels' or the building 'height' are available, take them from OSM
             shapefile['reference'] = ["OSM - as it is" if x else "OSM - median values of all buildings" for x in
