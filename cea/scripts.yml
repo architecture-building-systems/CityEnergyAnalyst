@@ -241,7 +241,7 @@ Thermal Network Design:
       - [get_database_components_conversion_fuel_cells]
       - [get_database_components_conversion_heat_exchangers]
       - [get_database_components_conversion_thermal_energy_storages]
-      - [get_database_components_conversion_thermal_grids]
+      - [get_database_components_distribution_thermal_grid]
       - [get_database_components_conversion_vapor_compression_chillers]
       - [get_weather_file]
 
