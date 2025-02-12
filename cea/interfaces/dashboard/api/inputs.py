@@ -542,6 +542,9 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
 
 
 def get_choices(choice_properties, path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Unable to generate choices. Could not find file: {path}")
+
     lookup = choice_properties['lookup']
 
     # TODO: Remove this once all databases are in .csv format
