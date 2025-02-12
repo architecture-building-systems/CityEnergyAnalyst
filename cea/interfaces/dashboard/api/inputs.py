@@ -4,6 +4,7 @@ import pathlib
 import shutil
 import traceback
 import warnings
+from collections import defaultdict
 from typing import Dict, Any
 
 import geopandas
@@ -242,6 +243,7 @@ def get_building_properties(config):
         file_type = db_info['file_type']
         db_columns = db_info['columns']
 
+        # Get building property data from file
         try:
             if file_type == 'shp':
                 table_df = geopandas.read_file(file_path)
@@ -257,14 +259,19 @@ def get_building_properties(config):
                 table_df = pd.read_csv(file_path)
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
-                store['tables'][db] = json.loads(
-                    table_df.set_index('name').to_json(orient='index'))
+                store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
+        except (IOError, DriverError, ValueError) as e:
+            print(f"Error reading {db} from {file_path}: {e}")
+            # Continue to try getting column definitions
+            store['tables'][db] = None
 
-            columns = {}
+        # Get column definitions from schema
+        columns = defaultdict(dict)
+        try:
             for column_name, column in db_columns.items():
-                columns[column_name] = {}
                 if column_name == 'reference':
                     continue
+
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
                     path = getattr(locator, column['choice']['lookup']['path'])()
@@ -279,12 +286,13 @@ def get_building_properties(config):
                         columns[column_name]['example'] = column['example']
                 if 'nullable' in column:
                     columns[column_name]['nullable'] = column['nullable']
+
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
-            store['columns'][db] = columns
-
-        except (IOError, DriverError, ValueError) as e:
-            print(e)
+            store['columns'][db] = dict(columns)
+        except Exception as e:
+            print(f"Error reading column property from schemas: {e}")
+            # Set data to None as well if column definitions cannot be read
             store['tables'][db] = None
             store['columns'][db] = None
 
