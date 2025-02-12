@@ -1540,8 +1540,7 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: COOLING
+            path: get_database_assemblies_hvac_cooling
             column: code
       hvac_type_hs:
         description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
@@ -1550,8 +1549,7 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HEATING
+            path: get_database_assemblies_hvac_heating
             column: code
       hvac_type_dhw:
         description: Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
@@ -1560,8 +1558,7 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HOT_WATER
+            path: get_database_assemblies_hvac_hot_water
             column: code
       hvac_type_ctrl:
         description: Type of heating and cooling control HVAC  assembly (relates to
@@ -1571,8 +1568,7 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: CONTROLLER
+            path: get_database_assemblies_hvac_controller
             column: code
       hvac_type_vent:
         description: Type of ventilation HVAC assembly (relates to "code" in HVAC
@@ -1582,8 +1578,7 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: VENTILATION
+            path: get_database_assemblies_hvac_ventilation
             column: code
       hvac_heat_starts:
         description: Start of the heating season - use 00|00 when there is none
@@ -1698,8 +1693,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: CONSTRUCTION
+            path: get_database_assemblies_envelope_mass
             column: code
       envelope_type_leak:
         description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
@@ -1708,8 +1702,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: TIGHTNESS
+            path: get_database_assemblies_envelope_tightness
             column: code
       envelope_type_roof:
         description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
@@ -1718,8 +1711,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: ROOF
+            path: get_database_assemblies_envelope_roof
             column: code
       envelope_type_shade:
         description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
@@ -1728,8 +1720,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: SHADING
+            path: get_database_assemblies_envelope_shading
             column: code
       envelope_type_wall:
         description: External wall construction assembly (relates to "code" in ENVELOPE
@@ -1739,8 +1730,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
+            path: get_database_assemblies_envelope_wall
             column: code
       envelope_type_part:
         description: Internal partitions construction assembly (relates to "code" in ENVELOPE
@@ -1750,8 +1740,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
+            path: get_database_assemblies_envelope_wall
             column: code
       envelope_type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
@@ -1761,8 +1750,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
+            path: get_database_assemblies_envelope_floor
             column: code
       envelope_type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
@@ -1772,8 +1760,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
+            path: get_database_assemblies_envelope_floor
             column: code
       envelope_type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
@@ -1782,8 +1769,7 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WINDOW
+            path: get_database_assemblies_envelope_window
             column: code
   used_by:
   - demand
@@ -1958,8 +1944,7 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: COOLING
+            path: get_database_assemblies_supply_cooling
             column: code
       supply_type_dhw:
         description: Type of hot water supply assembly (refers to "code" in SUPPLY
@@ -1969,8 +1954,7 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: HOT_WATER
+            path: get_database_assemblies_supply_hot_water
             column: code
       supply_type_el:
         description: Type of electrical supply assembly (refers to "code" in SUPPLY
@@ -1980,8 +1964,7 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: ELECTRICITY
+            path: get_database_assemblies_supply_electricity
             column: code
       supply_type_hs:
         description: Type of heating supply assembly (refers to "code" in SUPPLY assemblies)
@@ -1990,8 +1973,7 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: HEATING
+            path: get_database_assemblies_supply_heating
             column: code
   used_by:
   - decentralized
@@ -7843,8 +7825,7 @@ get_database_construction_standards:
           choice:
             lookup:
               column: code
-              path: get_database_air_conditioning_systems
-              sheet: COOLING
+              path: get_database_assemblies_hvac_cooling
           description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
           type: string
           unit: 'NA'
