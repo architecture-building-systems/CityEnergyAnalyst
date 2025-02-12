@@ -39,11 +39,11 @@ COLORS = {
 # List of input databases (db_name, locator/schema_key)
 INPUT_DATABASES = [
     ('zone', 'get_zone_geometry'),
-    ('architecture', 'get_building_architecture'),
+    ('envelope', 'get_building_architecture'),
     ('internal-loads', 'get_building_internal'),
     ('indoor-comfort', 'get_building_comfort'),
-    ('air-conditioning-systems', 'get_building_air_conditioning'),
-    ('supply-systems', 'get_building_supply'),
+    ('hvac', 'get_building_air_conditioning'),
+    ('supply', 'get_building_supply'),
     ('surroundings', 'get_surroundings_geometry'),
     ('trees', "get_tree_geometry")
 ]
