@@ -263,7 +263,7 @@ def get_building_properties(config):
             columns = {}
             for column_name, column in db_columns.items():
                 columns[column_name] = {}
-                if column_name == 'refeference':
+                if column_name == 'reference':
                     continue
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
