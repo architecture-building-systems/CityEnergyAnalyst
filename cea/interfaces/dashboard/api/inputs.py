@@ -548,8 +548,8 @@ def get_choices(choice_properties, path):
     lookup = choice_properties['lookup']
 
     # TODO: Remove this once all databases are in .csv format
-    if lookup['path'].endswith('.xlsx'):
-        warnings.warn('Databases are in .xlsx format. This will be deprecated in the future. Please use .csv instead.')
+    if path.endswith('.xlsx'):
+        warnings.warn(f'Database {path} is in .xlsx format. This will be deprecated in the future.')
         df = pd.read_excel(path, lookup['sheet'])
     else:
         df = pd.read_csv(path)
