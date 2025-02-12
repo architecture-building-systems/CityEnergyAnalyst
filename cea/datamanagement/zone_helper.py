@@ -382,7 +382,7 @@ def calculate_typology_file(locator, zone_df, year_construction, occupancy_type)
 
     # calculate the most likely construction standard
     standard_database = pd.read_csv(
-        locator.database_archetypes_construction_type())
+        locator.get_database_archetypes_construction_type())
     typology_df['const_type'] = calc_category(
         standard_database, typology_df['year'].values)
 
