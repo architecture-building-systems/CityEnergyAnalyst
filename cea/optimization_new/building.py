@@ -121,7 +121,7 @@ class Building(object):
 
         return self.location
 
-    def load_base_supply_system(self, file_locator, energy_system_type='DH'):
+    def load_base_supply_system(self, locator, energy_system_type='DH'):
         """
         Load the building's base supply system and determine what the supply system composition for the given system
         looks like (using SUPPLY_NEW.xlsx-database). The base supply system is given in the 'supply_systems.dbf'-file.
@@ -129,7 +129,7 @@ class Building(object):
 
         # load the building supply systems file as a class variable
         if Building._base_supply_systems.empty:
-            building_supply_systems_file = file_locator.get_building_supply()
+            building_supply_systems_file = locator.get_building_supply()
             Building._base_supply_systems = pd.read_csv(building_supply_systems_file)
 
         # fetch the base supply system for the building according to the building supply systems file
@@ -138,20 +138,19 @@ class Building(object):
             raise ValueError(f"Please make sure supply systems file specifies a base-case supply system for all "
                              f"buildings. No information could be found on building '{self.identifier}'.")
         elif energy_system_type == 'DH':
-            self._stand_alone_supply_system_code = base_supply_system_info['type_hs'].values[0]
+            self._stand_alone_supply_system_code = base_supply_system_info['supply_type_hs'].values[0]
         elif energy_system_type == 'DC':
-            self._stand_alone_supply_system_code = base_supply_system_info['type_cs'].values[0]
+            self._stand_alone_supply_system_code = base_supply_system_info['supply_type_cs'].values[0]
         else:
             raise ValueError(f"'{energy_system_type}' is not a valid energy system type. The relevant base supply "
                              f"system for building '{self.identifier}' could therefore not be assigned.")
 
         # load the 'assemblies'-supply systems database as a class variable
         if Building._supply_system_database.empty:
-            supply_systems_database_file = pd.ExcelFile(file_locator.get_database_supply_assemblies())
             if energy_system_type == 'DH':
-                Building._supply_system_database = pd.read_excel(supply_systems_database_file, 'HEATING')
+                Building._supply_system_database = pd.read_csv(locator.get_database_assemblies_supply_heating())
             elif energy_system_type == 'DC':
-                Building._supply_system_database = pd.read_excel(supply_systems_database_file, 'COOLING')
+                Building._supply_system_database = pd.read_csv(locator.get_database_assemblies_supply_cooling())
             else:
                 raise ValueError(f"'{energy_system_type}' is not a valid energy system type. No appropriate "
                                  f"'assemblies'-supply system database could therefore be loaded.")

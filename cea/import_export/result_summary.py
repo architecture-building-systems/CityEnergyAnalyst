@@ -187,7 +187,7 @@ def get_results_path(locator, cea_feature, list_buildings):
         list_appendix.append(cea_feature)
 
     if cea_feature == 'pv':
-        database_pv = pd.read_excel(locator.get_database_conversion_systems(), sheet_name='PHOTOVOLTAIC_PANELS')
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv(), 'PHOTOVOLTAIC_PANELS')
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
@@ -1487,7 +1487,7 @@ def serial_filter_buildings(config, locator):
     list_buildings = config.result_summary.buildings
     integer_year_start = config.result_summary.filter_buildings_by_year_start
     integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_standard
+    list_standard = config.result_summary.filter_buildings_by_construction_type
     list_main_use_type = config.result_summary.filter_buildings_by_use_type
     ratio_main_use_type = config.result_summary.min_ratio_as_main_use
 

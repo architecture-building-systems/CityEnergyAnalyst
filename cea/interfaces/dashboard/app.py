@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,6 +45,20 @@ app.include_router(api.router, prefix='/api')
 app.include_router(plots.router, prefix='/plots')
 app.include_router(server.router, prefix='/server')
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # TODO: Log this to logging service
+    print("Found validation errors", exc.errors())
+    print("url", request.url)
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors()},
+        headers={
+            "Access-Control-Allow-Origin": get_cors_origins(),
+        }
+    )
 
 @app.exception_handler(Exception)
 async def uncaught_exception_handler(request, exc):

@@ -1,0 +1,5 @@
+description,code,cap_min,cap_max,unit,currency,a,b,c,d,e,LT_yr,O&M_%,IR_%,assumption
+generic pump,PU1,500,4000,W,USD-2015,0,29.313929313929314,0.5216,0,0,25,1,6,LT_yr
+generic pump,PU1,4000,37000,W,USD-2015,0,4.3229729729729724,0.7464,0,0,25,1,6,LT_yr
+generic pump,PU1,37000,375000,W,USD-2015,0,1.016839916839917,0.8873,0,0,25,1,6,LT_yr
+generic pump,PU1,37000,10000000000,W,USD-2015,0,1.016839916839917,0.8873,0,0,25,1,6,all

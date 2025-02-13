@@ -35,17 +35,17 @@ def database_helper(locator,
 
     if initialize_archetypes_database:
         complete_databases_path = os.path.join(databases_path, 'archetypes')
-        complete_output_directory = locator.get_databases_archetypes_folder()
+        complete_output_directory = locator.get_db4_archetypes_folder()
         copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
     if initialize_components_database:
         complete_databases_path = os.path.join(databases_path, 'components')
-        complete_output_directory = locator.get_databases_systems_folder()
+        complete_output_directory = locator.get_db4_components_folder()
         copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
     if initialize_assemblies_database:
         complete_databases_path = os.path.join(databases_path, 'assemblies')
-        complete_output_directory = locator.get_databases_assemblies_folder()
+        complete_output_directory = locator.get_db4_assemblies_folder()
         copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
 

@@ -18,22 +18,10 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-COLUMNS_SCHEDULES = ['DAY',
-                     'HOUR',
-                     'OCCUPANCY',
-                     'APPLIANCES'
-                     'LIGHTING',
-                     'WATER',
-                     'HEATING',
-                     'COOLING',
-                     'PROCESSES',
-                     'SERVERS']
-
-DAY = ['WEEKDAY'] * 24 + ['SATURDAY'] * 24 + ['SUNDAY'] * 24
-HOUR = list(range(1, 25)) + list(range(1, 25)) + list(range(1, 25))
+months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 
-def read_cea_schedule(path_to_cea_schedule):
+def read_cea_schedule(locator, use_type=None, building=None):
     """
     reader for the files ``locator.get_building_weekly_schedules``
 
@@ -42,36 +30,50 @@ def read_cea_schedule(path_to_cea_schedule):
     :return: schedule data, schedule complementary data
     """
 
-    with open(path_to_cea_schedule) as f:
-        reader = csv.reader(f)
-        for i, row in enumerate(reader):
-            if i == 0:
-                metadata = row[1]
-            elif i == 1:
-                monthly_multiplier = [round(float(x), 2) for x in row[1:]]
-            else:
-                # skip all the other rows
-                break
+    metadata = 'meta-data'
+    # Get the twelve numbers of monthly multiplier as a list
+    if use_type:
+        path_to_monthly_multiplier = locator.get_database_archetypes_schedules_monthly_multiplier()
+        path_to_schedule = locator.get_database_archetypes_schedules(use_type)
+        df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
+        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['use_type'] == use_type]
+        monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
+        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
-    schedule_data = pd.read_csv(path_to_cea_schedule, skiprows=2).T
+    elif building:
+        path_to_monthly_multiplier = locator.get_building_weekly_schedules_monthly_multiplier_csv()
+        path_to_schedule = locator.get_building_weekly_schedules(building)
+        df_monthly_multiplier = pd.read_csv(path_to_monthly_multiplier)
+        df_monthly_multiplier_row = df_monthly_multiplier[df_monthly_multiplier['name'] == building]
+        monthly_multiplier = df_monthly_multiplier_row[months].values.flatten().tolist()
+        schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
+
+    else:
+        raise ValueError('Either use_type or building has to be not None.')
+
+    # Get the schedule data as a dictionary
+    schedule_data = pd.read_csv(path_to_schedule).T
     schedule_data = dict(zip(schedule_data.index, schedule_data.values))
-    schedule_complementary_data = {'METADATA': metadata, 'MONTHLY_MULTIPLIER': monthly_multiplier}
 
     return schedule_data, schedule_complementary_data
 
 
-def save_cea_schedule(schedule_data, schedule_complementary_data, path_to_building_schedule):
-    METADATA = ['METADATA'] + [schedule_complementary_data['METADATA']]
-    MULTIPLIER = ['MONTHLY_MULTIPLIER'] + list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
-    COLUMNS_SCHEDULES = schedule_data.keys()
-    RECORDS_SCHEDULES = map(list, zip(*schedule_data.values()))
-    with open(path_to_building_schedule, "w", newline="", encoding="utf-8") as csvfile:
-        csvwriter = csv.writer(csvfile, delimiter=',')
-        csvwriter.writerow(METADATA)
-        csvwriter.writerow(MULTIPLIER)
-        csvwriter.writerow(COLUMNS_SCHEDULES)
-        for row in RECORDS_SCHEDULES:
-            csvwriter.writerow(row)
+def save_cea_schedules(schedule_data, path_to_building_schedule):
+    # schedules
+    df_schedules = pd.DataFrame.from_dict(schedule_data)
+    if 'hour' in df_schedules.columns:
+        columns = ['hour'] + [col for col in df_schedules.columns if col != 'hour']
+        df_schedules = df_schedules[columns]
+    df_schedules.to_csv(path_to_building_schedule, index=False, float_format='%.2f')
+
+
+def save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier):
+
+    # monthly multiplier
+    header = ['name'] + months
+    df_monthly_multiplier = pd.DataFrame(data=lists_monthly_multiplier, columns=header)
+    df_monthly_multiplier.to_csv(path_to_monthly_multiplier, index=False, float_format='%.2f')
+
 
 
 def get_all_schedule_names(schedules_folder):

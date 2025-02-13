@@ -31,7 +31,7 @@ def calc_Cinv_storage(V_tank_m3, locator, technology_type):
 
     """
     if V_tank_m3 > 0:
-        storage_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="THERMAL_ENERGY_STORAGES")
+        storage_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv("THERMAL_ENERGY_STORAGES"))
         storage_cost_data = storage_cost_data[storage_cost_data['code'] == technology_type]
 
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

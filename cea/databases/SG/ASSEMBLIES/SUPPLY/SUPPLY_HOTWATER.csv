@@ -1,0 +1,3 @@
+description,code,feedstock,scale,efficiency,CAPEX_USD2015kW,LT_yr,O&M_%,IR_%,reference
+,SUPPLY_HOTWATER_AS0,NONE,NONE,0.0,0,20,1,1.3,educated guess
+Electrical boiler,SUPPLY_HOTWATER_AS1,GRID,BUILDING,0.9,200,20,5,1.3,educated guess

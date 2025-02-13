@@ -1,0 +1,6 @@
+description,code,dT_Qhs,dT_Qcs
+,HVAC_CONTROLLER_AS0,2.5,-2.5
+,HVAC_CONTROLLER_AS1,2.5,-2.5
+PI controller,HVAC_CONTROLLER_AS2,1.2,-1.2
+PI controller with optimum tuning,HVAC_CONTROLLER_AS3,0.9,-0.9
+room temperature control (electromagnetically/electronically).,HVAC_CONTROLLER_AS4,1.8,1.8

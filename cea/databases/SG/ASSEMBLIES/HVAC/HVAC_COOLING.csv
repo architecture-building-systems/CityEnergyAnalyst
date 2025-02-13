@@ -1,0 +1,7 @@
+description,code,class_cs,convection_cs,Qcsmax_Wm2,dTcs_C,Tscs0_ahu_C,dTcs0_ahu_C,Tc_sup_air_ahu_C,Tscs0_aru_C,dTcs0_aru_C,Tc_sup_air_aru_C,Tscs0_scu_C,dTcs0_scu_C,References
+none,HVAC_COOLING_AS0,NONE,0.0,0,0.0,,,,,,,,,
+ceiling cooling (18/21)  ,HVAC_COOLING_AS1,CEILING_COOLING,0.5,500,0.5,,,,,,,18.0,3.0,
+mini-split AC (6/15) ,HVAC_COOLING_AS2,DECENTRALIZED_AC,1.0,150,0.7,,,,6.5,9.0,16.0,,,
+central AC (6/15) ,HVAC_COOLING_AS3,CENTRAL_AC,1.0,500,0.5,6.5,9.0,13.0,6.5,9.0,13.0,,,supply air temperatures of ahu and aru accroding to Ashrae 90.1 (55F)
+3for2,HVAC_COOLING_AS4,HYBRID_AC,1.0,500,0.5,6.5,7.0,18.0,6.5,4.0,13.0,18.0,3.0,supply air temperatures of ahu and aru accroding to Ashrae 90.1 (55F)
+floor cooling (18/21)  ,HVAC_COOLING_AS5,FLOOR_COOLING,0.1,100,0.5,,,,,,,18.0,3.0,

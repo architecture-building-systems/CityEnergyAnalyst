@@ -1,0 +1,6 @@
+description,code,class_hs,convection_hs,Qhsmax_Wm2,dThs_C,Tshs0_ahu_C,dThs0_ahu_C,Th_sup_air_ahu_C,Tshs0_aru_C,dThs0_aru_C,Th_sup_air_aru_C,Tshs0_shu_C,dThs0_shu_C
+,HVAC_HEATING_AS0,NONE,0.0,0,0.0,,,,,,,,
+Radiator (90/70) ,HVAC_HEATING_AS1,RADIATOR,1.0,500,0.15,,,,,,,90.0,20.0
+Radiator (70/55) ,HVAC_HEATING_AS2,RADIATOR,1.0,500,-0.1,,,,,,,70.0,15.0
+central AC (40/20) ,HVAC_HEATING_AS3,CENTRAL_AC,1.0,500,-1.1,40.0,20.0,36.0,40.0,20.0,36.0,,
+Floor heating (40/35) ,HVAC_HEATING_AS4,FLOOR_HEATING,0.5,150,-0.9,,,,,,,40.0,5.0

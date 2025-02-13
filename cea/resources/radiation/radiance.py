@@ -524,7 +524,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
         written_mat_name_list = set()
         for geo in ageometry_table.index.values:
             # Wall material
-            mat_name = f"wall_{ageometry_table['type_wall'][geo]}"
+            mat_name = f"wall_{ageometry_table['envelope_type_wall'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_wall'][geo]
                 mat_value2 = mat_value1
@@ -539,7 +539,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 written_mat_name_list.add(mat_name)
 
             # Window material
-            mat_name = f"win_{ageometry_table['type_win'][geo]}"
+            mat_name = f"win_{ageometry_table['envelope_type_win'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = calc_transmissivity(ageometry_table['G_win'][geo])
                 mat_value2 = mat_value1
@@ -552,7 +552,7 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 written_mat_name_list.add(mat_name)
 
             # Roof material
-            mat_name = f"roof_{ageometry_table['type_roof'][geo]}"
+            mat_name = f"roof_{ageometry_table['envelope_type_roof'][geo]}"
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_roof'][geo]
                 mat_value2 = mat_value1
@@ -581,21 +581,21 @@ def create_rad_geometry(file_path, geometry_terrain, building_surface_properties
 
         # windows
         for num, occ_face in enumerate(building_properties.windows):
-            material = surface_properties['type_win'][name]
+            material = surface_properties['envelope_type_win'][name]
             surface_name = f"win_{name}_{num}"
             material_name = f"win_{material}"
             yield RadSurface(surface_name, occ_face, material_name)
 
         # walls
         for num, occ_face in enumerate(building_properties.walls):
-            material = surface_properties['type_wall'][name]
+            material = surface_properties['envelope_type_wall'][name]
             surface_name = f"wall_{name}_{num}"
             material_name = f"wall_{material}"
             yield RadSurface(surface_name, occ_face, material_name)
 
         # roofs
         for num, occ_face in enumerate(building_properties.roofs):
-            material = surface_properties['type_roof'][name]
+            material = surface_properties['envelope_type_roof'][name]
             surface_name = f"roof_{name}_{num}"
             material_name = f"roof_{material}"
             yield RadSurface(surface_name, occ_face, material_name)

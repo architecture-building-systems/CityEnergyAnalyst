@@ -1,0 +1,3 @@
+description,code,feedstock,scale,efficiency,CAPEX_USD2015kW,LT_yr,O&M_%,IR_%,reference
+,SUPPLY_ELECTRICITY_AS0,NONE,NONE,0.0,0.0,20,1.3,1.3,educated guess
+Singaporean consumer mix,SUPPLY_ELECTRICITY_AS1,GRID,CITY,0.99,62.1,20,1.3,1.3,CAPEX_USD2015: Industry Source for E/I&C investment costs

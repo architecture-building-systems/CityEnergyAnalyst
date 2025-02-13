@@ -4,6 +4,7 @@ import pathlib
 import shutil
 import traceback
 import warnings
+from collections import defaultdict
 from typing import Dict, Any
 
 import geopandas
@@ -18,6 +19,7 @@ import cea.schemas
 import cea.scripts
 import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.utils import secure_path
@@ -25,7 +27,7 @@ from cea.plots.supply_system.a_supply_system_map import get_building_connectivit
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe, \
-    read_cea_schedule, save_cea_schedule
+    read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 router = APIRouter()
@@ -38,11 +40,11 @@ COLORS = {
 # List of input databases (db_name, locator/schema_key)
 INPUT_DATABASES = [
     ('zone', 'get_zone_geometry'),
-    ('architecture', 'get_building_architecture'),
+    ('envelope', 'get_building_architecture'),
     ('internal-loads', 'get_building_internal'),
     ('indoor-comfort', 'get_building_comfort'),
-    ('air-conditioning-systems', 'get_building_air_conditioning'),
-    ('supply-systems', 'get_building_supply'),
+    ('hvac', 'get_building_air_conditioning'),
+    ('supply', 'get_building_supply'),
     ('surroundings', 'get_surroundings_geometry'),
     ('trees', "get_tree_geometry")
 ]
@@ -223,7 +225,7 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
                     for schedule_type, schedule in schedule_data.items():
                         df[schedule_type] = schedule[day]
                     data = pd.concat([df, data], ignore_index=True)
-                save_cea_schedule(data.to_dict('list'), schedule_complementary_data, schedule_path)
+                save_cea_schedules(data.to_dict('list'), schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
 
         return out
@@ -241,6 +243,7 @@ def get_building_properties(config):
         file_type = db_info['file_type']
         db_columns = db_info['columns']
 
+        # Get building property data from file
         try:
             if file_type == 'shp':
                 table_df = geopandas.read_file(file_path)
@@ -256,14 +259,19 @@ def get_building_properties(config):
                 table_df = pd.read_csv(file_path)
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
-                store['tables'][db] = json.loads(
-                    table_df.set_index('name').to_json(orient='index'))
+                store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
+        except (IOError, DriverError, ValueError) as e:
+            print(f"Error reading {db} from {file_path}: {e}")
+            # Continue to try getting column definitions
+            store['tables'][db] = None
 
-            columns = {}
+        # Get column definitions from schema
+        columns = defaultdict(dict)
+        try:
             for column_name, column in db_columns.items():
-                columns[column_name] = {}
-                if column_name == 'refeference':
+                if column_name == 'reference':
                     continue
+
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
                     path = getattr(locator, column['choice']['lookup']['path'])()
@@ -278,12 +286,13 @@ def get_building_properties(config):
                         columns[column_name]['example'] = column['example']
                 if 'nullable' in column:
                     columns[column_name]['nullable'] = column['nullable']
+
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
-            store['columns'][db] = columns
-
-        except (IOError, DriverError, ValueError) as e:
-            print(e)
+            store['columns'][db] = dict(columns)
+        except Exception as e:
+            print(f"Error reading column property from schemas: {e}")
+            # Set data to None as well if column definitions cannot be read
             store['tables'][db] = None
             store['columns'][db] = None
 
@@ -364,9 +373,8 @@ def df_to_json(file_location):
 async def get_building_schedule(config: CEAConfig, building: str):
     locator = cea.inputlocator.InputLocator(config.scenario)
     try:
-        schedule_path = secure_path(locator.get_building_weekly_schedules(building))
-        schedule_data, schedule_complementary_data = read_cea_schedule(schedule_path)
-        df = pd.DataFrame(schedule_data).set_index(['DAY', 'HOUR'])
+        schedule_data, schedule_complementary_data = read_cea_schedule(locator, use_type=None, building=building)
+        df = pd.DataFrame(schedule_data).set_index(['hour'])
         out = {'SCHEDULES': {
             schedule_type: {day: df.loc[day][schedule_type].values.tolist() for day in df.index.levels[0]}
             for schedule_type in df.columns}}
@@ -401,13 +409,11 @@ async def put_input_database_data(config: CEAConfig, payload: Dict[str, Any]):
         for db_name in payload[db_type]:
             if db_name == 'USE_TYPES':
                 database_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
-                                      locator.get_database_use_types_properties())
+                                      locator.get_database_archetypes_schedules())
                 for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
                     schedule_dict_to_file(
                         schedule_dict,
-                        locator.get_database_standard_schedules_use(
-                            archetype
-                        )
+                        locator.get_database_archetypes_schedules(archetype)
                     )
             else:
                 locator_method = DATABASES_SCHEMA_KEYS[db_name][0]
@@ -439,14 +445,16 @@ async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
 
 @router.get('/databases/check')
 async def check_input_database(config: CEAConfig):
-    locator = cea.inputlocator.InputLocator(config.scenario)
-    try:
-        locator.verify_database_template()
-    except IOError as e:
-        print(e)
+    """Check if the databases are valid"""
+    scenario = config.scenario
+    dict_missing_db = cea4_verify_db(scenario, verbose=True)
+
+    if dict_missing_db:
+        missing_dbs = list(dict_missing_db.keys())
+        missing_dbs.sort()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail= json.dumps(dict_missing_db),
         )
 
     return {'message': 'Database in path seems to be valid.'}
@@ -485,12 +493,45 @@ async def validate_input_database(config: CEAConfig):
     return out
 
 
-def database_dict_to_file(db_dict, db_path):
-    with pd.ExcelWriter(db_path) as writer:
+def database_dict_to_file(db_dict, csv_path):
+    """
+    Save a dictionary of DataFrames as a single CSV file, merging sheets horizontally on 'code' if available.
+
+    Parameters:
+    - db_dict (dict): Dictionary where keys are sheet names and values are DataFrames or lists of dicts.
+    - csv_path (str): Path to the output CSV file.
+
+    Returns:
+    - None
+    """
+    if not db_dict:
+        print("Warning: The database dictionary is empty. No file written.")
+        return
+
+    merged_df = None  # Initialize merged dataframe
+
+    try:
         for sheet_name, data in db_dict.items():
-            df = pd.DataFrame(data).dropna(axis=0, how='all')
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-    print('Database file written to {}'.format(db_path))
+            # Convert to DataFrame if it's a list of dictionaries
+            df = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data.copy()
+
+            # Determine merge method
+            if merged_df is None:
+                merged_df = df
+            else:
+                merge_column = "code" if "code" in df.columns and "code" in merged_df.columns else None
+                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat([merged_df, df], axis=1)
+
+        if merged_df is not None and not merged_df.empty:
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+            merged_df.to_csv(csv_path, index=False)
+            print(f"Database successfully saved to {csv_path}")
+        else:
+            print("Warning: No valid data to write. No CSV file created.")
+
+    except Exception as e:
+        print(f"Error writing database file: {e}")
 
 
 def schedule_dict_to_file(schedule_dict, schedule_path):
@@ -501,11 +542,14 @@ def schedule_dict_to_file(schedule_dict, schedule_path):
 
 
 def get_choices(choice_properties, path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Unable to generate choices. Could not find file: {path}")
+
     lookup = choice_properties['lookup']
 
     # TODO: Remove this once all databases are in .csv format
-    if lookup['path'].endswith('.xlsx'):
-        warnings.warn('Databases are in .xlsx format. This will be deprecated in the future. Please use .csv instead.')
+    if path.endswith('.xlsx'):
+        warnings.warn(f'Database {path} is in .xlsx format. This will be deprecated in the future.')
         df = pd.read_excel(path, lookup['sheet'])
     else:
         df = pd.read_csv(path)

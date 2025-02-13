@@ -1,0 +1,202 @@
+description,code,U_win,G_win,e_win,F_F,GHG_win_kgCO2m2,GHG_biogenic_win_kgCO2m2,Service_Life_win
+single glazing,WINDOW_AS1,4.8,0.85,0.89,0.2,47,0,30
+double glazing ,WINDOW_AS2,3.1,0.75,0.89,0.2,62,0,30
+double glazing - with argon filling,WINDOW_AS3,1.3,0.75,0.89,0.2,69,0,30
+double glazing with low-emissivity coating,WINDOW_AS4,1.1,0.67,0.02,0.2,123,0,30
+triple glazing,WINDOW_AS5,0.99,0.7,0.89,0.2,123,0,30
+trple glazing with two selective low-emissivity coatings,WINDOW_AS6,0.6,0.5,0.02,0.2,123,0,30
+double window,WINDOW_AS7,1.2,0.75,0.89,0.2,70,0,30
+single glazing - HDB,WINDOW_AS8,5.4,0.85,0.89,0.2,47,0,30
+window - NTU,WINDOW_AS9,1.8,0.29,0.89,0.2,62,0,30
+window - SinBERBest Office,WINDOW_AS10,2.2,0.2,0.89,0.2,62,0,30
+TABULA Single family house … 1859,WINDOW_SFH_A,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1860 - 1918,WINDOW_SFH_B,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1919 - 1948,WINDOW_SFH_C,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1949 - 1957,WINDOW_SFH_D,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1958 - 1968,WINDOW_SFH_E,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1969 - 1978,WINDOW_SFH_F,2.8,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1979 - 1983,WINDOW_SFH_G,4.3,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1984 - 1994,WINDOW_SFH_H,3.2,0.75,0.89,0.3,62,0,30
+TABULA Single family house 1995 - 2001,WINDOW_SFH_I,1.9000000000000001,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2002 - 2009,WINDOW_SFH_J,1.4,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2010 - 2015,WINDOW_SFH_K,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2016 …,WINDOW_SFH_L,1.1,0.5,0.02,0.3,123,0,30
+TABULA Multi family house … 1859,WINDOW_MFH_A,2.8,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1860 - 1918,WINDOW_MFH_B,2.6999999999999997,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1919 - 1948,WINDOW_MFH_C,3.0,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1949 - 1957,WINDOW_MFH_D,2.9999999999999996,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1958 - 1968,WINDOW_MFH_E,3.0,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1969 - 1978,WINDOW_MFH_F,3.0,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1979 - 1983,WINDOW_MFH_G,3.0,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1984 - 1994,WINDOW_MFH_H,3.0,0.75,0.89,0.3,62,0,30
+TABULA Multi family house 1995 - 2001,WINDOW_MFH_I,1.9000000000000001,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2002 - 2009,WINDOW_MFH_J,1.4,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2010 - 2015,WINDOW_MFH_K,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2016 …,WINDOW_MFH_L,1.1,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1860 - 1918,WINDOW_TH_B,2.7,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1919 - 1948,WINDOW_TH_C,2.8,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1949 - 1957,WINDOW_TH_D,2.8,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1958 - 1968,WINDOW_TH_E,2.8,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1969 - 1978,WINDOW_TH_F,2.8000000000000003,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1979 - 1983,WINDOW_TH_G,2.8,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1984 - 1994,WINDOW_TH_H,2.8,0.75,0.89,0.3,62,0,30
+TABULA Terraced house 1995 - 2001,WINDOW_TH_I,1.5999999999999999,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2002 - 2009,WINDOW_TH_J,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2010 - 2015,WINDOW_TH_K,1.2999999999999998,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2016 …,WINDOW_TH_L,1.1,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1860 - 1918,WINDOW_AB_B,2.8,0.75,0.89,0.3,62,0,30
+TABULA Apartment block 1919 - 1948,WINDOW_AB_C,3.0,0.75,0.89,0.3,62,0,30
+TABULA Apartment block 1949 - 1957,WINDOW_AB_D,3.0,0.75,0.89,0.3,62,0,30
+TABULA Apartment block 1958 - 1968,WINDOW_AB_E,3.0000000000000004,0.75,0.89,0.3,62,0,30
+TABULA Apartment block 1969 - 1978,WINDOW_AB_F,3.0,0.75,0.89,0.3,62,0,30
+TABULA High rise 1958 - 1968,WINDOW_HR_E,3.0,0.75,0.89,0.3,62,0,30
+TABULA High rise 1969 - 1978,WINDOW_HR_F,3.0,0.75,0.89,0.3,62,0,30
+TABULA Single family house … 1859 Normal Refurbishment,WINDOW_SFH_A_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1860 - 1918 Normal Refurbishment,WINDOW_SFH_B_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1919 - 1948 Normal Refurbishment,WINDOW_SFH_C_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1949 - 1957 Normal Refurbishment,WINDOW_SFH_D_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1958 - 1968 Normal Refurbishment,WINDOW_SFH_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1969 - 1978 Normal Refurbishment,WINDOW_SFH_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1979 - 1983 Normal Refurbishment,WINDOW_SFH_G_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1984 - 1994 Normal Refurbishment,WINDOW_SFH_H_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 1995 - 2001 Normal Refurbishment,WINDOW_SFH_I_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2002 - 2009 Normal Refurbishment,WINDOW_SFH_J_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2010 - 2015 Normal Refurbishment,WINDOW_SFH_K_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house 2016 … Normal Refurbishment,WINDOW_SFH_L_NR,1.1,0.67,0.02,0.3,123,0,30
+TABULA Multi family house … 1859 Normal Refurbishment,WINDOW_MFH_A_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1860 - 1918 Normal Refurbishment,WINDOW_MFH_B_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1919 - 1948 Normal Refurbishment,WINDOW_MFH_C_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1949 - 1957 Normal Refurbishment,WINDOW_MFH_D_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1958 - 1968 Normal Refurbishment,WINDOW_MFH_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1969 - 1978 Normal Refurbishment,WINDOW_MFH_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1979 - 1983 Normal Refurbishment,WINDOW_MFH_G_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1984 - 1994 Normal Refurbishment,WINDOW_MFH_H_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 1995 - 2001 Normal Refurbishment,WINDOW_MFH_I_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2002 - 2009 Normal Refurbishment,WINDOW_MFH_J_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2010 - 2015 Normal Refurbishment,WINDOW_MFH_K_NR,0.7,0.67,0.02,0.3,123,0,30
+TABULA Multi family house 2016 … Normal Refurbishment,WINDOW_MFH_L_NR,1.1,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1860 - 1918 Normal Refurbishment,WINDOW_TH_B_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1919 - 1948 Normal Refurbishment,WINDOW_TH_C_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1949 - 1957 Normal Refurbishment,WINDOW_TH_D_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1958 - 1968 Normal Refurbishment,WINDOW_TH_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1969 - 1978 Normal Refurbishment,WINDOW_TH_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1979 - 1983 Normal Refurbishment,WINDOW_TH_G_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1984 - 1994 Normal Refurbishment,WINDOW_TH_H_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 1995 - 2001 Normal Refurbishment,WINDOW_TH_I_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2002 - 2009 Normal Refurbishment,WINDOW_TH_J_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2010 - 2015 Normal Refurbishment,WINDOW_TH_K_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Terraced house 2016 … Normal Refurbishment,WINDOW_TH_L_NR,1.1,0.67,0.02,0.3,123,0,30
+TABULA Apartment block 1860 - 1918 Normal Refurbishment,WINDOW_AB_B_NR,1.6,0.67,0.02,0.3,123,0,30
+TABULA Apartment block 1919 - 1948 Normal Refurbishment,WINDOW_AB_C_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Apartment block 1949 - 1957 Normal Refurbishment,WINDOW_AB_D_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Apartment block 1958 - 1968 Normal Refurbishment,WINDOW_AB_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Apartment block 1969 - 1978 Normal Refurbishment,WINDOW_AB_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA High rise 1958 - 1968 Normal Refurbishment,WINDOW_HR_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA High rise 1969 - 1978 Normal Refurbishment,WINDOW_HR_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA Single family house … 1859 Advanced Refurbishment,WINDOW_SFH_A_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1860 - 1918 Advanced Refurbishment,WINDOW_SFH_B_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1919 - 1948 Advanced Refurbishment,WINDOW_SFH_C_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1949 - 1957 Advanced Refurbishment,WINDOW_SFH_D_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1958 - 1968 Advanced Refurbishment,WINDOW_SFH_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1969 - 1978 Advanced Refurbishment,WINDOW_SFH_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1979 - 1983 Advanced Refurbishment,WINDOW_SFH_G_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1984 - 1994 Advanced Refurbishment,WINDOW_SFH_H_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 1995 - 2001 Advanced Refurbishment,WINDOW_SFH_I_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 2002 - 2009 Advanced Refurbishment,WINDOW_SFH_J_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Single family house 2010 - 2015 Advanced Refurbishment,WINDOW_SFH_K_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Single family house 2016 … Advanced Refurbishment,WINDOW_SFH_L_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Multi family house … 1859 Advanced Refurbishment,WINDOW_MFH_A_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1860 - 1918 Advanced Refurbishment,WINDOW_MFH_B_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1919 - 1948 Advanced Refurbishment,WINDOW_MFH_C_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1949 - 1957 Advanced Refurbishment,WINDOW_MFH_D_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1958 - 1968 Advanced Refurbishment,WINDOW_MFH_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1969 - 1978 Advanced Refurbishment,WINDOW_MFH_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1979 - 1983 Advanced Refurbishment,WINDOW_MFH_G_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1984 - 1994 Advanced Refurbishment,WINDOW_MFH_H_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 1995 - 2001 Advanced Refurbishment,WINDOW_MFH_I_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 2002 - 2009 Advanced Refurbishment,WINDOW_MFH_J_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 2010 - 2015 Advanced Refurbishment,WINDOW_MFH_K_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Multi family house 2016 … Advanced Refurbishment,WINDOW_MFH_L_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1860 - 1918 Advanced Refurbishment,WINDOW_TH_B_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1919 - 1948 Advanced Refurbishment,WINDOW_TH_C_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1949 - 1957 Advanced Refurbishment,WINDOW_TH_D_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1958 - 1968 Advanced Refurbishment,WINDOW_TH_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1969 - 1978 Advanced Refurbishment,WINDOW_TH_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1979 - 1983 Advanced Refurbishment,WINDOW_TH_G_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1984 - 1994 Advanced Refurbishment,WINDOW_TH_H_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 1995 - 2001 Advanced Refurbishment,WINDOW_TH_I_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 2002 - 2009 Advanced Refurbishment,WINDOW_TH_J_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 2010 - 2015 Advanced Refurbishment,WINDOW_TH_K_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Terraced house 2016 … Advanced Refurbishment,WINDOW_TH_L_AR,0.7,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1860 - 1918 Advanced Refurbishment,WINDOW_AB_B_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1919 - 1948 Advanced Refurbishment,WINDOW_AB_C_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1949 - 1957 Advanced Refurbishment,WINDOW_AB_D_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1958 - 1968 Advanced Refurbishment,WINDOW_AB_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA Apartment block 1969 - 1978 Advanced Refurbishment,WINDOW_AB_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA High rise 1958 - 1968 Advanced Refurbishment,WINDOW_HR_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA High rise 1969 - 1978 Advanced Refurbishment,WINDOW_HR_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR Multi family house 1949 - 1957,WINDOW_MFH-EAST_D,3.0,0.75,0.89,0.2,62,0,30
+TABULA GDR Multi family house 1958 - 1068,WINDOW_MFH-EAST_E,2.7,0.75,0.89,0.2,62,0,30
+TABULA GDR Apartment block 1969 - 1978,WINDOW_AB-EAST_F,2.7,0.75,0.89,0.2,62,0,30
+TABULA GDR Apartment block 1979 - 1983,WINDOW_AB-EAST_G,2.7,0.75,0.89,0.2,62,0,30
+TABULA GDR Apartment block 1984 - 1994,WINDOW_AB-EAST_H,3.0,0.75,0.89,0.2,62,0,30
+TABULA GDR High rise 1969 - 1978,WINDOW_HR-EAST_F,2.7,0.75,0.89,0.2,62,0,30
+TABULA GDR High rise 1979 - 1983,WINDOW_HR-EAST_G,3.0,0.75,0.89,0.2,62,0,30
+TABULA GDR Multi family house 1949 - 1957 Normal Refurbishment,WINDOW_MFH-EAST_D_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR Multi family house 1958 - 1968 Normal Refurbishment,WINDOW_MFH-EAST_E_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1969 - 1978 Normal Refurbishment,WINDOW_AB-EAST_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1979 - 1983 Normal Refurbishment,WINDOW_AB-EAST_G_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1984 - 1994 Normal Refurbishment,WINDOW_AB-EAST_H_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR High rise 1969 - 1978 Normal Refurbishment,WINDOW_HR-EAST_F_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR High rise 1979 - 1983 Normal Refurbishment,WINDOW_HR-EAST_G_NR,1.3,0.67,0.02,0.3,123,0,30
+TABULA GDR Multi family house 1949 - 1957 Advanced Refurbishment,WINDOW_MFH-EAST_D_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR Multi family house 1958 - 1968 Advanced Refurbishment,WINDOW_MFH-EAST_E_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1969 - 1978 Advanced Refurbishment,WINDOW_AB-EAST_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1979 - 1983 Advanced Refurbishment,WINDOW_AB-EAST_G_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR Apartment block 1984 - 1994 Advanced Refurbishment,WINDOW_AB-EAST_H_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR High rise 1969 - 1978 Advanced Refurbishment,WINDOW_HR-EAST_F_AR,0.8,0.5,0.02,0.3,123,0,30
+TABULA GDR High rise 1979 - 1983 Advanced Refurbishment,WINDOW_HR-EAST_G_AR,0.8,0.5,0.02,0.3,123,0,30
+Window for non residential building typology NWG1,WINDOW_BMVBS_A,2.9,0.87,0.94,0.3,66,0,30
+Window for non residential building typology NWG2,WINDOW_BMVBS_B,2.9,0.87,0.94,0.3,66,0,30
+Window for non residential building typology NWG3,WINDOW_BMVBS_C,1.9,0.87,0.94,0.3,66,0,30
+Window for non residential building typology NWG4,WINDOW_BMVBS_D,1.3,0.87,0.94,0.3,66,0,30
+"IWU Büro-, Verwaltungs- oder Amtsgebäude 1860 - 1978",WINDOW_NWG_1_A,2.68,0.75,0.89,0.3,62,0,30
+"IWU Büro-, Verwaltungs- oder Amtsgebäude 1979 - 2009",WINDOW_NWG_1_B,1.89,0.75,0.89,0.3,62,0,30
+"IWU Büro-, Verwaltungs- oder Amtsgebäude 2010 - 2030",WINDOW_NWG_1_C,1.08,0.67,0.02,0.3,123,0,30
+IWU Gebäude für Forschung und Hochschullehre (2) 1860 - 1978,WINDOW_NWG_2_A,3.1,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Forschung und Hochschullehre (2) 1979 - 2009,WINDOW_NWG_2_B,1.74,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Forschung und Hochschullehre (2) 2010 - 2030,WINDOW_NWG_2_C,1.24,0.67,0.02,0.3,123,0,30
+IWU Gebäude für Gesundheit und Pflege (3) 1860 - 1978,WINDOW_NWG_3_A,2.72,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Gesundheit und Pflege (3) 1979 - 2009,WINDOW_NWG_3_B,2.24,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Gesundheit und Pflege (3)  2010 - 2030,WINDOW_NWG_3_C,1.25,0.67,0.02,0.3,123,0,30
+"IWU Schule, Kindertagesstätte und sonstiges Betreuungsgebäude (4) 1860 - 1978",WINDOW_NWG_4_A,2.22,0.75,0.89,0.3,62,0,30
+"IWU Schule, Kindertagesstätte und sonstiges Betreuungsgebäude (4) 1979 - 2009",WINDOW_NWG_4_B,2.05,0.75,0.89,0.3,62,0,30
+"IWU Schule, Kindertagesstätte und sonstiges Betreuungsgebäude (4)  2010 - 2030",WINDOW_NWG_4_C,1.17,0.67,0.02,0.3,123,0,30
+IWU Gebäude für Kultur und Freizeit (5) 1860 - 1978,WINDOW_NWG_5_A,2.56,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Kultur und Freizeit (5) 1979 - 2009,WINDOW_NWG_5_B,2.04,0.75,0.89,0.3,62,0,30
+IWU Gebäude für Kultur und Freizeit (5) 2010 - 2030,WINDOW_NWG_5_C,0.96,0.67,0.02,0.3,123,0,30
+IWU Sportgebäude (6) 1860 - 1978,WINDOW_NWG_6_A,3.09,0.75,0.89,0.3,62,0,30
+IWU Sportgebäude (6) 1979 - 2009,WINDOW_NWG_6_B,2.56,0.75,0.89,0.3,62,0,30
+IWU Sportgebäude (6) 2010 - 2030,WINDOW_NWG_6_C,1.07,0.67,0.02,0.3,123,0,30
+"IWU Beherbergungs- oder Unterbringungsgebäude, Gastronomie- oder Verpflegungsgebäude (7) 1860 - 1978",WINDOW_NWG_7_A,2.76,0.75,0.89,0.3,62,0,30
+"IWU Beherbergungs- oder Unterbringungsgebäude, Gastronomie- oder Verpflegungsgebäude (7) 1979 - 2009",WINDOW_NWG_7_B,2.07,0.75,0.89,0.3,62,0,30
+"IWU Beherbergungs- oder Unterbringungsgebäude, Gastronomie- oder Verpflegungsgebäude (7) 2010 - 2030",WINDOW_NWG_7_C,1.24,0.67,0.02,0.3,123,0,30
+"IWU Produktions-, Werkstatt-, Lager- oder Betriebsgebäude (8) 1860 - 1978",WINDOW_NWG_8_A,2.99,0.75,0.89,0.3,62,0,30
+"IWU Produktions-, Werkstatt-, Lager- oder Betriebsgebäude (8) 1979 - 2009",WINDOW_NWG_8_B,2.17,0.75,0.89,0.3,62,0,30
+"IWU Produktions-, Werkstatt-, Lager- oder Betriebsgebäude (8) 2010 - 2030",WINDOW_NWG_8_C,1.2,0.67,0.02,0.3,123,0,30
+IWU Handelsgebäude (9) 1860 - 1978,WINDOW_NWG_9_A,3.03,0.75,0.89,0.3,62,0,30
+IWU Handelsgebäude (9) 1979 - 2009,WINDOW_NWG_9_B,2.1,0.75,0.89,0.3,62,0,30
+IWU Handelsgebäude (9) 2010 - 2030,WINDOW_NWG_9_C,1.05,0.67,0.02,0.3,123,0,30
+IWU Technikgebäude (Ver- und Entsorgung) (10) 1860 - 1978,WINDOW_NWG_10_A,4.2,0.75,0.89,0.3,62,0,30
+IWU Technikgebäude (Ver- und Entsorgung) (10) 1979 - 2009,WINDOW_NWG_10_B,2.02,0.75,0.89,0.3,62,0,30
+IWU Technikgebäude (Ver- und Entsorgung) (10) 2010 - 2030,WINDOW_NWG_10_C,1.3,0.67,0.02,0.3,123,0,30
+IWU Verkehrsgebäude (11)  1860 - 1978,WINDOW_NWG_11_A,5.0,0.75,0.89,0.3,62,0,30
+IWU Verkehrsgebäude (11) 1979 - 2009,WINDOW_NWG_11_B,8.36,0.75,0.89,0.3,62,0,30
+IWU Verkehrsgebäude (11) 2010 - 2030,WINDOW_NWG_11_C,1.3,0.67,0.02,0.3,123,0,30
+"IWU Generalized (1) Dienstleistungsgebäude, HK_Geb = (1) bis (7) und (9)  1860 - 1978",WINDOW_NWG_G1_A,2.7,0.75,0.89,0.3,62,0,30
+"IWU Generalized (1) Dienstleistungsgebäude, HK_Geb = (1) bis (7) und (9) 1979 - 2009",WINDOW_NWG_G1_B,2.04,0.75,0.89,0.3,62,0,30
+"IWU Generalized (1) Dienstleistungsgebäude, HK_Geb = (1) bis (7) und (9) 2010 - 2030",WINDOW_NWG_G1_C,1.14,0.67,0.02,0.3,123,0,30
+"IWU Generalized (2) Produktions- und ähnliche Gebäude, HK_Geb = (8), (10), (11)  1860 - 1978",WINDOW_NWG_G2_A,3.11,0.75,0.89,0.3,62,0,30
+"IWU Generalized (2) Produktions- und ähnliche Gebäude, HK_Geb = (8), (10), (11) 1979 - 2009",WINDOW_NWG_G2_B,2.18,0.75,0.89,0.3,62,0,30
+"IWU Generalized (2) Produktions- und ähnliche Gebäude, HK_Geb = (8), (10), (11) 2010 - 2030",WINDOW_NWG_G2_C,1.2,0.67,0.02,0.3,123,0,30
+No retrofit,WINDOW_NoRet,2.2,0.2,0.89,0.2,0,0,60

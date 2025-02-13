@@ -134,7 +134,7 @@ def calc_Cinv_VCC(Q_nom_W, locator, technology_type):
     Capex_VCC_USD = 0
 
     if Q_nom_W > 0:
-        VCC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="VAPOR_COMPRESSION_CHILLERS")
+        VCC_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('VAPOR_COMPRESSION_CHILLERS'))
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == technology_type]
         max_chiller_size = max(VCC_cost_data['cap_max'].values)
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -233,7 +233,7 @@ class VaporCompressionChiller(object):
         self.setup()
 
     def setup(self):
-        VCC_database = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="VAPOR_COMPRESSION_CHILLERS")
+        VCC_database = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('VAPOR_COMPRESSION_CHILLERS'))
         if self.scale == 'DISTRICT':
             technology_type = VCC_CODE_CENTRALIZED
         elif self.scale == 'BUILDING':

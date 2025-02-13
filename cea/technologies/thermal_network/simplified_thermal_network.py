@@ -7,7 +7,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import wntr
-
+import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
@@ -150,7 +150,7 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
     selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
-    pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
+    pipe_DN = selection_of_catalog['pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
     D_ins_m = selection_of_catalog['D_ins_m'].values[0]
 
@@ -210,7 +210,8 @@ def thermal_network_simplified(locator, config, network_name=''):
                               node_df.building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            raise Exception('There is no heating demand from any building. Please check the input files.')
+            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
+            sys.exit(1)
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -230,7 +231,8 @@ def thermal_network_simplified(locator, config, network_name=''):
                               node_df.building.values]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
-            raise Exception('problem here')
+            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
+            sys.exit(1)
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -310,7 +312,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
         pipe_names = max_volume_flow_rates_m3s.index.values
-        pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
+        pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
         pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
             *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
               flow in max_volume_flow_rates_m3s])

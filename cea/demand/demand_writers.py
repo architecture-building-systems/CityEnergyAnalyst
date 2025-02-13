@@ -87,9 +87,9 @@ class DemandWriter(object):
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'DATE': date, 'name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
+        data.update({'date': date, 'name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
         # create dataframe with hourly values of selected data
-        hourly_data = pd.DataFrame(data).set_index('DATE')
+        hourly_data = pd.DataFrame(data).set_index('date')
         return columns, hourly_data
 
 
@@ -151,7 +151,7 @@ def aggregate_results(locator, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
 
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+        hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:
@@ -181,7 +181,7 @@ class YearlyDemandWriter:
         aggregated_hourly_results_df = pd.DataFrame()
 
         for i, building in enumerate(building_names):
-            hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('DATE')
+            hourly_results_per_building = pd.read_csv(locator.get_demand_results_file(building)).set_index('date')
             if i == 0:
                 aggregated_hourly_results_df = hourly_results_per_building
             else:

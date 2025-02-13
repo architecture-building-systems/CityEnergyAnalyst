@@ -119,7 +119,7 @@ def calc_Cinv_CT(Q_nom_CT_W, locator, technology_type):
     Capex_CT_USD = 0.0
 
     if Q_nom_CT_W > 0:
-        CT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="COOLING_TOWERS")
+        CT_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('COOLING_TOWERS'))
         CT_cost_data = CT_cost_data[CT_cost_data['code'] == technology_type]
         max_chiller_size = max(CT_cost_data['cap_max'].values)
 
