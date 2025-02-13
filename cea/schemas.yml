@@ -6733,7 +6733,7 @@ get_building_property_schedules_monthly_multiplier:
 get_database_archetypes_use_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/USE/USE_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/USE/USE_TYPES.csv
   file_type: csv
   schema:
     columns:
@@ -6867,7 +6867,7 @@ get_database_archetypes_use_type:
 get_database_archetypes_construction_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPES.csv
   file_type: csv
   schema:
     columns:

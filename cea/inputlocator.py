@@ -595,16 +595,16 @@ class InputLocator(object):
         return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION')
 
     def get_database_archetypes_construction_type(self):
-        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPE.csv"""
-        return os.path.join(self.get_db4_archetypes_construction_folder(), 'CONSTRUCTION_TYPE.csv')
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPES.csv"""
+        return os.path.join(self.get_db4_archetypes_construction_folder(), 'CONSTRUCTION_TYPES.csv')
 
     def get_db4_archetypes_use_folder(self):
         """scenario/inputs/database/ARCHETYPES/USE"""
         return os.path.join(self.get_db4_archetypes_folder(), 'USE')
 
     def get_database_archetypes_use_type(self):
-        """scenario/inputs/database/ARCHETYPES/USE/USE_TYPE.csv"""
-        return os.path.join(self.get_db4_archetypes_use_folder(), 'USE_TYPE.csv')
+        """scenario/inputs/database/ARCHETYPES/USE/USE_TYPES.csv"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'USE_TYPES.csv')
 
     def get_db4_archetypes_schedules_folder(self):
         """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES"""

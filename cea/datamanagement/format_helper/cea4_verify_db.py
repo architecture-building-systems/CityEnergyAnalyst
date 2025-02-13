@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
+ARCHETYPES = ['CONSTRUCTION_TYPES', 'USE_TYPES']
 SCHEDULES_FOLDER = ['SCHEDULES']
 SCHEDULES_LIBRARY_FOLDER = ['SCHEDULES_LIBRARY']
 ENVELOPE_ASSEMBLIES = ['ENVELOPE_MASS', 'ENVELOPE_TIGHTNESS', 'ENVELOPE_FLOOR', 'ENVELOPE_WALL', 'ENVELOPE_WINDOW', 'ENVELOPE_SHADING', 'ENVELOPE_ROOF']
@@ -46,8 +46,8 @@ ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
                               'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'], 'FEEDSTOCKS_LIBRARY': FEEDSTOCKS_COMPONENTS}
-mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
-                                          'USE_TYPE': 'get_database_archetypes_use_type',
+mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_archetypes_construction_type',
+                                          'USE_TYPES': 'get_database_archetypes_use_type',
                                           'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
                                           'MONTHLY_MULTIPLIERS': 'get_database_archetypes_schedules_monthly_multiplier',
                                           'ENVELOPE_CONSTRUCTION': 'get_database_assemblies_envelope_construction',
@@ -98,8 +98,8 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'WOOD': 'get_database_components_feedstocks_wood',
                                           }
 
-mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
-                                     'USE_TYPE':'use_type',
+mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPES': 'const_type',
+                                     'USE_TYPES':'use_type',
                                      'SCHEDULES': 'hour',
                                      'SCHEDULES_LIBRARY': 'hour',
                                      'ENVELOPE': 'code',
@@ -156,8 +156,8 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
 
     item_paths = {
         "database": base_path,
-        "CONSTRUCTION_TYPE": os.path.join(base_path, "ARCHETYPES", "CONSTRUCTION", "CONSTRUCTION_TYPE.csv"),
-        "USE_TYPE": os.path.join(base_path, "ARCHETYPES", "USE", "USE_TYPE.csv"),
+        "CONSTRUCTION_TYPES": os.path.join(base_path, "ARCHETYPES", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"),
+        "USE_TYPES": os.path.join(base_path, "ARCHETYPES", "USE", "USE_TYPES.csv"),
         "SCHEDULES": os.path.join(base_path, "ARCHETYPES", "USE", "SCHEDULES"),
         "SCHEDULES_LIBRARY": os.path.join(base_path, "ARCHETYPES", "USE", "SCHEDULES", "SCHEDULES_LIBRARY"),
         "ENVELOPE": os.path.join(base_path, "ASSEMBLIES", "ENVELOPE"),
@@ -416,7 +416,7 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     return dict_merged
 
 
-def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_columns_construction_type,archetypes='CONSTRUCTION_TYPE'):
+def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_columns_construction_type,archetypes='CONSTRUCTION_TYPES'):
     """
     Verify whether all required archetypes exist in the provided assemblies.
 
@@ -424,7 +424,7 @@ def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_column
     - scenario (str): Path to the scenario folder.
     - item (str): Item category (e.g., 'ASSEMBLIES').
     - list_sheet_name (list): List of sheet names to check.
-    - archetypes (str): File name for archetypes (default: 'CONSTRUCTION_TYPE').
+    - archetypes (str): File name for archetypes (default: 'CONSTRUCTION_TYPES').
 
     Returns:
     - dict: A dictionary where keys are sheet names and values are lists of missing items.
@@ -627,7 +627,7 @@ def cea4_verify_db(scenario, verbose=False):
     if list_missing_files_csv_archetypes:
         if verbose:
             print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_archetypes))))
-            # print('! CONSTRUCTION_TYPE.csv and USE_TYPE.csv are fundamental and should be present in the ARCHETYPES folder.')
+            # print('! CONSTRUCTION_TYPES.csv and USE_TYPES.csv are fundamental and should be present in the ARCHETYPES folder.')
             # print('! The CEA-4 Database verification is aborted.')
             # sys.exit(0)
 
@@ -646,8 +646,8 @@ def cea4_verify_db(scenario, verbose=False):
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
-    if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
-        use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
+    if not dict_missing_db['USE_TYPES'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
+        use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPES'))
         list_use_types = use_type_df['use_type'].tolist()
         list_missing_files_csv_schedules_library = verify_file_exists_4_db(scenario, SCHEDULES_LIBRARY_FOLDER, sheet_name=list_use_types)
         list_missing_files_csv_schedules_monthly_multiplier = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=['MONTHLY_MULTIPLIERS'])
@@ -660,7 +660,7 @@ def cea4_verify_db(scenario, verbose=False):
             if verbose:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_monthly_multiplier))))
         else:
-            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS'), 'use_type')
+            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPES'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS'), 'use_type')
             list_missing_monthly_multiplier_schedules, _ = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
@@ -677,10 +677,10 @@ def cea4_verify_db(scenario, verbose=False):
                     if list_issues_against_csv_schedules:
                         print('! Check value(s) in {sheet}.csv:')
                         print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
-    elif 'use_type' in dict_missing_db['USE_TYPE']:
-        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPE'])
+    elif 'use_type' in dict_missing_db['USE_TYPES']:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPES'])
         if verbose:
-            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPE.csv.')
+            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPES.csv.')
     else:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 
@@ -697,7 +697,7 @@ def cea4_verify_db(scenario, verbose=False):
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
         # Verify is all values in the construction_type.csv file are defined in the assemblies.csv file
-        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPE'], archetypes='CONSTRUCTION_TYPE')
+        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPES'], archetypes='CONSTRUCTION_TYPES')
         list_missing_names_assemblies = list(dict_missing_assemblies.keys())
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_names_assemblies)
         if list_missing_names_assemblies:

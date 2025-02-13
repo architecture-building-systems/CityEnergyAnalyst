@@ -388,8 +388,8 @@ def migrate_cea3_to_cea4_db(scenario):
         pass
     else:
         # Verify missing files for CEA-3 and CEA-4 formats
-        list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPE')
-        list_problems_use_type = dict_missing.get('USE_TYPE')
+        list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPES')
+        list_problems_use_type = dict_missing.get('USE_TYPES')
         list_problems_schedules = dict_missing.get('SCHEDULES')
         list_problems_envelope = dict_missing.get('ENVELOPE')
         list_problems_hvac = dict_missing.get('HVAC')
@@ -401,13 +401,13 @@ def migrate_cea3_to_cea4_db(scenario):
         #1. about archetypes - construction types
         path_3 = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
         if list_problems_construction_type and os.path.isfile(path_3):
-            path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
+            path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPES')
             merge_excel_tab_to_csv(path_3, 'STANDARD', path_csv, rename_dict=rename_dict)
 
         #2. about archetypes - use types
         path_3 = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
         if list_problems_use_type and os.path.isfile(path_3):
-            path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
+            path_csv = path_to_db_file_4(scenario, 'USE_TYPES')
             merge_excel_tab_to_csv(path_3, 'code', path_csv, rename_dict=rename_dict_2)
 
         if list_problems_schedules:
