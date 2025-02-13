@@ -154,7 +154,7 @@ def verify_file_against_schema_4(scenario, item, building_name=None):
     # Ensure ID column exists before using it
     if id_column not in df.columns:
         if 'Name' in df.columns:
-            errors.append(f"- Missing required identifier column: '{id_column}'. CEA-4 uses 'name' as the identifier for buildings instead of 'Name'. In most cases, CEA should be able to handle this automatically. However, if you see this error, it means that a manual fix is required.")
+            errors.append(f"- Missing required identifier column: '{id_column}'. CEA-4 uses 'name' as the identifier for buildings instead of 'Name'. In most cases, CEA should be able to handle this automatically. However, if you see this message, it means that a manual fix is required.")
         else:
             errors.append(f"- Missing required identifier column: '{id_column}'.")
         return missing_columns, errors  # Stop further validation if ID column is missing
