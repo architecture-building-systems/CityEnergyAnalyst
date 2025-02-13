@@ -601,6 +601,7 @@ class InputLocator(object):
     def get_db4_archetypes_use_folder(self):
         """scenario/inputs/database/ARCHETYPES/USE"""
         return os.path.join(self.get_db4_archetypes_folder(), 'USE')
+
     def get_database_archetypes_use_type(self):
         """scenario/inputs/database/ARCHETYPES/USE/USE_TYPE.csv"""
         return os.path.join(self.get_db4_archetypes_use_folder(), 'USE_TYPE.csv')
@@ -701,13 +702,13 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOTWATER.csv"""
         return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOTWATER.csv')
 
-    def get_database_components_folder(self):
+    def get_db4_components_folder(self):
         """scenario/inputs/database/COMPONENTS"""
         return os.path.join(self.get_db4_folder(), 'COMPONENTS')
 
     def get_db4_components_conversion_folder(self):
         """scenario/inputs/database/COMPONENTS/CONVERSION"""
-        return os.path.join(self.get_database_components_folder(), 'CONVERSION')
+        return os.path.join(self.get_db4_components_folder(), 'CONVERSION')
 
     def get_db4_components_conversion_conversion_technology_csv(self, conversion_technology=None):
         """scenario/inputs/database/COMPONENTS/CONVERSION/{conversion_technology}.csv"""
@@ -721,7 +722,7 @@ class InputLocator(object):
 
     def get_db4_components_distribution_folder(self):
         """scenario/inputs/database/COMPONENTS/DISTRIBUTION"""
-        return os.path.join(self.get_database_components_folder(), 'DISTRIBUTION')
+        return os.path.join(self.get_db4_components_folder(), 'DISTRIBUTION')
 
     def get_database_components_distribution_thermal_grid(self, distribution=None):
         """scenario/inputs/database/COMPONENTS/DISTRIBUTION/{distribution}.csv"""
@@ -729,11 +730,11 @@ class InputLocator(object):
 
     def get_db4_components_feedstocks_folder(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
-        return os.path.join(self.get_database_components_folder(), 'FEEDSTOCKS')
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
 
     def get_db4_components_feedstocks_library_folder(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
-        return os.path.join(self.get_database_components_folder(), 'FEEDSTOCKS', 'FEEDSTOCKS_LIBRARY')
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS', 'FEEDSTOCKS_LIBRARY')
 
     def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks=None):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/{feedstocks}.csv"""
