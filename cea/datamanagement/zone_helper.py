@@ -354,9 +354,9 @@ def zone_helper(locator, config):
 
 def calc_category(standard_db, year_array):
     def category_assignment(year):
-        within_year = (standard_db['YEAR_START'] <= year) & (
-            standard_db['YEAR_END'] >= year)
-        standards = standard_db.STANDARD.values
+        within_year = (standard_db['year_start'] <= year) & (
+            standard_db['year_end'] >= year)
+        standards = standard_db.const_type.values
 
         # Filter standards if found
         if within_year.any():
