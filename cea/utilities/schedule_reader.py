@@ -70,7 +70,7 @@ def save_cea_schedules(schedule_data, path_to_building_schedule):
 def save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier):
 
     # monthly multiplier
-    header = ['building'] + months
+    header = ['name'] + months
     df_monthly_multiplier = pd.DataFrame(data=lists_monthly_multiplier, columns=header)
     df_monthly_multiplier.to_csv(path_to_monthly_multiplier, index=False, float_format='%.2f')
 
