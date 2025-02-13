@@ -490,7 +490,7 @@ default:
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
     input-files:
-      - [get_database_construction_standards]
+      - [get_database_archetypes_construction_type]
 
   - name: create-polygon
     label: Create Polygon
