@@ -1,0 +1,3 @@
+description,code,type,cap_min,cap_max,unit,rated_COP_seasonal,V_power_supply,T_air_indoor_rating,T_air_outdoor_rating,currency,a,b,c,d,e,LT_yr,O&M_%,IR_%,assumption,reference
+"air conditioner, split-system, air cooled",AC1,mini-split,0,19000,W,3.7,230,27,35,USD-2015,0,1.6,1,0,0,25,5,5,all,"ASHRAE 90.1/2019 - minimum efficiency rating, AHRI 210/240 (2023) temperature rating - application rating conditions"
+"air conditioner, split-system, air cooled, ducted",AC2,"mini-split, ducted",0,19000,W,3.5,230,27,35,USD-2015,0,1.6,1,0,0,25,5,5,all,"ASHRAE 90.1/2019 - minimum efficiency rating, AHRI 210/240 (2023) temperature rating - application rating conditions"

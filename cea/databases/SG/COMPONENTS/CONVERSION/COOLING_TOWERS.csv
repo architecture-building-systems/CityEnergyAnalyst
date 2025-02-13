@@ -1,0 +1,5 @@
+description,code,type,cap_min,cap_max,unit,aux_power,V_power_supply,T_water_in_design,T_water_out_design,T_air_in_design,currency,a,b,c,d,e,LT_yr,O&M_%,IR_%,assumption,reference
+centralized cooling tower,CT1,open-circuit,1,10000000,W,0.0126,460,35,29.5,24,USD-2015,1457.3,0.0161,1,0,0,20,10,15,all,"ASHRAE 90.1/2019 - auxilary power demand (i.e. performance requirement, converted)"
+centralized cooling tower,CT1,open-circuit,10000000,10000000000000000,W,0.0126,460,35,29.5,24,USD-2015,1457.3,0.0161,1,0,0,20,10,15,all,"ASHRAE 90.1/2019 - auxilary power demand (i.e. performance requirement, converted)"
+centralized cooling tower,CT2,closed-circuit,1,10000000,W,0.0315,460,39,32.0,24,USD-2015,1457.3,0.0161,1,0,0,20,5,15,O&M_%,"ASHRAE 90.1/2019 - auxilary power demand (i.e. performance requirement, converted)"
+centralized cooling tower,CT2,closed-circuit,10000000,10000000000000000,W,0.0315,460,39,32.0,24,USD-2015,1457.3,0.0161,1,0,0,20,5,15,all,"ASHRAE 90.1/2019 - auxilary power demand (i.e. performance requirement, converted)"
