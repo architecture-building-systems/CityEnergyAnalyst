@@ -91,14 +91,14 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
 def serialize_geometry(geom):
     if geom.geom_type == 'Polygon':
-        return [(x, y, z if len(coord) == 3 else 0) for coord in geom.exterior.coords for x, y, *z in [coord]]
+        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.exterior.coords for x, y, *z in [coord]]
     elif geom.geom_type == 'LineString':
-        return [(x, y, z if len(coord) == 3 else 0) for coord in geom.coords for x, y, *z in [coord]]
+        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.coords for x, y, *z in [coord]]
     elif geom.geom_type == 'Point':
         if geom.has_z:
-            return (geom.x, geom.y, geom.z)
+            return [geom.x, geom.y, geom.z]
         else:
-            return (geom.x, geom.y, 0)
+            return [geom.x, geom.y, 0.0]
     else:
         return None
 
