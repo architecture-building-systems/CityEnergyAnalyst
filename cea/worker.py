@@ -146,6 +146,9 @@ def worker(jobid, server):
         post_started(jobid, server)
         run_job(job)
         post_success(jobid, server)
+    except SystemExit as e:
+        post_error(str(e), jobid, server)
+        print(f"Job [{jobid}]: exited with code {e.code}")
     except Exception as e:
         exc = traceback.format_exc()
         print(exc, file=sys.stderr)
