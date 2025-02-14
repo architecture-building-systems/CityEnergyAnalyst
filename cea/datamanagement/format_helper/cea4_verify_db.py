@@ -481,7 +481,8 @@ def find_missing_values_column_column(file_path_1, column_name_1, file_path_2, c
 
         return missing_items
     except Exception as e:
-        raise ValueError(f"An error occurred: {e}")
+        print(f"An error occurred when checking for missing values: {e}")
+        raise
 
 
 def find_missing_values_directory_column(directory_path_1, file_path_2, column_name_2, column_name_2_3=None):
@@ -627,6 +628,7 @@ def cea4_verify_db(scenario, verbose=False):
     if list_missing_files_csv_archetypes:
         if verbose:
             print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_archetypes))))
+            # FIXME: CONSTRUCTION_TYPES.csv and USE_TYPES.csv are required for verification to work
             # print('! CONSTRUCTION_TYPES.csv and USE_TYPES.csv are fundamental and should be present in the ARCHETYPES folder.')
             # print('! The CEA-4 Database verification is aborted.')
             # sys.exit(0)
