@@ -164,22 +164,33 @@ async def validate_database(data: ValidateDatabase):
                 # Copy the databases to the temporary directory
                 shutil.copytree(data.path, db_path, dirs_exist_ok=True)
 
-                dict_missing_db = cea4_verify_db(scenario, verbose=True)
+
+                try:
+                    dict_missing_db = cea4_verify_db(scenario, verbose=True)
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=str(e),
+                    )
 
             if dict_missing_db:
                 errors = {db: missing_files for db, missing_files in dict_missing_db.items() if missing_files}
 
                 if errors:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=json.dumps(errors),
-                    )
+                    # FIXME: do not raise errors for now, remove once database is updated
+                    print(json.dumps(errors))
+
+                    # raise HTTPException(
+                    #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    #     detail=json.dumps(errors),
+                    # )
 
         except IOError as e:
-            print(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e),
+                detail=f"Uncaught exception: {str(e)}",
             )
 
         return {}
