@@ -235,14 +235,8 @@ Thermal Network Design:
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_components_conversion_absorption_chillers]
-      - [get_database_components_conversion_boilers]
-      - [get_database_components_conversion_cooling_towers]
-      - [get_database_components_conversion_fuel_cells]
-      - [get_database_components_conversion_heat_exchangers]
-      - [get_database_components_conversion_thermal_energy_storages]
+      - [get_db4_components_conversion_folder]
       - [get_database_components_distribution_thermal_grid]
-      - [get_database_components_conversion_vapor_compression_chillers]
       - [get_weather_file]
 
 
