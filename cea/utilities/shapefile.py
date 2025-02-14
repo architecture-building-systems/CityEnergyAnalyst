@@ -89,7 +89,7 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
                 driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name, new_crs=None):
+def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
     """
     Converts an ESRI shapefile to a .csv or .xlsx file, including a 'geometry' column with serialized coordinates.
     Writes CRS information to a .txt file.
@@ -117,17 +117,17 @@ def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name, new_crs
         df['geometry'] = gdf.geometry.apply(serialize_geometry)  # Ensure serialize_geometry is implemented
 
         # Write DataFrame to CSV or Excel
-        output_path = os.path.join(output_file_path, output_file_name)
-        if output_file_name.endswith('.csv'):
+        if output_path.endswith('.csv'):
             df.to_csv(output_path, index=False)
-        elif output_file_name.endswith('.xlsx'):
+        elif output_path.endswith('.xlsx'):
             df.to_excel(output_path, index=False)
         else:
             raise ValueError("Output file name must end with '.csv' or '.xlsx'.")
 
         # Write CRS to a text file
+        output_file_name = os.path.basename(output_path)
         crs_file_name = os.path.splitext(output_file_name)[0] + "_crs.txt"
-        crs_file_path = os.path.join(output_file_path, crs_file_name)
+        crs_file_path = os.path.join(os.path.dirname(output_path), crs_file_name)
         with open(crs_file_path, 'w') as file:
             file.write(new_crs)
 

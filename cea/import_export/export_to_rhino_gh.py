@@ -38,6 +38,8 @@ def exec_export_csv_for_rhino(config, locator):
     bool_include_surroundings = config.to_rhino_gh.include_surroundings
     bool_include_streets = config.to_rhino_gh.include_streets
     bool_include_trees = config.to_rhino_gh.include_trees
+    bool_include_district_heating_network = config.to_rhino_gh.include_district_heating_network
+    bool_include_district_cooling_network = config.to_rhino_gh.include_district_cooling_network
 
     # Create the folder to store all the exported files if it doesn't exist
     output_path = locator.get_export_rhino_from_cea_folder()
@@ -68,6 +70,18 @@ def exec_export_csv_for_rhino(config, locator):
 
     if bool_include_trees and os.path.isfile(locator.get_tree_geometry()):
         shapefile_to_csv_xlsx(locator.get_tree_geometry(), output_path, 'trees_to.csv', new_crs)
+
+    if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DH')):
+        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DH'), output_path, 'district_heating_network_edges_to.csv', new_crs)
+
+    if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DC')):
+        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DC'), output_path, 'district_cooling_network_edges_to.csv', new_crs)
+
+    if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DH')):
+        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DH'), output_path, 'district_heating_network_nodes_to.csv', new_crs)
+
+    if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DC')):
+        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DC'), output_path, 'district_cooling_network_nodes_to.csv', new_crs)
 
 
 def main(config):
