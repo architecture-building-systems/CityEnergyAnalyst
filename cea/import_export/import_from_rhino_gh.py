@@ -71,7 +71,7 @@ def exec_import_csv_from_rhino(locator):
         os.makedirs(building_geometry_path, exist_ok=True)
         csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path)
     else:
-        raise ValueError("""The minimum requirement - zone_in.csv is missing. Create the file using Rhino/Grasshopper.""")
+        raise ValueError("""The minimum requirement - zone_in.csv is missing. Create the file using Rhino/Grasshopper. CEA attempted to look for the file under this path:{path}""".format(path=zone_csv_path))
 
     if os.path.isfile(surroundings_csv_path):
         csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path)
