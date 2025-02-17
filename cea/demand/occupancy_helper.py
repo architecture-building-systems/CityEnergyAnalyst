@@ -4,6 +4,7 @@ import random
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
+import re
 
 from itertools import repeat
 
@@ -126,12 +127,13 @@ def calc_schedules(locator,
 
     """
     # read building schedules input data:
-    schedule = read_cea_schedule(locator.get_building_weekly_schedules(building))
+    schedule = read_cea_schedule(locator, use_type=None, building=building)
     daily_schedule_building = schedule[0]
     monthly_multiplier = schedule[1]['MONTHLY_MULTIPLIER']
 
     final_schedule = {}
-    days_in_schedule = len(list(set(daily_schedule_building['DAY'])))
+    daily_schedule_building['day'] = pd.Series(daily_schedule_building['hour']).apply(lambda x: re.sub(r'_\d{2}$', '', x))
+    days_in_schedule = len(list(set(daily_schedule_building['day'])))
 
     # SCHEDULE FOR PEOPLE OCCUPANCY
     array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION['Occ_m2p']]
@@ -252,7 +254,7 @@ def calc_schedules(locator,
                                                       monthly_multiplier=list(np.ones(MONTHS_IN_YEAR)))
 
     final_dict = {
-        'DATE': date_range,
+        'date': date_range,
         'Ths_set_C': final_schedule['Ths_set_C'],
         'Tcs_set_C': final_schedule['Tcs_set_C'],
         'people_p': final_schedule['Occ_m2p'],

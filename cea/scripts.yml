@@ -28,6 +28,7 @@ Import & Export:
     interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
+    input-files:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
@@ -48,9 +49,8 @@ Solar Radiation Analysis:
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
     input-files:
-      - [get_database_envelope_systems]
-      - [get_surroundings_geometry]
       - [get_building_architecture]
+      - [get_surroundings_geometry]
       - [get_zone_geometry]
       - [get_terrain]
       - [get_weather_file]
@@ -88,7 +88,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_photovoltaic_panels]
       - [get_weather_file]
 
   - name: photovoltaic-thermal
@@ -114,7 +114,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_photovoltaic_thermal_panels]
       - [get_weather_file]
 
   - name: solar-collector
@@ -131,7 +131,7 @@ Renewable Energy Potential Assessment:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_solar_collectors]
       - [get_weather_file]
 
   - name: shallow-geothermal-potential
@@ -188,8 +188,17 @@ Energy Demand Forecasting:
                  demand]
     input-files:
       - [get_weather_file]
-      - [get_database_envelope_systems]
-      - [get_database_air_conditioning_systems]
+      - [get_database_assemblies_envelope_mass]
+      - [get_database_assemblies_envelope_tightness]
+      - [get_database_assemblies_envelope_floor]
+      - [get_database_assemblies_envelope_wall]
+      - [get_database_assemblies_envelope_window]
+      - [get_database_assemblies_envelope_shading]
+      - [get_database_assemblies_envelope_roof]
+      - [get_database_assemblies_hvac_controller]
+      - [get_database_assemblies_hvac_cooling]
+      - [get_database_assemblies_hvac_heating]
+      - [get_database_assemblies_hvac_hot_water]
       - [get_building_comfort]
       - [get_building_internal]
       - [get_building_architecture]
@@ -226,7 +235,8 @@ Thermal Network Design:
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_conversion_systems]
+      - [get_db4_components_conversion_folder]
+      - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
 
@@ -474,7 +484,7 @@ default:
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
     input-files:
-      - [get_database_construction_standards]
+      - [get_database_archetypes_construction_type]
 
   - name: create-polygon
     label: Create Polygon

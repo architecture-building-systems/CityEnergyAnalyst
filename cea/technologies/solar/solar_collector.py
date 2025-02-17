@@ -69,7 +69,7 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
     # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
     # print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
@@ -804,7 +804,7 @@ def calc_properties_SC_db(database_path, config):
         type_SCpanel = 'SC2'
     else:
         raise ValueError('this panel type ', config.solar.type_SCpanel, 'is not in the database!')
-    data = pd.read_excel(database_path, sheet_name="SOLAR_THERMAL_PANELS")
+    data = pd.read_csv(database_path)
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -939,7 +939,7 @@ def calc_Cinv_SC(Area_m2, locator, panel_type):
     Lifetime 35 years
     """
     if Area_m2 > 0.0:
-        SC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="SOLAR_THERMAL_PANELS")
+        SC_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
         SC_cost_data = SC_cost_data[SC_cost_data['type'] == panel_type]
         cap_min = SC_cost_data['cap_min'].values[0]
         # cap_max = SC_cost_data['cap_max'].values[0]
@@ -980,18 +980,18 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
     if config.solar.custom_tilt_angle:
-        print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
+        print('Running solar-collector with custom-tilt-angle = %s and panel-tilt-angle = %s' %
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
-        print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
+        print('Running solar-collector with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
+    print('Running solar-collector with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
-    panel_properties = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
+    panel_properties = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
     panel_type = panel_properties['type']
 
     # weather data

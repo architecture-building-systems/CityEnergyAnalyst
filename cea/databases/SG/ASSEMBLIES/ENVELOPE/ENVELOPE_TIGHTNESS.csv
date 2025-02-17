@@ -1,0 +1,7 @@
+description,code,n50
+Highly tight,TIGHTNESS_AS1,1
+Tight,TIGHTNESS_AS2,2
+Medium,TIGHTNESS_AS3,3
+Medium Leaky,TIGHTNESS_AS4,4
+Leaky,TIGHTNESS_AS5,5
+Very Leaky,TIGHTNESS_AS6,6

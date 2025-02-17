@@ -152,31 +152,39 @@ class EnergyCarrier(object):
     def _load_energy_carriers(locator):
         """ Fetch a complete description of available energy carriers from the FEEDSTOCKS database """
         # Load the feedstock database
-        feedstock = pd.ExcelFile(locator.get_database_feedstocks())
-        energy_carriers_overview = feedstock.parse('ENERGY_CARRIERS')
+        feedstocks = {feedstock: pd.read_csv(csv_file) for feedstock, csv_file
+                      in locator.get_db4_components_feedstocks_all().items()}
+        def to_numeric(x):
+            if x == '-':
+                return x
+            try:
+                return float(x)
+            except ValueError:
+                raise ValueError(f'Invalid qualifier value for energy carrier. Could not convert {x} to float.')
+        energy_carriers_overview = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers(),
+                                               converters={'mean_qual': to_numeric})
 
         # Correct potential basic format errors if there are any
-        energy_carriers_overview['cost_and_ghg_tab'].fillna('-', inplace=True)
-        energy_carriers_overview['cost_and_ghg_tab'] = \
-            energy_carriers_overview['cost_and_ghg_tab'].astype(str).str.strip().str.upper()
+        energy_carriers_overview['feedstock_file'].fillna('-', inplace=True)
+        energy_carriers_overview['feedstock_file'] = \
+            energy_carriers_overview['feedstock_file'].astype(str).str.strip().str.upper()
         EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
 
         # Check if tab references are valid
-        referenced_tabs = [tab_name for tab_name in list(set(energy_carriers_overview['cost_and_ghg_tab']))
-                           if tab_name != '-']
-        if not all([tab_name in feedstock.sheet_names for tab_name in referenced_tabs]):
+        referenced_files = [file_name for file_name in list(set(energy_carriers_overview['feedstock_file']))
+                            if file_name != '-']
+        if not all([file_name in feedstocks.keys() for file_name in referenced_files]):
             raise ValueError('The energy carriers data base contains references to tabs that do not exist in the '
                              'feedstock data base. Please make sure the tabs are named correctly.')
 
         # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
-        # energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
-        for tab_name in referenced_tabs:
-            cost_and_ghg = feedstock.parse(tab_name)
-            EnergyCarrier._daily_ghg_profile[tab_name] = \
+        for file_name in referenced_files:
+            cost_and_ghg = feedstocks[file_name]
+            EnergyCarrier._daily_ghg_profile[file_name] = \
                 {hour: ghg_emission * 3.6 for hour, ghg_emission in zip(cost_and_ghg['hour'], cost_and_ghg['GHG_kgCO2MJ'])}
-            EnergyCarrier._daily_buy_price_profile[tab_name] = \
+            EnergyCarrier._daily_buy_price_profile[file_name] = \
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_buy_USD2015kWh'])}
-            EnergyCarrier._daily_sell_price_profile[tab_name] = \
+            EnergyCarrier._daily_sell_price_profile[file_name] = \
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_sell_USD2015kWh'])}
 
 
@@ -550,5 +558,5 @@ class EnergyCarrier(object):
         Associate the respective tab-name of the feedstock-database to the energy carrier code.
         """
         corresponding_feedstock_tab = EnergyCarrier._available_energy_carriers[
-            EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['cost_and_ghg_tab'].values[0]
+            EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['feedstock_file'].values[0]
         EnergyCarrier._feedstock_tab[energy_carrier_code] = corresponding_feedstock_tab

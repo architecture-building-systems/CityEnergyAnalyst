@@ -395,8 +395,7 @@ class Network(object):
         Network._load_pot_network(domain)
         Network._set_potential_network_terminals(domain)
         Network._set_building_operation_parameters(domain)
-        Network._pipe_catalog = pd.read_excel(Network._domain_locator.get_database_distribution_systems(),
-                                              sheet_name='THERMAL_GRID')
+        Network._pipe_catalog = pd.read_csv(Network._domain_locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
 
     @staticmethod
     def _load_pot_network(domain):
@@ -888,7 +887,7 @@ class Network(object):
         """
         Calculate piping cost for a fully built network.
         """
-        piping_unit_cost_dict = {pipe_type['Pipe_DN']: pipe_type['Inv_USD2015perm']
+        piping_unit_cost_dict = {pipe_type['pipe_DN']: pipe_type['Inv_USD2015perm']
                                  for ind, pipe_type in Network._pipe_catalog.iterrows()}
         piping_cost_aggregated = sum([piping_unit_cost_dict[pipe_segment['pipe_DN']] * pipe_segment['length_m']
                                       for ind, pipe_segment in self.network_piping.iterrows()])

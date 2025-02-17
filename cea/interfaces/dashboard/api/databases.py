@@ -1,4 +1,7 @@
+import json
 import os
+import shutil
+import tempfile
 from typing import Optional, Literal
 
 import pandas as pd
@@ -7,7 +10,7 @@ from pydantic import BaseModel
 
 import cea.inputlocator
 from cea.databases import get_regions, get_database_tree, databases_folder_path
-from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
 router = APIRouter()
@@ -110,7 +113,6 @@ async def get_database_region_data(region: str):
 
 
 def convert_path_to_name(schema_dict):
-    import cea.inputlocator
     locator = cea.inputlocator.InputLocator('')
     for sheet_name, sheet_info in schema_dict.items():
         for variable_name, schema in sheet_info['columns'].items():
@@ -144,24 +146,49 @@ class ValidateDatabase(BaseModel):
 
 
 @router.post("/validate")
-async def validate_database(config: CEAConfig, data: ValidateDatabase):
+async def validate_database(data: ValidateDatabase):
     """Validate the given databases (only checks if the folder structure is correct)"""
     if data.type == 'path':
         if data.path is None:
             raise HTTPException(status_code=400, detail="Missing path")
 
-        # Override the locator to use path of database
-        class DummyInputLocator(cea.inputlocator.InputLocator):
-            def get_databases_folder(self):
-                return data.path
-
         try:
-            DummyInputLocator(config.scenario).verify_database_template()
+            # FIXME: Update verify_database_template to be able to verify databases from a path
+            with tempfile.TemporaryDirectory() as tmpdir:
+                scenario = os.path.join(tmpdir, "scenario")
+                db_path = os.path.join(scenario, "inputs", "database")
+                os.makedirs(db_path, exist_ok=True)
+
+                # Copy the databases to the temporary directory
+                shutil.copytree(data.path, db_path, dirs_exist_ok=True)
+
+
+                try:
+                    dict_missing_db = cea4_verify_db(scenario, verbose=True)
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=str(e),
+                    )
+
+            if dict_missing_db:
+                errors = {db: missing_files for db, missing_files in dict_missing_db.items() if missing_files}
+
+                if errors:
+                    # FIXME: do not raise errors for now, remove once database is updated
+                    print(json.dumps(errors))
+
+                    # raise HTTPException(
+                    #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    #     detail=json.dumps(errors),
+                    # )
+
         except IOError as e:
-            print(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e),
+                detail=f"Uncaught exception: {str(e)}",
             )
 
         return {}

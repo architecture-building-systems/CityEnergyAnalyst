@@ -15,10 +15,12 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import re
+import sys
 
 import cea.config
 import cea.inputlocator
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
+from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
 import cea.utilities.workerstream
@@ -496,8 +498,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
                                                                    thermal_network.network_name))
 
     # read in HEX pressure loss values from database
-    HEX_prices = pd.read_excel(thermal_network.locator.get_database_conversion_systems(),
-                               sheet_name="HEAT_EXCHANGERS", index_col=0)
+    HEX_prices = pd.read_csv(thermal_network.locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'), index_col=0)
     a_p = HEX_prices['a']['District substation heat exchanger']
     b_p = HEX_prices['b']['District substation heat exchanger']
     c_p = HEX_prices['c']['District substation heat exchanger']
@@ -1164,7 +1165,7 @@ def calc_assign_diameter(max_flow, pipe_catalog):
         length_catalogue = range(pipe_catalog['mdot_min_kgs'].count())
         for i in length_catalogue:
             if pipe_catalog.loc[i, 'mdot_min_kgs'] <= max_flow < pipe_catalog.loc[i, 'mdot_max_kgs']:
-                return pipe_catalog.loc[i, 'Code']
+                return pipe_catalog.loc[i, 'code']
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms):
@@ -1189,7 +1190,7 @@ def assign_pipes_to_edges(thermal_network):
     """
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(thermal_network.locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
+    pipe_catalog = pd.read_csv(thermal_network.locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
 
@@ -1197,9 +1198,9 @@ def assign_pipes_to_edges(thermal_network):
     series_max_mass_flow = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
     pipe_properties_df = series_max_mass_flow.T.rename(columns={0: 'max_flow_kgs'})
     pipe_properties_df['name'] = pipe_properties_df.index
-    pipe_properties_df['Code'] = pipe_properties_df.apply(lambda x: calc_assign_diameter(x['max_flow_kgs'],
+    pipe_properties_df['code'] = pipe_properties_df.apply(lambda x: calc_assign_diameter(x['max_flow_kgs'],
                                                                                          pipe_catalog), axis=1)
-    pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='Code')
+    pipe_properties_df = pipe_properties_df.merge(pipe_catalog, on='code')
 
     # save to the existing file:
     network_edges_path = thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
@@ -3435,6 +3436,23 @@ def read_properties_from_buildings(buildings_demands, property):
     return property_df
 
 
+def check_heating_cooling_demand(locator, config):
+    # local variables
+    network_type = config.thermal_network.network_type
+    total_demand = pd.read_csv(locator.get_total_demand())
+    if network_type == "DH":
+        buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
+        buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
+        if not (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
+            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
+            sys.exit(1)
+
+    if network_type == "DC":
+        buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
+        if not buildings_name_with_cooling:
+            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
+            sys.exit(1)
+
 # ============================
 # test
 # ============================
@@ -3455,13 +3473,17 @@ def main(config):
     if network_model == 'simplified':
         for network_name in network_names:
             thermal_network_simplified(locator, config, network_name)
+        # Print the time used for the entire processing
+        time_elapsed = time.time() - start
+        print('The process of simplified thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
     else:
         for network_name in network_names:
+            check_heating_cooling_demand(locator, config)
             thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
             thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
-
-    print('done.')
-    print('total time: ', time.time() - start)
+        # Print the time used for the entire processing
+        time_elapsed = time.time() - start
+        print('The process of thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
 
 
 if __name__ == '__main__':

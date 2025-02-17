@@ -42,10 +42,10 @@ class SolarPotentialsLayer(MapLayer):
         technology = parameters.get("technology")
 
         if technology == "PV":
-            df = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="PHOTOVOLTAIC_PANELS")
+            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
             return df["code"].unique().tolist()
         elif technology == "SC":
-            df = pd.read_excel(self.locator.get_database_conversion_systems(), sheet_name="SOLAR_THERMAL_PANELS")
+            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
             return df["type"].unique().tolist()
 
         return None

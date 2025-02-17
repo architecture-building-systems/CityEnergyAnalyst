@@ -48,7 +48,7 @@ class Component(object):
     """
     _components_database = None
     _model_complexity = None
-    _database_tab = None
+    _csv_name = None
     code_to_class_mapping = None
     possible_main_ecs = {}
 
@@ -68,7 +68,8 @@ class Component(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
-        Component._components_database = pd.read_excel(domain.locator.get_database_conversion_systems(), None)
+        component_csvs = domain.locator.get_db4_components_conversion_technologies_all()
+        Component._components_database = {name: pd.read_csv(path) for name, path in component_csvs.items()}
         Component._model_complexity = domain.config.optimization_new.component_efficiency_model_complexity
         Component.code_to_class_mapping = Component.create_code_mapping(Component._components_database)
         AbsorptionChiller.initialize_subclass_variables(Component._components_database)
@@ -96,7 +97,7 @@ class Component(object):
         """ Return the class object corresponding to a given component-database-tab. """
         for subclass in Component.__subclasses__():
             for component_class in subclass.__subclasses__():
-                if component_class._database_tab == component_tab:
+                if component_class._csv_name == component_tab:
                     return component_class
         return None
 
@@ -118,7 +119,7 @@ class Component(object):
     @staticmethod
     def get_smallest_capacity(component_class, model_code):
         """ Get the smallest possible capacity of a given component from the database. """
-        component_database = Component._components_database[component_class._database_tab]
+        component_database = Component._components_database[component_class._csv_name]
         model_data = component_database[component_database['code'] == model_code]
         smallest_model_capacity_W = min(model_data['cap_min'])
         smallest_model_capacity_kW = smallest_model_capacity_W / 1000
@@ -201,7 +202,7 @@ class ActiveComponent(Component):
     @staticmethod
     def get_subclass(component_tab):
         for subclass in ActiveComponent.__subclasses__():
-            if subclass._database_tab == component_tab:
+            if subclass._csv_name == component_tab:
                 return subclass
         return None
 
@@ -218,11 +219,11 @@ class PassiveComponent(Component):
 
 class AbsorptionChiller(ActiveComponent):
 
-    _database_tab = 'ABSORPTION_CHILLERS'
+    _csv_name = 'ABSORPTION_CHILLERS'
 
     def __init__(self, ach_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(AbsorptionChiller._database_tab, ach_model_code, capacity, placement)
+        super().__init__(AbsorptionChiller._csv_name, ach_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         self.aux_power_share = self._model_data['aux_power'].values[0]
@@ -282,7 +283,7 @@ class AbsorptionChiller(ActiveComponent):
         Fetch possible main energy carriers of absorption chillers from the database and save a dictionary, indicating
          which component models can provide each of the energy carriers, as a new class variable.
         """
-        ach_database = components_database[AbsorptionChiller._database_tab]
+        ach_database = components_database[AbsorptionChiller._csv_name]
         AbsorptionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(ach_database,
                                                                                  'T_evap_design',
                                                                                  'water')
@@ -290,11 +291,11 @@ class AbsorptionChiller(ActiveComponent):
 
 class VapourCompressionChiller(ActiveComponent):
 
-    _database_tab = 'VAPOR_COMPRESSION_CHILLERS'
+    _csv_name = 'VAPOR_COMPRESSION_CHILLERS'
 
     def __init__(self, vcc_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(VapourCompressionChiller._database_tab, vcc_model_code, capacity, placement)
+        super().__init__(VapourCompressionChiller._csv_name, vcc_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -348,7 +349,7 @@ class VapourCompressionChiller(ActiveComponent):
         Fetch possible main energy carriers of vapor compression chillers from the database and save a dictionary,
         indicating which component models can provide each of the energy carriers, as a new class variable.
         """
-        vcc_database = components_database[VapourCompressionChiller._database_tab]
+        vcc_database = components_database[VapourCompressionChiller._csv_name]
         VapourCompressionChiller.possible_main_ecs = Component._create_thermal_ecs_dict(vcc_database,
                                                                                          'T_evap_design',
                                                                                          'water')
@@ -356,11 +357,11 @@ class VapourCompressionChiller(ActiveComponent):
 
 class AirConditioner(ActiveComponent):
 
-    _database_tab = 'UNITARY_AIR_CONDITIONERS'
+    _csv_name = 'UNITARY_AIR_CONDITIONERS'
 
     def __init__(self, ac_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(AirConditioner._database_tab, ac_model_code, capacity, placement)
+        super().__init__(AirConditioner._csv_name, ac_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['rated_COP_seasonal'].values[0]
         # assign technology-specific energy carriers
@@ -414,7 +415,7 @@ class AirConditioner(ActiveComponent):
         Fetch possible main energy carriers of unitary air conditioners from the database and save a dictionary,
         indicating which component models can provide each of the energy carriers, as a new class variable.
         """
-        ac_database = components_database[AirConditioner._database_tab]
+        ac_database = components_database[AirConditioner._csv_name]
         AirConditioner.possible_main_ecs = Component._create_thermal_ecs_dict(ac_database,
                                                                                'T_air_indoor_rating',
                                                                                'air')
@@ -422,11 +423,11 @@ class AirConditioner(ActiveComponent):
 
 class Boiler(ActiveComponent):
 
-    _database_tab = 'BOILERS'
+    _csv_name = 'BOILERS'
 
     def __init__(self, boiler_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(Boiler._database_tab, boiler_model_code, capacity, placement)
+        super().__init__(Boiler._csv_name, boiler_model_code, capacity, placement)
         # initialise subclass attributes
         self.min_thermal_eff = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -480,7 +481,7 @@ class Boiler(ActiveComponent):
         Fetch possible main energy carriers of boilers from the database and save a dictionary, indicating which
         component models can provide each of the energy carriers, as a new class variable.
         """
-        blr_database = components_database[Boiler._database_tab]
+        blr_database = components_database[Boiler._csv_name]
         Boiler.possible_main_ecs = Component._create_thermal_ecs_dict(blr_database,
                                                                        'T_water_out_rating',
                                                                        'water')
@@ -488,11 +489,11 @@ class Boiler(ActiveComponent):
 
 class CogenPlant(ActiveComponent):
 
-    _database_tab = 'COGENERATION_PLANTS'
+    _csv_name = 'COGENERATION_PLANTS'
 
     def __init__(self, cogen_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(CogenPlant._database_tab, cogen_model_code, capacity, placement)
+        super().__init__(CogenPlant._csv_name, cogen_model_code, capacity, placement)
         # initialise subclass attributes
         self.thermal_eff = self._model_data['therm_eff_design'].values[0]
         self.electrical_eff = self._model_data['elec_eff_design'].values[0]
@@ -555,7 +556,7 @@ class CogenPlant(ActiveComponent):
         Fetch possible main energy carriers of cogeneration plants from the database and save a dictionary, indicating
         which component models can provide each of the energy carriers, as a new class variable.
         """
-        cp_database = components_database[CogenPlant._database_tab]
+        cp_database = components_database[CogenPlant._csv_name]
         CogenPlant.possible_main_ecs = Component._create_thermal_ecs_dict(cp_database,
                                                                            'T_water_out_design',
                                                                            'water')
@@ -563,11 +564,11 @@ class CogenPlant(ActiveComponent):
 
 class HeatPump(ActiveComponent):
 
-    _database_tab = 'HEAT_PUMPS'
+    _csv_name = 'HEAT_PUMPS'
 
     def __init__(self, hp_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(HeatPump._database_tab, hp_model_code, capacity, placement)
+        super().__init__(HeatPump._csv_name, hp_model_code, capacity, placement)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating_seasonal'].values[0]
         self.thermal_ec_subtype_condenser_side = self._model_data['medium_cond_side'].values[0]
@@ -623,7 +624,7 @@ class HeatPump(ActiveComponent):
         """
         Fetch possible main energy carriers of heat pumps from the database and save the list as a new class variable.
         """
-        hp_database = components_database[HeatPump._database_tab]
+        hp_database = components_database[HeatPump._csv_name]
 
         water_heating_heat_pumps = hp_database[hp_database['medium_cond_side'] == 'water']
         water_possible_main_ecs_dict = Component._create_thermal_ecs_dict(water_heating_heat_pumps,
@@ -644,11 +645,11 @@ class HeatPump(ActiveComponent):
 class CoolingTower(ActiveComponent):
 
     main_side = 'input'
-    _database_tab = 'COOLING_TOWERS'
+    _csv_name = 'COOLING_TOWERS'
 
     def __init__(self, ct_model_code, placement, capacity):
         # initialise parent-class attributes
-        super().__init__(CoolingTower._database_tab, ct_model_code, capacity, placement)
+        super().__init__(CoolingTower._csv_name, ct_model_code, capacity, placement)
         # initialise subclass attributes
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
@@ -702,7 +703,7 @@ class CoolingTower(ActiveComponent):
         Fetch possible main energy carriers of cooling towers from the database and save the list as a new class
         variable.
         """
-        ct_database = components_database[CoolingTower._database_tab]
+        ct_database = components_database[CoolingTower._csv_name]
         hot_water_temperatures = ct_database['T_water_in_design'].unique()
         heating_ecs = {temp: EnergyCarrier.temp_to_thermal_ec('water', temp) for temp in hot_water_temperatures}
         ec_code_series = pd.Series([heating_ecs[temp] for temp in ct_database['T_water_in_design']], name='ec')
@@ -714,11 +715,11 @@ class CoolingTower(ActiveComponent):
 
 class PowerTransformer(PassiveComponent):
 
-    _database_tab = 'POWER_TRANSFORMERS'
+    _csv_name = 'POWER_TRANSFORMERS'
 
     def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
         # initialise parent-class attributes
-        super().__init__(PowerTransformer._database_tab, pt_model_code, capacity, placed_after, placed_before)
+        super().__init__(PowerTransformer._csv_name, pt_model_code, capacity, placed_after, placed_before)
         # initialise subclass attributes
         self.min_low_voltage = self._model_data['V_min_lowV_side'].values[0]
         self.max_low_voltage = self._model_data['V_max_lowV_side'].values[0]
@@ -812,7 +813,7 @@ class PowerTransformer(PassiveComponent):
         different electrical output energy carrier (either in step-up or step-down method) and save the result in a
         pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
         """
-        power_transformers_db = components_database[PowerTransformer._database_tab]
+        power_transformers_db = components_database[PowerTransformer._csv_name]
         all_transformer_codes = list(power_transformers_db['code'])
         all_electrical_ecs = EnergyCarrier.get_all_electrical_ecs()
         PowerTransformer.conversion_matrix = pd.DataFrame(data=[], index=all_electrical_ecs, columns=all_electrical_ecs)
@@ -847,11 +848,11 @@ class PowerTransformer(PassiveComponent):
 
 class HeatExchanger(PassiveComponent):
 
-    _database_tab = 'HEAT_EXCHANGERS'
+    _csv_name = 'HEAT_EXCHANGERS'
 
     def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after):
         # initialise parent-class attributes
-        super().__init__(HeatExchanger._database_tab, he_model_code, capacity, placed_after, placed_before)
+        super().__init__(HeatExchanger._csv_name, he_model_code, capacity, placed_after, placed_before)
         # initialise subclass attributes
         self.max_operating_temp = self._model_data['T_max_operating'].values[0]
         self.min_operating_temp = self._model_data['T_min_operating'].values[0]
@@ -1002,7 +1003,7 @@ class HeatExchanger(PassiveComponent):
         thermal output energy carrier (either for heat absorption or heat rejection) and save the result in a
         pd.DataFrame with the input and output energy carrier codes in the index and column name respectively.
         """
-        heat_exchangers_db = components_database[HeatExchanger._database_tab]
+        heat_exchangers_db = components_database[HeatExchanger._csv_name]
         all_heat_exchanger_codes = list(heat_exchangers_db['code'])
         all_thermal_ecs = EnergyCarrier.get_all_thermal_ecs()
         HeatExchanger.conversion_matrix = pd.DataFrame(data=[], index=all_thermal_ecs, columns=all_thermal_ecs)

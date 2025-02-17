@@ -1,0 +1,8 @@
+description,code,type,cap_min,cap_max,unit,currency,a,b,c,d,e,LT_yr,LT_mat_yr,O&M_%,IR_%,C_mat_%,T_PHCH_C,T_min_C,T_max_C,HL_kJkg,Rho_T_PHCH_kgm3,Cp_kJkgK,n_ch,n_disch,assumption
+long-term storage tank,TES1,HEATING,100,12000,m3,USD-2015,0,2880.6652806652805,1,0,-295.4261954261954,25,25,1,6,0.0,0.0,70.0,90.0,0,997,4.19,0.98,0.96,"cap_min, cap_max"
+long-term storage tank,TES1,HEATING,12000,10000000000,m3,USD-2015,0,2880.6652806652805,1,0,-295.4261954261954,25,25,1,6,0.0,0.0,70.0,90.0,0,997,4.19,0.98,0.96,cap_max
+short-term storage tank - water,TES2,COOLING,0,10000000000,kWh,USD-2015,0,108.0,1,0,0.0,25,25,2,6,0.0,0.0,4.0,13.0,0,997,4.19,0.98,0.96,"cap_min, cap_max"
+short-term storage tank- ice,TES3,COOLING,0,10000000000,kWh,USD-2015,0,117.9,1,0,0.0,25,25,2,6,4.8,0.0,-0.5,0.5,334,917,2.11,0.98,0.96,"cap_min, cap_max"
+short-term storage tank - eutectic salt,TES4,COOLING,0,10000000000,kWh,USD-2015,0,117.9,1,0,0.0,25,7,2,6,4.8,4.0,3.5,4.5,234,1600,2.0,0.98,0.96,"cap_min, cap_max"
+short-term storage tank - PEG400,TES5,COOLING,0,10000000000,kWh,USD-2015,0,156.3,1,0,0.0,25,7,2,6,27.3,5.4,4.9,5.9,105,1125,2.09,0.98,0.96,"cap_min, cap_max"
+short-term storage tank - Paraffin C14,TES6,COOLING,0,10000000000,kWh,USD-2015,0,141.5,1,0,0.0,25,7,2,6,19.7,5.0,4.5,5.5,230,760,2.14,0.98,0.96,"cap_min, cap_max"

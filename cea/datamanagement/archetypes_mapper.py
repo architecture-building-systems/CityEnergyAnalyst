@@ -60,8 +60,7 @@ def archetypes_mapper(locator,
     """
     # Get occupancy and age files
     building_typology_df = gpd.read_file(locator.get_zone_geometry())
-    db_standards = pd.read_excel(locator.get_database_construction_standards(), sheet_name='STANDARD_DEFINITION')[
-        'STANDARD']
+    db_standards = pd.read_csv(locator.get_database_archetypes_construction_type())['const_type']    # this is named as standard due to the legacy from CEA-3
 
     verify_building_standards(building_typology_df, db_standards)
 
@@ -73,7 +72,7 @@ def archetypes_mapper(locator,
 
     # Get occupant densities from archetypes schedules
     occupant_densities = {}
-    occ_densities = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS').set_index('code')
+    occ_densities = pd.read_csv(locator.get_database_archetypes_use_type()).set_index('use_type')
     for use in list_uses:
         if occ_densities.loc[use, 'Occ_m2p'] > 0.0:
             occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2p']
@@ -103,9 +102,9 @@ def archetypes_mapper(locator,
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_comfort())
-    comfort_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INDOOR_COMFORT')
+    comfort_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
-    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='code')
+    prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
     fields = ['name',
               'Tcs_set_C',
@@ -124,9 +123,9 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_internal())
-    internal_DB = pd.read_excel(locator.get_database_use_types_properties(), 'INTERNAL_LOADS')
+    internal_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
-    prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='code')
+    prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
     fields = ['name',
               'Occ_m2p',
@@ -152,57 +151,57 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
 
 def supply_mapper(locator, building_typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_supply())
-    supply_DB = pd.read_excel(locator.get_database_construction_standards(), 'SUPPLY_ASSEMBLIES')
-    prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='STANDARD')
+    supply_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
+    prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
-              'type_cs',
-              'type_hs',
-              'type_dhw',
-              'type_el']
+              'supply_type_cs',
+              'supply_type_hs',
+              'supply_type_dhw',
+              'supply_type_el']
     prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
 
 def aircon_mapper(locator, typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
-    air_conditioning_DB = pd.read_excel(locator.get_database_construction_standards(), 'HVAC_ASSEMBLIES')
+    air_conditioning_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     # define HVAC systems types
-    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='STANDARD')
+    prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='const_type')
     # write to shapefile
     fields = ['name',
-              'type_cs',
-              'type_hs',
-              'type_dhw',
-              'type_ctrl',
-              'type_vent',
-              'heat_starts',
-              'heat_ends',
-              'cool_starts',
-              'cool_ends']
+              'hvac_type_cs',
+              'hvac_type_hs',
+              'hvac_type_dhw',
+              'hvac_type_ctrl',
+              'hvac_type_vent',
+              'hvac_heat_starts',
+              'hvac_heat_ends',
+              'hvac_cool_starts',
+              'hvac_cool_ends']
     prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
 
 
 def architecture_mapper(locator, typology_df):
     locator.ensure_parent_folder_exists(locator.get_building_architecture())
-    architecture_DB = pd.read_excel(locator.get_database_construction_standards(), 'ENVELOPE_ASSEMBLIES')
-    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='STANDARD')
+    architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
+    prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
-              'Hs_ag',
-              'Hs_bg',
-              'Ns',
-              'Es',
-              'void_deck',
-              'wwr_north',
-              'wwr_west',
-              'wwr_east',
-              'wwr_south',
-              'type_cons',
-              'type_leak',
-              'type_floor',
-              'type_part',
-              'type_base',
-              'type_roof',
-              'type_wall',
-              'type_win',
-              'type_shade']
+              'envelope_Hs_ag',
+              'envelope_Hs_bg',
+              'envelope_Ns',
+              'envelope_Es',
+              'envelope_void_deck',
+              'envelope_wwr_north',
+              'envelope_wwr_west',
+              'envelope_wwr_east',
+              'envelope_wwr_south',
+              'envelope_type_mass',
+              'envelope_type_leak',
+              'envelope_type_floor',
+              'envelope_type_part',
+              'envelope_type_base',
+              'envelope_type_roof',
+              'envelope_type_wall',
+              'envelope_type_win',
+              'envelope_type_shade']
     prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
 
 def calc_code(code1, code2, code3, code4):
@@ -359,7 +358,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
     list_var_names, list_var_values = get_lists_of_var_names_and_var_values(list_var_names, list_var_values,
                                                                             properties_df)
 
-    properties_DB = properties_DB.set_index('code')
+    properties_DB = properties_DB.set_index('use_type')
     for column in fields:
         if column in ['Ve_lsp', 'Qs_Wp', 'X_ghp', 'Vww_ldp', 'Vw_ldp']:
             # some properties are imported from the Excel files as int instead of float
