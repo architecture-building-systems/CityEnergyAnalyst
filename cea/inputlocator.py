@@ -246,19 +246,19 @@ class InputLocator(object):
 
     def get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(self):
         """scenario/export/rhino/from_cea/dh_edges_out.csv"""
-        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'district_heating_network_edges_out.csv')
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_out.csv')
 
     def get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(self):
         """scenario/export/rhino/from_cea/dc_edges_out.csv"""
-        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'district_cooling_network_edges_out.csv')
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_edges_out.csv')
 
     def get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(self):
         """scenario/export/rhino/from_cea/dh_nodes_out.csv"""
-        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'district_heating_network_nodes_out.csv')
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_nodes_out.csv')
 
     def get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(self):
         """scenario/export/rhino/from_cea/dc_nodes_out.csv"""
-        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'district_cooling_network_nodes_out.csv')
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_nodes_out.csv')
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
