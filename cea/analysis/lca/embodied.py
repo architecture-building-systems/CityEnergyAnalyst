@@ -112,21 +112,21 @@ def lca_embodied(year_to_calculate, locator):
     zone_df = zone_df.drop('geometry', axis=1)
 
     # local variables
-    surface_database_windows = pd.read_excel(locator.get_database_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_database_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_database_envelope_systems(), "WALL")
-    surface_database_floors = pd.read_excel(locator.get_database_envelope_systems(), "FLOOR")
+    surface_database_windows = pd.read_csv(locator.get_database_assemblies_envelope_window())
+    surface_database_roof = pd.read_csv(locator.get_database_assemblies_envelope_roof())
+    surface_database_walls = pd.read_csv(locator.get_database_assemblies_envelope_wall())
+    surface_database_floors = pd.read_csv(locator.get_database_assemblies_envelope_floor())
 
 
     # query data
-    df1 = architecture_df.merge(surface_database_windows, left_on='type_win', right_on='code')
-    df2 = architecture_df.merge(surface_database_roof, left_on='type_roof', right_on='code')
-    df3 = architecture_df.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    df4 = architecture_df.merge(surface_database_floors, left_on='type_floor', right_on='code')
-    df5 = architecture_df.merge(surface_database_floors, left_on='type_base', right_on='code')
+    df1 = architecture_df.merge(surface_database_windows, left_on='envelope_type_win', right_on='code')
+    df2 = architecture_df.merge(surface_database_roof, left_on='envelope_type_roof', right_on='code')
+    df3 = architecture_df.merge(surface_database_walls, left_on='envelope_type_wall', right_on='code')
+    df4 = architecture_df.merge(surface_database_floors, left_on='envelope_type_floor', right_on='code')
+    df5 = architecture_df.merge(surface_database_floors, left_on='envelope_type_base', right_on='code')
     df5.rename({'GHG_floor_kgCO2m2': 'GHG_base_kgCO2m2'}, inplace=True, axis=1)
     df5.rename({'GHG_biogenic_floor_kgCO2m2': 'GHG_biogenic_base_kgCO2m2'}, inplace=True, axis=1)
-    df6 = architecture_df.merge(surface_database_walls, left_on='type_part', right_on='code')
+    df6 = architecture_df.merge(surface_database_walls, left_on='envelope_type_part', right_on='code')
     df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
     df6.rename({'GHG_biogenic_wall_kgCO2m2': 'GHG_biogenic_part_kgCO2m2'}, inplace=True, axis=1)
 
@@ -178,8 +178,8 @@ def lca_embodied(year_to_calculate, locator):
     # calculate building geometry
     ## total window area
     average_wwr = [np.mean([a, b, c, d]) for a, b, c, d in
-                   zip(data_merged_df['wwr_south'], data_merged_df['wwr_north'], data_merged_df['wwr_west'],
-                       data_merged_df['wwr_east'])]
+                   zip(data_merged_df['envelope_wwr_south'], data_merged_df['envelope_wwr_north'], data_merged_df['envelope_wwr_west'],
+                       data_merged_df['envelope_wwr_east'])]
 
     data_merged_df['windows_ag'] = average_wwr * data_merged_df['perimeter'] * data_merged_df['height_ag']
 
@@ -189,7 +189,7 @@ def lca_embodied(year_to_calculate, locator):
 
     # fix according to the void deck
     data_merged_df['empty_envelope_ratio'] = 1 - (
-            (data_merged_df['void_deck'] * (data_merged_df['height_ag'] / data_merged_df['floors_ag'])) / (
+            (data_merged_df['envelope_void_deck'] * (data_merged_df['height_ag'] / data_merged_df['floors_ag'])) / (
             data_merged_df['area_walls_ext_ag'] + data_merged_df['windows_ag']))
     data_merged_df['windows_ag'] = data_merged_df['windows_ag'] * data_merged_df['empty_envelope_ratio']
     data_merged_df['area_walls_ext_ag'] = data_merged_df['area_walls_ext_ag'] * data_merged_df['empty_envelope_ratio']

@@ -122,26 +122,6 @@ class InputLocator(object):
     def get_database_standard_schedules_use(self, use):
         return os.path.join(self.get_database_use_types_folder(), use + '.csv')
 
-    def verify_database_template(self):
-        """True, if the path is a valid template path - containing the same excel files as the standard regions."""
-        default_template = os.path.join(self.db_path, 'CH')
-        missing_files = []
-        for folder in os.listdir(default_template):
-            if os.path.isdir(os.path.join(default_template, folder)):
-                # check inside folders
-                for file in os.listdir(os.path.join(default_template, folder)):
-                    default_file_path = os.path.join(default_template, folder, file)
-                    if os.path.isfile(default_file_path) and os.path.splitext(default_file_path)[1] in {'.xls',
-                                                                                                        '.xlsx'}:
-                        # we're only interested in the excel files
-                        template_file_path = os.path.join(self.get_databases_folder(), folder, file)
-                        if not os.path.exists(template_file_path):
-                            missing_files.append(template_file_path)
-        if len(missing_files):
-            message = "Invalid database template - files not found: \n{}".format(', \n'.join(missing_files))
-            raise IOError(message)
-        return True
-
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
@@ -602,52 +582,183 @@ class InputLocator(object):
     def get_weather_folder(self):
         return self._ensure_folder(self.get_input_folder(), 'weather')
 
-    def get_database_construction_standards(self):
-        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_archetypes_folder(), 'CONSTRUCTION_STANDARD.xlsx')
+    def get_db4_folder(self):
+        """scenario/inputs/database/"""
+        return os.path.join(self.scenario, 'inputs', 'database')
 
-    def get_database_use_types_properties(self):
-        """Returns the database of construction properties to be used by the archetypes-mapper. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_database_use_types_folder(), 'USE_TYPE_PROPERTIES.xlsx')
+    def get_db4_archetypes_folder(self):
+        """scenario/inputs/database/ARCHETYPES"""
+        return os.path.join(self.get_db4_folder(), 'ARCHETYPES')
 
-    def get_database_supply_assemblies(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_assemblies_folder(), 'SUPPLY.xlsx')
+    def get_db4_archetypes_construction_folder(self):
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'CONSTRUCTION')
 
-    def get_database_air_conditioning_systems(self):
-        return os.path.join(self.get_databases_assemblies_folder(), 'HVAC.xlsx')
+    def get_database_archetypes_construction_type(self):
+        """scenario/inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPES.csv"""
+        return os.path.join(self.get_db4_archetypes_construction_folder(), 'CONSTRUCTION_TYPES.csv')
 
-    def get_database_envelope_systems(self):
-        """databases/Systems/envelope_systems.csv"""
-        return os.path.join(self.get_databases_assemblies_folder(), 'ENVELOPE.xlsx')
+    def get_db4_archetypes_use_folder(self):
+        """scenario/inputs/database/ARCHETYPES/USE"""
+        return os.path.join(self.get_db4_archetypes_folder(), 'USE')
 
-    def get_database_conversion_systems(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'CONVERSION.xlsx')
+    def get_database_archetypes_use_type(self):
+        """scenario/inputs/database/ARCHETYPES/USE/USE_TYPES.csv"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'USE_TYPES.csv')
+
+    def get_db4_archetypes_schedules_folder(self):
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'SCHEDULES')
+
+    def get_db4_archetypes_schedules_library_folder(self):
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY"""
+        return os.path.join(self.get_db4_archetypes_use_folder(), 'SCHEDULES', 'SCHEDULES_LIBRARY')
+
+    def get_database_archetypes_schedules(self, use_type):
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/{use}.csv"""
+        return os.path.join(self.get_db4_archetypes_schedules_library_folder(), f'{use_type}.csv')
+
+    def get_database_archetypes_schedules_monthly_multiplier(self):
+        """scenario/inputs/database/ARCHETYPES/USE/SCHEDULES/MONTHLY_MULTIPLIERS.csv"""
+        return os.path.join(self.get_db4_archetypes_schedules_folder(), 'MONTHLY_MULTIPLIERS.csv')
+
+    def get_db4_assemblies_folder(self):
+        """scenario/inputs/database/ASSEMBLIES"""
+        return os.path.join(self.get_db4_folder(), 'ASSEMBLIES')
+
+    def get_db4_assemblies_envelope_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'ENVELOPE')
+
+    def get_database_assemblies_envelope_floor(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_FLOOR.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_FLOOR.csv')
+
+    def get_database_assemblies_envelope_window(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WINDOW.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_WINDOW.csv')
+
+    def get_database_assemblies_envelope_mass(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_MASS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_MASS.csv')
+
+    def get_database_assemblies_envelope_tightness(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_TIGHTNESS.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_TIGHTNESS.csv')
+
+    def get_database_assemblies_envelope_roof(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_ROOF.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_ROOF.csv')
+
+    def get_database_assemblies_envelope_shading(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_SHADING.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_SHADING.csv')
+
+    def get_database_assemblies_envelope_wall(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_WALL.csv')
+
+    def get_db4_assemblies_hvac_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'HVAC')
+
+    def get_database_assemblies_hvac_controller(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_CONTROLLER.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_CONTROLLER.csv')
+
+    def get_database_assemblies_hvac_heating(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HEATING.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HEATING.csv')
+
+    def get_database_assemblies_hvac_cooling(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_COOLING.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_COOLING.csv')
+
+    def get_database_assemblies_hvac_ventilation(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_VENTILATION.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_VENTILATION.csv')
+
+    def get_database_assemblies_hvac_hot_water(self):
+        """scenario/inputs/database/ASSEMBLIES/HVAC/HVAC_HOTWATER.csv"""
+        return os.path.join(self.get_db4_assemblies_hvac_folder(), 'HVAC_HOTWATER.csv')
+
+    def get_db4_assemblies_supply_folder(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY"""
+        return os.path.join(self.get_db4_assemblies_folder(), 'SUPPLY')
+
+    def get_database_assemblies_supply_cooling(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_COOLING.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_COOLING.csv')
+
+    def get_database_assemblies_supply_electricity(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_ELECTRICITY.csv')
+
+    def get_database_assemblies_supply_heating(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HEATING.csv')
+
+    def get_database_assemblies_supply_hot_water(self):
+        """scenario/inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOTWATER.csv"""
+        return os.path.join(self.get_db4_assemblies_supply_folder(), 'SUPPLY_HOTWATER.csv')
+
+    def get_db4_components_folder(self):
+        """scenario/inputs/database/COMPONENTS"""
+        return os.path.join(self.get_db4_folder(), 'COMPONENTS')
+
+    def get_db4_components_conversion_folder(self):
+        """scenario/inputs/database/COMPONENTS/CONVERSION"""
+        return os.path.join(self.get_db4_components_folder(), 'CONVERSION')
+
+    def get_db4_components_conversion_conversion_technology_csv(self, conversion_technology):
+        """scenario/inputs/database/COMPONENTS/CONVERSION/{conversion_technology}.csv"""
+        return os.path.join(self.get_db4_components_conversion_folder(), f'{conversion_technology}.csv')
+
+    def get_db4_components_conversion_technologies_all(self):
+        """return: dict of scenario/inputs/database/COMPONENTS/CONVERSION/*.csv"""
+        csv_file_names = [os.path.splitext(file)[0] for file in os.listdir(self.get_db4_components_conversion_folder())
+                          if file.endswith('.csv')]
+        return {name: self.get_db4_components_conversion_conversion_technology_csv(name) for name in csv_file_names}
+
+    def get_db4_components_distribution_folder(self):
+        """scenario/inputs/database/COMPONENTS/DISTRIBUTION"""
+        return os.path.join(self.get_db4_components_folder(), 'DISTRIBUTION')
+
+    def get_database_components_distribution_thermal_grid(self, distribution="THERMAL_GRID"):
+        """scenario/inputs/database/COMPONENTS/DISTRIBUTION/{distribution}.csv"""
+        return os.path.join(self.get_db4_components_distribution_folder(), f'{distribution}.csv')
+
+    def get_db4_components_feedstocks_folder(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS')
+
+    def get_db4_components_feedstocks_library_folder(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS"""
+        return os.path.join(self.get_db4_components_folder(), 'FEEDSTOCKS', 'FEEDSTOCKS_LIBRARY')
+
+    def get_db4_components_feedstocks_feedstocks_csv(self, feedstocks):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/{feedstocks}.csv"""
+        return os.path.join(self.get_db4_components_feedstocks_library_folder(), f'{feedstocks}.csv')
+
+    def get_db4_components_feedstocks_all(self):
+        """return: dict of scenario/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv"""
+        csv_file_names = [os.path.splitext(file)[0] for file in
+                          os.listdir(self.get_db4_components_feedstocks_library_folder()) if file.endswith('.csv')]
+        return {name: self.get_db4_components_feedstocks_feedstocks_csv(name) for name in csv_file_names}
+
+    def get_database_components_feedstocks_energy_carriers(self):
+        """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
+        return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
-        if not os.path.exists(self.get_database_conversion_systems()):
+        if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_database_conversion_systems(), sheet_name="THERMAL_ENERGY_STORAGES")
+        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
-
-    def get_database_distribution_systems(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'DISTRIBUTION.xlsx')
-
-    def get_database_feedstocks(self):
-        """Returns the database of supply components for cost analysis. These are copied
-        to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return os.path.join(self.get_databases_folder(), 'components', 'FEEDSTOCKS.xlsx')
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
@@ -696,8 +807,8 @@ class InputLocator(object):
         return zone_building_names
 
     def get_building_supply(self):
-        """scenario/inputs/building-properties/supply_systems.csv"""
-        return os.path.join(self.get_building_properties_folder(), 'supply_systems.csv')
+        """scenario/inputs/building-properties/supply.csv"""
+        return os.path.join(self.get_building_properties_folder(), 'supply.csv')
 
     def get_building_internal(self):
         """scenario/inputs/building-properties/internal_loads.csv"""
@@ -708,19 +819,24 @@ class InputLocator(object):
         return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.csv')
 
     def get_building_air_conditioning(self):
-        """scenario/inputs/building-properties/air_conditioning.csv"""
-        return os.path.join(self.get_building_properties_folder(), 'air_conditioning.csv')
+        """scenario/inputs/building-properties/hvac.csv"""
+        return os.path.join(self.get_building_properties_folder(), 'hvac.csv')
 
     def get_building_architecture(self):
-        """scenario/inputs/building-properties/architecture.csv
+        """scenario/inputs/building-properties/envelope.csv
         This file is generated by the data-helper script.
         This file is used in the embodied energy script (cea/embodied.py)
         and the demand script (cea/demand_main.py)"""
-        return os.path.join(self.get_building_properties_folder(), 'architecture.csv')
+        return os.path.join(self.get_building_properties_folder(), 'envelope.csv')
 
     def get_building_weekly_schedules_folder(self):
         """scenario/inputs/building-properties/schedules/"""
         return self._ensure_folder(self.get_building_properties_folder(), 'schedules')
+
+    def get_building_weekly_schedules_monthly_multiplier_csv(self):
+        """
+        scenario/inputs/building-properties/schedules/MONTHLY_MULTIPLIERS.csv"""
+        return os.path.join(self.get_building_weekly_schedules_folder(), 'MONTHLY_MULTIPLIERS.csv')
 
     def get_building_weekly_schedules(self, building):
         """

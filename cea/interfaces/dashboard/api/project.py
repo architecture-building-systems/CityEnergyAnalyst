@@ -327,7 +327,8 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             locator.ensure_parent_folder_exists(site_path)
             site_df.to_file(site_path)
             # Generate using zone helper
-            cea.api.zone_helper(config)
+            from cea.datamanagement.zone_helper import main as zone_helper
+            zone_helper(config)
 
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
@@ -357,7 +358,9 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         if scenario_form.should_generate_surroundings():
             # Generate using surroundings helper
             config.surroundings_helper.buffer = scenario_form.generate_surroundings
-            cea.api.surroundings_helper(config)
+
+            from cea.datamanagement.surroundings_helper import main as surroundings_helper
+            surroundings_helper(config)
         elif scenario_form.user_surroundings == EMTPY_GEOMETRY:
             # Generate empty surroundings
             surroundings_df = generate_empty_surroundings(zone_df.crs)
@@ -427,7 +430,8 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
     async def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
             # Run terrain helper
-            cea.api.terrain_helper(config)
+            from cea.datamanagement.terrain_helper import main as terrain_helper
+            terrain_helper(config)
         else:
             # Copy terrain using path
             centroid = zone_df.dissolve().centroid.values[0]
@@ -444,7 +448,8 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
     async def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
             # Run street helper
-            cea.api.streets_helper(config)
+            from cea.datamanagement.streets_helper import main as streets_helper
+            streets_helper(config)
         elif scenario_form.street != EMTPY_GEOMETRY:
             # Copy street using path
             street_df = await scenario_form.get_street_file()
@@ -458,9 +463,12 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         config.scenario_name = "temp_scenario"
         locator = cea.inputlocator.InputLocator(config.scenario)
 
+        from cea.datamanagement.database_helper import main as database_helper
+
         try:
             # Run database-helper to copy databases to input
-            cea.api.database_helper(config, databases_path=scenario_form.database)
+            config.database_helper.databases_path = scenario_form.database
+            database_helper(config)
 
             # Generate / Copy zone
             zone_df = await create_zone(scenario_form, locator)
@@ -474,7 +482,8 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             # Run weather helper
             async with scenario_form.get_weather_file() as weather_path:
                 config.weather_helper.weather = weather_path
-                cea.api.weather_helper(config)
+                from cea.datamanagement.weather_helper import main as weather_helper
+                weather_helper(config)
 
             # Generate / Copy terrain
             await create_terrain(scenario_form, zone_df, locator)
@@ -483,7 +492,8 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             await create_street(scenario_form, locator)
 
             # Run archetypes mapper
-            cea.api.archetypes_mapper(config)
+            from cea.datamanagement.archetypes_mapper import main as archetypes_mapper
+            archetypes_mapper(config)
 
             # Move temp scenario to correct path
             print(f"Moving from {config.scenario} to {new_scenario_path}")

@@ -426,7 +426,7 @@ def main(config):
     T_ground_K = 300
     ach_type = case_dict['ACH_type']
 
-    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="ABSORPTION_CHILLERS"), ach_type)
+    chiller_prop = AbsorptionChiller(pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('ABSORPTION_CHILLERS')), ach_type)
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop)
     print(chiller_operation)

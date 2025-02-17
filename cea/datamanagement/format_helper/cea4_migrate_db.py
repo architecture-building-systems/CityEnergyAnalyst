@@ -46,6 +46,7 @@ rename_dict = {'STANDARD': 'const_type',
                'SERVERS':'servers',
                'ELECTROMOBILITY':'electromobility',
                'unit ': 'unit',
+               'cost_and_ghg_tab': 'feedstock_file',
                }
 
 rename_dict_2 = {'Code': 'use_type',
@@ -126,12 +127,20 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
                 df.rename(columns=rename_dict, inplace=True)
 
             # Handle the special case of renaming
-            if sheet_name == 'CONSTRUCTION':
-                output_path = os.path.join(directory_csv, "MASS.csv")
-            elif file_name == 'HVAC':
+            if file_name == 'ENVELOPE' and sheet_name == 'CONSTRUCTION':
+                output_path = os.path.join(directory_csv, "ENVELOPE_MASS.csv")
+            elif file_name == 'ENVELOPE' and sheet_name != 'CONSTRUCTION':
+                output_path = os.path.join(directory_csv, f"ENVELOPE_{sheet_name}.csv")
+            elif file_name == 'HVAC' and sheet_name != 'HOT_WATER':
                 output_path = os.path.join(directory_csv, f"HVAC_{sheet_name}.csv")
-            elif file_name == 'SUPPLY':
+            elif file_name == 'HVAC' and sheet_name == 'HOT_WATER':
+                output_path = os.path.join(directory_csv, "HVAC_HOTWATER.csv")
+            elif file_name == 'SUPPLY' and sheet_name != 'HOT_WATER':
                 output_path = os.path.join(directory_csv, f"SUPPLY_{sheet_name}.csv")
+            elif file_name == 'SUPPLY' and sheet_name == 'HOT_WATER':
+                output_path = os.path.join(directory_csv, "SUPPLY_HOTWATER.csv")
+            elif sheet_name == 'SOLAR_THERMAL_PANELS':
+                output_path = os.path.join(directory_csv, "SOLAR_COLLECTORS.csv")
             else:
                 output_path = os.path.join(directory_csv, f"{sheet_name}.csv")
 
@@ -356,10 +365,10 @@ def move_txt_modify_csv_files(scenario, verbose=False):
     # Create and save the compiled DataFrame
     if compiled_rows:
         compiled_multiplier_df = pd.DataFrame(compiled_rows)
-        compiled_multiplier_path = path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER')
+        compiled_multiplier_path = path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS')
         compiled_multiplier_df.to_csv(compiled_multiplier_path, index=False)
         if verbose:
-            print(f"Saved MONTHLY_MULTIPLIER to: {compiled_multiplier_path}")
+            print(f"Saved MONTHLY_MULTIPLIERS to: {compiled_multiplier_path}")
 
 
 def delete_files(path, verbose=False):
@@ -373,9 +382,13 @@ def delete_files(path, verbose=False):
         shutil.rmtree(path)
         if verbose:
             print(f"Deleted directory: {path}")
-    except Exception as e:
+    except FileNotFoundError:
+        # Ignore if the directory doesn't exist
         pass
-
+    except PermissionError as e:
+        raise RuntimeError(f"Permission denied when deleting {path}: {e}")
+    except Exception as e:
+        print(f"Warning: Failed to delete {path}: {e}")
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
@@ -390,8 +403,8 @@ def migrate_cea3_to_cea4_db(scenario):
         pass
     else:
         # Verify missing files for CEA-3 and CEA-4 formats
-        list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPE')
-        list_problems_use_type = dict_missing.get('USE_TYPE')
+        list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPES')
+        list_problems_use_type = dict_missing.get('USE_TYPES')
         list_problems_schedules = dict_missing.get('SCHEDULES')
         list_problems_envelope = dict_missing.get('ENVELOPE')
         list_problems_hvac = dict_missing.get('HVAC')
@@ -403,13 +416,13 @@ def migrate_cea3_to_cea4_db(scenario):
         #1. about archetypes - construction types
         path_3 = path_to_db_file_3(scenario, 'CONSTRUCTION_STANDARD')
         if list_problems_construction_type and os.path.isfile(path_3):
-            path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPE')
+            path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPES')
             merge_excel_tab_to_csv(path_3, 'STANDARD', path_csv, rename_dict=rename_dict)
 
         #2. about archetypes - use types
         path_3 = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
         if list_problems_use_type and os.path.isfile(path_3):
-            path_csv = path_to_db_file_4(scenario, 'USE_TYPE')
+            path_csv = path_to_db_file_4(scenario, 'USE_TYPES')
             merge_excel_tab_to_csv(path_3, 'code', path_csv, rename_dict=rename_dict_2)
 
         if list_problems_schedules:
@@ -479,7 +492,7 @@ def main(config):
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed and successful - time elapsed: %.2f seconds' % time_elapsed)
+        print('The entire process of Database migration from CEA-3 to CEA-4 is now completed and successful - time elapsed: %.2f seconds.' % time_elapsed)
 
     # if verification is failed, keep the old database, remove the new one
     else:
@@ -490,7 +503,7 @@ def main(config):
 
         # Print the time used for the entire processing
         time_elapsed = time.perf_counter() - t0
-        print('The process of Database migration from CEA-3 to CEA-4 is not entirely successful - time elapsed: %.2f seconds' % time_elapsed)
+        print('The process of Database migration from CEA-3 to CEA-4 is not entirely successful - time elapsed: %.2f seconds.' % time_elapsed)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

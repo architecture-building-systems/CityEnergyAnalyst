@@ -4,7 +4,7 @@ jobs: maintain a list of jobs to be simulated.
 import subprocess
 from datetime import datetime
 from enum import IntEnum
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import psutil
 from fastapi import APIRouter, Request
@@ -32,9 +32,9 @@ class JobInfo(BaseModel):
     script: str
     parameters: dict
     state: JobState = JobState.PENDING
-    error: str = None
-    start_time: datetime = None
-    end_time: datetime = None
+    error: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
 
 
 @router.get("/")

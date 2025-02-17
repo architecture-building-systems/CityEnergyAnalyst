@@ -22,50 +22,50 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-ARCHETYPES = ['CONSTRUCTION_TYPE', 'USE_TYPE']
+ARCHETYPES = ['CONSTRUCTION_TYPES', 'USE_TYPES']
 SCHEDULES_FOLDER = ['SCHEDULES']
 SCHEDULES_LIBRARY_FOLDER = ['SCHEDULES_LIBRARY']
-ENVELOPE_ASSEMBLIES = ['MASS', 'TIGHTNESS', 'FLOOR', 'WALL', 'WINDOW', 'SHADING', 'ROOF']
-HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOT_WATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
-SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOT_WATER']
+ENVELOPE_ASSEMBLIES = ['ENVELOPE_MASS', 'ENVELOPE_TIGHTNESS', 'ENVELOPE_FLOOR', 'ENVELOPE_WALL', 'ENVELOPE_WINDOW', 'ENVELOPE_SHADING', 'ENVELOPE_ROOF']
+HVAC_ASSEMBLIES = ['HVAC_CONTROLLER', 'HVAC_HOTWATER', 'HVAC_HEATING', 'HVAC_COOLING', 'HVAC_VENTILATION']
+SUPPLY_ASSEMBLIES = ['SUPPLY_COOLING', 'SUPPLY_ELECTRICITY', 'SUPPLY_HEATING', 'SUPPLY_HOTWATER']
 CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENERATION_PLANTS', 'COOLING_TOWERS',
                          'FUEL_CELLS', 'HEAT_EXCHANGERS', 'HEAT_PUMPS', 'HYDRAULIC_PUMPS', 'PHOTOVOLTAIC_PANELS',
-                         'PHOTOVOLTAIC_THERMAL_PANELS', 'POWER_TRANSFORMERS', 'SOLAR_THERMAL_PANELS',
+                         'PHOTOVOLTAIC_THERMAL_PANELS', 'POWER_TRANSFORMERS', 'SOLAR_COLLECTORS',
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
-dict_assembly = {'MASS': 'envelope_type_mass', 'TIGHTNESS': 'envelope_type_leak', 'FLOOR': 'envelope_type_floor',
-                 'WALL': 'envelope_type_wall', 'WINDOW': 'envelope_type_win', 'SHADING': 'envelope_type_shade',
-                 'ROOF': 'envelope_type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOT_WATER': 'hvac_type_dhw',
+dict_assembly = {'ENVELOPE_MASS': 'envelope_type_mass', 'ENVELOPE_TIGHTNESS': 'envelope_type_leak', 'ENVELOPE_FLOOR': 'envelope_type_floor',
+                 'ENVELOPE_WALL': 'envelope_type_wall', 'ENVELOPE_WINDOW': 'envelope_type_win', 'ENVELOPE_SHADING': 'envelope_type_shade',
+                 'ENVELOPE_ROOF': 'envelope_type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
                  'HVAC_HEATING': 'hvac_type_hs', 'HVAC_COOLING': 'hvac_type_cs', 'HVAC_VENTILATION': 'hvac_type_vent',
                  'SUPPLY_COOLING': 'supply_type_cs', 'SUPPLY_ELECTRICITY': 'supply_type_el', 'SUPPLY_HEATING': 'supply_type_hs',
-                 'SUPPLY_HOT_WATER': 'supply_type_dhw',
+                 'SUPPLY_HOTWATER': 'supply_type_dhw',
                  }
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
                               'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'], 'FEEDSTOCKS_LIBRARY': FEEDSTOCKS_COMPONENTS}
-mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_archetypes_construction_type',
-                                          'USE_TYPE': 'get_database_archetypes_use_type',
+mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_archetypes_construction_type',
+                                          'USE_TYPES': 'get_database_archetypes_use_type',
                                           'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
-                                          'MONTHLY_MULTIPLIER': 'get_database_archetypes_schedules_monthly_multiplier',
-                                          'CONSTRUCTION': 'get_database_assemblies_envelope_construction',
-                                          'MASS': 'get_database_assemblies_envelope_mass',
-                                          'FLOOR': 'get_database_assemblies_envelope_floor',
-                                          'WALL': 'get_database_assemblies_envelope_wall',
-                                          'WINDOW': 'get_database_assemblies_envelope_window',
-                                          'SHADING': 'get_database_assemblies_envelope_shading',
-                                          'ROOF': 'get_database_assemblies_envelope_roof',
-                                          'TIGHTNESS': 'get_database_assemblies_envelope_tightness',
+                                          'MONTHLY_MULTIPLIERS': 'get_database_archetypes_schedules_monthly_multiplier',
+                                          'ENVELOPE_CONSTRUCTION': 'get_database_assemblies_envelope_construction',
+                                          'ENVELOPE_MASS': 'get_database_assemblies_envelope_mass',
+                                          'ENVELOPE_FLOOR': 'get_database_assemblies_envelope_floor',
+                                          'ENVELOPE_WALL': 'get_database_assemblies_envelope_wall',
+                                          'ENVELOPE_WINDOW': 'get_database_assemblies_envelope_window',
+                                          'ENVELOPE_SHADING': 'get_database_assemblies_envelope_shading',
+                                          'ENVELOPE_ROOF': 'get_database_assemblies_envelope_roof',
+                                          'ENVELOPE_TIGHTNESS': 'get_database_assemblies_envelope_tightness',
                                           'HVAC_CONTROLLER': 'get_database_assemblies_hvac_controller',
                                           'HVAC_COOLING': 'get_database_assemblies_hvac_cooling',
                                           'HVAC_HEATING': 'get_database_assemblies_hvac_heating',
-                                          'HVAC_HOT_WATER': 'get_database_assemblies_hvac_hot_water',
+                                          'HVAC_HOTWATER': 'get_database_assemblies_hvac_hot_water',
                                           'HVAC_VENTILATION': 'get_database_assemblies_hvac_ventilation',
                                           'SUPPLY_COOLING': 'get_database_assemblies_supply_cooling',
                                           'SUPPLY_HEATING': 'get_database_assemblies_supply_heating',
-                                          'SUPPLY_HOT_WATER': 'get_database_assemblies_supply_hot_water',
+                                          'SUPPLY_HOTWATER': 'get_database_assemblies_supply_hot_water',
                                           'SUPPLY_ELECTRICITY': 'get_database_assemblies_supply_electricity',
                                           'ABSORPTION_CHILLERS': 'get_database_components_conversion_absorption_chillers',
                                           'BOILERS': 'get_database_components_conversion_boilers',
@@ -79,7 +79,8 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'PHOTOVOLTAIC_PANELS': 'get_database_components_conversion_photovoltaic_panels',
                                           'PHOTOVOLTAIC_THERMAL_PANELS': 'get_database_components_conversion_photovoltaic_thermal_panels',
                                           'POWER_TRANSFORMERS': 'get_database_components_conversion_power_transformers',
-                                          'SOLAR_THERMAL_PANELS': 'get_database_components_conversion_solar_thermal_panels',
+                                          'SOLAR_COLLECTORS': 'get_database_components_conversion_solar_collectors',
+                                          'SOLAR_THERMAL_PANELS': 'get_database_components_conversion_solar_collectors',
                                           'THERMAL_ENERGY_STORAGES': 'get_database_components_conversion_thermal_energy_storages',
                                           'UNITARY_AIR_CONDITIONERS': 'get_database_components_conversion_unitary_air_conditioners',
                                           'VAPOR_COMPRESSION_CHILLERS': 'get_database_components_conversion_vapor_compression_chillers',
@@ -97,8 +98,8 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPE': 'get_database_arc
                                           'WOOD': 'get_database_components_feedstocks_wood',
                                           }
 
-mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPE': 'const_type',
-                                     'USE_TYPE':'use_type',
+mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPES': 'const_type',
+                                     'USE_TYPES':'use_type',
                                      'SCHEDULES': 'hour',
                                      'SCHEDULES_LIBRARY': 'hour',
                                      'ENVELOPE': 'code',
@@ -126,7 +127,7 @@ dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
                      'PV':'PHOTOVOLTAIC_PANELS',
                      'PVT':'PHOTOVOLTAIC_THERMAL_PANELS',
                      'TR':'POWER_TRANSFORMERS',
-                     'SC': 'SOLAR_THERMAL_PANELS',
+                     'SC': 'SOLAR_COLLECTORS',
                      'TES':'THERMAL_ENERGY_STORAGES',
                      'AC':'UNITARY_AIR_CONDITIONERS',
                      }
@@ -137,7 +138,6 @@ dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-import os
 
 def path_to_db_file_4(scenario, item, sheet_name=None):
     """
@@ -155,10 +155,10 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
 
     item_paths = {
         "database": base_path,
-        "CONSTRUCTION_TYPE": os.path.join(base_path, "ARCHETYPES", "CONSTRUCTION_TYPE.csv"),
-        "USE_TYPE": os.path.join(base_path, "ARCHETYPES", "USE_TYPE.csv"),
-        "SCHEDULES": os.path.join(base_path, "ARCHETYPES", "SCHEDULES"),
-        "SCHEDULES_LIBRARY": os.path.join(base_path, "ARCHETYPES", "SCHEDULES", "SCHEDULES_LIBRARY"),
+        "CONSTRUCTION_TYPES": os.path.join(base_path, "ARCHETYPES", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"),
+        "USE_TYPES": os.path.join(base_path, "ARCHETYPES", "USE", "USE_TYPES.csv"),
+        "SCHEDULES": os.path.join(base_path, "ARCHETYPES", "USE", "SCHEDULES"),
+        "SCHEDULES_LIBRARY": os.path.join(base_path, "ARCHETYPES", "USE", "SCHEDULES", "SCHEDULES_LIBRARY"),
         "ENVELOPE": os.path.join(base_path, "ASSEMBLIES", "ENVELOPE"),
         "HVAC": os.path.join(base_path, "ASSEMBLIES", "HVAC"),
         "SUPPLY": os.path.join(base_path, "ASSEMBLIES", "SUPPLY"),
@@ -170,7 +170,7 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
 
     # Handle special sheet names for specific categories
     special_sheets = {
-        ("SCHEDULES", "MONTHLY_MULTIPLIER"): os.path.join(item_paths["SCHEDULES"], "MONTHLY_SCHEDULE_COEFFICIENTS.csv"),
+        ("SCHEDULES", "MONTHLY_MULTIPLIERS"): os.path.join(item_paths["SCHEDULES"], "MONTHLY_MULTIPLIERS.csv"),
         ("FEEDSTOCKS", "ENERGY_CARRIERS"): os.path.join(item_paths["FEEDSTOCKS"], "ENERGY_CARRIERS.csv"),
     }
 
@@ -415,7 +415,7 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     return dict_merged
 
 
-def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_columns_construction_type,archetypes='CONSTRUCTION_TYPE'):
+def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_columns_construction_type,archetypes='CONSTRUCTION_TYPES'):
     """
     Verify whether all required archetypes exist in the provided assemblies.
 
@@ -423,7 +423,7 @@ def verify_assemblies_exist(scenario, item, list_sheet_name, list_missing_column
     - scenario (str): Path to the scenario folder.
     - item (str): Item category (e.g., 'ASSEMBLIES').
     - list_sheet_name (list): List of sheet names to check.
-    - archetypes (str): File name for archetypes (default: 'CONSTRUCTION_TYPE').
+    - archetypes (str): File name for archetypes (default: 'CONSTRUCTION_TYPES').
 
     Returns:
     - dict: A dictionary where keys are sheet names and values are lists of missing items.
@@ -480,10 +480,11 @@ def find_missing_values_column_column(file_path_1, column_name_1, file_path_2, c
 
         return missing_items
     except Exception as e:
-        raise ValueError(f"An error occurred: {e}")
+        print(f"An error occurred when checking for missing values: {e}")
+        raise
 
 
-def find_missing_values_directory_column(directory_path_1, file_path_2, column_name_2):
+def find_missing_values_directory_column(directory_path_1, file_path_2, column_name_2, column_name_2_3=None):
     """
     Checks if all unique values in column_name_1 of the first CSV file are present in column_name_2 of the second CSV file.
 
@@ -496,14 +497,21 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
     Returns:
     - list: A list of missing items from column_name_1 that are not covered by column_name_2.
     """
+    update_column = []
     try:
         # Load both CSV files
         df2 = pd.read_csv(file_path_2)
 
-
         # Get unique values from both columns
         unique_values_1 = set(get_csv_filenames(directory_path_1))
-        unique_values_2 = set(df2[column_name_2].dropna().unique())
+        if column_name_2 in df2.columns:
+            unique_values_2 = set(df2[column_name_2].dropna().unique())
+        else:
+            if column_name_2_3 is None:
+                raise ValueError("An older column name from CEA-3 is necessary here.")
+            else:
+                unique_values_2 = set(df2[column_name_2_3].dropna().unique())
+                update_column = [column_name_2_3]
 
         # Find missing items
         missing_items = list(unique_values_1 - unique_values_2)
@@ -512,12 +520,9 @@ def find_missing_values_directory_column(directory_path_1, file_path_2, column_n
             missing_items.remove('ENERGY_CARRIERS')
         if 'SOLAR' in missing_items:
             missing_items.remove('SOLAR')
-        if 'MONTHLY_MULTIPLIER' in missing_items:
-            missing_items.remove('MONTHLY_MULTIPLIER')
-        if 'MONTHLY_SCHEDULE_COEFFICIENTS' in missing_items:
-            missing_items.remove('MONTHLY_SCHEDULE_COEFFICIENTS')
-
-        return missing_items
+        if 'MONTHLY_MULTIPLIERS' in missing_items:
+            missing_items.remove('MONTHLY_MULTIPLIERS')
+        return missing_items, update_column
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
 
@@ -622,7 +627,8 @@ def cea4_verify_db(scenario, verbose=False):
     if list_missing_files_csv_archetypes:
         if verbose:
             print('! Ensure .csv file(s) are present in the ARCHETYPES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_archetypes))))
-            # print('! CONSTRUCTION_TYPE.csv and USE_TYPE.csv are fundamental and should be present in the ARCHETYPES folder.')
+            # FIXME: CONSTRUCTION_TYPES.csv and USE_TYPES.csv are required for verification to work
+            # print('! CONSTRUCTION_TYPES.csv and USE_TYPES.csv are fundamental and should be present in the ARCHETYPES folder.')
             # print('! The CEA-4 Database verification is aborted.')
             # sys.exit(0)
 
@@ -641,26 +647,26 @@ def cea4_verify_db(scenario, verbose=False):
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
-    if not dict_missing_db['USE_TYPE'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
-        use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPE'))
+    if not dict_missing_db['USE_TYPES'] and check_directory_contains_csv(path_to_db_file_4(scenario, 'SCHEDULES')):
+        use_type_df = pd.read_csv(path_to_db_file_4(scenario, 'USE_TYPES'))
         list_use_types = use_type_df['use_type'].tolist()
         list_missing_files_csv_schedules_library = verify_file_exists_4_db(scenario, SCHEDULES_LIBRARY_FOLDER, sheet_name=list_use_types)
-        list_missing_files_csv_schedules_monthly_multiplier = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=['MONTHLY_MULTIPLIER'])
+        list_missing_files_csv_schedules_monthly_multiplier = verify_file_exists_4_db(scenario, SCHEDULES_FOLDER, sheet_name=['MONTHLY_MULTIPLIERS'])
         if list_missing_files_csv_schedules_library:
             add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_files_csv_schedules_library)
             if verbose:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES>SCHEDULES_LIBRARY folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_library))))
-        if 'MONTHLY_MULTIPLIER' in list_missing_files_csv_schedules_monthly_multiplier:
-            add_values_to_dict(dict_missing_db, 'SCHEDULES', ['MONTHLY_MULTIPLIER'])
+        if 'MONTHLY_MULTIPLIERS' in list_missing_files_csv_schedules_monthly_multiplier:
+            add_values_to_dict(dict_missing_db, 'SCHEDULES', ['MONTHLY_MULTIPLIERS'])
             if verbose:
                 print('! Ensure .csv file(s) are present in the ARCHETYPES>SCHEDULES folder: {list_missing_files_csv}.'.format(list_missing_files_csv=', '.join(map(str, list_missing_files_csv_schedules_monthly_multiplier))))
         else:
-            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPE'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
-            list_missing_monthly_multiplier_schedules = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIER'), 'use_type')
+            list_missing_monthly_multiplier_use_type = find_missing_values_column_column(path_to_db_file_4(scenario, 'USE_TYPES'), 'use_type', path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS'), 'use_type')
+            list_missing_monthly_multiplier_schedules, _ = find_missing_values_directory_column(path_to_db_file_4(scenario, 'SCHEDULES_LIBRARY'), path_to_db_file_4(scenario, 'SCHEDULES', 'MONTHLY_MULTIPLIERS'), 'use_type')
             list_missing_monthly_multiplier = list(set(list_missing_monthly_multiplier_use_type + list_missing_monthly_multiplier_schedules))
             if list_missing_monthly_multiplier:
                 if verbose:
-                    print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIER.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
+                    print('! Ensure use type(s) are defined in the MONTHLY_MULTIPLIERS.csv: {list_missing_monthly_multiplier}.'.format(list_missing_monthly_multiplier=', '.join(map(str, list_missing_monthly_multiplier))))
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_monthly_multiplier)
         for sheet in list_use_types:
             if sheet not in list_missing_files_csv_schedules_library:
@@ -672,10 +678,10 @@ def cea4_verify_db(scenario, verbose=False):
                     if list_issues_against_csv_schedules:
                         print('! Check value(s) in {sheet}.csv:')
                         print("\n".join(f"  {item}" for item in list_issues_against_csv_schedules))
-    elif 'use_type' in dict_missing_db['USE_TYPE']:
-        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPE'])
+    elif 'use_type' in dict_missing_db['USE_TYPES']:
+        add_values_to_dict(dict_missing_db, 'SCHEDULES', ['USE_TYPES'])
         if verbose:
-            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPE.csv.')
+            print('! Verification of .csv files for SCHEDULES was skipped because the use_type column is missing in USE_TYPES.csv.')
     else:
         add_values_to_dict(dict_missing_db, 'SCHEDULES', ['SCHEDULES'])
 
@@ -692,7 +698,7 @@ def cea4_verify_db(scenario, verbose=False):
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
         # Verify is all values in the construction_type.csv file are defined in the assemblies.csv file
-        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPE'], archetypes='CONSTRUCTION_TYPE')
+        dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPES'], archetypes='CONSTRUCTION_TYPES')
         list_missing_names_assemblies = list(dict_missing_assemblies.keys())
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_names_assemblies)
         if list_missing_names_assemblies:
@@ -764,11 +770,13 @@ def cea4_verify_db(scenario, verbose=False):
                 for key, _ in dict_missing_feedstocks.items():
                     print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
-            list_missing_energy_carriers = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'cost_and_ghg_tab')
+            list_missing_energy_carriers, update_column = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstock_file', column_name_2_3='cost_and_ghg_tab')
             if list_missing_energy_carriers:
                 if verbose:
                     print('! Ensure feedstock(s) are defined in the ENERGY_CARRIERS.csv: {list_missing_energy_carriers}.'.format(list_missing_energy_carriers=', '.join(map(str, list_missing_energy_carriers))))
                 add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_energy_carriers)
+            if update_column:
+                add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', update_column)
         if list_feedstocks_db:
             for sheet in list_feedstocks_db:
                 if sheet not in list_feedstocks_db:

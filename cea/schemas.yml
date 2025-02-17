@@ -1533,37 +1533,34 @@ get_building_air_conditioning:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_cs:
+      hvac_type_cs:
         description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: COOLING
+            path: get_database_assemblies_hvac_cooling
             column: code
-      type_hs:
+      hvac_type_hs:
         description: Type of heating HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HEATING
+            path: get_database_assemblies_hvac_heating
             column: code
-      type_dhw:
+      hvac_type_dhw:
         description: Type of hot water HVAC assembly (relates to "code" in HVAC assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: HOT_WATER
+            path: get_database_assemblies_hvac_hot_water
             column: code
-      type_ctrl:
+      hvac_type_ctrl:
         description: Type of heating and cooling control HVAC  assembly (relates to
           "code" in HVAC assemblies)
         type: string
@@ -1571,10 +1568,9 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: CONTROLLER
+            path: get_database_assemblies_hvac_controller
             column: code
-      type_vent:
+      hvac_type_vent:
         description: Type of ventilation HVAC assembly (relates to "code" in HVAC
           assemblies)
         type: string
@@ -1582,31 +1578,30 @@ get_building_air_conditioning:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_air_conditioning_systems
-            sheet: VENTILATION
+            path: get_database_assemblies_hvac_ventilation
             column: code
-      heat_starts:
+      hvac_heat_starts:
         description: Start of the heating season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      heat_ends:
+      hvac_heat_ends:
         description: End of the heating season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      cool_starts:
+      hvac_cool_starts:
         description: Start of the cooling season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
         example: '31|12'
         unit: '[DD|MM]'
         values: '{00|00...31|12}'
-      cool_ends:
+      hvac_cool_ends:
         description: End of the cooling season - use 00|00 when there is none
         type: string
         regex: ^(0[1-9]|[12][0-9]|3[01])\|(0[1-9]|1[012])|00\|00$
@@ -1618,7 +1613,7 @@ get_building_air_conditioning:
 get_building_architecture:
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/architecture.csv
+  file_path: inputs/building-properties/envelope.csv
   file_type: csv
   schema:
     columns:
@@ -1627,70 +1622,70 @@ get_building_architecture:
         type: string
         unit: '[-]'
         values: alphanumeric
-      void_deck:
+      envelope_void_deck:
         description: Number of floors (from the ground up) with an open envelope (default
           = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      Es:
+      envelope_Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Hs_ag:
+      envelope_Hs_ag:
         description: Fraction of above ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Hs_bg:
+      envelope_Hs_bg:
         description: Fraction of below ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Ns:
+      envelope_Ns:
         description: Fraction of net gross floor area.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_north:
+      envelope_wwr_north:
         description: Window to wall ratio in in facades facing north
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_east:
+      envelope_wwr_east:
         description: Window to wall ratio in in facades facing east
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_south:
+      envelope_wwr_south:
         description: Window to wall ratio in in facades facing south
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      wwr_west:
+      envelope_wwr_west:
         description: Window to wall ratio in in facades facing west
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      type_cons:
+      envelope_type_mass:
         description: Type of construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1698,40 +1693,36 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: CONSTRUCTION
+            path: get_database_assemblies_envelope_mass
             column: code
-      type_leak:
+      envelope_type_leak:
         description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: TIGHTNESS
+            path: get_database_assemblies_envelope_tightness
             column: code
-      type_roof:
+      envelope_type_roof:
         description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: ROOF
+            path: get_database_assemblies_envelope_roof
             column: code
-      type_shade:
+      envelope_type_shade:
         description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: SHADING
+            path: get_database_assemblies_envelope_shading
             column: code
-      type_wall:
+      envelope_type_wall:
         description: External wall construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1739,10 +1730,9 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
+            path: get_database_assemblies_envelope_wall
             column: code
-      type_part:
+      envelope_type_part:
         description: Internal partitions construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1750,10 +1740,9 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WALL
+            path: get_database_assemblies_envelope_wall
             column: code
-      type_floor:
+      envelope_type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1761,10 +1750,9 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
+            path: get_database_assemblies_envelope_floor
             column: code
-      type_base:
+      envelope_type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1772,18 +1760,16 @@ get_building_architecture:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: FLOOR
+            path: get_database_assemblies_envelope_floor
             column: code
-      type_win:
+      envelope_type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_envelope_systems
-            sheet: WINDOW
+            path: get_database_assemblies_envelope_window
             column: code
   used_by:
   - demand
@@ -1951,17 +1937,16 @@ get_building_supply:
         type: string
         unit: '[-]'
         values: alphanumeric
-      type_cs:
+      supply_type_cs:
         description: Type of cooling supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: COOLING
+            path: get_database_assemblies_supply_cooling
             column: code
-      type_dhw:
+      supply_type_dhw:
         description: Type of hot water supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
@@ -1969,10 +1954,9 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: HOT_WATER
+            path: get_database_assemblies_supply_hot_water
             column: code
-      type_el:
+      supply_type_el:
         description: Type of electrical supply assembly (refers to "code" in SUPPLY
           assemblies)
         type: string
@@ -1980,18 +1964,16 @@ get_building_supply:
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: ELECTRICITY
+            path: get_database_assemblies_supply_electricity
             column: code
-      type_hs:
+      supply_type_hs:
         description: Type of heating supply assembly (refers to "code" in SUPPLY assemblies)
         type: string
         unit: '[-]'
         values: alphanumeric
         choice:
           lookup:
-            path: get_database_supply_assemblies
-            sheet: HEATING
+            path: get_database_assemblies_supply_heating
             column: code
   used_by:
   - decentralized
@@ -2006,19 +1988,139 @@ get_building_weekly_schedules:
   file_type: csv
   schema:
     columns:
-      METADATA:
-        description: TODO
+      hour:
+        description: Day of the week (weekday, saturday, or sunday)
+        choice:
+          values:
+          - Weekday_00
+          - Weekday_01
+          - Weekday_02
+          - Weekday_03
+          - Weekday_04
+          - Weekday_05
+          - Weekday_06
+          - Weekday_07
+          - Weekday_08
+          - Weekday_09
+          - Weekday_10
+          - Weekday_11
+          - Weekday_12
+          - Weekday_13
+          - Weekday_14
+          - Weekday_15
+          - Weekday_16
+          - Weekday_17
+          - Weekday_18
+          - Weekday_19
+          - Weekday_20
+          - Weekday_21
+          - Weekday_22
+          - Weekday_23
+          - Saturday_00
+          - Saturday_01
+          - Saturday_02
+          - Saturday_03
+          - Saturday_04
+          - Saturday_05
+          - Saturday_06
+          - Saturday_07
+          - Saturday_08
+          - Saturday_09
+          - Saturday_10
+          - Saturday_11
+          - Saturday_12
+          - Saturday_13
+          - Saturday_14
+          - Saturday_15
+          - Saturday_16
+          - Saturday_17
+          - Saturday_18
+          - Saturday_19
+          - Saturday_20
+          - Saturday_21
+          - Saturday_22
+          - Saturday_23
+          - Sunday_00
+          - Sunday_01
+          - Sunday_02
+          - Sunday_03
+          - Sunday_04
+          - Sunday_05
+          - Sunday_06
+          - Sunday_07
+          - Sunday_08
+          - Sunday_09
+          - Sunday_10
+          - Sunday_11
+          - Sunday_12
+          - Sunday_13
+          - Sunday_14
+          - Sunday_15
+          - Sunday_16
+          - Sunday_17
+          - Sunday_18
+          - Sunday_19
+          - Sunday_20
+          - Sunday_21
+          - Sunday_22
+          - Sunday_23
+        primary: true
         type: string
-        unit: TODO
-        values: TODO
-      MONTHLY_MULTIPLIER:
-        description: Monthly probabilities of occupancy throughout the year
+      occupancy:
+        description: Occupancy
+        max: 1.0
+        min: 0.0
         type: float
-        unit: '[-]'
-        values: '{0.0...n}'
+      appliances:
+        description: Appliances
+        max: 1.0
+        min: 0.0
+        type: float
+      lighting:
+        description: Lighting
+        max: 1.0
+        min: 0.0
+        type: float
+      hot_water:
+        description: Domestic hot water
+        max: 1.0
+        min: 0.0
+        type: float
+      heating:
+        description: Space heating
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      cooling:
+        description: Space cooling
+        type: string
+        choice:
+          values:
+          - 'OFF'
+          - SETBACK
+          - SETPOINT
+      processes:
+        description: processes
+        max: 1.0
+        min: 0.0
+        type: float
+      servers:
+        description: Servers
+        max: 1.0
+        min: 0.0
+        type: float
+      electromobility:
+        description: Average number of electric vehicles in this hour
+        max: 10000
+        min: 0
+        type: float
   used_by:
   - demand
   - occupancy_helper
+
 get_costs_operation_file:
   created_by:
   - system_costs
@@ -2284,11 +2386,10 @@ get_costs_operation_file:
         min: 0.0
   used_by: []
 
-
 get_database_assemblies_envelope_mass:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/MASS.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_MASS.csv
   file_type: csv
   schema:
     columns:
@@ -2318,7 +2419,7 @@ get_database_assemblies_envelope_mass:
 get_database_assemblies_envelope_floor:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/FLOOR.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_FLOOR.csv
   file_type: csv
   schema:
     columns:
@@ -2361,7 +2462,7 @@ get_database_assemblies_envelope_floor:
 get_database_assemblies_envelope_roof:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ROOF.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_ROOF.csv
   file_type: csv
   schema:
     columns:
@@ -2426,7 +2527,7 @@ get_database_assemblies_envelope_roof:
 get_database_assemblies_envelope_shading:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/SHADING.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_SHADING.csv
   file_type: csv
   schema:
     columns:
@@ -2457,7 +2558,7 @@ get_database_assemblies_envelope_shading:
 get_database_assemblies_envelope_tightness:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/TIGHTNESS.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_TIGHTNESS.csv
   file_type: csv
   schema:
     columns:
@@ -2488,7 +2589,7 @@ get_database_assemblies_envelope_tightness:
 get_database_assemblies_envelope_wall:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WALL.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv
   file_type: csv
   schema:
     columns:
@@ -2552,7 +2653,7 @@ get_database_assemblies_envelope_wall:
 get_database_assemblies_envelope_window:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/ENVELOPE/WINDOW.csv
+  file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WINDOW.csv
   file_type: csv
   schema:
     columns:
@@ -2884,7 +2985,7 @@ get_database_assemblies_hvac_heating:
 get_database_assemblies_hvac_hot_water:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/HVAC/HOT_WATER.csv
+  file_path: inputs/database/ASSEMBLIES/HVAC/HVAC_HOTWATER.csv
   file_type: csv
   schema:
     columns:
@@ -3285,7 +3386,7 @@ get_database_assemblies_supply_heating:
 get_database_assemblies_supply_hot_water:
   created_by:
   - database_helper
-  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOT_WATER.csv
+  file_path: inputs/database/ASSEMBLIES/SUPPLY/SUPPLY_HOTWATER.csv
   file_type: csv
   schema:
     columns:
@@ -5200,10 +5301,10 @@ get_database_components_conversion_power_transformers:
   - decentralized
   - optimization
 
-get_database_components_conversion_solar_thermal_panels:
+get_database_components_conversion_solar_collectors:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/CONVERSION/SOLAR_THERMAL_PANELS.csv
+  file_path: inputs/database/COMPONENTS/CONVERSION/SOLAR_COLLECTORS.csv
   file_type: csv
   schema:
     columns:
@@ -6414,6 +6515,11 @@ get_database_components_feedstocks_energy_carriers:
         type: float, int
         unit: 'NA'
         values: '{-273.15...n}'
+      feedstock_file:
+        description: reference to the file in the feedstock library containing cost and emissions of this energy carrier
+        type: string
+        unit: 'NA'
+        values: 'NA'
       reference:
         description: references to documents and articles values in the table were taken from
         type: string
@@ -6428,7 +6534,7 @@ get_database_components_feedstocks_energy_carriers:
 get_database_archetypes_schedules_monthly_multiplier:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_SCHEDULE_COEFFICIENTS.csv.csv
+  file_path: inputs/database/ARCHETYPES/SCHEDULES/MONTHLY_MULTIPLIERS.csv
   file_type: csv
   schema:
     columns:
@@ -6525,10 +6631,109 @@ get_database_archetypes_schedules_monthly_multiplier:
   used_by:
   - archetypes_mapper
 
+get_building_property_schedules_monthly_multiplier:
+  created_by:
+  - database_helper
+  file_path: inputs/building-properties/schedules/MONTHLY_MULTIPLIERS.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Unique building ID. It must start with a letter.
+        type: string
+        unit: 'NA'
+        values: alphanumeric
+      Jan:
+        description: Monthly schedule coefficient for January
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Feb:
+        description: Monthly schedule coefficient for February
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Mar:
+        description: Monthly schedule coefficient for March
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Apr:
+        description: Monthly schedule coefficient for April
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      May:
+        description: Monthly schedule coefficient for May
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jun:
+        description: Monthly schedule coefficient for June
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Jul:
+        description: Monthly schedule coefficient for July
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Aug:
+        description: Monthly schedule coefficient for August
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Sep:
+        description: Monthly schedule coefficient for September
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Oct:
+        description: Monthly schedule coefficient for October
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Nov:
+        description: Monthly schedule coefficient for November
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+      Dec:
+        description: Monthly schedule coefficient for December
+        type: float
+        unit: '[-]'
+        values: '{0.0...1.0}'
+        min: 0.0
+        max: 1.0
+  used_by:
+  - archetypes_mapper
+
 get_database_archetypes_use_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/USE_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/USE/USE_TYPES.csv
   file_type: csv
   schema:
     columns:
@@ -6662,7 +6867,7 @@ get_database_archetypes_use_type:
 get_database_archetypes_construction_type:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/CONSTRUCTION_TYPE.csv
+  file_path: inputs/database/ARCHETYPES/CONSTRUCTION/CONSTRUCTION_TYPES.csv
   file_type: csv
   schema:
     columns:
@@ -6951,7 +7156,7 @@ get_database_archetypes_construction_type:
 get_database_archetypes_schedules:
   created_by:
   - database_helper
-  file_path: inputs/database/ARCHETYPES/SCHEDULES/SCHEDULES_LIBRARY/MULTI_RES.csv
+  file_path: inputs/database/ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/MULTI_RES.csv
   file_type: csv
   schema:
     columns:
@@ -7620,8 +7825,7 @@ get_database_construction_standards:
           choice:
             lookup:
               column: code
-              path: get_database_air_conditioning_systems
-              sheet: COOLING
+              path: get_database_assemblies_hvac_cooling
           description: Type of cooling HVAC assembly (relates to "code" in HVAC assemblies)
           type: string
           unit: 'NA'
@@ -12473,7 +12677,7 @@ get_demand_results_file:
         unit: '[kWh]'
         values: '{0.0...n}'
         min: 0.0
-      DATE:
+      date:
         description: Time stamp for each day of the year ascending in hour intervals.
         type: date
         unit: '[datetime]'

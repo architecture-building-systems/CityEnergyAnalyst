@@ -375,7 +375,7 @@ def calc_Cinv_HP(HP_Size, locator, technology_type):
     Capex_HP_USD = 0.0
 
     if HP_Size > 0.0:
-        HP_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEAT_PUMPS")
+        HP_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('HEAT_PUMPS'))
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
