@@ -268,13 +268,21 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
 
             # Check range
             if 'min' in col_specs:
-                out_of_range = col_data[col_data < col_specs['min']]
+                try:
+                    out_of_range = col_data[col_data < col_specs['min']]
+                except TypeError:
+                    print(col_name, col_specs, col_data)
+                    raise ValueError(f"The column '{col_name}' in file '{file_path}' has invalid values (expected number type). Please check the data type.")
                 for idx, value in out_of_range.items():
                     identifier = df.at[idx, id_column]
                     errors.append(f"The {col_name} value for row {identifier} is too low ({value}). It should be at least {col_specs['min']}.")
 
             if 'max' in col_specs:
-                out_of_range = col_data[col_data > col_specs['max']]
+                try:
+                    out_of_range = col_data[col_data > col_specs['max']]
+                except TypeError:
+                    print(col_name, col_specs, col_data)
+                    raise ValueError(f"The column '{col_name}' in file '{file_path}' has invalid values (expected number type). Please check the data type.")
                 for idx, value in out_of_range.items():
                     identifier = df.at[idx, id_column]
                     errors.append(f"The {col_name} value for row {identifier} is too high ({value}). It should be at most {col_specs['max']}.")
