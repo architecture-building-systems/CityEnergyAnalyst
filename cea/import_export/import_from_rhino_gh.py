@@ -9,7 +9,6 @@ import cea.config
 import shutil
 import time
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
-from cea.utilities.dbf import csv_xlsx_to_dbf
 from cea.utilities.shapefile import csv_xlsx_to_shapefile
 
 
@@ -71,9 +70,8 @@ def exec_import_csv_from_rhino(locator):
     if os.path.isfile(zone_csv_path):
         os.makedirs(building_geometry_path, exist_ok=True)
         csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path)
-
     else:
-        raise ValueError("""The minimum requirement - zone_from.csv is missing. Create the file using Rhino/Grasshopper.""")
+        raise ValueError("""The minimum requirement - zone_in.csv is missing. Create the file using Rhino/Grasshopper.""")
 
     if os.path.isfile(surroundings_csv_path):
         csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path)

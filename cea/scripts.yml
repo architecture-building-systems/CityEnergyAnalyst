@@ -25,7 +25,7 @@ Import & Export:
       
       https://www.cityenergyanalyst.com/s/to_cea_v400alpha20gh.zip
 
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
     input-files:
