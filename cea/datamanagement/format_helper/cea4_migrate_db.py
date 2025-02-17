@@ -371,9 +371,13 @@ def delete_files(path, verbose=False):
         shutil.rmtree(path)
         if verbose:
             print(f"Deleted directory: {path}")
-    except Exception as e:
+    except FileNotFoundError:
+        # Ignore if the directory doesn't exist
         pass
-
+    except PermissionError as e:
+        raise RuntimeError(f"Permission denied when deleting {path}: {e}")
+    except Exception as e:
+        print(f"Warning: Failed to delete {path}: {e}")
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
