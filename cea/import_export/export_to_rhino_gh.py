@@ -42,7 +42,7 @@ def exec_export_csv_for_rhino(config, locator):
     bool_include_district_cooling_network = config.to_rhino_gh.include_district_cooling_network
 
     # Create the folder to store all the exported files if it doesn't exist
-    output_path = locator.get_export_rhino_from_cea_folder()
+    output_path = locator.get_export_to_rhino_from_cea_folder()
     os.makedirs(output_path, exist_ok=True)
 
     # Remove all files in folder
@@ -57,31 +57,31 @@ def exec_export_csv_for_rhino(config, locator):
 
     # Export zone info including typology
     if bool_include_zone:
-        shapefile_to_csv_xlsx(locator.get_zone_geometry(), locator.get_export_rhino_from_cea_zone_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_zone_geometry(), locator.get_export_to_rhino_from_cea_zone_to_csv(), new_crs)
 
     if bool_include_site and os.path.isfile(locator.get_site_polygon()):
-        shapefile_to_csv_xlsx(locator.get_site_polygon(), locator.get_export_rhino_from_cea_site_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_site_polygon(), locator.get_export_to_rhino_from_cea_site_to_csv(), new_crs)
 
     if bool_include_surroundings and os.path.isfile(locator.get_surroundings_geometry()):
-        shapefile_to_csv_xlsx(locator.get_surroundings_geometry(), locator.get_export_rhino_from_cea_surroundings_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_surroundings_geometry(), locator.get_export_to_rhino_from_cea_surroundings_to_csv(), new_crs)
 
     if bool_include_streets and os.path.isfile(locator.get_street_network()):
-        shapefile_to_csv_xlsx(locator.get_street_network(), locator.get_export_rhino_from_cea_streets_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_street_network(), locator.get_export_to_rhino_from_cea_streets_to_csv(), new_crs)
 
     if bool_include_trees and os.path.isfile(locator.get_tree_geometry()):
-        shapefile_to_csv_xlsx(locator.get_tree_geometry(), locator.get_export_rhino_from_cea_trees_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_tree_geometry(), locator.get_export_to_rhino_from_cea_trees_to_csv(), new_crs)
 
     if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DH')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DH'), locator.get_export_rhino_from_cea_district_heating_network_edges_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DH'), locator.get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(), new_crs)
 
     if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DC')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DC'), locator.get_export_rhino_from_cea_district_cooling_network_edges_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DC'), locator.get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(), new_crs)
 
     if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DH')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DH'), locator.get_export_rhino_from_cea_district_heating_network_nodes_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DH'), locator.get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(), new_crs)
 
     if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DC')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DC'), locator.get_export_rhino_from_cea_district_cooling_network_nodes_to_csv(), new_crs)
+        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DC'), locator.get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(), new_crs)
 
 
 def main(config):
