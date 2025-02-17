@@ -138,7 +138,6 @@ dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
 
 # The paths are relatively hardcoded for now without using the inputlocator script.
 # This is because we want to iterate over all scenarios, which is currently not possible with the inputlocator script.
-import os
 
 def path_to_db_file_4(scenario, item, sheet_name=None):
     """

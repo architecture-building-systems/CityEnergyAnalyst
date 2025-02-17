@@ -7,7 +7,6 @@ is to avoid reading this data (which is constant during the lifetime of a script
 
 
 import pandas as pd
-import os
 
 from cea.datamanagement.format_helper.cea4_verify_db import get_csv_filenames
 

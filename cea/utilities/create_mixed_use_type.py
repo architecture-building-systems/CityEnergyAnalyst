@@ -2,11 +2,6 @@
 This script creates a new use-type by aggregating values from a list of different use-types
 """
 
-
-
-
-import os
-
 import pandas as pd
 
 import cea

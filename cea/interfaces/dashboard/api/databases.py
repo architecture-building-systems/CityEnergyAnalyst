@@ -11,7 +11,6 @@ from pydantic import BaseModel
 import cea.inputlocator
 from cea.databases import get_regions, get_database_tree, databases_folder_path
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
 router = APIRouter()
@@ -114,7 +113,6 @@ async def get_database_region_data(region: str):
 
 
 def convert_path_to_name(schema_dict):
-    import cea.inputlocator
     locator = cea.inputlocator.InputLocator('')
     for sheet_name, sheet_info in schema_dict.items():
         for variable_name, schema in sheet_info['columns'].items():
