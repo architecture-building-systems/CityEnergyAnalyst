@@ -55,19 +55,19 @@ def exec_export_csv_for_rhino(config, locator):
 
     # Export zone info including typology
     if bool_include_zone:
-        shapefile_to_csv_xlsx(locator.get_zone_geometry(), output_path, 'zone_to.csv', new_crs)
+        shapefile_to_csv_xlsx(locator.get_zone_geometry(), output_path, 'zone_out.csv', new_crs)
 
     if bool_include_site and os.path.isfile(locator.get_site_polygon()):
-        shapefile_to_csv_xlsx(locator.get_site_polygon(), output_path, 'site_to.csv', new_crs)
+        shapefile_to_csv_xlsx(locator.get_site_polygon(), output_path, 'site_out.csv', new_crs)
 
     if bool_include_surroundings and os.path.isfile(locator.get_surroundings_geometry()):
-        shapefile_to_csv_xlsx(locator.get_surroundings_geometry(), output_path, 'surroundings_to.csv', new_crs)
+        shapefile_to_csv_xlsx(locator.get_surroundings_geometry(), output_path, 'surroundings_out.csv', new_crs)
 
     if bool_include_streets and os.path.isfile(locator.get_street_network()):
-        shapefile_to_csv_xlsx(locator.get_street_network(), output_path, 'streets_to.csv', new_crs)
+        shapefile_to_csv_xlsx(locator.get_street_network(), output_path, 'streets_out.csv', new_crs)
 
     if bool_include_trees and os.path.isfile(locator.get_tree_geometry()):
-        shapefile_to_csv_xlsx(locator.get_tree_geometry(), output_path, 'trees_to.csv', new_crs)
+        shapefile_to_csv_xlsx(locator.get_tree_geometry(), output_path, 'trees_out.csv', new_crs)
 
 
 def main(config):

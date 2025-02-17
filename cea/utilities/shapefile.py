@@ -31,62 +31,70 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_crs_txt, polygon):
-    """
-    This function converts .csv file to ESRI shapefile using the crs of a reference ESRI shapefile.
+import pandas as pd
+import geopandas as gpd
+import shapely.geometry
+import json
+import os
 
-    :param csv_file: path to the input .csv file
-    :type csv_file: string
-    :param shapefile_path: directory to story the output shapefile
-    :type shapefile_path: string
-    :param shapefile_name: name of the output shapefile
-    :type shapefile_name: string
-    :param reference_shapefile: path to the reference shapefile
-    :type reference_shapefile: string
-    :param polygon: Set this to ``False`` if the csv file contains polyline data in the
-        ``geometry`` column instead of the default polygon data. (polylines are used for representing streets etc.)
-    :type polygon: bool
+
+def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_crs_txt, geometry_type="polygon"):
+    """
+    Converts a CSV or Excel file to an ESRI shapefile using the CRS from a reference CRS text file.
+
+    :param input_file: Path to the input .csv or .xlsx file.
+    :param shapefile_path: Directory to store the output shapefile.
+    :param shapefile_name: Name of the output shapefile.
+    :param reference_crs_txt: Path to the text file containing the reference CRS.
+    :param geometry_type: Type of geometry to handle. Options: "polygon", "polyline", "point".
     """
 
     if not reference_crs_txt:
-        raise ValueError("""crs information is compulsory when converting csv files to ESRI Shapefiles. """)
+        raise ValueError("CRS information is required when converting CSV files to ESRI Shapefiles.")
 
-    # generate crs and DataFrame from files
+    # Read input data
     if input_file.endswith('.csv'):
         df = pd.read_csv(input_file, sep=None, engine='python')
-
     elif input_file.endswith('.xlsx'):
         df = pd.read_excel(input_file)
-
     else:
-        print("The input file type is not valid. Only .csv or .xlsx file types are supported.")
+        raise ValueError("Invalid input file format. Only .csv or .xlsx files are supported.")
 
-    # generate GeoDataFrames from files and get its crs
+    # Read reference CRS
     with open(reference_crs_txt, 'r') as file:
         crs = file.read().strip()
 
-    # Check if the unit of the geometry's coordinates is in metres
+    # Check coordinate system (Degrees or Metres)
     geometry = df['geometry'].values.tolist()
-    x0 = ast.literal_eval(geometry[0])[0][0]
-    y0 = ast.literal_eval(geometry[0])[0][1]
-    geometry_in_metres = abs(x0) > 180 or abs(y0) > 90     # True if coordinates in metres
-    #todo: this method is not 100% accurate but at least for now works for most of the cases.
+    first_geom = json.loads(geometry[0])
 
-    # if the coordinates are in metres and the crs of the reference shapefile is not projected in metres,
-    # convert the coordinates to degrees
-    if 'epsg:4326' in str(crs) and geometry_in_metres:
-        raise ValueError("""The provided reference crs seems to be in decimal degrees while the unit of coordinates "
-              "in the .csv file is in metres. A projected crs is compulsory for converting coordinates in metres. """)
-
-    if polygon:
-        geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+    if isinstance(first_geom, list) and isinstance(first_geom[0], list):  # Checking if it is a nested list
+        x0, y0, z0 = first_geom[0]
     else:
-        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
-    df.drop('geometry', axis=1)
+        x0, y0, z0 = first_geom
 
+    geometry_in_metres = abs(x0) > 180 or abs(y0) > 90  # True if coordinates are in metres
+
+    if 'epsg:4326' in str(crs) and geometry_in_metres:
+        raise ValueError("The provided reference CRS appears to be in decimal degrees while the coordinates "
+                         "in the CSV file are in metres. A projected CRS is required for converting metre-based coordinates.")
+
+    # Convert geometry based on type
+    if geometry_type == "polygon":
+        geometry = [shapely.geometry.Polygon(json.loads(g)) for g in df.geometry]
+    elif geometry_type == "polyline":
+        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
+    elif geometry_type == "point":
+        geometry = [shapely.geometry.Point(json.loads(g)) for g in df.geometry]
+    else:
+        raise ValueError("Invalid geometry type. Use 'polygon', 'polyline', or 'point'.")
+
+    # Create GeoDataFrame and export
+    df.drop(columns=['geometry'], inplace=True, errors='ignore')
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(os.path.join(shapefile_path, '{filename}'.format(filename=shapefile_name)),
-                driver='ESRI Shapefile', encoding='ISO-8859-1')
+    gdf.to_file(os.path.join(shapefile_path, f"{shapefile_name}"), driver='ESRI Shapefile', encoding='ISO-8859-1')
+
+    print(f"Shapefile {shapefile_name} successfully created at {shapefile_path}.")
 
 
 def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name, new_crs=None):
@@ -172,8 +180,10 @@ def main(config):
         print("Running csv-xlsx-to-shapefile with csv-file = %s" % input_file)
         print("Running csv-xlsx-to-shapefile with polygon = %s" % polygon)
         print("Saving the generated shapefile to directory = %s" % output_path)
-
-        csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path, shapefile_name=output_file_name, reference_crs_txt=reference_crs_txt, polygon=polygon)
+        if polygon:
+            csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path, shapefile_name=output_file_name, reference_crs_txt=reference_crs_txt, geometry_type="polygon")
+        else:
+            csv_xlsx_to_shapefile(input_file=input_file, shapefile_path=output_path, shapefile_name=output_file_name, reference_crs_txt=reference_crs_txt, geometry_type="polyline")
 
         print("ESRI Shapefile has been generated.")
 

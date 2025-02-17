@@ -54,6 +54,7 @@ def exec_import_csv_from_rhino(locator):
     building_geometry_path = locator.get_building_geometry_folder()
     networks_path = locator.get_networks_folder()
     trees_path = locator.get_tree_geometry_folder()
+    thermal_network_path = locator.get_thermal_network_folder()
     os.makedirs(input_path, exist_ok=True)
 
     # Remove all files in folder
@@ -69,21 +70,37 @@ def exec_import_csv_from_rhino(locator):
     # Convert
     if os.path.isfile(zone_csv_path):
         os.makedirs(building_geometry_path, exist_ok=True)
-        csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path, polygon=True)
+        csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path)
 
     else:
         raise ValueError("""The minimum requirement - zone_from.csv is missing. Create the file using Rhino/Grasshopper.""")
 
     if os.path.isfile(surroundings_csv_path):
-        csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path, polygon=True)
+        csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path)
 
     if os.path.isfile(streets_csv_path):
         os.makedirs(networks_path, exist_ok=True)
-        csv_xlsx_to_shapefile(streets_csv_path, networks_path, 'streets.shp', reference_txt_path, polygon=False)
+        csv_xlsx_to_shapefile(streets_csv_path, networks_path, 'streets.shp', reference_txt_path,  geometry_type="polyline")
 
     if os.path.isfile(trees_csv_path):
         os.makedirs(trees_path, exist_ok=True)
-        csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path, polygon=True)
+        csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path)
+
+    if os.path.isfile(dh_edges_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
+        csv_xlsx_to_shapefile(dh_edges_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'edges.shp', reference_txt_path,  geometry_type="polyline")
+
+    if os.path.isfile(dc_edges_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
+        csv_xlsx_to_shapefile(dc_edges_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'edges.shp', reference_txt_path, geometry_type="polyline")
+
+    if os.path.isfile(dh_nodes_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
+        csv_xlsx_to_shapefile(dh_nodes_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'nodes.shp', reference_txt_path, geometry_type="point")
+
+    if os.path.isfile(dc_nodes_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
+        csv_xlsx_to_shapefile(dc_nodes_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'nodes.shp', reference_txt_path, geometry_type="point")
 
 
 def copy_data_from_reference_to_new_scenarios(config, locator):

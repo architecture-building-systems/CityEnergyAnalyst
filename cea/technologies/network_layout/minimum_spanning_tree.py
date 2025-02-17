@@ -85,7 +85,7 @@ def main(config):
     input_network_shp = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
-    output_network_folder = locator.get_input_network_folder(type_network,'')
+    output_network_folder = locator.get_output_thermal_network_type_folder(type_network, '')
     calc_minimum_spanning_tree(input_network_shp, output_network_folder, building_nodes, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default)
 
