@@ -224,9 +224,46 @@ class InputLocator(object):
         """scenario/export/rhino/from_cea"""
         return os.path.join(self.get_export_folder(), 'rhino', 'from_cea')
 
+    def get_export_rhino_from_cea_zone_to_csv(self):
+        """scenario/export/rhino/from_cea/zone_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'zone_out.csv')
+
+    def get_export_rhino_from_cea_site_to_csv(self):
+        """scenario/export/rhino/from_cea/site_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'site_out.csv')
+
+    def get_export_rhino_from_cea_surroundings_to_csv(self):
+        """scenario/export/rhino/from_cea/surroundings_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'surroundings_out.csv')
+
+    def get_export_rhino_from_cea_streets_to_csv(self):
+        """scenario/export/rhino/from_cea/streets_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'streets_out.csv')
+
+    def get_export_rhino_from_cea_trees_to_csv(self):
+        """scenario/export/rhino/from_cea/trees_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'trees_out.csv')
+
+    def get_export_rhino_from_cea_district_heating_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/district_heating_network_edges_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'district_heating_network_edges_out.csv')
+
+    def get_export_rhino_from_cea_district_cooling_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/district_cooling_network_edges_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'district_cooling_network_edges_out.csv')
+
+    def get_export_rhino_from_cea_district_heating_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/district_heating_network_nodes_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'district_heating_network_nodes_out.csv')
+
+    def get_export_rhino_from_cea_district_cooling_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/district_cooling_network_nodes_to.csv"""
+        return os.path.join(self.get_export_rhino_from_cea_folder(), 'district_cooling_network_nodes_out.csv')
+
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
+
 
     def get_electrical_and_thermal_network_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""

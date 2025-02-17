@@ -97,65 +97,54 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
     print(f"Shapefile {shapefile_name} successfully created at {shapefile_path}.")
 
 
-def shapefile_to_csv_xlsx(shapefile, output_file_path, output_file_name, new_crs=None):
+def serialize_geometry(geom):
+    if geom.geom_type == 'Polygon':
+        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.exterior.coords for x, y, *z in [coord]]
+    elif geom.geom_type == 'LineString':
+        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.coords for x, y, *z in [coord]]
+    elif geom.geom_type == 'Point':
+        if geom.has_z:
+            return [geom.x, geom.y, geom.z]
+        else:
+            return [geom.x, geom.y, 0.0]
+    else:
+        return None
+
+def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
     """
     Converts an ESRI shapefile to a .csv or .xlsx file, including a 'geometry' column with serialized coordinates.
     Writes CRS information to a .txt file.
 
     :param shapefile: Path to the input shapefile
-    :type shapefile: str
-    :param output_file_path: Directory to store the output .csv or .xlsx file
-    :type output_file_path: str
-    :param output_file_name: Name of the output .csv or .xlsx file
-    :type output_file_name: str
+    :param output_path: Path to store the output .csv or .xlsx file
+    :param new_crs: Coordinate reference system to project the geometries (optional)
     """
     try:
-        # Read shapefile into a GeoDataFrame
         gdf = gpd.read_file(shapefile)
-
-        new_crs = new_crs
         if new_crs is None:
-            # Process geometries and convert to a projected CRS if possible
-            lat, lon = get_lat_lon_projected_shapefile(gdf)  # Ensure this function is implemented
-            new_crs = get_projected_coordinate_system(lat=lat, lon=lon)
+            new_crs = gdf.crs
         gdf = gdf.to_crs(new_crs)
 
-        # Convert GeoDataFrame to DataFrame
         df = pd.DataFrame(gdf.drop(columns='geometry'))
-        df['geometry'] = gdf.geometry.apply(serialize_geometry)  # Ensure serialize_geometry is implemented
+        df['geometry'] = gdf.geometry.apply(serialize_geometry)
 
-        # Write DataFrame to CSV or Excel
-        output_path = os.path.join(output_file_path, output_file_name)
-        if output_file_name.endswith('.csv'):
+        if output_path.endswith('.csv'):
             df.to_csv(output_path, index=False)
-        elif output_file_name.endswith('.xlsx'):
+        elif output_path.endswith('.xlsx'):
             df.to_excel(output_path, index=False)
         else:
             raise ValueError("Output file name must end with '.csv' or '.xlsx'.")
 
-        # Write CRS to a text file
-        crs_file_name = os.path.splitext(output_file_name)[0] + "_crs.txt"
-        crs_file_path = os.path.join(output_file_path, crs_file_name)
+        crs_file_path = os.path.splitext(output_path)[0] + "_crs.txt"
         with open(crs_file_path, 'w') as file:
-            file.write(new_crs)
+            file.write(str(new_crs))
+
+        print(f"File saved at {output_path}")
+        print(f"CRS saved at {crs_file_path}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
-def serialize_geometry(geometry):
-    """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
-
-    :param geometry: a polygon or polyline to extract the points from and represent as a json object
-    :type geometry: shapely.geometry.polygon.Polygon
-    """
-    if isinstance(geometry, shapely.geometry.polygon.Polygon):
-        points = list(geometry.exterior.coords)
-    elif isinstance(geometry, shapely.geometry.LineString):
-        points = list(geometry.coords)
-    else:
-        raise ValueError("Expected either a Polygon or a LineString, got %s" % type(geometry))
-    return json.dumps(points)
 
 
 def main(config):
