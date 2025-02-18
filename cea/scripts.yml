@@ -28,7 +28,6 @@ Import & Export:
     interfaces: [cli]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
-    input-files:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
