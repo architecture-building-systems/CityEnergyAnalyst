@@ -471,12 +471,12 @@ def cea4_verify(scenario, verbose=False):
     for item in CSV_BUILDING_PROPERTIES_3:
         if item not in list_missing_files_csv_building_properties_3:
             list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item)
-            dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties
+            dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties + list_issues_against_csv_building_properties
             if verbose:
                 if list_missing_columns_csv_building_properties:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_building_properties))))
                 if list_issues_against_csv_building_properties:
-                    print('! Check values in {item}.csv: ')
+                    print('! Check values in {item}.csv: '.format(item=item))
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_building_properties))
         else:
             dict_list_missing_columns_csv_building_properties[item] = []
