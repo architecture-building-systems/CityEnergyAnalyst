@@ -220,13 +220,50 @@ class InputLocator(object):
                 self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
-    def get_export_rhino_from_cea_folder(self):
+    def get_export_to_rhino_from_cea_folder(self):
         """scenario/export/rhino/from_cea"""
         return os.path.join(self.get_export_folder(), 'rhino', 'from_cea')
+
+    def get_export_to_rhino_from_cea_zone_to_csv(self):
+        """scenario/export/rhino/from_cea/zone_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'zone_out.csv')
+
+    def get_export_to_rhino_from_cea_site_to_csv(self):
+        """scenario/export/rhino/from_cea/site_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'site_out.csv')
+
+    def get_export_to_rhino_from_cea_surroundings_to_csv(self):
+        """scenario/export/rhino/from_cea/surroundings_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'surroundings_out.csv')
+
+    def get_export_to_rhino_from_cea_streets_to_csv(self):
+        """scenario/export/rhino/from_cea/streets_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'streets_out.csv')
+
+    def get_export_to_rhino_from_cea_trees_to_csv(self):
+        """scenario/export/rhino/from_cea/trees_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'trees_out.csv')
+
+    def get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/dh_edges_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_out.csv')
+
+    def get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/dc_edges_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_edges_out.csv')
+
+    def get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/dh_nodes_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_nodes_out.csv')
+
+    def get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/dc_nodes_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_nodes_out.csv')
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
+
 
     def get_electrical_and_thermal_network_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
@@ -880,7 +917,7 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
-    def get_input_network_folder(self, network_type, network_name=""):
+    def get_output_thermal_network_type_folder(self, network_type, network_name=""):
         if network_name == '':  # in case there is no specific network name (default case)
             return self._ensure_folder(self.get_thermal_network_folder(), network_type)
         else:
@@ -888,13 +925,13 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/edges.shp"""
-        shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
+        shapefile_path = os.path.join(self.get_output_thermal_network_type_folder(network_type, network_name), 'edges.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/nodes.shp"""
-        shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
+        shapefile_path = os.path.join(self.get_output_thermal_network_type_folder(network_type, network_name), 'nodes.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 

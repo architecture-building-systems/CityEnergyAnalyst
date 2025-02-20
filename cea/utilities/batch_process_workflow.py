@@ -70,9 +70,9 @@ def exec_cea_commands(config, cea_scenario):
     if export_to_rhino_gh:
         subprocess.run(['cea', 'export-to-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
-    if import_from_rhino_gh:
-        subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
-                       capture_output=True)
+    # if import_from_rhino_gh:
+    #     subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+    #                    capture_output=True)
 
     if database_helper:
         subprocess.run(['cea', 'data-helper', '--scenario', cea_scenario], env=my_env, check=True,
