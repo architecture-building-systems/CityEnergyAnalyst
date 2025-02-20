@@ -187,7 +187,7 @@ def get_results_path(locator, cea_feature, list_buildings):
         list_appendix.append(cea_feature)
 
     if cea_feature == 'pv':
-        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv(), 'PHOTOVOLTAIC_PANELS')
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
             pv_paths = []
@@ -2115,7 +2115,7 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire process of exporting CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire process of exporting and summarising the CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
 
 
 if __name__ == '__main__':
