@@ -57,14 +57,14 @@ class CSVSelector:
 
         return None  # No match found
 
-# ✅ **Example Usage**
-user_input = {
-    "key1": "value_a",
-    "key2": "value_c",
-    "key3": "value_a",
-}
-
-selector = CSVSelector(user_input)
-csv_path = selector.get_csv_path()
-
-print(csv_path)  # Expected: "data/results/file1.csv" (if it exists)
+# # ✅ **Example Usage**
+# user_input = {
+#     "key1": "value_a",
+#     "key2": "value_c",
+#     "key3": "value_a",
+# }
+#
+# selector = CSVSelector(user_input)
+# csv_path = selector.get_csv_path()
+#
+# print(csv_path)  # Expected: "data/results/file1.csv" (if it exists)
