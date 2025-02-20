@@ -9,7 +9,6 @@ import cea.config
 import shutil
 import time
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
-from cea.utilities.dbf import csv_xlsx_to_dbf
 from cea.utilities.shapefile import csv_xlsx_to_shapefile
 
 
@@ -40,18 +39,21 @@ def exec_import_csv_from_rhino(locator):
     # Directory where the files from Rhino/Grasshopper are stored
     input_path = os.path.join(export_folder_path, 'rhino', 'to_cea')
     reference_txt_path = os.path.join(input_path, 'reference_crs.txt')
-    zone_csv_path = os.path.join(input_path, 'zone_from.csv')
-    typology_csv_path = os.path.join(input_path, 'typology_from.csv')
-    surroundings_csv_path = os.path.join(input_path, 'surroundings_from.csv')
-    streets_csv_path = os.path.join(input_path, 'streets_from.csv')
-    trees_csv_path = os.path.join(input_path, 'trees_from.csv')
+    zone_csv_path = os.path.join(input_path, 'zone_in.csv')
+    surroundings_csv_path = os.path.join(input_path, 'surroundings_in.csv')
+    streets_csv_path = os.path.join(input_path, 'streets_in.csv')
+    trees_csv_path = os.path.join(input_path, 'trees_in.csv')
+    dh_edges_csv_path = os.path.join(input_path, 'dh_edges_in.csv')
+    dh_nodes_csv_path = os.path.join(input_path, 'dh_nodes_in.csv')
+    dc_edges_csv_path = os.path.join(input_path, 'dc_edges_in.csv')
+    dc_nodes_csv_path = os.path.join(input_path, 'dc_nodes_in.csv')
 
     # Create the CEA Directory for the new scenario
     input_path = locator.get_input_folder()
     building_geometry_path = locator.get_building_geometry_folder()
-    building_properties_path = locator.get_building_properties_folder()
     networks_path = locator.get_networks_folder()
     trees_path = locator.get_tree_geometry_folder()
+    thermal_network_path = locator.get_thermal_network_folder()
     os.makedirs(input_path, exist_ok=True)
 
     # Remove all files in folder
@@ -67,25 +69,36 @@ def exec_import_csv_from_rhino(locator):
     # Convert
     if os.path.isfile(zone_csv_path):
         os.makedirs(building_geometry_path, exist_ok=True)
-        csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path, polygon=True)
-
+        csv_xlsx_to_shapefile(zone_csv_path, building_geometry_path, 'zone.shp', reference_txt_path)
     else:
-        raise ValueError("""The minimum requirement - zone_from.csv is missing. Create the file using Rhino/Grasshopper.""")
-
-    if os.path.isfile(typology_csv_path):
-        os.makedirs(building_properties_path, exist_ok=True)
-        csv_xlsx_to_dbf(typology_csv_path, building_properties_path, 'typology.dbf')
+        raise ValueError("""The minimum requirement - zone_in.csv is missing. Create the file using Rhino/Grasshopper. CEA attempted to look for the file under this path:{path}.""".format(path=zone_csv_path))
 
     if os.path.isfile(surroundings_csv_path):
-        csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path, polygon=True)
+        csv_xlsx_to_shapefile(surroundings_csv_path, building_geometry_path, 'surroundings.shp', reference_txt_path)
 
     if os.path.isfile(streets_csv_path):
         os.makedirs(networks_path, exist_ok=True)
-        csv_xlsx_to_shapefile(streets_csv_path, networks_path, 'streets.shp', reference_txt_path, polygon=False)
+        csv_xlsx_to_shapefile(streets_csv_path, networks_path, 'streets.shp', reference_txt_path,  geometry_type="polyline")
 
     if os.path.isfile(trees_csv_path):
         os.makedirs(trees_path, exist_ok=True)
-        csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path, polygon=True)
+        csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path)
+
+    if os.path.isfile(dh_edges_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
+        csv_xlsx_to_shapefile(dh_edges_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'edges.shp', reference_txt_path,  geometry_type="polyline")
+
+    if os.path.isfile(dc_edges_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
+        csv_xlsx_to_shapefile(dc_edges_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'edges.shp', reference_txt_path, geometry_type="polyline")
+
+    if os.path.isfile(dh_nodes_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
+        csv_xlsx_to_shapefile(dh_nodes_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'nodes.shp', reference_txt_path, geometry_type="point")
+
+    if os.path.isfile(dc_nodes_csv_path):
+        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
+        csv_xlsx_to_shapefile(dc_nodes_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'nodes.shp', reference_txt_path, geometry_type="point")
 
 
 def copy_data_from_reference_to_new_scenarios(config, locator):
@@ -99,12 +112,12 @@ def copy_data_from_reference_to_new_scenarios(config, locator):
     bool_copy_terrain = config.from_rhino_gh.copy_terrain
 
     # Create the CEA Directory for the new scenario
-    reference_database_path = os.path.join(reference_scenario_path, 'inputs', 'technology')
+    reference_database_path = os.path.join(reference_scenario_path, 'inputs', 'database')
     reference_terrain_path = os.path.join(reference_scenario_path, 'inputs', 'topography')
     reference_weather_path = os.path.join(reference_scenario_path, 'inputs', 'weather')
 
     # Acquire the paths to the data to copy in the current scenario
-    current_database_path = locator.get_databases_folder()
+    current_database_path = locator.get_db4_folder()
     current_terrain_path = locator.get_terrain_folder()
     current_weather_path = locator.get_weather_folder()
 
