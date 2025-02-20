@@ -37,7 +37,6 @@ def exec_cea_commands(config, cea_scenario):
     """
     # acquire the user-defined CEA commands
     export_to_rhino_gh = config.batch_process_workflow.export_to_rhino_gh
-    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
 
     database_helper = config.batch_process_workflow.database_helper
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
@@ -70,9 +69,6 @@ def exec_cea_commands(config, cea_scenario):
     if export_to_rhino_gh:
         subprocess.run(['cea', 'export-to-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
-    # if import_from_rhino_gh:
-    #     subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
-    #                    capture_output=True)
 
     if database_helper:
         subprocess.run(['cea', 'data-helper', '--scenario', cea_scenario], env=my_env, check=True,
@@ -95,15 +91,6 @@ def exec_cea_commands(config, cea_scenario):
 
     if radiation:
         subprocess.run(['cea', 'radiation', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
-    if demand_forecasting:
-        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
-                       capture_output=True)
-        subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
-
-    if emissions:
-        subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
-    if system_costs:
-        subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if solar_pv:
         subprocess.run(['cea', 'photovoltaic', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
@@ -122,13 +109,14 @@ def exec_cea_commands(config, cea_scenario):
     if water_body:
         subprocess.run(['cea', 'water-body-potential', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
-    if sewage_heat:
-        subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if demand_forecasting:
         subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
         subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
+    if sewage_heat:
+        subprocess.run(['cea', 'sewage-potential', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if thermal_network_layout:
         subprocess.run(['cea', 'network-layout', '--scenario', cea_scenario], env=my_env, check=True,
@@ -137,17 +125,17 @@ def exec_cea_commands(config, cea_scenario):
         subprocess.run(['cea', 'thermal-network', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
 
-    if optimisation:
-        subprocess.run(['cea', 'decentralized', '--scenario', cea_scenario], env=my_env, check=True,
-                       capture_output=True)
-        subprocess.run(['cea', 'optimization-new', '--scenario', cea_scenario], env=my_env, check=True,
-                       capture_output=True)
-
     if emissions:
         subprocess.run(['cea', 'emissions', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
     if system_costs:
         subprocess.run(['cea', 'system-costs', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
+
+    if optimisation:
+        subprocess.run(['cea', 'decentralized', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+        subprocess.run(['cea', 'optimization-new', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
 
     if results_summary_and_analytics:
         subprocess.run(['cea', 'export-results-csv', '--scenario', cea_scenario], env=my_env, check=True,
