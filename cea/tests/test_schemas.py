@@ -36,8 +36,11 @@ class TestSchemas(unittest.TestCase):
         config = cea.config.Configuration()
         locator = cea.inputlocator.InputLocator(config.scenario)
 
+        missing_schema = set()
         for method in extract_locator_methods(locator):
-            self.assertIn(method, schemas.keys())
+            if method not in schemas.keys():
+                missing_schema.add(method)
+        self.assertEqual(len(missing_schema), 0, f"Missing schemas: {missing_schema}")
 
     def test_all_locator_methods_have_a_file_path(self):
         schemas = cea.schemas.schemas(plugins=[])
