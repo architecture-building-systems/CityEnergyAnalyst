@@ -26,7 +26,7 @@ class TestInputLocator(unittest.TestCase):
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % archetypes_properties)
 
     def test_get_supply_systems_cost(self):
-        supply_systems_cost = self.locator.get_db4_components_conversion_conversion_technology_csv()
+        supply_systems_cost = self.locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS")
         self.assertTrue(os.path.exists(supply_systems_cost))
         self.assertTrue(os.path.realpath(supply_systems_cost).startswith(
             os.path.realpath(self.locator.scenario)), msg='Path not in scenario: %s' % supply_systems_cost)
