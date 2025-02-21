@@ -76,7 +76,7 @@ class LoadDurationCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlotBase):
             y = data_frame_new[field].values
             load_utilization.append(evaluate_utilization(x, y))
             loss_names.append(NAMING[field] + ' (' + field_3 + ')')
-        column_names = ['Name', 'Peak Load [kW]', 'Yearly Demand [MWh]', 'Utilization [-]']
+        column_names = ['name', 'Peak Load [kW]', 'Yearly Demand [MWh]', 'Utilization [-]']
         column_values = [loss_names, loss_peak, loss_total, load_utilization]
         table_df = pd.DataFrame({cn: cv for cn, cv in zip(column_names, column_values)}, columns=column_names)
         return table_df

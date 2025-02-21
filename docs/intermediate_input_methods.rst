@@ -716,12 +716,12 @@ The following file is used by these scripts: ``optimization``, ``thermal_network
 .. csv-table:: Worksheet: ``THERMAL_GRID``
     :header: "Variable", "Description"
 
-    ``Code``, pipe ID from the manufacturer
+    ``code``, pipe ID from the manufacturer
     ``D_ext_m``, external pipe diameter tolerance for the nominal diameter (DN)
     ``D_ins_m``, maximum pipe diameter tolerance for the nominal diameter (DN)
     ``D_int_m``, internal pipe diameter tolerance for the nominal diameter (DN)
     ``Inv_USD2015perm``, Typical cost of investment for a given pipe diameter.
-    ``Pipe_DN``, Nominal pipe diameter
+    ``pipe_DN``, Nominal pipe diameter
     ``Vdot_max_m3s``, maximum volumetric flow rate for the nominal diameter (DN)
     ``Vdot_min_m3s``, minimum volumetric flow rate for the nominal diameter (DN)
     

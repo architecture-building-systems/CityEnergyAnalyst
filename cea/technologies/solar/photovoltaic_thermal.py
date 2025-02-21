@@ -71,18 +71,18 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print('calculating solar properties done for building %s' % building_name)
+    # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = get_properties_PV_db(locator.get_database_conversion_systems(), config)
-    panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
-    print('gathering properties of PVT collector panel for building %s' % building_name)
+    panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
+    # print('gathering properties of PVT collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
 
-    print('filtering low potential sensor points done for building %s' % building_name)
+    # print('filtering low potential sensor points done for building %s' % building_name)
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -98,19 +98,19 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
                                                                           max_annual_radiation, panel_properties_PV,
                                                                           max_roof_coverage)
 
-            print('calculating optimal tile angle and separation done for building %s' % building_name)
+            # print('calculating optimal tile angle and separation done for building %s' % building_name)
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_PV,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
-            print('calculating separation for custom tilt angle done')
+            # print('calculating separation for custom tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print('generating groups of sensor points done for building %s' % building_name)
+        # print('generating groups of sensor points done for building %s' % building_name)
 
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
@@ -354,7 +354,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     mB_min_r = panel_properties_SC['mB_min_r']  # minimum flow rate per aperture area
     C_eff_Jperm2K = panel_properties_SC['C_eff']  # thermal capacitance of module [J/m2K]
     IAM_d = panel_properties_SC['IAM_d']  # incident angle modifier for diffuse radiation [-]
-    dP1 = panel_properties_SC['dP1']  # pressure drop [Pa/m2] at zero flow rate
+    # dP1 = panel_properties_SC['dP1']  # pressure drop [Pa/m2] at zero flow rate
     dP2 = panel_properties_SC['dP2']  # pressure drop [Pa/m2] at nominal flow rate (mB0)
     dP3 = panel_properties_SC['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties_SC['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
@@ -362,7 +362,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     aperature_area_ratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
     area_pv_module = panel_properties_PV['module_length_m'] ** 2
     Nseg = panel_properties_SC['Nseg']
-    T_max_C = panel_properties_SC['t_max']
+    # T_max_C = panel_properties_SC['t_max']
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
     misc_losses = panel_properties_PV['misc_losses']
@@ -402,9 +402,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     tilt_rad = radians(tilt_angle_deg)
     q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
                                             tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
-    counter = 0
-    Flag = False
-    Flag2 = False
+    # counter = 0
+    # Flag = False
+    # Flag2 = False
     for flow in range(6):
         Mo_seg = 1  # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
@@ -505,7 +505,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                       pipe_lengths['l_ext_mperm2'],
                                                                       aperture_area_m2, temperature_mean[flow],
                                                                       Tamb_vector_C, msc_max_kgpers)
-            supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
+            # supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
             auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
@@ -650,7 +650,7 @@ def calc_Cinv_PVT(PVT_peak_W, locator, technology=0):
     FIXME: handle multiple technologies when cost calculations are done
     """
     if PVT_peak_W > 0.0:
-        PVT_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PHOTOVOLTAIC_THERMAL_PANELS")
+        PVT_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_THERMAL_PANELS'))
         technology_code = list(set(PVT_cost_data['code']))
         PVT_cost_data = PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

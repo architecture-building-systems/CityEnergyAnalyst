@@ -81,30 +81,30 @@ class SolarTechnologyPotentialsPlotBase(PlotBase):
                                     'PVT_roofs_top_Q_kWh']
 
     def normalize_data(self, data_processed, buildings, analysis_fields, analysis_fields_area):
+        if self.normalization == "surface area":
+            for energy, area in zip(analysis_fields, analysis_fields_area):
+                if data_processed[area][0] > 0.0:
+                    data_processed[energy] = data_processed[energy] / data_processed[area]
+            return data_processed
+
+        data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+
         if self.normalization == "gross floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "net floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "air conditioned floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "building occupancy":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
             normalizatioon_factor = data.loc[buildings]['people0'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
-        elif self.normalization == "surface area":
-            for energy, area in zip(analysis_fields, analysis_fields_area):
-                if data_processed[area][0] > 0.0:
-                    data_processed[energy] = data_processed[energy] / data_processed[area]
         return data_processed
 
     def add_pv_fields(self, df1, df2):

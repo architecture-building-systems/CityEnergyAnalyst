@@ -1,7 +1,13 @@
 name: Build CEA Setup
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      gui-branch:
+        description: 'Branch of GUI repo to build with'
+        required: true
+        type: string
+        default: 'master'
 
 jobs:
   build_win_setup:
@@ -25,7 +31,7 @@ jobs:
         run: |
           python -m pip install build
           python -m build
-          mv dist/cityenergyanalyst-$CEA_VERSION.tar.gz setup/cityenergyanalyst.tar.gz
+          mv dist/cityenergyanalyst-*.tar.gz setup/cityenergyanalyst.tar.gz
 
       - name: Cache CEA env
         id: cache-env
@@ -59,21 +65,24 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: ${{ inputs.gui-branch }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Enable Corepack
+        shell: bash
         run: corepack enable
 
       - name: Package CEA GUI
-        shell: bash -el {0}
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/gui
-          yarn
+          yarn install
           yarn version $CEA_VERSION
           yarn electron:release
           mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
@@ -120,6 +129,8 @@ jobs:
         with:
           path: gui
           repository: architecture-building-systems/CityEnergyAnalyst-GUI
+          ref: ${{ inputs.gui-branch }}
+          fetch-depth: 0
 
       - name: Fetch micromamba
         run: |
@@ -137,7 +148,7 @@ jobs:
   
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
   
       - name: Enable Corepack
         run: corepack enable

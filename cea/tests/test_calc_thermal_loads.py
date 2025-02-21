@@ -8,7 +8,7 @@ import unittest
 
 import pandas as pd
 
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.utilities.date import get_date_range_hours_from_year
@@ -39,10 +39,10 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.data_initializer import main as data_initializer
-        cls.config.data_initializer.databases_path = "CH"
-        cls.config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-        data_initializer(cls.config)
+        from cea.datamanagement.database_helper import main as database_helper
+        cls.config.database_helper.databases_path = "CH"
+        cls.config.database_helper.databases = ["archetypes", "assemblies", "components"]
+        database_helper(cls.config)
 
         # run properties script
         import cea.datamanagement.archetypes_mapper
@@ -61,8 +61,8 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B1011']
         self.config.general.multiprocessing = False
-        self.config.schedule_maker.schedule_model = "deterministic"
-        schedule_maker_main(self.locator, self.config, building='B1011')
+        self.config.occupancy_helper.occupancy_model = "deterministic"
+        occupancy_helper_main(self.locator, self.config, building='B1011')
 
         result = calc_thermal_loads('B1011', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
@@ -118,7 +118,7 @@ def run_for_single_building(building, bpr, weather_data, date, locator,
                             massflows_output, temperatures_output, config, debug):
 
     config.general.multiprocessing = False
-    schedule_maker_main(locator, config, building=building)
+    occupancy_helper_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
                        massflows_output, temperatures_output, config, debug)

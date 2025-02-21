@@ -26,7 +26,7 @@ __status__ = "Production"
 def calc_bounding_box(locator):
     # connect both files and avoid repetition
     data_zone, data_dis = get_zone_and_surr_in_projected_crs(locator)
-    data_dis = data_dis.loc[~data_dis["Name"].isin(data_zone["Name"])]
+    data_dis = data_dis.loc[~data_dis["name"].isin(data_zone["name"])]
     data = pd.concat([
         data_zone.to_crs(get_geographic_coordinate_system()),
         data_dis.to_crs(get_geographic_coordinate_system())
@@ -42,39 +42,31 @@ def geometry_extractor_osm(locator, config):
     """
 
     # local variables:
-    list_of_bounding_box = config.streets_helper.bbox
-    type_of_streets = config.streets_helper.streets
+    bool_include_private_streets = config.streets_helper.include_private_streets
     shapefile_out_path = locator.get_street_network()
-    extra_border = 0.0010  # adding extra 150m (in degrees equivalent) to avoid errors of no data
 
-    # get the bounding box coordinates
-    if not list_of_bounding_box:
-        # the list is empty, we then revert to get the bounding box for the district
-        assert os.path.exists(
-            locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
-        print("generating streets from Surroundings Geometry")
-        bounding_box_surroundings_file = calc_bounding_box(locator)
-        lon_min = bounding_box_surroundings_file[0] - extra_border
-        lat_min = bounding_box_surroundings_file[1] - extra_border
-        lon_max = bounding_box_surroundings_file[2] + extra_border
-        lat_max = bounding_box_surroundings_file[3] + extra_border
-    elif len(list_of_bounding_box) == 4:
-        print("generating streets from your bounding box")
-        # the list is not empty, the user has indicated a specific set of coordinates
-        lon_min = list_of_bounding_box[0] - extra_border
-        lat_min = list_of_bounding_box[1] - extra_border
-        lon_max = list_of_bounding_box[2] + extra_border
-        lat_max = list_of_bounding_box[3] + extra_border
+    # Determine to include private streets or not
+    if bool_include_private_streets:
+        type_streets = 'all'
     else:
-        raise ValueError("Please indicate the coordinates of the area where to extract the streets from in the next "
-                         "format: lon_min, lat_min, lon_max, lat_max")
+        type_streets = 'all_public'
 
-    # get and clean the streets
+    # Get the bounding box coordinates
+    assert os.path.exists(
+        locator.get_surroundings_geometry()), 'Get surroundings geometry file first or the coordinates of the area where to extract the streets from in the next format: lon_min, lat_min, lon_max, lat_max: %s'
+    print("generating streets from Surroundings Geometry")
+    bounding_box_surroundings_file = calc_bounding_box(locator)
+    lon_min = bounding_box_surroundings_file[0]
+    lat_min = bounding_box_surroundings_file[1]
+    lon_max = bounding_box_surroundings_file[2]
+    lat_max = bounding_box_surroundings_file[3]
+
+    # Get and clean the streets
     G = osmnx.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
-                              network_type=type_of_streets)
+                              network_type=type_streets)
     data = osmnx.utils_graph.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
 
-    # project coordinate system
+    # Project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))
     data[['geometry']].to_file(shapefile_out_path)
 

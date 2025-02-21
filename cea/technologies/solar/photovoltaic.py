@@ -87,17 +87,14 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
-    print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = get_properties_PV_db(locator.get_database_conversion_systems(), config)
+    panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
-
-    print('filtering low potential sensor points done')
 
     # set the maximum roof coverage
     max_roof_coverage = config.solar.max_roof_coverage
@@ -109,14 +106,12 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
                                                                           solar_properties,
                                                                           max_annual_radiation, panel_properties_PV,
                                                                           max_roof_coverage)
-            print('calculating optimal tilt angle and separation done')
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
                                                                              max_annual_radiation, panel_properties_PV,
                                                                              config.solar.panel_tilt_angle,
                                                                              max_roof_coverage)
-            print('calculating separation for custom tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
@@ -126,7 +121,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
         final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
                                    panel_properties_PV)
 
-        final.to_csv(locator.PV_results(building=building_name), index=True,
+        final.to_csv(locator.PV_results(building=building_name, panel_type=config.solar.type_PVpanel), index=True,
                      float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
@@ -141,7 +136,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
              'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
-        final.to_csv(locator.PV_results(building=building_name), index=False, float_format='%.2f', na_rep='nan')
+        final.to_csv(locator.PV_results(building=building_name, panel_type=config.solar.type_PVpanel), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
@@ -199,17 +194,11 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         tot_module_area_m2 = prop_observers.loc[group, 'area_installed_module_m2']
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
-        # degree to radians
-        tilt_rad = radians(tilt_angle_deg)  # tilt angle
-        # teta_z_deg = radians(teta_z_deg)  # surface azimuth
-        teta_z_rad = radians(teta_z_deg)  # surface azimuth
+        tilt_rad = radians(tilt_angle_deg) # degree to radians
 
         # calculate effective incident angles necessary
         teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
         teta_rad = [radians(x) for x in teta_deg]
-        # teta_rad = pd.Series(index=radiation_Wperm2.index,
-        #                      data=np.vectorize(calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_rad),
-        #                      name='aoi')
 
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
@@ -363,7 +352,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     n = constants.n  # refractive index of glass
     Pg = constants.Pg  # ground reflectance
     K = constants.K  # glazing extinction coefficient
-    NOCT = panel_properties_PV['PV_noct']
+    # NOCT = panel_properties_PV['PV_noct']
     a0 = panel_properties_PV['PV_a0']
     a1 = panel_properties_PV['PV_a1']
     a2 = panel_properties_PV['PV_a2']
@@ -663,7 +652,7 @@ def get_properties_PV_db(database_path, config):
     :return: dict with Properties of the panel taken form the database
     """
     type_PVpanel = config.solar.type_PVpanel
-    data = pd.read_excel(database_path, sheet_name="PHOTOVOLTAIC_PANELS")
+    data = pd.read_csv(database_path)
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -677,7 +666,7 @@ def calc_Cinv_pv(total_module_area_m2, locator, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    PV_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="PHOTOVOLTAIC_PANELS")
+    PV_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
@@ -734,12 +723,14 @@ def calc_Crem_pv(E_nom):
     return KEV_obtained_in_RpPerkWh
 
 
-def aggregate_results(locator, building_names):
+def aggregate_results(config, locator, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
     aggregated_annual_results = pd.DataFrame()
+    panel_type = config.solar.type_PVpanel
+
 
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.PV_results(building)).set_index('Date')
+        hourly_results_per_building = pd.read_csv(locator.PV_results(building, panel_type)).set_index('Date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:
@@ -754,7 +745,7 @@ def aggregate_results(locator, building_names):
 
 
 def aggregate_results_func(args):
-    return aggregate_results(args[0], args[1])
+    return aggregate_results(args[0], args[1], args[2])
 
 
 def write_aggregate_results(config, locator, building_names):
@@ -764,7 +755,7 @@ def write_aggregate_results(config, locator, building_names):
 
     num_process = 4
     with Pool(processes=num_process) as pool:
-        args = [(locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
+        args = [(config, locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
         for i, x in enumerate(pool.map(aggregate_results_func, args)):
             hourly_results_df, annual_results = x
             if i == 0:
@@ -778,7 +769,7 @@ def write_aggregate_results(config, locator, building_names):
     aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=panel_type), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="Name",
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="name",
                                         float_format='%.2f', na_rep='nan')
 
 

@@ -66,17 +66,17 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print('calculating solar properties done for building %s' % building_name)
+    # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
-    print('gathering properties of Solar collector panel for building %s' % building_name)
+    panel_properties_SC = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
+    # print('gathering properties of Solar collector panel for building %s' % building_name)
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(radiation_path, metadata_csv, config)
 
-    print('filtering low potential sensor points done for building %s' % building_name)
+    # print('filtering low potential sensor points done for building %s' % building_name)
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -90,19 +90,19 @@ def calc_SC(locator, config, latitude, longitude, weather_data, date_local, buil
             sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                           solar_properties, max_annual_radiation,
                                                                           panel_properties_SC, max_roof_coverage)
-            print('calculating optimal tilt angle and separation done for building %s' % building_name)
+            # print('calculating optimal tilt angle and separation done for building %s' % building_name)
         else:
             # calculate spacing required by user-supplied tilt angle for panels
             sensors_metadata_cat = solar_equations.calc_spacing_custom_angle(sensors_metadata_clean, solar_properties,
                                                                            max_annual_radiation, panel_properties_SC,
                                                                            config.solar.panel_tilt_angle,
                                                                            max_roof_coverage)
-            print('calculating separation for custom tilt angle done')
+            # print('calculating separation for custom tilt angle done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print('generating groups of sensor points done for building %s' % building_name)
+        # print('generating groups of sensor points done for building %s' % building_name)
 
         # calculate heat production from solar collectors
         Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m,
@@ -330,7 +330,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     mB_min_r = panel_properties['mB_min_r']  # minimum flow rate per aperture area
     C_eff_Jperm2K = panel_properties['C_eff']  # thermal capacitance of module [J/m2K]
     IAM_d = panel_properties['IAM_d']  # incident angle modifier for diffuse radiation [-]
-    dP1 = panel_properties['dP1']  # pressure drop [Pa/m2] at zero flow rate
+    # dP1 = panel_properties['dP1']  # pressure drop [Pa/m2] at zero flow rate
     dP2 = panel_properties['dP2']  # pressure drop [Pa/m2] at nominal flow rate (mB0)
     dP3 = panel_properties['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
@@ -804,7 +804,7 @@ def calc_properties_SC_db(database_path, config):
         type_SCpanel = 'SC2'
     else:
         raise ValueError('this panel type ', config.solar.type_SCpanel, 'is not in the database!')
-    data = pd.read_excel(database_path, sheet_name="SOLAR_THERMAL_PANELS")
+    data = pd.read_csv(database_path)
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
@@ -939,10 +939,10 @@ def calc_Cinv_SC(Area_m2, locator, panel_type):
     Lifetime 35 years
     """
     if Area_m2 > 0.0:
-        SC_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="SOLAR_THERMAL_PANELS")
+        SC_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
         SC_cost_data = SC_cost_data[SC_cost_data['type'] == panel_type]
         cap_min = SC_cost_data['cap_min'].values[0]
-        cap_max = SC_cost_data['cap_max'].values[0]
+        # cap_max = SC_cost_data['cap_max'].values[0]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
         if Area_m2 <= cap_min:
@@ -980,18 +980,18 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
     if config.solar.custom_tilt_angle:
-        print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
+        print('Running solar-collector with custom-tilt-angle = %s and panel-tilt-angle = %s' %
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
     else:
-        print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
+        print('Running solar-collector with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
+    print('Running solar-collector with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     building_names = config.solar.buildings
 
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
-    panel_properties = calc_properties_SC_db(locator.get_database_conversion_systems(), config)
+    panel_properties = calc_properties_SC_db(locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'), config)
     panel_type = panel_properties['type']
 
     # weather data

@@ -48,7 +48,7 @@ def main(config):
         print("Processing input file {file_path}".format(file_path=file_path))
 
         df = schemas_io.read()
-        df.loc[df["Name"] == old_building_name, "Name"] = new_building_name
+        df.loc[df["name"] == old_building_name, "name"] = new_building_name
 
         schemas_io.write(df)
 

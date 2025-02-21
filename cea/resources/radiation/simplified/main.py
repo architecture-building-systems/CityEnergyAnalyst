@@ -60,10 +60,10 @@ def generate_sample_data(locator, sample_buildings):
 def fetch_simulation_buildings(sample_buildings, zone_df, buffer_m):
     simulation_buildings = set()
     for building in sample_buildings:
-        buffer = zone_df[zone_df["Name"] == building].buffer(buffer_m).geometry
+        buffer = zone_df[zone_df["name"] == building].buffer(buffer_m).geometry
         buildings_intersect = zone_df.intersects(buffer.values[0])
 
-        for building_name in zone_df[buildings_intersect]["Name"].values:
+        for building_name in zone_df[buildings_intersect]["name"].values:
             simulation_buildings.add(building_name)
 
     return simulation_buildings
@@ -119,7 +119,7 @@ def main(config):
     print(f"Saving geometry pickle files in: {geometry_staging_location}")
     # create geometrical faces of terrain and buildings
     terrain_raster = gdal.Open(locator.get_terrain())
-    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('Name')
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
 
     (geometry_terrain,
      zone_building_names,

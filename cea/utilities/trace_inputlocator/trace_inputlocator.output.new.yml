@@ -3072,13 +3072,13 @@ get_network_layout_edges_shapefile:
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/networks/DC\edges.shp
     file_type: shp
     schema:
-        Name:
+        name:
             sample_data: PIPE24
             types_found: [string]
-        Pipe_DN:
+        pipe_DN:
             sample_data: !!python/long '150'
             types_found: [long]
-        Type_mat:
+        type_mat:
             sample_data: T1
             types_found: [string]
         geometry:
@@ -3094,13 +3094,13 @@ get_network_layout_nodes_shapefile:
     file_path: c:\reference-case-open\WTP_CBD_h\inputs/networks/DC\nodes.shp
     file_type: shp
     schema:
-        Building:
+        building:
             sample_data: NONE
             types_found: [string]
-        Name:
+        name:
             sample_data: NODE25
             types_found: [string]
-        Type:
+        type:
             sample_data: PLANT
             types_found: [string]
         geometry:
@@ -3169,16 +3169,16 @@ get_optimization_network_edge_list_file:
         D_int_m:
             sample_value: 0.1325
             types_found: [float]
-        Name:
+        name:
             sample_value: PIPE29
             types_found: [str]
-        Pipe_DN_x:
+        pipe_DN_x:
             sample_value: 125.0
             types_found: [float]
-        Pipe_DN_y:
+        pipe_DN_y:
             sample_value: 125.0
             types_found: [float]
-        Type_mat:
+        type_mat:
             sample_value: T1
             types_found: [str]
         Vdot_max_m3s:

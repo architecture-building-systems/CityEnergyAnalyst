@@ -23,6 +23,8 @@ __status__ = "Production"
 
 def calc_q_em_ls_cooling(bpr, tsd, t):
     """
+    __author__ = "Gabriel Happle"
+
     calculation procedure for space emissions losses in the cooling case [prEN 15316-2:2014]
 
     :param bpr: building properties row
@@ -37,7 +39,6 @@ def calc_q_em_ls_cooling(bpr, tsd, t):
     :return: emission losses of cooling system for time step [W]
     :rtype: double
     """
-    __author__ = "Gabriel Happle"
 
     # get properties
     theta_e = tsd['T_ext'][t]
@@ -70,9 +71,10 @@ def calc_q_em_ls_heating(bpr, tsd, hoy):
     
     :return: emission losses of heating system for time step [W]
     :rtype: double
-    """
-    __author__ = "Gabriel Happle"
 
+    Author: Gabriel Happle
+
+    """
     # get properties
     theta_e = tsd['T_ext'][hoy]
     theta_int_ini = tsd['T_int'][hoy]
@@ -113,9 +115,9 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
     
     :return: emission losses of heating/cooling system [W]
     :rtype: double
-    """
-    __author__ = "Gabriel Happle"
 
+    Author: Gabriel Happle
+    """
     if abs(theta_int_inc-theta_e_comb) < 1e-6:
         q_em_ls = 0.0  # prevent division by zero
     else:
@@ -221,10 +223,10 @@ def calc_delta_theta_int_inc_heating(bpr):
 
     :returns: delta T to correct the set point temperature for heating
     :rtype: double
-    """
-    __author__ = ["Shanshan Hsieh","Gabriel Happle"]
-    __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
+    Author: Shanshan Hsieh, Gabriel Happle
+    Credits: Shanshan Hsieh, Daren Thomas
+    """
     try:
         delta_theta_int_inc_heating = (0.0 if not has_heating_system(bpr.hvac["class_hs"])
                                        else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C']))
@@ -256,10 +258,10 @@ def calc_delta_theta_int_inc_cooling(bpr):
 
     :returns: delta T to correct the set point temperature for cooling
     :rtype: double
-    """
-    __author__ = ["Shanshan Hsieh","Gabriel Happle"]
-    __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
+    Author: Shanshan Hsieh, Gabriel Happle
+    Credits: Shanshan Hsieh, Daren Thomas
+    """
     try:
 
         delta_theta_int_inc_cooling = (0.0 if not has_cooling_system(bpr.hvac["class_cs"])
