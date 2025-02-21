@@ -123,7 +123,8 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
+                                   panel_properties_PV)
 
         final.to_csv(locator.PV_results(building=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -154,7 +155,8 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, longitude,
+                       panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
     """
@@ -215,7 +217,8 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
                                                                              radiation_Wperm2.I_direct,
                                                                              radiation_Wperm2.I_diffuse, tilt_rad,
                                                                              Sz_rad, teta_rad, teta_ed_rad,
-                                                                             teta_eg_rad, panel_properties_PV)
+                                                                             teta_eg_rad, panel_properties_PV,
+                                                                             latitude, longitude)
 
         T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_Wperm2, weather_data.drybulb_C,
                                                        panel_properties_PV)
@@ -328,7 +331,8 @@ def calc_diffuseground_comp(tilt_radians):
     return radians(teta_ed), radians(teta_eG)
 
 
-def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV):
+def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV,
+                               latitude, longitude):
     """
     :param I_sol: total solar radiation [Wh/m2]
     :param I_direct: direct solar radiation [Wh/m2]
@@ -389,7 +393,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
         Rb = 0  # Assume there is no direct radiation when the sun is close to the horizon.
 
     # calculate air mass modifier
-    m = 1 / cos(Sz)  # air mass (1.5.1)
+    m = calc_air_mass(Sz, latitude, longitude)
     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
     M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
@@ -433,6 +437,24 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
 
     return absorbed_radiation_Wperm2
 
+
+def calc_air_mass(Sz, latitude, longitude):
+    '''
+    Calculate air mass according to Duffie & Beckmann, p. 10.
+    For zenith angles from 0° to 70°, the air mass is calculated based on Equation 1.5.1.
+    For zenith angles above that, the empirical equation in footnote 3 (taken from Kasten & Young, 1989) is used.
+
+    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+                 doi: 10.1002/9781118671603.ch5
+    '''
+    if abs(Sz) <= radians(70):
+        m = 1 / cos(Sz)  # air mass (1.5.1)
+    else:
+        h = pvlib.location.lookup_altitude(latitude, longitude) # altitude (in m)
+        m = exp(-0.0001184 * h) / (cos(Sz) + 0.5057 * (96.080 - degrees(Sz))**(-1.634)) # air mass (footnote 3)
+
+    return m
 
 def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
     """
