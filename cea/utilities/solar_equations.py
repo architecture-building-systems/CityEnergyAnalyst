@@ -141,7 +141,7 @@ def calc_sun_properties(latitude, longitude, weather_data, datetime_local, confi
     sun_coords = pyephem(datetime_local, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
-    worst_sh = sun_coords['elevation'].loc[datetime_local[worst_hour]]
+    worst_sh = max(sun_coords['elevation'].loc[datetime_local[worst_hour]], 5)
     worst_Az = sun_coords['azimuth'].loc[datetime_local[worst_hour]]
 
     # mean transmissivity
@@ -477,6 +477,8 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
 def calc_optimal_spacing(sun_properties, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
+    This calculation assumes that panels are south- or north facing and accounts for a sun azimuth being
+    between 90 and 270 on the northern hemisphere and 0-90 and 270-360 on the southern hemisphere respectively.
 
     :param sun_properties: SunProperties, using worst_sh (Solar elevation at the worst hour [degree]) and worst_Az
                            (Solar Azimuth [degree] at the worst hour)
@@ -490,7 +492,7 @@ def calc_optimal_spacing(sun_properties, tilt_angle, module_length):
     """
     h = module_length * sin(tilt_angle)
     D1 = h / tan(radians(sun_properties.worst_sh))
-    D = max(D1 * cos(radians(180 - sun_properties.worst_Az)), D1 * cos(radians(sun_properties.worst_Az - 180)))
+    D = max(D1 * cos(radians(180 - sun_properties.worst_Az)), D1 * cos(radians(sun_properties.worst_Az)))
     return D
 
 

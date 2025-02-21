@@ -191,17 +191,11 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         tot_module_area_m2 = prop_observers.loc[group, 'area_installed_module_m2']
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
-        # degree to radians
-        tilt_rad = radians(tilt_angle_deg)  # tilt angle
-        # teta_z_deg = radians(teta_z_deg)  # surface azimuth
-        teta_z_rad = radians(teta_z_deg)  # surface azimuth
+        tilt_rad = radians(tilt_angle_deg) # degree to radians
 
         # calculate effective incident angles necessary
         teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
         teta_rad = [radians(x) for x in teta_deg]
-        # teta_rad = pd.Series(index=radiation_Wperm2.index,
-        #                      data=np.vectorize(calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_rad),
-        #                      name='aoi')
 
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
