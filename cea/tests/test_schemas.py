@@ -43,9 +43,9 @@ class TestSchemas(unittest.TestCase):
         schemas = cea.schemas.schemas(plugins=[])
 
         for lm in schemas:
-            self.assertIn("file_path", schemas[lm], "{lm} does not have a file_path".format(lm=lm))
-            self.assertIsInstance(schemas[lm]["file_path"], str, "{lm} does not have a file_path".format(lm=lm))
-            self.assertNotIn("\\", schemas[lm]["file_path"], "{lm} has backslashes in it's file_path".format(lm=lm))
+            self.assertIn("file_path", schemas[lm], f"{lm} does not have a file_path")
+            self.assertIsInstance(schemas[lm]["file_path"], str, f"{lm} does not have a file_path")
+            self.assertNotIn("\\", schemas[lm]["file_path"], f"{lm} has backslashes in it's file_path")
 
     def test_all_columns_have_description(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -57,11 +57,11 @@ class TestSchemas(unittest.TestCase):
                 for ws in schemas[lm]["schema"]:
                     for col in schemas[lm]["schema"][ws]["columns"]:
                         self.assertIn("description", schemas[lm]["schema"][ws]["columns"][col],
-                                      "Missing description for {lm}/{ws}/{col}".format(lm=lm, ws=ws, col=col))
+                                      f"Missing description for {lm}/{ws}/{col}")
             else:
                 for col in schemas[lm]["schema"]["columns"]:
                     self.assertIn("description", schemas[lm]["schema"]["columns"][col],
-                                  "Missing description for {lm}/{col}".format(lm=lm, col=col))
+                                  f"Missing description for {lm}/{col}")
 
     def test_all_schemas_have_a_columns_entry(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -71,10 +71,9 @@ class TestSchemas(unittest.TestCase):
                 continue
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
-                    self.assertIn("columns", schemas[lm]["schema"][ws], "Missing columns for {lm}/{ws}".format(
-                        lm=lm, ws=ws))
+                    self.assertIn("columns", schemas[lm]["schema"][ws], f"Missing columns for {lm}/{ws}")
             else:
-                self.assertIn("columns", schemas[lm]["schema"], "Missing columns for {lm}".format(lm=lm))
+                self.assertIn("columns", schemas[lm]["schema"], f"Missing columns for {lm}")
 
     def test_all_schema_columns_documented(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -88,28 +87,22 @@ class TestSchemas(unittest.TestCase):
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
                         self.assertNotEqual(ws_schema[col]["description"].strip(), "TODO",
-                                            "Missing description for {lm}/{ws}/{col}/description".format(
-                                                lm=lm, ws=ws, col=col))
+                                            f"Missing description for {lm}/{ws}/{col}/description")
                         self.assertNotEqual(ws_schema[col]["unit"].strip(), "TODO",
-                                            "Missing description for {lm}/{ws}/{col}/unit".format(
-                                                lm=lm, ws=ws, col=col))
+                                            f"Missing description for {lm}/{ws}/{col}/unit")
                         self.assertNotEqual(ws_schema[col]["values"].strip(), "TODO",
-                                            "Missing description for {lm}/{ws}/{col}/description".format(
-                                                lm=lm, ws=ws, col=col))
+                                            f"Missing description for {lm}/{ws}/{col}/description")
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     try:
                         self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
-                                            "Missing description for {lm}/{col}/description".format(
-                                                lm=lm, col=col))
+                                            f"Missing description for {lm}/{col}/description")
                         self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
-                                            "Missing description for {lm}/{col}/description".format(
-                                                lm=lm, col=col))
+                                            f"Missing description for {lm}/{col}/description")
                         self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
-                                            "Missing description for {lm}/{col}/description".format(
-                                                lm=lm, col=col))
+                                            f"Missing description for {lm}/{col}/description")
                     except BaseException as e:
-                        self.fail("Problem with lm={lm}, col={col}, message: {m}".format(lm=lm, col=col, m=e))
+                        self.fail(f"Problem with lm={lm}, col={col}, message: {e}")
 
     def test_each_column_has_type(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -124,41 +117,38 @@ class TestSchemas(unittest.TestCase):
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
                         self.assertIn("type", ws_schema[col],
-                                      "Missing type definition for {lm}/{ws}/{col}".format(
-                                          lm=lm, ws=ws, col=col))
+                                      f"Missing type definition for {lm}/{ws}/{col}")
                         col_type = ws_schema[col]["type"]
                         self.assertIn(col_type, valid_types,
-                                      "Invalid type definition for {lm}/{ws}/{col}: {type}".format(
-                                          lm=lm, ws=ws, col=col, type=col_type))
+                                      f"Invalid type definition for {lm}/{ws}/{col}: {col_type}")
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     self.assertIn("type", schema["columns"][col],
-                                  "Missing type definition for {lm}/{col}".format(lm=lm, col=col))
+                                  f"Missing type definition for {lm}/{col}")
                     col_type = schema["columns"][col]["type"]
                     self.assertIn(col_type, valid_types,
-                                  "Invalid type definition for {lm}/{col}: {type}".format(lm=lm, col=col,
-                                                                                          type=col_type))
+                                  f"Invalid type definition for {lm}/{col}: {col_type}")
 
     def test_each_lm_has_created_by(self):
         schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
-            self.assertIn("created_by", schemas[lm], "{lm} missing created_by entry".format(lm=lm))
+            self.assertIn("created_by", schemas[lm], f"{lm} missing created_by entry")
             self.assertIsInstance(schemas[lm]["created_by"], list,
-                                  "created_by entry of {lm} must be a list".format(lm=lm))
+                                  f"created_by entry of {lm} must be a list")
 
     def test_each_lm_has_used_by(self):
         schemas = cea.schemas.schemas(plugins=[])
         for lm in schemas:
-            self.assertIn("used_by", schemas[lm], "{lm} missing used_by entry".format(lm=lm))
+            self.assertIn("used_by", schemas[lm], f"{lm} missing used_by entry")
             self.assertIsInstance(schemas[lm]["used_by"], list,
-                                  "used_by entry of {lm} must be a list".format(lm=lm))
+                                  f"used_by entry of {lm} must be a list")
 
     def test_each_lm_has_method(self):
         schemas = cea.schemas.schemas(plugins=[])
         locator = cea.inputlocator.InputLocator(None)
         for lm in schemas:
             self.assertIn(lm, dir(locator),
-                          "schemas.yml contains {lm} but no corresponding method in InputLocator".format(lm=lm))
+                          f"schemas.yml contains {lm} but no corresponding method in InputLocator")
 
     def test_each_folder_unique(self):
         locator = cea.inputlocator.ReferenceCaseOpenLocator()
@@ -179,8 +169,7 @@ class TestSchemas(unittest.TestCase):
                 folder = method(**parameters)
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
                 self.assertNotIn(folder, folders,
-                                 "{attrib} duplicates the result of {prev}".format(
-                                     attrib=attrib, prev=folders.get(folder, None)))
+                                 f"{attrib} duplicates the result of {folders.get(folder, None)}")
                 folders[folder] = attrib
 
     def test_scripts_use_underscores_not_hyphen(self):
@@ -189,9 +178,9 @@ class TestSchemas(unittest.TestCase):
             used_by = schemas[lm]["used_by"]
             created_by = schemas[lm]["created_by"]
             for script in used_by:
-                self.assertNotIn("-", script, "{lm} used_by script {script} contains hyphen".format(**locals()))
+                self.assertNotIn("-", script, f"{lm} used_by script {script} contains hyphen")
             for script in created_by:
-                self.assertNotIn("-", script, "{lm} created_by script {script} contains hyphen".format(**locals()))
+                self.assertNotIn("-", script, f"{lm} created_by script {script} contains hyphen")
 
     def test_read_glossary_df(self):
         import cea.glossary
@@ -225,16 +214,14 @@ class TestSchemas(unittest.TestCase):
                             check_range(col_schema)
                         except ValueError as e:
                             col_label = ":".join([lm, ws, col])
-                            print("Error in column {col_label}:\n{message}\n".format(col_label=col_label,
-                                                                                     message=e))
+                            print(f"Error in column {col_label}:\n{e}\n")
             else:
                 for col, col_schema in schemas[lm]["schema"]["columns"].items():
                     try:
                         check_range(col_schema)
                     except ValueError as e:
                         col_label = ":".join([lm, col])
-                        print(
-                            "Error in column {col_label}:\n{message}\n".format(col_label=col_label, message=e))
+                        print(f"Error in column {col_label}:\n{e}\n")
 
 
 def extract_locator_methods(locator):
@@ -278,7 +265,7 @@ def parse_numerical_range_value(value, num_type):
         elif num_type == 'int':
             return int(string_num)
         else:
-            raise TypeError("Unable to cast type `{type}`".format(type=num_type))
+            raise TypeError(f"Unable to cast type `{num_type}`")
 
     num = r'-?\d+(?:.\d+)?'
     num_or_n = r'{num}|n'.format(num=num)
@@ -288,7 +275,7 @@ def parse_numerical_range_value(value, num_type):
     match = re.match(regex, value)
 
     if match is None:
-        raise ValueError("values property not in '{{n...n}}' format. Got: '{value}'".format(value=value))
+        raise ValueError(f"values property not in '{{n...n}}' format. Got: '{value}'")
     return parse_string_num(match.group("first")), parse_string_num(match.group("second"))
 
 
