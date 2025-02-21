@@ -23,3 +23,7 @@ notebooks
 setup
 
 *.md
+
+# Docker files
+Dockerfile
+.dockerignore
