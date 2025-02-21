@@ -1,7 +1,6 @@
 # NSIS script for creating the City Energy Analyst installer
 !define CEA_TITLE "City Energy Analyst"
 !define VER $%CEA_VERSION%
-!define CEA_REPO_URL "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
@@ -159,15 +158,6 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
-
-SectionEnd
-
-Section /o "Developer version" Clone_Repository_Section
-
-    DetailPrint 'Cloning GitHub Repository ${CEA_REPO_URL} to "$INSTDIR\CityEnergyAnalyst"'
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea git clone ${CEA_REPO_URL}'
-    DetailPrint "Binding CEA to repository"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install -e "$INSTDIR\CityEnergyAnalyst"'
 
 SectionEnd
 

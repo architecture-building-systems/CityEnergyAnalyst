@@ -155,50 +155,60 @@ DIN EN 16789-1:2019 presents indoor environmental input parameters for design an
 
 #### Residential types
 
- The naming convention is *D_[usetype]* for residential profiles:
+Cooling is always equal to CH database. The naming convention is the same as the CH database. For residential profiles:
 
-- `D_SFH`: Single family home
-- `D_MFH`: Multi family home
+- `SINGLE_RES`: Single family home
+- `MULTI_RES`: Multi family home
 
-##### Use type properties - internal loads
+#### Non-Residential types
+
+In the current status, there are some non-residential use types included. There is only a very heterogeneous data basis for non-residential buildings in Germany:
+
+- DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
+- Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
+
+So, if the data is available in DIN 18599-13, this was added to the USE_TYPE_PROPERTIES excel; otherwise, it was assumed to be equal to CH defaults. 
+
+#### Use type properties - internal loads
 
 | Parameter   | Description   | Method  |
 |---   |---   |---  |
 | `Occ_m2P` | Occupancy density (refers to “code”) | According to Sagner: 48 m2 per person for house owner (SFH)  and 35m2 per Person in rented flats (MFH)  |
 | `El_Wm2` |  Peak specific electrical load due to artificial lighting (refers to “code”)| DIN V 18599-4 Anhang B (Abbildung B.12) =  6,4 W/m²  |
-| `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany, 42% of 121 lpd [^BDEW] |
+| `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany [^BDEW] |
 | `Vww_ldp` | Peak specific hot water consumption (refers to “code”)| 10% of `Vww` (educated guess) |
 
-##### Use type properties - indoor comfort
+#### Use type properties - indoor comfort
 
 | Parameter   | Description   | Method  |
 |---   |---   |---  |
 | `Tcs_set_C` |   Setpoint temperature for cooling system (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.3 Höchstwert für Kühlung in der Sommerperiode Wohnen Kat. II : 26°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegung Kühlfall|
 | `Tcs_setb_C` |  Setback point of temperature for cooling system (refers to "code")  | DIN V 18599-10:2018-09 Tab. 4 |
-| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | [^statista] 20.9 °C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall |
-| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K -> 17°C|
+| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | DIN EN 16798-1:2022-03 Tab.NA.3  Wohnen Kat. I: 20°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall and DIN EN 18599-13 Tab. 8 if available, CH defaults otherwise |
+| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K. Example: 20 °C ->16 °C |
 | `Ve_lsp` | Minimum outdoor air ventilation rate per person for Air Quality (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.6 Kat. II - I  (erhöht auf Grdl. VDI Empfehlung zu 30 m³/h |
 
 ##### SCHEDULES
 
 | Parameter   | Method  |
 |---   |---   |
-| OCCUPANCY | modified according to  DIN EN 16798 and DIN18599 |
+| OCCUPANCY | modified according to  DIN EN 16798 and DIN18599 for Residential. Non residential assumed equal to CH. |
 | APPLIENCES | 0.5 as baseline, others correlating with occupancy  |  
 | LIGHTING | starting at 7 am, correlating with occupancy, but modified  |  
 | WATER | starting at 7 am, correlating with occupancy  |  
 | SETPOINT | DIN V 18599-10:2018 Tab. 4 Nutzungszeit von 6:00 - 23:00 |  
 | SETBACK | if not SETPOINT|  
 
-#### Non-Residential types
+#### Internal Load Calculations
 
-In the current status, there are no non-residential use types included.
-
-There is only a very heterogeneous data basis for non-residential buildings in Germany:
-
-- DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
-- Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
-- ...
+- Water usage School with shower: 250 Wh/m2/d $\times$ 3 m2/p / 23.28 Wh/l at 20 K temperature difference = 32.22 l/d/p [18599-13].
+- Water usage School without shower: 10.95 l/d/p [18599-13].
+- Assumed cold water usage equal to warmwater usage in School.
+- Warm water usage in office assumed equal to 2.5 l/d/p according to paper 'Fuentes, Elena, L. Arce, and Jaume Salom. "A review of domestic hot water consumption profiles for application in systems and buildings energy performance analysis." Renewable and Sustainable Energy Reviews 81 (2018): 1530-1547.
+- Restaurant assumed to be equal to: "Bürogebäude mit
+Gaststätte" of DIN 18599-13 -> 1500*1.2/23.28=77 l/d/p, cold water assumed equal.
+- Hotel left equal to CH.
+- Library: 30*5/23.28=6.44 l/d/p.
 
 ## Assemblies
 
@@ -396,10 +406,10 @@ In alphabetic order:
 - Amedeo Ceruti
 - Mara Geske
 - Ulla Hartmann
+- Urbano Tataranni
 
 ## References
 
-[^statista] https://de.statista.com/statistik/daten/studie/1072340/umfrage/raumtemperatur-in-haushalten-in-deutschland-oesterreich-und-der-schweiz/. Accessed on 04.11.2024
 [^tab]: Loga, Tobias, Britta Stein, and Nikolaus Diefenbach. "TABULA building typologies in 20 European countries—Making energy-related features of residential building stocks comparable." _Energy and Buildings_ 132 (2016): 4-12. <https://doi.org/10.1016/j.enbuild.2016.06.094>
 [^tab-com]: Loga, Tobias, and Nikolaus Diefenbach. "TABULA Calculation Method-Energy Use for Heating and Domestic Hot Water." _Germany: Institut Wohnen und Umwelt GmbH_ (2013). Available at <https://episcope.eu/building-typology/tabula-structure/calculation/>. Last accessed 01.12.2023.
 [^cea-desc]: CEA documentation for intermediate input methods.  Available at <https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/0c483f4553c2d53c866cd8ce4f1ed278cf7ace3b/docs/intermediate_input_methods.rst#L45>
@@ -413,5 +423,5 @@ In alphabetic order:
 [^IWU-NW-data]: Github repository "Nichtwohngebaeude-Typologie-Deutschland" of IWUGERMANY. Available at: <https://github.com/IWUGERMANY/Nichtwohngebaeude-Typologie-Deutschland>.
 [^KEA]: KEA-BW (2022): Technikkatalog zur Kommunalen Wärmeplanung.  Available at <https://www.kea-bw.de/fileadmin/user_upload/Waermewende/Wissensportal/Technikkatalog_Tabellen_v1.1.zip>. Last accessed 26.8.23.
 [^US]: US INFLATION CALCULATOR. Available at <https://www.usinflationcalculator.com/>. Last accessed 26.8.23.
-[^BDEW] : Bundesverbands der Energie- und Wasserwirtschaft. https://www.bdew.de/service/daten-und-grafiken/trinkwasserverwendung-im-haushalt/, accessed on 04.11.2024
+[^BDEW] : Bundesverbands der Energie- und Wasserwirtschaft
 [^Sagner]: Pekka Sagner. "IW-Kurzbericht 11: Wer wohnt wie groß?" Institut der deutschen Wirtschaft. 2021. Köln.
