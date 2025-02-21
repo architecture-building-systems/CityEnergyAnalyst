@@ -6512,7 +6512,7 @@ get_database_components_feedstocks_energy_carriers:
         values: '{"", "V", "nm", "°C"}'
       mean_qual:
         description: mean value of the qualifier corresponding to the respective energy carrier
-        type: float, int
+        type: float
         unit: 'NA'
         values: '{-273.15...n}'
       feedstock_file:
