@@ -32,7 +32,9 @@ COPY --from=daysim / /Daysim
 RUN cea-config write --general:project /project/reference-case-open \
     && cea-config write --general:scenario-name baseline \
     && cea-config write --radiation:daysim-bin-directory /Daysim \
-    && cea-config write --server:host 0.0.0.0
+    && cea-config write --server:host 0.0.0.0 \
+    # create dummy project folder
+    && mkdir -p /project/reference-case-open
 
 # Expose dashboard port
 EXPOSE 5050
