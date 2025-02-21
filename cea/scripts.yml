@@ -23,7 +23,7 @@ Import & Export:
       Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
       
-      https://www.cityenergyanalyst.com/s/to_cea_v400alpha21.gh
+      https://www.cityenergyanalyst.com/s/to_cea_v400alpha20gh.zip
 
     interfaces: [cli]
     module: cea.import_export.import_from_rhino_gh
