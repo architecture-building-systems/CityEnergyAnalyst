@@ -40,7 +40,12 @@ class TestSchemas(unittest.TestCase):
         for method in extract_locator_methods(locator):
             if method not in schemas.keys():
                 missing_schema.add(method)
-        self.assertEqual(len(missing_schema), 0, f"Missing schemas: {missing_schema}")
+        
+        if missing_schema:
+            error_msg = "Missing locator methods in schemas:\n"
+            for schema in missing_schema:
+                error_msg += f"\t{schema}\n"
+            self.fail(error_msg)
 
     def test_all_locator_methods_have_a_file_path(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -80,32 +85,44 @@ class TestSchemas(unittest.TestCase):
 
     def test_all_schema_columns_documented(self):
         schemas = cea.schemas.schemas(plugins=[])
+        missing_docs = {}  # Store all missing documentation details
+        
         for lm in schemas.keys():
             if lm in SKIP_LMS:
-                # these can't be documented properly due to the file format
+            # these can't be documented properly due to the file format
                 continue
+                
             schema = schemas[lm]["schema"]
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schema.keys():
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
-                        self.assertNotEqual(ws_schema[col]["description"].strip(), "TODO",
-                                            f"Missing description for {lm}/{ws}/{col}/description")
-                        self.assertNotEqual(ws_schema[col]["unit"].strip(), "TODO",
-                                            f"Missing description for {lm}/{ws}/{col}/unit")
-                        self.assertNotEqual(ws_schema[col]["values"].strip(), "TODO",
-                                            f"Missing description for {lm}/{ws}/{col}/description")
+                        col_path = f"{lm}/{ws}/{col}"
+                        if ws_schema[col]["description"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("description")
+                        if ws_schema[col]["unit"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("unit")
+                        if ws_schema[col]["values"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("values")
+                            
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
+                    col_path = f"{lm}/{col}"
                     try:
-                        self.assertNotEqual(schema["columns"][col]["description"].strip(), "TODO",
-                                            f"Missing description for {lm}/{col}/description")
-                        self.assertNotEqual(schema["columns"][col]["unit"].strip(), "TODO",
-                                            f"Missing description for {lm}/{col}/description")
-                        self.assertNotEqual(schema["columns"][col]["values"].strip(), "TODO",
-                                            f"Missing description for {lm}/{col}/description")
+                        if schema["columns"][col]["description"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("description")
+                        if schema["columns"][col]["unit"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("unit")
+                        if schema["columns"][col]["values"].strip() == "TODO":
+                            missing_docs.setdefault(col_path, []).append("values")
                     except BaseException as e:
-                        self.fail(f"Problem with lm={lm}, col={col}, message: {e}")
+                        missing_docs[col_path] = [f"error: {str(e)}"]
+
+        if missing_docs:
+            error_msg = "Missing documentation in schemas:\n"
+            for path, missing in missing_docs.items():
+                error_msg += f"  {path}: missing {', '.join(missing)}\n"
+            self.fail(error_msg)
 
     def test_each_column_has_type(self):
         schemas = cea.schemas.schemas(plugins=[])
