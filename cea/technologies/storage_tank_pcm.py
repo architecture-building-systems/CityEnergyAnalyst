@@ -31,7 +31,7 @@ class Storage_tank_PCM(object):
 
         # INITIALIZING MODEL PARAMETERS FROM DATABASE OF CONVERSION TECHNOLOGIES / TES
         self.storage_prop = database_model_parameters[database_model_parameters['code'] == type_storage]
-        self.description = self.storage_prop['Description'].values[0]
+        self.description = self.storage_prop['description'].values[0]
         self.T_phase_change_K = self.storage_prop['T_PHCH_C'].values[0] + 273.0
         self.T_tank_fully_charged_K = self.storage_prop['T_min_C'].values[0] + 273.0
         self.T_tank_fully_discharged_K = self.storage_prop['T_max_C'].values[0] + 273.0
