@@ -1461,19 +1461,16 @@ class ReferenceCaseOpenLocator(InputLocator):
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
     def __init__(self):
-        temp_folder = tempfile.gettempdir()
-        project_folder = os.path.join(temp_folder, 'reference-case-open')
-        reference_case = os.path.join(project_folder, 'baseline')
+        self.temp_directory = tempfile.TemporaryDirectory()
+        atexit.register(self.temp_directory.cleanup)
+
+        self.project_path = os.path.join(self.temp_directory.name, 'reference-case-open')
+        reference_case = os.path.join(self.project_path, 'baseline')
 
         import cea.examples
         import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
-
-        archive.extractall(temp_folder)
+        with zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip')) as archive:
+            archive.extractall(self.temp_directory.name)
 
         #FIXME: Remove this once reference-case-open is updated
         from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
