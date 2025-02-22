@@ -7,6 +7,7 @@ import unittest
 
 import os
 import warnings
+from collections import defaultdict
 
 import cea.config
 import cea.inputlocator
@@ -87,7 +88,7 @@ class TestSchemas(unittest.TestCase):
 
     def test_all_schema_columns_documented(self):
         schemas = cea.schemas.schemas(plugins=[])
-        missing_docs = {}  # Store all missing documentation details
+        missing_docs = defaultdict(list)  # Store all missing documentation details
         
         for lm in schemas.keys():
             if lm in SKIP_LMS:
@@ -101,22 +102,22 @@ class TestSchemas(unittest.TestCase):
                     for col in ws_schema.keys():
                         col_path = f"{lm}/{ws}/{col}"
                         if ws_schema[col]["description"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("description")
+                            missing_docs[col_path].append("description")
                         if ws_schema[col]["unit"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("unit")
+                            missing_docs[col_path].append("unit")
                         if ws_schema[col]["values"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("values")
+                            missing_docs[col_path].append("values")
                             
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     col_path = f"{lm}/{col}"
                     try:
-                        if schema["columns"][col]["description"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("description")
-                        if schema["columns"][col]["unit"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("unit")
-                        if schema["columns"][col]["values"].strip() == "TODO":
-                            missing_docs.setdefault(col_path, []).append("values")
+                        if schema["columns"][col].get("description", "TODO").strip() == "TODO":
+                            missing_docs[col_path].append("description")
+                        if schema["columns"][col].get("unit", "TODO").strip() == "TODO":
+                            missing_docs[col_path].append("unit")
+                        if schema["columns"][col].get("values", "TODO").strip() == "TODO":
+                            missing_docs[col_path].append("values")
                     except BaseException as e:
                         missing_docs[col_path] = [f"error: {str(e)}"]
 
