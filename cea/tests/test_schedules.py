@@ -108,8 +108,8 @@ def calculate_mixed_use_archetype_values_results(locator):
         occupant_densities={'OFFICE': 1.0 / office_occ,
                             'LAB': 1.0 / lab_occ,
                             'INDUSTRIAL': 1.0 / indus_occ,
-                            'SERVERRROOM': 1.0 },
-        list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM'],
+                            'SERVERROOM': 0.0 },
+        list_uses=['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERROOM'],
         properties_db=occ_densities).set_index('name')
 
     return calculated_results
@@ -138,7 +138,7 @@ def create_data():
     # calculate schedules
     building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
     bpr = building_properties['B1011']
-    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERRROOM']
+    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERROOM']
     bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
 
     # read weather file
