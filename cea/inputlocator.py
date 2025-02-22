@@ -1474,6 +1474,14 @@ class ReferenceCaseOpenLocator(InputLocator):
             assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
 
         archive.extractall(temp_folder)
+
+        #FIXME: Remove this once reference-case-open is updated
+        from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
+        from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
+        print("Migrating reference case from v3 to v4")
+        migrate_cea3_to_cea4(reference_case)
+        migrate_cea3_to_cea4_db(reference_case)
+
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):
