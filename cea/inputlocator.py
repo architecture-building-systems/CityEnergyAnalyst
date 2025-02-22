@@ -792,7 +792,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
+        data = pd.read_csv(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
