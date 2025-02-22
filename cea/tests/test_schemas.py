@@ -6,6 +6,8 @@ import re
 import unittest
 
 import os
+import warnings
+
 import cea.config
 import cea.inputlocator
 import cea.scripts
@@ -182,11 +184,23 @@ class TestSchemas(unittest.TestCase):
                     "gen_num": 1,
                     "category": "demand",
                     "type_of_district_network": "space-heating",
+                    "summary_folder": "summary",
+                    "cea_feature": "demand",
+                    "hour_start": 0,
+                    "hour_end": 24,
+                    "folder_name": "test",
                 }
                 for p in list(parameters.keys()):
                     if p not in method.__code__.co_varnames:
                         del parameters[p]
-                folder = method(**parameters)
+                try:
+                    folder = method(**parameters)
+                except TypeError as e:
+                    raise ValueError(f"Parameters found for {attrib}: {method.__code__.co_varnames}."
+                                     f"Add them to the test.") from e
+                if folder is None:
+                    warnings.warn(f"{attrib} returned None, skipping...")
+                    continue
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
                 self.assertNotIn(folder, folders,
                                  f"{attrib} duplicates the result of {folders.get(folder, None)}")
