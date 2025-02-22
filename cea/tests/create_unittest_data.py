@@ -7,35 +7,28 @@ unit tests. You can safely ignore the output printed to STDOUT - it is used for 
 
 NOTE: Check first to make sure the core algorithms are correct, i.e. the changes to the outputs behave as expected.
 """
-
-
-
 import configparser
 import json
 import os
-import tempfile
-import zipfile
 
 import pandas as pd
 
+from cea.config import Configuration, DEFAULT_CONFIG
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.inputlocator import InputLocator
+from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 
 
 def main(output_file):
-    import cea.examples
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-    archive.extractall(tempfile.gettempdir())
+    config = Configuration(DEFAULT_CONFIG)
+    locator = ReferenceCaseOpenLocator()
 
-    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    config.project = os.path.join(tempfile.gettempdir(), 'reference-case-open')
-    config.scenario_name = 'baseline'
+    config.project = locator.project_path
+    config.scenario = locator.scenario
 
-    locator = InputLocator(config.scenario)
     weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
