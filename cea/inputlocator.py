@@ -792,7 +792,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
+        data = pd.read_csv(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
@@ -1461,19 +1461,24 @@ class ReferenceCaseOpenLocator(InputLocator):
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
     def __init__(self):
-        temp_folder = tempfile.gettempdir()
-        project_folder = os.path.join(temp_folder, 'reference-case-open')
-        reference_case = os.path.join(project_folder, 'baseline')
+        self.temp_directory = tempfile.TemporaryDirectory()
+        atexit.register(self.temp_directory.cleanup)
+
+        self.project_path = os.path.join(self.temp_directory.name, 'reference-case-open')
+        reference_case = os.path.join(self.project_path, 'baseline')
 
         import cea.examples
         import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        with zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip')) as archive:
+            archive.extractall(self.temp_directory.name)
 
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+        #FIXME: Remove this once reference-case-open is updated
+        from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
+        from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
+        print("Migrating reference case from v3 to v4")
+        migrate_cea3_to_cea4(reference_case)
+        migrate_cea3_to_cea4_db(reference_case)
 
-        archive.extractall(temp_folder)
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

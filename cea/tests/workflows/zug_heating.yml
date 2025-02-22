@@ -8,6 +8,9 @@
     case: open
 - config: .
   "general:scenario-name": baseline
+- script: cea4-format-helper
+  parameters:
+    scenarios-to-verify-and-migrate: [baseline]
 
 - script: database-helper
   parameters:

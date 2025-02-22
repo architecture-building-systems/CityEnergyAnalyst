@@ -60,8 +60,8 @@ def glossary_row(script, file_path, col, lm, cd, worksheet):
             "WORKSHEET": worksheet,
             "VARIABLE": col,
             "DESCRIPTION": cd["description"],
-            "UNIT": cd["unit"],
-            "VALUES": cd["values"],
+            "UNIT": cd.get("unit"),
+            "VALUES": cd.get("values"),
             "TYPE": cd["type"],
             "COLOR": "",
             "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
