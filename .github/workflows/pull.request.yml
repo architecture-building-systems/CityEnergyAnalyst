@@ -58,7 +58,7 @@ jobs:
         with:
           environment-file: conda-lock.yml
           environment-name: cea
-          cache-environment: true
+          cache-environment: ${{ runner.os != 'Windows' }}
 
       - name: Install CEA
         shell: bash -l {0}
