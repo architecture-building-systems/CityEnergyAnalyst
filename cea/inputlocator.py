@@ -220,13 +220,50 @@ class InputLocator(object):
                 self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
-    def get_export_rhino_from_cea_folder(self):
+    def get_export_to_rhino_from_cea_folder(self):
         """scenario/export/rhino/from_cea"""
         return os.path.join(self.get_export_folder(), 'rhino', 'from_cea')
+
+    def get_export_to_rhino_from_cea_zone_to_csv(self):
+        """scenario/export/rhino/from_cea/zone_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'zone_out.csv')
+
+    def get_export_to_rhino_from_cea_site_to_csv(self):
+        """scenario/export/rhino/from_cea/site_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'site_out.csv')
+
+    def get_export_to_rhino_from_cea_surroundings_to_csv(self):
+        """scenario/export/rhino/from_cea/surroundings_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'surroundings_out.csv')
+
+    def get_export_to_rhino_from_cea_streets_to_csv(self):
+        """scenario/export/rhino/from_cea/streets_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'streets_out.csv')
+
+    def get_export_to_rhino_from_cea_trees_to_csv(self):
+        """scenario/export/rhino/from_cea/trees_to.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'trees_out.csv')
+
+    def get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/dh_edges_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_out.csv')
+
+    def get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(self):
+        """scenario/export/rhino/from_cea/dc_edges_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_edges_out.csv')
+
+    def get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/dh_nodes_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dh_nodes_out.csv')
+
+    def get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(self):
+        """scenario/export/rhino/from_cea/dc_nodes_out.csv"""
+        return os.path.join(self.get_export_to_rhino_from_cea_folder(), 'dc_nodes_out.csv')
 
     def get_optimization_results_folder(self):
         """Returns the folder containing the scenario's optimization results"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
+
 
     def get_electrical_and_thermal_network_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
@@ -755,7 +792,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
+        data = pd.read_csv(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
@@ -880,7 +917,7 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
-    def get_input_network_folder(self, network_type, network_name=""):
+    def get_output_thermal_network_type_folder(self, network_type, network_name=""):
         if network_name == '':  # in case there is no specific network name (default case)
             return self._ensure_folder(self.get_thermal_network_folder(), network_type)
         else:
@@ -888,13 +925,13 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/edges.shp"""
-        shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
+        shapefile_path = os.path.join(self.get_output_thermal_network_type_folder(network_type, network_name), 'edges.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
         """scenario/outputs/thermal-network/DH or DC/nodes.shp"""
-        shapefile_path = os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
+        shapefile_path = os.path.join(self.get_output_thermal_network_type_folder(network_type, network_name), 'nodes.shp')
         check_cpg(shapefile_path)
         return shapefile_path
 
@@ -1424,19 +1461,24 @@ class ReferenceCaseOpenLocator(InputLocator):
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
     def __init__(self):
-        temp_folder = tempfile.gettempdir()
-        project_folder = os.path.join(temp_folder, 'reference-case-open')
-        reference_case = os.path.join(project_folder, 'baseline')
+        self.temp_directory = tempfile.TemporaryDirectory()
+        atexit.register(self.temp_directory.cleanup)
+
+        self.project_path = os.path.join(self.temp_directory.name, 'reference-case-open')
+        reference_case = os.path.join(self.project_path, 'baseline')
 
         import cea.examples
         import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        with zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip')) as archive:
+            archive.extractall(self.temp_directory.name)
 
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+        #FIXME: Remove this once reference-case-open is updated
+        from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
+        from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
+        print("Migrating reference case from v3 to v4")
+        migrate_cea3_to_cea4(reference_case)
+        migrate_cea3_to_cea4_db(reference_case)
 
-        archive.extractall(temp_folder)
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

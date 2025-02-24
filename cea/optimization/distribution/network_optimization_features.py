@@ -56,7 +56,9 @@ class NetworkOptimizationFeatures(object):
     def pipe_costs(self, locator, network_name, network_type):
         edges_file = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
         piping_cost_data = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
-        merge_df = edges_file.merge(piping_cost_data, left_on='pipe_DN', right_on='pipe_DN')
+        
+        # FIXME: Standardize column name in files
+        merge_df = edges_file.rename(columns={'Pipe_DN': 'pipe_DN'}).merge(piping_cost_data, on='pipe_DN')
         merge_df['Inv_USD2015'] = merge_df['Inv_USD2015perm'] * merge_df['length_m']
         pipe_costs = merge_df['Inv_USD2015'].sum()
         return pipe_costs

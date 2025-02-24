@@ -6512,7 +6512,7 @@ get_database_components_feedstocks_energy_carriers:
         values: '{"", "V", "nm", "°C"}'
       mean_qual:
         description: mean value of the qualifier corresponding to the respective energy carrier
-        type: float, int
+        type: float
         unit: 'NA'
         values: '{-273.15...n}'
       feedstock_file:
@@ -7238,57 +7238,76 @@ get_database_archetypes_schedules:
           - Sunday_23
         primary: true
         type: string
+        unit: "[-]"
+        values: ""
       occupancy:
         description: Occupancy
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       appliances:
         description: Appliances
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       lighting:
         description: Lighting
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       hot_water:
         description: Domestic hot water
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       heating:
         description: Space heating
         type: string
+        unit: "[-]"
         choice:
           values:
           - 'OFF'
           - SETBACK
           - SETPOINT
+        values: ""
       cooling:
         description: Space cooling
         type: string
+        unit: "[-]"
         choice:
           values:
           - 'OFF'
           - SETBACK
           - SETPOINT
+        values: ""
       processes:
         description: processes
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       servers:
         description: Servers
         max: 1.0
         min: 0.0
         type: float
+        unit: "[-]"
+        values: "{0.0...1.0}"
       electromobility:
         description: Average number of electric vehicles in this hour
-        max: 10000
         min: 0
         type: float
+        unit: "[-]"
+        values: "{0.0...n}"
   used_by:
   - archetypes_mapper
 

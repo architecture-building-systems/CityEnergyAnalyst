@@ -7,7 +7,6 @@ import unittest
 import configparser
 import os
 import json
-import tempfile
 import numpy as np
 
 import cea.inputlocator
@@ -20,123 +19,119 @@ import cea.optimization.slave.cooling_main as cooling_main
 
 
 class TestDistrictCooling(unittest.TestCase):
-
-    weather_features = None
-    slave_variables = None
-    test_config = None
-    locator = None
+    # set debugging variable. Set to True if you wish to analyse details of the district cooling activation script
+    debug = False
 
     @classmethod
     def setUpClass(cls):
-        # set debugging variable. Set to True if you wish to analyse details of the district cooling activation script
-        cls.debug = False
+        cls.test_config = configparser.ConfigParser()
+        cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_district_cooling.config'))
 
+    def setUp(self):
         # get locator and config variables for the reference case, which will also be used to test the
         # district cooling operation functions
-        cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
-        cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        self.locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        self.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+
+        self.config.project = self.locator.project_path
+        self.config.scenario = self.locator.scenario
 
         # assign all network feature variables used to evaluate district cooling operation (i.e. ground_temp)
-        weather_file = cls.locator.get_weather_file()
-        cls.weather_features = preprocessing_main.WeatherFeatures(weather_file)
+        weather_file = self.locator.get_weather_file()
+        self.weather_features = preprocessing_main.WeatherFeatures(weather_file)
 
         # assign all network feature variables used to evaluate district cooling operation
         DHN_exists = False
         DCN_exists = True
-        cls.network_features = network_optimization_features.NetworkOptimizationFeatures(DHN_exists,
-                                                                                         DCN_exists,
-                                                                                         cls.locator)
+        self.network_features = network_optimization_features.NetworkOptimizationFeatures(DHN_exists,
+                                                                                          DCN_exists,
+                                                                                          self.locator)
 
         # assign all the variables used to define an individual (in the genetic optimization algorithm)
         # to the 'TestDistrictCooling' class and set them to the values specified in 'test_district_cooling.config'
-        cls.slave_variables = cea.optimization.slave_data.SlaveData()
-        cls.test_config = configparser.ConfigParser()
-        cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_district_cooling.config'))
+        self.slave_variables = cea.optimization.slave_data.SlaveData()
 
         # GENERAL
         # Setting the slave variable debug variable equal to cls.debug allows testing of specific functionalities within
         # the cooling_main script
-        cls.slave_variables.debug = cls.debug
+        self.slave_variables.debug = self.debug
 
         # DISTRICT COOLING
         # buildings connected
-        cls.slave_variables.num_total_buildings = \
-            json.loads(cls.test_config.get("input_district_cooling_network", "num_total_buildings"))
-        cls.slave_variables.number_of_buildings_district_scale_cooling = \
-            json.loads(cls.test_config.get("input_district_cooling_network", "number_of_buildings_district_scale_cooling"))
-        cls.slave_variables.DCN_barcode = \
-            json.loads(cls.test_config.get("input_district_cooling_network", "DCN_barcode"))
-        cls.slave_variables.building_names_cooling = \
-            json.loads(cls.test_config.get("input_district_cooling_network", "building_names_cooling"))
+        self.slave_variables.num_total_buildings = \
+            json.loads(self.test_config.get("input_district_cooling_network", "num_total_buildings"))
+        self.slave_variables.number_of_buildings_district_scale_cooling = \
+            json.loads(
+                self.test_config.get("input_district_cooling_network", "number_of_buildings_district_scale_cooling"))
+        self.slave_variables.DCN_barcode = \
+            json.loads(self.test_config.get("input_district_cooling_network", "DCN_barcode"))
+        self.slave_variables.building_names_cooling = \
+            json.loads(self.test_config.get("input_district_cooling_network", "building_names_cooling"))
 
         # total cooling demand
-        cls.slave_variables.Q_cooling_nom_W = \
-            json.loads(cls.test_config.get("input_district_cooling_network", "Q_cooling_nom_W"))
+        self.slave_variables.Q_cooling_nom_W = \
+            json.loads(self.test_config.get("input_district_cooling_network", "Q_cooling_nom_W"))
 
         # Network
-        cls.slave_variables.DHN_exists = DHN_exists
-        cls.slave_variables.DCN_exists = DCN_exists
-        cls.slave_variables.DC_network_summary_individual = summarize_network.network_main(cls.locator,
-                                                                                           cls.slave_variables.building_names_cooling,
-                                                                                           cls.weather_features.ground_temp,
-                                                                                           cls.slave_variables.num_total_buildings,
-                                                                                           'DC',
-                                                                                           cls.slave_variables.DCN_barcode)
+        self.slave_variables.DHN_exists = DHN_exists
+        self.slave_variables.DCN_exists = DCN_exists
+        self.slave_variables.DC_network_summary_individual = summarize_network.network_main(self.locator,
+                                                                                            self.slave_variables.building_names_cooling,
+                                                                                            self.weather_features.ground_temp,
+                                                                                            self.slave_variables.num_total_buildings,
+                                                                                            'DC',
+                                                                                            self.slave_variables.DCN_barcode)
 
         # HEATING TECHNOLOGIES
         # data-centre source waste heat
-        cls.slave_variables.WasteServersHeatRecovery = \
-            json.loads(cls.test_config.get("input_heating_technologies", "WasteServersHeatRecovery"))
+        self.slave_variables.WasteServersHeatRecovery = \
+            json.loads(self.test_config.get("input_heating_technologies", "WasteServersHeatRecovery"))
 
         # COOLING TECHNOLOGIES
         # NG-fired trigen
-        cls.slave_variables.NG_Trigen_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "NG_Trigen_on"))
-        cls.slave_variables.NG_Trigen_ACH_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "NG_Trigen_ACH_size_W"))
-        cls.slave_variables.NG_Trigen_CCGT_size_thermal_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "NG_Trigen_CCGT_size_thermal_W"))
-        cls.slave_variables.NG_Trigen_CCGT_size_electrical_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "NG_Trigen_CCGT_size_electrical_W"))
+        self.slave_variables.NG_Trigen_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "NG_Trigen_on"))
+        self.slave_variables.NG_Trigen_ACH_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "NG_Trigen_ACH_size_W"))
+        self.slave_variables.NG_Trigen_CCGT_size_thermal_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "NG_Trigen_CCGT_size_thermal_W"))
+        self.slave_variables.NG_Trigen_CCGT_size_electrical_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "NG_Trigen_CCGT_size_electrical_W"))
 
         # Water-source vapour compression chillers
-        cls.slave_variables.WS_BaseVCC_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "WS_BaseVCC_on"))
-        cls.slave_variables.WS_BaseVCC_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "WS_BaseVCC_size_W"))
+        self.slave_variables.WS_BaseVCC_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "WS_BaseVCC_on"))
+        self.slave_variables.WS_BaseVCC_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "WS_BaseVCC_size_W"))
 
-        cls.slave_variables.WS_PeakVCC_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "WS_PeakVCC_on"))
-        cls.slave_variables.WS_PeakVCC_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "WS_PeakVCC_size_W"))
+        self.slave_variables.WS_PeakVCC_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "WS_PeakVCC_on"))
+        self.slave_variables.WS_PeakVCC_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "WS_PeakVCC_size_W"))
 
         # Air-source vapour compression chiller
-        cls.slave_variables.AS_BaseVCC_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_BaseVCC_on"))
-        cls.slave_variables.AS_BaseVCC_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_BaseVCC_size_W"))
+        self.slave_variables.AS_BaseVCC_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_BaseVCC_on"))
+        self.slave_variables.AS_BaseVCC_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_BaseVCC_size_W"))
 
-        cls.slave_variables.AS_PeakVCC_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_PeakVCC_on"))
-        cls.slave_variables.AS_PeakVCC_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_PeakVCC_size_W"))
+        self.slave_variables.AS_PeakVCC_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_PeakVCC_on"))
+        self.slave_variables.AS_PeakVCC_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_PeakVCC_size_W"))
 
-        cls.slave_variables.AS_BackupVCC_on = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_BackupVCC_on"))
-        cls.slave_variables.AS_BackupVCC_size_W = \
-            json.loads(cls.test_config.get("input_cooling_technologies", "AS_BackupVCC_size_W"))
+        self.slave_variables.AS_BackupVCC_on = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_BackupVCC_on"))
+        self.slave_variables.AS_BackupVCC_size_W = \
+            json.loads(self.test_config.get("input_cooling_technologies", "AS_BackupVCC_size_W"))
 
         # Storage Cooling
-        cls.slave_variables.Storage_cooling_on = \
-            json.loads(cls.test_config.get("input_storage", "Storage_cooling_on"))
-        cls.slave_variables.Storage_cooling_size_W = \
-            json.loads(cls.test_config.get("input_storage", "Storage_cooling_size_W"))
+        self.slave_variables.Storage_cooling_on = \
+            json.loads(self.test_config.get("input_storage", "Storage_cooling_on"))
+        self.slave_variables.Storage_cooling_size_W = \
+            json.loads(self.test_config.get("input_storage", "Storage_cooling_size_W"))
 
     def test_cooling_main(self):
-        # config-project directory to the reference case
-        project_reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open')
-        self.config.project = project_reference_case
-
         # run district cooling activation script (and calculate all the costs, capacities and energy demands)
         district_cooling_fixed_costs, \
         district_cooling_generation_dispatch, \
@@ -163,7 +158,8 @@ class TestDistrictCooling(unittest.TestCase):
         expected_district_cooling_generation_dispatch = \
             json.loads(self.test_config.get("output_expected", "expected_district_cooling_generation_dispatch"))
         expected_district_cooling_electricity_requirements_dispatch = \
-            json.loads(self.test_config.get("output_expected", "expected_district_cooling_electricity_requirements_dispatch"))
+            json.loads(
+                self.test_config.get("output_expected", "expected_district_cooling_electricity_requirements_dispatch"))
         expected_district_cooling_fuel_requirements_dispatch = \
             json.loads(self.test_config.get("output_expected", "expected_district_cooling_fuel_requirements_dispatch"))
         expected_district_cooling_heat_release = \
