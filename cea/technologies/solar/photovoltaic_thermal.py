@@ -112,7 +112,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
 
         # print('generating groups of sensor points done for building %s' % building_name)
 
-        Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
+        Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, longitude,
                                     tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
 
         Final.to_csv(locator.PVT_results(building=building_name), index=True, float_format='%.2f',  na_rep='nan')
@@ -150,7 +150,7 @@ def calc_PVT(locator, config, latitude, longitude, weather_data, date_local, bui
     return
 
 
-def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, tot_bui_height_m,
+def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, longitude, tot_bui_height_m,
                         panel_properties_SC, panel_properties_PV, config):
     """
     To calculate the heat and electricity generated from PVT panels.
@@ -241,7 +241,8 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
                                                                                 radiation_Wperm2.I_direct,
                                                                                 radiation_Wperm2.I_diffuse, tilt_rad,
                                                                                 Sz_rad, teta_rad, teta_ed_rad,
-                                                                                teta_eg_rad, panel_properties_PV)
+                                                                                teta_eg_rad, panel_properties_PV,
+                                                                                latitude, longitude)
 
         T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_PV_Wperm2, weather_data.drybulb_C,
                                                        panel_properties_PV)
