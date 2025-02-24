@@ -6871,28 +6871,28 @@ get_database_archetypes_construction_type:
   file_type: csv
   schema:
     columns:
-      envelope_Es:
+      Es:
         description: Fraction of gross floor area with electrical demands.
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_Hs_ag:
+      Hs_ag:
         description: Fraction of above ground gross floor area air-conditioned.
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_Hs_bg:
+      Hs_bg:
         description: 'Fraction of below ground gross floor area air-conditioned '
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_Ns:
+      Ns:
         description: Fraction of net gross floor area.
         max: 1.0
         min: 0.0
@@ -6905,7 +6905,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      envelope_type_mass:
+      type_mass:
         choice:
           lookup:
             column: code
@@ -6915,7 +6915,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      envelope_type_floor:
+      type_floor:
         choice:
           lookup:
             column: code
@@ -6926,7 +6926,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      envelope_type_leak:
+      type_leak:
         choice:
           lookup:
             column: code
@@ -6935,7 +6935,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
-      envelope_type_part:
+      type_part:
         choice:
           lookup:
             column: code
@@ -6945,7 +6945,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      envelope_type_roof:
+      type_roof:
         choice:
           lookup:
             column: code
@@ -6954,7 +6954,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      envelope_type_shade:
+      type_shade:
         choice:
           lookup:
             column: code
@@ -6963,7 +6963,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      envelope_type_wall:
+      type_wall:
         choice:
           lookup:
             column: code
@@ -6973,7 +6973,7 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      envelope_type_win:
+      type_win:
         choice:
           lookup:
             column: code
@@ -6982,35 +6982,35 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      envelope_void_deck:
+      void_deck:
         description: Number of floors (from the ground up) with an open envelope
           (default = 0)
         min: 0
         type: int
         unit: '[-]'
         values: '{0...n}'
-      envelope_wwr_east:
+      wwr_east:
         description: Window to wall ratio in in facades facing east
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_wwr_north:
+      wwr_north:
         description: Window to wall ratio in in facades facing north
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_wwr_south:
+      wwr_south:
         description: Window to wall ratio in in facades facing south
         max: 1.0
         min: 0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      envelope_wwr_west:
+      wwr_west:
         description: Window to wall ratio in in facades facing west
         max: 1.0
         min: 0
