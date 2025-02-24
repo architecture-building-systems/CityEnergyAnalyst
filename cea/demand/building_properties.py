@@ -443,7 +443,7 @@ def calc_useful_areas(df):
     df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
     # conditioned area: areas that are heated/cooled
     df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
-    df['Aef'] = df['GFA_m2'] * df['envelope_Es']  # electrified area: share of gross floor area that is also electrified
+    df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
     df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
     return df
 
@@ -627,10 +627,10 @@ class EnvelopeProperties(object):
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
-        self.Hs_ag = envelope['envelope_Hs_ag']
-        self.Hs_bg = envelope['envelope_Hs_bg']
-        self.Ns = envelope['envelope_Ns']
-        self.Es = envelope['envelope_Es']
+        self.Hs_ag = envelope['Hs_ag']
+        self.Hs_bg = envelope['Hs_bg']
+        self.Ns = envelope['Ns']
+        self.Es = envelope['Es']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -896,21 +896,21 @@ def get_envelope_properties(locator, prop_architecture):
     prop_construction = pd.read_csv(locator.get_database_assemblies_envelope_mass())
     prop_leakage = pd.read_csv(locator.get_database_assemblies_envelope_tightness())
 
-    df_construction = prop_architecture.merge(prop_construction, left_on='envelope_type_mass', right_on='code', how='left')
-    df_leakage = prop_architecture.merge(prop_leakage, left_on='envelope_type_leak', right_on='code', how='left')
-    df_floor = prop_architecture.merge(prop_floor, left_on='envelope_type_base', right_on='code', how='left')
-    df_roof = prop_architecture.merge(prop_roof, left_on='envelope_type_roof', right_on='code', how='left')
-    df_wall = prop_architecture.merge(prop_wall, left_on='envelope_type_wall', right_on='code', how='left')
-    df_win = prop_architecture.merge(prop_win, left_on='envelope_type_win', right_on='code', how='left')
-    df_shading = prop_architecture.merge(prop_shading, left_on='envelope_type_shade', right_on='code', how='left')
+    df_construction = prop_architecture.merge(prop_construction, left_on='type_mass', right_on='code', how='left')
+    df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
+    df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
+    df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
+    df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
+    df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
+    df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
 
     check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
-    fields_construction = ['name', 'Cm_Af', 'envelope_void_deck', 'envelope_Hs_ag', 'envelope_Hs_bg', 'envelope_Ns', 'envelope_Es']
+    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
     fields_leakage = ['name', 'n50']
     fields_basement = ['name', 'U_base']
     fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
-    fields_wall = ['name', 'envelope_wwr_north', 'envelope_wwr_west', 'envelope_wwr_east', 'envelope_wwr_south',
+    fields_wall = ['name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall']
     fields_win = ['name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['name', 'rf_sh']
