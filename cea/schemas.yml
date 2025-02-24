@@ -1622,70 +1622,70 @@ get_building_architecture:
         type: string
         unit: '[-]'
         values: alphanumeric
-      envelope_void_deck:
+      void_deck:
         description: Number of floors (from the ground up) with an open envelope (default
           = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'
         min: 0
-      envelope_Es:
+      Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_Hs_ag:
+      Hs_ag:
         description: Fraction of above ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_Hs_bg:
+      Hs_bg:
         description: Fraction of below ground gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_Ns:
+      Ns:
         description: Fraction of net gross floor area.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_wwr_north:
+      wwr_north:
         description: Window to wall ratio in in facades facing north
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_wwr_east:
+      wwr_east:
         description: Window to wall ratio in in facades facing east
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_wwr_south:
+      wwr_south:
         description: Window to wall ratio in in facades facing south
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_wwr_west:
+      wwr_west:
         description: Window to wall ratio in in facades facing west
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      envelope_type_mass:
+      type_mass:
         description: Type of construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1695,7 +1695,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_mass
             column: code
-      envelope_type_leak:
+      type_leak:
         description: Tightness level assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1704,7 +1704,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_tightness
             column: code
-      envelope_type_roof:
+      type_roof:
         description: Roof construction assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1713,7 +1713,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_roof
             column: code
-      envelope_type_shade:
+      type_shade:
         description: Shading system assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -1722,7 +1722,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_shading
             column: code
-      envelope_type_wall:
+      type_wall:
         description: External wall construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1732,7 +1732,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_wall
             column: code
-      envelope_type_part:
+      type_part:
         description: Internal partitions construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1742,7 +1742,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_wall
             column: code
-      envelope_type_floor:
+      type_floor:
         description: Internal floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1752,7 +1752,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_floor
             column: code
-      envelope_type_base:
+      type_base:
         description: Basement floor construction assembly (relates to "code" in ENVELOPE
           assemblies)
         type: string
@@ -1762,7 +1762,7 @@ get_building_architecture:
           lookup:
             path: get_database_assemblies_envelope_floor
             column: code
-      envelope_type_win:
+      type_win:
         description: Window assembly (relates to "code" in ENVELOPE assemblies)
         type: string
         unit: '[-]'

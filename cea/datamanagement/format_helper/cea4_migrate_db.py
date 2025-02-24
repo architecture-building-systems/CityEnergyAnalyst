@@ -202,7 +202,7 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None, 
                 df.rename(columns=rename_dict, inplace=True)
 
             # Add prefix for sheets ending with '_ASSEMBLIES'
-            if sheet_name.endswith("_ASSEMBLIES"):
+            if sheet_name.endswith("_ASSEMBLIES") and sheet_name != "ENVELOPE_ASSEMBLIES":
                 prefix = sheet_name.replace("_ASSEMBLIES", "").lower()
                 df.columns = [f"{prefix}_{col}" if col != key_column else col for col in df.columns]
 

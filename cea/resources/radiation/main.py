@@ -62,9 +62,9 @@ def read_surface_properties(locator) -> pd.DataFrame:
 
     # query data
     building_names = architectural_properties['name']
-    df1 = match_code('envelope_type_win', surface_database_windows[['G_win']])
-    df2 = match_code('envelope_type_roof', surface_database_roof[['r_roof']])
-    df3 = match_code('envelope_type_wall', surface_database_walls[['r_wall']])
+    df1 = match_code('type_win', surface_database_windows[['G_win']])
+    df2 = match_code('type_roof', surface_database_roof[['r_roof']])
+    df3 = match_code('type_wall', surface_database_walls[['r_wall']])
 
     if len(errors) > 0:
         raise ValueError(f"The following building properties were not found in the database: {errors}. "

@@ -275,9 +275,9 @@ class BuildingProperties(object):
             has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
             has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
             if (not has_system_heating_flag and not has_system_cooling_flag and
-                    np.max([df.loc[building, 'envelope_Hs_ag'], df.loc[building, 'envelope_Hs_bg']]) <= 0.0):
-                df.loc[building, 'envelope_Hs_ag'] = 0.0
-                df.loc[building, 'envelope_Hs_bg'] = 0.0
+                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0):
+                df.loc[building, 'Hs_ag'] = 0.0
+                df.loc[building, 'Hs_bg'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
@@ -294,14 +294,14 @@ class BuildingProperties(object):
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         # Thermal transmission coefficient for windows and glazing in [W/K]
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['envelope_Hs_ag'])
+        df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['envelope_Hs_ag']) + df['Aroof'] * df['U_roof'] * df['envelope_Hs_ag']
+        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['Aroof'] * df['U_roof'] * df['Hs_ag']
 
         # steady-state Thermal transmission coefficient to the ground. in W/K
-        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['envelope_Hs_bg']
+        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
@@ -377,7 +377,7 @@ class BuildingProperties(object):
                 empty_envelope_ratio = 1
             return empty_envelope_ratio
 
-        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['envelope_void_deck'],
+        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'],
                                                                                   x['height_ag'],
                                                                                   x['floors_ag'],
                                                                                   x['Awall_ag'],
@@ -440,9 +440,9 @@ class BuildingProperties(object):
 
 
 def calc_useful_areas(df):
-    df['Aocc'] = df['GFA_m2'] * df['envelope_Ns']  # occupied floor area: all occupied areas in the building
+    df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
     # conditioned area: areas that are heated/cooled
-    df['Af'] = df['GFA_ag_m2'] * df['envelope_Hs_ag'] + df['GFA_bg_m2'] * df['envelope_Hs_bg']
+    df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
     df['Aef'] = df['GFA_m2'] * df['envelope_Es']  # electrified area: share of gross floor area that is also electrified
     df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
     return df
