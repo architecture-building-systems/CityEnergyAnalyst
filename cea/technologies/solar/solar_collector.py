@@ -985,7 +985,7 @@ def aggregate_solar_collector_results(building_names, panel_type, locator):
 
     for i, building in enumerate(building_names):
         # Read hourly results for the current building
-        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type)).set_index('Date')
+        hourly_results_per_building = pd.read_csv(locator.SC_results(building, panel_type)).set_index('date')
 
         # Aggregate hourly results
         if aggregated_hourly_results_df is None:
@@ -1026,7 +1026,7 @@ def aggregate_solar_collector_results(building_names, panel_type, locator):
     # Process aggregated annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
     annual_csv_path = locator.SC_total_buildings(panel_type)
-    aggregated_annual_results_df.to_csv(annual_csv_path, index=True, index_label="Name", float_format='%.2f', na_rep="nan")
+    aggregated_annual_results_df.to_csv(annual_csv_path, index=True, index_label="name", float_format='%.2f', na_rep="nan")
 
     return aggregated_hourly_results_df, aggregated_annual_results_df
 
