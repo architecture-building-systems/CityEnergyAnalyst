@@ -590,7 +590,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     #     print('GB not in expected range')
 
 
-    if 0 < GB_percent <= 0.1:
+    if 0 <= GB_percent <= 0.1:
         CATGB = 1
     elif 0.1 < GB_percent <= 0.2:
         CATGB = 2
@@ -612,7 +612,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
         CATGB = 10
     else:
         CATGB = None
-        print('GB not in expected range')
+        print(f'GB not in expected range: {GB_percent}.')
 
     return CATteta_z, CATB, CATGB
 
