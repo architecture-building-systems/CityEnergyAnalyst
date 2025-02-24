@@ -493,11 +493,11 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
         # Verify missing attributes/columns for CEA-4 format
         list_missing_attributes_zone_4 = dict_missing.get('zone')
         list_missing_attributes_surroundings_4 = dict_missing.get('surroundings')
-        list_missing_columns_air_conditioning_4 = dict_missing.get('air_conditioning')
-        list_missing_columns_architecture_4 = dict_missing.get('architecture')
+        list_missing_columns_air_conditioning_4 = dict_missing.get('hvac')
+        list_missing_columns_architecture_4 = dict_missing.get('envelope')
         list_missing_columns_indoor_comfort_4 = dict_missing.get('indoor_comfort')
         list_missing_columns_internal_loads_4 = dict_missing.get('internal_loads')
-        list_missing_columns_supply_systems_4 = dict_missing.get('supply_systems')
+        list_missing_columns_supply_systems_4 = dict_missing.get('supply')
         list_missing_columns_building_properties_schedules_buildings_4 = dict_missing.get('buildings')
         list_missing_columns_building_properties_schedules_monthly_multipliers_4 = dict_missing.get('monthly_multipliers')
 
