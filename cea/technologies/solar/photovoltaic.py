@@ -128,11 +128,11 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
         print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
-            {'Date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
+            {'date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
              'PV_walls_south_m2': 0,
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
-             'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
+             'E_PV_gen_kWh': 0, 'area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
         final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -229,9 +229,9 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
 
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['radiation_kWh'] = sum(total_radiation_kWh).values
-    potential['Area_PV_m2'] = sum(list_groups_area)
-    potential['Date'] = date_local
-    potential = potential.set_index('Date')
+    potential['area_PV_m2'] = sum(list_groups_area)
+    potential['date'] = date_local
+    potential = potential.set_index('date')
 
     return potential
 
@@ -762,7 +762,7 @@ def aggregate_results(locator, type_PVpanel, building_names):
     aggregated_annual_results = pd.DataFrame()
 
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.PV_results(building, type_PVpanel)).set_index('Date')
+        hourly_results_per_building = pd.read_csv(locator.PV_results(building, type_PVpanel)).set_index('date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:

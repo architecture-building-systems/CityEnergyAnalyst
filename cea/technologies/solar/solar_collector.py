@@ -128,10 +128,10 @@ def calc_SC(locator, config, type_panel, latitude, longitude, weather_data, date
              'SC_' + type_panel + '_roofs_top_m2': 0, 'SC_' + type_panel + '_roofs_top_Q_kWh': 0,
              'SC_' + type_panel + '_roofs_top_Tout_C': 0,
              'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0, 'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
-             'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0,
-             'Date':date_local},
+             'Q_SC_l_kWh': 0, 'area_SC_m2': 0, 'radiation_kWh': 0,
+             'date':date_local},
             index=np.zeros(HOURS_IN_YEAR))
-        Final.set_index('Date', inplace=True)
+        Final.set_index('date', inplace=True)
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -235,7 +235,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
         total_Qh_output_kWh[group] = list_results_from_SC[group][1] * number_modules_per_group
         total_radiation_kWh[group] = (radiation_Wperm2['I_sol'] * module_area_per_group_m2 / 1000)
 
-    potential['Area_SC_m2'] = sum(list_areas_groups)
+    potential['area_SC_m2'] = sum(list_areas_groups)
     potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['Q_SC_gen_kWh'] = sum(total_Qh_output_kWh)
     potential['mcp_SC_kWperC'] = sum(total_mcp_kWperC)
@@ -246,8 +246,8 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
     potential[
         'T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels #FIXME: change here when the flow rate is zero
 
-    potential['Date'] = date_local
-    potential = potential.set_index('Date')
+    potential['date'] = date_local
+    potential = potential.set_index('date')
 
     return potential
 
@@ -959,8 +959,6 @@ def calc_Cinv_SC(Area_m2, locator, panel_type):
 
     return Capex_a_SC_USD, Opex_fixed_SC_USD, Capex_SC_USD
 
-import pandas as pd
-import numpy as np
 
 def aggregate_solar_collector_results(building_names, panel_type, locator):
     """

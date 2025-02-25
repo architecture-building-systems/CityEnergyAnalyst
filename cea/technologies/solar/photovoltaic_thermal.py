@@ -123,7 +123,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
 
     else:  # This block is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
-            {'Date': date_local, 'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
+            {'date': date_local, 'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
              'PVT_walls_north_Tout_C': 0.0,
              'PVT_walls_south_E_kWh': 0.0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0.0,
              'PVT_walls_south_Tout_C': 0.0,
@@ -135,7 +135,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
              'PVT_roofs_top_Tout_C': 0.0,
              'Q_PVT_gen_kWh': 0.0, 'T_PVT_sup_C': 0.0, 'T_PVT_re_C': 0.0,
              'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
-             'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'Area_PVT_m2': 0.0,
+             'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'area_PVT_m2': 0.0,
              'radiation_kWh': 0.0}, index=range(HOURS_IN_YEAR))
         Final.to_csv(locator.PVT_results(building_name, type_pvpanel, type_scpanel), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
@@ -268,7 +268,7 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         total_el_output_PV_kWh[group] = list_results_from_PVT[group][6]
         total_radiation_kWh[group] = hourly_radiation_Wperm2[group] * module_area_per_group_m2 / 1000
 
-    potential['Area_PVT_m2'] = sum(list_groups_area)
+    potential['area_PVT_m2'] = sum(list_groups_area)
     potential['radiation_kWh'] = sum(total_radiation_kWh).values
     potential['E_PVT_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['Q_PVT_gen_kWh'] = sum(total_Qh_output_kWh)
@@ -279,8 +279,8 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
     T_out_C = (potential['Q_PVT_gen_kWh'] / potential['mcp_PVT_kWperC']) + T_in_C
     potential['T_PVT_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
-    potential['Date'] = date_local
-    potential = potential.set_index('Date')
+    potential['date'] = date_local
+    potential = potential.set_index('date')
 
     return potential
 
@@ -691,7 +691,7 @@ def aggregate_pvt_results(building_names, locator, type_pvpanel, type_scpanel):
 
     for i, building in enumerate(building_names):
         # Read hourly results for the current building
-        hourly_results_per_building = pd.read_csv(locator.PVT_results(building, type_pvpanel, type_scpanel)).set_index("Date")
+        hourly_results_per_building = pd.read_csv(locator.PVT_results(building, type_pvpanel, type_scpanel)).set_index("date")
 
         # Aggregate hourly results
         if aggregated_hourly_results_df is None:

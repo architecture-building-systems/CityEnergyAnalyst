@@ -1309,8 +1309,8 @@ class InputLocator(object):
                             "{building}_PV_sensors.csv".format(building=building))
 
     def SC_results(self, building, panel_type):
-        """scenario/outputs/data/potentials/solar/SC/{building}_SC.csv"""
-        return os.path.join(self.solar_potential_folder_SC(), "{building}_SC_{panel_type}.csv".format(**locals()))
+        """scenario/outputs/data/potentials/solar/SC/{building}_{panel_type}.csv"""
+        return os.path.join(self.solar_potential_folder_SC(), "{building}_{panel_type}.csv".format(**locals()))
 
     def SC_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/SC_{panel_type}_total.csv"""
