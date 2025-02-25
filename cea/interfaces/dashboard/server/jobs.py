@@ -3,38 +3,16 @@ jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
 from datetime import datetime
-from enum import IntEnum
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import psutil
 from fastapi import APIRouter, Request
-from pydantic import BaseModel
 
 from cea.interfaces.dashboard.dependencies import CEAJobs, CEAServerUrl, CEAWorkerProcesses
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
-
-
-class JobState(IntEnum):
-    # Job states
-    PENDING = 0
-    STARTED = 1
-    SUCCESS = 2
-    ERROR = 3
-    CANCELED = 4
-
-
-# FIXME: replace with database or similar solution
-class JobInfo(BaseModel):
-    """Store all the information required to run a job"""
-    id: str
-    script: str
-    parameters: dict
-    state: JobState = JobState.PENDING
-    error: Optional[str] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
 
 
 @router.get("/")
