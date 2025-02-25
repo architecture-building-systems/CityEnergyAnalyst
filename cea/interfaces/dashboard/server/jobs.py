@@ -82,7 +82,6 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
         job.error = None
         job.end_time = datetime.now()
         job.stdout = "".join(streams.get(job_id, []))
-        print("stdout", job.stdout)
         session.add(job)
         session.commit()
         session.refresh(job)
