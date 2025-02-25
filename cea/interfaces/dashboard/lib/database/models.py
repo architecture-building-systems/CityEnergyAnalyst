@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import IntEnum
 from typing import Optional
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Column, JSON
 
 class JobState(IntEnum):
     # Job states
@@ -15,12 +15,13 @@ class JobState(IntEnum):
 
 class JobInfo(SQLModel, table=True):
     """Store all the information required to run a job"""
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(default=None, primary_key=True)
     script: str = Field(index=True)
-    parameters: str
+    parameters: dict = Field(sa_column=Column(JSON))
     state: JobState = Field(default=JobState.PENDING, index=True)
     error: Optional[str] = None
-    start_time: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
+    created_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     stdout: Optional[str] = None
     stderr: Optional[str] = None

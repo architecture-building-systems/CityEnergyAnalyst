@@ -5,6 +5,8 @@ from typing_extensions import Annotated
 
 import cea.config
 from cea.config import CEA_CONFIG
+from cea.interfaces.dashboard.lib.database.models import JobInfo
+from cea.interfaces.dashboard.lib.database.session import get_session
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
@@ -81,16 +83,7 @@ async def get_plot_cache():
 
     return _plot_cache
 
-
-async def get_jobs():
-    _cache = caches.get(CACHE_NAME)
-    jobs = await _cache.get("jobs")
-
-    if jobs is None:
-        jobs = dict()
-        await _cache.set("jobs", jobs)
-
-    return AsyncDictCache(_cache, "jobs")
+    
 
 
 async def get_worker_processes():
@@ -117,7 +110,6 @@ def get_project_root():
 
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
-CEAJobs = Annotated[dict, Depends(get_jobs)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAServerUrl = Annotated[dict, Depends(get_server_url)]
 CEAProjectRoot = Annotated[dict, Depends(get_project_root)]
