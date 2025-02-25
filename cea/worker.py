@@ -56,7 +56,7 @@ def stream_poster(jobid, server, queue):
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
+        requests.put(f"{server}/streams/write/{jobid}", data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
@@ -97,7 +97,7 @@ def configure_streams(jobid, server):
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
-    response = requests.get("{server}/jobs/{jobid}".format(**locals()))
+    response = requests.get(f"{server}/jobs/{jobid}")
     job = response.json()
     return JobInfo(**job)
 
@@ -125,20 +125,20 @@ def read_parameters(job: JobInfo):
 
 
 def post_started(jobid, server):
-    requests.post("{server}/jobs/started/{jobid}".format(**locals()))
+    requests.post(f"{server}/jobs/started/{jobid}")
 
 
 def post_success(jobid, server):
-    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
+    requests.post(f"{server}/jobs/success/{jobid}")
 
 
 def post_error(exc, jobid, server):
-    requests.post("{server}/jobs/error/{jobid}".format(**locals()), data=exc)
+    requests.post(f"{server}/jobs/error/{jobid}", data=exc)
 
 
 def worker(jobid, server):
     """This is the main logic of the cea-worker."""
-    print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
+    print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
         job = fetch_job(jobid, server)
 
