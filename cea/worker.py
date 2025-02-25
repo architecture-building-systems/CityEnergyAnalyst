@@ -96,6 +96,14 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
+def close_streams():
+    """Close and flush all streams properly"""
+    if hasattr(sys.stdout, 'close'):
+        sys.stdout.close()
+    if hasattr(sys.stderr, 'close'):
+        sys.stderr.close()
+
+
 def fetch_job(jobid: str, server) -> JobInfo:
     response = requests.get(f"{server}/jobs/{jobid}")
     job = response.json()
@@ -128,15 +136,19 @@ def post_started(jobid, server):
     requests.post(f"{server}/jobs/started/{jobid}")
 
 
-def post_success(jobid, server):
+def post_success(jobid: str, server: str):
+    # Close streams before sending success
+    close_streams()
     requests.post(f"{server}/jobs/success/{jobid}")
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
+    # Close streams before sending error
+    close_streams()
     requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
-def worker(jobid, server):
+def worker(jobid: str, server: str):
     """This is the main logic of the cea-worker."""
     print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
@@ -148,11 +160,12 @@ def worker(jobid, server):
         post_success(jobid, server)
     except (SystemExit, Exception) as e:
         message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
+        print(f"\nERROR: {message}")
         exc = traceback.format_exc()
         post_error(message, exc, jobid, server)
     finally:
-        sys.stdout.close()
-        sys.stderr.close()
+        # Ensure streams are closed
+        close_streams()
 
 
 def main():
