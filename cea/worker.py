@@ -132,8 +132,8 @@ def post_success(jobid, server):
     requests.post(f"{server}/jobs/success/{jobid}")
 
 
-def post_error(exc, jobid, server):
-    requests.post(f"{server}/jobs/error/{jobid}", data=exc)
+def post_error(message: str, stacktrace: str, jobid: str, server: str):
+    requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
 def worker(jobid, server):
@@ -146,13 +146,10 @@ def worker(jobid, server):
         post_started(jobid, server)
         run_job(job)
         post_success(jobid, server)
-    except SystemExit as e:
-        post_error(str(e), jobid, server)
-        print(f"Job [{jobid}]: exited with code {e.code}")
-    except Exception as e:
+    except (SystemExit, Exception) as e:
+        message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
         exc = traceback.format_exc()
-        print(exc, file=sys.stderr)
-        post_error(str(e), jobid, server)
+        post_error(message, exc, jobid, server)
     finally:
         sys.stdout.close()
         sys.stderr.close()

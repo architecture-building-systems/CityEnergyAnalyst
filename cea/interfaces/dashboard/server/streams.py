@@ -7,6 +7,8 @@ from collections import defaultdict
 
 from fastapi import APIRouter, Request
 
+from cea.interfaces.dashboard.lib.database.models import JobInfo
+from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
@@ -16,12 +18,15 @@ streams = defaultdict(list)
 
 
 @router.get("/read/{job_id}")
-async def read_stream(job_id: str):
-    try:
-        return ''.join(streams[job_id])
-    except KeyError:
-        return ''
+async def read_stream(session: SessionDep, job_id: str):
+    stdout = streams.get(job_id)
 
+    if stdout is None:
+        stdout = session.get(JobInfo, job_id).stdout
+    else:
+        stdout = ''.join(stdout)
+
+    return stdout
 
 @router.put("/write/{job_id}")
 async def write_stream(job_id: str, request: Request):

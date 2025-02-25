@@ -7,14 +7,20 @@ from typing import Dict, Any
 import uuid
 
 import psutil
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
 from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
+
+class JobError(BaseModel):
+    message: str
+    stacktrace: str
 
 
 @router.get("/")
@@ -60,6 +66,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         await sio.emit("cea-worker-started", job.model_dump(mode='json'))
         return job
     except Exception as e:
+        print(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -74,21 +81,26 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = datetime.now()
+        job.stdout = "".join(streams.get(job_id, []))
+        print("stdout", job.stdout)
+        session.add(job)
         session.commit()
+        session.refresh(job)
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
         await sio.emit("cea-worker-success", job.model_dump(mode='json'))
         return job
     except Exception as e:
+        print(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses, request: Request) -> JobInfo:
-    body = await request.body()
-    error = body.decode("utf-8")
+async def set_job_error(session: SessionDep, job_id: str, error: JobError, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    message = error.message
+    error = error.stacktrace
 
     job = session.get(JobInfo, job_id)
     if not job:
@@ -96,14 +108,20 @@ async def set_job_error(session: SessionDep, job_id: str, worker_processes: CEAW
     
     try:
         job.state = JobState.ERROR
-        job.error = error
+        job.error = message
         job.end_time = datetime.now()
+        job.stdout = "".join(streams.get(job_id, []))
+        job.stderr = error
+        session.add(job)
+        session.commit()
+        session.refresh(job)
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
         await sio.emit("cea-worker-error", job.model_dump(mode='json'))
         return job
     except Exception as e:
+        print(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -130,12 +148,15 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
         job.end_time = datetime.now()
+        session.add(job)
         session.commit()
+        session.refresh(job)
 
         await kill_job(job_id, worker_processes)
         await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
         return job
     except Exception as e:
+        print(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
