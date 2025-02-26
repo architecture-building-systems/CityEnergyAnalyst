@@ -22,6 +22,7 @@ dependencies:
 - pip
 - psutil
 - pvlib-python
+- pythermalcomfort
 - python=3.8 # Held back by wntr version
 - python-louvain
 - pythonocc-core==7.7.0 # Avoid deprecation warnings
