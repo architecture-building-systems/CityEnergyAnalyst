@@ -9,7 +9,7 @@ Demand model of thermal loads
 import numpy as np
 import pandas as pd
 
-from cea.demand.comfort import calc_pmv_pdd_ashrae
+from cea.comfort import calc_pmv_pdd_ashrae
 from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
 from cea.demand import demand_writers
 from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
