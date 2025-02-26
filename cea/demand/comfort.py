@@ -7,19 +7,9 @@ Comfort models
 
 
 import numpy as np
-import pandas as pd
 import pythermalcomfort
 
 from cea.demand.latent_loads import calc_saturation_pressure, P_ATM
-from cea.constants import HOURS_IN_YEAR, HOURS_PRE_CONDITIONING
-from cea.demand import demand_writers
-from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
-from cea.demand import latent_loads
-from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
-from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-from cea.demand.building_properties import get_thermal_resistance_surface
-from cea.demand.latent_loads import convert_rh_to_moisture_content
-from cea.utilities import reporting
 
 
 def calc_pmv_pdd_ashrae(tsd, bpr, config):
