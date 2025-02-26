@@ -186,9 +186,9 @@ async def kill_job(jobid, worker_processes):
     await worker_processes.delete(jobid)
 
 
-def get_project_id(session,project_uri: str):
+def get_project_id(session: SessionDep, project_uri: str):
     """Get the project ID from the project URI."""
-    project = session.get(Project, project_uri)
+    project = session.exec(select(Project).where(Project.uri == project_uri)).first()
 
     # If project not found, create a new one
     if not project:
