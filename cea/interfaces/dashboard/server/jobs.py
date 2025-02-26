@@ -28,8 +28,8 @@ class JobError(BaseModel):
 async def get_jobs(session: SessionDep, config: CEAConfig) -> List[JobInfo]:
     """Get a list of jobs for the current project"""
     project_id = get_project_id(session, config.project)
-    
-    return [job.model_dump(mode='json') for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
+
+    return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
 
 @router.get("/{job_id}")
