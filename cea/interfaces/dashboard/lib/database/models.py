@@ -16,7 +16,6 @@ class JobState(IntEnum):
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    name: str
     uri: str
 
 
@@ -32,3 +31,4 @@ class JobInfo(SQLModel, table=True):
     end_time: Optional[datetime] = None
     stdout: Optional[str] = None
     stderr: Optional[str] = None
+    project_id: str = Field(foreign_key="project.id")

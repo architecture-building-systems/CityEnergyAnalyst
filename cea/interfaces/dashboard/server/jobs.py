@@ -3,16 +3,16 @@ jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
 from datetime import datetime, timezone
-from typing import Dict, Any
-import uuid
+from typing import Dict, Any, List
 
 import psutil
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses
-from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
-from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerUrl, CEAWorkerProcesses
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project
+from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session
 from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
@@ -25,23 +25,28 @@ class JobError(BaseModel):
 
 @router.get("/")
 @router.get("/list")
-async def get_jobs(session: SessionDep):
-    return [job.model_dump(mode='json') for job in session.query(JobInfo)]
+async def get_jobs(session: SessionDep, config: CEAConfig) -> List[JobInfo]:
+    """Get a list of jobs for the current project"""
+    project_id = get_project_id(session, config.project)
+    
+    return [job.model_dump(mode='json') for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
 
 @router.get("/{job_id}")
-async def get_job_info(session: SessionDep, job_id: str):
+async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
     return session.get(JobInfo, job_id)
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any], session: SessionDep):
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, config: CEAConfig) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
     print(f"NewJob: args={args}")
 
-    job = JobInfo(script=args["script"], parameters=args["parameters"])
+    project_id = get_project_id(session, config.project)
+
+    job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
     session.add(job)
     session.commit()
     session.refresh(job)
@@ -179,3 +184,17 @@ async def kill_job(jobid, worker_processes):
         child.kill()
     process.kill()
     await worker_processes.delete(jobid)
+
+
+def get_project_id(session,project_uri: str):
+    """Get the project ID from the project URI."""
+    project = session.get(Project, project_uri)
+
+    # If project not found, create a new one
+    if not project:
+        project = Project(name=project_uri, uri=project_uri)
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+    
+    return project.id
