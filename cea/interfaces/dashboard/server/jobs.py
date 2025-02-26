@@ -41,7 +41,7 @@ async def create_new_job(payload: Dict[str, Any], session: SessionDep):
     args = payload
     print(f"NewJob: args={args}")
 
-    job = JobInfo(id=str(uuid.uuid4()), script=args["script"], parameters=args["parameters"])
+    job = JobInfo(script=args["script"], parameters=args["parameters"])
     session.add(job)
     session.commit()
     session.refresh(job)

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from enum import IntEnum
 from typing import Optional
+import uuid
 
 from sqlmodel import Field, SQLModel, Column, JSON
 
@@ -13,9 +14,15 @@ class JobState(IntEnum):
     CANCELED = 4
 
 
+class Project(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+    name: str
+    uri: str
+
+
 class JobInfo(SQLModel, table=True):
     """Store all the information required to run a job"""
-    id: str = Field(default=None, primary_key=True)
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     script: str = Field(index=True)
     parameters: dict = Field(sa_column=Column(JSON))
     state: JobState = Field(default=JobState.PENDING, index=True)
