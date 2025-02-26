@@ -1358,6 +1358,16 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building)s.%(format)s' % locals())
 
+    # COMFORT
+
+    def get_comfort_results_folder(self):
+        """scenario/outputs/data/comfort"""
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'comfort')
+
+    def get_comfort_results_file(self, building, format='csv'):
+        """scenario/outputs/data/comfort/{building}.csv"""
+        return os.path.join(self.get_comfort_results_folder(), '%(building)s.%(format)s' % locals())
+
     # EMISSIONS
     def get_lca_emissions_results_folder(self):
         """scenario/outputs/data/emissions"""
