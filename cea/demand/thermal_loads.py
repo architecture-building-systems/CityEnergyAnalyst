@@ -165,7 +165,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
     # COMFORT CALCULATION
     pmv, ppd, tsv = calc_pmv_pdd_ashrae(tsd, bpr, config)
-    thermal_comfort_df = pd.DataFrame(index=date_range, columns=['PMV', 'PPD', 'TSV'], data=[pmv, ppd, tsv])
+    thermal_comfort_df = pd.DataFrame(index=date_range, data={'PMV': pmv, 'PPD': ppd, 'TSV': tsv})
     thermal_comfort_df.to_csv(locator.get_comfort_results_file(building_name))
 
     return
