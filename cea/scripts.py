@@ -100,7 +100,7 @@ def list_scripts(plugins):
             yield CeaScript(script_dict, category)
 
 
-def by_name(script_name, plugins):
+def by_name(script_name, plugins=[]):
     """
     Returns a CeaScript object by name.
 
