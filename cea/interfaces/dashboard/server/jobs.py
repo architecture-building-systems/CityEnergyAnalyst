@@ -11,8 +11,8 @@ from pydantic import BaseModel
 from sqlmodel import select
 
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerUrl, CEAWorkerProcesses
-from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project
-from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project, get_current_time
+from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
@@ -63,11 +63,12 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
     
     try:
         job.state = JobState.STARTED
-        job.start_time = datetime.now(timezone.utc)
+        job.start_time = get_current_time()
         session.add(job)
         session.commit()
         session.refresh(job)
 
+        print(job)
         await sio.emit("cea-worker-started", job.model_dump(mode='json'))
         return job
     except Exception as e:
@@ -85,7 +86,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
     try:
         job.state = JobState.SUCCESS
         job.error = None
-        job.end_time = datetime.now()
+        job.end_time = get_current_time()
         job.stdout = "".join(streams.get(job_id, []))
         session.add(job)
         session.commit()
@@ -113,7 +114,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
     try:
         job.state = JobState.ERROR
         job.error = message
-        job.end_time = datetime.now()
+        job.end_time = get_current_time()
         job.stdout = "".join(streams.get(job_id, []))
         job.stderr = error
         session.add(job)
@@ -151,7 +152,7 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
     try:
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
-        job.end_time = datetime.now()
+        job.end_time = get_current_time()
         session.add(job)
         session.commit()
         session.refresh(job)
