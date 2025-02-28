@@ -57,7 +57,7 @@ class JobInfo(SQLModel, table=True):
         return None
 
     @computed_field
-    def execution_time(self) -> Optional[float]:
+    def duration(self) -> Optional[float]:
         """Calculate job execution time in seconds if available"""
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
