@@ -2,7 +2,6 @@
 jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
-from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 import psutil
