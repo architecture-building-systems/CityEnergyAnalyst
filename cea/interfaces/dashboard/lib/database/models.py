@@ -21,6 +21,7 @@ class JobState(IntEnum):
     SUCCESS = 2
     ERROR = 3
     CANCELED = 4
+    DELETED = 5
 
 
 class Project(SQLModel, table=True):

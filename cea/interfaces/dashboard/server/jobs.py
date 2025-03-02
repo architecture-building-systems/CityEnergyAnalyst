@@ -5,7 +5,7 @@ import subprocess
 from typing import Dict, Any, List
 
 import psutil
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
 
@@ -163,6 +163,31 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         print(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{job_id}")
+async def delete_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    """
+    Delete a job from the database. This is only possible if the job is not running.
+    """
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    if job.state == JobState.STARTED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
+
+    try:
+        job.state = JobState.DELETED
+        session.delete(job)
+        session.commit()
+        session.refresh(job)
+        
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 async def kill_job(jobid, worker_processes):
