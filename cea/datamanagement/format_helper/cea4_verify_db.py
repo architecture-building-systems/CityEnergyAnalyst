@@ -651,7 +651,7 @@ def cea4_verify_db(scenario, verbose=False):
                 if list_missing_columns_csv_archetypes:
                     print('! Ensure column(s) are present in {item}.csv: {missing_columns}.'.format(item=item, missing_columns=', '.join(map(str, list_missing_columns_csv_archetypes))))
                 if list_issues_against_csv_archetypes:
-                    print('! Check value(s) in {item}.csv:')
+                    print('! Check value(s) in {item}.csv:'.format(item=item))
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_archetypes))
 
     #2. verify columns and values in .csv files for schedules
