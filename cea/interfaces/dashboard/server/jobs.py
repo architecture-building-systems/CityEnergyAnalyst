@@ -166,7 +166,7 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
 
 
 @router.delete("/{job_id}")
-async def delete_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     """
     Delete a job from the database. This is only possible if the job is not running.
     """
@@ -181,7 +181,6 @@ async def delete_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.state = JobState.DELETED
         session.delete(job)
         session.commit()
-        session.refresh(job)
         
         return job
     except Exception as e:
