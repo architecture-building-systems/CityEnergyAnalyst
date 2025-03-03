@@ -822,7 +822,8 @@ def main(config):
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
     print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
-    building_names = locator.get_zone_building_names()
+    # building_names = locator.get_zone_building_names()
+    building_names = config.solar.buildings
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry_df)
     weather_data = epwreader.epw_reader(locator.get_weather_file())
