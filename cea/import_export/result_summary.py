@@ -1487,36 +1487,6 @@ def filter_by_building_names(df_typology, list_buildings):
     return filtered_df
 
 
-def serial_filter_buildings(config, locator):
-
-    # Get the building info
-    df_typology = get_building_year_standard_main_use_type(locator)
-
-    # get the selecting criteria from config
-    list_buildings = config.result_summary.buildings
-    integer_year_start = config.result_summary.filter_buildings_by_year_start
-    integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_construction_type
-    list_main_use_type = config.result_summary.filter_buildings_by_use_type
-    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
-
-    # Initial filter to keep the selected buildings
-    df_typology = filter_by_building_names(df_typology, list_buildings)
-
-    # Further select by year
-    df_typology = filter_by_year_range(df_typology, integer_year_start, integer_year_end)
-
-    # Further filter by standard
-    df_typology = filter_by_standard(df_typology, list_standard)
-
-    # Further filter by main use type
-    df_typology = filter_by_main_use(df_typology, list_main_use_type)
-
-    # Further filter by main use type ratio
-    df_typology = filter_by_main_use_ratio(df_typology, ratio_main_use_type)
-
-    return df_typology
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
@@ -2070,12 +2040,18 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Gather info from config file
+    list_buildings = config.result_summary.buildings
+    integer_year_start = config.result_summary.filter_buildings_by_year_start
+    integer_year_end = config.result_summary.filter_buildings_by_year_end
+    list_standard = config.result_summary.filter_buildings_by_construction_type
+    list_main_use_type = config.result_summary.filter_buildings_by_use_type
+    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_selected_time_period = config.result_summary.aggregate_by_time_period
-    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     hour_start, hour_end = get_hours_start_end(config)
-    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
     bool_include_advanced_analytics = config.result_summary.include_advanced_analytics
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
+    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
     # Get the selected metrics
     list_list_metrics_with_date = get_list_list_metrics_with_date(config)
@@ -2090,7 +2066,17 @@ def main(config):
     os.makedirs(summary_folder, exist_ok=True)
 
     # Get the list of selected buildings
-    df_buildings = serial_filter_buildings(config, locator)
+    df_buildings = get_building_year_standard_main_use_type(locator)
+    # Initial filter to keep the selected buildings
+    df_buildings = filter_by_building_names(df_buildings, list_buildings)
+    # Further select by year
+    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
+    # Further filter by standard
+    df_buildings = filter_by_standard(df_buildings, list_standard)
+    # Further filter by main use type
+    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
+    # Further filter by main use type ratio
+    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
     list_buildings = df_buildings['name'].to_list()
 
     # Get the GFA of the selected buildings
