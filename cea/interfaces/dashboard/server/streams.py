@@ -22,7 +22,11 @@ async def read_stream(session: SessionDep, job_id: str):
     stdout = streams.get(job_id)
 
     if stdout is None:
-        stdout = session.get(JobInfo, job_id).stdout
+        job = session.get(JobInfo, job_id)
+        if job is None:
+            print(f"read_stream: job {job_id} not found")
+            return ""  # Return empty string for non-existent jobs
+        stdout = job.stdout
     else:
         stdout = ''.join(stdout)
 
