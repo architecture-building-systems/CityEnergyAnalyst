@@ -5,8 +5,6 @@ from typing_extensions import Annotated
 
 import cea.config
 from cea.config import CEA_CONFIG
-from cea.interfaces.dashboard.lib.database.models import JobInfo
-from cea.interfaces.dashboard.lib.database.session import get_session
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
