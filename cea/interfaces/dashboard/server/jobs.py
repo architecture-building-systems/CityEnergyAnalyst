@@ -103,7 +103,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
 @router.post("/error/{job_id}")
 async def set_job_error(session: SessionDep, job_id: str, error: JobError, worker_processes: CEAWorkerProcesses) -> JobInfo:
     message = error.message
-    error = error.stacktrace
+    stacktrace = error.stacktrace
 
     job = session.get(JobInfo, job_id)
     if not job:
@@ -114,7 +114,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
         job.error = message
         job.end_time = get_current_time()
         job.stdout = "".join(streams.get(job_id, []))
-        job.stderr = error
+        job.stderr = stacktrace
         session.add(job)
         session.commit()
         session.refresh(job)
