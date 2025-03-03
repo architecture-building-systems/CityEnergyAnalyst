@@ -839,27 +839,33 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
-                hourly_annually_df.insert(0, 'name', list_buildings)
-                if not bool_use_acronym:
-                    hourly_annually_df.columns = map_metrics_and_cea_columns(
-                        hourly_annually_df.columns, direction="columns_to_metrics"
-                    )
-                hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
+                if len(hourly_annually_df) == len(list_buildings):
+                    hourly_annually_df.insert(0, 'name', list_buildings)
+                    if not bool_use_acronym:
+                        hourly_annually_df.columns = map_metrics_and_cea_columns(
+                            hourly_annually_df.columns, direction="columns_to_metrics"
+                        )
+                    hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure all buildings selected for summary have simulated results: {appendix}.".format(appendix=appendix))
 
         if monthly_rows:
             monthly_df = pd.DataFrame(monthly_rows)
             if not monthly_df.empty:
-                monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-                # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                monthly_df = add_nominal_actual_and_coverage(monthly_df)
-                list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
-                list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
-                monthly_df.insert(0, 'name', list_buildings_series)
-                if not bool_use_acronym:
-                    monthly_df.columns = map_metrics_and_cea_columns(
-                        monthly_df.columns, direction="columns_to_metrics"
-                    )
-                monthly_results.append(monthly_df.reset_index(drop=True))
+                if len(monthly_df) == len(list_buildings):
+                    monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
+                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+                    monthly_df = add_nominal_actual_and_coverage(monthly_df)
+                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                    list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
+                    monthly_df.insert(0, 'name', list_buildings_series)
+                    if not bool_use_acronym:
+                        monthly_df.columns = map_metrics_and_cea_columns(
+                            monthly_df.columns, direction="columns_to_metrics"
+                        )
+                    monthly_results.append(monthly_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure all buildings selected for summary have simulated results: {appendix}.".format(appendix=appendix))
 
         if seasonally_rows:
             seasonally_df = pd.DataFrame(seasonally_rows)
@@ -885,13 +891,16 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
-                seasonally_df.insert(0, 'name', list_buildings_series)
-                if not bool_use_acronym:
-                    seasonally_df.columns = map_metrics_and_cea_columns(
-                        seasonally_df.columns, direction="columns_to_metrics"
-                    )
-                seasonally_results.append(seasonally_df.reset_index(drop=True))
+                if len(list_buildings_repeated) == len(seasonally_df['period'].unique()):
+                    list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
+                    seasonally_df.insert(0, 'name', list_buildings_series)
+                    if not bool_use_acronym:
+                        seasonally_df.columns = map_metrics_and_cea_columns(
+                            seasonally_df.columns, direction="columns_to_metrics"
+                        )
+                    seasonally_results.append(seasonally_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure all buildings selected for summary have simulated results: {appendix}.".format(appendix=appendix))
 
         list_list_df = [hourly_annually_results, monthly_results, seasonally_results]
         list_time_resolution = ['annually', 'monthly', 'seasonally']
@@ -1946,27 +1955,30 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                 df_buildings_path = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(
                     summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
                 )
-                df_buildings = pd.read_csv(df_buildings_path)
+                if os.path.exists(df_buildings_path):
+                    df_buildings = pd.read_csv(df_buildings_path)
 
-                if bool_use_acronym:
-                    df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
+                    if bool_use_acronym:
+                        df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
 
-                result_buildings = pd.merge(
-                    df_buildings,
-                    df_architecture[['name', area_column]],
-                    on='name', how='inner'
-                )
-                for col in list_metrics:
-                    if col in result_buildings.columns:
-                        result_buildings[col] = result_buildings[col] / result_buildings[area_column]
-                result_buildings.drop(columns=[area_column], inplace=True)
+                    result_buildings = pd.merge(
+                        df_buildings,
+                        df_architecture[['name', area_column]],
+                        on='name', how='inner'
+                    )
+                    for col in list_metrics:
+                        if col in result_buildings.columns:
+                            result_buildings[col] = result_buildings[col] / result_buildings[area_column]
+                    result_buildings.drop(columns=[area_column], inplace=True)
 
-                result_buildings = result_buildings.rename(columns=name_mapping)
+                    result_buildings = result_buildings.rename(columns=name_mapping)
 
-                list_result_buildings.append(result_buildings)
+                    list_result_buildings.append(result_buildings)
 
-                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
-                [list_result_buildings], [appendix], [time_period], bool_analytics=True)
+                    results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
+                    [list_result_buildings], [appendix], [time_period], bool_analytics=True)
+                else:
+                    print("Aggregation by buildings was skipped as the required input file was not found: {appendix}.".format(appendix=appendix))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
