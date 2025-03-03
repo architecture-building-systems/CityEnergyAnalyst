@@ -56,23 +56,23 @@ columns_mapping_dict_typology = {'YEAR': 'year',
                                  '3RD_USE_R': 'use_type3r'
                                  }
 
-columns_mapping_dict_envelope = {'Hs_ag': 'envelope_Hs_ag',
-                                     'Hs_bg': 'envelope_Hs_bg',
-                                     'Ns': 'envelope_Ns',
-                                     'Es': 'envelope_Es',
-                                     'void_deck': 'envelope_void_deck',
-                                     'wwr_north': 'envelope_wwr_north',
-                                     'wwr_south': 'envelope_wwr_south',
-                                     'wwr_east': 'envelope_wwr_east',
-                                     'wwr_west': 'envelope_wwr_west',
-                                     'type_cons': 'envelope_type_mass',
-                                     'type_leak': 'envelope_type_leak',
-                                     'type_floor': 'envelope_type_floor',
-                                     'type_part': 'envelope_type_part', 'type_roof': 'envelope_type_roof',
-                                     'type_base': 'envelope_type_base',
-                                     'type_wall': 'envelope_type_wall',
-                                     'type_win': 'envelope_type_win',
-                                     'type_shade': 'envelope_type_shade',
+columns_mapping_dict_envelope = {'Hs_ag': 'Hs_ag',
+                                     'Hs_bg': 'Hs_bg',
+                                     'Ns': 'Ns',
+                                     'Es': 'Es',
+                                     'void_deck': 'void_deck',
+                                     'wwr_north': 'wwr_north',
+                                     'wwr_south': 'wwr_south',
+                                     'wwr_east': 'wwr_east',
+                                     'wwr_west': 'wwr_west',
+                                     'type_cons': 'type_mass',
+                                     'type_leak': 'type_leak',
+                                     'type_floor': 'type_floor',
+                                     'type_part': 'type_part', 'type_roof': 'type_roof',
+                                     'type_base': 'type_base',
+                                     'type_wall': 'type_wall',
+                                     'type_win': 'type_win',
+                                     'type_shade': 'type_shade',
                                      }
 
 
@@ -493,11 +493,11 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
         # Verify missing attributes/columns for CEA-4 format
         list_missing_attributes_zone_4 = dict_missing.get('zone')
         list_missing_attributes_surroundings_4 = dict_missing.get('surroundings')
-        list_missing_columns_air_conditioning_4 = dict_missing.get('air_conditioning')
-        list_missing_columns_architecture_4 = dict_missing.get('architecture')
+        list_missing_columns_air_conditioning_4 = dict_missing.get('hvac')
+        list_missing_columns_architecture_4 = dict_missing.get('envelope')
         list_missing_columns_indoor_comfort_4 = dict_missing.get('indoor_comfort')
         list_missing_columns_internal_loads_4 = dict_missing.get('internal_loads')
-        list_missing_columns_supply_systems_4 = dict_missing.get('supply_systems')
+        list_missing_columns_supply_systems_4 = dict_missing.get('supply')
         list_missing_columns_building_properties_schedules_buildings_4 = dict_missing.get('buildings')
         list_missing_columns_building_properties_schedules_monthly_multipliers_4 = dict_missing.get('monthly_multipliers')
 

@@ -293,10 +293,10 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
     # get window properties
-    wwr_west = architecture_wwr_df.loc[name, "envelope_wwr_west"]
-    wwr_east = architecture_wwr_df.loc[name, "envelope_wwr_east"]
-    wwr_north = architecture_wwr_df.loc[name, "envelope_wwr_north"]
-    wwr_south = architecture_wwr_df.loc[name, "envelope_wwr_south"]
+    wwr_west = architecture_wwr_df.loc[name, "wwr_west"]
+    wwr_east = architecture_wwr_df.loc[name, "wwr_east"]
+    wwr_north = architecture_wwr_df.loc[name, "wwr_north"]
+    wwr_south = architecture_wwr_df.loc[name, "wwr_south"]
 
     window_west, \
     wall_west, \
