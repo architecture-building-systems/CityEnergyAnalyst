@@ -82,7 +82,7 @@ Renewable Energy Potential Assessment:
                  'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:max-roof-coverage',
-                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle']
+                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle', 'solar:buildings']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
