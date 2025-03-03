@@ -100,13 +100,16 @@ def list_scripts(plugins):
             yield CeaScript(script_dict, category)
 
 
-def by_name(script_name, plugins=[]):
+def by_name(script_name, plugins=None):
     """
     Returns a CeaScript object by name.
 
     :parameter str script_name: The name of the script to return (e.g. "demand")
     :parameter List[CeaPlugin]: The list of plugins to include in the search.
     """
+    if plugins is None:
+        plugins = []
+
     for script in list_scripts(plugins):
         # Convert script names that use "_" instead of "-"
         if script.name == script_name.replace("_", "-"):
