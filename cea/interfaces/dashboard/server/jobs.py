@@ -67,7 +67,6 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         session.commit()
         session.refresh(job)
 
-        print(job)
         await sio.emit("cea-worker-started", job.model_dump(mode='json'))
         return job
     except Exception as e:
@@ -123,6 +122,9 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
         await sio.emit("cea-worker-error", job.model_dump(mode='json'))
+
+        print(f"Error found in job {job_id}: {job.error}")
+        print(job.stderr)
         return job
     except Exception as e:
         print(e)
