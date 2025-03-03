@@ -34,7 +34,10 @@ async def get_jobs(session: SessionDep, config: CEAConfig) -> List[JobInfo]:
 @router.get("/{job_id}")
 async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
-    return session.get(JobInfo, job_id)
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
 @router.post("/new")
