@@ -25,7 +25,7 @@ SHAPEFILES = ['zone', 'surroundings']
 COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
-CSV_BUILDING_PROPERTIES_4 = ['hvac', 'architecture', 'indoor_comfort', 'internal_loads', 'supply']
+CSV_BUILDING_PROPERTIES_4 = ['hvac', 'envelope', 'indoor_comfort', 'internal_loads', 'supply']
 CSV_BUILDING_PROPERTIES_3_CSV = ['air_conditioning_csv', 'architecture_csv', 'supply_systems_csv']
 dict_mapping_building_properties = {'air_conditioning': 'hvac',
                                     'architecture': 'envelope',
@@ -40,6 +40,9 @@ mapping_dict_input_item_to_schema_locator = {'zone': 'get_zone_geometry',
                                              'air_conditioning': 'get_building_air_conditioning',
                                              'supply_systems': 'get_building_supply',
                                              'architecture': 'get_building_architecture',
+                                             'envelope': 'get_building_architecture',
+                                             'hvac': 'get_building_air_conditioning',
+                                             'supply': 'get_building_supply',
                                              'indoor_comfort': 'get_building_comfort',
                                              'streets': 'get_street_network',
                                              'schedules': 'get_building_weekly_schedules',
@@ -52,6 +55,9 @@ mapping_dict_input_item_to_id_column = {'zone': 'name',
                                         'weather': '',
                                         'internal_loads': 'name',
                                         'air_conditioning': 'name',
+                                        'hvac': 'name',
+                                        'envelope': 'name',
+                                        'supply': 'name',
                                         'supply_systems': 'name',
                                         'architecture': 'name',
                                         'indoor_comfort': 'name',
@@ -75,13 +81,19 @@ def path_to_input_file_without_db_4(scenario, item, building_name=None):
         path_to_input_file = os.path.join(scenario, "inputs", "building-geometry", "surroundings.shp")
     elif item == "air_conditioning":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "hvac.csv")
+    elif item == "hvac":
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "hvac.csv")
     elif item == "architecture":
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "envelope.csv")
+    elif item == "envelope":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "envelope.csv")
     elif item == "indoor_comfort":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "indoor_comfort.csv")
     elif item == "internal_loads":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "internal_loads.csv")
     elif item == "supply_systems":
+        path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "supply.csv")
+    elif item == "supply":
         path_to_input_file = os.path.join(scenario, "inputs", "building-properties", "supply.csv")
     elif item == 'streets':
         path_to_input_file = os.path.join(scenario, "inputs", "networks", "streets.shp")
@@ -462,14 +474,13 @@ def cea4_verify(scenario, verbose=False):
     #2. about .csv files under the "inputs/building-properties" folder
     dict_list_missing_columns_csv_building_properties = {}
 
-    list_missing_files_csv_building_properties_3 = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_3)
-    list_missing_files_csv_building_properties_4 = [dict_mapping_building_properties[item] if item in dict_mapping_building_properties else item for item in list_missing_files_csv_building_properties_3]
+    list_missing_files_csv_building_properties_4 = verify_file_exists_4(scenario, CSV_BUILDING_PROPERTIES_4)
     if list_missing_files_csv_building_properties_4:
         if verbose:
             print('! Ensure .csv file(s) are present in the building-properties folder: {missing_files_csv_building_properties}.'.format(missing_files_csv_building_properties=', '.join(map(str, list_missing_files_csv_building_properties_4))))
 
-    for item in CSV_BUILDING_PROPERTIES_3:
-        if item not in list_missing_files_csv_building_properties_3:
+    for item in CSV_BUILDING_PROPERTIES_4:
+        if item not in list_missing_files_csv_building_properties_4:
             list_missing_columns_csv_building_properties, list_issues_against_csv_building_properties = verify_file_against_schema_4(scenario, item)
             dict_list_missing_columns_csv_building_properties[item] = list_missing_columns_csv_building_properties + list_issues_against_csv_building_properties
             if verbose:
@@ -538,11 +549,11 @@ def cea4_verify(scenario, verbose=False):
         'schedules': list_missing_files_csv_building_properties_schedules,
         'buildings':  dict_list_missing_items_building_properties_schedules,
         'monthly_multipliers': list_missing_columns_schedules_monthly_multipliers,
-        'air_conditioning': dict_list_missing_columns_csv_building_properties['air_conditioning'],
-        'architecture': dict_list_missing_columns_csv_building_properties['architecture'],
+        'hvac': dict_list_missing_columns_csv_building_properties['hvac'],  # previously 'air_conditioning'
+        'envelope': dict_list_missing_columns_csv_building_properties['envelope'],  # previously 'architecture'
         'indoor_comfort': dict_list_missing_columns_csv_building_properties['indoor_comfort'],
         'internal_loads': dict_list_missing_columns_csv_building_properties['internal_loads'],
-        'supply_systems': dict_list_missing_columns_csv_building_properties['supply_systems'],
+        'supply': dict_list_missing_columns_csv_building_properties['supply'],  # previously 'supply_systems'
         'terrain': list_missing_files_terrain,
         'weather': list_missing_files_weather,
         'streets': list_missing_files_streets,
