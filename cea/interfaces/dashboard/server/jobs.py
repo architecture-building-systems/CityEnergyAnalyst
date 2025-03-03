@@ -193,7 +193,8 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
 
 async def kill_job(jobid, worker_processes):
     """Kill the processes associated with a jobid"""
-    if jobid not in await worker_processes.values():
+    if jobid not in await worker_processes.keys():
+        print(f"Unable to kill job. Could no find job: {jobid}.")
         return
 
     pid = await worker_processes.get(jobid)
