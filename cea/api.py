@@ -3,6 +3,15 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 import datetime
+from enum import Enum
+
+class ScriptStatus(str, Enum):
+    """
+    Enum for the status of a script.
+    """
+    COMPLETED = "completed"
+    FAILED = "failed"
+    INTERRUPTED = "interrupted"
 
 
 def register_scripts():
@@ -10,10 +19,10 @@ def register_scripts():
     import cea.scripts
     import importlib
 
-    def print_execution_time(start_time: float, status: str = "completed"):
+    def print_execution_time(start_time: float, status: ScriptStatus = ScriptStatus.COMPLETED):
         elapsed = (datetime.datetime.now() - start_time).total_seconds()
 
-        msg = f"Script {status}. Execution time: {elapsed:.2f}s"
+        msg = f"Script {status.value}. Execution time: {elapsed:.2f}s"
         print("")
         print("-" * len(msg))
         print(msg)
@@ -25,7 +34,10 @@ def register_scripts():
             script_func(config)
             print_execution_time(t0)
         except Exception:
-            print_execution_time(t0, status="failed")
+            print_execution_time(t0, status=ScriptStatus.FAILED.value)
+            raise
+        except SystemExit:
+            print_execution_time(t0, status=ScriptStatus.INTERRUPTED.value)
             raise
 
     def script_wrapper(cea_script):
