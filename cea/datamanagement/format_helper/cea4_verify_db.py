@@ -35,9 +35,9 @@ CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENE
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
 FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
-dict_assembly = {'ENVELOPE_MASS': 'envelope_type_mass', 'ENVELOPE_TIGHTNESS': 'envelope_type_leak', 'ENVELOPE_FLOOR': 'envelope_type_floor',
-                 'ENVELOPE_WALL': 'envelope_type_wall', 'ENVELOPE_WINDOW': 'envelope_type_win', 'ENVELOPE_SHADING': 'envelope_type_shade',
-                 'ENVELOPE_ROOF': 'envelope_type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
+dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak', 'ENVELOPE_FLOOR': 'type_floor',
+                 'ENVELOPE_WALL': 'type_wall', 'ENVELOPE_WINDOW': 'type_win', 'ENVELOPE_SHADING': 'type_shade',
+                 'ENVELOPE_ROOF': 'type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
                  'HVAC_HEATING': 'hvac_type_hs', 'HVAC_COOLING': 'hvac_type_cs', 'HVAC_VENTILATION': 'hvac_type_vent',
                  'SUPPLY_COOLING': 'supply_type_cs', 'SUPPLY_ELECTRICITY': 'supply_type_el', 'SUPPLY_HEATING': 'supply_type_hs',
                  'SUPPLY_HOTWATER': 'supply_type_dhw',
