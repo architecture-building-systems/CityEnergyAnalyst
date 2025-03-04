@@ -22,7 +22,7 @@ def register_scripts():
     def print_execution_time(start_time: float, status: ScriptStatus = ScriptStatus.COMPLETED):
         elapsed = (datetime.datetime.now() - start_time).total_seconds()
 
-        msg = f"Script {status.value}. Execution time: {elapsed:.2f}s"
+        msg = f"Script {status}. Execution time: {elapsed:.2f}s"
         print("")
         print("-" * len(msg))
         print(msg)
@@ -34,10 +34,10 @@ def register_scripts():
             script_func(config)
             print_execution_time(t0)
         except Exception:
-            print_execution_time(t0, status=ScriptStatus.FAILED.value)
+            print_execution_time(t0, status=ScriptStatus.FAILED)
             raise
         except SystemExit:
-            print_execution_time(t0, status=ScriptStatus.INTERRUPTED.value)
+            print_execution_time(t0, status=ScriptStatus.INTERRUPTED)
             raise
 
     def script_wrapper(cea_script):
