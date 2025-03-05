@@ -101,13 +101,3 @@ In order to access and work on the source code of CEA from pycharm, do:
    ``/Users/your_name/AppData/Local/conda/conda/envs/cea/python.exe``
    where *your_name* represents your user name on your Mac.
 #. Click apply changes.
-
-
-.. attention:: We ended Support of Grasshopper on 20.03.20. The legacy code can be found in our github repository/legacy.
-As of 24.06.2024, you may export and load your Grasshopper geometries into CEA using a provisional link explained
-in this `CEA Lesson <https://www.cityenergyanalyst.com/learning-camp/cea-s-01-from-grasshopper-to-cea-dashboard>`__.
-
-.. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
-
-
-

@@ -41,10 +41,3 @@ In order to access and work on the source code of CEA from pycharm, do:
 #. Click ``System Interpreter`` from the left hand list and select existing environment.
 #. Point to ``C:\Users\<you>\Documents\CityEnergyAnalyst\Dependencies\Python\python.exe``
 #. Click apply changes.
-
-
-.. attention:: We ended Support of Grasshopper on 20.03.20. The legacy code can be found in our github repository/legacy.
-As of 24.06.2024, you may export and load your Grasshopper geometries into CEA using a provisional link explained
-in this `CEA Lesson <https://www.cityenergyanalyst.com/learning-camp/cea-s-01-from-grasshopper-to-cea-dashboard>`__.
-
-.. attention:: We ended Support of ArcGIS on 15.04.19. The legacy code can be found in our github repository/legacy
