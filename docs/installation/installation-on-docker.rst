@@ -2,13 +2,13 @@ Installation guide for Docker
 ==============================
 
 Pre-requisites
-~~~~~~~~~~~~~~~
+--------------
 
 * `Docker <https://docs.docker.com/get-docker/>`__
 * Knowledge on how to run commands using Docker
 
 Installation
-~~~~~~~~~~~~~~~~~
+------------
 #. Pull CEA docker image from GitHub:
 
 	.. code-block:: bash
@@ -23,7 +23,7 @@ Installation
 	- **Desktop App**: Open source desktop application developed by the CEA team. (https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI)
 
 Command line interface
-______________________
+~~~~~~~~~~~~~~~~~~~~~~
 
 In order to run CEA from the command line, you will need to run the following command: 
 
@@ -31,14 +31,16 @@ In order to run CEA from the command line, you will need to run the following co
 
 	docker run --rm -v PATH_TO_PROJECT:/projects ghcr.io/architecture-building-systems/cityenergyanalyst/cea cea
 
-``--rm`` :							ensures that the container is removed after the command is executed.
+``--rm``
+	ensures that the container is removed after the command is executed.
 
-``-v PATH_TO_PROJECT:/projects`` :	mounts the folder containing your CEA projects on your local machine to the container.
+``-v PATH_TO_PROJECT:/projects``
+	mounts the folder containing your CEA projects on your local machine to the container.
 
 That's it! `You can run the CEA command interface normally </developer/interfaces.html#the-command-line-interface>`_.
 
 Desktop App
-___________
+~~~~~~~~~~~
 
 In order to use the CEA docker container with the Desktop App, you will need to start the docker container **every time before** starting the Desktop App:
 
@@ -46,13 +48,17 @@ In order to use the CEA docker container with the Desktop App, you will need to 
 
 	docker run --rm -t -p 5050:5050 -v PATH_TO_PROJECT:/projects ghcr.io/architecture-building-systems/cityenergyanalyst/cea
 
-``--rm`` :							ensures that the container is removed after the command is executed.
+``--rm``
+	ensures that the container is removed after the command is executed.
 
-``-t`` :							allocates a pseudo-TTY, which keeps the container running and provides terminal output.
+``-t``
+	allocates a pseudo-TTY, which keeps the container running and provides terminal output.
 
-``-p 5050:5050`` :					maps the container's port 5050 to the host's port 5050.
+``-p 5050:5050``
+	maps the container's port 5050 to the host's port 5050.
 
-``-v PATH_TO_PROJECT:/projects`` :	mounts the folder containing your CEA projects on your local machine to the container.
+``-v PATH_TO_PROJECT:/projects``
+	mounts the folder containing your CEA projects on your local machine to the container.
 
 .. note:: 
 
