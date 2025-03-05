@@ -35,7 +35,7 @@ In order to run CEA from the command line, you will need to run the following co
 
 ``-v PATH_TO_PROJECT:/projects`` :	mounts the folder containing your CEA projects on your local machine to the container.
 
-That's it! `You can run the CEA command interface normally <developer/interfaces.html#the-command-line-interface>`__.
+That's it! `You can run the CEA command interface normally </developer/interfaces.html#the-command-line-interface>`_.
 
 Desktop App
 ___________
