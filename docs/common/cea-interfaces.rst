@@ -1,9 +1,9 @@
-There are 3 ways to use CEA.
+We currently support 3 main ways to use CEA.
 
-#. CEA Dashboard: This a graphical user interface to CEA, open source and developed by the CEA Team using web-based technology.
-#. CEA Command Line: This is the command line to all the commands of CEA from your computer terminal.
-#. The Pycharm Interface: this interface provides access to all the source code of CEA.
+    #. **CEA Desktop App**: A graphical user interface to CEA, open source and developed by the CEA Team using web-based technology.
+    #. **Command Line**: This is the command line to all the commands of CEA from your computer terminal.
+    #. **Pycharm**: Provides access to all the source code of CEA.
 
-Both Non-Developer and Developer versions support the CEA Dashboard interface.
+We recommend users to use the **CEA Desktop App**.
 
-If you intend to use the Pycharm Interface and/or CEA Command Line, install the Developer version.
+If you intend to use CEA with **Pycharm** and/or the **Command Line**, you can :doc:`install CEA manually from source </developer/installing-from-source>`.
