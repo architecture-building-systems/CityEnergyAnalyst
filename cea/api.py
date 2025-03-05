@@ -19,7 +19,7 @@ def register_scripts():
     import cea.scripts
     import importlib
 
-    def print_execution_time(start_time: datetime.dateime, status: ScriptStatus = ScriptStatus.COMPLETED):
+    def print_execution_time(start_time: datetime.datetime, status: ScriptStatus = ScriptStatus.COMPLETED):
         elapsed = (datetime.datetime.now() - start_time).total_seconds()
 
         msg = f"Script {status}. Execution time: {elapsed:.2f}s"
