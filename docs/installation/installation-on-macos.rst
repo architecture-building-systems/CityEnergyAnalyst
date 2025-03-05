@@ -14,6 +14,4 @@ Step 2: Run CEA Desktop App
 #. Locate the CEA application in the Applications folder or Launchpad and double click on it
 #. Start using CEA Desktop App
 
-You can find a series of tutorials at `CEA Learning Camp <https://www.cityenergyanalyst.com/learning-camp>`__ to help you get started!
-
-.. note:: If you have any issues with the installation, you can create an issue on `GitHub <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__.
+.. include:: installation-footer.rst
