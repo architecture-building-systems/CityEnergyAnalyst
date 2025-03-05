@@ -2,115 +2,138 @@
 jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
-from datetime import datetime
-from enum import IntEnum
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List
 
 import psutil
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
+from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAJobs, CEAServerUrl, CEAWorkerProcesses
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerUrl, CEAWorkerProcesses
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project, get_current_time
+from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
 
-
-class JobState(IntEnum):
-    # Job states
-    PENDING = 0
-    STARTED = 1
-    SUCCESS = 2
-    ERROR = 3
-    CANCELED = 4
-
-
-# FIXME: replace with database or similar solution
-class JobInfo(BaseModel):
-    """Store all the information required to run a job"""
-    id: str
-    script: str
-    parameters: dict
-    state: JobState = JobState.PENDING
-    error: Optional[str] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+class JobError(BaseModel):
+    message: str
+    stacktrace: str
 
 
 @router.get("/")
 @router.get("/list")
-async def get_jobs(jobs: CEAJobs):
-    return [job.dict() for job in await jobs.values()]
+async def get_jobs(session: SessionDep, config: CEAConfig) -> List[JobInfo]:
+    """Get a list of jobs for the current project"""
+    project_id = get_project_id(session, config.project)
+
+    return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
 
 @router.get("/{job_id}")
-async def get_job_info(jobs: CEAJobs, job_id: str):
+async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
-    return await jobs.get(job_id)
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
 @router.post("/new")
-async def create_new_job(jobs: CEAJobs, payload: Dict[str, Any]):
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, config: CEAConfig) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
     print(f"NewJob: args={args}")
 
-    async def next_id():
-        """
-        FIXME: replace with better solution
-        """
-        try:
-            return str(len(await jobs.keys()) + 1)
-        except ValueError:
-            # this is the first job...
-            return str(1)
+    project_id = get_project_id(session, config.project)
 
-    job = JobInfo(id=await next_id(), script=args["script"], parameters=args["parameters"])
-    await jobs.set(job.id, job)
+    job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+
     await sio.emit("cea-job-created", job.model_dump(mode='json'))
     return job
 
 
 @router.post("/started/{job_id}")
-async def set_job_started(jobs: CEAJobs, job_id: str) -> JobInfo:
-    job = await jobs.get(job_id)
-    job.state = JobState.STARTED
-    job.start_time = datetime.now()
-    await jobs.set(job.id, job)
+async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    try:
+        job.state = JobState.STARTED
+        job.start_time = get_current_time()
+        session.add(job)
+        session.commit()
+        session.refresh(job)
 
-    await sio.emit("cea-worker-started", job.model_dump(mode='json'))
-    return job
+        await sio.emit("cea-worker-started", job.model_dump(mode='json'))
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
-    job = await jobs.get(job_id)
-    job.state = JobState.SUCCESS
-    job.error = None
-    job.end_time = datetime.now()
-    await jobs.set(job.id, job)
+async def set_job_success(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    try:
+        job.state = JobState.SUCCESS
+        job.error = None
+        job.end_time = get_current_time()
+        job.stdout = "".join(streams.get(job_id, []))
+        session.add(job)
+        session.commit()
+        session.refresh(job)
 
-    if job.id in await worker_processes.values():
-        await worker_processes.delete(job.id)
-    await sio.emit("cea-worker-success", job.model_dump(mode='json'))
-    return job
+        if job.id in await worker_processes.values():
+            await worker_processes.delete(job.id)
+        await sio.emit("cea-worker-success", job.model_dump(mode='json'))
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses, request: Request) -> JobInfo:
-    body = await request.body()
-    error = body.decode("utf-8")
+async def set_job_error(session: SessionDep, job_id: str, error: JobError, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    message = error.message
+    stacktrace = error.stacktrace
 
-    job = await jobs.get(job_id)
-    job.state = JobState.ERROR
-    job.error = error
-    job.end_time = datetime.now()
-    await jobs.set(job.id, job)
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    try:
+        job.state = JobState.ERROR
+        job.error = message
+        job.end_time = get_current_time()
+        job.stdout = "".join(streams.get(job_id, []))
+        job.stderr = stacktrace
+        session.add(job)
+        session.commit()
+        session.refresh(job)
 
-    if job.id in await worker_processes.values():
-        await worker_processes.delete(job.id)
-    await sio.emit("cea-worker-error", job.model_dump(mode='json'))
-    return job
+        if job.id in await worker_processes.values():
+            await worker_processes.delete(job.id)
+        await sio.emit("cea-worker-error", job.model_dump(mode='json'))
+
+        print(f"Error found in job {job_id}: {job.error}")
+        print(job.stderr)
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post('/start/{job_id}')
@@ -125,21 +148,56 @@ async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerU
 
 
 @router.post("/cancel/{job_id}")
-async def cancel_job(jobs: CEAJobs, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
-    job = await jobs.get(job_id)
-    job.state = JobState.CANCELED
-    job.error = "Canceled by user"
-    job.end_time = datetime.now()
-    await jobs.set(job.id, job)
+async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    try:
+        job.state = JobState.CANCELED
+        job.error = "Canceled by user"
+        job.end_time = get_current_time()
+        session.add(job)
+        session.commit()
+        session.refresh(job)
 
-    await kill_job(job_id, worker_processes)
-    await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
-    return job
+        await kill_job(job_id, worker_processes)
+        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{job_id}")
+async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
+    """
+    Delete a job from the database. This is only possible if the job is not running.
+    """
+    job = session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    if job.state == JobState.STARTED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
+
+    try:
+        job.state = JobState.DELETED
+        session.delete(job)
+        session.commit()
+        
+        return job
+    except Exception as e:
+        print(e)
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 async def kill_job(jobid, worker_processes):
     """Kill the processes associated with a jobid"""
-    if jobid not in await worker_processes.values():
+    if jobid not in await worker_processes.keys():
+        print(f"Unable to kill job. Could no find job: {jobid}.")
         return
 
     pid = await worker_processes.get(jobid)
@@ -156,3 +214,17 @@ async def kill_job(jobid, worker_processes):
         child.kill()
     process.kill()
     await worker_processes.delete(jobid)
+
+
+def get_project_id(session: SessionDep, project_uri: str):
+    """Get the project ID from the project URI."""
+    project = session.exec(select(Project).where(Project.uri == project_uri)).first()
+
+    # If project not found, create a new one
+    if not project:
+        project = Project(name=project_uri, uri=project_uri)
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+    
+    return project.id
