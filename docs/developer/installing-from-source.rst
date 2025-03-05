@@ -106,3 +106,4 @@ You should be able to run the following command to see the help message:
     usage: cea --help SCRIPT
         to get additional help specific to a script
 
+To use it in Pycharm, see :doc:`pycharm-interface`.
