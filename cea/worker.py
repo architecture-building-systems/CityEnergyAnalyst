@@ -56,7 +56,7 @@ def stream_poster(jobid, server, queue):
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
+        requests.put(f"{server}/streams/write/{jobid}", data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
@@ -96,8 +96,16 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
+def close_streams():
+    """Close and flush all streams properly"""
+    if hasattr(sys.stdout, 'close'):
+        sys.stdout.close()
+    if hasattr(sys.stderr, 'close'):
+        sys.stderr.close()
+
+
 def fetch_job(jobid: str, server) -> JobInfo:
-    response = requests.get("{server}/jobs/{jobid}".format(**locals()))
+    response = requests.get(f"{server}/jobs/{jobid}")
     job = response.json()
     return JobInfo(**job)
 
@@ -125,20 +133,24 @@ def read_parameters(job: JobInfo):
 
 
 def post_started(jobid, server):
-    requests.post("{server}/jobs/started/{jobid}".format(**locals()))
+    requests.post(f"{server}/jobs/started/{jobid}")
 
 
-def post_success(jobid, server):
-    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
+def post_success(jobid: str, server: str):
+    # Close streams before sending success
+    close_streams()
+    requests.post(f"{server}/jobs/success/{jobid}")
 
 
-def post_error(exc, jobid, server):
-    requests.post("{server}/jobs/error/{jobid}".format(**locals()), data=exc)
+def post_error(message: str, stacktrace: str, jobid: str, server: str):
+    # Close streams before sending error
+    close_streams()
+    requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
-def worker(jobid, server):
+def worker(jobid: str, server: str):
     """This is the main logic of the cea-worker."""
-    print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
+    print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
         job = fetch_job(jobid, server)
 
@@ -146,16 +158,14 @@ def worker(jobid, server):
         post_started(jobid, server)
         run_job(job)
         post_success(jobid, server)
-    except SystemExit as e:
-        post_error(str(e), jobid, server)
-        print(f"Job [{jobid}]: exited with code {e.code}")
-    except Exception as e:
+    except (SystemExit, Exception) as e:
+        message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
+        print(f"\nERROR: {message}")
         exc = traceback.format_exc()
-        print(exc, file=sys.stderr)
-        post_error(str(e), jobid, server)
+        post_error(message, exc, jobid, server)
     finally:
-        sys.stdout.close()
-        sys.stderr.close()
+        # Ensure streams are closed
+        close_streams()
 
 
 def main():
