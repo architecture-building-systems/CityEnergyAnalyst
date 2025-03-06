@@ -27,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
+def electricity_calculations_of_all_buildings(config, locator, master_to_slave_vars,
                                               district_heating_generation_dispatch,
                                               district_heating_electricity_requirements_dispatch,
                                               district_cooling_generation_dispatch,
@@ -38,7 +38,7 @@ def electricity_calculations_of_all_buildings(locator, master_to_slave_vars,
     building_names = master_to_slave_vars.building_names_electricity
 
     # GET ENERGY GENERATION OF THE ELECTRICAL GRID
-    district_microgrid_generation_dispatch = calc_district_system_electricity_generated(locator,
+    district_microgrid_generation_dispatch = calc_district_system_electricity_generated(config, locator,
                                                                                         master_to_slave_vars)
 
     # GET ENERGY REQUIREMENTS
@@ -290,11 +290,11 @@ def electricity_activation_curve(E_CHP_gen_W,
            E_GRID_directload_W
 
 
-def calc_district_system_electricity_generated(locator,
+def calc_district_system_electricity_generated(config, locator,
                                                master_to_slave_vars):
     # TODO: Handle the case where no PV potential has been calculated (assuming no PV capacity is installed)
     # TECHNOLOGIES THAT ONLY GENERATE ELECTRICITY
-    E_PV_gen_W = calc_available_generation_PV(locator, master_to_slave_vars.building_names_all,
+    E_PV_gen_W = calc_available_generation_PV(config, locator, master_to_slave_vars.building_names_all,
                                               master_to_slave_vars.PV_share)
 
     district_electricity_generation_dispatch = {
@@ -304,16 +304,17 @@ def calc_district_system_electricity_generated(locator,
     return district_electricity_generation_dispatch
 
 
-def calc_available_generation_PV(locator, buildings, share_allowed):
+def calc_available_generation_PV(config, locator, buildings, share_allowed):
     """
     :param cea.inputlocator.InputLocator locator:
     :param buildings:
     :param share_allowed:
     :return:
     """
+    panel_type = config.solar.type_PVpanel
     E_PV_gen_kWh = np.zeros(HOURS_IN_YEAR)
     for building in buildings:
-        building_PVT = pd.read_csv(locator.PV_results(building)).fillna(value=0.0)
+        building_PVT = pd.read_csv(locator.PV_results(building, panel_type)).fillna(value=0.0)
         E_PV_gen_kWh += building_PVT['E_PV_gen_kWh']
     E_PVT_gen_Wh = E_PV_gen_kWh * share_allowed * 1000
     return E_PVT_gen_Wh

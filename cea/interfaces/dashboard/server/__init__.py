@@ -1,49 +1,33 @@
-"""
-The /server api blueprint is used by cea-worker processes to manage jobs and files.
-"""
+from fastapi import APIRouter
 
-from flask import Blueprint, current_app
-from flask_restx import Api, Resource
-from .jobs import api as jobs, worker_processes, kill_job
-from .streams import api as streams
+import cea
+import cea.interfaces.dashboard.server.jobs as jobs
+import cea.interfaces.dashboard.server.streams as streams
+from cea.interfaces.dashboard.dependencies import get_worker_processes, CEAServerSettings
 
-__author__ = "Daren Thomas"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+router = APIRouter()
 
-blueprint = Blueprint('server', __name__, url_prefix='/server')
-api = Api(blueprint)
-
-# there might potentially be more namespaces added in the future, e.g. a method for locating files etc.
-api.add_namespace(jobs, path='/jobs')
-api.add_namespace(streams, path='/streams')
+router.include_router(jobs.router, prefix='/jobs')
+router.include_router(streams.router, prefix='/streams')
 
 
-def shutdown_worker_processes():
+async def shutdown_worker_processes():
     """When shutting down the flask server, make sure any subprocesses are also terminated. See issue #2408."""
-    for jobid in worker_processes.keys():
-        kill_job(jobid)
+    worker_processes = await get_worker_processes()
+    for jobid in await worker_processes.keys():
+        await jobs.kill_job(jobid, worker_processes)
 
 
-def shutdown_server():
-    print("Shutting down server...")
-    shutdown_worker_processes()
-    current_app.socketio.stop()
+@router.get("/alive")
+async def get_health_check():
+    return {'success': True}
 
 
-@api.route("/alive")
-class ServerAlive(Resource):
-    def get(self):
-        return {'success': True}
+@router.get("/version")
+async def get_version():
+    return {'version': cea.__version__}
 
 
-@api.route("/shutdown")
-class ServerShutdown(Resource):
-    def post(self):
-        shutdown_server()
-        return {'message': 'Shutting down...'}
+@router.get("/settings")
+async def get_settings(settings: CEAServerSettings):
+    return {'allow_path_transversal': settings.allow_path_transversal()}

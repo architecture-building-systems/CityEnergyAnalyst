@@ -1,0 +1,5 @@
+description,code,MECH_VENT,WIN_VENT,HEAT_REC,NIGHT_FLSH,ECONOMIZER
+Window ventilation,HVAC_VENTILATION_AS0,False,True,False,True,False
+Mechanical ventilation with demand control,HVAC_VENTILATION_AS1,True,False,True,True,False
+Mechanical ventilation with demand control and economizer,HVAC_VENTILATION_AS2,True,False,True,True,True
+Window ventilation - no night flushing,HVAC_VENTILATION_AS3,False,True,False,False,False

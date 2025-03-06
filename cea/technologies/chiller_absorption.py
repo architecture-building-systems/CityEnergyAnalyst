@@ -412,10 +412,10 @@ def main(config):
 
     # Input parameters for test cases
     case_1_dict = {'mdot_chw_kgpers':0.8, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 286.0, 'T_hw_in_C': 84.6, 'ACH_type': 'single'}
-    case_2_dict = {'mdot_chw_kgpers': 39.7, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 287.0, 'T_hw_in_C': 180,
-                   'ACH_type': 'double'}
-    case_3_dict = {'mdot_chw_kgpers': 55.6, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 285.0, 'T_hw_in_C': 210,
-                   'ACH_type': 'triple'}
+    # case_2_dict = {'mdot_chw_kgpers': 39.7, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 287.0, 'T_hw_in_C': 180,
+    #                'ACH_type': 'double'}
+    # case_3_dict = {'mdot_chw_kgpers': 55.6, 'T_chw_sup_K': 280.0, 'T_chw_re_K': 285.0, 'T_hw_in_C': 210,
+    #                'ACH_type': 'triple'}
 
     # Unpack parameters
     case_dict = case_1_dict
@@ -426,7 +426,7 @@ def main(config):
     T_ground_K = 300
     ach_type = case_dict['ACH_type']
 
-    chiller_prop = AbsorptionChiller(pd.read_excel(locator.get_database_conversion_systems(), sheet_name="ABSORPTION_CHILLERS"), ach_type)
+    chiller_prop = AbsorptionChiller(pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('ABSORPTION_CHILLERS')), ach_type)
 
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, chiller_prop)
     print(chiller_operation)

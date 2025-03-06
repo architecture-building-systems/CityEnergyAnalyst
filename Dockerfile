@@ -1,64 +1,43 @@
-# Build Daysim in image to prevent errors in OS lib dependencies
-FROM debian:bookworm-slim AS daysim-build
+FROM ghcr.io/reyery/daysim:release AS daysim
 
-RUN apt update && DEBIAN_FRONTEND="noninteractive" apt install -y \
-git \
-cmake \
-build-essential \
-libgl1-mesa-dev \
-libglu1-mesa-dev
-
-RUN git clone -b fix-ds-illum-variable --single-branch https://github.com/reyery/Daysim.git /Daysim
-
-# only build required binaries
-RUN mkdir build \
-    && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
-    && make ds_illum \
-    && make epw2wea \
-    && make gen_dc \
-    && make oconv \
-    && make radfiles2daysim \
-    && mv ./bin /Daysim_build
-
-# uncommenting line in CMakeLists to build rtrace_dc
-RUN sed -i 's/#add_definitions(-DDAYSIM)/add_definitions(-DDAYSIM)/' /Daysim/src/rt/CMakeLists.txt \
-    && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_HEADLESS=ON -DOpenGL_GL_PREFERENCE=GLVND /Daysim \
-    && make rtrace \
-    && mv ./bin/rtrace /Daysim_build/rtrace_dc
-
-
-FROM mambaorg/micromamba:1.5.10 as cea-build
-
-COPY --from=daysim-build /Daysim_build /Daysim
+FROM mambaorg/micromamba:1.5.10-jammy AS cea
+LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
 USER root
-
-# create directory for projects and set MAMBA_USER as owner of the project directory
-RUN mkdir -p /project
-RUN chown $MAMBA_USER /project
+# create directory for projects and set MAMBA_USER as owner
+RUN mkdir -p /project && chown $MAMBA_USER /project
 
 USER $MAMBA_USER
-# create the conda environment and install cea
+# create conda environment and configure matplotlib
+# bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 COPY --chown=$MAMBA_USER:$MAMBA_USER conda-lock.yml /tmp/conda-lock.yml
 RUN micromamba config set extract_threads 1 \
     && micromamba install --name base --yes --file /tmp/conda-lock.yml \
-    && micromamba clean --all --yes
-
-# bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
-RUN mkdir -p ~/.config/matplotlib && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
+    && micromamba clean --all --yes \
+    && mkdir -p ~/.config/matplotlib \
+    && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc \
+    && rm -f /tmp/conda-lock.yml
 
 # active environment to install CEA
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-# install cea after dependencies to avoid running conda too many times when rebuilding
+# install cea and clean up
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
-RUN pip install /tmp/cea
-RUN cea-config write --general:project /project
-RUN cea-config write --radiation:daysim-bin-directory /Daysim
-# required for flask to receive reqests from the docker host
-RUN cea-config write --server:host 0.0.0.0
+RUN pip install /tmp/cea && rm -rf /tmp/cea
+
+# Copy Daysim from build stage
+COPY --from=daysim / /Daysim
+
+# write config files
+RUN cea-config write --general:project /project/reference-case-open \
+    && cea-config write --general:scenario-name baseline \
+    && cea-config write --radiation:daysim-bin-directory /Daysim \
+    && cea-config write --server:host 0.0.0.0 \
+    # create dummy project folder
+    && mkdir -p /project/reference-case-open
+
+# Expose dashboard port
+EXPOSE 5050
 
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD cea dashboard

@@ -1,6 +1,3 @@
-
-
-
 import os
 from collections import OrderedDict
 
@@ -10,7 +7,14 @@ databases_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 def get_regions():
     return [folder for folder in os.listdir(databases_folder_path) if folder != "weather"
-            and os.path.isdir(os.path.join(databases_folder_path, folder))]
+            and os.path.isdir(os.path.join(databases_folder_path, folder))
+            and not folder.startswith('.')
+            and not folder.startswith('__')]
+
+
+def get_weather_files():
+    weather_folder_path = os.path.join(databases_folder_path, 'weather')
+    return [os.path.splitext(f)[0] for f in os.listdir(weather_folder_path) if f.endswith('.epw')]
 
 
 def get_categories(db_path):

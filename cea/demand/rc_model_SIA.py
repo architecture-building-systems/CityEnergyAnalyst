@@ -369,18 +369,19 @@ def calc_theta_em(T_ext):
 def calc_theta_e_star():
 
     # TODO: To be addressed in issue #446
+    pass
 
     # (24) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     #
 
     # standard values for calculation
-    h_e_load_and_temp = 13.5  # (W/m2K) for load and temperature calculation
-    h_e_energy = 23  # (W/m2K) for energy demand calculation
-
-    f_r_roof = 1  # (-)
-    f_r_wall = 0.5  # (-)
-    h_r = 5.5  # (-)
-    delta_t_er = 11  # (K)
+    # h_e_load_and_temp = 13.5  # (W/m2K) for load and temperature calculation
+    # h_e_energy = 23  # (W/m2K) for energy demand calculation
+    #
+    # f_r_roof = 1  # (-)
+    # f_r_wall = 0.5  # (-)
+    # h_r = 5.5  # (-)
+    # delta_t_er = 11  # (K)
 
     # if is_roof(surface):
         #f_r = f_r_roof

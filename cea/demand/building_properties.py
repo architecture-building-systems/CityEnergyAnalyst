@@ -8,10 +8,10 @@ from geopandas import GeoDataFrame as Gdf
 from datetime import datetime
 from collections import namedtuple
 from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
-from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import blinds
 
 __author__ = "Gabriel Happle"
@@ -22,6 +22,8 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 # import constants
 H_MS = constants.H_MS
@@ -57,36 +59,42 @@ class BuildingProperties(object):
         self.building_names = building_names
         print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+
+        # reproject to projected coordinate system (in meters) to calculate area
+        lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
+        target_crs = get_projected_coordinate_system(float(lat), float(lon))
+        prop_geometry = prop_geometry.to_crs(target_crs)
+
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
-        prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = dbf_to_dataframe(locator.get_building_air_conditioning())
-
-        prop_typology = dbf_to_dataframe(locator.get_building_typology()).set_index('Name')
+        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
+        prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('name')
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning())
+        zone_gdf = Gdf.from_file(locator.get_zone_geometry())
+        prop_typology = zone_gdf[COLUMNS_ZONE_TYPOLOGY].set_index('name')
         # Drop 'REFERENCE' column if it exists
-        if 'REFERENCE' in prop_typology:
-            prop_typology.drop('REFERENCE', axis=1, inplace=True)
-        prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
-        prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
-        prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
-        prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
+        if 'reference' in prop_typology:
+            prop_typology.drop('reference', axis=1, inplace=True)
+        prop_architectures = pd.read_csv(locator.get_building_architecture())
+        prop_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
+        prop_internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
+        prop_supply_systems_building = pd.read_csv(locator.get_building_supply())
 
         # GET SYSTEMS EFFICIENCIES
-        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index('Name')
+        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building).set_index('name')
 
         # get temperatures of operation
-        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
+        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('name')
 
         # get envelope properties
-        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
+        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('name')
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(locator, prop_typology, prop_envelope,
                                                 prop_geometry, prop_HVAC_result)
 
         # get solar properties
-        solar = get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data).set_index('Name')
+        solar = get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data).set_index('name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -101,22 +109,35 @@ class BuildingProperties(object):
         self._prop_HVAC_result = prop_HVAC_result
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
-        self._prop_age = prop_typology[['YEAR']]
+        self._prop_age = prop_typology[['year']]
         self._solar = solar
         self._prop_RC_model = prop_rc_model
 
-    def calc_bounding_box_geom(self, geometry_shapefile):
-        import shapefile
-        sf = shapefile.Reader(geometry_shapefile)
-        shapes = sf.shapes()
-        len_shapes = len(shapes)
+    def calc_bounding_box_geom(self, gdf):
+        """
+        Calculate bounding box dimensions (length and width) for each geometry in the GeoDataFrame.
+
+        Parameters:
+        - gdf (GeoDataFrame): A GeoDataFrame containing building geometries.
+
+        Returns:
+        - Tuple[List[float], List[float]]: Two lists, one for bounding box lengths and another for widths.
+        """
         bwidth = []
         blength = []
-        for shape in range(len_shapes):
-            bbox = shapes[shape].bbox
-            coords_bbox = [coord for coord in bbox]
-            delta1 = abs(coords_bbox[0] - coords_bbox[2])
-            delta2 = abs(coords_bbox[1] - coords_bbox[3])
+
+        for geom in gdf.geometry:
+            if geom.is_empty:
+                bwidth.append(0)
+                blength.append(0)
+                continue
+
+            # Get bounding box (xmin, ymin, xmax, ymax)
+            xmin, ymin, xmax, ymax = geom.bounds
+            delta1 = abs(xmax - xmin)  # Horizontal length
+            delta2 = abs(ymax - ymin)  # Vertical width
+
+            # Determine which is length and which is width
             if delta1 >= delta2:
                 bwidth.append(delta2)
                 blength.append(delta1)
@@ -309,7 +330,7 @@ class BuildingProperties(object):
 
         :return: Adjusted Daysim geometry data containing the following:
 
-            - Name: Name of building.
+            - name: Name of building.
             - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
             - Awall_ag: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
             - Aop_bg: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
@@ -573,10 +594,10 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['YEAR'] >= 1995:
+        if self.age['year'] >= 1995:
             phi_pipes = [0.2, 0.3, 0.3]
         # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
-        elif 1985 <= self.age['YEAR'] < 1995:
+        elif 1985 <= self.age['year'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
         else:
             phi_pipes = [0.4, 0.4, 0.4]
@@ -626,16 +647,15 @@ class SolarProperties(object):
 
 
 def get_properties_supply_sytems(locator, properties_supply):
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
-    supply_heating = data_all_in_one_systems['HEATING']
-    supply_dhw = data_all_in_one_systems['HOT_WATER']
-    supply_cooling = data_all_in_one_systems['COOLING']
-    supply_electricity = data_all_in_one_systems['ELECTRICITY']
+    supply_heating = pd.read_csv(locator.get_database_assemblies_supply_heating())
+    supply_dhw = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+    supply_cooling = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+    supply_electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity())
 
-    df_emission_heating = properties_supply.merge(supply_heating, left_on='type_hs', right_on='code')
-    df_emission_cooling = properties_supply.merge(supply_cooling, left_on='type_cs', right_on='code')
-    df_emission_dhw = properties_supply.merge(supply_dhw, left_on='type_dhw', right_on='code')
-    df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
+    df_emission_heating = properties_supply.merge(supply_heating, left_on='supply_type_hs', right_on='code')
+    df_emission_cooling = properties_supply.merge(supply_cooling, left_on='supply_type_cs', right_on='code')
+    df_emission_dhw = properties_supply.merge(supply_dhw, left_on='supply_type_dhw', right_on='code')
+    df_emission_electricity = properties_supply.merge(supply_electricity, left_on='supply_type_el', right_on='code')
 
     df_emission_heating.rename(columns={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
                                inplace=True)
@@ -646,15 +666,14 @@ def get_properties_supply_sytems(locator, properties_supply):
     df_emission_electricity.rename(columns={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
                                    inplace=True)
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
+    fields_emission_heating = ['name', 'supply_type_hs', 'supply_type_cs', 'supply_type_dhw', 'supply_type_el',
                                'source_hs', 'scale_hs', 'eff_hs']
-    fields_emission_cooling = ['Name', 'source_cs', 'scale_cs', 'eff_cs']
-    fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw', 'eff_dhw']
-    fields_emission_el = ['Name', 'source_el', 'scale_el', 'eff_el']
+    fields_emission_cooling = ['name', 'source_cs', 'scale_cs', 'eff_cs']
+    fields_emission_dhw = ['name', 'source_dhw', 'scale_dhw', 'eff_dhw']
+    fields_emission_el = ['name', 'source_el', 'scale_el', 'eff_el']
 
-    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                on='Name').merge(
-        df_emission_dhw[fields_emission_dhw], on='Name').merge(df_emission_electricity[fields_emission_el], on='Name')
+    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling], on='name')\
+        .merge(df_emission_dhw[fields_emission_dhw], on='name').merge(df_emission_electricity[fields_emission_el], on='name')
 
     return result
 
@@ -673,7 +692,7 @@ def get_properties_technical_systems(locator, prop_hvac):
 
     Sample data (first 5 rows)::
 
-                     Name type_cs type_ctrl type_dhw type_hs type_vent
+                     name type_cs type_ctrl type_dhw type_hs type_vent
             0     B154862      T0        T1       T1      T1       T0
             1     B153604      T0        T1       T1      T1       T0
             2     B153831      T0        T1       T1      T1       T0
@@ -688,7 +707,7 @@ def get_properties_technical_systems(locator, prop_hvac):
     ==========    =======   ===========================================================================
     Column           e.g.   Description
     ==========    =======   ===========================================================================
-    Name          B154862   (building name)
+    name          B154862   (building name)
     type_hs            T1   (copied from input, code for type of heating system)
     type_cs            T0   (copied from input, code for type of cooling system)
     type_dhw           T1   (copied from input, code for type of hot water system)
@@ -719,53 +738,52 @@ def get_properties_technical_systems(locator, prop_hvac):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HEATING')
-    prop_emission_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(), 'COOLING')
-    prop_emission_dhw = pd.read_excel(locator.get_database_air_conditioning_systems(), 'HOT_WATER')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_database_air_conditioning_systems(),
-                                                              'CONTROLLER')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_database_air_conditioning_systems(), 'VENTILATION')
-    df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='type_hs', right_on='code')
-    df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    prop_emission_heating = pd.read_csv(locator.get_database_assemblies_hvac_heating())
+    prop_emission_cooling = pd.read_csv(locator.get_database_assemblies_hvac_cooling())
+    prop_emission_dhw = pd.read_csv(locator.get_database_assemblies_hvac_hot_water())
+    prop_emission_control_heating_and_cooling = pd.read_csv(locator.get_database_assemblies_hvac_controller())
+    prop_ventilation_system_and_control = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
+    df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='hvac_type_hs', right_on='code')
+    df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='hvac_type_cs', right_on='code')
     df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
-                                                              left_on='type_ctrl', right_on='code')
-    df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='type_vent',
+                                                              left_on='hvac_type_ctrl', right_on='code')
+    df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='hvac_type_dhw', right_on='code')
+    df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='hvac_type_vent',
                                                         right_on='code')
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'heat_starts',
-                               'heat_ends', 'cool_starts', 'cool_ends', 'class_hs', 'convection_hs',
+    fields_emission_heating = ['name', 'hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent', 'hvac_heat_starts',
+                               'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs', 'convection_hs',
                                'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
                                'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
-    fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
+    fields_emission_cooling = ['name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
                                'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
                                'class_cs', 'convection_cs']
-    fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
-    fields_emission_dhw = ['Name', 'class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
-    fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
+    fields_emission_control_heating_and_cooling = ['name', 'dT_Qhs', 'dT_Qcs']
+    fields_emission_dhw = ['name', 'class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
+    fields_system_ctrl_vent = ['name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                on='Name').merge(
+                                                                on='name').merge(
         df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
-        on='Name').merge(df_emission_dhw[fields_emission_dhw],
-                         on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
+        on='name').merge(df_emission_dhw[fields_emission_dhw],
+                         on='name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='name')
     # verify hvac and ventilation combination
     verify_hvac_system_combination(result, locator)
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['Name'],
-                                                                            x['heat_starts'],
-                                                                            x['heat_ends']), axis=1)
-    result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x['Name'],
-                                                                            x['cool_starts'],
-                                                                            x['cool_ends']), axis=1)
+    result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['name'],
+                                                                            x['hvac_heat_starts'],
+                                                                            x['hvac_heat_ends']), axis=1)
+    result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x['name'],
+                                                                            x['hvac_cool_starts'],
+                                                                            x['hvac_cool_ends']), axis=1)
 
     # verify seasons do not overlap
-    result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x['Name'],
+    result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x['name'],
                                                                             x['has-heating-season'],
                                                                             x['has-cooling-season'],
-                                                                            x['heat_starts'],
-                                                                            x['heat_ends'],
-                                                                            x['cool_starts'],
-                                                                            x['cool_ends']), axis=1)
+                                                                            x['hvac_heat_starts'],
+                                                                            x['hvac_heat_ends'],
+                                                                            x['hvac_cool_starts'],
+                                                                            x['hvac_cool_ends']), axis=1)
     return result
 
 
@@ -824,14 +842,14 @@ def get_envelope_properties(locator, prop_architecture):
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
 
-    - prop_roof: Name, emissivity (e_roof), absorbtivity (a_roof), thermal resistance (U_roof), and fraction of
+    - prop_roof: name, emissivity (e_roof), absorbtivity (a_roof), thermal resistance (U_roof), and fraction of
       heated space (Hs).
-    - prop_wall: Name, emissivity (e_wall), absorbtivity (a_wall), thermal resistance (U_wall & U_base),
+    - prop_wall: name, emissivity (e_wall), absorbtivity (a_wall), thermal resistance (U_wall & U_base),
       window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
-    - prop_win: Name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
-    - prop_shading: Name, shading factor (rf_sh).
-    - prop_construction: Name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
-    - prop_leakage: Name, exfiltration (n50).
+    - prop_win: name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
+    - prop_shading: name, shading factor (rf_sh).
+    - prop_construction: name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
+    - prop_leakage: name, exfiltration (n50).
 
     Creates a merged df containing aforementioned envelope properties called envelope_prop.
 
@@ -844,41 +862,41 @@ def get_envelope_properties(locator, prop_architecture):
         if len(df_construction.loc[df_construction['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_construction.loc[df_shading['code'].isna()]['Name'])))
+                    list(df_construction.loc[df_shading['code'].isna()]['name'])))
         if len(df_leakage.loc[df_leakage['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_leakage.loc[df_leakage['code'].isna()]['Name'])))
+                    list(df_leakage.loc[df_leakage['code'].isna()]['name'])))
         if len(df_roof[df_roof['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_roof.loc[df_roof['code'].isna()]['Name'])))
+                    list(df_roof.loc[df_roof['code'].isna()]['name'])))
         if len(df_wall.loc[df_wall['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_wall.loc[df_wall['code'].isna()]['Name'])))
+                    list(df_wall.loc[df_wall['code'].isna()]['name'])))
         if len(df_win.loc[df_win['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_win.loc[df_win['code'].isna()]['Name'])))
+                    list(df_win.loc[df_win['code'].isna()]['name'])))
         if len(df_shading.loc[df_shading['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_shading.loc[df_shading['code'].isna()]['Name'])))
+                    list(df_shading.loc[df_shading['code'].isna()]['name'])))
         if len(df_floor.loc[df_floor['code'].isna()]) > 0:
             raise ValueError(
                 'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                    list(df_floor.loc[df_floor['code'].isna()]['Name'])))
+                    list(df_floor.loc[df_floor['code'].isna()]['name'])))
 
-    prop_roof = pd.read_excel(locator.get_database_envelope_systems(), 'ROOF')
-    prop_wall = pd.read_excel(locator.get_database_envelope_systems(), 'WALL')
-    prop_floor = pd.read_excel(locator.get_database_envelope_systems(), 'FLOOR')
-    prop_win = pd.read_excel(locator.get_database_envelope_systems(), 'WINDOW')
-    prop_shading = pd.read_excel(locator.get_database_envelope_systems(), 'SHADING')
-    prop_construction = pd.read_excel(locator.get_database_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_database_envelope_systems(), 'TIGHTNESS')
+    prop_roof = pd.read_csv(locator.get_database_assemblies_envelope_roof())
+    prop_wall = pd.read_csv(locator.get_database_assemblies_envelope_wall())
+    prop_floor = pd.read_csv(locator.get_database_assemblies_envelope_floor())
+    prop_win = pd.read_csv(locator.get_database_assemblies_envelope_window())
+    prop_shading = pd.read_csv(locator.get_database_assemblies_envelope_shading())
+    prop_construction = pd.read_csv(locator.get_database_assemblies_envelope_mass())
+    prop_leakage = pd.read_csv(locator.get_database_assemblies_envelope_tightness())
 
-    df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code', how='left')
+    df_construction = prop_architecture.merge(prop_construction, left_on='type_mass', right_on='code', how='left')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
     df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
@@ -888,27 +906,27 @@ def get_envelope_properties(locator, prop_architecture):
 
     check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
-    fields_construction = ['Name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
-    fields_leakage = ['Name', 'n50']
-    fields_basement = ['Name', 'U_base']
-    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof']
-    fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
+    fields_leakage = ['name', 'n50']
+    fields_basement = ['name', 'U_base']
+    fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
+    fields_wall = ['name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                    'e_wall', 'a_wall', 'U_wall']
-    fields_win = ['Name', 'e_win', 'G_win', 'U_win', 'F_F']
-    fields_shading = ['Name', 'rf_sh']
+    fields_win = ['name', 'e_win', 'G_win', 'U_win', 'F_F']
+    fields_shading = ['name', 'rf_sh']
 
-    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win],
-                                                                                      on='Name').merge(
-        df_shading[fields_shading], on='Name').merge(df_construction[fields_construction], on='Name').merge(
-        df_leakage[fields_leakage], on='Name').merge(
-        df_floor[fields_basement], on='Name')
+    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='name').merge(df_win[fields_win],
+                                                                                      on='name').merge(
+        df_shading[fields_shading], on='name').merge(df_construction[fields_construction], on='name').merge(
+        df_leakage[fields_leakage], on='name').merge(
+        df_floor[fields_basement], on='name')
 
     return envelope_prop
 
 
 def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data):
     """
-    Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
+    Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'name' and
     I_sol (incident solar gains).
 
     :param locator: an InputLocator for locating the input files
@@ -930,7 +948,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
         list_Isol.append(I_sol)
 
-    result = pd.DataFrame({'Name': list(building_names), 'I_sol': list_Isol})
+    result = pd.DataFrame({'name': list(building_names), 'I_sol': list_Isol})
 
     return result
 
@@ -1026,10 +1044,10 @@ def verify_hvac_system_combination(result, locator):
     needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
     list_exceptions = []
     for idx in result.loc[needs_mech_vent & (~ result.MECH_VENT)].index:
-        building_name = result.loc[idx, 'Name']
+        building_name = result.loc[idx, 'name']
         class_cs = result.loc[idx, 'class_cs']
         type_vent = result.loc[idx,'type_vent']
-        hvac_database = pd.read_excel(locator.get_database_air_conditioning_systems(), sheet_name='VENTILATION')
+        hvac_database = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
         mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
         list_exceptions.append(Exception(
             f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'

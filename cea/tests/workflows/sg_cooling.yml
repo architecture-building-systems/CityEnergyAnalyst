@@ -9,7 +9,7 @@
 - config: .
   "general:scenario-name": baseline
 
-- script: data-initializer
+- script: database-helper
   parameters:
     databases-path: SG
     databases: [archetypes, assemblies, components]
@@ -25,7 +25,7 @@
 - script: radiation
   parameters:
     neglect-adjacent-buildings: false
-- script: schedule-maker
+- script: occupancy-helper
 - script: demand
 - script: emissions
 - script: system-costs

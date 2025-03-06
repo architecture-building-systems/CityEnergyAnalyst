@@ -469,14 +469,14 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     Qhs_sys_kWh_dict = {1: Qhs_sys_ahu_kWh, 2: Qhs_sys_aru_kWh, 3: Qhs_sys_shu_kWh,
                         4: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh, 5: Qhs_sys_ahu_kWh + Qhs_sys_shu_kWh,
                         6: Qhs_sys_aru_kWh + Qhs_sys_shu_kWh, 7: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh + Qhs_sys_shu_kWh}
-    mcphs_sys_ahu_kWperC = building_demand_df.mcphs_sys_ahu_kWperC.values
-    mcphs_sys_aru_kWperC = building_demand_df.mcphs_sys_aru_kWperC.values
-    mcphs_sys_shu_kWperC = building_demand_df.mcphs_sys_shu_kWperC.values
-    mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
-                             4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC,
-                             5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
-                             6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
-                             7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
+    # mcphs_sys_ahu_kWperC = building_demand_df.mcphs_sys_ahu_kWperC.values
+    # mcphs_sys_aru_kWperC = building_demand_df.mcphs_sys_aru_kWperC.values
+    # mcphs_sys_shu_kWperC = building_demand_df.mcphs_sys_shu_kWperC.values
+    # mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
+    #                          4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC,
+    #                          5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
+    #                          6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
+    #                          7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
 
     # fixme: this is the wrong aggregation! the mcp should be recalculated according to the updated Tsup/re, and this does not aggregate the domestic hot water
     # HEX for space heating

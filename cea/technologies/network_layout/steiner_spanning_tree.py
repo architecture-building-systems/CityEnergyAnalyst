@@ -82,13 +82,13 @@ def calc_steiner_spanning_tree(crs_projected,
     terminal_nodes_coordinates = []
     terminal_nodes_names = []
     for coordinates, data in iterator_nodes._nodes.items():
-        building_name = data['Name']
+        building_name = data['name']
         if building_name in disconnected_building_names:
             print("Building {} is considered to be disconnected and it is not included".format(building_name))
         else:
             terminal_nodes_coordinates.append(
                 (round(coordinates[0], SHAPEFILE_TOLERANCE), round(coordinates[1], SHAPEFILE_TOLERANCE)))
-            terminal_nodes_names.append(data['Name'])
+            terminal_nodes_names.append(data['name'])
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
@@ -114,20 +114,20 @@ def calc_steiner_spanning_tree(crs_projected,
 
     mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
         lambda x: (round(x.coords[0][0], SHAPEFILE_TOLERANCE), round(x.coords[0][1], SHAPEFILE_TOLERANCE)))
-    mst_nodes['Building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
-    mst_nodes['Name'] = mst_nodes['FID'].apply(lambda x: "NODE" + str(x))
-    mst_nodes['Type'] = mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
+    mst_nodes['building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
+    mst_nodes['name'] = mst_nodes['FID'].apply(lambda x: "NODE" + str(x))
+    mst_nodes['type'] = mst_nodes['building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
 
     # do some checks to see that the building names was not compromised
-    if len(terminal_nodes_names) != (len(mst_nodes['Building'].unique()) - 1):
+    if len(terminal_nodes_names) != (len(mst_nodes['building'].unique()) - 1):
         raise ValueError('There was an error while populating the nodes fields. '
                          'One or more buildings could not be matched to nodes of the network. '
                          'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
 
     # POPULATE FIELDS IN EDGES
-    mst_edges.loc[:, 'Type_mat'] = type_mat_default
-    mst_edges.loc[:, 'Pipe_DN'] = pipe_diameter_default
-    mst_edges.loc[:, 'Name'] = ["PIPE" + str(x) for x in mst_edges.index]
+    mst_edges.loc[:, 'type_mat'] = type_mat_default
+    mst_edges.loc[:, 'pipe_DN'] = pipe_diameter_default
+    mst_edges.loc[:, 'name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
     if allow_looped_networks:
         # add loops to the network by connecting None nodes that exist in the potential network
@@ -146,7 +146,7 @@ def calc_steiner_spanning_tree(crs_projected,
                                                              type_mat_default, pipe_diameter_default)
     elif os.path.exists(total_demand_location):
         if len(plant_building_names) > 0:
-            building_anchor = mst_nodes[mst_nodes['Building'].isin(plant_building_names)]
+            building_anchor = mst_nodes[mst_nodes['building'].isin(plant_building_names)]
         else:
             building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
@@ -156,16 +156,16 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']
-    mst_edges[['geometry', 'length_m', 'Type_mat', 'Name', 'Pipe_DN']].to_file(path_output_edges_shp,
+    mst_edges[['geometry', 'length_m', 'type_mat', 'name', 'pipe_DN']].to_file(path_output_edges_shp,
                                                                                driver='ESRI Shapefile')
-    mst_nodes[['geometry', 'Building', 'Name', 'Type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
+    mst_nodes[['geometry', 'building', 'name', 'type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
 def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat, pipe_dn):
     added_a_loop = False
     # Identify all NONE type nodes in the steiner tree
     for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-        if new_mst_nodes['Type'][node_number] == 'NONE':
+        if new_mst_nodes['type'][node_number] == 'NONE':
             # find neighbours of nodes in the potential network and steiner network
             potential_neighbours = G[node_coords]
             steiner_neighbours = mst_non_directed[node_coords]
@@ -181,13 +181,13 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                         # check if it is a none type
                         # write out index of this node
                         node_index = list(new_mst_nodes['coordinates'].values).index(new_neighbour)
-                        if new_mst_nodes['Type'][node_index] == 'NONE':
+                        if new_mst_nodes['type'][node_index] == 'NONE':
                             # create new edge
                             line = LineString((node_coords, new_neighbour))
                             if line not in mst_edges['geometry']:
                                 mst_edges = mst_edges.append(
-                                    {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                     "Name": "PIPE" + str(mst_edges.Name.count())},
+                                    {"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                     "name": "PIPE" + str(mst_edges.name.count())},
                                     ignore_index=True)
                                 added_a_loop = True
                             mst_edges.reset_index(inplace=True, drop=True)
@@ -195,7 +195,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
         print('No first degree loop added. Trying two nodes apart.')
         # Identify all NONE type nodes in the steiner tree
         for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-            if new_mst_nodes['Type'][node_number] == 'NONE':
+            if new_mst_nodes['type'][node_number] == 'NONE':
                 # find neighbours of nodes in the potential network and steiner network
                 potential_neighbours = G[node_coords]
                 steiner_neighbours = mst_non_directed[node_coords]
@@ -217,13 +217,13 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                     # write out index of this node
                                     node_index = list(new_mst_nodes['coordinates'].values).index(
                                         potential_second_deg_neighbour)
-                                    if new_mst_nodes['Type'][node_index] == 'NONE':
+                                    if new_mst_nodes['type'][node_index] == 'NONE':
                                         # create new edge
                                         line = LineString((node_coords, new_neighbour))
                                         if line not in mst_edges['geometry']:
                                             mst_edges = mst_edges.append(
-                                                {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                                 "Name": "PIPE" + str(mst_edges.Name.count())},
+                                                {"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                                 "name": "PIPE" + str(mst_edges.name.count())},
                                                 ignore_index=True)
                                         # Add new node from potential network to steiner tree
                                         # create copy of selected node and add to list of all nodes
@@ -234,8 +234,8 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                             xoff=x_distance, yoff=y_distance)
                                         selected_node = copy_of_new_mst_nodes[
                                             copy_of_new_mst_nodes["coordinates"] == node_coords]
-                                        selected_node.loc[:, "Name"] = "NODE" + str(new_mst_nodes.Name.count())
-                                        selected_node.loc[:, "Type"] = "NONE"
+                                        selected_node.loc[:, "name"] = "NODE" + str(new_mst_nodes.name.count())
+                                        selected_node.loc[:, "type"] = "NONE"
                                         selected_node["coordinates"] = selected_node.geometry.values[0].coords
                                         if selected_node["coordinates"].values not in new_mst_nodes[
                                             "coordinates"].values:
@@ -245,8 +245,8 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                         line2 = LineString((new_neighbour, potential_second_deg_neighbour))
                                         if line2 not in mst_edges['geometry']:
                                             mst_edges = mst_edges.append(
-                                                {"geometry": line2, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                                 "Name": "PIPE" + str(mst_edges.Name.count())},
+                                                {"geometry": line2, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                                 "name": "PIPE" + str(mst_edges.name.count())},
                                                 ignore_index=True)
                                             added_a_loop = True
                                         mst_edges.reset_index(inplace=True, drop=True)
@@ -257,7 +257,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
 
 def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     total_demand = pd.read_csv(total_demand_location)
-    nodes_names_demand = nodes_df.merge(total_demand, left_on="Building", right_on="Name", how="inner")
+    nodes_names_demand = nodes_df.merge(total_demand, left_on="building", right_on="name", how="inner")
     if type_network == "DH":
         field = "QH_sys_MWhyr"
     elif type_network == "DC":
@@ -272,7 +272,7 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
 
 
 def building_node_from_name(building_name, nodes_df):
-    building_series = nodes_df[nodes_df['Building'] == building_name]
+    building_series = nodes_df[nodes_df['building'] == building_name]
     return building_series
 
 
@@ -286,33 +286,33 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     node_id = None
 
     for node in copy_of_new_mst_nodes.iterrows():
-        if node[1]['Type'] == 'NONE':
+        if node[1]['type'] == 'NONE':
             x2 = node[1].geometry.coords[0][0]
             y2 = node[1].geometry.coords[0][1]
             distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
             if 0 < distance < delta:
                 delta = distance
-                node_id = node[1].Name
+                node_id = node[1]['name']
 
     if node_id is None:
         raise ValueError("Could not find closest node.")
 
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
-    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id].iloc[[0]]
-    selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
-    selected_node["Type"] = "PLANT"
+    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
+    selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
+    selected_node["type"] = "PLANT"
     new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
     new_mst_nodes.reset_index(inplace=True, drop=True)
 
     # create new edge
     point1 = (selected_node.iloc[0].geometry.x, selected_node.iloc[0].geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.x,
-              new_mst_nodes[new_mst_nodes["Name"] == node_id].iloc[0].geometry.y)
+    point2 = (new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.x,
+              new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
     mst_edges = pd.concat([mst_edges,
-                           pd.DataFrame([{"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                         "Name": "PIPE" + str(mst_edges.Name.count())}])], ignore_index=True)
+                           pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                         "name": "PIPE" + str(mst_edges.name.count())}])], ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
 
@@ -329,7 +329,7 @@ def main(config):
     path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
-    output_network_folder = locator.get_input_network_folder(type_network, '')
+    output_network_folder = locator.get_output_thermal_network_type_folder(type_network, '')
     total_demand_location = locator.get_total_demand()
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,

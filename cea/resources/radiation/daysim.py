@@ -267,6 +267,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
                       'SURFACE': sensors_code,
                       'orientation': sensor_orientation_building,
                       'intersection': sensor_intersection_building,
+                      'terrain_elevation': building_geometry.terrain_elevation,
                       'Xcoor': [x[0] for x in sensors_coords_building],
                       'Ycoor': [x[1] for x in sensors_coords_building],
                       'Zcoor': [x[2] for x in sensors_coords_building],

@@ -1,55 +1,51 @@
-import webbrowser
+import os
+import sys
+import tempfile
 
-from flask import Flask
-from flask_cors import CORS
-from flask_socketio import SocketIO
+import uvicorn
 
-import cea.config
-import cea.plots
-import cea.plots.cache
+from cea.interfaces.dashboard.settings import get_settings
 
 
 def main(config):
-    config.restricted_to = None  # allow access to the whole config file
-    plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__)
-    CORS(app)
-    app.config.from_mapping({'SECRET_KEY': 'secret'})
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    # Try loading settings from env vars first
+    settings = get_settings()
+    config_dict = dict()
 
-    if config.server.browser:
-        from cea.interfaces.dashboard.frontend import blueprint as frontend
-        app.register_blueprint(frontend)
+    # Load from config if not found in env vars
+    if settings.host is None:
+        settings.host = config.server.host
 
-    from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
-    from cea.interfaces.dashboard.server import blueprint as server_blueprint, shutdown_server
-    from cea.interfaces.dashboard.api import blueprint as api_blueprint
+    if settings.port is None:
+        settings.port = config.server.port
 
-    app.register_blueprint(plots_blueprint)
-    app.register_blueprint(api_blueprint)
-    app.register_blueprint(server_blueprint)
+    if settings.project_root is None:
+        settings.project_root = config.server.project_root
+        config_dict["project_root"] = config.server.project_root
 
-    # keep a copy of the configuration we're using
-    app.cea_config = config
-    app.plot_cache = plot_cache
-    app.socketio = socketio
+        # Ensure project root exists before starting the server
+        if settings.project_root != "" and not os.path.exists(settings.project_root):
+            raise ValueError(f"The path `{settings.project_root}` does not exist. "
+                             f"Make sure project_root in config is set correctly.")
 
-    print("start CEA dashboard server")
-    
-    if config.server.browser:
-        url = f"http://{config.server.host}:{config.server.port}"
-        print(f"Open {url} in your browser to access the GUI")
-        webbrowser.open(url)
+    print(f"Using settings: {settings}")
 
-    print("Press Ctrl+C to stop server")
     try:
-        socketio.run(app, host=config.server.host, port=config.server.port)
+        # Write missing settings to temp env file
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_file = os.path.join(temp_dir, "cea.env")
+            with open(env_file, "w") as f:
+                for key, value in config_dict.items():
+                    f.write(f"CEA_{key.upper()}={value}\n")
+                    f.flush()
+
+            uvicorn.run("cea.interfaces.dashboard.app:app",
+                        env_file=env_file,
+                        host=settings.host, port=settings.port)
     except KeyboardInterrupt:
-        with app.app_context():
-            shutdown_server()
-
-    print("server exited")
+        sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import cea.config
     main(cea.config.Configuration())

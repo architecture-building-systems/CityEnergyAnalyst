@@ -15,9 +15,6 @@ import requests
 import traceback
 import queue
 import threading
-import cea.config
-import cea.scripts
-from cea import suppress_3rd_party_debug_loggers
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +25,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-suppress_3rd_party_debug_loggers()
+from cea.interfaces.dashboard.server.jobs import JobInfo
 
 
 def consume_nowait(q, msg):
@@ -63,7 +60,7 @@ def stream_poster(jobid, server, queue):
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
-class JobServerStream(object):
+class JobServerStream:
     """A File-like object for capturing STDOUT and STDERR form cea-worker processes on the server."""
 
     def __init__(self, jobid, server, stream):
@@ -79,9 +76,12 @@ class JobServerStream(object):
         self.queue.put(EOFError)
         self.stream_poster.join()
 
-    def write(self, str):
-        self.queue.put_nowait(str)
-        print("cea-worker: {str}".format(**locals()), end='', file=self.stream)
+    def write(self, value):
+        self.queue.put_nowait(value)
+        try:
+            print(f"cea-worker: {value}", end='', file=self.stream)
+        except Exception as e:
+            print(f"cea-worker: error writing to stream: {e}")
 
     def isatty(self):
         return False
@@ -96,30 +96,30 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
-def fetch_job(jobid, server):
+def fetch_job(jobid: str, server) -> JobInfo:
     response = requests.get("{server}/jobs/{jobid}".format(**locals()))
     job = response.json()
-    return job
+    return JobInfo(**job)
 
 
-def run_job(config, job, server):
+def run_job(job: JobInfo):
     parameters = read_parameters(job)
     script = read_script(job)
-    script(config=config, **parameters)
+    script(**parameters)
 
 
-def read_script(job):
+def read_script(job: JobInfo):
     """Locate the script defined by the job dictionary in the ``cea.api`` module, take care of dashes"""
     import cea.api
-    script_name = job["script"]
+    script_name = job.script
     py_script_name = script_name.replace("-", "_")
     script_method = getattr(cea.api, py_script_name)
     return script_method
 
 
-def read_parameters(job):
+def read_parameters(job: JobInfo):
     """Return the parameters of the job in a format that is valid for using as ``**kwargs``"""
-    parameters = job["parameters"] or {}
+    parameters = job.parameters or {}
     py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
     return py_parameters
 
@@ -136,15 +136,19 @@ def post_error(exc, jobid, server):
     requests.post("{server}/jobs/error/{jobid}".format(**locals()), data=exc)
 
 
-def worker(config, jobid, server):
+def worker(jobid, server):
     """This is the main logic of the cea-worker."""
     print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
-    job = fetch_job(jobid, server)
     try:
+        job = fetch_job(jobid, server)
+
         configure_streams(jobid, server)
         post_started(jobid, server)
-        run_job(config, job, server)
+        run_job(job)
         post_success(jobid, server)
+    except SystemExit as e:
+        post_error(str(e), jobid, server)
+        print(f"Job [{jobid}]: exited with code {e.code}")
     except Exception as e:
         exc = traceback.format_exc()
         print(exc, file=sys.stderr)
@@ -154,23 +158,19 @@ def worker(config, jobid, server):
         sys.stderr.close()
 
 
-def main(config=None):
-    if not config:
-        config = cea.config.Configuration()
-    default_url = config.worker.url
-
-    args = parse_arguments(default_url)
-    worker(config, args.jobid, args.url)
+def main():
+    args = parse_arguments()
+    worker(args.jobid, args.url)
 
 
-def parse_arguments(default_url):
+def parse_arguments():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("jobid", type=int, help="Job id to run - use 0 to run the next job", default=0)
-    parser.add_argument("-u", "--url", type=str, help="URL of the CEA server api", default=default_url)
+    parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job")
+    parser.add_argument("url", type=str, help="URL of the CEA server api")
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main()
