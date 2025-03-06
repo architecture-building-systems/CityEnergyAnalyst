@@ -174,16 +174,18 @@ class Configuration:
 
         for section, parameter in self.matching_parameters(option_list):
             if parameter.name in command_line_args:
+                command_line_arg = command_line_args.pop(parameter.name)
                 try:
-                    parameter.set(
-                        parameter.decode(
-                            parameter.replace_references(
-                                command_line_args[parameter.name])))
+                    raw_value = parameter.replace_references(command_line_arg)
+
+                    # Allow boolean parameters to be set to empty string to be interpreted as True
+                    if (raw_value == "" and isinstance(parameter, BooleanParameter)):
+                        parameter.set(True)
+                    else:
+                        parameter.set(parameter.decode(raw_value))
                 except Exception as e:
                     raise ValueError(
-                        f"ERROR setting {section.name}:{parameter.name} to {command_line_args[parameter.name]}") from e
-
-                del command_line_args[parameter.name]
+                        f"ERROR setting {section.name}:{parameter.name} to {command_line_arg}") from e
 
         if len(command_line_args) != 0:
             raise ValueError(f"Unexpected parameters: {command_line_args}")

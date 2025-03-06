@@ -229,8 +229,7 @@ Thermal Network Design:
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network',
-                 'thermal-network-optimization:use-representative-week-per-month']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]

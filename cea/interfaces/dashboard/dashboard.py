@@ -40,6 +40,7 @@ def main(config):
                     f.flush()
 
             uvicorn.run("cea.interfaces.dashboard.app:app",
+                        reload=config.server.dev,
                         env_file=env_file,
                         host=settings.host, port=settings.port)
     except KeyboardInterrupt:
