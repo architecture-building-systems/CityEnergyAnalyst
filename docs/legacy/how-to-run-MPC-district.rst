@@ -89,6 +89,6 @@ Calculation flowchart
 
 ** Please note: To maintain linearity, the cooling demand is calculated by a linearized model instead of the CEA demand module. 
 
-.. image:: _static/flowchart_mpc_district.png
+.. image:: /_static/flowchart_mpc_district.png
     :align: center
 

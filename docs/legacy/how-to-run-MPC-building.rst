@@ -4,7 +4,7 @@ How to Run MPC Building Toolbox
 ===============================
 The MPC Building Toolbox utilize Model Predictive Control (MPC) algorithms to minimize the electricity costs for cooling in buildings. When the hourly electricity prices are flunctuating, it is possible to explore the opportunities to shift the cooling loads by precooling the buildings (as shown in the figure below). 
 
-.. image:: _static/flexible_loads.png
+.. image:: /_static/flexible_loads.png
       :width: 250
       :align: center
     
@@ -65,6 +65,6 @@ Calculation flowchart
 ---------------------
 ** Please note: To maintain linearity, the cooling demand is calculated by a linearized model instead of the CEA demand module. 
 
-.. image:: _static/flowchart_mpc_building.png
+.. image:: /_static/flowchart_mpc_building.png
     :align: center
 

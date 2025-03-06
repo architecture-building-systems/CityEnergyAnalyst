@@ -1,3 +1,5 @@
+:orphan:
+
 Windows
 -------
 #. Clone the CEA GUI repository with the following URL: https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
