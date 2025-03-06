@@ -10,7 +10,7 @@ The steps below will describe how to setup an environment for CEA by installing 
 Prerequisites
 -------------
 * `Git <https://git-scm.com/downloads>`__
-    Required to clone the CEA souce code from GitHub. 
+    Required to clone the CEA source code from GitHub. 
     You can use `Github Desktop <https://desktop.github.com/>`__ if you are not comfortable with the command line.
 * `Conda <https://docs.conda.io/projects/conda/en/stable/>`__
    We recommend using `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
