@@ -2042,9 +2042,8 @@ def get_list_list_metrics_with_date(config):
 
 def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
-    if config.result_summary.metrics_embodied_emissions:
+    if config.result_summary.metrics_emissions:
         list_list_metrics_without_date.append(list_metrics_embodied_emissions)
-    if config.result_summary.metrics_operation_emissions:
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
     return list_list_metrics_without_date
