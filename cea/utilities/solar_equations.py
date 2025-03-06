@@ -436,9 +436,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, m
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth_deg, sensors_metadata_clean.B_deg,
                                                sensors_metadata_clean.total_rad_Whm2, max_rad_Whperm2yr)
-    sensors_metadata_clean['CATteta_z'] = result[0]
-    sensors_metadata_clean['CATB'] = result[1]
-    sensors_metadata_clean['CATGB'] = result[2]
+    sensors_metadata_clean['CATteta_z'] = pd.Categorical(result[0])
+    sensors_metadata_clean['CATB'] = pd.Categorical(result[1])
+    sensors_metadata_clean['CATGB'] = pd.Categorical(result[2])
 
     return sensors_metadata_clean
 
@@ -541,7 +541,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     elif B > 60:
         CATB = 6  # tilted >60 degrees
     else:
-        CATB = None
+        CATB = 0
         print('B not in expected range')
 
     GB_percent = GB / Max_Isol
@@ -589,7 +589,6 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     #     CATGB = None
     #     print('GB not in expected range')
 
-
     if 0 <= GB_percent <= 0.1:
         CATGB = 1
     elif 0.1 < GB_percent <= 0.2:
@@ -611,8 +610,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     elif 0.90 < GB_percent <= 1:
         CATGB = 10
     else:
-        CATGB = None
-        print(f'GB not in expected range: {GB_percent}.')
+        raise ValueError(f'Yearly radiation of sensors not in expected range [0,1]: {GB_percent}. Cannot be negative')
 
     return CATteta_z, CATB, CATGB
 
