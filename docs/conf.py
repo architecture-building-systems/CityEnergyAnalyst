@@ -15,7 +15,7 @@
 
 import os
 import sys
-from mock import Mock as MagicMock
+from unittest.mock import MagicMock
 import cea
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -31,7 +31,7 @@ class Mock(MagicMock):
 
     @classmethod
     def __getattr__(cls, name):
-            return MagicMock()
+        return MagicMock()
 
 
 MOCK_MODULES = ['COLOR',
