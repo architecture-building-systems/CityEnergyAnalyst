@@ -719,30 +719,27 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
     # calculate number of groups as number of optimal combinations.
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' + sensors_metadata_cat['orientation']
     sensors_metadata_cat['surface'] = sensors_metadata_cat.index
-    sensor_groups_ob = sensors_metadata_cat.groupby(
-        ['CATB', 'CATGB', 'CATteta_z', 'type_orientation'])  # group the sensors by categories
-    number_groups = sensor_groups_ob.size().count() # TODO: check if redundant, it is actually equal to group_count
+    # group the sensors by categories
+    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'])
     group_keys = sensor_groups_ob.groups.keys()
+    number_groups = len(group_keys)
 
     # empty dicts to store results
     group_properties = {}
     group_mean_radiations = {}
     number_points = {}
-    group_count = 0
-    for key in group_keys:
+    for i, key in enumerate(group_keys):
         # get surface names in group
         surfaces_in_group = sensor_groups_ob['surface'].groups[key].values
-        number_points[group_count] = len(surfaces_in_group)
+        number_points[i] = len(surfaces_in_group)
         # write group properties
         group_key = pd.Series({'CATB': key[0], 'CATGB': key[1], 'CATteta_z': key[2], 'type_orientation': key[3]})
         group_info = pd.Series({'number_srfs': number_points, 'srfs': (''.join(surfaces_in_group))})
         group_prop_sum = sensor_groups_ob.sum(numeric_only=True).loc[key][['AREA_m2', 'area_installed_module_m2']]
         group_prop_mean = sensor_groups_ob.mean(numeric_only=True).loc[key].drop(['area_installed_module_m2', 'AREA_m2'])
-        group_properties[group_count] = pd.concat([group_key, group_prop_mean, group_prop_sum, group_info])
+        group_properties[i] = pd.concat([group_key, group_prop_mean, group_prop_sum, group_info])
         # calculate mean radiation among surfaces in group
-        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
-
-        group_count += 1
+        group_mean_radiations[i] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).values
 
     prop_observers = pd.DataFrame(group_properties).T
     hourlydata_groups = pd.DataFrame(group_mean_radiations)
