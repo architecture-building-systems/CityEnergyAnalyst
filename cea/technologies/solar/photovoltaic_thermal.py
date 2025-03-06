@@ -126,7 +126,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
         Final = pd.DataFrame(
             {'date': date_local, 'PVT' + type_scpanel + '_walls_north_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_north_m2': 0.0, 'PVT' + type_scpanel + '_walls_north_Q_kWh': 0.0,
              'PVT' + type_scpanel + '_walls_north_Tout_C': 0.0,
-             'PVT' + type_scpanel + '_walls_south_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_south_m2': 0, 'PVT' + type_scpanel + '__walls_south_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_walls_south_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_south_m2': 0, 'PVT' + type_scpanel + '_walls_south_Q_kWh': 0.0,
              'PVT' + type_scpanel + '_walls_south_Tout_C': 0.0,
              'PVT' + type_scpanel + '_walls_east_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_east_m2': 0.0, 'PVT' + type_scpanel + '_walls_east_Q_kWh': 0.0,
              'PVT' + type_scpanel + '_walls_east_Tout_C': 0.0,
