@@ -29,7 +29,7 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
 
    installation/installation
    cite
-   tutorials
+   tutorials/tutorials
    known-issues
    glossary
    legal
@@ -39,6 +39,6 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
    :caption: Developer Documentation:
 
    agile-with-CEA
-   how-to-contribute
+   tutorials/how-to-contribute
    developer/developer-walk-through
    modules/modules

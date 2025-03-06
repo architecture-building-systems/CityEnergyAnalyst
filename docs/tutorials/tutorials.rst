@@ -15,7 +15,7 @@ Developers
 These are a collection of tutorials we consider essential for any new developer of CEA. We suggest to take them in order for a better learning experience.
 
 #. :doc:`how-to-contribute`
-#. :doc:`agile-with-CEA/how-to-create-user-stories`
+#. :doc:`/agile-with-CEA/how-to-create-user-stories`
 #. :doc:`how-to-report-bugs`
 #. :doc:`how-to-use-github`
 #. :doc:`how-to-name-variables`
