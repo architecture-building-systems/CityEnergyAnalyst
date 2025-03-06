@@ -179,7 +179,7 @@ This tool will:
 Finally, any changes to the conda environment need to be reflected in the ``CityEnergyAnalyst/environment.yml`` file and if your code writes any new output variables or files,
 the ``CityEnergyAnalyst/cea/schemas.yml`` should be updated accordingly.
 
-For more information, check out the :doc:`how-to-document-cea`.
+For more information, check out the :doc:`/tutorials/how-to-document-cea`.
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
 .. _sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html

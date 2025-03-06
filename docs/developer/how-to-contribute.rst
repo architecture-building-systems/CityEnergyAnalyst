@@ -30,27 +30,27 @@ Branch out from out main 'Master branch" of our github repository and start codi
 development version. For this make sure to use one of our template scripts and follow the documentation guide. This
 could help to maintain an homogeneous structure, and help us to acknowledge you.
 
-Check these guides for more details: :doc:`how-to-use-github`, :doc:`how-to-add-a-new-script-to-the-cea`.
+Check these guides for more details: :doc:`/tutorials/how-to-use-github`, :doc:`/tutorials/how-to-add-a-new-script-to-the-cea`.
 
 Step 4. Check style
 -------------------
 If you have not done it yet, take some time to get acquainted with variable names in CEA. This would make easier for
 you to understand and develop consistent code.
 
-Here we tell some basic hints :doc:`how-to-name-variables`.
+Here we tell some basic hints :doc:`/tutorials/how-to-name-variables`.
 
 Step 5. Run some local tests
 ----------------------------
 Now test if your creation does not brake CEA's functionality. 
 
-The next guide explains how to run local unittests in CEA :doc:`how-to-test-the-cea`.
+The next guide explains how to run local unittests in CEA :doc:`/tutorials/how-to-test-the-cea`.
 
 Step 6. Create a Pull request
 -----------------------------
 Now it is time to ask other developer of CEA to review your code so we get to make it part of the CEA main core. We do
 this by creating a Pull Request in github.
 
-Check this guide for more details on how to do it: :doc:`how-to-use-github`.
+Check this guide for more details on how to do it: :doc:`/tutorials/how-to-use-github`.
 
 Step 7. Claim your CEA T-shirt!
 -------------------------------

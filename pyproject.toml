@@ -17,7 +17,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest"]
-docs = ["setuptools", "mock"]
+docs = ["setuptools"]
 
 [project.urls]
 "Homepage" = "https://cityenergyanalyst.com"

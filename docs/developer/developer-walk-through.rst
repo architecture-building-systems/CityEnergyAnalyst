@@ -11,7 +11,7 @@ Developer walkthrough
    architecture
    how-to-review-a-pull-request
    how-to-add-a-new-cooling-system
-   thermal_network_matrix/thermal_network_matrix_data_description
+   /thermal_network_matrix/thermal_network_matrix_data_description
    how-to-create-a-new-release
    installing-the-jenkins
    run-cea-in-docker
