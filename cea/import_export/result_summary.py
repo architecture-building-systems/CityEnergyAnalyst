@@ -2067,6 +2067,90 @@ def get_list_list_metrics_building(config):
     return list_list_metrics_building
 
 
+def process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type,
+                             bool_use_acronym, bool_aggregate_by_building,
+                             bool_include_advanced_analytics, list_selected_time_period,
+                             bool_use_conditioned_floor_area_for_normalisation):
+    """
+    Processes and exports building summary results, filtering buildings based on user-defined criteria.
+
+    Args:
+        config: Configuration object containing user inputs.
+        locator: Locator object to find file paths.
+        hour_start (int): Start hour for analysis.
+        hour_end (int): End hour for analysis.
+        list_buildings (list): List of building names to process.
+        integer_year_start (int): Minimum building construction year.
+        integer_year_end (int): Maximum building construction year.
+        list_standard (list): Building standard filter.
+        list_main_use_type (list): Main use type filter.
+        ratio_main_use_type (float): Ratio for main use type filtering.
+        bool_use_acronym (bool): Whether to use building acronyms.
+        bool_aggregate_by_building (bool): Whether to aggregate results by building.
+        bool_include_advanced_analytics (bool): Whether to include advanced analytics.
+        list_selected_time_period (list): List of time periods for aggregation.
+        bool_use_conditioned_floor_area_for_normalisation (bool): Normalize results using conditioned floor area.
+
+    Returns:
+        None
+    """
+
+    # Step 1: Get Selected Metrics
+    list_list_metrics_with_date = get_list_list_metrics_with_date(config)
+    list_list_metrics_without_date = get_list_list_metrics_without_date(config)
+    list_list_metrics_building = get_list_list_metrics_building(config)
+
+    # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
+    folder_name = config.result_summary.folder_name_to_save_exported_results
+    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+    os.makedirs(summary_folder, exist_ok=True)
+
+    # Step 3: Get & Filter Buildings
+    df_buildings = get_building_year_standard_main_use_type(locator)
+    df_buildings = filter_by_building_names(df_buildings, list_buildings)
+    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
+    df_buildings = filter_by_standard(df_buildings, list_standard)
+    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
+    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
+    list_buildings = df_buildings['name'].to_list()
+
+    # Step 4: Get Building GFA & Merge with df_buildings
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
+    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
+
+    # Step 5: Save Building Summary to Disk
+    buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    df_buildings.to_csv(buildings_path, index=False)
+
+    # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
+    for list_metrics in list_list_metrics_without_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False)
+
+    # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
+    for list_metrics in list_list_metrics_with_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False)
+
+    # Step 8: Aggregate by Building (if Enabled)
+    if bool_aggregate_by_building:
+        for list_metrics in list_list_metrics_building:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period)
+
+    # Step 9: Include Advanced Analytics (if Enabled)
+    if bool_include_advanced_analytics:
+        if config.result_summary.metrics_building_energy_demand:
+            calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
+        if config.result_summary.metrics_photovoltaic_panels:
+            calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym)
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)
 
@@ -2099,65 +2183,13 @@ def main(config):
     bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
-    # Get the selected metrics
-    list_list_metrics_with_date = get_list_list_metrics_with_date(config)
-    list_list_metrics_without_date = get_list_list_metrics_without_date(config)
-    list_list_metrics_building = get_list_list_metrics_building(config)
-
-    # Get the user-defined name of folder
-    folder_name = config.result_summary.folder_name_to_save_exported_results
-
-    # Create the folder to store all the .csv file if it doesn't exist
-    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
-    os.makedirs(summary_folder, exist_ok=True)
-
-    # Get the list of selected buildings
-    df_buildings = get_building_year_standard_main_use_type(locator)
-    # Initial filter to keep the selected buildings
-    df_buildings = filter_by_building_names(df_buildings, list_buildings)
-    # Further select by year
-    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
-    # Further filter by standard
-    df_buildings = filter_by_standard(df_buildings, list_standard)
-    # Further filter by main use type
-    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
-    # Further filter by main use type ratio
-    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
-    list_buildings = df_buildings['name'].to_list()
-
-    # Get the GFA of the selected buildings
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
-    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
-
-    # Join the two Dataframes storing the architectural information of the selected buildings, and write to disk
-    buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
-    df_buildings.to_csv(buildings_path, index=False)
-
-    # Export results that have no date information, non-8760 hours, aggregate by building
-    for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None,  bool_analytics=False)   # Write to disk
-
-    # Export results that have date information, 8760 hours, aggregate by time period
-    for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False)   # Write to disk
-
-    # Aggregate by building
-    if bool_aggregate_by_building:
-        for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period)  # Write to disk
-
-    # Include analytics, aggregate by time period and by building
-    if bool_include_advanced_analytics:
-        if config.result_summary.metrics_building_energy_demand:
-            calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
-        if config.result_summary.metrics_photovoltaic_panels:
-            calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym)
+    # Process building summary
+    process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type,
+                             bool_use_acronym, bool_aggregate_by_building,
+                             bool_include_advanced_analytics, list_selected_time_period,
+                             bool_use_conditioned_floor_area_for_normalisation)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
