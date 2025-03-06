@@ -29,7 +29,7 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
 
    installation/installation
    cite
-   tutorials
+   tutorials/index
    known-issues
    glossary
    legal
