@@ -812,7 +812,7 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 # Execute aggregation
 
 
-def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date'):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot_cea_feature=None):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -952,7 +952,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         list_time_resolution = ['annually', 'monthly', 'seasonally']
 
         # Write to disk
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot_cea_feature=None)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1185,7 +1185,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics):
+def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics, plot_cea_feature=None):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -1198,7 +1198,10 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
     cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
 
     # Create the target path of directory
-    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+    if plot_cea_feature is not None:
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+    else:
+        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1294,7 +1297,10 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         cea_feature = list_appendix
 
     # Join the paths
-    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+    if plot_cea_feature is not None:
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+    else:
+        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1550,7 +1556,7 @@ def filter_by_building_names(df_typology, list_buildings):
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym):
+def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot_cea_feature=None):
     list_pv_analytics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                          'PV_yield_carbon_intensity[tonCO2-eq/kWh]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
@@ -1734,7 +1740,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         list_list_time_period.append(list_time_period)
 
     # Write to disk - district
-    results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True)
+    results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True, plot_cea_feature=None)
 
     if bool_aggregate_by_building:
         # For each building
@@ -1814,7 +1820,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_time_period = ['annually', 'monthly', 'seasonally']
 
             # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot_cea_feature=None)
 
 
 def calc_solar_energy_penetration_by_period(df, col):
@@ -1919,7 +1925,7 @@ def calc_self_consumption_by_period(df, col):
 
 def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period,
                                    bool_aggregate_by_building, bool_use_acronym,
-                                   bool_use_conditioned_floor_area_for_normalisation):
+                                   bool_use_conditioned_floor_area_for_normalisation, plot_cea_feature=None):
     """
     Normalizes UBEM analytics based on floor area and writes the results.
     """
@@ -1940,7 +1946,10 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     }
 
     # Read and process the architecture DataFrame
-    df_building_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    if plot_cea_feature is not None:
+        df_building_path = locator.get_export_plots_selected_building_file(plot_cea_feature)
+    else:
+        df_building_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     df_architecture = pd.read_csv(df_building_path)
 
     if bool_use_acronym:
@@ -1973,7 +1982,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         list_result_time_resolution.append(result_time_resolution)
 
         # Write to disk
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True, plot_cea_feature=None)
 
         # Aggregate by building
         if bool_aggregate_by_building:
@@ -2005,7 +2014,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                     list_result_buildings.append(result_buildings)
 
                     results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
-                    [list_result_buildings], [appendix], [time_period], bool_analytics=True)
+                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot_cea_feature=None)
                 else:
                     print("Aggregation by buildings was skipped as the required input file was not found: {appendix}.".format(appendix=appendix))
 
@@ -2122,7 +2131,7 @@ def process_building_summary(config, locator, hour_start, hour_end, list_buildin
         summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
     else:
         summary_folder = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
-     os.makedirs(summary_folder, exist_ok=True)
+    os.makedirs(summary_folder, exist_ok=True)
 
     # Step 3: Get & Filter Buildings
     df_buildings = get_building_year_standard_main_use_type(locator)
