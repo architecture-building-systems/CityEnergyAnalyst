@@ -197,10 +197,21 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
-    if cea_feature == 'pvt':
+    if cea_feature == 'pvt_et':
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
-        for panel_type, sc_panel_type in itertools.product(list_panel_type, ['ET', 'FP']):
+        for panel_type, sc_panel_type in itertools.product(list_panel_type, ['ET']):
+            pv_paths = []
+            for building in list_buildings:
+                path = locator.PVT_results(building, panel_type, sc_panel_type)
+                pv_paths.append(path)
+            list_paths.append(pv_paths)
+            list_appendix.append(f"{cea_feature}_{panel_type}")
+
+    if cea_feature == 'pvt_fp':
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+        list_panel_type = database_pv['code'].dropna().unique().tolist()
+        for panel_type, sc_panel_type in itertools.product(list_panel_type, ['FP']):
             pv_paths = []
             for building in list_buildings:
                 path = locator.PVT_results(building, panel_type, sc_panel_type)
@@ -285,12 +296,18 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
                'PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
-        "pvt": ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]',
-                    'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]',
-                    'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]',
-                    'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]',
-                    'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]',
-                    'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]'],
+        "pvt_et": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
+                    'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
+                    'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
+                    'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]',
+                    'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]',
+                    'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]'],
+        "pvt_fp": ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]',
+                    'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]',
+                    'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]',
+                    'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]',
+                    'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]',
+                    'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]'],
         "sc_et": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
                   'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
                   'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
@@ -381,24 +398,42 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'PV_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
         'PV_installed_area_west[m2]': ['PV_walls_west_m2'],
         'PV_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
-        'PVT_installed_area_total[m2]': ['Area_PVT_m2'],
-        'PVT_electricity_total[kWh]': ['E_PVT_gen_kWh'],
-        'PVT_heat_total[kWh]': ['Q_PVT_gen_kWh'],
-        'PVT_installed_area_roof[m2]': ['PVT_roofs_top_m2'],
-        'PVT_electricity_roof[kWh]': ['PVT_roofs_top_E_kWh'],
-        'PVT_heat_roof[kWh]': ['PVT_roofs_top_Q_kWh'],
-        'PVT_installed_area_north[m2]': ['PVT_walls_north_m2'],
-        'PVT_electricity_north[kWh]': ['PVT_walls_north_E_kWh'],
-        'PVT_heat_north[kWh]': ['PVT_walls_north_Q_kWh'],
-        'PVT_installed_area_south[m2]': ['PVT_walls_south_m2'],
-        'PVT_electricity_south[kWh]': ['PVT_walls_south_E_kWh'],
-        'PVT_heat_south[kWh]': ['PVT_walls_south_Q_kWh'],
-        'PVT_installed_area_east[m2]': ['PVT_walls_east_m2'],
-        'PVT_electricity_east[kWh]': ['PVT_walls_east_E_kWh'],
-        'PVT_heat_east[kWh]': ['PVT_walls_east_Q_kWh'],
-        'PVT_installed_area_west[m2]': ['PVT_walls_west_m2'],
-        'PVT_electricity_west[kWh]': ['PVT_walls_west_E_kWh'],
-        'PVT_heat_west[kWh]': ['PVT_walls_west_Q_kWh'],
+        'PVT_ET_installed_area_total[m2]': ['Area_PVT_m2'],
+        'PVT_ET_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'PVT_ET_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'PVT_ET_installed_area_roof[m2]': ['PVT_ET_roofs_top_m2'],
+        'PVT_ET_electricity_roof[kWh]': ['PVT_ET_roofs_top_E_kWh'],
+        'PVT_ET_heat_roof[kWh]': ['PVT_ET_roofs_top_Q_kWh'],
+        'PVT_ET_installed_area_north[m2]': ['PVT_ET_walls_north_m2'],
+        'PVT_ET_electricity_north[kWh]': ['PVT_ET_walls_north_E_kWh'],
+        'PVT_ET_heat_north[kWh]': ['PVT_ET_walls_north_Q_kWh'],
+        'PVT_ET_installed_area_south[m2]': ['PVT_ET_walls_south_m2'],
+        'PVT_ET_electricity_south[kWh]': ['PVT_ET_walls_south_E_kWh'],
+        'PVT_ET_heat_south[kWh]': ['PVT_ET_walls_south_Q_kWh'],
+        'PVT_ET_installed_area_east[m2]': ['PVT_ET_walls_east_m2'],
+        'PVT_ET_electricity_east[kWh]': ['PVT_ET_walls_east_E_kWh'],
+        'PVT_ET_heat_east[kWh]': ['PVT_ET_walls_east_Q_kWh'],
+        'PVT_ET_installed_area_west[m2]': ['PVT_ET_walls_west_m2'],
+        'PVT_ET_electricity_west[kWh]': ['PVT_ET_walls_west_E_kWh'],
+        'PVT_ET_heat_west[kWh]': ['PVT_ET_walls_west_Q_kWh'],
+        'PVT_FP_installed_area_total[m2]': ['Area_PVT_m2'],
+        'PVT_FP_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'PVT_FP_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'PVT_FP_installed_area_roof[m2]': ['PVT_FP_roofs_top_m2'],
+        'PVT_FP_electricity_roof[kWh]': ['PVT_FP_roofs_top_E_kWh'],
+        'PVT_FP_heat_roof[kWh]': ['PVT_FP_roofs_top_Q_kWh'],
+        'PVT_FP_installed_area_north[m2]': ['PVT_FP_walls_north_m2'],
+        'PVT_FP_electricity_north[kWh]': ['PVT_FP_walls_north_E_kWh'],
+        'PVT_FP_heat_north[kWh]': ['PVT_FP_walls_north_Q_kWh'],
+        'PVT_FP_installed_area_south[m2]': ['PVT_FP_walls_south_m2'],
+        'PVT_FP_electricity_south[kWh]': ['PVT_FP_walls_south_E_kWh'],
+        'PVT_FP_heat_south[kWh]': ['PVT_FP_walls_south_Q_kWh'],
+        'PVT_FP_installed_area_east[m2]': ['PVT_FP_walls_east_m2'],
+        'PVT_FP_electricity_east[kWh]': ['PVT_FP_walls_east_E_kWh'],
+        'PVT_FP_heat_east[kWh]': ['PVT_FP_walls_east_Q_kWh'],
+        'PVT_FP_installed_area_west[m2]': ['PVT_FP_walls_west_m2'],
+        'PVT_FP_electricity_west[kWh]': ['PVT_FP_walls_west_E_kWh'],
+        'PVT_FP_heat_west[kWh]': ['PVT_FP_walls_west_Q_kWh'],
         'SC_ET_installed_area_total[m2]': ['Area_SC_m2'],
         'SC_ET_heat_total[kWh]': ['Q_SC_gen_kWh'],
         'SC_ET_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
@@ -1968,7 +2003,8 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 list_metrics_building_energy_demand = ['grid_electricity_consumption[kWh]','enduse_electricity_demand[kWh]','enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]','enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]']
 list_metrics_solar_irradiation = ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]', 'irradiation_wall_north[kWh]', 'irradiation_window_south[kWh]', 'irradiation_wall_south[kWh]', 'irradiation_window_east[kWh]', 'irradiation_wall_east[kWh]', 'irradiation_window_west[kWh]', 'irradiation_wall_west[kWh]']
 list_metrics_photovoltaic_panels = ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]', 'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]', 'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]', 'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]']
-list_metrics_photovoltaic_thermal_panels = ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]', 'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]', 'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]', 'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]', 'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]', 'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_et = ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]', 'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]', 'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]', 'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]', 'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]', 'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_fp = ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]', 'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]', 'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]', 'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]', 'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]', 'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]']
 list_metrics_solar_collectors_et = ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]', 'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]', 'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]', 'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]', 'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]', 'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]']
 list_metrics_solar_collectors_fp = ['SC_FP_installed_area_total[m2]','SC_FP_heat_total[kWh]','SC_FP_installed_area_roof[m2]','SC_FP_heat_roof[kWh]','SC_FP_installed_area_north[m2]','SC_FP_heat_north[kWh]','SC_FP_installed_area_south[m2]','SC_FP_heat_south[kWh]','SC_FP_installed_area_east[m2]','SC_FP_heat_east[kWh]','SC_FP_installed_area_west[m2]','SC_FP_heat_west[kWh]']
 list_metrics_other_renewables = ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]']
@@ -1989,7 +2025,8 @@ def get_list_list_metrics_with_date(config):
     if config.result_summary.metrics_photovoltaic_panels:
         list_list_metrics_with_date.append(list_metrics_photovoltaic_panels)
     if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels)
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_fp)
     if config.result_summary.metrics_solar_collectors:
         list_list_metrics_with_date.append(list_metrics_solar_collectors_et)
         list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
@@ -2022,7 +2059,8 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_photovoltaic_panels:
         list_list_metrics_building.append(list_metrics_photovoltaic_panels)
     if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels)
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_fp)
     if config.result_summary.metrics_solar_collectors:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)

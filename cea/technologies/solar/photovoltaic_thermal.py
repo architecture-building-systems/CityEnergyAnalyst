@@ -112,7 +112,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
         # print('generating groups of sensor points done for building %s' % building_name)
 
         Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
-                                    tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
+                                    tot_bui_height_m, panel_properties_SC, panel_properties_PV, config, type_scpanel)
 
         Final.to_csv(locator.PVT_results(building_name, type_pvpanel, type_scpanel), index=True, float_format='%.2f',  na_rep='nan')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building=building_name), index=True,
@@ -122,17 +122,18 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
         print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
 
     else:  # This block is activated when a building has not sufficient solar potential
+
         Final = pd.DataFrame(
-            {'date': date_local, 'PVT_walls_north_E_kWh': 0.0, 'PVT_walls_north_m2': 0.0, 'PVT_walls_north_Q_kWh': 0.0,
-             'PVT_walls_north_Tout_C': 0.0,
-             'PVT_walls_south_E_kWh': 0.0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0.0,
-             'PVT_walls_south_Tout_C': 0.0,
-             'PVT_walls_east_E_kWh': 0.0, 'PVT_walls_east_m2': 0.0, 'PVT_walls_east_Q_kWh': 0.0,
-             'PVT_walls_east_Tout_C': 0.0,
-             'PVT_walls_west_E_kWh': 0.0, 'PVT_walls_west_m2': 0.0, 'PVT_walls_west_Q_kWh': 0.0,
-             'PVT_walls_west_Tout_C': 0.0,
-             'PVT_roofs_top_E_kWh': 0.0, 'PVT_roofs_top_m2': 0.0, 'PVT_roofs_top_Q_kWh': 0.0,
-             'PVT_roofs_top_Tout_C': 0.0,
+            {'date': date_local, 'PVT' + type_scpanel + '_walls_north_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_north_m2': 0.0, 'PVT' + type_scpanel + '_walls_north_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_walls_north_Tout_C': 0.0,
+             'PVT' + type_scpanel + '_walls_south_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_south_m2': 0, 'PVT' + type_scpanel + '__walls_south_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_walls_south_Tout_C': 0.0,
+             'PVT' + type_scpanel + '_walls_east_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_east_m2': 0.0, 'PVT' + type_scpanel + '_walls_east_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_walls_east_Tout_C': 0.0,
+             'PVT' + type_scpanel + '_walls_west_E_kWh': 0.0, 'PVT' + type_scpanel + '_walls_west_m2': 0.0, 'PVT' + type_scpanel + '_walls_west_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_walls_west_Tout_C': 0.0,
+             'PVT' + type_scpanel + '_roofs_top_E_kWh': 0.0, 'PVT' + type_scpanel + '_roofs_top_m2': 0.0, 'PVT' + type_scpanel + '_roofs_top_Q_kWh': 0.0,
+             'PVT' + type_scpanel + '_roofs_top_Tout_C': 0.0,
              'Q_PVT_gen_kWh': 0.0, 'T_PVT_sup_C': 0.0, 'T_PVT_re_C': 0.0,
              'mcp_PVT_kWperC': 0.0, 'Eaux_PVT_kWh': 0.0,
              'Q_PVT_l_kWh': 0.0, 'E_PVT_gen_kWh': 0.0, 'area_PVT_m2': 0.0,
@@ -150,7 +151,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
 
 
 def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, tot_bui_height_m,
-                        panel_properties_SC, panel_properties_PV, config):
+                        panel_properties_SC, panel_properties_PV, config, type_scpanel):
     """
     To calculate the heat and electricity generated from PVT panels.
 
@@ -199,9 +200,9 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
     potential = pd.DataFrame(index=range(HOURS_IN_YEAR))
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
-        potential['PVT_' + panel_orientation + '_Q_kWh'] = 0.0
-        potential['PVT_' + panel_orientation + '_E_kWh'] = 0.0
-        potential['PVT_' + panel_orientation + '_m2'] = 0.0
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_Q_kWh'] = 0.0
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_E_kWh'] = 0.0
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_m2'] = 0.0
 
     # assign default number of subsdivisions for the calculation
     if panel_properties_SC['type'] == 'ET':  # ET: evacuated tubes
@@ -254,10 +255,9 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         PVT_E_kWh = list_results_from_PVT[group][6]
 
         # write results
-        potential['PVT_' + panel_orientation + '_Q_kWh'] = potential['PVT_' + panel_orientation + '_Q_kWh'] + PVT_Q_kWh
-        potential['PVT_' + panel_orientation + '_E_kWh'] = potential['PVT_' + panel_orientation + '_E_kWh'] + PVT_E_kWh
-        potential['PVT_' + panel_orientation + '_m2'] = potential[
-                                                            'PVT_' + panel_orientation + '_m2'] + module_area_per_group_m2
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_Q_kWh'] = potential['PVT_' + type_scpanel + '_' +panel_orientation + '_Q_kWh'] + PVT_Q_kWh
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_E_kWh'] = potential['PVT_' + type_scpanel + '_' + panel_orientation + '_E_kWh'] + PVT_E_kWh
+        potential['PVT_' + type_scpanel + '_' + panel_orientation + '_m2'] = potential['PVT_' + type_scpanel + '_' + panel_orientation + '_m2'] + module_area_per_group_m2
 
         # aggregate results from all modules
         list_groups_area[group] = module_area_per_group_m2
