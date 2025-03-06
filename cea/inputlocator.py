@@ -163,6 +163,14 @@ class InputLocator(object):
             return os.path.join(summary_folder, 'sc')
         elif cea_feature == 'sc_fp':
             return os.path.join(summary_folder, 'sc')
+        elif cea_feature == 'pvt_et':
+            return os.path.join(summary_folder, 'pvt')
+        elif cea_feature == 'pvt_fp':
+            return os.path.join(summary_folder, 'pvt')
+        elif cea_feature == 'embodied_emissions':
+            return os.path.join(summary_folder, 'emissions')
+        elif cea_feature == 'operation_emissions':
+            return os.path.join(summary_folder, 'emissions')
         else:
             return os.path.join(summary_folder, cea_feature)
 
