@@ -3,12 +3,11 @@ Import & Export:
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
     description: |
-      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
+      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at path: {CEA Project}/{Current Scenario}/export/rhino/from_cea.
       
       Download the .gh file via the link. Use the Grasshopper components to import the exported package into Rhino/Grasshopper. 
-      The .gh file requires two inputs: the path to this Project and the name of this Scenario.
-      
-      https://www.cityenergyanalyst.com/s/to_cea_v400alpha22gh.zip
+      https://www.cityenergyanalyst.com/s/cea_gh_v4alpha22gh.zip
+
     interfaces: [cli, dashboard]
     module: cea.import_export.export_to_rhino_gh
     parameters: ['general:scenario', to-rhino-gh]
