@@ -73,6 +73,17 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
+Function .onInstFailed
+    # Ensure temporary files are cleaned up
+    ${If} ${FileExists} "$INSTDIR\cityenergyanalyst.tar.gz"
+        Delete /REBOOTOK "$INSTDIR\cityenergyanalyst.tar.gz"
+    ${EndIf}
+    
+    ${If} ${FileExists} "$INSTDIR\gui_setup.exe"
+        Delete /REBOOTOK "$INSTDIR\gui_setup.exe"
+    ${EndIf}
+FunctionEnd
+
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
