@@ -87,18 +87,18 @@ in your browser OR in Github Desktop under `branch <https://help.github.com/desk
 2. If you're using your browser click the ``pull requests`` tab.
 3. Select ``New Pull Request``.
 
-.. image:: _static/pullrequest1.png
+.. image:: /_static/pullrequest1.png
     :align: center
 
 4. Select the branch you have been working on and review your changes.
 
-.. image:: _static/pullrequest2.png
+.. image:: /_static/pullrequest2.png
     :align: center
 
 5. Click ``Create pull request``.
 6. Ensure the request is linked to the Zenhub issue and add a reviewer and any other comments.
 
-.. image:: _static/pullrequest3.png
+.. image:: /_static/pullrequest3.png
     :align: center
 
 7. Click ``Create pull request``.

@@ -1,37 +1,17 @@
 :orphan:
 
-How to Run MPC District Toolbox
+How to Run MPC Building Toolbox
 ===============================
-The MPC District Toolbox finds the micro-grid design with the lowest investment and operation costs. 
-The optimization in done in two stages, first, the planning (or design) of the electrical network, and second, the optimization of building temperature setpoints in order to decrease electricity costs. A detailed workflow is shown in the bottom of this page.
+The MPC Building Toolbox utilize Model Predictive Control (MPC) algorithms to minimize the electricity costs for cooling in buildings. When the hourly electricity prices are flunctuating, it is possible to explore the opportunities to shift the cooling loads by precooling the buildings (as shown in the figure below). 
+
+.. image:: /_static/flexible_loads.png
+      :width: 250
+      :align: center
+    
 
 
-The second part is directly calling the MPC Building Toolbox in CEA, please see :doc:`how-to-run-MPC-building` to learn more about MPC Building. 
-
-
-
-The Optimization Problem
-------------------------
-Objective
-"""""""""
-Minimize annual investment and operation costs of a micro-grid.
-The investment costs of a micro-grid include: the substations, electricity grid(line), transformers. The operation costs include the maintenance costs of the equiment and electricity costs for cooling in buildings.
-
-Constraints
-"""""""""""
-  * Capacity limits corresponding to electric grids, line types.
-  * Range of the building temperature according to thermal comfort standard.
-
-
-Variables
-"""""""""
-  * Which buildings are connected to the micro-grid.
-  * The capacities of substations, electricity grid(line), transformers. 
-  * Hourly temperature set-points for each function in the building
-
-
-Inputs
-------
+Input
+-----
 #. Range of the building temperature according to thermal comfort standard. 
 #. Hourly electricity price. The database is located here: ``..\CityEnergyAnalyst\cea\databases\Region\systems\electricity_costs.xlsx``
 
@@ -56,7 +36,7 @@ Steps
 #. Run demand simulation of the case study you wish to optimize.
 #. Assign optimization parameters in ``cea.config``::
 
-      [mpc-district]
+      [mpc-building]
       time-start = 2005-01-01 00:00:00
       time-end = 2005-01-01 23:30:00
       *set-temperature-goal = constant_temperature, follow_cea, set_setback_temperature
@@ -69,9 +49,8 @@ Steps
       delta-set = 3.0; if min-max-source = from occupancy
       delta-setback = 5.0; if min-max-source = from occupany
 
-#. Run `cea\optimization\flexibility_model\mpc_district\planning_and_operation_optimization.py`
-#. Check results from optimization in ``...scenario\outputs\mpc-district``
-
+#. Run `cea\optimization\flexibility_model\mpc_building\operation_main.py`
+#. Check results from optimization in ``...scenario\outputs\mpc-building``
 
 Outputs
 -------
@@ -81,14 +60,11 @@ The results from the optimization are saved for each building. In ``Bxxx_outputs
 * Hourly air flows
 * Hourly electricity consumption for cooling
 
-The results of the electricity grid costs and sizes is saved in ``output_folder.csv``
-
 
 Calculation flowchart
 ---------------------
-
 ** Please note: To maintain linearity, the cooling demand is calculated by a linearized model instead of the CEA demand module. 
 
-.. image:: _static/flowchart_mpc_district.png
+.. image:: /_static/flowchart_mpc_building.png
     :align: center
 
