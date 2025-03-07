@@ -946,9 +946,9 @@ class MultiChoiceParameter(ChoiceParameter):
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
-    def encode(self, value):
-        if isinstance(value, str):
-            raise ValueError(f"Bad value for encode of parameter {self.name}")
+    def encode(self, value: list):
+        if not isinstance(value, list):
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
 
         valid_choices = set(self._choices)
         for choice in value:

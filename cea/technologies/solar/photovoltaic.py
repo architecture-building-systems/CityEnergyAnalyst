@@ -62,7 +62,7 @@ def projected_lifetime_output(
     lifetime_production = production_values * derate_factors
     return lifetime_production
 
-def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, building_name):
+def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, datetime_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -89,7 +89,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
 
     # calculate properties of PV panel
-    panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), config)
+    panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_PVpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -121,7 +121,7 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
         final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
                                    panel_properties_PV)
 
-        final.to_csv(locator.PV_results(building=building_name, panel_type=config.solar.type_PVpanel), index=True,
+        final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=True,
                      float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
@@ -131,12 +131,12 @@ def calc_PV(locator, config, latitude, longitude, weather_data, datetime_local, 
         print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
-            {'Date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
+            {'date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,
              'PV_walls_south_m2': 0,
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
-             'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
-        final.to_csv(locator.PV_results(building=building_name, panel_type=config.solar.type_PVpanel), index=False, float_format='%.2f', na_rep='nan')
+             'E_PV_gen_kWh': 0, 'area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
+        final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
@@ -235,9 +235,9 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
 
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['radiation_kWh'] = sum(total_radiation_kWh).values
-    potential['Area_PV_m2'] = sum(list_groups_area)
-    potential['Date'] = date_local
-    potential = potential.set_index('Date')
+    potential['area_PV_m2'] = sum(list_groups_area)
+    potential['date'] = date_local
+    potential = potential.set_index('date')
 
     return potential
 
@@ -643,7 +643,7 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 # TODO: Delete when done
 
 
-def get_properties_PV_db(database_path, config):
+def get_properties_PV_db(database_path, type_PVpanel):
     """
     To assign PV module properties according to panel types.
 
@@ -651,7 +651,6 @@ def get_properties_PV_db(database_path, config):
     :type type_PVpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-    type_PVpanel = config.solar.type_PVpanel
     data = pd.read_csv(database_path)
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
@@ -723,14 +722,12 @@ def calc_Crem_pv(E_nom):
     return KEV_obtained_in_RpPerkWh
 
 
-def aggregate_results(config, locator, building_names):
+def aggregate_results(locator, type_PVpanel, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
     aggregated_annual_results = pd.DataFrame()
-    panel_type = config.solar.type_PVpanel
-
 
     for i, building in enumerate(building_names):
-        hourly_results_per_building = pd.read_csv(locator.PV_results(building, panel_type)).set_index('Date')
+        hourly_results_per_building = pd.read_csv(locator.PV_results(building, type_PVpanel)).set_index('date')
         if i == 0:
             aggregated_hourly_results_df = hourly_results_per_building
         else:
@@ -748,14 +745,13 @@ def aggregate_results_func(args):
     return aggregate_results(args[0], args[1], args[2])
 
 
-def write_aggregate_results(config, locator, building_names):
+def write_aggregate_results(locator, type_PVpanel, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
     aggregated_annual_results = pd.DataFrame()
-    panel_type = config.solar.type_PVpanel
 
     num_process = 4
     with Pool(processes=num_process) as pool:
-        args = [(config, locator, x) for x in np.array_split(building_names, num_process) if x.size != 0]
+        args = [(locator, type_PVpanel, x) for x in np.array_split(building_names, num_process) if x.size != 0]
         for i, x in enumerate(pool.map(aggregate_results_func, args)):
             hourly_results_df, annual_results = x
             if i == 0:
@@ -766,23 +762,24 @@ def write_aggregate_results(config, locator, building_names):
                 aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
 
     # save hourly results
-    aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=panel_type), index=True, float_format='%.2f', na_rep='nan')
+    aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=type_PVpanel), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
-    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(panel_type), index=True, index_label="name",
+    aggregated_annual_results_df.to_csv(locator.PV_total_buildings(type_PVpanel), index=True, index_label="name",
                                         float_format='%.2f', na_rep='nan')
 
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    list_types_PVpanel = config.solar.type_PVpanel
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
     print('Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
-    print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
+    # print('Running photovoltaic with type-PVpanel = {types_PVpanel}'.format(types_PVpanel=', '.join(map(str, list_types_PVpanel))))
     if config.solar.custom_tilt_angle:
         print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
               (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
@@ -790,26 +787,28 @@ def main(config):
         print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
     print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
-    building_names = locator.get_zone_building_names()
+    # building_names = locator.get_zone_building_names()
+    building_names = config.solar.buildings
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry_df)
-
-    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
 
     num_process = config.get_number_of_processes()
     n = len(building_names)
-    cea.utilities.parallel.vectorize(calc_PV, num_process)(repeat(locator, n),
-                                                           repeat(config, n),
-                                                           repeat(latitude, n),
-                                                           repeat(longitude, n),
-                                                           repeat(weather_data, n),
-                                                           repeat(date_local, n),
-                                                           building_names)
 
-    # aggregate results from all buildings
-    write_aggregate_results(config, locator, building_names)
+    for type_PVpanel in list_types_PVpanel:
+        print('Running photovoltaic with type-PVpanel = %s' % type_PVpanel)
+        cea.utilities.parallel.vectorize(calc_PV, num_process)(repeat(locator, n),
+                                                               repeat(config, n),
+                                                               repeat(type_PVpanel, n),
+                                                               repeat(latitude, n),
+                                                               repeat(longitude, n),
+                                                               repeat(weather_data, n),
+                                                               repeat(date_local, n),
+                                                               building_names)
+        # aggregate results from all buildings
+        write_aggregate_results(locator, type_PVpanel,building_names)
 
 
 if __name__ == '__main__':

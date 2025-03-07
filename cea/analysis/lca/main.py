@@ -30,7 +30,7 @@ def emissions_main(locator, config):
 
     #
     embodied = config.emissions.embodied
-    operation = config.emissions.operation
+    operation = config.emissions.operational
     # embodied emissions
     if embodied:
         year_to_calculate = config.emissions.year_to_calculate
