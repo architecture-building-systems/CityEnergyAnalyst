@@ -62,7 +62,6 @@ def occupancy_helper_main(locator, config, building=None):
     prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
     prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
     prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
-    # prop_geometry = split_above_and_below_ground_shares(prop_geometry)
     prop_geometry = calc_useful_areas(prop_geometry)
 
     # get calculation year from weather file
