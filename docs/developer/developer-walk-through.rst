@@ -16,3 +16,4 @@ Developer walkthrough
    installing-the-jenkins
    run-cea-in-docker
    repo-cleanup
+   pycharm-interface
