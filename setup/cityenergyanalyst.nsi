@@ -99,14 +99,13 @@ Function BaseInstallationSection
     ${EndIf}
     Delete "$INSTDIR\cityenergyanalyst.tar.gz"
     
-    # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --help'
+    # Run cea --version to check if installation was successful
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'
     Pop $0
-    DetailPrint '"cea --help" returned $0'
+    DetailPrint '"cea --version" returned $0'
     ${If} "$0" != "0"
         Abort "Installation failed - see Details"
     ${EndIf}
-    #WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
 
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
