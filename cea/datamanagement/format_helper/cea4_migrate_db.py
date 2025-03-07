@@ -7,7 +7,6 @@ Mirgate the format of the DB to CEA-4 format.
 import os
 import cea.config
 import time
-import numpy as np
 import pandas as pd
 from cea.utilities.dbf import dbf_to_dataframe
 import shutil

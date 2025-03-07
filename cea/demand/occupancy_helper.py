@@ -13,7 +13,7 @@ import cea.inputlocator
 import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
-from cea.demand.building_properties import calc_useful_areas, split_above_and_below_ground_shares
+from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
