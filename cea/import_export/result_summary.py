@@ -2097,9 +2097,42 @@ def get_list_list_metrics_with_date(config):
     return list_list_metrics_with_date
 
 
+def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
+    list_list_metrics_with_date = []
+    if 'demand' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_building_energy_demand)
+    if 'solar_irradiation' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_solar_irradiation)
+    if 'pv' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_panels)
+    if 'pvt' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if 'sc' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_solar_collectors_et)
+        list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
+    if 'other_renewables' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_other_renewables)
+    if 'dh' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_district_heating)
+    if 'dc' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_district_cooling)
+
+    return list_list_metrics_with_date
+
+
 def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
+        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
+        list_list_metrics_without_date.append(list_metrics_operation_emissions)
+
+    return list_list_metrics_without_date
+
+
+def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
+    list_list_metrics_without_date = []
+    if 'emissions' in list_cea_feature_to_plot:
         list_list_metrics_without_date.append(list_metrics_embodied_emissions)
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
@@ -2124,13 +2157,32 @@ def get_list_list_metrics_building(config):
     return list_list_metrics_building
 
 
+def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
+    list_list_metrics_building = []
+    if 'demand' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_building_energy_demand)
+    if 'solar_irradiation' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_solar_irradiation)
+    if 'pv' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_photovoltaic_panels)
+    if 'pvt' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if 'sc' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_solar_collectors_et)
+        list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+
+    return list_list_metrics_building
+
+
 def process_building_summary(config, locator,
                              hour_start, hour_end, list_buildings,
                              integer_year_start, integer_year_end, list_standard,
                              list_main_use_type, ratio_main_use_type,
                              bool_use_acronym, bool_aggregate_by_building,
                              bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation, plot=False):
+                             bool_use_conditioned_floor_area_for_normalisation,
+                             plot=False, list_cea_feature_to_plot=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -2156,10 +2208,21 @@ def process_building_summary(config, locator,
         None
     """
 
+    # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
+
     # Step 1: Get Selected Metrics
-    list_list_metrics_with_date = get_list_list_metrics_with_date(config)
-    list_list_metrics_without_date = get_list_list_metrics_without_date(config)
-    list_list_metrics_building = get_list_list_metrics_building(config)
+    if not plot:
+        list_list_metrics_with_date = get_list_list_metrics_with_date(config)
+        list_list_metrics_without_date = get_list_list_metrics_without_date(config)
+        list_list_metrics_building = get_list_list_metrics_building(config)
+
+    else:
+        if list_cea_feature_to_plot is not None:
+            list_list_metrics_with_date = get_list_list_metrics_with_date_plot(list_cea_feature_to_plot)
+            list_list_metrics_without_date = get_list_list_metrics_without_date_plot(list_cea_feature_to_plot)
+            list_list_metrics_building = get_list_list_metrics_building_plot(list_cea_feature_to_plot)
+        else:
+            raise ValueError("Specify the list of CEA features to plot.")
 
     # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
     if not plot:
