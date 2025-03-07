@@ -75,13 +75,21 @@ FunctionEnd
 
 Function .onInstFailed
     # Ensure temporary files are cleaned up
+    DetailPrint "Installation failed, cleaning up temporary files..."
+
     ${If} ${FileExists} "$INSTDIR\cityenergyanalyst.tar.gz"
         Delete /REBOOTOK "$INSTDIR\cityenergyanalyst.tar.gz"
+    ${EndIf}
+
+    ${If} ${FileExists} "$INSTDIR\dependencies"
+        RMDir /r /REBOOTOK "$INSTDIR\dependencies"
     ${EndIf}
     
     ${If} ${FileExists} "$INSTDIR\gui_setup.exe"
         Delete /REBOOTOK "$INSTDIR\gui_setup.exe"
     ${EndIf}
+
+
 FunctionEnd
 
 Function BaseInstallationSection
