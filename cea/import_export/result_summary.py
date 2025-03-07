@@ -2254,7 +2254,7 @@ def main(config):
                              list_main_use_type, ratio_main_use_type,
                              bool_use_acronym, bool_aggregate_by_building,
                              bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation, plot=True)
+                             bool_use_conditioned_floor_area_for_normalisation, plot=False)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
