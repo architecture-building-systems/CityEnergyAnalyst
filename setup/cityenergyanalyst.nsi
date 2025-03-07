@@ -73,8 +73,7 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
-Section "Base Installation" Base_Installation_Section
-    SectionIn RO  # this section is required so user is unable to uncheck
+Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     File "cityenergyanalyst.tar.gz"
@@ -142,11 +141,9 @@ Section "Base Installation" Base_Installation_Section
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
     CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+FunctionEnd
 
-SectionEnd
-
-Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
-
+Function CreateStartMenuShortcutsSection
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
@@ -158,24 +155,18 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
+FunctionEnd
 
-SectionEnd
-
-Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
-
+Function CreateDesktopShortcutsSection
     # create shortcuts on the Desktop for launching the CEA console
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+FunctionEnd
 
-SectionEnd
-
-;Uninstaller Section
-
-Section "Uninstall"
-
+Function UninstallSection
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
@@ -198,10 +189,21 @@ Section "Uninstall"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+FunctionEnd
 
-    ; Change current working directory so that it can be deleted
-    ; Will only be deleted if the directory is empty
-    SetOutPath $TEMP
-    RMDir /REBOOTOK "$INSTDIR"
+Section "Base Installation" Base_Installation_Section
+    SectionIn RO  # this section is required so user is unable to uncheck
+    Call BaseInstallationSection
+SectionEnd
 
+Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
+    Call CreateStartMenuShortcutsSection
+SectionEnd
+
+Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
+    Call CreateDesktopShortcutsSection
+SectionEnd
+
+Section "Uninstall"
+    Call UninstallSection
 SectionEnd
