@@ -184,10 +184,10 @@ def architecture_mapper(locator, typology_df):
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
-              'Hs_ag',
-              'Hs_bg',
+              'Hs',
               'Ns',
               'Es',
+              'occupied_bg',
               'void_deck',
               'wwr_north',
               'wwr_west',
@@ -260,7 +260,7 @@ def calc_comparison(array_second, array_max):
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
-    Corrects the heated area 'Hs_ag' and 'Hs_bg' for buildings with multiple uses.
+    Corrects the heated area 'Hs', occupied area 'Ns' and electrified area 'Es' for buildings with multiple uses.
 
     :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
          well as the architectural properties obtained from the archetypes.
@@ -270,10 +270,10 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     :var list_uses: list of all occupancy types in the project
     :type list_uses: list[str]
 
-    :return: Hs_ag_list, Hs_bg_list, Ns_list, Es_list: the corrected values for 'Hs_ag', 'Hs_bg', 'Ns' and 'Es' for each
-             building
+    :return: Hs_list, Ns_list, Es_list, occupied_bg_list: the corrected values for 'Hs', 'Ns', 'Es' and
+             'occupied_bg' for each building
 
-    :rtype Tuple[List[float], List[float], List[float], List[float]]
+    :rtype Tuple[List[float], List[float], List[float], List[Boolean]]
     """
 
     indexed_DB = architecture_DB.set_index('Code')
@@ -282,15 +282,15 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
-    Hs_ag_list = []
-    Hs_bg_list = []
+    Hs_list = []
     Ns_list = []
     Es_list = []
+    occupied_bg_list = []
     for building in prop_architecture_df.index:
-        Hs_ag = 0.0
-        Hs_bg = 0.0
+        Hs = 0.0
         Ns = 0.0
         Es = 0.0
+        occupied_bg = 0.0
         for use in list_uses:
             # if the use is present in the building, find the building archetype properties for that use
             if prop_architecture_df[use][building] > 0.0:
@@ -300,16 +300,17 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
                                    str(prop_architecture_df['standard'][building])
                 # recalculate heated floor area as an average of the archetype value for each occupancy type in the
                 # building
-                Hs_ag = calc_average(Hs_ag, indexed_DB['Hs_ag'][current_use_code], prop_architecture_df[use][building])
-                Hs_bg = calc_average(Hs_bg, indexed_DB['Hs_bg'][current_use_code], prop_architecture_df[use][building])
+                Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
                 Ns = calc_average(Ns, indexed_DB['Ns'][current_use_code], prop_architecture_df[use][building])
                 Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
-        Hs_ag_list.append(Hs_ag)
-        Hs_bg_list.append(Hs_bg)
+                occupied_bg = calc_average(occupied_bg, indexed_DB['occupied_bg'][current_use_code],
+                                                 prop_architecture_df[use][building])
+        Hs_list.append(Hs)
         Ns_list.append(Ns)
         Es_list.append(Es)
+        occupied_bg_list.append(occupied_bg > 0)  # if the basement is occupied for some of the uses, assume it is occupied for all
 
-    return Hs_ag_list, Hs_bg_list, Ns_list, Es_list
+    return Hs_list, Ns_list, Es_list, occupied_bg_list
 
 
 def get_prop_architecture(typology_df, architecture_DB):
