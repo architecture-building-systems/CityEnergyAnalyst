@@ -89,7 +89,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, datetime_local, config)
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_PVpanel)
+    panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_PVpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
