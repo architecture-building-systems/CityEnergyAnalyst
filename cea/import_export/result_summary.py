@@ -1339,10 +1339,12 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
             if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
                 # Create the .csv file path
                 path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
+                os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                 else:
                     os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                     time_resolution = list_time_resolution[m]
@@ -1350,15 +1352,17 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         else:
             if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
                 # Create the .csv file path
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                 path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, cea_feature, appendix)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                 else:
-                    os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
 
         # Write to .csv files
         for df in list_df:
@@ -1978,7 +1982,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
     # Read and process the architecture DataFrame
     if plot_cea_feature is not None:
-        df_building_path = locator.get_export_plots_selected_building_file(plot_cea_feature)
+        df_building_path = locator.get_export_plots_selected_building_file()
     else:
         df_building_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     df_architecture = pd.read_csv(df_building_path)
@@ -2120,7 +2124,8 @@ def get_list_list_metrics_building(config):
     return list_list_metrics_building
 
 
-def process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+def process_building_summary(config, locator,
+                             hour_start, hour_end, list_buildings,
                              integer_year_start, integer_year_end, list_standard,
                              list_main_use_type, ratio_main_use_type,
                              bool_use_acronym, bool_aggregate_by_building,
@@ -2249,7 +2254,7 @@ def main(config):
                              list_main_use_type, ratio_main_use_type,
                              bool_use_acronym, bool_aggregate_by_building,
                              bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation, plot=False)
+                             bool_use_conditioned_floor_area_for_normalisation, plot=True)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0

@@ -206,7 +206,7 @@ class InputLocator(object):
 
     def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, cea_feature, appendix):
         """scenario/export/plots/{plot_cea_feature}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), cea_feature,
+        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                             f"{appendix}_buildings.csv")
 
     def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature,
@@ -220,14 +220,14 @@ class InputLocator(object):
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
 
-    def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, cea_feature, appendix,
+    def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
                                                                       time_period, hour_start, hour_end):
         """scenario/export/plots/{plot_cea_feature}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), cea_feature,
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f'{appendix}_selected_hours_buildings.csv')
         else:
-            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), cea_feature,
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
@@ -262,21 +262,21 @@ class InputLocator(object):
                 self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
-    def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature, cea_feature):
+    def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature):
         """scenario/export/plots/{plot_cea_feature}/{cea_feature}/analytics"""
-        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), cea_feature, 'analytics')
+        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), 'analytics')
 
-    def get_export_plots_cea_feature_analytics_time_resolution_buildings_file(self, plot_cea_feature, cea_feature,
+    def get_export_plots_cea_feature_analytics_time_resolution_buildings_file(self, plot_cea_feature,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
         """scenario/export/plots/{plot_cea_feature}/{cea_feature}/analytics/{appendix}_analytics_{time_resolution}_buildings.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(
-                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature, cea_feature),
+                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature),
                 f"{appendix}_analytics_selected_hours_buildings.csv")
         else:
             return os.path.join(
-                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature, cea_feature),
+                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
     def get_export_to_rhino_from_cea_folder(self):
