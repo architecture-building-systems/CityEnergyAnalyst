@@ -145,9 +145,9 @@ class InputLocator(object):
         """scenario/export/plots/{plot_cea_feature}"""
         return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
 
-    def get_export_plots_selected_building_file(self, plot_cea_feature):
+    def get_export_plots_selected_building_file(self):
         """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
-        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), 'selected_buildings.csv')
+        return os.path.join(self.get_export_plots_folder(), 'selected_buildings.csv')
 
     def get_export_results_summary_folder(self, hour_start, hour_end, folder_name):
         if folder_name is None or folder_name.strip() == "":
