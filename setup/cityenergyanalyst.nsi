@@ -176,7 +176,7 @@ Function CreateDesktopShortcutsSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 FunctionEnd
 
-Function UninstallSection
+Function un.UninstallSection
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
@@ -215,5 +215,5 @@ Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
 SectionEnd
 
 Section "Uninstall"
-    Call UninstallSection
+    Call un.UninstallSection
 SectionEnd
