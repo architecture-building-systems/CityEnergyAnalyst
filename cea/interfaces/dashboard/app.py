@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from cea.interfaces.dashboard.lib.database.session import create_db_and_tables
 from cea.interfaces.dashboard.server.socketio import socket_app
 
 import cea.interfaces.dashboard.api as api
@@ -15,6 +16,7 @@ from cea.interfaces.dashboard.settings import get_settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    create_db_and_tables()
     yield
     print("Shutting down server...")
     # Shutdown all worker processes on exit

@@ -30,8 +30,8 @@ class TestNetworkTemperature(unittest.TestCase):
     def test_function_with_invalid_input(self):
         """Test the function with invalid input."""
         input_data = "invalid"  # Example invalid input
-        with self.assertRaises(ValueError, msg="Invalid input did not raise expected ValueError"):
-            set_network_temperature(input_data)
+        with self.assertRaises(TypeError, msg="Invalid input did not raise expected TypeError"):
+            set_network_temperature(input_data, "temperature")
 
     def tearDown(self):
         """Clean up resources specific to each individual test."""

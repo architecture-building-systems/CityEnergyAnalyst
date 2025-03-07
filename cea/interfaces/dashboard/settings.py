@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     port: Optional[int] = None
     cors_origin: str = "*"
     project_root: Optional[str] = None
+    database_path: Optional[str] = None
 
     def allow_path_transversal(self) -> bool:
         """

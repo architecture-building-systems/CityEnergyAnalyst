@@ -112,7 +112,8 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
 
     # Read the Excel file
     try:
-        excel_data = pd.ExcelFile(path_excel)
+        with pd.ExcelFile(path_excel) as excel_data:
+            sheet_names = excel_data.sheet_names
     except Exception as e:
         raise ValueError(f"Error reading Excel file: {e}")
 
@@ -121,7 +122,7 @@ def excel_tab_to_csv(path_excel, directory_csv, rename_dict=None, verbose=False)
     total_sheets = 0
 
     # Loop through each sheet and save as a CSV
-    for sheet_name in excel_data.sheet_names:
+    for sheet_name in sheet_names:
         total_sheets += 1
         try:
             df = pd.read_excel(path_excel, sheet_name=sheet_name)
@@ -181,7 +182,8 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None, 
 
     try:
         # Read the Excel file
-        excel_data = pd.ExcelFile(path_excel)
+        with pd.ExcelFile(path_excel) as excel_data:
+            sheet_names = excel_data.sheet_names
     except Exception as e:
         raise ValueError(f"Error reading Excel file: {e}")
 
@@ -192,7 +194,7 @@ def merge_excel_tab_to_csv(path_excel, column_name, path_csv, rename_dict=None, 
     else:
         key_column = column_name  # Determine key column name
 
-    for sheet_name in excel_data.sheet_names:
+    for sheet_name in sheet_names:
         try:
             df = pd.read_excel(path_excel, sheet_name=sheet_name)
 
