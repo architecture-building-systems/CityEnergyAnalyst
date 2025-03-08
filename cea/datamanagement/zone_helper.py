@@ -71,9 +71,9 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
               'Modify before proceeding with any simulations.')
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
-        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
+        OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'building:levels:underground', 'height']
         shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
-            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
+            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] \
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
@@ -100,15 +100,14 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                                                  [parse_building_floors(y) for y in data_osm_floors2])]
         data_floors_sum_with_nan = [np.nan if x <
                                     1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = math.ceil(
-            np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
-        shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
-                                  data_floors_sum_with_nan]
+        data_osm_floors_joined = math.ceil(np.nanmedian(data_floors_sum_with_nan))  # get median of all floors_ag
 
         if 'height' in list_of_columns:
+            shapefile["floors_ag"] = [int(x) if not np.isnan(x) else int(shapefile['height'][i] / constants.H_F)
+                                      if not np.isnan(shapefile['height'][i]) else data_osm_floors_joined
+                                      for i, x in enumerate(data_floors_sum_with_nan)]
             #  Replaces 'nan' values with CEA assumption
-            shapefile["height_ag"] = shapefile["height"].fillna(
-                shapefile["floors_ag"] * constants.H_F).astype(float)
+            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
             #  Replaces values of height = 0 with CEA assumption
             # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
             #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
@@ -117,6 +116,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
                                                                   shapefile["floors_ag"] * constants.H_F).astype(float)
         else:
+            shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
+                                      data_floors_sum_with_nan]
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
         # make sure each floor is at least 1m
@@ -129,16 +130,22 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile["floors_bg"] = pd.Series(np.nan)
 
         # Correct levels below ground if a minimum floor level or height is indicated
+        if 'building:levels:underground' in list_of_columns:
+            has_ug_levels = shapefile["building:levels:underground"] == shapefile["building:levels:underground"]
+            shapefile.floors_bg[has_ug_levels] = [int(x)
+                                                  for x in shapefile[has_ug_levels]["building:levels:underground"]]
+            shapefile.height_bg[has_ug_levels] = shapefile[has_ug_levels].floors_bg * constants.H_F
         if 'building:min_level' in list_of_columns:
             has_min_floor = shapefile["building:min_level"] == shapefile["building:min_level"]
-            shapefile[has_min_floor].floors_bg = [- int(x) for x in shapefile[has_min_floor]["building:min_level"]]
-            shapefile[has_min_floor].height_bg = shapefile[has_min_floor].floors_bg * constants.H_F
+            shapefile.floors_bg[has_min_floor] = [- int(x) for x in shapefile[has_min_floor]["building:min_level"]]
+            shapefile.height_bg[has_min_floor] = shapefile[has_min_floor].floors_bg * constants.H_F
         if 'min_height' in list_of_columns:
             has_min_height = shapefile["min_height"] == shapefile["min_height"]
-            shapefile[has_min_height].height_bg = [- int(x) for x in shapefile[has_min_height]["min_height"]]
+            shapefile.height_bg[has_min_height] = [- x for x in shapefile[has_min_height]["min_height"]]
+            shapefile.floors_bg[has_min_floor] = (shapefile[has_min_height].height_bg / constants.H_F).astype(int)
         # add missing floors and height below ground
-        shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = [buildings_height_below_ground] * no_buildings
-        shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
+        shapefile["height_bg"].fillna(buildings_height_below_ground, inplace=True)
+        shapefile["floors_bg"].fillna(buildings_floors_below_ground, inplace=True)
         shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
     else:
         shapefile['reference'] = "User - assumption"
@@ -169,13 +176,10 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     shapefile["category"] = shapefile['building']
     if 'amenity' in list_of_columns:
         # in OSM, "amenities" (where available) supersede "building" categories
-        in_categories = shapefile['amenity'].isin(
-            OSM_BUILDING_CATEGORIES.keys())
-        shapefile.loc[in_categories, 'use_type1'] = shapefile[in_categories]['amenity'].map(
-            OSM_BUILDING_CATEGORIES)
+        in_categories = shapefile['amenity'].isin(OSM_BUILDING_CATEGORIES.keys())
+        shapefile.loc[in_categories, 'use_type1'] = shapefile[in_categories]['amenity'].map(OSM_BUILDING_CATEGORIES)
 
-    shapefile["name"] = [key + str(x + 1000) for x in
-                         range(no_buildings)]  # start in a big number to avoid potential confusion
+    shapefile["name"] = [key + str(x + 1000) for x in range(no_buildings)]  # start in a big number to avoid confusion
     shapefile.reset_index(inplace=True, drop=True)
 
     return shapefile
