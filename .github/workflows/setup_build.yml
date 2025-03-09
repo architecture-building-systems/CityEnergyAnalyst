@@ -96,7 +96,17 @@ jobs:
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
-          compression-level: 0 
+          compression-level: 0
+      
+      - name: Create Release Draft
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: CityEnergyAnalyst v${{ env.CEA_VERSION }}
+          tag_name: v${{ env.CEA_VERSION }}
+          files: ${{ github.workspace }}/setup/Output/*
+          fail_on_unmatched_files: true
 
   build_mac_dmg:
     runs-on: "macos-latest"
