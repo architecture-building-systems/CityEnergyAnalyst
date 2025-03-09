@@ -275,12 +275,12 @@ class BuildingProperties(object):
             has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
             has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
             if (not has_system_heating_flag and not has_system_cooling_flag and
-                    np.max([df.loc[building, 'Hs_ag'], df.loc[building, 'Hs_bg']]) <= 0.0):
-                df.loc[building, 'Hs_ag'] = 0.0
-                df.loc[building, 'Hs_bg'] = 0.0
+                    df.loc[building, 'Hs'] != 0.0):
+                df.loc[building, 'Hs'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
+        # Calculate useful (electrified/conditioned/occupied) floor areas
         df = calc_useful_areas(df)
 
         if 'Cm_Af' in self.get_overrides_columns():
@@ -315,6 +315,7 @@ class BuildingProperties(object):
         result = df[fields]
 
         return result
+
 
     def geometry_reader_radiation_daysim(self, locator, envelope, geometry):
         """
@@ -439,12 +440,34 @@ class BuildingProperties(object):
         return []
 
 
+def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_bg):
+    '''
+    Split conditioned (Hs) and occupied (Ns) shares of ground floor area based on whether the basement
+    conditioned/occupied or not.
+    For simplicity, the same share is assumed for all conditioned/occupied floors (whether above or below ground)
+    '''
+
+    Hs_ag = Hs * floors_ag / (floors_ag + floors_bg * occupied_bg)
+    Hs_bg = Hs * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
+    Ns_ag = Ns * floors_ag / (floors_ag + floors_bg * occupied_bg)
+    Ns_bg = Ns * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
+
+    return Hs_ag, Hs_bg, Ns_ag, Ns_bg
+
+
 def calc_useful_areas(df):
-    df['Aocc'] = df['GFA_m2'] * df['Ns']  # occupied floor area: all occupied areas in the building
+    # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
+    df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = split_above_and_below_ground_shares(
+        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'], df['floors_bg'])
+    # occupied floor area: all occupied areas in the building
+    df['Aocc'] = df['GFA_ag_m2'] * df['Ns_ag'] + df['GFA_bg_m2'] * df['Ns_bg']
     # conditioned area: areas that are heated/cooled
     df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
-    df['Aef'] = df['GFA_m2'] * df['Es']  # electrified area: share of gross floor area that is also electrified
-    df['Atot'] = df['Af'] * LAMBDA_AT  # area of all surfaces facing the building zone
+    # electrified area: share of gross floor area that is also electrified
+    df['Aef'] = df['GFA_m2'] * df['Es']
+    # area of all surfaces facing the building zone
+    df['Atot'] = df['Af'] * LAMBDA_AT
+
     return df
 
 
@@ -461,6 +484,9 @@ class BuildingPropertiesRow(object):
         self.geometry = geometry
         self.geometry['floor_height'] = calc_floor_to_floor_height(self.geometry['height_ag'],
                                                                    self.geometry['floors_ag'])
+        envelope['Hs_ag'], envelope['Hs_bg'], envelope['Ns_ag'], envelope['Ns_bg'] = \
+            split_above_and_below_ground_shares(
+                envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
         self.architecture = EnvelopeProperties(envelope)
         self.typology = typology  # FIXME: rename to uses!
         self.hvac = hvac
@@ -629,8 +655,10 @@ class EnvelopeProperties(object):
         self.U_roof = envelope['U_roof']
         self.Hs_ag = envelope['Hs_ag']
         self.Hs_bg = envelope['Hs_bg']
-        self.Ns = envelope['Ns']
+        self.Ns_ag = envelope['Ns_ag']
+        self.Ns_bg = envelope['Ns_bg']
         self.Es = envelope['Es']
+        self.occupied_bg = envelope['occupied_bg']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -906,12 +934,11 @@ def get_envelope_properties(locator, prop_architecture):
 
     check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
-    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs_ag', 'Hs_bg', 'Ns', 'Es']
+    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
     fields_leakage = ['name', 'n50']
     fields_basement = ['name', 'U_base']
     fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
-    fields_wall = ['name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                   'e_wall', 'a_wall', 'U_wall']
+    fields_wall = ['name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']
     fields_win = ['name', 'e_win', 'G_win', 'U_win', 'F_F']
     fields_shading = ['name', 'rf_sh']
 

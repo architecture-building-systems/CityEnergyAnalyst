@@ -8,6 +8,7 @@ import os
 import cea.config
 import time
 import pandas as pd
+from cea.utilities.dbf import dbf_to_dataframe
 import shutil
 import csv
 
@@ -52,6 +53,7 @@ rename_dict = {'STANDARD': 'const_type',
 rename_dict_2 = {'Code': 'use_type',
                  'code': 'use_type',
                  }
+
 
 ## --------------------------------------------------------------------------------------------------------------------
 ## The paths to the input files for CEA-4
@@ -403,6 +405,8 @@ def migrate_cea3_to_cea4_db(scenario):
     dict_missing = cea4_verify_db(scenario)
     if all(not value for value in dict_missing.values()):
         pass
+    elif hs_bg_in_db(scenario):
+        add_occupied_bg_db(scenario)
     else:
         # Verify missing files for CEA-3 and CEA-4 formats
         list_problems_construction_type = dict_missing.get('CONSTRUCTION_TYPES')
@@ -420,6 +424,8 @@ def migrate_cea3_to_cea4_db(scenario):
         if list_problems_construction_type and os.path.isfile(path_3):
             path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPES')
             merge_excel_tab_to_csv(path_3, 'STANDARD', path_csv, rename_dict=rename_dict)
+            if 'Hs_bg' in pd.read_csv(path_csv).columns:
+                add_occupied_bg_db(scenario)
 
         #2. about archetypes - use types
         path_3 = path_to_db_file_3(scenario, 'USE_TYPE_PROPERTIES')
@@ -456,6 +462,67 @@ def migrate_cea3_to_cea4_db(scenario):
 
         # # Print: End
         # print('-' * 49)
+
+def hs_bg_in_envelope(scenario):
+    if os.path.isfile(os.path.join(scenario, "inputs", "building-properties", "envelope.csv")):
+        envelope = pd.read_csv(os.path.join(scenario, "inputs", "building-properties", "envelope.csv"))
+        if 'Hs_bg' in envelope.columns:
+            return True
+    return False
+
+
+def hs_bg_in_db(scenario):
+    if os.path.isfile(
+            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv")):
+        construction = pd.read_csv(
+            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"))
+        if 'Hs_bg' in construction.columns:
+            return True
+    return False
+
+
+def add_occupied_bg(scenario, envelope):
+    geometry = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-geometry", "zone.dbf")).set_index('name')
+    envelope.set_index('name', inplace=True)
+    envelope = envelope.loc[list(set(envelope.index).intersection(geometry.index))]
+
+    # if floors_bg are occupied, calculate Hs based on Hs_ag and Hs_bg; otherwise, keep Hs_ag
+    occupied_bg_bdgs = envelope.loc[envelope.occupied_bg > 0.0].index
+
+    # occupied_bg_bdgs = envelope.loc[envelope['occupied_bg']].index
+    envelope.loc[occupied_bg_bdgs, 'Hs'] = \
+        (envelope.loc[occupied_bg_bdgs, 'Hs'] * geometry.loc[occupied_bg_bdgs, 'floors_ag'] +
+         envelope.loc[occupied_bg_bdgs, 'occupied_bg'] * geometry.loc[occupied_bg_bdgs, 'floors_bg']) / \
+        (geometry.loc[occupied_bg_bdgs, 'floors_ag'] + geometry.loc[occupied_bg_bdgs, 'floors_bg'])
+    # if building had Hs_bg > 0, floors_bg are occupied, otherwise they aren't
+    envelope['occupied_bg'] = envelope.occupied_bg > 0.0
+    # if floors_bg are unoccupied, calculate Ns based on old Ns (which was for all floors) and floors_ag;
+    # otherwise keep old Ns
+    unoccupied_bg_bdgs = list(set(envelope.loc[~envelope['occupied_bg']].index).intersection(geometry.index))
+    envelope.loc[unoccupied_bg_bdgs, 'Ns'] = envelope.loc[unoccupied_bg_bdgs, 'Ns'] * (
+            geometry.loc[unoccupied_bg_bdgs, 'floors_ag'] + geometry.loc[unoccupied_bg_bdgs, 'floors_bg']) / \
+                                                 geometry.loc[unoccupied_bg_bdgs, 'floors_ag']
+    # Ns cannot be greater than 1; adjust accordingly
+    envelope.loc[envelope['Ns'] > 1, 'Ns'] = 1.0
+
+    return envelope.reset_index()
+
+
+def add_occupied_bg_db(scenario):
+    if os.path.isfile(
+            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv")):
+        construction_db = pd.read_csv(os.path.join(
+            scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"), index_col=0)
+        construction_db = calc_occupied_bg(construction_db)
+        construction_db.to_csv(
+            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"))
+
+
+def calc_occupied_bg(construction_db):
+    construction_db.rename(columns={'Hs_ag': 'Hs', 'Hs_bg': 'occupied_bg'}, inplace=True)
+    construction_db['occupied_bg'] = construction_db['occupied_bg'] > 0.0
+
+    return construction_db
 
 
 ## --------------------------------------------------------------------------------------------------------------------

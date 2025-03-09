@@ -1636,15 +1636,8 @@ get_building_architecture:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      Hs_ag:
-        description: Fraction of above ground gross floor area air-conditioned.
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1}'
-        min: 0.0
-        max: 1.0
-      Hs_bg:
-        description: Fraction of below ground gross floor area air-conditioned.
+      Hs:
+        description: Fraction of gross floor area air-conditioned.
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
@@ -1657,6 +1650,11 @@ get_building_architecture:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
+      occupied_bg:
+        description: Whether the basement is occupied/conditioned.
+        type: boolean
+        unit: '[-]'
+        values: '{TRUE, FALSE}'
       wwr_north:
         description: Window to wall ratio in in facades facing north
         type: float
@@ -7651,20 +7649,18 @@ get_database_construction_standards:
           type: float
           unit: '[m2/m2]'
           values: '{0.0...1}'
-        Hs_ag:
-          description: Fraction of above ground gross floor area air-conditioned.
+        Hs:
+          description: Fraction of gross floor area air-conditioned.
           max: 1.0
           min: 0.0
           type: float
           unit: '[m2/m2]'
           values: '{0.0...1}'
-        Hs_bg:
-          description: 'Fraction of below ground gross floor area air-conditioned '
-          max: 1.0
-          min: 0.0
-          type: float
-          unit: '[m2/m2]'
-          values: '{0.0...1}'
+        occupied_bg:
+          description: Whether the basement is occupied/conditioned.
+          type: boolean
+          unit: '[-]'
+          values: '{TRUE, FALSE}'
         Ns:
           description: Fraction of net gross floor area.
           max: 1.0

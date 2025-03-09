@@ -82,9 +82,9 @@ get_building_architecture [shape=none, margin=0, label=<
         <tr><td port="Name" align="left">str: Name</td></tr>
         <tr><td port="void_deck" align="left">int: void_deck</td></tr>
         <tr><td port="Es" align="left">float: Es</td></tr>
-        <tr><td port="Hs_ag" align="left">float: Hs_ag</td></tr>
-        <tr><td port="Hs_bg" align="left">float: Hs_bg</td></tr>
+        <tr><td port="Hs" align="left">float: Hs</td></tr>
         <tr><td port="Ns" align="left">float: Ns</td></tr>
+        <tr><td port="occupied_bg" align="left">Boolean: occupied_bg</td></tr>
         <tr><td port="wwr_north" align="left">float: wwr_north</td></tr>
         <tr><td port="wwr_east" align="left">float: wwr_east</td></tr>
         <tr><td port="wwr_south" align="left">float: wwr_south</td></tr>

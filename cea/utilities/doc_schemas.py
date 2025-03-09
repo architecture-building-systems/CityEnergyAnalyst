@@ -52,7 +52,7 @@ def read_schema_details(abs_path, file_type, buildings):
     """
     Returns schema as a dict, based on file_type
 
-    :return: schema of each file. E.g., schema = {columns : {Hs_ag: {...}, Hs_bg: {...}, ...}
+    :return: schema of each file. E.g., schema = {columns : {Hs: {...}, Ns: {...}, ...}
     :rtype: dict
     """
     schema_readers = {

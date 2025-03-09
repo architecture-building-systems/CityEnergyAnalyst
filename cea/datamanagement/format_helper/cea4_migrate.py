@@ -20,7 +20,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict
+from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict, add_occupied_bg, hs_bg_in_envelope
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4, CSV_BUILDING_PROPERTIES_3_CSV
 from cea.datamanagement.format_helper.cea4_verify_db import check_directory_contains_csv
@@ -32,19 +32,19 @@ CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort
 COLUMNS_TYPOLOGY_3 = ['Name', 'YEAR', 'STANDARD', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE', '3RD_USE_R']
 COLUMNS_SURROUNDINGS_3 = ['Name', 'height_ag', 'floors_ag']
 COLUMNS_AIR_CONDITIONING_3 = ['Name',
-                            'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent',
-                            'heat_starts', 'heat_ends', 'cool_starts', 'cool_ends']
+                              'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent',
+                              'heat_starts', 'heat_ends', 'cool_starts', 'cool_ends']
 COLUMNS_ARCHITECTURE_3 = ['Name',
-                        'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
-                        'type_cons', 'type_leak', 'type_floor', 'type_part', 'type_base', 'type_roof', 'type_wall',
-                        'type_win', 'type_shade']
+                          'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+                          'type_cons', 'type_leak', 'type_floor', 'type_part', 'type_base', 'type_roof', 'type_wall',
+                          'type_win', 'type_shade']
 COLUMNS_INDOOR_COMFORT_3 = ['Name',
-                          'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lsp', 'RH_min_pc', 'RH_max_pc']
+                            'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lsp', 'RH_min_pc', 'RH_max_pc']
 COLUMNS_INTERNAL_LOADS_3 = ['Name',
-                          'Occ_m2p', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Ev_kWveh', 'Qcre_Wm2',
-                          'Vww_ldp', 'Vw_ldp', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
+                            'Occ_m2p', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Ed_Wm2', 'Ev_kWveh', 'Qcre_Wm2',
+                            'Vww_ldp', 'Vw_ldp', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Epro_Wm2']
 COLUMNS_SUPPLY_SYSTEMS_3 = ['Name',
-                          'type_cs', 'type_hs', 'type_dhw', 'type_el']
+                            'type_cs', 'type_hs', 'type_dhw', 'type_el']
 columns_mapping_dict_name = {'Name': 'name'}
 columns_mapping_dict_typology = {'YEAR': 'year',
                                  'STANDARD': 'const_type',
@@ -56,24 +56,24 @@ columns_mapping_dict_typology = {'YEAR': 'year',
                                  '3RD_USE_R': 'use_type3r'
                                  }
 
-columns_mapping_dict_envelope = {'Hs_ag': 'Hs_ag',
-                                     'Hs_bg': 'Hs_bg',
-                                     'Ns': 'Ns',
-                                     'Es': 'Es',
-                                     'void_deck': 'void_deck',
-                                     'wwr_north': 'wwr_north',
-                                     'wwr_south': 'wwr_south',
-                                     'wwr_east': 'wwr_east',
-                                     'wwr_west': 'wwr_west',
-                                     'type_cons': 'type_mass',
-                                     'type_leak': 'type_leak',
-                                     'type_floor': 'type_floor',
-                                     'type_part': 'type_part', 'type_roof': 'type_roof',
-                                     'type_base': 'type_base',
-                                     'type_wall': 'type_wall',
-                                     'type_win': 'type_win',
-                                     'type_shade': 'type_shade',
-                                     }
+columns_mapping_dict_envelope = {'Hs_ag': 'Hs',
+                                 'Hs_bg': 'occupied_bg',
+                                 'Ns': 'Ns',
+                                 'Es': 'Es',
+                                 'void_deck': 'void_deck',
+                                 'wwr_north': 'wwr_north',
+                                 'wwr_south': 'wwr_south',
+                                 'wwr_east': 'wwr_east',
+                                 'wwr_west': 'wwr_west',
+                                 'type_cons': 'type_mass',
+                                 'type_leak': 'type_leak',
+                                 'type_floor': 'type_floor',
+                                 'type_part': 'type_part', 'type_roof': 'type_roof',
+                                 'type_base': 'type_base',
+                                 'type_wall': 'type_wall',
+                                 'type_win': 'type_win',
+                                 'type_shade': 'type_shade',
+                                 }
 
 
 columns_mapping_dict_hvac = {'type_cs': 'hvac_type_cs',
@@ -318,6 +318,10 @@ def migrate_dbf_to_csv(scenario, item, required_columns, columns_mapping_dict=No
                 df.rename(columns=columns_mapping_dict_name, inplace=True)
                 if columns_mapping_dict:
                     df.rename(columns=columns_mapping_dict, inplace=True)
+                # if 'Hs_bg' in df.columns:
+                if 'occupied_bg' in df.columns:
+                    if df['occupied_bg'].dtype != 'bool':
+                        df = add_occupied_bg(scenario, df)
                 df.to_csv(path_to_input_file_without_db_4(scenario, item), index=False)
                 os.remove(path_to_input_file_without_db_3(scenario, item))
                 if verbose:
@@ -481,7 +485,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
     dict_missing = cea4_verify(scenario)
     if all(not value for value in dict_missing.values()):
         pass
-
+    elif hs_bg_in_envelope(scenario):
+        envelope = add_occupied_bg(
+            scenario=scenario,
+            envelope=pd.read_csv(os.path.join(scenario, "inputs", "building-properties", "envelope.csv")).rename(
+                columns={'Hs_ag': 'Hs', 'Hs_bg': 'occupied_bg'}))
+        envelope.to_csv(os.path.join(scenario, "inputs", "building-properties", "envelope.csv"), index=False)
     else:
         # Verify missing files for CEA-3 and CEA-4 formats
         list_missing_files_shp_building_geometry_4 = dict_missing.get('building-geometry')
