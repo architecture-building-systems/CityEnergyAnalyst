@@ -468,8 +468,7 @@ def hs_bg_in_envelope(scenario):
         envelope = pd.read_csv(os.path.join(scenario, "inputs", "building-properties", "envelope.csv"))
         if 'Hs_bg' in envelope.columns:
             return True
-        else:
-            return False
+    return False
 
 
 def hs_bg_in_db(scenario):
@@ -479,8 +478,7 @@ def hs_bg_in_db(scenario):
             os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"))
         if 'Hs_bg' in construction.columns:
             return True
-        else:
-            return False
+    return False
 
 
 def add_occupied_bg(scenario, envelope):
