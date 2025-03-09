@@ -14,6 +14,20 @@ Import & Export:
     input-files:
       - [get_zone_geometry]
 
+  - name: import-from-rhino-gh
+    label: Import from Rhino/Grasshopper
+    description: |
+      This Feature imports Rhino/Grasshopper-generated files into CEA.
+      
+      Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
+      Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
+      
+      https://www.cityenergyanalyst.com/s/cea_gh_v4alpha22gh.zip
+
+    interfaces: [cli]
+    module: cea.import_export.import_from_rhino_gh
+    parameters: ['general:scenario', from-rhino-gh]
+
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
