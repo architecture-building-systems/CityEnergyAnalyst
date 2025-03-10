@@ -72,10 +72,10 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_PVT_potential(self, locator, building_codes):
+    def load_PVT_potential(self, locator, building_codes, pv_panel_type, sc_panel_type):
         self.type = 'SolarPVT'
         self.scale = 'Building'
-        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes)
+        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes, pv_panel_type, sc_panel_type)
         potentials = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:

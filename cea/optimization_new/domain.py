@@ -99,7 +99,7 @@ class Domain(object):
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None, panel_type='PV1'):
+    def load_potentials(self, buildings_in_domain=None, pv_panel_type='PV1'):
         """
         Import energy potentials from the current scenario.
 
@@ -112,8 +112,9 @@ class Domain(object):
             buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
-        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, panel_type)
-        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
+        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
+        pvtet_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "ET")
+        pvtfp_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "FP")
         scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
         scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
 
@@ -122,7 +123,9 @@ class Domain(object):
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
 
-        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
+        for potential in [pv_potential,
+                          pvtet_potential, pvtfp_potential,
+                          scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 

@@ -1369,7 +1369,7 @@ class InputLocator(object):
 
     def SC_results(self, building, panel_type):
         """scenario/outputs/data/potentials/solar/SC/{building}_{panel_type}.csv"""
-        return os.path.join(self.solar_potential_folder_SC(), "{building}_{panel_type}.csv".format(**locals()))
+        return os.path.join(self.solar_potential_folder_SC(), f"{building}_{panel_type}.csv")
 
     def SC_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/SC_{panel_type}_total.csv"""
@@ -1383,17 +1383,14 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
         return os.path.join(self.solar_potential_folder_sensors(), '%s_SC_%s_sensors.csv' % (building, panel_type))
 
-    def PVT_results(self, building, PVpanel_type='', SCpanel_type=''):
-        """scenario/outputs/data/potentials/solar/PVT/{building}_SC.csv"""
-        return os.path.join(self.solar_potential_folder_PVT(), "{building}_{PVpanel_type}_{SCpanel_type}.csv".format(building=building, PVpanel_type=PVpanel_type, SCpanel_type=SCpanel_type))
+    def PVT_results(self, building, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder_PVT(), f"{building}_{pv_panel_type}_{sc_panel_type}.csv")
 
-    def PVT_totals(self, PVpanel_type='', SCpanel_type=''):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), 'PVT_{PVpanel_type}_{SCpanel_type}_total.csv'.format(PVpanel_type=PVpanel_type, SCpanel_type=SCpanel_type))
+    def PVT_totals(self, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total.csv')
 
-    def PVT_total_buildings(self, PVpanel_type='', SCpanel_type=''):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), 'PVT_{PVpanel_type}_{SCpanel_type}_total_buildings.csv'.format(PVpanel_type=PVpanel_type, SCpanel_type=SCpanel_type))
+    def PVT_total_buildings(self, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total_buildings.csv')
 
     def PVT_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
