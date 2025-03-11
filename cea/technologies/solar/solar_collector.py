@@ -370,8 +370,8 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
     # calculate absorbed radiation
     tilt_rad = radians(tilt_angle_deg)
-    q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
-                                            tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
+    q_rad_vector = calc_q_rad(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
+                              tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
     for flow in range(6):
         mode_seg = 1  # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
@@ -614,7 +614,6 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
                                                                      pipe_lengths, aperture_area_m2)
 
 
-@jit(nopython=True)
 def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     """
     Calculates the absorbed radiation for solar thermal collectors.
@@ -627,7 +626,7 @@ def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     :return q_rad: absorbed radiation [W/m2]
     """
 
-    q_rad_Wperm2 = n0 * IAM_b * I_direct_Wperm2 + n0 * IAM_d * I_diffuse_Wperm2 * (1 + cos(tilt)) / 2
+    q_rad_Wperm2 = n0 * IAM_b * I_direct_Wperm2 + n0 * IAM_d * I_diffuse_Wperm2 * (1 + np.cos(tilt)) / 2
     return q_rad_Wperm2
 
 

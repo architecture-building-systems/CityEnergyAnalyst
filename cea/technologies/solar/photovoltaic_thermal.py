@@ -237,15 +237,14 @@ def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_propertie
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         # absorbed radiation and Tcell
-        absorbed_radiation_PV_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
-                                                                                radiation_Wperm2.I_direct,
-                                                                                radiation_Wperm2.I_diffuse, tilt_rad,
-                                                                                Sz_rad, teta_rad, teta_ed_rad,
-                                                                                teta_eg_rad, panel_properties_PV,
-                                                                                latitude, longitude)
+        absorbed_radiation_PV_Wperm2 = calc_absorbed_radiation_PV(radiation_Wperm2.I_sol,
+                                                                  radiation_Wperm2.I_direct,
+                                                                  radiation_Wperm2.I_diffuse, tilt_rad,
+                                                                  Sz_rad, teta_rad, teta_ed_rad,
+                                                                  teta_eg_rad, panel_properties_PV,
+                                                                  latitude, longitude)
 
-        T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_PV_Wperm2, weather_data.drybulb_C,
-                                                       panel_properties_PV)
+        T_cell_C = calc_cell_temperature(absorbed_radiation_PV_Wperm2, weather_data.drybulb_C, panel_properties_PV)
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
@@ -400,8 +399,8 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
 
     # calculate absorbed radiation
     tilt_rad = radians(tilt_angle_deg)
-    q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
-                                            tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
+    q_rad_vector = calc_q_rad(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
+                              tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
     # counter = 0
     # Flag = False
     # Flag2 = False
@@ -516,9 +515,9 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                               mcp_kWperK, supply_out_total_kW[5], temperature_in[5],
                                                               temperature_out[5])
 
-    el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom,
-                                                  module_area_per_group_m2,
-                                                  Bref, misc_losses)
+    el_output_PV_kW = calc_PV_power(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom,
+                                    module_area_per_group_m2,
+                                    Bref, misc_losses)
 
     # write results into a list
     result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5],
