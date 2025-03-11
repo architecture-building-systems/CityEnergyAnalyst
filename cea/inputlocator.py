@@ -135,6 +135,20 @@ class InputLocator(object):
         """scenario/export/results"""
         return os.path.join(self.get_export_folder(), "results")
 
+    def get_export_plots_folder(self):
+        """Returns the folder storing the plots in the export folder of a scenario"""
+        """scenario/export/plots"""
+        return os.path.join(self.get_export_folder(), "plots")
+
+    def get_export_plots_cea_feature_folder(self, plot_cea_feature):
+        """Returns the folder storing the plots in the export folder of a scenario"""
+        """scenario/export/plots/{plot_cea_feature}"""
+        return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
+
+    def get_export_plots_selected_building_file(self):
+        """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
+        return os.path.join(self.get_export_plots_folder(), 'selected_buildings.csv')
+
     def get_export_results_summary_folder(self, hour_start, hour_end, folder_name):
         if folder_name is None or folder_name.strip() == "":
             """scenario/export/results/hours_{hour_start}_{hour_end}_done_{current_time}"""
@@ -159,7 +173,20 @@ class InputLocator(object):
 
     def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}"""
-        return os.path.join(summary_folder, cea_feature)
+        if cea_feature == 'sc_et':
+            return os.path.join(summary_folder, 'sc')
+        elif cea_feature == 'sc_fp':
+            return os.path.join(summary_folder, 'sc')
+        elif cea_feature == 'pvt_et':
+            return os.path.join(summary_folder, 'pvt')
+        elif cea_feature == 'pvt_fp':
+            return os.path.join(summary_folder, 'pvt')
+        elif cea_feature == 'embodied_emissions':
+            return os.path.join(summary_folder, 'emissions')
+        elif cea_feature == 'operation_emissions':
+            return os.path.join(summary_folder, 'emissions')
+        else:
+            return os.path.join(summary_folder, cea_feature)
 
 
     def get_export_results_summary_cea_feature_time_resolution_file(self, summary_folder, cea_feature, appendix,
@@ -177,6 +204,11 @@ class InputLocator(object):
         return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                             f"{appendix}_buildings.csv")
 
+    def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, cea_feature, appendix):
+        """scenario/export/plots/{plot_cea_feature}/{cea_feature}/{appendix}_buildings.csv"""
+        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                            f"{appendix}_buildings.csv")
+
     def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
@@ -186,6 +218,16 @@ class InputLocator(object):
                                 f'{appendix}_selected_hours_buildings.csv')
         else:
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+                                f"{appendix}_{time_period}_buildings.csv")
+
+    def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
+                                                                      time_period, hour_start, hour_end):
+        """scenario/export/plots/{plot_cea_feature}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                                f'{appendix}_selected_hours_buildings.csv')
+        else:
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
@@ -218,6 +260,23 @@ class InputLocator(object):
         else:
             return os.path.join(
                 self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
+                f"{appendix}_analytics_{time_period}_buildings.csv")
+
+    def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature):
+        """scenario/export/plots/{plot_cea_feature}/{cea_feature}/analytics"""
+        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), 'analytics')
+
+    def get_export_plots_cea_feature_analytics_time_resolution_buildings_file(self, plot_cea_feature,
+                                                                              appendix, time_period, hour_start,
+                                                                              hour_end):
+        """scenario/export/plots/{plot_cea_feature}/{cea_feature}/analytics/{appendix}_analytics_{time_resolution}_buildings.csv"""
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(
+                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature),
+                f"{appendix}_analytics_selected_hours_buildings.csv")
+        else:
+            return os.path.join(
+                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
     def get_export_to_rhino_from_cea_folder(self):
@@ -792,7 +851,7 @@ class InputLocator(object):
         if not os.path.exists(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES')):
             return []
         import pandas as pd
-        data = pd.read_excel(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
+        data = pd.read_csv(self.get_db4_components_conversion_conversion_technology_csv('THERMAL_ENERGY_STORAGES'))
         data = data[data["type"] == "COOLING"]
         names = sorted(data["code"])
         return names
@@ -1309,8 +1368,8 @@ class InputLocator(object):
                             "{building}_PV_sensors.csv".format(building=building))
 
     def SC_results(self, building, panel_type):
-        """scenario/outputs/data/potentials/solar/SC/{building}_SC.csv"""
-        return os.path.join(self.solar_potential_folder_SC(), "{building}_SC_{panel_type}.csv".format(**locals()))
+        """scenario/outputs/data/potentials/solar/SC/{building}_{panel_type}.csv"""
+        return os.path.join(self.solar_potential_folder_SC(), f"{building}_{panel_type}.csv")
 
     def SC_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/SC_{panel_type}_total.csv"""
@@ -1324,17 +1383,14 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
         return os.path.join(self.solar_potential_folder_sensors(), '%s_SC_%s_sensors.csv' % (building, panel_type))
 
-    def PVT_results(self, building):
-        """scenario/outputs/data/potentials/solar/PVT/{building}_SC.csv"""
-        return os.path.join(self.solar_potential_folder_PVT(), '%s_PVT.csv' % building)
+    def PVT_results(self, building, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder_PVT(), f"{building}_{pv_panel_type}_{sc_panel_type}.csv")
 
-    def PVT_totals(self):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
+    def PVT_totals(self, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total.csv')
 
-    def PVT_total_buildings(self):
-        """scenario/outputs/data/potentials/solar/{building}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), 'PVT_total_buildings.csv')
+    def PVT_total_buildings(self, pv_panel_type, sc_panel_type):
+        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total_buildings.csv')
 
     def PVT_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
@@ -1357,16 +1413,6 @@ class InputLocator(object):
     def get_demand_results_file(self, building, format='csv'):
         """scenario/outputs/data/demand/{building}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building)s.%(format)s' % locals())
-
-    # COMFORT
-
-    def get_comfort_results_folder(self):
-        """scenario/outputs/data/comfort"""
-        return self._ensure_folder(self.scenario, 'outputs', 'data', 'comfort')
-
-    def get_comfort_results_file(self, building, format='csv'):
-        """scenario/outputs/data/comfort/{building}.csv"""
-        return os.path.join(self.get_comfort_results_folder(), '%(building)s.%(format)s' % locals())
 
     # EMISSIONS
     def get_lca_emissions_results_folder(self):
@@ -1471,19 +1517,24 @@ class ReferenceCaseOpenLocator(InputLocator):
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
 
     def __init__(self):
-        temp_folder = tempfile.gettempdir()
-        project_folder = os.path.join(temp_folder, 'reference-case-open')
-        reference_case = os.path.join(project_folder, 'baseline')
+        self.temp_directory = tempfile.TemporaryDirectory()
+        atexit.register(self.temp_directory.cleanup)
+
+        self.project_path = os.path.join(self.temp_directory.name, 'reference-case-open')
+        reference_case = os.path.join(self.project_path, 'baseline')
 
         import cea.examples
         import zipfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        with zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip')) as archive:
+            archive.extractall(self.temp_directory.name)
 
-        if os.path.exists(project_folder):
-            shutil.rmtree(project_folder)
-            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+        #FIXME: Remove this once reference-case-open is updated
+        from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
+        from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
+        print("Migrating reference case from v3 to v4")
+        migrate_cea3_to_cea4(reference_case)
+        migrate_cea3_to_cea4_db(reference_case)
 
-        archive.extractall(temp_folder)
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

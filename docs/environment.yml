@@ -4,11 +4,11 @@ channels:
 dependencies:
 #- geopandas
 #- numba=0.42.0
-- mock
 - python=3.8
 #- pillow
 - sphinx
 - sphinx_rtd_theme
+- graphviz
 #- pip:
 #  - utm
 #  - pyyaml

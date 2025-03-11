@@ -72,6 +72,8 @@ def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.
     if index:
         out = out.set_index(index)
 
+    out.replace({'T': True, 'F': False}, inplace=True)
+
     return out
 
 

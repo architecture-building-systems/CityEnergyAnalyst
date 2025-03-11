@@ -3,8 +3,9 @@
 Installation guide for the Euler cluster
 =======================================================
 
-**Disclaimer**: for this to work, you must be an ETH Zurich affiliated
-person and own a nethz-account.
+.. attention:: This has only been tested with CEA v3. Let us know if you have any issues.
+
+.. note:: For this to work, you must be an ETH Zurich affiliated person and own a nethz-account.
 
 EULER stands for *Erweiterbarer, Umweltfreundlicher, Leistungsfähiger
 ETH-Rechner*. It is a high performance cluster available to users

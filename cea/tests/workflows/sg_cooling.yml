@@ -8,6 +8,9 @@
     case: open
 - config: .
   "general:scenario-name": baseline
+- script: cea4-format-helper
+  parameters:
+    scenarios-to-verify-and-migrate: [baseline]
 
 - script: database-helper
   parameters:
@@ -34,17 +37,7 @@
 - script: shallow-geothermal-potential
 - script: photovoltaic
 - script: solar-collector
-  parameters:
-    type-scpanel: FP
-- script: solar-collector
-  parameters:
-    type-scpanel: ET
 - script: photovoltaic-thermal
-  parameters:
-    type-scpanel: FP
-- script: photovoltaic-thermal
-  parameters:
-    type-scpanel: ET
 - script: network-layout
   parameters:
     network-type: DC

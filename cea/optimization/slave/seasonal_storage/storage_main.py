@@ -405,7 +405,7 @@ def calc_available_generation_PVT(locator, buildings, share_allowed):
         E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
         Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
         E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
-        A_PVT_m2 += building_PVT['Area_PVT_m2'][0]
+        A_PVT_m2 += building_PVT['area_PVT_m2'][0]
         mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C'] + 273)  # to K
         mcp += building_PVT['mcp_PVT_kWperC']
 
@@ -436,7 +436,7 @@ def calc_available_generation_solar(locator, buildings, share_allowed, panel_typ
         data = pd.read_csv(locator.SC_results(building_name, panel_type)).fillna(value=0.0)
         Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
         E_SC_req_kWh += data['Eaux_SC_kWh']
-        A_PVT_m2 += data['Area_SC_m2'][0]
+        A_PVT_m2 += data['area_SC_m2'][0]
         mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C'] + 273)  # to K
         mcp += data['mcp_SC_kWperC']
 

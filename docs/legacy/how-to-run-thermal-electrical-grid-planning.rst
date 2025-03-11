@@ -87,7 +87,7 @@ When the optimization is interrupted, the intermediate results can be found in `
 Calculation flowchart
 ---------------------
 
-.. image:: _static/flowchart_thermal_electric_network_planning.png
+.. image:: /_static/flowchart_thermal_electric_network_planning.png
     :align: center
 
 
