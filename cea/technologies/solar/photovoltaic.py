@@ -262,7 +262,7 @@ def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_propert
     T_cell_C = T_external_C + absorbed_radiation_Wperm2 * (NOCT - 20) / 800  # assuming linear temperature rise vs radiation according to NOCT condition
     
     # Return scalar if input was scalar
-    if np.isscalar(absorbed_radiation_Wperm2) and np.size(T_cell_C) == 1:
+    if np.size(T_cell_C) == 1:
         return float(T_cell_C)
     return T_cell_C
 
@@ -439,7 +439,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = np.maximum(absorbed_radiation_Wperm2, 0.0)
 
     # Return scalar if input was scalar
-    if np.isscalar(I_sol) and np.size(absorbed_radiation_Wperm2) == 1:
+    if np.size(absorbed_radiation_Wperm2) == 1:
         return float(absorbed_radiation_Wperm2)
     return absorbed_radiation_Wperm2
 
@@ -474,7 +474,7 @@ def calc_air_mass(Sz, latitude, longitude):
                 np.exp(-0.0001184 * h) / (np.cos(Sz) + 0.5057 * (96.080 - np.degrees(Sz))**(-1.634)))  # air mass (footnote 3)
     
     # Return scalar if input was scalar
-    if np.isscalar(Sz) and np.size(m) == 1:
+    if np.size(m) == 1:
         return float(m)
     return m
 
@@ -509,7 +509,7 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
                      (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
     
     # Return scalar if input was scalar
-    if np.isscalar(absorbed_radiation_Wperm2) and np.size(el_output_PV_kW) == 1:
+    if np.size(el_output_PV_kW) == 1:
         return float(el_output_PV_kW)
     return el_output_PV_kW
 
