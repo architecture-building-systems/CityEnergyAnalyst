@@ -202,18 +202,16 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
 
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
-        absorbed_radiation_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
-                                                                             radiation_Wperm2.I_direct,
-                                                                             radiation_Wperm2.I_diffuse, tilt_rad,
-                                                                             Sz_rad, teta_rad, teta_ed_rad,
-                                                                             teta_eg_rad, panel_properties_PV,
-                                                                             latitude, longitude)
+        absorbed_radiation_Wperm2 = calc_absorbed_radiation_PV(radiation_Wperm2.I_sol,
+                                                            radiation_Wperm2.I_direct,
+                                                            radiation_Wperm2.I_diffuse, tilt_rad,
+                                                            Sz_rad, teta_rad, teta_ed_rad,
+                                                            teta_eg_rad, panel_properties_PV,
+                                                            latitude, longitude)
 
-        T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_Wperm2, weather_data.drybulb_C,
-                                                       panel_properties_PV)
+        T_cell_C = calc_cell_temperature(absorbed_radiation_Wperm2, weather_data.drybulb_C,panel_properties_PV)
 
-        el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2,
-                                                      Bref, misc_losses)
+        el_output_PV_kW = calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref, misc_losses)
 
         # write results from each group
         panel_orientation = prop_observers.loc[group, 'type_orientation']
@@ -244,22 +242,28 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
 
 def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_properties_PV):
     """
-    calculates cell temperatures based on the absorbed radiation
+    Calculates cell temperatures based on the absorbed radiation
 
     :param absorbed_radiation_Wperm2: absorbed radiation on panel
-    :type absorbed_radiation_Wperm2: np.array
+    :type absorbed_radiation_Wperm2: float or numpy.ndarray
     :param T_external_C: drybulb temperature from the weather file
-    :type T_external_C: series
+    :type T_external_C: float or numpy.ndarray
     :param panel_properties_PV: panel property from the supply system database
     :type panel_properties_PV: dataframe
     :return T_cell_C: cell temperature of PV panels
-    :rtype T_cell_C: series
+    :rtype T_cell_C: float or numpy.ndarray
     """
-
+    # Convert inputs to numpy arrays if they're not already
+    absorbed_radiation_Wperm2 = np.asarray(absorbed_radiation_Wperm2)
+    T_external_C = np.asarray(T_external_C)
+    
     NOCT = panel_properties_PV['PV_noct']
     # temperature of cell
-    T_cell_C = T_external_C + absorbed_radiation_Wperm2 * (NOCT - 20) / (
-        800)  # assuming linear temperature rise vs radiation according to NOCT condition
+    T_cell_C = T_external_C + absorbed_radiation_Wperm2 * (NOCT - 20) / 800  # assuming linear temperature rise vs radiation according to NOCT condition
+    
+    # Return scalar if input was scalar
+    if np.isscalar(absorbed_radiation_Wperm2) and np.size(T_cell_C) == 1:
+        return float(T_cell_C)
     return T_cell_C
 
 
@@ -331,28 +335,35 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     :param teta: angle of incidence [rad]
     :param tetaed: effective incidence angle from diffuse radiation [rad]
     :param tetaeg: effective incidence angle from ground-reflected radiation [rad]
-    :type I_sol: float
-    :type I_direct: float
-    :type I_diffuse: float
-    :type tilt: float
-    :type Sz: float
-    :type teta: float
-    :type tetaed: float
-    :type tetaeg: float
+    :type I_sol: float or numpy.ndarray
+    :type I_direct: float or numpy.ndarray
+    :type I_diffuse: float or numpy.ndarray
+    :type tilt: float or numpy.ndarray
+    :type Sz: float or numpy.ndarray
+    :type teta: float or numpy.ndarray
+    :type tetaed: float or numpy.ndarray
+    :type tetaeg: float or numpy.ndarray
     :param panel_properties_PV: properties of the PV panel
     :type panel_properties_PV: dataframe
-    :return:
+    :return: absorbed radiation [W/m2]
+    :rtype: float or numpy.ndarray
 
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
-
     """
+    # Convert inputs to numpy arrays if they're not already
+    I_sol = np.asarray(I_sol)
+    I_direct = np.asarray(I_direct)
+    I_diffuse = np.asarray(I_diffuse)
+    tilt = np.asarray(tilt)
+    Sz = np.asarray(Sz)
+    teta = np.asarray(teta)
+    
     # read variables
     n = constants.n  # refractive index of glass
     Pg = constants.Pg  # ground reflectance
     K = constants.K  # glazing extinction coefficient
-    # NOCT = panel_properties_PV['PV_noct']
     a0 = panel_properties_PV['PV_a0']
     a1 = panel_properties_PV['PV_a1']
     a2 = panel_properties_PV['PV_a2']
@@ -361,25 +372,21 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     L = panel_properties_PV['PV_th']
 
     # calculate ratio of beam radiation on a tilted plane to avoid inconvergence when I_sol = 0
-    lim1 = radians(0)
-    lim2 = radians(90)
-    lim3 = radians(89.999)
+    lim1 = np.radians(0)
+    lim2 = np.radians(90)
+    lim3 = np.radians(89.999)
 
-    if teta < lim1:
-        teta = min(lim3, abs(teta))
-    if teta >= lim2:
-        teta = lim3
-
-    if Sz < lim1:
-        Sz = min(lim3, abs(Sz))
-    if Sz >= lim2:
-        Sz = lim3
+    # Handle bounds for teta and Sz
+    teta = np.where(teta < lim1, np.minimum(lim3, np.abs(teta)), teta)
+    teta = np.where(teta >= lim2, lim3, teta)
+    
+    Sz = np.where(Sz < lim1, np.minimum(lim3, np.abs(Sz)), Sz)
+    Sz = np.where(Sz >= lim2, lim3, Sz)
 
     # Rb: ratio of beam radiation of tilted surface to that on horizontal surface
-    if Sz <= radians(85):  # Sz is Zenith angle   # TODO: FIND REFERENCE
-        Rb = cos(teta) / cos(Sz)
-    else:
-        Rb = 0  # Assume there is no direct radiation when the sun is close to the horizon.
+    Rb = np.where(Sz <= radians(85),
+                  np.cos(teta) / np.cos(Sz),
+                  0)  # Assume there is no direct radiation when the sun is close to the horizon.
 
     # calculate air mass modifier
     m = calc_air_mass(Sz, latitude, longitude)
@@ -387,43 +394,53 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
 
     # transmittance-absorptance product at normal incidence
-    Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
+    Ta_n = np.exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
 
     # incidence angle modifier for direct (beam) radiation
-    teta_r = asin(sin(teta) / n)  # refraction angle in radians(approximation according to Soteris A.) (5.1.4)
-    if teta < radians(90):  # 90 degrees in radians
+    teta_r = np.arcsin(np.sin(teta) / n)  # refraction angle in radians
+    
+    # Calculate beam radiation component
+    kteta_B = np.zeros_like(teta)
+    mask_below_90 = teta < radians(90)
+    
+    if np.any(mask_below_90):
         part1 = teta_r + teta
         part2 = teta_r - teta
-        Ta_B = exp((-K * L) / cos(teta_r)) * (
-                1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
-        kteta_B = Ta_B / Ta_n
-    else:
-        kteta_B = 0
+        Ta_B = np.exp((-K * L) / np.cos(teta_r)) * (
+                1 - 0.5 * ((np.sin(part2) ** 2) / (np.sin(part1) ** 2) + 
+                           (np.tan(part2) ** 2) / (np.tan(part1) ** 2)))
+        kteta_B = np.where(mask_below_90, Ta_B / Ta_n, 0)
 
     # incidence angle modifier for diffuse radiation
-    teta_r = asin(sin(tetaed) / n)  # refraction angle for diffuse radiation [rad]
-    part1 = teta_r + tetaed
-    part2 = teta_r - tetaed
-    Ta_D = exp((-K * L) / cos(teta_r)) * (
-            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+    teta_r_d = np.arcsin(np.sin(tetaed) / n)  # refraction angle for diffuse radiation
+    part1_d = teta_r_d + tetaed
+    part2_d = teta_r_d - tetaed
+    Ta_D = np.exp((-K * L) / np.cos(teta_r_d)) * (
+            1 - 0.5 * ((np.sin(part2_d) ** 2) / (np.sin(part1_d) ** 2) + 
+                       (np.tan(part2_d) ** 2) / (np.tan(part1_d) ** 2)))
     kteta_D = Ta_D / Ta_n
 
     # incidence angle modifier for ground-reflected radiation
-    teta_r = asin(sin(tetaeg) / n)  # refraction angle for ground-reflected radiation [rad]
-    part1 = teta_r + tetaeg
-    part2 = teta_r - tetaeg
-    Ta_eG = exp((-K * L) / cos(teta_r)) * (
-            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+    teta_r_g = np.arcsin(np.sin(tetaeg) / n)  # refraction angle for ground-reflected radiation
+    part1_g = teta_r_g + tetaeg
+    part2_g = teta_r_g - tetaeg
+    Ta_eG = np.exp((-K * L) / np.cos(teta_r_g)) * (
+            1 - 0.5 * ((np.sin(part2_g) ** 2) / (np.sin(part1_g) ** 2) + 
+                       (np.tan(part2_g) ** 2) / (np.tan(part1_g) ** 2)))
     kteta_eG = Ta_eG / Ta_n
 
     # absorbed solar radiation
     absorbed_radiation_Wperm2 = M * Ta_n * (
-            kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * (I_sol * Pg) * (
-            1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 < 0.0:  # when points are 0 and too much losses
-        # print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
-        absorbed_radiation_Wperm2 = 0.0
+            kteta_B * I_direct * Rb + 
+            kteta_D * I_diffuse * (1 + np.cos(tilt)) / 2 + 
+            kteta_eG * (I_sol * Pg) * (1 - np.cos(tilt)) / 2)  # [W/m2] (5.12.1)
+    
+    # ensure no negative values
+    absorbed_radiation_Wperm2 = np.maximum(absorbed_radiation_Wperm2, 0.0)
 
+    # Return scalar if input was scalar
+    if np.isscalar(I_sol) and np.size(absorbed_radiation_Wperm2) == 1:
+        return float(absorbed_radiation_Wperm2)
     return absorbed_radiation_Wperm2
 
 
@@ -433,16 +450,32 @@ def calc_air_mass(Sz, latitude, longitude):
     For zenith angles from 0° to 70°, the air mass is calculated based on Equation 1.5.1.
     For zenith angles above that, the empirical equation in footnote 3 (taken from Kasten & Young, 1989) is used.
 
+    :param Sz: solar zenith angle [rad]
+    :type Sz: float or numpy.ndarray
+    :param latitude: latitude of the location [degrees]
+    :type latitude: float
+    :param longitude: longitude of the location [degrees]
+    :type longitude: float
+    :return: air mass [-]
+    :rtype: float or numpy.ndarray
+    
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
     '''
-    if abs(Sz) <= radians(70):
-        m = 1 / cos(Sz)  # air mass (1.5.1)
-    else:
-        h = pvlib.location.lookup_altitude(latitude, longitude) # altitude (in m)
-        m = exp(-0.0001184 * h) / (cos(Sz) + 0.5057 * (96.080 - degrees(Sz))**(-1.634)) # air mass (footnote 3)
-
+    # Convert inputs to numpy arrays if they're not already
+    Sz = np.asarray(Sz)
+    
+    h = pvlib.location.lookup_altitude(latitude, longitude)  # altitude (in m)
+    
+    # Apply the appropriate formula based on solar zenith angle
+    m = np.where(np.abs(Sz) <= np.radians(70),
+                1 / np.cos(Sz),  # air mass (1.5.1)
+                np.exp(-0.0001184 * h) / (np.cos(Sz) + 0.5057 * (96.080 - np.degrees(Sz))**(-1.634)))  # air mass (footnote 3)
+    
+    # Return scalar if input was scalar
+    if np.isscalar(Sz) and np.size(m) == 1:
+        return float(m)
     return m
 
 def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
@@ -450,8 +483,9 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
     To calculate the power production of PV panels.
 
     :param absorbed_radiation_Wperm2: absorbed radiation [W/m2]
-    :type absorbed_radiation_Wperm2: float
+    :type absorbed_radiation_Wperm2: float or numpy.ndarray
     :param T_cell_C: cell temperature [degree]
+    :type T_cell_C: float or numpy.ndarray
     :param eff_nom: nominal efficiency of PV module [-]
     :type eff_nom: float
     :param tot_module_area_m2: total PV module area [m2]
@@ -461,16 +495,22 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
     :param misc_losses: expected system loss [-]
     :type misc_losses: float
     :return el_output_PV_kW: Power production [kW]
-    :rtype el_output_PV_kW: float
+    :rtype el_output_PV_kW: float or numpy.ndarray
 
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
-
     """
+    # Convert inputs to numpy arrays if they're not already
+    absorbed_radiation_Wperm2 = np.asarray(absorbed_radiation_Wperm2)
+    T_cell_C = np.asarray(T_cell_C)
+    
     T_standard_C = 25.0  # temperature at the standard testing condition
     el_output_PV_kW = eff_nom * tot_module_area_m2 * absorbed_radiation_Wperm2 * \
-                      (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
-
+                     (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
+    
+    # Return scalar if input was scalar
+    if np.isscalar(absorbed_radiation_Wperm2) and np.size(el_output_PV_kW) == 1:
+        return float(el_output_PV_kW)
     return el_output_PV_kW
 
 
