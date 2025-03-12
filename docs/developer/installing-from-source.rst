@@ -15,9 +15,7 @@ Prerequisites
 * `Conda <https://docs.conda.io/projects/conda/en/stable/>`__
    We recommend using `Micromamba <https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`__.
    It supports parallel downloading of package files using multi-threading and it natively supports `conda-lock <https://github.com/conda/conda-lock/>`__ to skip the solving of dependencies *(it saves a lot of time!)*.
-   
-   .. attention:: Currently using Micromamba v2 is not supported due to a `bug in micromamba <https://github.com/mamba-org/mamba/issues/3711>`__. Please use **v1.5.10** instead.
-    
+       
    .. attention:: If you are planning to use CEA in **PyCharm**, we recommend using the other ones listed below, since micromamba environments are not natively supported by **PyCharm**.
 
    However, you can use any other conda package manager that you might already have
