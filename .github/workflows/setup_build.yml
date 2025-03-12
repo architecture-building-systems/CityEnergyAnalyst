@@ -86,7 +86,7 @@ jobs:
           yarn install
           yarn version $CEA_VERSION
           yarn electron:release
-          mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
+          mv "out/CEA-4 Desktop Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 
       - name: Install setup plugin
         shell: bash
