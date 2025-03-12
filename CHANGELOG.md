@@ -1,3 +1,9 @@
+- 2025-03-10 - 3.39.3 - #3790 Fix windows setup
+- 2025-03-06 - 3.39.3 - #3787 Update installation docs
+- 2025-02-24 - 3.39.3 - #3779 Add bug report issue template to improve issue tracking
+- 2025-02-03 - 3.39.3 - #3762 DE use_types schedule and properties fix
+- 2025-01-29 - 3.39.3 - #3765 Remove developer version in Windows setup
+- 2025-01-15 - 3.39.3 - #3758 Update README.md with DOI
 - 2024-12-19 - 3.39.0 - #3743 Update scripts.yml
 - 2024-12-17 - 3.38.0 - #3736 DE_Ns_CONSTRUCTION_STANDARD.xlsx_fix
 - 2024-11-25 - 3.38.0 - #3712 Update documentation.md
