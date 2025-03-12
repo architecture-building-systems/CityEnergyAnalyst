@@ -133,7 +133,6 @@ Function BaseInstallationSection
 
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
     File "gui_setup.exe"
-    File "dashboard.bat"
 
     # Run GUI Setup
     DetailPrint "Installing CEA Desktop"
