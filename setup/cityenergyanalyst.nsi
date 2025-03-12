@@ -191,6 +191,11 @@ Function un.UninstallSection
     ; Uninstall CEA Desktop silently
     DetailPrint 'Uninstalling $CEA_GUI_NAME'
     nsExec::ExecToLog '"$INSTDIR\$CEA_GUI_INSTALL_FOLDER\Uninstall $CEA_GUI_NAME.exe" /S'
+    Pop $0
+    DetailPrint "Uninstaller returned: $0"
+    
+    ; Optional: Add a small delay to ensure all processes are terminated
+    Sleep 1000
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
