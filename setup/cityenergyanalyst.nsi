@@ -137,7 +137,7 @@ Function BaseInstallationSection
 
     # Run GUI Setup
     DetailPrint "Installing CEA Desktop"
-    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\$CEA_GUI_INSTALL_FOLDER"'
+    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"'
     Delete "$INSTDIR\gui_setup.exe"
 
     ;Create uninstaller
@@ -151,7 +151,7 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
-    CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 FunctionEnd
 
@@ -161,7 +161,7 @@ Function CreateStartMenuShortcutsSection
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
@@ -174,7 +174,7 @@ Function CreateDesktopShortcutsSection
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 FunctionEnd
 
@@ -189,8 +189,8 @@ Function un.UninstallSection
     Delete /REBOOTOK "$DESKTOP\CEA Desktop.lnk"
 
     ; Uninstall CEA Desktop silently
-    DetailPrint 'Uninstalling $CEA_GUI_NAME'
-    nsExec::ExecToLog '"$INSTDIR\$CEA_GUI_INSTALL_FOLDER\Uninstall $CEA_GUI_NAME.exe" /S'
+    DetailPrint 'Uninstalling ${CEA_GUI_NAME}'
+    nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
     Pop $0
     DetailPrint "Uninstaller returned: $0"
     
@@ -201,8 +201,7 @@ Function un.UninstallSection
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Desktop.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
-    Delete /REBOOTOK "$INSTDIR\dashboard.bat"
-    RMDir /R /REBOOTOK "$INSTDIR\$CEA_GUI_INSTALL_FOLDER"
+    RMDir /R /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
