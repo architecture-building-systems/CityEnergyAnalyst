@@ -90,7 +90,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
 
     # calculate properties of PV panel
     panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_PVpanel)
-    print('gathering properties of PV panel')
+    # print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
@@ -116,7 +116,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print('generating groups of sensor points done')
+        # print('generating groups of sensor points done')
 
         final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
                                    panel_properties_PV)
