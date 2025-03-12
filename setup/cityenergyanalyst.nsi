@@ -2,6 +2,7 @@
 !define CEA_TITLE "City Energy Analyst"
 !define VER $%CEA_VERSION%
 !define CEA_GUI_NAME="CEA-4 Desktop"
+!define CEA_GUI_INSTALL_FOLDER="app"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
@@ -130,13 +131,13 @@ Function BaseInstallationSection
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
 
-    # install the CEA Desktop to "dashboard" folder
+    # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
     File "gui_setup.exe"
     File "dashboard.bat"
 
     # Run GUI Setup
     DetailPrint "Installing CEA Desktop"
-    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\dashboard"'
+    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\$CEA_GUI_INSTALL_FOLDER"'
     Delete "$INSTDIR\gui_setup.exe"
 
     ;Create uninstaller
@@ -150,7 +151,7 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
-    CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\dashboard\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
 FunctionEnd
 
@@ -160,7 +161,7 @@ Function CreateStartMenuShortcutsSection
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\dashboard\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
@@ -173,7 +174,7 @@ Function CreateDesktopShortcutsSection
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\dashboard\$CEA_GUI_NAME.exe" "" \
+    CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
 FunctionEnd
 
@@ -189,14 +190,14 @@ Function un.UninstallSection
 
     ; Uninstall CEA Desktop silently
     DetailPrint 'Uninstalling $CEA_GUI_NAME'
-    nsExec::ExecToLog '"$INSTDIR\dashboard\Uninstall $CEA_GUI_NAME.exe" /S'
+    nsExec::ExecToLog '"$INSTDIR\$CEA_GUI_INSTALL_FOLDER\Uninstall $CEA_GUI_NAME.exe" /S'
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Desktop.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
     Delete /REBOOTOK "$INSTDIR\dashboard.bat"
-    RMDir /R /REBOOTOK "$INSTDIR\dashboard"
+    RMDir /R /REBOOTOK "$INSTDIR\$CEA_GUI_INSTALL_FOLDER"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
