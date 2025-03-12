@@ -73,8 +73,26 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
-Section "Base Installation" Base_Installation_Section
-    SectionIn RO  # this section is required so user is unable to uncheck
+Function .onInstFailed
+    # Ensure temporary files are cleaned up
+    DetailPrint "Installation failed, cleaning up temporary files..."
+
+    ${If} ${FileExists} "$INSTDIR\cityenergyanalyst.tar.gz"
+        Delete /REBOOTOK "$INSTDIR\cityenergyanalyst.tar.gz"
+    ${EndIf}
+
+    ${If} ${FileExists} "$INSTDIR\dependencies"
+        RMDir /r /REBOOTOK "$INSTDIR\dependencies"
+    ${EndIf}
+    
+    ${If} ${FileExists} "$INSTDIR\gui_setup.exe"
+        Delete /REBOOTOK "$INSTDIR\gui_setup.exe"
+    ${EndIf}
+
+
+FunctionEnd
+
+Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     File "cityenergyanalyst.tar.gz"
@@ -100,22 +118,13 @@ Section "Base Installation" Base_Installation_Section
     ${EndIf}
     Delete "$INSTDIR\cityenergyanalyst.tar.gz"
     
-    # create cea.config file in the %userprofile% directory by calling `cea --help` and set daysim paths
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --help'
+    # Run cea --version to check if installation was successful
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'
     Pop $0
-    DetailPrint '"cea --help" returned $0'
+    DetailPrint '"cea --version" returned $0'
     ${If} "$0" != "0"
         Abort "Installation failed - see Details"
     ${EndIf}
-    #WriteINIStr "$PROFILE\cea.config" radiation daysim-bin-directory "$INSTDIR\Dependencies\Daysim"
-
-    # make sure qt.conf has the correct paths
-    #DetailPrint "Updating qt.conf..."
-    #${StrRep} $0 "$INSTDIR" "\" "/" # $0 now contains the $INSTDIR with forward slashes instead of backward slashes
-    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Prefix "$0/Dependencies/Python/Library"
-    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Binaries "$0/Dependencies/Python/Library/bin"
-    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Libraries "$0/Dependencies/Python/Library/lib"
-    #WriteINIStr "$INSTDIR\Dependencies\Python\qt.conf" Paths Headers "$0/Dependencies/Python/Library/include/qt"
 
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
@@ -142,11 +151,9 @@ Section "Base Installation" Base_Installation_Section
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
     CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+FunctionEnd
 
-SectionEnd
-
-Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
-
+Function CreateStartMenuShortcutsSection
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
@@ -158,24 +165,18 @@ Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" 0 SW_SHOWNORMAL "" "Uninstall the City Energy Analyst"
+FunctionEnd
 
-SectionEnd
-
-Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
-
+Function CreateDesktopShortcutsSection
     # create shortcuts on the Desktop for launching the CEA console
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
+FunctionEnd
 
-SectionEnd
-
-;Uninstaller Section
-
-Section "Uninstall"
-
+Function un.UninstallSection
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
@@ -198,10 +199,21 @@ Section "Uninstall"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
+FunctionEnd
 
-    ; Change current working directory so that it can be deleted
-    ; Will only be deleted if the directory is empty
-    SetOutPath $TEMP
-    RMDir /REBOOTOK "$INSTDIR"
+Section "Base Installation" Base_Installation_Section
+    SectionIn RO  # this section is required so user is unable to uncheck
+    Call BaseInstallationSection
+SectionEnd
 
+Section "Create Start menu shortcuts" Create_Start_Menu_Shortcuts_Section
+    Call CreateStartMenuShortcutsSection
+SectionEnd
+
+Section /o "Create Desktop shortcuts" Create_Desktop_Shortcuts_Section
+    Call CreateDesktopShortcutsSection
+SectionEnd
+
+Section "Uninstall"
+    Call un.UninstallSection
 SectionEnd

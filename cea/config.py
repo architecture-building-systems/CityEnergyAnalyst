@@ -13,6 +13,7 @@ import os
 import re
 import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional
+import warnings
 
 import pandas as pd
 
@@ -41,7 +42,15 @@ class Configuration:
         self.default_config.read(DEFAULT_CONFIG)
 
         self.user_config = configparser.ConfigParser()
-        self.user_config.read([DEFAULT_CONFIG, config_file])
+
+        try:
+            self.user_config.read([DEFAULT_CONFIG, config_file])
+        except UnicodeDecodeError as e:
+            print(e)
+            # Fallback to default config if user config not readable
+            warnings.warn(f"Could not read {config_file}, using default config instead. "
+                          f"Please check that the config file is in the correct format or if it has any special characters")
+            self.user_config.read(DEFAULT_CONFIG)
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 

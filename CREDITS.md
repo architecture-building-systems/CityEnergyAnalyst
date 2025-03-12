@@ -1,7 +1,7 @@
 How to Cite
 ===========
 
-The CEA Team. (2025). City Energy Analyst (v3.39.2). Zenodo. https://doi.org/10.5281/zenodo.14617664
+The CEA Team. (2025). City Energy Analyst (v3.39.4). Zenodo. https://doi.org/10.5281/zenodo.14903253
 
 The CEA team
 ============
@@ -11,6 +11,25 @@ and split into the categories of developers, product owner, project sponsor and 
 
 
 <!-- credits -->
+- Version 3.39.4 - March 2025
+
+    Developers:
+    * Reynold Mok
+    * Martín Mosteiro Romero
+    * Mathias Niffeler
+    * Zhongming Shi
+
+    Product lead:
+    * Zhongming Shi
+
+    Product sponsor:
+    * [Arno Schlueter](https://systems.arch.ethz.ch/arno-schlueter)
+    * [Toni Piëch Foundation](https://www.tonipiechfoundation.org/)
+
+    Past Collaborators:
+    * https://cityenergyanalyst.com/people
+
+
 - Version 3.39.2 - January 2025
 
     Developers:
