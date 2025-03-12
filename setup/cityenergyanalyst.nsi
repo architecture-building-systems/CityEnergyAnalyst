@@ -1,7 +1,7 @@
 # NSIS script for creating the City Energy Analyst installer
 !define CEA_TITLE "City Energy Analyst"
 !define VER $%CEA_VERSION%
-!define CEA_GUI_NAME="CEA-4 Desktop"
+!define CEA_GUI_NAME="CEA-4 Desktop"  # references productName from GUI package.json. ensure it is the same
 !define CEA_GUI_INSTALL_FOLDER="app"
 
 # Request the highest possible execution level for the current user
