@@ -152,7 +152,7 @@ Function BaseInstallationSection
 
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
     CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 FunctionEnd
 
 Function CreateStartMenuShortcutsSection
@@ -162,7 +162,7 @@ Function CreateStartMenuShortcutsSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
         "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe" "" \
@@ -175,7 +175,7 @@ Function CreateDesktopShortcutsSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\$CEA_GUI_INSTALL_FOLDER\$CEA_GUI_NAME.exe" "" \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch $CEA_GUI_NAME"
+        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 FunctionEnd
 
 Function un.UninstallSection
