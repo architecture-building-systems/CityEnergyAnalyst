@@ -149,7 +149,7 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA dashboard
-    CreateShortcut "$INSTDIR\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
+    CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 FunctionEnd
 
@@ -159,7 +159,7 @@ Function CreateStartMenuShortcutsSection
     CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
+    CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk" \
@@ -172,19 +172,19 @@ Function CreateDesktopShortcutsSection
     CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
-    CreateShortcut "$DESKTOP\CEA Dashboard.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
+    CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\dashboard\CityEnergyAnalyst-GUI.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Dashboard"
 FunctionEnd
 
 Function un.UninstallSection
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
-    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\Uninstall CityEnergy Analyst.lnk"
     RMDir /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}"
 
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
-    Delete /REBOOTOK "$DESKTOP\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$DESKTOP\CEA Desktop.lnk"
 
     ; Uninstall CEA GUI silently
     DetailPrint 'Uninstalling CityEnergyAnalyst-GUI'
@@ -192,7 +192,7 @@ Function un.UninstallSection
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
-    Delete /REBOOTOK "$INSTDIR\CEA Dashboard.lnk"
+    Delete /REBOOTOK "$INSTDIR\CEA Desktop.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
     Delete /REBOOTOK "$INSTDIR\dashboard.bat"
     RMDir /R /REBOOTOK "$INSTDIR\dashboard"
