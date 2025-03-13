@@ -20,8 +20,17 @@ class Settings(BaseSettings):
         """
         return self.project_root == ""
 
+    def to_env_file(self, path: str):
+        """
+        Write settings to env file in the format CEA_{KEY}={VALUE}
+        """
+        with open(path, "w") as f:
+            for key, value in self.__dict__.items():
+                if value is not None:
+                    f.write(f"CEA_{key.upper()}={value}\n")
+                f.flush()
 
-# FIXME: Settings does not load from cea config
+
 @lru_cache
 def get_settings():
     return Settings()

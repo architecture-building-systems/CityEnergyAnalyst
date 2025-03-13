@@ -4,15 +4,14 @@ import tempfile
 
 import uvicorn
 
-from cea.interfaces.dashboard.settings import get_settings
+from cea.config import Configuration
+from cea.interfaces.dashboard.settings import get_settings, Settings
 
 
-def main(config):
-    # Try loading settings from env vars first
-    settings = get_settings()
-    config_dict = dict()
-
-    # Load from config if not found in env vars
+def load_from_config(settings: Settings, config: Configuration):
+    """
+    Load settings from config file if not set in Settings (not found in env vars)
+    """
     if settings.host is None:
         settings.host = config.server.host
 
@@ -21,23 +20,25 @@ def main(config):
 
     if settings.project_root is None:
         settings.project_root = config.server.project_root
-        config_dict["project_root"] = config.server.project_root
 
         # Ensure project root exists before starting the server
         if settings.project_root != "" and not os.path.exists(settings.project_root):
             raise ValueError(f"The path `{settings.project_root}` does not exist. "
                              f"Make sure project_root in config is set correctly.")
 
+    return settings
+
+def main(config):
+    # Load settings from env vars (priority) then config file
+    settings = get_settings()
+    load_from_config(settings, config)
     print(f"Using settings: {settings}")
 
     try:
-        # Write missing settings to temp env file
         with tempfile.TemporaryDirectory() as temp_dir:
             env_file = os.path.join(temp_dir, "cea.env")
-            with open(env_file, "w") as f:
-                for key, value in config_dict.items():
-                    f.write(f"CEA_{key.upper()}={value}\n")
-                    f.flush()
+            # Rewrite settings to env file to be loaded by uvicorn process
+            settings.to_env_file(env_file)
 
             uvicorn.run("cea.interfaces.dashboard.app:app",
                         reload=config.server.dev,
