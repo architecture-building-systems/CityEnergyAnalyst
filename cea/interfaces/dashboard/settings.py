@@ -28,7 +28,7 @@ class Settings(BaseSettings):
             for key, value in self.__dict__.items():
                 if value is not None:
                     f.write(f"CEA_{key.upper()}={value}\n")
-                f.flush()
+            f.flush()
 
 
 @lru_cache
