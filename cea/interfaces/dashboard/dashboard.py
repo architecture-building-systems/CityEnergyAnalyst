@@ -8,7 +8,7 @@ from cea.config import Configuration
 from cea.interfaces.dashboard.settings import get_settings, Settings
 
 
-def load_from_config(settings: Settings, config: Configuration):
+def load_from_config(settings: Settings, config: Configuration) -> None:
     """
     Load settings from config file if not set in Settings (not found in env vars)
     """
@@ -26,7 +26,6 @@ def load_from_config(settings: Settings, config: Configuration):
             raise ValueError(f"The path `{settings.project_root}` does not exist. "
                              f"Make sure project_root in config is set correctly.")
 
-    return settings
 
 def main(config):
     # Load settings from env vars (priority) then config file
@@ -50,4 +49,5 @@ def main(config):
 
 if __name__ == "__main__":
     import cea.config
+
     main(cea.config.Configuration())
