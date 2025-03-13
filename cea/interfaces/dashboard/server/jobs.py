@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerUrl, CEAWorkerProcesses
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectInfo
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.server.streams import streams
@@ -24,9 +24,9 @@ class JobError(BaseModel):
 
 @router.get("/")
 @router.get("/list")
-async def get_jobs(session: SessionDep, config: CEAConfig) -> List[JobInfo]:
+async def get_jobs(session: SessionDep, project_info: CEAProjectInfo) -> List[JobInfo]:
     """Get a list of jobs for the current project"""
-    project_id = get_project_id(session, config.project)
+    project_id = get_project_id(session, project_info.project)
 
     return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
@@ -41,12 +41,12 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any], session: SessionDep, config: CEAConfig) -> JobInfo:
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_info: CEAProjectInfo) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
     print(f"NewJob: args={args}")
 
-    project_id = get_project_id(session, config.project)
+    project_id = get_project_id(session, project_info.project)
 
     job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
     session.add(job)

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
 from fastapi import Depends
@@ -73,6 +74,18 @@ async def get_cea_config():
         await _cache.set("cea_config", cea_config)
 
     return cea_config
+@dataclass
+class ProjectInfo:
+    project: str
+    scenario: str
+
+async def get_project_info() -> ProjectInfo:
+    """Get the current project and scenario in the config"""
+    config = await get_cea_config()
+    return ProjectInfo(
+        project=config.project,
+        scenario=config.scenario,
+    )
 
 
 async def get_plot_cache():
@@ -80,8 +93,6 @@ async def get_plot_cache():
     _plot_cache = PlotCache(cea_config.project)
 
     return _plot_cache
-
-    
 
 
 async def get_worker_processes():
@@ -107,6 +118,7 @@ def get_project_root():
 
 
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
+CEAProjectInfo = Annotated[dict, Depends(get_project_info)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAServerUrl = Annotated[dict, Depends(get_server_url)]

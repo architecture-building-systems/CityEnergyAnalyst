@@ -24,7 +24,7 @@ from cea.databases import get_regions, databases_folder_path
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -192,11 +192,11 @@ async def get_project_choices(project_root: CEAProjectRoot):
     }
 
 @router.get('/config')
-async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
+async def config_project_info(project_info: CEAProjectInfo) -> ConfigProjectInfo:
     """Return the current project and scenario in the config"""
     return ConfigProjectInfo(
-        project=config.project,
-        scenario=config.scenario_name,
+        project=project_info.project,
+        scenario=project_info.scenario,
     )
 
 

@@ -21,7 +21,7 @@ import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
-from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
@@ -116,17 +116,17 @@ async def get_input_geojson(config: CEAConfig, kind: str):
 
 
 @router.get('/building-properties')
-async def get_building_props(config: CEAConfig):
-    return get_building_properties(config)
+async def get_building_props(project_info: CEAProjectInfo):
+    return get_building_properties(project_info.scenario)
 
 
 @router.get('/all-inputs')
-async def get_all_inputs(config: CEAConfig):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def get_all_inputs(project_info: CEAProjectInfo):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
 
     # FIXME: Find a better way, current used to test for Input Editor
     def fn():
-        store = get_building_properties(config)
+        store = get_building_properties(project_info.scenario)
         store['geojsons'] = {}
         store['connected_buildings'] = {'dc': [], 'dh': []}
         store['crs'] = {}
@@ -154,8 +154,8 @@ class InputForm(BaseModel):
 
 
 @router.put('/all-inputs')
-async def save_all_inputs(config: CEAConfig, form: InputForm):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
 
     tables = form.tables
     geojsons = form.geojsons
@@ -233,8 +233,8 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
     return await run_in_threadpool(fn)
 
 
-def get_building_properties(config):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+def get_building_properties(scenario: str):
+    locator = cea.inputlocator.InputLocator(scenario)
     store = {'tables': {}, 'columns': {}}
     for db in INPUTS:
         db_info = INPUTS[db]
@@ -370,8 +370,8 @@ def df_to_json(file_location):
 
 
 @router.get('/building-schedule/{building}')
-async def get_building_schedule(config: CEAConfig, building: str):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def get_building_schedule(project_info: CEAProjectInfo, building: str):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
         schedule_data, schedule_complementary_data = read_cea_schedule(locator, use_type=None, building=building)
         df = pd.DataFrame(schedule_data).set_index(['hour'])
@@ -389,8 +389,8 @@ async def get_building_schedule(config: CEAConfig, building: str):
 
 
 @router.get('/databases')
-async def get_input_database_data(config: CEAConfig):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def get_input_database_data(project_info: CEAProjectInfo):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
         return await run_in_threadpool(lambda: read_all_databases(locator.get_databases_folder()))
     except IOError as e:
@@ -402,8 +402,8 @@ async def get_input_database_data(config: CEAConfig):
 
 
 @router.put('/databases')
-async def put_input_database_data(config: CEAConfig, payload: Dict[str, Any]):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
 
     for db_type in payload:
         for db_name in payload[db_type]:
@@ -429,8 +429,8 @@ class DatabasePath(BaseModel):
 
 
 @router.put('/databases/copy')
-async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def copy_input_database(project_info: CEAProjectInfo, database_path: DatabasePath):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
 
     copy_path = secure_path(os.path.join(database_path.path, database_path.name))
     if os.path.exists(copy_path):
@@ -444,9 +444,9 @@ async def copy_input_database(config: CEAConfig, database_path: DatabasePath):
 
 
 @router.get('/databases/check')
-async def check_input_database(config: CEAConfig):
+async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
-    scenario = config.scenario
+    scenario = project_info.scenario
     dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
     if dict_missing_db:
