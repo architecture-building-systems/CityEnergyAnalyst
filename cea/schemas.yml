@@ -6876,20 +6876,18 @@ get_database_archetypes_construction_type:
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Hs_ag:
-        description: Fraction of above ground gross floor area air-conditioned.
+      Hs:
+        description: Fraction of gross floor area air-conditioned.
         max: 1.0
         min: 0.0
         type: float
         unit: '[m2/m2]'
         values: '{0.0...1}'
-      Hs_bg:
-        description: 'Fraction of below ground gross floor area air-conditioned '
-        max: 1.0
-        min: 0.0
-        type: float
-        unit: '[m2/m2]'
-        values: '{0.0...1}'
+      occupied_bg:
+        description: Boolean, basement conditioned/occupied
+        type: boolean
+        unit: '[-]'
+        values: '{TRUE, FALSE}'
       Ns:
         description: Fraction of net gross floor area.
         max: 1.0
