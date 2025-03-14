@@ -40,7 +40,7 @@ dependencies:
 - pip:
   - fastapi
   - pydantic-settings
-  - uvicorn-standard
+  - uvicorn
   - jinja2
   - python-socketio
   - python-multipart # Required by fastapi for file uploads
