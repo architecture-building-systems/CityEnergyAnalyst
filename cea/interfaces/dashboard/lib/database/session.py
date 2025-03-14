@@ -26,11 +26,11 @@ def get_default_db_directory():
         # Fallback to user home directory
         return os.path.join(os.path.expanduser('~'), '.cea')
 
-def get_database_path():
+def get_local_database_path():
     """Get the path to the database file."""
     # Try to get from settings (if available)
     settings = get_settings()
-    db_dir = settings.database_path
+    db_dir = settings.db_path
 
     # Use default location if not configured
     if db_dir is None:
@@ -39,11 +39,18 @@ def get_database_path():
     os.makedirs(db_dir, exist_ok=True)
     return os.path.join(db_dir, "database.db")
 
-sqlite_file_name = get_database_path()
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+def get_database_props():
+    settings = get_settings()
+    # Use database_url if set (priority)
+    # Support postgres for now
+    if settings.db_url is not None:
+        return settings.db_url, {}
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
+    return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
+
+
+db_url, connect_args = get_database_props()
+engine = create_engine(db_url, connect_args=connect_args)
 
 def get_session():
     with Session(engine) as session:
@@ -51,7 +58,7 @@ def get_session():
 
 
 def create_db_and_tables():
-    print(f"Preparing database at {sqlite_url}")
+    print(f"Preparing database...")
     SQLModel.metadata.create_all(engine)
 
 SessionDep = Annotated[Session, Depends(get_session)]

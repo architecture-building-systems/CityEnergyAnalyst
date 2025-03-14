@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     port: Optional[int] = None
     cors_origin: str = "*"
     project_root: Optional[str] = None
-    database_path: Optional[str] = None
+
+    db_path: Optional[str] = None
+    db_url: Optional[str] = None
+
+    config_path: Optional[str] = "~/cea.config"
 
     def allow_path_transversal(self) -> bool:
         """
