@@ -30,6 +30,8 @@ class Project(SQLModel, table=True):
 
 
 class JobInfo(SQLModel, table=True):
+    __tablename__ = "job"
+
     """Store all the information required to run a job"""
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     script: str = Field(index=True)
