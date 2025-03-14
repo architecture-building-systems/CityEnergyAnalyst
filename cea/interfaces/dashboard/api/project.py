@@ -20,7 +20,6 @@ from typing_extensions import Annotated
 import cea.api
 import cea.config
 import cea.inputlocator
-from cea.databases import get_regions, databases_folder_path
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
@@ -226,7 +225,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
     project_info = {
         'name': os.path.basename(config.project),
         'project': config.project,
-        'scenarios_list': (config)
+        'scenarios_list': cea.config.get_scenarios_list(config.project)
     }
 
     return ProjectInfo(**project_info)
