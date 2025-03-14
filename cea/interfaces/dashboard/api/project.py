@@ -226,7 +226,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
     project_info = {
         'name': os.path.basename(config.project),
         'project': config.project,
-        'scenarios_list': list_scenario_names_for_project(config)
+        'scenarios_list': (config)
     }
 
     return ProjectInfo(**project_info)
@@ -629,23 +629,17 @@ def glob_shapefile_auxilaries(shapefile_path):
     return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
-def list_scenario_names_for_project(config):
-    with config.ignore_restrictions():
-        return config.get_parameter('general:scenario-name')._choices
-
-
-async def check_scenario_exists(request: Request, config: CEAConfig, scenario: str = Path()):
+async def check_scenario_exists(request: Request, scenario: str = Path()):
     try:
         data = await request.json()
+        project = data.get("project")
     except Exception:
-        data = None
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not determine project and scenario",
+        )
 
-    if len(data):
-        try:
-            config.project = data["project"]
-        except Exception:
-            pass
-    choices = list_scenario_names_for_project(config)
+    choices = cea.config.get_scenarios_list(project)
     if scenario not in choices:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -682,12 +676,12 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
 
 
 @router.delete('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
-async def delete(config: CEAConfig, scenario: str):
+async def delete(project_info: CEAProjectInfo, scenario: str):
     """Delete scenario from project"""
-    scenario_path = secure_path(os.path.join(config.project, scenario))
+    scenario_path = secure_path(os.path.join(project_info.project, scenario))
     try:
         shutil.rmtree(scenario_path)
-        return {'scenarios': list_scenario_names_for_project(config)}
+        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
     except OSError:
         traceback.print_exc()
         raise HTTPException(

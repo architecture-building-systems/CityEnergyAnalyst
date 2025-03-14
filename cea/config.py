@@ -1148,6 +1148,7 @@ class CoordinateListParameter(ListParameter):
 
 
 def get_scenarios_list(project_path: str) -> List[str]:
+    # TODO: Allow for remote projects
     # return empty list if project path does not exist
     if not os.path.exists(project_path):
         return []

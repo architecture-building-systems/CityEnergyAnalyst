@@ -14,6 +14,7 @@ from fiona.errors import DriverError
 from pydantic import BaseModel, Field
 from fastapi.concurrency import run_in_threadpool
 
+import cea.config
 import cea.inputlocator
 import cea.schemas
 import cea.scripts
@@ -90,8 +91,8 @@ async def get_building_props_db(db: str):
 
 
 @router.get('/geojson/{kind}')
-async def get_input_geojson(config: CEAConfig, kind: str):
-    locator = cea.inputlocator.InputLocator(config.scenario)
+async def get_input_geojson(project_info: CEAProjectInfo, kind: str):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
 
     if kind not in GEOJSON_KEYS:
         raise HTTPException(
@@ -101,7 +102,7 @@ async def get_input_geojson(config: CEAConfig, kind: str):
     # Building geojsons
     elif kind in INPUT_KEYS and kind in GEOJSON_KEYS:
         db_info = INPUTS[kind]
-        locator = cea.inputlocator.InputLocator(config.scenario)
+        locator = cea.inputlocator.InputLocator(project_info.scenario)
         location = getattr(locator, db_info['location'])()
         if db_info['file_type'] != 'shp':
             raise HTTPException(
@@ -110,7 +111,7 @@ async def get_input_geojson(config: CEAConfig, kind: str):
             )
         return df_to_json(location)[0]
     elif kind in NETWORK_KEYS:
-        return get_network(config, kind)[0]
+        return get_network(project_info.scenario, kind)[0]
     elif kind == 'streets':
         return df_to_json(locator.get_street_network())[0]
 
@@ -299,10 +300,10 @@ def get_building_properties(scenario: str):
     return store
 
 
-def get_network(config, network_type):
+def get_network(scenario: str, network_type):
     # TODO: Get a list of names and send all in the json
     try:
-        locator = cea.inputlocator.InputLocator(config.scenario)
+        locator = cea.inputlocator.InputLocator(scenario)
         building_connectivity = get_building_connectivity(locator)
         network_type = network_type.upper()
         connected_buildings = building_connectivity[building_connectivity['{}_connectivity'.format(
@@ -315,6 +316,8 @@ def get_network(config, network_type):
 
         # Generate network files
         if newer_network_layout_exists(locator, network_type, network_name):
+            config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+            config.scenario = scenario
             config.network_layout.network_type = network_type
             config.network_layout.connected_buildings = connected_buildings
             # Ignore demand and creating plants for layout in map
@@ -461,11 +464,12 @@ async def check_input_database(project_info: CEAProjectInfo):
 
 
 @router.get("/databases/validate")
-async def validate_input_database(config: CEAConfig):
+async def validate_input_database(project_info: CEAProjectInfo):
     import cea.scripts
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
+    # TODO: Add plugin support
     schemas = cea.schemas.schemas(plugins=[])
-    validator = InputFileValidator(locator, plugins=config.plugins)
+    validator = InputFileValidator(locator, plugins=[])
     out = dict()
 
     for db_name, schema_keys in DATABASES_SCHEMA_KEYS.items():
