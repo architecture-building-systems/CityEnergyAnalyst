@@ -7,11 +7,6 @@ dependencies:
 - ephem
 - fiona
 - aiocache
-- fastapi
-- pydantic-settings
-- uvicorn-standard
-- jinja2
-- python-socketio
 - geopandas=0.13 # Due to python3.8 support
 - libpysal
 - networkx=2.8
@@ -42,8 +37,14 @@ dependencies:
 - pyarrow
 - git
 - yarn=4 # Use latest version of yarn
-- python-multipart # Required by fastapi for file uploads
-- sqlmodel # Required by fastapi for database models
 - pip:
+  - fastapi
+  - pydantic-settings
+  - uvicorn-standard
+  - jinja2
+  - python-socketio
+  - python-multipart # Required by fastapi for file uploads
+  - sqlmodel # Required by fastapi for database models
+  - psycopg2-binary # Required by sqlmodel for postgres
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
