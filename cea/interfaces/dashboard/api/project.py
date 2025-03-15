@@ -278,7 +278,7 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
-            await config.save()
+            config.save()
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
             raise HTTPException(
@@ -554,7 +554,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
-                await config.save()
+                config.save()
             return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(

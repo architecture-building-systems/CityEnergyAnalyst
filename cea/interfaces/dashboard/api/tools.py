@@ -9,7 +9,7 @@ import cea.config
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo
 
 router = APIRouter()
 
@@ -27,8 +27,9 @@ class ToolProperties(ToolDescription):
 
 
 @router.get('/')
-async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
-    tools = cea.scripts.for_interface('dashboard', plugins=config.plugins)
+async def get_tool_list() -> Dict[str, List[ToolDescription]]:
+    # TODO: Add plugin support
+    tools = cea.scripts.for_interface('dashboard', plugins=[])
     result = dict()
     for category, group in groupby(tools, lambda t: t.category):
         result[category] = [
@@ -39,7 +40,8 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    # TODO: Add plugin support
+    script = cea.scripts.by_name(tool_name, plugins=[])
 
     parameters = []
     categories = defaultdict(list)
@@ -82,7 +84,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
             continue
 
         parameter.set(default_value)
-    await config.save()
+    config.save()
     return 'Success'
 
 
@@ -94,7 +96,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             value = payload[parameter.name]
             print('%s: %s' % (parameter.name, value))
             parameter.set(value)
-    await config.save()
+    config.save()
     return 'Success'
 
 
@@ -106,7 +108,8 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
             value = payload[parameter.name]
             parameter.set(value)
 
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    # TODO: Add plugin support
+    script = cea.scripts.by_name(tool_name, plugins=[])
     schema_data = schemas(config.plugins)
 
     script_suggestions = set()

@@ -1,11 +1,13 @@
+import json
+import os
 from dataclasses import dataclass
+
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
-from fastapi import Depends
+from fastapi import Depends, Request
 from typing_extensions import Annotated
 
 import cea.config
-from cea.config import CEA_CONFIG
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
@@ -18,21 +20,6 @@ caches.set_config({
         }
     }
 })
-
-
-class CEAConfigCache(cea.config.Configuration):
-    _cache = caches.get(CACHE_NAME)
-    _cache_key = "cea_config"
-
-    def __init__(self, config_file: str = CEA_CONFIG):
-        super().__init__(config_file)
-
-    async def save(self, config_file: str = CEA_CONFIG) -> None:
-        """
-        Write to cache as well when saving to file
-        """
-        await self._cache.set(self._cache_key, self)
-        super().save(config_file)
 
 
 class AsyncDictCache:
@@ -65,15 +52,39 @@ class AsyncDictCache:
         return _dict.keys()
 
 
-async def get_cea_config():
-    _cache = caches.get(CACHE_NAME)
-    cea_config = await _cache.get("cea_config")
+class CEAServerConfig(cea.config.Configuration):
+    def __init__(self, config_file: str = get_settings().config_path):
+        if config_file.startswith("~"):
+            config_file = os.path.expanduser(config_file)
+        super().__init__(config_file)
 
-    if cea_config is None:
-        cea_config = CEAConfigCache()
-        await _cache.set("cea_config", cea_config)
+    def save(self, config_file: str = get_settings().config_path) -> None:
+        if config_file.startswith("~"):
+            config_file = os.path.expanduser(config_file)
+        print(f"Saving config to {config_file}")
+        super().save(config_file)
 
-    return cea_config
+
+async def get_cea_config(request: Request=None):
+    """Get configuration from request headers or query parameters"""
+
+    # Load config from body (priority)
+    if request and request.method in ["POST", "PUT", "PATCH"]:
+        try:
+            body = await request.json()
+            if "config" in body:
+                return json.loads(body["config"])
+        except json.JSONDecodeError:
+            pass
+
+    # Read config from file if config_path is set
+    if get_settings().config_path:
+        cea_config = CEAServerConfig()
+
+        return cea_config
+    
+    raise ValueError("No config provided")
+
 @dataclass
 class ProjectInfo:
     project: str
