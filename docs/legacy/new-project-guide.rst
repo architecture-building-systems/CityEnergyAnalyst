@@ -36,7 +36,7 @@ This tool will also add new input databases to your project.
 
 The objective of this step is to use the configuration editor to set up the input parameters of the create-new-project tool.
 
-#. Open the configuration editor of CEA. This guide :doc:`config-file-guide` describes how to use it.
+#. Open the configuration editor of CEA. This guide :doc:`/legacy/the-configuration-file` describes how to use it.
 #. In the configuration editor, scroll down the menu on the left and click in "Create-new-project" tool.
 #. On the right side proceed to give an input to the next variables:
 

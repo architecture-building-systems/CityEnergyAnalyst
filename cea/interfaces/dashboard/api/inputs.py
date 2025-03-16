@@ -185,7 +185,7 @@ async def save_all_inputs(config: CEAConfig, form: InputForm):
                     table_df = pd.DataFrame(table_df.drop(columns='geometry'))
                     out['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
                 elif file_type == 'csv':
-                    table_df = pd.read_json(json.dumps(tables[db]), orient='index')
+                    table_df = pd.DataFrame.from_dict(tables[db], orient='index')
 
                     # Make sure index name is 'Name;
                     table_df.index.name = 'name'

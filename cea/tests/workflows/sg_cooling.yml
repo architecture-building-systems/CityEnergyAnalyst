@@ -37,17 +37,7 @@
 - script: shallow-geothermal-potential
 - script: photovoltaic
 - script: solar-collector
-  parameters:
-    type-scpanel: FP
-- script: solar-collector
-  parameters:
-    type-scpanel: ET
 - script: photovoltaic-thermal
-  parameters:
-    type-scpanel: FP
-- script: photovoltaic-thermal
-  parameters:
-    type-scpanel: ET
 - script: network-layout
   parameters:
     network-type: DC

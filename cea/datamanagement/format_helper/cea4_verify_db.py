@@ -705,7 +705,7 @@ def cea4_verify_db(scenario, verbose=False):
         add_values_to_dict(dict_missing_db, ASSEMBLIES, [item for sublist in list_list_missing_columns_csv for item in sublist])
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
-        # Verify is all values in the construction_type.csv file are defined in the assemblies.csv file
+        # Verify if all values in the construction_type.csv file are defined in the assemblies.csv file
         dict_missing_assemblies = verify_assemblies_exist(scenario, ASSEMBLIES, list_existing_files_csv, dict_missing_db['CONSTRUCTION_TYPES'], archetypes='CONSTRUCTION_TYPES')
         list_missing_names_assemblies = list(dict_missing_assemblies.keys())
         add_values_to_dict(dict_missing_db, ASSEMBLIES, list_missing_names_assemblies)

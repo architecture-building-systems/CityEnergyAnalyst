@@ -3,12 +3,11 @@ Import & Export:
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
     description: |
-      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at current_scenario/export/rhino/from_cea.
+      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at path: {CEA Project}/{Current Scenario}/export/rhino/from_cea.
       
       Download the .gh file via the link. Use the Grasshopper components to import the exported package into Rhino/Grasshopper. 
-      The .gh file requires two inputs: the path to this Project and the name of this Scenario.
-      
-      https://www.cityenergyanalyst.com/s/to_cea_v400alpha20gh.zip
+      https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh
+
     interfaces: [cli, dashboard]
     module: cea.import_export.export_to_rhino_gh
     parameters: ['general:scenario', to-rhino-gh]
@@ -22,12 +21,12 @@ Import & Export:
       
       Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
-      
-      https://www.cityenergyanalyst.com/s/to_cea_v400alpha20gh.zip
+      https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh
 
-    interfaces: [cli]
+    interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
     parameters: ['general:scenario', from-rhino-gh]
+
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
@@ -82,7 +81,7 @@ Renewable Energy Potential Assessment:
                  'general:number-of-cpus-to-keep-free',
                  'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
                  'solar:solar-window-solstice', 'solar:max-roof-coverage',
-                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle']
+                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle', 'solar:buildings']
     input-files:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
@@ -229,8 +228,7 @@ Thermal Network Design:
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network',
-                 'thermal-network-optimization:use-representative-week-per-month']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]

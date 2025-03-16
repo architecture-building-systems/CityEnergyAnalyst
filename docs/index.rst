@@ -21,13 +21,15 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
 
 .. _www.cityenergyanalyst.com: https://www.cityenergyanalyst.com
 
+.. include:: common/cea-legacy.rst
+
 .. toctree::
    :maxdepth: 2
    :caption: User Documentation:
 
    installation/installation
    cite
-   tutorials
+   tutorials/index
    known-issues
    glossary
    legal
@@ -37,6 +39,6 @@ Visit www.cityenergyanalyst.com_ for more information on the CEA.
    :caption: Developer Documentation:
 
    agile-with-CEA
-   how-to-contribute
+   developer/how-to-contribute
    developer/developer-walk-through
    modules/modules

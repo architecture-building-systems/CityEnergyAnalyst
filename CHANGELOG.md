@@ -1,3 +1,26 @@
+- 2025-03-10 - 3.39.3 - #3790 Fix windows setup
+- 2025-03-06 - 3.39.3 - #3787 Update installation docs
+- 2025-02-24 - 3.39.3 - #3779 Add bug report issue template to improve issue tracking
+- 2025-02-03 - 3.39.3 - #3762 DE use_types schedule and properties fix
+- 2025-01-29 - 3.39.3 - #3765 Remove developer version in Windows setup
+- 2025-01-15 - 3.39.3 - #3758 Update README.md with DOI
+- 2024-12-19 - 3.39.0 - #3743 Update scripts.yml
+- 2024-12-17 - 3.38.0 - #3736 DE_Ns_CONSTRUCTION_STANDARD.xlsx_fix
+- 2024-11-25 - 3.38.0 - #3712 Update documentation.md
+- 2024-11-15 - 3.38.0 - #3700 Requested by IDP students, adding in Total_demand_hourly.csv
+- 2024-11-13 - 3.38.0 - #3691 Fix Dockerfile micromamba
+- 2024-11-12 - 3.38.0 - #3683 Ensure .cpg file exists before reading it
+- 2024-11-12 - 3.38.0 - #3685 enable Batch process Workflow to include the summary and analytics tools
+- 2024-11-12 - 3.38.0 - #3684 Fix syntax to pass the ruff test
+- 2024-11-12 - 3.38.0 - #3682 Fixing schedule-helper that hard-coded hotel use type to be in the database
+- 2024-11-08 - 3.38.0 - #3490 New Features: Result reader - summary & analysis
+- 2024-11-07 - 3.38.0 - #3673 rewrite ensure_cpg_file function to prevent frequent file writing
+- 2024-11-07 - 3.38.0 - #3676 De fix
+- 2024-11-07 - 3.38.0 - #3664 fixing the messing columns for pipe properties
+- 2024-09-24 - 3.38.0 - #3650 Fix 'None'-setting for 'network-overlap-correction'
+- 2024-09-24 - 3.38.0 - #3659 Add tool check endpoint
+- 2024-09-06 - 3.38.0 - #3653 Update weather source file
+- 2024-08-26 - 3.38.0 - #3648 Release 3.38.0
 - 2024-08-25 - 3.37.1 - #3645 Fix daysim binaries to allow whitespace in path
 - 2024-08-06 - 3.37.1 - #3636 Introduce result-retention toggle
 - 2024-08-06 - 3.37.1 - #3638 Fix radiation simplified

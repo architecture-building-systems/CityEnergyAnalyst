@@ -42,9 +42,10 @@ jobs:
             setup/dependencies/micromamba.exe
           key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
       
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         if: steps.cache-env.outputs.cache-hit != 'true'
         with:
+          micromamba-version: '2.0.7-0'
           environment-file: conda-lock.yml
           environment-name: cea
           cache-environment: true
@@ -85,7 +86,7 @@ jobs:
           yarn install
           yarn version $CEA_VERSION
           yarn electron:release
-          mv "out/CityEnergyAnalyst-GUI Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
+          mv "out/CEA-4 Desktop Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 
       - name: Install setup plugin
         shell: bash
@@ -105,7 +106,17 @@ jobs:
         with:
           name: setup
           path: ${{ github.workspace }}\setup\Output
-          compression-level: 0 
+          compression-level: 0
+      
+      - name: Create Release Draft
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: CityEnergyAnalyst v${{ env.CEA_VERSION }}
+          tag_name: v${{ env.CEA_VERSION }}
+          files: ${{ github.workspace }}/setup/Output/*
+          fail_on_unmatched_files: true
 
   build_mac_dmg:
     runs-on: "macos-latest"
@@ -136,9 +147,9 @@ jobs:
         run: |
           cd gui
           mkdir -p ./dependencies/arm64
-          curl -Ls https://micro.mamba.pm/api/micromamba/osx-arm64/1.5.10 | tar -xvj -C ./dependencies/arm64 --strip-components=1 bin/micromamba
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-arm64/2.0.7 | tar -xvj -C ./dependencies/arm64 --strip-components=1 bin/micromamba
           mkdir -p ./dependencies/x64
-          curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/1.5.10 | tar -xvj -C ./dependencies/x64 --strip-components=1 bin/micromamba 
+          curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/2.0.7 | tar -xvj -C ./dependencies/x64 --strip-components=1 bin/micromamba 
 
       - name: Save Apple API Key secret to file
         env:

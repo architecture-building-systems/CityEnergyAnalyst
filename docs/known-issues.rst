@@ -23,7 +23,7 @@ Report a new issue
 
 For any problems please `post a new issue here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__.
 
-Please read the :doc:`how-to-report-bugs` guide and review the `open issues <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen+>`_
+Please read the :doc:`/tutorials/how-to-report-bugs` guide and review the `open issues <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen+>`_
 before posting.
 
 We have a turn-over time of a couple of days.

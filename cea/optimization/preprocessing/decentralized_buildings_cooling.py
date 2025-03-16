@@ -107,12 +107,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     ## Get hourly hot water supply condition of Solar Collectors (SC)
     # Flat Plate Solar Collectors
     SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
-    Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
+    Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['area_SC_m2'][0],
                                                                                       locator,
                                                                                       panel_type="FP")
     # Evacuated Tube Solar Collectors
     SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
-    Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
+    Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['area_SC_m2'][0],
                                                                                       locator,
                                                                                       panel_type="ET")
     ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
@@ -673,7 +673,7 @@ def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, absorp
 
 def get_SC_data(building_name, locator, panel_type):
     SC_data = pd.read_csv(locator.SC_results(building_name, panel_type),
-                          usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
+                          usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "area_SC_m2",
                                    "Eaux_SC_kWh"])
     q_sc_gen_Wh = (SC_data['Q_SC_gen_kWh'] * 1000).values
     q_sc_gen_Wh = np.where(q_sc_gen_Wh < 0.0, 0.0, q_sc_gen_Wh)

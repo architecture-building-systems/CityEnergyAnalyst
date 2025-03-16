@@ -40,7 +40,7 @@ average:
 These schedules are then passed on to the thermal loads module of CEA, where they represent either demands to be satisfied for the building
 in question or internal gains that need to be accounted for in the thermal model.
 
-.. image:: _static/deterministic_flow.png
+.. image:: /_static/deterministic_flow.png
     :align: center
 
 
@@ -83,7 +83,7 @@ were not present at the previous time step.
 
 The only parameter that needs to be estimated is μ.
 
-.. image:: _static/stochastic_flow.png
+.. image:: /_static/stochastic_flow.png
     :align: center
 
 .. [1] SIA. SIA Energy Efficiency Path. SIA Standard 2024, 2017.

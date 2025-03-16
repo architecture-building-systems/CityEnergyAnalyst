@@ -2,7 +2,7 @@
 Read and summarise CEA results over all scenarios in a project.
 
 """
-
+import itertools
 import os
 import pandas as pd
 import cea.config
@@ -45,6 +45,23 @@ season_hours = {
         'Spring': (31 + 30 + 31) * 24,  # Mar, Apr, May
         'Summer': (30 + 31 + 31) * 24,  # Jun, Jul, Aug
         'Autumn': (30 + 31 + 30) * 24   # Sep, Oct, Nov
+}
+
+# Define metrics for plot
+dict_plot_metrics_cea_feature = {
+    'architecture': 'architecture',
+    'embodied_emissions': 'emissions',
+    'operation_emissions': 'emissions',
+    'solar_irradiation': 'solar_irradiation',
+    'demand': 'demand',
+    'pv': 'pv',
+    'pvt_et': 'pvt',
+    'pvt_fp': 'pvt',
+    'sc_et': 'sc',
+    'sc_fp': 'sc',
+    'other_renewables': 'other_renewables',
+    'dh': 'dh',
+    'dc': 'dc',
 }
 
 
@@ -197,23 +214,45 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
-    if cea_feature == 'pvt':
-        for building in list_buildings:
-            path = locator.PVT_results(building)
-            list_paths.append(path)
-        list_appendix.append(cea_feature)
+    if cea_feature == 'pvt_et':
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+        list_panel_type = database_pv['code'].dropna().unique().tolist()
+        for panel_type, sc_panel_type in itertools.product(list_panel_type, ['ET']):
+            pv_paths = []
+            for building in list_buildings:
+                path = locator.PVT_results(building, panel_type, sc_panel_type)
+                pv_paths.append(path)
+            list_paths.append(pv_paths)
+            list_appendix.append(f"{cea_feature}_{panel_type}")
+
+    if cea_feature == 'pvt_fp':
+        database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+        list_panel_type = database_pv['code'].dropna().unique().tolist()
+        for panel_type, sc_panel_type in itertools.product(list_panel_type, ['FP']):
+            pv_paths = []
+            for building in list_buildings:
+                path = locator.PVT_results(building, panel_type, sc_panel_type)
+                pv_paths.append(path)
+            list_paths.append(pv_paths)
+            list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'sc_et':
-        for building in list_buildings:
-            path = locator.SC_results(building, 'ET')
-            list_paths.append(path)
-        list_appendix.append(cea_feature)
+        for sc_panel_type in ['ET']:
+            sc_paths = []
+            for building in list_buildings:
+                path = locator.SC_results(building, sc_panel_type)
+                sc_paths.append(path)
+            list_paths.append(sc_paths)
+            list_appendix.append(f"{cea_feature}_{sc_panel_type}")
 
     if cea_feature == 'sc_fp':
-        for building in list_buildings:
-            path = locator.SC_results(building, 'FP')
-            list_paths.append(path)
-        list_appendix.append(cea_feature)
+        for sc_panel_type in ['FP']:
+            sc_paths = []
+            for building in list_buildings:
+                path = locator.SC_results(building, sc_panel_type)
+                sc_paths.append(path)
+            list_paths.append(sc_paths)
+            list_appendix.append(f"{cea_feature}_{sc_panel_type}")
 
     if cea_feature == 'other_renewables':
         path_geothermal = locator.get_geothermal_potential()
@@ -274,12 +313,18 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
                'PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
-        "pvt": ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]',
-                'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]',
-                'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]',
-                'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]',
-                'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]',
-                'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]'],
+        "pvt_et": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
+                    'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
+                    'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
+                    'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]',
+                    'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]',
+                    'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]'],
+        "pvt_fp": ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]',
+                    'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]',
+                    'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]',
+                    'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]',
+                    'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]',
+                    'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]'],
         "sc_et": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
                   'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
                   'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
@@ -358,7 +403,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'irradiation_wall_east[kWh]': ['walls_east_kW'],
         'irradiation_window_west[kWh]': ['windows_west_kW'],
         'irradiation_wall_west[kWh]': ['walls_west_kW'],
-        'PV_installed_area_total[m2]': ['Area_PV_m2'],
+        'PV_installed_area_total[m2]': ['area_PV_m2'],
         'PV_electricity_total[kWh]': ['E_PV_gen_kWh'],
         'PV_installed_area_roof[m2]': ['PV_roofs_top_m2'],
         'PV_electricity_roof[kWh]': ['PV_roofs_top_E_kWh'],
@@ -370,25 +415,43 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'PV_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
         'PV_installed_area_west[m2]': ['PV_walls_west_m2'],
         'PV_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
-        'PVT_installed_area_total[m2]': ['Area_PVT_m2'],
-        'PVT_electricity_total[kWh]': ['E_PVT_gen_kWh'],
-        'PVT_heat_total[kWh]': ['Q_PVT_gen_kWh'],
-        'PVT_installed_area_roof[m2]': ['PVT_roofs_top_m2'],
-        'PVT_electricity_roof[kWh]': ['PVT_roofs_top_E_kWh'],
-        'PVT_heat_roof[kWh]': ['PVT_roofs_top_Q_kWh'],
-        'PVT_installed_area_north[m2]': ['PVT_walls_north_m2'],
-        'PVT_electricity_north[kWh]': ['PVT_walls_north_E_kWh'],
-        'PVT_heat_north[kWh]': ['PVT_walls_north_Q_kWh'],
-        'PVT_installed_area_south[m2]': ['PVT_walls_south_m2'],
-        'PVT_electricity_south[kWh]': ['PVT_walls_south_E_kWh'],
-        'PVT_heat_south[kWh]': ['PVT_walls_south_Q_kWh'],
-        'PVT_installed_area_east[m2]': ['PVT_walls_east_m2'],
-        'PVT_electricity_east[kWh]': ['PVT_walls_east_E_kWh'],
-        'PVT_heat_east[kWh]': ['PVT_walls_east_Q_kWh'],
-        'PVT_installed_area_west[m2]': ['PVT_walls_west_m2'],
-        'PVT_electricity_west[kWh]': ['PVT_walls_west_E_kWh'],
-        'PVT_heat_west[kWh]': ['PVT_walls_west_Q_kWh'],
-        'SC_ET_installed_area_total[m2]': ['Area_SC_m2'],
+        'PVT_ET_installed_area_total[m2]': ['area_PVT_m2'],
+        'PVT_ET_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'PVT_ET_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'PVT_ET_installed_area_roof[m2]': ['PVT_ET_roofs_top_m2'],
+        'PVT_ET_electricity_roof[kWh]': ['PVT_ET_roofs_top_E_kWh'],
+        'PVT_ET_heat_roof[kWh]': ['PVT_ET_roofs_top_Q_kWh'],
+        'PVT_ET_installed_area_north[m2]': ['PVT_ET_walls_north_m2'],
+        'PVT_ET_electricity_north[kWh]': ['PVT_ET_walls_north_E_kWh'],
+        'PVT_ET_heat_north[kWh]': ['PVT_ET_walls_north_Q_kWh'],
+        'PVT_ET_installed_area_south[m2]': ['PVT_ET_walls_south_m2'],
+        'PVT_ET_electricity_south[kWh]': ['PVT_ET_walls_south_E_kWh'],
+        'PVT_ET_heat_south[kWh]': ['PVT_ET_walls_south_Q_kWh'],
+        'PVT_ET_installed_area_east[m2]': ['PVT_ET_walls_east_m2'],
+        'PVT_ET_electricity_east[kWh]': ['PVT_ET_walls_east_E_kWh'],
+        'PVT_ET_heat_east[kWh]': ['PVT_ET_walls_east_Q_kWh'],
+        'PVT_ET_installed_area_west[m2]': ['PVT_ET_walls_west_m2'],
+        'PVT_ET_electricity_west[kWh]': ['PVT_ET_walls_west_E_kWh'],
+        'PVT_ET_heat_west[kWh]': ['PVT_ET_walls_west_Q_kWh'],
+        'PVT_FP_installed_area_total[m2]': ['area_PVT_m2'],
+        'PVT_FP_electricity_total[kWh]': ['E_PVT_gen_kWh'],
+        'PVT_FP_heat_total[kWh]': ['Q_PVT_gen_kWh'],
+        'PVT_FP_installed_area_roof[m2]': ['PVT_FP_roofs_top_m2'],
+        'PVT_FP_electricity_roof[kWh]': ['PVT_FP_roofs_top_E_kWh'],
+        'PVT_FP_heat_roof[kWh]': ['PVT_FP_roofs_top_Q_kWh'],
+        'PVT_FP_installed_area_north[m2]': ['PVT_FP_walls_north_m2'],
+        'PVT_FP_electricity_north[kWh]': ['PVT_FP_walls_north_E_kWh'],
+        'PVT_FP_heat_north[kWh]': ['PVT_FP_walls_north_Q_kWh'],
+        'PVT_FP_installed_area_south[m2]': ['PVT_FP_walls_south_m2'],
+        'PVT_FP_electricity_south[kWh]': ['PVT_FP_walls_south_E_kWh'],
+        'PVT_FP_heat_south[kWh]': ['PVT_FP_walls_south_Q_kWh'],
+        'PVT_FP_installed_area_east[m2]': ['PVT_FP_walls_east_m2'],
+        'PVT_FP_electricity_east[kWh]': ['PVT_FP_walls_east_E_kWh'],
+        'PVT_FP_heat_east[kWh]': ['PVT_FP_walls_east_Q_kWh'],
+        'PVT_FP_installed_area_west[m2]': ['PVT_FP_walls_west_m2'],
+        'PVT_FP_electricity_west[kWh]': ['PVT_FP_walls_west_E_kWh'],
+        'PVT_FP_heat_west[kWh]': ['PVT_FP_walls_west_Q_kWh'],
+        'SC_ET_installed_area_total[m2]': ['area_SC_m2'],
         'SC_ET_heat_total[kWh]': ['Q_SC_gen_kWh'],
         'SC_ET_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
         'SC_ET_heat_roof[kWh]': ['SC_ET_roofs_top_Q_kWh'],
@@ -400,7 +463,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'SC_ET_heat_east[kWh]': ['SC_ET_walls_east_Q_kWh'],
         'SC_ET_installed_area_west[m2]': ['SC_ET_walls_west_m2'],
         'SC_ET_heat_west[kWh]': ['SC_ET_walls_west_Q_kWh'],
-        'SC_FP_installed_area_total[m2]': ['Area_SC_m2'],
+        'SC_FP_installed_area_total[m2]': ['area_SC_m2'],
         'SC_FP_heat_total[kWh]': ['Q_FP_gen_kWh'],
         'SC_FP_installed_area_roof[m2]': ['SC_FP_roofs_top_m2'],
         'SC_FP_heat_roof[kWh]': ['SC_FP_roofs_top_Q_kWh'],
@@ -766,7 +829,7 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 # Execute aggregation
 
 
-def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date'):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -839,27 +902,33 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
-                hourly_annually_df.insert(0, 'name', list_buildings)
-                if not bool_use_acronym:
-                    hourly_annually_df.columns = map_metrics_and_cea_columns(
-                        hourly_annually_df.columns, direction="columns_to_metrics"
-                    )
-                hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
+                if len(hourly_annually_df) / len(hourly_annually_df['period'].unique().tolist()) == len(list_buildings):
+                    hourly_annually_df.insert(0, 'name', list_buildings)
+                    if not bool_use_acronym:
+                        hourly_annually_df.columns = map_metrics_and_cea_columns(
+                            hourly_annually_df.columns, direction="columns_to_metrics"
+                        )
+                    hourly_annually_results.append(hourly_annually_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure the buildings selected for (annually) summary have all been simulated: {appendix}.".format(appendix=appendix))
 
         if monthly_rows:
             monthly_df = pd.DataFrame(monthly_rows)
             if not monthly_df.empty:
-                monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-                # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                monthly_df = add_nominal_actual_and_coverage(monthly_df)
-                list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
-                list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
-                monthly_df.insert(0, 'name', list_buildings_series)
-                if not bool_use_acronym:
-                    monthly_df.columns = map_metrics_and_cea_columns(
-                        monthly_df.columns, direction="columns_to_metrics"
-                    )
-                monthly_results.append(monthly_df.reset_index(drop=True))
+                if len(monthly_df) / len(monthly_df['period'].unique().tolist()) == len(list_buildings):
+                    monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
+                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
+                    monthly_df = add_nominal_actual_and_coverage(monthly_df)
+                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                    list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
+                    monthly_df.insert(0, 'name', list_buildings_series)
+                    if not bool_use_acronym:
+                        monthly_df.columns = map_metrics_and_cea_columns(
+                            monthly_df.columns, direction="columns_to_metrics"
+                        )
+                    monthly_results.append(monthly_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure the buildings selected for (monthly) summary have been simulated: {appendix}.".format(appendix=appendix))
 
         if seasonally_rows:
             seasonally_df = pd.DataFrame(seasonally_rows)
@@ -885,19 +954,22 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
                 list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
-                seasonally_df.insert(0, 'name', list_buildings_series)
-                if not bool_use_acronym:
-                    seasonally_df.columns = map_metrics_and_cea_columns(
-                        seasonally_df.columns, direction="columns_to_metrics"
-                    )
-                seasonally_results.append(seasonally_df.reset_index(drop=True))
+                if len(seasonally_df) / len(seasonally_df['period'].unique().tolist()) == len(list_buildings):
+                    list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
+                    seasonally_df.insert(0, 'name', list_buildings_series)
+                    if not bool_use_acronym:
+                        seasonally_df.columns = map_metrics_and_cea_columns(
+                            seasonally_df.columns, direction="columns_to_metrics"
+                        )
+                    seasonally_results.append(seasonally_df.reset_index(drop=True))
+                else:
+                    print(f"Ensure the buildings selected for (seasonally) summary all have been simulated: {appendix}.".format(appendix=appendix))
 
         list_list_df = [hourly_annually_results, monthly_results, seasonally_results]
         list_time_resolution = ['annually', 'monthly', 'seasonally']
 
         # Write to disk
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1130,7 +1202,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics):
+def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics, plot=False):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -1141,9 +1213,16 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
     """
     # Map metrics to CEA features
     cea_feature = map_metrics_cea_features(list_metrics, direction="metrics_to_features")
+    if plot:
+        plot_cea_feature = dict_plot_metrics_cea_feature[cea_feature]
+    else:
+        plot_cea_feature = None
 
     # Create the target path of directory
-    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+    if plot_cea_feature is not None:
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+    else:
+        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1222,7 +1301,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False):
     """
     Writes aggregated results for each building to CSV files.
 
@@ -1238,8 +1317,16 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
     else:
         cea_feature = list_appendix
 
+    if plot:
+        plot_cea_feature = dict_plot_metrics_cea_feature[cea_feature]
+    else:
+        plot_cea_feature = None
+
     # Join the paths
-    target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+    if plot_cea_feature is not None:
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+    else:
+        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1248,17 +1335,34 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         list_df = list_list_df[m]
         appendix = list_appendix[0]
 
-        if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
-            # Create the .csv file path
-            path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
-        else:
-            if not bool_analytics:
-                time_resolution = list_time_resolution[m]
-                path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
-            else:
+        if plot_cea_feature is None:
+            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+                # Create the .csv file path
+                path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
                 os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                time_resolution = list_time_resolution[m]
-                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+            else:
+                if not bool_analytics:
+                    time_resolution = list_time_resolution[m]
+                    path_csv = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                else:
+                    os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
+                    time_resolution = list_time_resolution[m]
+                    path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
+        else:
+            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+                # Create the .csv file path
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, cea_feature, appendix)
+            else:
+                if not bool_analytics:
+                    time_resolution = list_time_resolution[m]
+                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                else:
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                    time_resolution = list_time_resolution[m]
+                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
 
         # Write to .csv files
         for df in list_df:
@@ -1478,41 +1582,11 @@ def filter_by_building_names(df_typology, list_buildings):
     return filtered_df
 
 
-def serial_filter_buildings(config, locator):
-
-    # Get the building info
-    df_typology = get_building_year_standard_main_use_type(locator)
-
-    # get the selecting criteria from config
-    list_buildings = config.result_summary.buildings
-    integer_year_start = config.result_summary.filter_buildings_by_year_start
-    integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_construction_type
-    list_main_use_type = config.result_summary.filter_buildings_by_use_type
-    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
-
-    # Initial filter to keep the selected buildings
-    df_typology = filter_by_building_names(df_typology, list_buildings)
-
-    # Further select by year
-    df_typology = filter_by_year_range(df_typology, integer_year_start, integer_year_end)
-
-    # Further filter by standard
-    df_typology = filter_by_standard(df_typology, list_standard)
-
-    # Further filter by main use type
-    df_typology = filter_by_main_use(df_typology, list_main_use_type)
-
-    # Further filter by main use type ratio
-    df_typology = filter_by_main_use_ratio(df_typology, ratio_main_use_type)
-
-    return df_typology
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym):
+def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
     list_pv_analytics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                          'PV_yield_carbon_intensity[tonCO2-eq/kWh]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
@@ -1696,7 +1770,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         list_list_time_period.append(list_time_period)
 
     # Write to disk - district
-    results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True)
+    results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True, plot=plot)
 
     if bool_aggregate_by_building:
         # For each building
@@ -1776,7 +1850,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_time_period = ['annually', 'monthly', 'seasonally']
 
             # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot)
 
 
 def calc_solar_energy_penetration_by_period(df, col):
@@ -1881,7 +1955,7 @@ def calc_self_consumption_by_period(df, col):
 
 def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period,
                                    bool_aggregate_by_building, bool_use_acronym,
-                                   bool_use_conditioned_floor_area_for_normalisation):
+                                   bool_use_conditioned_floor_area_for_normalisation, plot=False):
     """
     Normalizes UBEM analytics based on floor area and writes the results.
     """
@@ -1889,6 +1963,11 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     list_metrics = map_metrics_cea_features([cea_feature], direction="features_to_metrics")
     list_result_time_resolution = []
     list_result_buildings = []
+
+    if plot:
+        plot_cea_feature = dict_plot_metrics_cea_feature[cea_feature]
+    else:
+        plot_cea_feature = None
 
     # Mapping metric names for user-friendly output
     name_mapping = {
@@ -1902,7 +1981,10 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     }
 
     # Read and process the architecture DataFrame
-    df_building_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    if plot_cea_feature is not None:
+        df_building_path = locator.get_export_plots_selected_building_file()
+    else:
+        df_building_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     df_architecture = pd.read_csv(df_building_path)
 
     if bool_use_acronym:
@@ -1935,7 +2017,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         list_result_time_resolution.append(result_time_resolution)
 
         # Write to disk
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, [list_result_time_resolution], [list_time_period], [appendix], bool_analytics=True, plot=plot)
 
         # Aggregate by building
         if bool_aggregate_by_building:
@@ -1946,27 +2028,30 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                 df_buildings_path = locator.get_export_results_summary_cea_feature_time_resolution_buildings_file(
                     summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
                 )
-                df_buildings = pd.read_csv(df_buildings_path)
+                if os.path.exists(df_buildings_path):
+                    df_buildings = pd.read_csv(df_buildings_path)
 
-                if bool_use_acronym:
-                    df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
+                    if bool_use_acronym:
+                        df_buildings.columns = map_metrics_and_cea_columns(df_buildings.columns, direction="columns_to_metrics")
 
-                result_buildings = pd.merge(
-                    df_buildings,
-                    df_architecture[['name', area_column]],
-                    on='name', how='inner'
-                )
-                for col in list_metrics:
-                    if col in result_buildings.columns:
-                        result_buildings[col] = result_buildings[col] / result_buildings[area_column]
-                result_buildings.drop(columns=[area_column], inplace=True)
+                    result_buildings = pd.merge(
+                        df_buildings,
+                        df_architecture[['name', area_column]],
+                        on='name', how='inner'
+                    )
+                    for col in list_metrics:
+                        if col in result_buildings.columns:
+                            result_buildings[col] = result_buildings[col] / result_buildings[area_column]
+                    result_buildings.drop(columns=[area_column], inplace=True)
 
-                result_buildings = result_buildings.rename(columns=name_mapping)
+                    result_buildings = result_buildings.rename(columns=name_mapping)
 
-                list_result_buildings.append(result_buildings)
+                    list_result_buildings.append(result_buildings)
 
-                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
-                [list_result_buildings], [appendix], [time_period], bool_analytics=True)
+                    results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
+                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot=plot)
+                else:
+                    print("Aggregation by buildings was skipped as the required input file was not found: {appendix}.".format(appendix=appendix))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1975,7 +2060,8 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 list_metrics_building_energy_demand = ['grid_electricity_consumption[kWh]','enduse_electricity_demand[kWh]','enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]','enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]']
 list_metrics_solar_irradiation = ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]', 'irradiation_wall_north[kWh]', 'irradiation_window_south[kWh]', 'irradiation_wall_south[kWh]', 'irradiation_window_east[kWh]', 'irradiation_wall_east[kWh]', 'irradiation_window_west[kWh]', 'irradiation_wall_west[kWh]']
 list_metrics_photovoltaic_panels = ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]', 'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]', 'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]', 'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]']
-list_metrics_photovoltaic_thermal_panels = ['PVT_installed_area_total[m2]', 'PVT_electricity_total[kWh]', 'PVT_heat_total[kWh]', 'PVT_installed_area_roof[m2]', 'PVT_electricity_roof[kWh]', 'PVT_heat_roof[kWh]', 'PVT_installed_area_north[m2]', 'PVT_electricity_north[kWh]', 'PVT_heat_north[kWh]', 'PVT_installed_area_south[m2]', 'PVT_electricity_south[kWh]', 'PVT_heat_south[kWh]', 'PVT_installed_area_east[m2]', 'PVT_electricity_east[kWh]', 'PVT_heat_east[kWh]', 'PVT_installed_area_west[m2]', 'PVT_electricity_west[kWh]', 'PVT_heat_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_et = ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]', 'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]', 'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]', 'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]', 'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]', 'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_fp = ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]', 'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]', 'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]', 'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]', 'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]', 'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]']
 list_metrics_solar_collectors_et = ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]', 'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]', 'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]', 'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]', 'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]', 'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]']
 list_metrics_solar_collectors_fp = ['SC_FP_installed_area_total[m2]','SC_FP_heat_total[kWh]','SC_FP_installed_area_roof[m2]','SC_FP_heat_roof[kWh]','SC_FP_installed_area_north[m2]','SC_FP_heat_north[kWh]','SC_FP_installed_area_south[m2]','SC_FP_heat_south[kWh]','SC_FP_installed_area_east[m2]','SC_FP_heat_east[kWh]','SC_FP_installed_area_west[m2]','SC_FP_heat_west[kWh]']
 list_metrics_other_renewables = ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]']
@@ -1996,10 +2082,10 @@ def get_list_list_metrics_with_date(config):
     if config.result_summary.metrics_photovoltaic_panels:
         list_list_metrics_with_date.append(list_metrics_photovoltaic_panels)
     if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels)
-    if config.result_summary.metrics_solar_collectors_et:
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if config.result_summary.metrics_solar_collectors:
         list_list_metrics_with_date.append(list_metrics_solar_collectors_et)
-    if config.result_summary.metrics_solar_collectors_fp:
         list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_other_renewables:
         list_list_metrics_with_date.append(list_metrics_other_renewables)
@@ -2011,11 +2097,43 @@ def get_list_list_metrics_with_date(config):
     return list_list_metrics_with_date
 
 
+def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
+    list_list_metrics_with_date = []
+    if 'demand' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_building_energy_demand)
+    if 'solar_irradiation' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_solar_irradiation)
+    if 'pv' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_panels)
+    if 'pvt' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if 'sc' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_solar_collectors_et)
+        list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
+    if 'other_renewables' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_other_renewables)
+    if 'dh' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_district_heating)
+    if 'dc' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_district_cooling)
+
+    return list_list_metrics_with_date
+
+
 def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
-    if config.result_summary.metrics_embodied_emissions:
+    if config.result_summary.metrics_emissions:
         list_list_metrics_without_date.append(list_metrics_embodied_emissions)
-    if config.result_summary.metrics_operation_emissions:
+        list_list_metrics_without_date.append(list_metrics_operation_emissions)
+
+    return list_list_metrics_without_date
+
+
+def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
+    list_list_metrics_without_date = []
+    if 'emissions' in list_cea_feature_to_plot:
+        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
     return list_list_metrics_without_date
@@ -2030,13 +2148,135 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_photovoltaic_panels:
         list_list_metrics_building.append(list_metrics_photovoltaic_panels)
     if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels)
-    if config.result_summary.metrics_solar_collectors_et:
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if config.result_summary.metrics_solar_collectors:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
-    if config.result_summary.metrics_solar_collectors_fp:
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
 
     return list_list_metrics_building
+
+
+def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
+    list_list_metrics_building = []
+    if 'demand' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_building_energy_demand)
+    if 'solar_irradiation' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_solar_irradiation)
+    if 'pv' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_photovoltaic_panels)
+    if 'pvt' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_et)
+        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_fp)
+    if 'sc' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_solar_collectors_et)
+        list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+
+    return list_list_metrics_building
+
+
+def process_building_summary(config, locator,
+                             hour_start, hour_end, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type,
+                             bool_use_acronym, bool_aggregate_by_building,
+                             bool_include_advanced_analytics, list_selected_time_period,
+                             bool_use_conditioned_floor_area_for_normalisation,
+                             plot=False, list_cea_feature_to_plot=None):
+    """
+    Processes and exports building summary results, filtering buildings based on user-defined criteria.
+
+    Args:
+        config: Configuration object containing user inputs.
+        locator: Locator object to find file paths.
+        hour_start (int): Start hour for analysis.
+        hour_end (int): End hour for analysis.
+        list_buildings (list): List of building names to process.
+        integer_year_start (int): Minimum building construction year.
+        integer_year_end (int): Maximum building construction year.
+        list_standard (list): Building standard filter.
+        list_main_use_type (list): Main use type filter.
+        ratio_main_use_type (float): Ratio for main use type filtering.
+        bool_use_acronym (bool): Whether to use building acronyms.
+        bool_aggregate_by_building (bool): Whether to aggregate results by building.
+        bool_include_advanced_analytics (bool): Whether to include advanced analytics.
+        list_selected_time_period (list): List of time periods for aggregation.
+        bool_use_conditioned_floor_area_for_normalisation (bool): Normalize results using conditioned floor area.
+        plot (bool): Whether to plot the results.
+
+    Returns:
+        None
+    """
+
+    # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
+
+    # Step 1: Get Selected Metrics
+    if not plot:
+        list_list_metrics_with_date = get_list_list_metrics_with_date(config)
+        list_list_metrics_without_date = get_list_list_metrics_without_date(config)
+        list_list_metrics_building = get_list_list_metrics_building(config)
+
+    else:
+        if list_cea_feature_to_plot is not None:
+            list_list_metrics_with_date = get_list_list_metrics_with_date_plot(list_cea_feature_to_plot)
+            list_list_metrics_without_date = get_list_list_metrics_without_date_plot(list_cea_feature_to_plot)
+            list_list_metrics_building = get_list_list_metrics_building_plot(list_cea_feature_to_plot)
+        else:
+            raise ValueError("Specify the list of CEA features to plot.")
+
+    # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
+    if not plot:
+        folder_name = config.result_summary.folder_name_to_save_exported_results
+        summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+    else:
+        summary_folder = locator.get_export_plots_folder()
+    os.makedirs(summary_folder, exist_ok=True)
+
+    # Step 3: Get & Filter Buildings
+    df_buildings = get_building_year_standard_main_use_type(locator)
+    df_buildings = filter_by_building_names(df_buildings, list_buildings)
+    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
+    df_buildings = filter_by_standard(df_buildings, list_standard)
+    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
+    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
+    list_buildings = df_buildings['name'].to_list()
+
+    # Step 4: Get Building GFA & Merge with df_buildings
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
+    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
+
+    # Step 5: Save Building Summary to Disk
+    if not plot:
+        buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    else:
+        buildings_path = locator.get_export_plots_selected_building_file()
+    df_buildings.to_csv(buildings_path, index=False)
+
+    # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
+    for list_metrics in list_list_metrics_without_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot)
+
+    # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
+    for list_metrics in list_list_metrics_with_date:
+        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+
+    # Step 8: Aggregate by Building (if Enabled)
+    if bool_aggregate_by_building:
+        for list_metrics in list_list_metrics_building:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+
+    # Step 9: Include Advanced Analytics (if Enabled)
+    if bool_include_advanced_analytics:
+        if config.result_summary.metrics_building_energy_demand:
+            calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+        if config.result_summary.metrics_photovoltaic_panels:
+            calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -2058,60 +2298,26 @@ def main(config):
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Gather info from config file
+    list_buildings = config.result_summary.buildings
+    integer_year_start = config.result_summary.filter_buildings_by_year_start
+    integer_year_end = config.result_summary.filter_buildings_by_year_end
+    list_standard = config.result_summary.filter_buildings_by_construction_type
+    list_main_use_type = config.result_summary.filter_buildings_by_use_type
+    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_selected_time_period = config.result_summary.aggregate_by_time_period
-    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
     hour_start, hour_end = get_hours_start_end(config)
-    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
     bool_include_advanced_analytics = config.result_summary.include_advanced_analytics
+    bool_use_acronym = config.result_summary.use_cea_acronym_format_column_names
+    bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
-    # Get the selected metrics
-    list_list_metrics_with_date = get_list_list_metrics_with_date(config)
-    list_list_metrics_without_date = get_list_list_metrics_without_date(config)
-    list_list_metrics_building = get_list_list_metrics_building(config)
-
-    # Get the user-defined name of folder
-    folder_name = config.result_summary.folder_name_to_save_exported_results
-
-    # Create the folder to store all the .csv file if it doesn't exist
-    summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
-    os.makedirs(summary_folder, exist_ok=True)
-
-    # Get the list of selected buildings
-    df_buildings = serial_filter_buildings(config, locator)
-    list_buildings = df_buildings['name'].to_list()
-
-    # Get the GFA of the selected buildings
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
-    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
-
-    # Join the two Dataframes storing the architectural information of the selected buildings, and write to disk
-    buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
-    df_buildings.to_csv(buildings_path, index=False)
-
-    # Export results that have no date information, non-8760 hours, aggregate by building
-    for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None,  bool_analytics=False)   # Write to disk
-
-    # Export results that have date information, 8760 hours, aggregate by time period
-    for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False)   # Write to disk
-
-    # Aggregate by building
-    if bool_aggregate_by_building:
-        for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period)  # Write to disk
-
-    # Include analytics, aggregate by time period and by building
-    if bool_include_advanced_analytics:
-        calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation)
-        calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym)
+    # Process building summary
+    process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type,
+                             bool_use_acronym, bool_aggregate_by_building,
+                             bool_include_advanced_analytics, list_selected_time_period,
+                             bool_use_conditioned_floor_area_for_normalisation, plot=False)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
