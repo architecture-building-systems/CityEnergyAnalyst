@@ -15,8 +15,6 @@ import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional
 import warnings
 
-import pandas as pd
-
 import cea.inputlocator
 import cea.plugin
 from cea.utilities import unique
@@ -1217,10 +1215,7 @@ def parse_string_coordinate_list(string_tuples):
 
 
 class ColumnChoiceParameter(ChoiceParameter):
-    extension_readers = {
-        '.xlsx': pd.read_excel,
-        '.csv': pd.read_csv,
-    }
+    _supported_extensions = ['.csv']
 
     @staticmethod
     def _parse_kwargs(value: str) -> Dict[str, str]:
@@ -1247,9 +1242,7 @@ class ColumnChoiceParameter(ChoiceParameter):
     def initialize(self, parser):
         self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
         self.column_name = parser.get(self.section.name, f"{self.name}.column")
-        self.sheet_name = parser.get(self.section.name, f"{self.name}.sheet", fallback=None)
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None)
-)
+        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
 
     @property
     def _choices(self):
@@ -1263,19 +1256,12 @@ class ColumnChoiceParameter(ChoiceParameter):
                                  f'check value under {self.section.name}.{self.name} in default.config') from e
 
         ext = os.path.splitext(location)[1]
-        if ext not in self.extension_readers:
-            raise ValueError(f'Invalid file type {ext}, expected one of {self.extension_readers.keys()}')
-
-        reader = self.extension_readers[ext]
+        if ext not in self._supported_extensions:
+            raise ValueError(f'Invalid file type {ext}, expected one of {self._supported_extensions}')
 
         try:
-            if ext == '.xlsx':
-                if self.sheet_name is None:
-                    raise ValueError(f'Sheet name not specified for parameter {self.section.name}.{self.name}')
-
-                df = reader(location, sheet_name=self.sheet_name)
-            else:
-                df = reader(location)
+            import pandas as pd
+            df = pd.read_csv(location)
 
             if self.column_name not in df.columns:
                 raise ValueError(f'Column {self.column_name} not found in source file')
