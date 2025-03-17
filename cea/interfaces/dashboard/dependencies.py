@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 from dataclasses import dataclass
@@ -5,10 +7,12 @@ from dataclasses import dataclass
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
 from fastapi import Depends, Request
+from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
-from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
+from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project
+from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
@@ -83,13 +87,15 @@ async def get_cea_config(request: Request=None):
         cea_config = CEAServerConfig()
 
         return cea_config
-    
+
     raise ValueError("No config provided")
+
 
 @dataclass
 class ProjectInfo:
     project: str
     scenario: str
+
 
 async def get_project_info() -> ProjectInfo:
     """Get the current project and scenario in the config"""
@@ -98,6 +104,25 @@ async def get_project_info() -> ProjectInfo:
         project=config.project,
         scenario=config.scenario,
     )
+
+
+async def get_project_id(session: SessionDep, owner: CEAUser,
+                         project_root: CEAProjectRoot, project_info: CEAProjectInfo):
+    """Get the project ID from the project URI."""
+    project_uri = project_info.project
+    if project_root is not None:
+        project_uri = os.path.join(project_root, project_uri)
+
+    project = session.exec(select(Project).where(Project.uri == project_uri)).first()
+
+    # If project not found, create a new one
+    if not project:
+        project = Project(uri=project_uri, owner=owner)
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+
+    return project.id
 
 
 async def get_plot_cache():
@@ -139,7 +164,8 @@ def get_current_user():
 
 CEAUser = Annotated[str, Depends(get_current_user)]
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
-CEAProjectInfo = Annotated[dict, Depends(get_project_info)]
+CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
+CEAProjectID = Annotated[str, Depends(get_project_id)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
