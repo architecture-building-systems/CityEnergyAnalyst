@@ -1,6 +1,8 @@
 from functools import lru_cache
 from typing import Optional
+import warnings
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +18,21 @@ class Settings(BaseSettings):
     db_path: Optional[str] = None
     db_url: Optional[str] = None
 
-    config_path: Optional[str] = "~/cea.config"
     local: bool = True
     cors_origin: str = "*"
+
+    # Local only settings
+    config_path: Optional[str] = "~/cea.config"
+
+    @model_validator(mode='after')
+    def validate_non_local_mode(self):
+        if not self.local:
+            if self.cors_origin == "*":
+                warnings.warn("Security warning: Running with cors_origin='*'. "
+                              "This allows any origin to access your API and may pose security risks.")
+            if self.db_url is None:
+                raise ValueError("Database URL not set. Please set db_url in config file.")
+        return self
 
     def allow_path_transversal(self) -> bool:
         """
