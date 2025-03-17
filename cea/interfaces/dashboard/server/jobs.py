@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectInfo
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectInfo, CEAUser
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.server.streams import streams
@@ -24,9 +24,9 @@ class JobError(BaseModel):
 
 @router.get("/")
 @router.get("/list")
-async def get_jobs(session: SessionDep, project_info: CEAProjectInfo) -> List[JobInfo]:
+async def get_jobs(session: SessionDep, project_info: CEAProjectInfo, user: CEAUser) -> List[JobInfo]:
     """Get a list of jobs for the current project"""
-    project_id = get_project_id(session, project_info.project)
+    project_id = get_project_id(session, project_info.project, user)
 
     return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
@@ -41,12 +41,13 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_info: CEAProjectInfo) -> JobInfo:
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_info: CEAProjectInfo,
+                         user: CEAUser) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
     print(f"NewJob: args={args}")
 
-    project_id = get_project_id(session, project_info.project)
+    project_id = get_project_id(session, project_info.project, user)
 
     job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
     session.add(job)
@@ -216,13 +217,13 @@ async def kill_job(jobid, worker_processes):
     await worker_processes.delete(jobid)
 
 
-def get_project_id(session: SessionDep, project_uri: str):
+def get_project_id(session: SessionDep, project_uri: str, owner: str):
     """Get the project ID from the project URI."""
     project = session.exec(select(Project).where(Project.uri == project_uri)).first()
 
     # If project not found, create a new one
     if not project:
-        project = Project(name=project_uri, uri=project_uri)
+        project = Project(name=project_uri, uri=project_uri, owner=owner)
         session.add(project)
         session.commit()
         session.refresh(project)

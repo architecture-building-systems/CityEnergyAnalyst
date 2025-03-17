@@ -8,15 +8,17 @@ class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
     model_config = SettingsConfigDict(env_prefix='cea_')
 
+    # Settings from cea.config
     host: Optional[str] = None
     port: Optional[int] = None
-    cors_origin: str = "*"
     project_root: Optional[str] = None
 
     db_path: Optional[str] = None
     db_url: Optional[str] = None
 
     config_path: Optional[str] = "~/cea.config"
+    local: bool = True
+    cors_origin: str = "*"
 
     def allow_path_transversal(self) -> bool:
         """

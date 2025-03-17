@@ -22,7 +22,7 @@ import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo
+from cea.interfaces.dashboard.dependencies import CEAProjectInfo
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array

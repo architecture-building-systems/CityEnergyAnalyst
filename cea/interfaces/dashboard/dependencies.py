@@ -8,6 +8,7 @@ from fastapi import Depends, Request
 from typing_extensions import Annotated
 
 import cea.config
+from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
@@ -128,10 +129,19 @@ def get_project_root():
     return get_settings().project_root
 
 
+def get_current_user():
+    if get_settings().local:
+        return LOCAL_USER_ID
+
+    # TODO: Get user from request cookie
+    raise ValueError("Could not determine current user")
+
+
+CEAUser = Annotated[str, Depends(get_current_user)]
 CEAConfig = Annotated[dict, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[dict, Depends(get_project_info)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
-CEAServerUrl = Annotated[dict, Depends(get_server_url)]
-CEAProjectRoot = Annotated[dict, Depends(get_project_root)]
+CEAServerUrl = Annotated[str, Depends(get_server_url)]
+CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]

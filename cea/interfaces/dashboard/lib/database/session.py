@@ -2,10 +2,11 @@ import os
 import sys
 
 from fastapi import Depends
-from sqlmodel import create_engine, Session, SQLModel
+from sqlmodel import create_engine, Session, SQLModel, select
 
 from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.lib.database.models import User, LOCAL_USER_ID
 from cea.interfaces.dashboard.settings import get_settings
 
 
@@ -60,5 +61,14 @@ def get_session():
 def create_db_and_tables():
     print(f"Preparing database...")
     SQLModel.metadata.create_all(engine)
+
+    if get_settings().local:
+        print("Using local user...")
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.id == LOCAL_USER_ID))
+            if user is None:
+                print("Default local user not found. Creating...")
+                user = User(id=LOCAL_USER_ID)
+                session.add(user)
 
 SessionDep = Annotated[Session, Depends(get_session)]

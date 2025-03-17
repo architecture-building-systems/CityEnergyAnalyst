@@ -9,7 +9,7 @@ import cea.config
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo
+from cea.interfaces.dashboard.dependencies import CEAConfig
 
 router = APIRouter()
 
