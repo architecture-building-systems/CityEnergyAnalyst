@@ -9,10 +9,12 @@ from sqlmodel import Field, SQLModel, JSON, DateTime
 
 import cea.scripts
 
+LOCAL_USER_ID = "localuser"
 
 def get_current_time() -> AwareDatetime:
     """Get the current time in UTC"""
     return datetime.now(timezone.utc)
+
 
 class JobState(IntEnum):
     # Job states
@@ -24,19 +26,33 @@ class JobState(IntEnum):
     DELETED = 5
 
 
+class User(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+
+
+class Config(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+    config: dict = Field(sa_type=JSON, nullable=False)
+    user_id: str = Field(foreign_key="user.id")
+
+
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     uri: str
+    owner: str = Field(foreign_key="user.id")
 
 
 class JobInfo(SQLModel, table=True):
+    __tablename__ = "job"
+
     """Store all the information required to run a job"""
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     script: str = Field(index=True)
     parameters: dict = Field(sa_type=JSON)
     state: JobState = Field(default=JobState.PENDING, index=True)
     error: Optional[str] = None
-    created_time: AwareDatetime = Field(sa_type=DateTime(timezone=True), nullable=False, default_factory=get_current_time)
+    created_time: AwareDatetime = Field(sa_type=DateTime(timezone=True), nullable=False,
+                                        default_factory=get_current_time)
     start_time: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
     end_time: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
     stdout: Optional[str] = None
