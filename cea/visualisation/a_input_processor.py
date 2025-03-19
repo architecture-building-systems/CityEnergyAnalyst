@@ -1,5 +1,6 @@
 """
-InputProcessor – Determines the correct CSV file
+InputProcessor – Determines the correct CSV file in the summary folder and triggers the summary feature to generate this file.
+Ensure this file exists or break the script.
 
 """
 
