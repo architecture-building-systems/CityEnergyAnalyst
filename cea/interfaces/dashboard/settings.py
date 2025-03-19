@@ -17,8 +17,10 @@ class Settings(BaseSettings):
 
     db_path: Optional[str] = None
     db_url: Optional[str] = None
+    user_table_name: str = "users"
+    user_table_schema: str = "public"
 
-    local: bool = True
+    local: bool = Field(default=True, description="Run in local mode. Writes to local file")
     cors_origin: str = "*"
 
     # Local only settings

@@ -8,8 +8,12 @@ from pydantic import AwareDatetime, computed_field
 from sqlmodel import Field, SQLModel, JSON, DateTime
 
 import cea.scripts
+from cea.interfaces.dashboard.settings import get_settings
 
 LOCAL_USER_ID = "localuser"
+user_table_name = get_settings().user_table_name
+user_table_schema = get_settings().user_table_schema
+
 
 def get_current_time() -> AwareDatetime:
     """Get the current time in UTC"""
@@ -27,19 +31,22 @@ class JobState(IntEnum):
 
 
 class User(SQLModel, table=True):
+    __tablename__ = user_table_name
+    __table_args__ = {'schema': user_table_schema}
+
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
 
 
 class Config(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     config: dict = Field(sa_type=JSON, nullable=False)
-    user_id: str = Field(foreign_key="user.id")
+    user_id: str = Field(foreign_key=f"{user_table_schema}.{user_table_name}.id")
 
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     uri: str
-    owner: str = Field(foreign_key="user.id")
+    owner: str = Field(foreign_key=f"{user_table_schema}.{user_table_name}.id")
 
 
 class JobInfo(SQLModel, table=True):
