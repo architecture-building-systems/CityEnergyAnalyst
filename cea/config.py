@@ -70,7 +70,7 @@ class Configuration:
 
     def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter in the general section"""
-        if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
+        if key in {'default_config', 'user_config', 'sections', 'restricted_to'} or key.startswith('_'):
             # make sure the __init__ method doesn't trigger this
             return super().__setattr__(key, value)
 
