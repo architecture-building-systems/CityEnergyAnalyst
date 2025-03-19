@@ -62,7 +62,6 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
     try:
         job.state = JobState.STARTED
         job.start_time = get_current_time()
-        session.add(job)
         session.commit()
         session.refresh(job)
 
@@ -85,7 +84,6 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
         job.error = None
         job.end_time = get_current_time()
         job.stdout = "".join(streams.get(job_id, []))
-        session.add(job)
         session.commit()
         session.refresh(job)
 
@@ -114,7 +112,6 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
         job.end_time = get_current_time()
         job.stdout = "".join(streams.get(job_id, []))
         job.stderr = stacktrace
-        session.add(job)
         session.commit()
         session.refresh(job)
 
@@ -153,7 +150,6 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
         job.end_time = get_current_time()
-        session.add(job)
         session.commit()
         session.refresh(job)
 
