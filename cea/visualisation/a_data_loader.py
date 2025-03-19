@@ -8,6 +8,7 @@ import cea.inputlocator
 import os
 import cea.config
 from cea.import_export.result_summary import process_building_summary
+import pandas as pd
 
 
 
@@ -21,6 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# Trigger the summary feature and point to the csv results file
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
@@ -115,10 +117,6 @@ class csv_pointer:
                 summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
             )
 
-    def get_selected_building_csv_path(self):
-        """Returns the path for the selected building CSV file."""
-        return self.locator.get_export_plots_selected_building_file()
-
 
 # Main function
 def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end):
@@ -144,9 +142,25 @@ def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_en
     # Delete the existing file if it exists
     if os.path.exists(summary_results_csv_path):
         os.remove(summary_results_csv_path)
-        print(f"Deleted existing summary file: {summary_results_csv_path}")
 
     # Execute the summary process
     plot_instance.execute_summary()
-    print(f"Summary execution completed. Results saved at: {summary_results_csv_path}")
+
+    # Load the summary results data
+    try:
+        df_summary_data = pd.read_csv(summary_results_csv_path)
+    except Exception as e:
+        print(f"Error loading csv file: {e}")
+        df_summary_data = None
+
+    # Load the architecture data
+    try:
+        df_architecture_data = pd.read_csv(plot_instance.locator.get_export_plots_selected_building_file())
+    except Exception as e:
+        print(f"Error loading csv file: {e}")
+        df_architecture_data = None
+
+    return df_summary_data, df_architecture_data
+
+
 
