@@ -48,7 +48,7 @@ DICT_EXAMPLE = {'plot_type': 'bar',
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, locator, config_config, scenario, cea_feature, hour_start, hour_end):
+    def __init__(self, locator, config_config, scenario, plot_cea_feature, hour_start, hour_end):
         """
         :param user_input: Dictionary containing user selections.
 
@@ -56,7 +56,7 @@ class csv_pointer:
         self.config = config_config
         self.scenario = scenario
         self.locator = cea.inputlocator.InputLocator(scenario=scenario)
-        self.cea_feature = cea_feature
+        self.plot_cea_feature = plot_cea_feature
         self.hour_start = hour_start
         self.hour_end = hour_end
         self.buildings = config_config.buildings
@@ -102,7 +102,7 @@ class csv_pointer:
             bool_use_conditioned_floor_area_for_normalisation = True
         else:
             bool_use_conditioned_floor_area_for_normalisation = False
-        list_cea_feature_to_plot = [self.cea_feature]
+        list_cea_feature_to_plot = [self.plot_cea_feature]
 
         # Execute the summary feature
         process_building_summary(config, locator,
@@ -116,15 +116,14 @@ class csv_pointer:
         #
 
     def get_summary_results_csv_path(self):
-        # Define key order to generate passkey
-        self.required_keys = ["key1", "key2", "key3"]  # Adjust based on actual keys
+        locator = self.locator
+        plot_cea_feature = self.plot_cea_feature
+        appendix = self.appendix
 
-        # Predefined passkey-to-file mapping
-        self.csv_mapping = {
-            ("value_a", "value_c", "value_a"): "file1.csv",
-            ("value_b", "value_c", "value_a"): "file2.csv",
-            ("value_a", "value_d", "value_b"): "file3.csv",
-        }
+
+        locator.get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
+                                                                      time_period, hour_start, hour_end)
+
 
     def get_csv_path(self):
         """Returns the full path of the matched CSV file if it exists."""
