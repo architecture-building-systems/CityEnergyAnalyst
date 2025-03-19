@@ -7,8 +7,8 @@ Ensure this file exists or break the script.
 import cea.inputlocator
 import os
 import cea.config
-import time
-import geopandas as gpd
+from cea.import_export.result_summary import process_building_summary
+
 
 
 __author__ = "Zhongming Shi"
@@ -19,29 +19,6 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-from cea.import_export.result_summary import process_building_summary
-
-DICT_EXAMPLE = {'plot_type': 'bar',
-                'cea_feature': 'demand',
-                'buildings': ['B0001', 'B0002', 'B0003'],
-                'y-metric-to-plot': 'end_use',
-                'y-metric-unit': 'MWh',
-                'y-normalised-by': 'gross_floor_area',
-                'y-min': '',
-                'y-max': '',
-                'y-step': '',
-                'y-label': '',
-                'x-to-plot': 'by_building',
-                'x-faceted': 'no_facet',
-                'x-label': '',
-                'transposed': False,
-                'filter-buildings-by-year-start': 1900,
-                'filter-buildings-by-year-end': 2050,
-                'filter-buildings-by-construction-type': [],
-                'filter-buildings-by-use-type': [],
-                'min-ratio-as-main-use': 0,
-}
 
 
 class csv_pointer:
