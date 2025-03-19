@@ -40,8 +40,22 @@ Import & Export:
 
 Solar Radiation Analysis:
   - name: radiation
-    label: Building Solar Radiation
+    label: Building Solar Radiation using DAYSIM
     description: This Feature uses DAYSIM to perform solar radiation analysis.
+    interfaces: [cli, dashboard]
+    module: cea.resources.radiation.main
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation]
+    input-files:
+      - [get_building_architecture]
+      - [get_surroundings_geometry]
+      - [get_zone_geometry]
+      - [get_terrain]
+      - [get_weather_file]
+
+  - name: radiation-usr
+    label: Building Solar Radiation using Tongji's USR model
+    description: This Feature uses Tongji's USR (urban solar radiation) model to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',

@@ -115,7 +115,7 @@ class csv_pointer:
                              plot=True, list_cea_feature_to_plot=list_cea_feature_to_plot)
         #
 
-    def csv_mapping(self):
+    def get_summary_results_csv_path(self):
         # Define key order to generate passkey
         self.required_keys = ["key1", "key2", "key3"]  # Adjust based on actual keys
 

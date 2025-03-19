@@ -1353,7 +1353,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
             if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
                 # Create the .csv file path
                 os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, cea_feature, appendix)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
