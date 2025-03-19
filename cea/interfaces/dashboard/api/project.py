@@ -569,6 +569,7 @@ async def delete(project_info: CEAProjectInfo, scenario: str):
     """Delete scenario from project"""
     scenario_path = secure_path(os.path.join(project_info.project, scenario))
     try:
+        # TODO: Check for any current open scenarios or jobs
         shutil.rmtree(scenario_path)
         return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
     except OSError:
