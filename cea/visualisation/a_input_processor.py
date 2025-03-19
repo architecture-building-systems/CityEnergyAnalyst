@@ -20,6 +20,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.import_export.result_summary import process_building_summary
+
 DICT_EXAMPLE = {'plot_type': 'bar',
                 'cea_feature': 'demand',
                 'buildings': ['B0001', 'B0002', 'B0003'],
@@ -46,17 +48,72 @@ DICT_EXAMPLE = {'plot_type': 'bar',
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, config_config, scenario, cea_feature):
+    def __init__(self, locator, config_config, scenario, cea_feature, hour_start, hour_end):
         """
         :param user_input: Dictionary containing user selections.
 
         """
         self.config = config_config
         self.scenario = scenario
+        self.locator = cea.inputlocator.InputLocator(scenario=scenario)
         self.cea_feature = cea_feature
+        self.hour_start = hour_start
+        self.hour_end = hour_end
         self.buildings = config_config.buildings
-        self.y_metric_to_plot = config_config.y_metric_to_plot
-        
+        self.y_metric_to_plot = config_config.Y_metric_to_plot
+        self.normalised_by = config_config.normalised_by
+        self.x_to_plot = config_config.X_to_plot
+        self.x_faceted = config_config.X_faceted
+        self.integer_year_start = config_config.filter_buildings_by_year_start
+        self.integer_year_end = config_config.filter_buildings_by_year_end
+        self.list_construction_type = config_config.filter_buildings_by_construction_type
+        self.list_use_type = config_config.filter_buildings_by_use_type
+        self.min_ratio_as_main_use = config_config.min_ratio_as_main_use
+
+    def execute_summary(self):
+        # Prepare the arguments for the summary feature
+        config = self.config
+        locator = self.locator
+        hour_start = self.hour_start
+        hour_end = self.hour_end
+        list_buildings = self.buildings
+        integer_year_start = self.integer_year_start
+        integer_year_end = self.integer_year_end
+        list_standard = self.list_construction_type
+        list_main_use_type = self.list_use_type
+        ratio_main_use_type = self.min_ratio_as_main_use
+        bool_use_acronym = True
+        x_to_plot = self.x_to_plot
+        x_faceted = self.x_faceted
+        if x_to_plot == "by_building":
+            bool_aggregate_by_building = True
+            if x_faceted == "by_months":
+                list_selected_time_period = ["monthly"]
+            elif x_faceted == "by_seasons":
+                list_selected_time_period = ["seasonally"]
+            else:
+                list_selected_time_period = []
+        else:
+            bool_aggregate_by_building = False
+            list_selected_time_period = []
+        bool_include_advanced_analytics = True
+        normalised_by = self.normalised_by
+        if normalised_by == "conditioned_floor_area":
+            bool_use_conditioned_floor_area_for_normalisation = True
+        else:
+            bool_use_conditioned_floor_area_for_normalisation = False
+        list_cea_feature_to_plot = [self.cea_feature]
+
+        # Execute the summary feature
+        process_building_summary(config, locator,
+                             hour_start, hour_end, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type,
+                             bool_use_acronym, bool_aggregate_by_building,
+                             bool_include_advanced_analytics, list_selected_time_period,
+                             bool_use_conditioned_floor_area_for_normalisation,
+                             plot=True, list_cea_feature_to_plot=list_cea_feature_to_plot)
+        #
 
     def csv_mapping(self):
         # Define key order to generate passkey
