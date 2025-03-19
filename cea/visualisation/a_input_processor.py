@@ -49,8 +49,11 @@ class csv_pointer:
 
     def __init__(self, config_config, scenario, plot_cea_feature, hour_start, hour_end):
         """
-        :param user_input: Dictionary containing user selections.
-
+        :param config_config: User-defined configuration settings.
+        :param scenario: CEA scenario path.
+        :param plot_cea_feature: The feature to plot.
+        :param hour_start: Start hour for analysis.
+        :param hour_end: End hour for analysis.
         """
         self.config = config_config
         self.scenario = scenario
@@ -68,107 +71,76 @@ class csv_pointer:
         self.list_construction_type = config_config.filter_buildings_by_construction_type
         self.list_use_type = config_config.filter_buildings_by_use_type
         self.min_ratio_as_main_use = config_config.min_ratio_as_main_use
+        self.appendix = plot_cea_feature if plot_cea_feature == "demand" else "default"
 
-        if plot_cea_feature == "demand":
-            self.appendix = plot_cea_feature
+        self.bool_aggregate_by_building = self.x_to_plot == "by_building"
 
-        if self.x_to_plot == "by_building":
-            bool_aggregate_by_building = True
-            if self.x_faceted == "by_months":
-                time_period = ["monthly"]
-            elif self.x_faceted == "by_seasons":
-                time_period = ["seasonally"]
-            else:
-                time_period = []
-        else:
-            bool_aggregate_by_building = False
-            if self.x_to_plot == "by_district_and_time_period_hourly":
-                time_period = ['hourly']
-            elif self.x_to_plot == "by_district_and_time_period_daily":
-                time_period = ['daily']
-            elif self.x_to_plot == "by_district_and_time_period_monthly":
-                time_period = ['monthly']
-            elif self.x_to_plot == "by_district_and_time_period_seasonally":
-                time_period = ['seasonally']
-            elif self.x_to_plot == "by_district_and_time_period_annually_or_selected":
-                time_period = ['annually']
-            else:
-                time_period = []
-        self.bool_aggregate_by_building = bool_aggregate_by_building
-        self.time_period = time_period
+        time_period_map = {
+            "by_months": ["monthly"],
+            "by_seasons": ["seasonally"],
+            "by_district_and_time_period_hourly": ["hourly"],
+            "by_district_and_time_period_daily": ["daily"],
+            "by_district_and_time_period_monthly": ["monthly"],
+            "by_district_and_time_period_seasonally": ["seasonally"],
+            "by_district_and_time_period_annually_or_selected": ["annually"]
+        }
+        self.time_period = time_period_map.get(self.x_faceted if self.bool_aggregate_by_building else self.x_to_plot, [])
 
     def execute_summary(self):
-        # Prepare the arguments for the summary feature
-        config = self.config
-        locator = self.locator
-        hour_start = self.hour_start
-        hour_end = self.hour_end
-        list_buildings = self.buildings
-        integer_year_start = self.integer_year_start
-        integer_year_end = self.integer_year_end
-        list_standard = self.list_construction_type
-        list_main_use_type = self.list_use_type
-        ratio_main_use_type = self.min_ratio_as_main_use
+        """Executes the summary feature to generate the required CSV output."""
         bool_use_acronym = True
-        bool_aggregate_by_building = self.bool_aggregate_by_building
-        list_selected_time_period = [self.time_period]
-
         bool_include_advanced_analytics = True
-        normalised_by = self.normalised_by
-        if normalised_by == "conditioned_floor_area":
-            bool_use_conditioned_floor_area_for_normalisation = True
-        else:
-            bool_use_conditioned_floor_area_for_normalisation = False
-        list_cea_feature_to_plot = [self.plot_cea_feature]
+        bool_use_conditioned_floor_area_for_normalisation = self.normalised_by == "conditioned_floor_area"
 
-        # Execute the summary feature
-        process_building_summary(config, locator,
-                             hour_start, hour_end, list_buildings,
-                             integer_year_start, integer_year_end, list_standard,
-                             list_main_use_type, ratio_main_use_type,
-                             bool_use_acronym, bool_aggregate_by_building,
-                             bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation,
-                             plot=True, list_cea_feature_to_plot=list_cea_feature_to_plot)
+        process_building_summary(
+            self.config, self.locator,
+            self.hour_start, self.hour_end, self.buildings,
+            self.integer_year_start, self.integer_year_end, self.list_construction_type,
+            self.list_use_type, self.min_ratio_as_main_use,
+            bool_use_acronym, self.bool_aggregate_by_building,
+            bool_include_advanced_analytics, [self.time_period],
+            bool_use_conditioned_floor_area_for_normalisation,
+            plot=True, list_cea_feature_to_plot=[self.plot_cea_feature]
+        )
 
     def get_summary_results_csv_path(self):
-        locator = self.locator
-        plot_cea_feature = self.plot_cea_feature
-        appendix = self.appendix
-        bool_aggregate_by_building = self.bool_aggregate_by_building
-        time_period = self.time_period
-        hour_start = self.hour_start
-        hour_end = self.hour_end
-        y_metric_to_plot = self.y_metric_to_plot
-        summary_folder = locator.get_export_plots_folder()
-
+        """Returns the correct path for the summary results CSV file based on user inputs."""
+        summary_folder = self.locator.get_export_plots_folder()
         list_metrics_non_analytics = ['end_use', 'final_use']
         list_metrics_analytics = ['energy_use_intensity']
 
-        # X-axis: by_building
-        if bool_aggregate_by_building:
-            if y_metric_to_plot in list_metrics_non_analytics:
-                summary_results_csv_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_period, hour_start, hour_end)
-            elif y_metric_to_plot in list_metrics_analytics:
-                summary_results_csv_path = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_period, hour_start,hour_end)
-            else:
-                raise ValueError(f"Invalid y-metric-to-plot: {y_metric_to_plot}")
-
-        # X-axis: by_district
+        if self.y_metric_to_plot in list_metrics_non_analytics:
+            return self._get_non_analytics_summary_path(summary_folder)
+        elif self.y_metric_to_plot in list_metrics_analytics:
+            return self._get_analytics_summary_path(summary_folder)
         else:
-            if y_metric_to_plot in list_metrics_non_analytics:
-                summary_results_csv_path = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, plot_cea_feature, appendix, time_period, hour_start, hour_end)
-            elif y_metric_to_plot in list_metrics_analytics:
-                summary_results_csv_path = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, plot_cea_feature, appendix, time_period, hour_start, hour_end)
-            else:
-                raise ValueError(f"Invalid y-metric-to-plot: {y_metric_to_plot}")
+            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}")
 
-        return summary_results_csv_path
+    def _get_non_analytics_summary_path(self, summary_folder):
+        """Helper function to retrieve the non-analytics summary CSV path."""
+        if self.bool_aggregate_by_building:
+            return self.locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+                self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+            )
+        else:
+            return self.locator.get_export_results_summary_cea_feature_time_resolution_file(
+                summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+            )
+
+    def _get_analytics_summary_path(self, summary_folder):
+        """Helper function to retrieve the analytics summary CSV path."""
+        if self.bool_aggregate_by_building:
+            return self.locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(
+                self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+            )
+        else:
+            return self.locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(
+                summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+            )
 
     def get_selected_building_csv_path(self):
-        locator = self.locator
-        selected_building_csv_path = locator.get_export_plots_selected_building_file()
-        return selected_building_csv_path
+        """Returns the path for the selected building CSV file."""
+        return self.locator.get_export_plots_selected_building_file()
 
 
 # Main function
