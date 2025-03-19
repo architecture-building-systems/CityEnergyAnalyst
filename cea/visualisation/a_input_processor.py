@@ -44,11 +44,10 @@ DICT_EXAMPLE = {'plot_type': 'bar',
 }
 
 
-
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, locator, config_config, scenario, plot_cea_feature, hour_start, hour_end):
+    def __init__(self, config_config, scenario, plot_cea_feature, hour_start, hour_end):
         """
         :param user_input: Dictionary containing user selections.
 
@@ -70,6 +69,34 @@ class csv_pointer:
         self.list_use_type = config_config.filter_buildings_by_use_type
         self.min_ratio_as_main_use = config_config.min_ratio_as_main_use
 
+        if plot_cea_feature == "demand":
+            self.appendix = plot_cea_feature
+
+        if self.x_to_plot == "by_building":
+            bool_aggregate_by_building = True
+            if self.x_faceted == "by_months":
+                time_period = ["monthly"]
+            elif self.x_faceted == "by_seasons":
+                time_period = ["seasonally"]
+            else:
+                time_period = []
+        else:
+            bool_aggregate_by_building = False
+            if self.x_to_plot == "by_district_and_time_period_hourly":
+                time_period = ['hourly']
+            elif self.x_to_plot == "by_district_and_time_period_daily":
+                time_period = ['daily']
+            elif self.x_to_plot == "by_district_and_time_period_monthly":
+                time_period = ['monthly']
+            elif self.x_to_plot == "by_district_and_time_period_seasonally":
+                time_period = ['seasonally']
+            elif self.x_to_plot == "by_district_and_time_period_annually_or_selected":
+                time_period = ['annually']
+            else:
+                time_period = []
+        self.bool_aggregate_by_building = bool_aggregate_by_building
+        self.time_period = time_period
+
     def execute_summary(self):
         # Prepare the arguments for the summary feature
         config = self.config
@@ -83,19 +110,9 @@ class csv_pointer:
         list_main_use_type = self.list_use_type
         ratio_main_use_type = self.min_ratio_as_main_use
         bool_use_acronym = True
-        x_to_plot = self.x_to_plot
-        x_faceted = self.x_faceted
-        if x_to_plot == "by_building":
-            bool_aggregate_by_building = True
-            if x_faceted == "by_months":
-                list_selected_time_period = ["monthly"]
-            elif x_faceted == "by_seasons":
-                list_selected_time_period = ["seasonally"]
-            else:
-                list_selected_time_period = []
-        else:
-            bool_aggregate_by_building = False
-            list_selected_time_period = []
+        bool_aggregate_by_building = self.bool_aggregate_by_building
+        list_selected_time_period = [self.time_period]
+
         bool_include_advanced_analytics = True
         normalised_by = self.normalised_by
         if normalised_by == "conditioned_floor_area":
@@ -113,54 +130,74 @@ class csv_pointer:
                              bool_include_advanced_analytics, list_selected_time_period,
                              bool_use_conditioned_floor_area_for_normalisation,
                              plot=True, list_cea_feature_to_plot=list_cea_feature_to_plot)
-        #
 
     def get_summary_results_csv_path(self):
         locator = self.locator
         plot_cea_feature = self.plot_cea_feature
         appendix = self.appendix
+        bool_aggregate_by_building = self.bool_aggregate_by_building
+        time_period = self.time_period
+        hour_start = self.hour_start
+        hour_end = self.hour_end
+        y_metric_to_plot = self.y_metric_to_plot
+        summary_folder = locator.get_export_plots_folder()
+
+        list_metrics_non_analytics = ['end_use', 'final_use']
+        list_metrics_analytics = ['energy_use_intensity']
+
+        # X-axis: by_building
+        if bool_aggregate_by_building:
+            if y_metric_to_plot in list_metrics_non_analytics:
+                summary_results_csv_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_period, hour_start, hour_end)
+            elif y_metric_to_plot in list_metrics_analytics:
+                summary_results_csv_path = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_period, hour_start,hour_end)
+            else:
+                raise ValueError(f"Invalid y-metric-to-plot: {y_metric_to_plot}")
+
+        # X-axis: by_district
+        else:
+            if y_metric_to_plot in list_metrics_non_analytics:
+                summary_results_csv_path = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, plot_cea_feature, appendix, time_period, hour_start, hour_end)
+            elif y_metric_to_plot in list_metrics_analytics:
+                summary_results_csv_path = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, plot_cea_feature, appendix, time_period, hour_start, hour_end)
+            else:
+                raise ValueError(f"Invalid y-metric-to-plot: {y_metric_to_plot}")
+
+        return summary_results_csv_path
+
+    def get_selected_building_csv_path(self):
+        locator = self.locator
+        selected_building_csv_path = locator.get_export_plots_selected_building_file()
+        return selected_building_csv_path
 
 
-        locator.get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
-                                                                      time_period, hour_start, hour_end)
+# Main function
+def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end):
+    """
+    Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
+    Args:
+        config: Configuration object containing user inputs.
+        scenario: Path to the scenario folder.
+        plot_cea_feature: The plot_cea_feature to process.
+        hour_start (int): Start hour for analysis.
+        hour_end (int): End hour for analysis.
 
-    def get_csv_path(self):
-        """Returns the full path of the matched CSV file if it exists."""
+    Returns:
+        None
+    """
+    # Instantiate the csv_pointer class
+    plot_instance = csv_pointer(config, scenario, plot_cea_feature, hour_start, hour_end)
 
-        # Generate passkey tuple from user input
-        passkey = tuple(self.user_input_dict.get(key, "default") for key in self.required_keys)
+    # Get the summary results CSV path
+    summary_results_csv_path = plot_instance.get_summary_results_csv_path()
 
-        # Lookup file based on passkey
-        filename = self.csv_mapping.get(passkey)
+    # Delete the existing file if it exists
+    if os.path.exists(summary_results_csv_path):
+        os.remove(summary_results_csv_path)
+        print(f"Deleted existing summary file: {summary_results_csv_path}")
 
-        if filename:
-            csv_path = os.path.join(self.base_dir, filename)
-            return csv_path if os.path.exists(csv_path) else None  # Return path only if file exists
+    # Execute the summary process
+    plot_instance.execute_summary()
+    print(f"Summary execution completed. Results saved at: {summary_results_csv_path}")
 
-        return None  # No match found
-
-# # ✅ **Example Usage**
-# user_input = {
-#     "key1": "value_a",
-#     "key2": "value_c",
-#     "key3": "value_a",
-# }
-#
-# selector = CSVSelector(user_input)
-# csv_path = selector.get_csv_path()
-#
-# print(csv_path)  # Expected: "data/results/file1.csv" (if it exists)
-
-def main():
-    import cea.config
-    import cea.plots.cache
-    config = cea.config.Configuration()
-    cache = cea.plots.cache.NullPlotCache()
-    EnergyBalancePlot(config.project, {'building': config.plots.building,
-                                       'scenario-name': config.scenario_name},
-                      cache).plot(auto_open=True)
-
-
-if __name__ == '__main__':
-    main()

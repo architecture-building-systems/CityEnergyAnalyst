@@ -263,7 +263,7 @@ class InputLocator(object):
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature):
-        """scenario/export/plots/{plot_cea_feature}/{cea_feature}/analytics"""
+        """scenario/export/plots/{plot_cea_feature}/analytics"""
         return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature), 'analytics')
 
     def get_export_plots_cea_feature_analytics_time_resolution_buildings_file(self, plot_cea_feature,
