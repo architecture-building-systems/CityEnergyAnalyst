@@ -20,11 +20,10 @@ from typing_extensions import Annotated
 import cea.api
 import cea.config
 import cea.inputlocator
-from cea.databases import get_regions, databases_folder_path
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -192,11 +191,11 @@ async def get_project_choices(project_root: CEAProjectRoot):
     }
 
 @router.get('/config')
-async def config_project_info(config: CEAConfig) -> ConfigProjectInfo:
+async def config_project_info(project_info: CEAProjectInfo) -> ConfigProjectInfo:
     """Return the current project and scenario in the config"""
     return ConfigProjectInfo(
-        project=config.project,
-        scenario=config.scenario_name,
+        project=project_info.project,
+        scenario=project_info.scenario,
     )
 
 
@@ -226,7 +225,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
     project_info = {
         'name': os.path.basename(config.project),
         'project': config.project,
-        'scenarios_list': list_scenario_names_for_project(config)
+        'scenarios_list': cea.config.get_scenarios_list(config.project)
     }
 
     return ProjectInfo(**project_info)
@@ -279,7 +278,7 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
-            await config.save()
+            config.save()
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
             raise HTTPException(
@@ -513,139 +512,23 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
     }
 
 
-@router.post('/scenario/')
-async def create_new_scenario(config: CEAConfig, payload: Dict[str, Any]):
-    """
-    Create new scenario
-    """
-    project = secure_path(payload.get('project'))
-    scenario_name = payload.get('scenario_name')
-    if scenario_name is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail='scenario_name parameter cannot be empty',
-        )
-
-    databases_path = payload.get('databases_path')
-    input_data = payload.get('input_data')
-
-    # Ignore using secure databases_path and only allow the default databases_path
-    if databases_path not in (os.path.join(databases_folder_path, region) for region in get_regions()):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Invalid databases_path: {databases_path}',
-        )
-
-    with tempfile.TemporaryDirectory() as tmp:
-        config.project = tmp
-        config.scenario_name = "temp_scenario"
-
-        _project = project or config.project
-
-        locator = cea.inputlocator.InputLocator(config.scenario)
-
-        # Run database-helper to copy databases to input
-        if databases_path is not None:
-            try:
-                cea.api.database_helper(config, databases_path=databases_path)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f'database_helper: {e}',
-                ) from e
-
-        if input_data == 'import':
-            files = payload.get('files')
-            if files is not None:
-                try:
-                    output_path, project_name = os.path.split(config.project)
-                    cea.api.create_new_scenario(config,
-                                                output_path=output_path,
-                                                project=project_name,
-                                                scenario=config.scenario_name,
-                                                zone=files.get('zone'),
-                                                surroundings=files.get('surroundings'),
-                                                streets=files.get('streets'),
-                                                terrain=files.get('terrain'),
-                                                typology=files.get('typology'))
-                except Exception as e:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=f'create_new_scenario: {e}',
-                    ) from e
-
-        elif input_data == 'copy':
-            source_scenario_name = payload.get('copy_scenario')
-            source_scenario = secure_path(os.path.join(_project, source_scenario_name))
-            os.makedirs(locator.get_input_folder(), exist_ok=True)
-            shutil.copytree(cea.inputlocator.InputLocator(source_scenario).get_input_folder(),
-                            locator.get_input_folder())
-
-        elif input_data == 'generate':
-            tools = payload.get('tools', [])
-            for tool in tools:
-                try:
-                    if tool == 'zone':
-                        # FIXME: Setup a proper endpoint for site creation
-                        site_geojson = payload.get('geojson')
-                        if site_geojson is None:
-                            raise ValueError('Could not find GeoJson for site polygon')
-                        site = geopandas.GeoDataFrame(crs=get_geographic_coordinate_system(),
-                                                      geometry=[shape(site_geojson['features'][0]['geometry'])])
-                        site_path = locator.get_site_polygon()
-                        locator.ensure_parent_folder_exists(site_path)
-                        site.to_file(site_path)
-                        print(f'site.shp file created at {site_path}')
-                        cea.api.zone_helper(config)
-                    elif tool == 'surroundings':
-                        cea.api.surroundings_helper(config)
-                    elif tool == 'streets':
-                        cea.api.streets_helper(config)
-                    elif tool == 'terrain':
-                        cea.api.terrain_helper(config)
-                    elif tool == 'weather':
-                        # Fetch weather as default if weather is not set
-                        # (old versions of GUI might return empty string as default)
-                        if config.weather_helper.weather == "":
-                            config.weather_helper.weather = "climate.onebuilding.org"
-                        cea.api.weather_helper(config)
-                except Exception as e:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=f'{tool}_helper: {e}',
-                    ) from e
-
-        # Move temp scenario to correct path
-        new_scenario_path = secure_path(os.path.join(_project, str(scenario_name).strip()))
-        print(f"Moving from {config.scenario} to {new_scenario_path}")
-        shutil.move(config.scenario, new_scenario_path)
-
-    return {'scenarios_list': list_scenario_names_for_project(config)}
-
-
 def glob_shapefile_auxilaries(shapefile_path):
     """Returns a list of files in the same folder as ``shapefile_path``, but allows for varying extensions.
     This gets the .dbf, .shx, .prj, .shp and .cpg files"""
     return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
-def list_scenario_names_for_project(config):
-    with config.ignore_restrictions():
-        return config.get_parameter('general:scenario-name')._choices
-
-
-async def check_scenario_exists(request: Request, config: CEAConfig, scenario: str = Path()):
+async def check_scenario_exists(request: Request, scenario: str = Path()):
     try:
         data = await request.json()
+        project = data.get("project")
     except Exception:
-        data = None
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not determine project and scenario",
+        )
 
-    if len(data):
-        try:
-            config.project = data["project"]
-        except Exception:
-            pass
-    choices = list_scenario_names_for_project(config)
+    choices = cea.config.get_scenarios_list(project)
     if scenario not in choices:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -671,7 +554,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
-                await config.save()
+                config.save()
             return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(
@@ -682,12 +565,12 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
 
 
 @router.delete('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
-async def delete(config: CEAConfig, scenario: str):
+async def delete(project_info: CEAProjectInfo, scenario: str):
     """Delete scenario from project"""
-    scenario_path = secure_path(os.path.join(config.project, scenario))
+    scenario_path = secure_path(os.path.join(project_info.project, scenario))
     try:
         shutil.rmtree(scenario_path)
-        return {'scenarios': list_scenario_names_for_project(config)}
+        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
     except OSError:
         traceback.print_exc()
         raise HTTPException(

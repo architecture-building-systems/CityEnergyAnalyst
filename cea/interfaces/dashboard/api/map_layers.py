@@ -1,9 +1,11 @@
+import os
 from typing import List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from cea import MissingInputDataException
+from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.map_layers import get_layers_grouped_by_category, load_layer
 
 router = APIRouter()
@@ -67,11 +69,15 @@ async def get_layer_parameter_choices(params: LayerParams, layer_category: str, 
 
 
 @router.post('/{layer_category}/{layer_name}/generate')
-async def generate_map_layer(params: LayerParams, layer_category: str, layer_name: str):
+async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
 
+    project_path = params.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=project_path, scenario_name=params.scenario_name)
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
