@@ -20,19 +20,45 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+DICT_EXAMPLE = {'plot_type': 'bar',
+                'cea_feature': 'demand',
+                'buildings': ['B0001', 'B0002', 'B0003'],
+                'y-metric-to-plot': 'end_use',
+                'y-metric-unit': 'MWh',
+                'y-normalised-by': 'gross_floor_area',
+                'y-min': '',
+                'y-max': '',
+                'y-step': '',
+                'y-label': '',
+                'x-to-plot': 'by_building',
+                'x-faceted': 'no_facet',
+                'x-label': '',
+                'transposed': False,
+                'filter-buildings-by-year-start': 1900,
+                'filter-buildings-by-year-end': 2050,
+                'filter-buildings-by-construction-type': [],
+                'filter-buildings-by-use-type': [],
+                'min-ratio-as-main-use': 0,
+}
 
 
-class CSVSelector:
+
+class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, user_input, base_dir="data/results"):
+    def __init__(self, config_config, scenario, cea_feature):
         """
         :param user_input: Dictionary containing user selections.
-        :param base_dir: Base directory where CSV files are stored.
-        """
-        self.user_input = user_input
-        self.base_dir = base_dir
 
+        """
+        self.config = config_config
+        self.scenario = scenario
+        self.cea_feature = cea_feature
+        self.buildings = config_config.buildings
+        self.y_metric_to_plot = config_config.y_metric_to_plot
+        
+
+    def csv_mapping(self):
         # Define key order to generate passkey
         self.required_keys = ["key1", "key2", "key3"]  # Adjust based on actual keys
 
@@ -47,7 +73,7 @@ class CSVSelector:
         """Returns the full path of the matched CSV file if it exists."""
 
         # Generate passkey tuple from user input
-        passkey = tuple(self.user_input.get(key, "default") for key in self.required_keys)
+        passkey = tuple(self.user_input_dict.get(key, "default") for key in self.required_keys)
 
         # Lookup file based on passkey
         filename = self.csv_mapping.get(passkey)
@@ -69,3 +95,16 @@ class CSVSelector:
 # csv_path = selector.get_csv_path()
 #
 # print(csv_path)  # Expected: "data/results/file1.csv" (if it exists)
+
+def main():
+    import cea.config
+    import cea.plots.cache
+    config = cea.config.Configuration()
+    cache = cea.plots.cache.NullPlotCache()
+    EnergyBalancePlot(config.project, {'building': config.plots.building,
+                                       'scenario-name': config.scenario_name},
+                      cache).plot(auto_open=True)
+
+
+if __name__ == '__main__':
+    main()
