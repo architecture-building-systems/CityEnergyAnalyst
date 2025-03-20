@@ -5,14 +5,32 @@ from typing import Optional
 import uuid
 
 from pydantic import AwareDatetime, computed_field
-from sqlmodel import Field, SQLModel, JSON, DateTime
+from sqlmodel import Field, SQLModel, JSON, DateTime, select
 
 import cea.scripts
+from cea.interfaces.dashboard.lib.database.session import engine, get_session_context, get_connection_props
+
 from cea.interfaces.dashboard.settings import get_settings
+
+
+def determine_db_type():
+    """
+    Determine the database type from the database URL.
+    Currently local will be sqlite and remote will be postgres.
+    """
+    db_url, _ = get_connection_props()
+
+    return db_url.split(":")[0]
+
 
 LOCAL_USER_ID = "localuser"
 user_table_name = get_settings().user_table_name
 user_table_schema = get_settings().user_table_schema
+db_type = determine_db_type()
+
+# Include schema name when using postgres
+user_table_ref = f"{user_table_schema}.{user_table_name}" if db_type == "postgresql" else user_table_name
+table_args = {'schema': user_table_schema} if db_type == "postgresql" else {}
 
 
 def get_current_time() -> AwareDatetime:
@@ -32,7 +50,7 @@ class JobState(IntEnum):
 
 class User(SQLModel, table=True):
     __tablename__ = user_table_name
-    __table_args__ = {'schema': user_table_schema}
+    __table_args__ = table_args
 
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
 
@@ -40,13 +58,13 @@ class User(SQLModel, table=True):
 class Config(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     config: dict = Field(sa_type=JSON, nullable=False)
-    user_id: str = Field(foreign_key=f"{user_table_schema}.{user_table_name}.id")
+    user_id: str = Field(foreign_key=f"{user_table_ref}.id")
 
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     uri: str
-    owner: str = Field(foreign_key=f"{user_table_schema}.{user_table_name}.id")
+    owner: str = Field(foreign_key=f"{user_table_ref}.id")
 
 
 class JobInfo(SQLModel, table=True):
@@ -86,3 +104,17 @@ class JobInfo(SQLModel, table=True):
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
         return None
+
+
+def create_db_and_tables():
+    print(f"Preparing database...")
+    SQLModel.metadata.create_all(engine)
+
+    if get_settings().local:
+        print("Using local user...")
+        with get_session_context() as session:
+            user = session.exec(select(User).where(User.id == LOCAL_USER_ID))
+            if user is None:
+                print("Default local user not found. Creating...")
+                user = User(id=LOCAL_USER_ID)
+                session.add(user)

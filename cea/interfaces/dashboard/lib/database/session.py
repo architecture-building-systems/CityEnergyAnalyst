@@ -3,11 +3,10 @@ import sys
 from contextlib import contextmanager
 
 from fastapi import Depends
-from sqlmodel import create_engine, Session, SQLModel, select
+from sqlmodel import create_engine, Session
 
 from typing_extensions import Annotated
 
-from cea.interfaces.dashboard.lib.database.models import User, LOCAL_USER_ID
 from cea.interfaces.dashboard.settings import get_settings
 
 
@@ -43,17 +42,22 @@ def get_local_database_path():
     return os.path.join(db_dir, "database.db")
 
 
-def get_database_props():
+def get_connection_props():
     settings = get_settings()
+
+    # Only use local database if local mode
+    if get_settings().local:
+        return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
+
     # Use database_url if set (priority)
     # Support postgres for now
     if settings.db_url is not None:
         return settings.db_url, {}
 
-    return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
+    raise ValueError("Could not determine database properties")
 
 
-db_url, connect_args = get_database_props()
+db_url, connect_args = get_connection_props()
 engine = create_engine(db_url, connect_args=connect_args)
 
 
@@ -66,20 +70,6 @@ def get_session():
 def get_session_context():
     with Session(engine) as session:
         yield session
-
-
-def create_db_and_tables():
-    print(f"Preparing database...")
-    SQLModel.metadata.create_all(engine)
-
-    if get_settings().local:
-        print("Using local user...")
-        with Session(engine) as session:
-            user = session.exec(select(User).where(User.id == LOCAL_USER_ID))
-            if user is None:
-                print("Default local user not found. Creating...")
-                user = User(id=LOCAL_USER_ID)
-                session.add(user)
 
 
 SessionDep = Annotated[Session, Depends(get_session)]

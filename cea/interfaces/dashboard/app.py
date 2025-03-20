@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from cea.interfaces.dashboard.lib.database.session import create_db_and_tables
+from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.server.socketio import socket_app
 
 import cea.interfaces.dashboard.api as api

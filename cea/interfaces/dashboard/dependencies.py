@@ -11,6 +11,7 @@ from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
+from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
@@ -215,9 +216,12 @@ def get_project_root():
 
 
 def get_current_user(request: Request) -> dict:
-    if get_settings().local:
+    # Return local user if local mode or no remote database
+    if get_settings().local or get_settings().db_url is None:
+        logger.info("Using local user")
         return {'id': LOCAL_USER_ID}
 
+    # Try to get user id from request cookie
     if StackAuth.check_token(request) is not None:
         try:
             auth_client = StackAuth.from_settings()
@@ -235,6 +239,9 @@ def get_current_user(request: Request) -> dict:
 
 
 def get_auth_client(request: Request):
+    if get_settings().local:
+        raise ValueError("Server running in local mode")
+
     auth_client = StackAuth.from_settings()
     auth_client.add_token_from_cookie(request)
     return auth_client
