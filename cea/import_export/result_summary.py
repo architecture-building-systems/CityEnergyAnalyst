@@ -1971,13 +1971,13 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
     # Mapping metric names for user-friendly output
     name_mapping = {
-        'grid_electricity_consumption[kWh]': 'EUI - grid electricity [kWh/m²]',
-        'enduse_electricity_demand[kWh]': 'EUI - enduse electricity [kWh/m²]',
-        'enduse_cooling_demand[kWh]': 'EUI - cooling [kWh/m²]',
-        'enduse_space_cooling_demand[kWh]': 'EUI - space cooling [kWh/m²]',
-        'enduse_heating_demand[kWh]': 'EUI - heating [kWh/m²]',
-        'enduse_space_heating_demand[kWh]': 'EUI - space heating [kWh/m²]',
-        'enduse_dhw_demand[kWh]': 'EUI - domestic hot water [kWh/m²]',
+        'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m²]',
+        'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m²]',
+        'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m²]',
+        'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m²]',
+        'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m²]',
+        'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m²]',
+        'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m²]',
     }
 
     # Read and process the architecture DataFrame

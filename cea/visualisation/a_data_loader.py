@@ -21,6 +21,16 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_cooling_demand', 'enduse_space_cooling_demand',	'enduse_heating_demand', 'enduse_space_heating_demand',	'enduse_dhw_demand']
+demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
+
+dict_plot_metrics_cea_feature = {
+    'demand':demand_metrics,
+}
+
+dict_plot_analytics_cea_feature = {
+    'demand':demand_analytics,
+}
 
 # Trigger the summary feature and point to the csv results file
 class csv_pointer:
@@ -85,8 +95,8 @@ class csv_pointer:
     def get_summary_results_csv_path(self):
         """Returns the correct path for the summary results CSV file based on user inputs."""
         summary_folder = self.locator.get_export_plots_folder()
-        list_metrics_non_analytics = ['end_use', 'final_use']
-        list_metrics_analytics = ['energy_use_intensity']
+        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
+        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
 
         if self.y_metric_to_plot in list_metrics_non_analytics:
             return self._get_non_analytics_summary_path(summary_folder)

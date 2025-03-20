@@ -40,7 +40,6 @@ class data_processor:
         self.appendix = plot_cea_feature if plot_cea_feature == "demand" else "default"
 
     def process_architecture_data(self):
-
         if self.normalised_by == 'gross_floor_area':
             normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
@@ -55,10 +54,8 @@ class data_processor:
         normaliser_m2 = normaliser_m2[['normaliser_m2']]
 
         return normaliser_m2
-    
 
     def process_demand_data(self):
-        """Applies necessary data transformations."""
         if self.df is None:
             return None
 
@@ -68,7 +65,3 @@ class data_processor:
 
         return self.df
 
-# ✅ **Test DataProcessor**
-processor = DataProcessor(data)
-processed_data = processor.process_data()
-print(processed_data.head())  # Check the transformed data
