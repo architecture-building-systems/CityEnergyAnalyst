@@ -77,8 +77,16 @@ class csv_pointer:
 
     def execute_summary(self):
         """Executes the summary feature to generate the required CSV output."""
+        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
+        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
+        if self.y_metric_to_plot in list_metrics_non_analytics:
+            bool_include_advanced_analytics = False
+        elif self.y_metric_to_plot in list_metrics_analytics:
+            bool_include_advanced_analytics = True
+        else:
+            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}")
         bool_use_acronym = True
-        bool_include_advanced_analytics = True
+
         bool_use_conditioned_floor_area_for_normalisation = self.normalised_by == "conditioned_floor_area"
 
         process_building_summary(

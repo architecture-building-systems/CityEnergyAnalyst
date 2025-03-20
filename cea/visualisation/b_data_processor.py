@@ -3,11 +3,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
-import cea.inputlocator
-import os
-import cea.config
-import time
-import geopandas as gpd
+import pandas as pd
 
 
 __author__ = "Zhongming Shi"
@@ -56,12 +52,29 @@ class data_processor:
         return normaliser_m2
 
     def process_demand_data(self):
-        if self.df is None:
-            return None
+        y_cea_metric_map = {
+            'grid_electricity_consumption': 'GRID_kWh',
+            'enduse_electricity_demand': 'E_sys_kWh',
+            'enduse_cooling_demand': 'QC_sys_kWh',
+            'enduse_space_cooling_demand': 'Qcs_sys_kWh',
+            'enduse_heating_demand': 'QH_sys_kWh',
+            'enduse_space_heating_demand': 'Qhs_sys_kWh',
+            'enduse_dhw_demand': 'Qww_kWh'
+        }
+        list_columns = [y_cea_metric_map[key] for key in self.y_metric_to_plot if key in y_cea_metric_map]
+        y_metric = self.df_summary_data[y_cea_metric_map[list_columns]]
+        return y_metric
 
-        # Example: Calculate total energy demand per building
-        if "total" not in self.df.columns:
-            self.df["total"] = self.df.iloc[:, 1:].sum(axis=1)  # Sum all columns except 'Building Name'
 
-        return self.df
+# Main function
+def calc_x_y_metric(config_config, scenario, plot_cea_feature, df_summary_data, df_architecture_data):
+    plot_instance = data_processor(config_config, scenario, plot_cea_feature, df_summary_data, df_architecture_data)
+    df_to_plotly = pd.DataFrame()
+    if plot_cea_feature == "demand":
+        normaliser_m2 = plot_instance.process_architecture_data()
+        y_metric = plot_instance.process_demand_data()
+        df_to_plotly = y_metric.div(normaliser_m2)
+        df_to_plotly['X'] = df_summary_data.index
+        df_to_plotly['X_facet'] = df_summary_data['name']
 
+    return df_to_plotly
