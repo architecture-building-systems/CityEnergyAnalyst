@@ -30,6 +30,8 @@ caches.set_config({
 
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
+settings = get_settings()
+
 class AsyncDictCache:
     def __init__(self, cache: BaseCache, cache_key: str):
         self._cache = cache
@@ -61,12 +63,12 @@ class AsyncDictCache:
 
 
 class CEALocalConfig(cea.config.Configuration):
-    def __init__(self, config_file: str = get_settings().config_path):
+    def __init__(self, config_file: str = settings.config_path):
         if config_file.startswith("~"):
             config_file = os.path.expanduser(config_file)
         super().__init__(config_file)
 
-    def save(self, config_file: str = get_settings().config_path) -> None:
+    def save(self, config_file: str = settings.config_path) -> None:
         if config_file.startswith("~"):
             config_file = os.path.expanduser(config_file)
         print(f"Saving config to {config_file}")
@@ -116,7 +118,6 @@ class CEADatabaseConfig(cea.config.Configuration):
         with get_session_context() as session:
             _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
 
-            print(self._user_id)
             try:
                 if _config:
                     print("Reading config from database")
@@ -144,11 +145,11 @@ async def get_cea_config(user: CEAUser):
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
-    if get_settings().db_url is not None and user['id'] != LOCAL_USER_ID:
+    if settings.db_url is not None and user['id'] != LOCAL_USER_ID:
         return CEADatabaseConfig(user['id'])
 
     # Read config from file if config_path is set
-    if get_settings().config_path is not None:
+    if settings.config_path is not None:
         return CEALocalConfig()
 
     raise ValueError("No config provided")
@@ -205,19 +206,19 @@ async def get_worker_processes():
 
 
 def get_server_url():
-    host = get_settings().host
-    port = get_settings().port
+    host = settings.host
+    port = settings.port
     worker_url = f"http://{host}:{port}/server"
     return worker_url
 
 
 def get_project_root():
-    return get_settings().project_root
+    return settings.project_root
 
 
 def get_current_user(request: Request) -> dict:
     # Return local user if local mode or no remote database
-    if get_settings().local or get_settings().db_url is None:
+    if settings.local or settings.db_url is None:
         logger.info("Using local user")
         return {'id': LOCAL_USER_ID}
 
@@ -239,7 +240,7 @@ def get_current_user(request: Request) -> dict:
 
 
 def get_auth_client(request: Request):
-    if get_settings().local:
+    if settings.local:
         raise ValueError("Server running in local mode")
 
     auth_client = StackAuth.from_settings()
