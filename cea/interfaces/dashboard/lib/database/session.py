@@ -7,6 +7,7 @@ from sqlmodel import create_engine, Session
 
 from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings
 
 
@@ -74,6 +75,7 @@ def get_session_context():
 
 def close_db_connection():
     """Close the database engine connection pool on application shutdown."""
+    logger.info("Closing database connection pool...")
     engine.dispose()
 
 

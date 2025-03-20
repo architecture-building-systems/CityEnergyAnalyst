@@ -11,7 +11,7 @@ from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
-from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
@@ -31,6 +31,8 @@ caches.set_config({
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
 settings = get_settings()
+cea_db_config_logger = getCEAServerLogger("cea-db-config")
+
 
 class AsyncDictCache:
     def __init__(self, cache: BaseCache, cache_key: str):
@@ -74,7 +76,6 @@ class CEALocalConfig(cea.config.Configuration):
         logger.info(f"Saving config to {config_file}")
         super().save(config_file)
 
-
 class CEADatabaseConfig(cea.config.Configuration):
     def __init__(self, user_id: str):
         self._user_id = user_id
@@ -93,7 +94,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     parameter.set(parameter_value)
                 except Exception as e:
-                    logger.error(f"Error setting `{section_name}:{parameter_name}`: {e}")
+                    cea_db_config_logger.error(f"Error setting `{section_name}:{parameter_name}`: {e}")
         return self
 
     def to_dict(self) -> dict:
@@ -107,7 +108,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     out[section.name][parameter.name] = parameter.get()
                 except Exception as e:
-                    logger.error(f"Error reading `{section.name}:{parameter.name}`: {e}")
+                    cea_db_config_logger.error(f"Error reading `{section.name}:{parameter.name}`: {e}")
                     # default_value = self.default_config.get(section.name, parameter.name)
                     # print(f"Using default value: '{default_value}'")
                     # out[section.name][parameter.name] = default_value
@@ -120,12 +121,11 @@ class CEADatabaseConfig(cea.config.Configuration):
 
             try:
                 if _config:
-                    logger.info("Reading config from database")
+                    cea_db_config_logger.info("Reading config from database")
                     self.from_dict(_config.config)
             except Exception as e:
                 logger.error(e)
-                logger.info("Returning local config")
-                return self
+                cea_db_config_logger.info("Returning local config")
 
             return self
 

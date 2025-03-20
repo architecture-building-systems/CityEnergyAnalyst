@@ -28,9 +28,14 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-logger = logging.getLogger("cea-server")
-logger.setLevel(logging.INFO)
+def getCEAServerLogger(name="cea-server"):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
 
-stdout_handler = logging.StreamHandler()
-stdout_handler.setFormatter(CustomFormatter(FORMAT))
-logger.addHandler(stdout_handler)
+    stdout_handler = logging.StreamHandler()
+    stdout_handler.setFormatter(CustomFormatter(FORMAT))
+    logger.addHandler(stdout_handler)
+
+    return logger
+
+logger = getCEAServerLogger()
