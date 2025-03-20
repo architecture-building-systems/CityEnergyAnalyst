@@ -3,7 +3,7 @@ import sys
 from contextlib import contextmanager
 
 from fastapi import Depends
-from sqlmodel import create_engine, Session, SQLModel, select
+from sqlmodel import create_engine, Session, SQLModel, select, inspect, text
 
 from typing_extensions import Annotated
 
@@ -72,14 +72,27 @@ def create_db_and_tables():
     print(f"Preparing database...")
     SQLModel.metadata.create_all(engine)
 
+    # Check and update existing table schemas
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        # TODO: Remove once in release new version
+        # For project table and owner column
+        if 'project' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('project')]
+            if 'owner' not in columns:
+                print("Adding 'owner' column to project table...")
+                conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
+                conn.commit()
+
     if get_settings().local:
         print("Using local user...")
         with Session(engine) as session:
-            user = session.exec(select(User).where(User.id == LOCAL_USER_ID))
+            user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
             if user is None:
                 print("Default local user not found. Creating...")
                 user = User(id=LOCAL_USER_ID)
                 session.add(user)
+                session.commit()
 
 
 SessionDep = Annotated[Session, Depends(get_session)]
