@@ -11,6 +11,7 @@ from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
+from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
 from cea.interfaces.dashboard.settings import get_settings
@@ -141,7 +142,8 @@ class CEADatabaseConfig(cea.config.Configuration):
 async def get_cea_config(user: CEAUser):
     """Get configuration remote database or local file"""
 
-    if get_settings().db_url is not None:
+    # Don't read config from database if user is local
+    if get_settings().db_url is not None and user['id'] != LOCAL_USER_ID:
         return CEADatabaseConfig(user['id'])
 
     # Read config from file if config_path is set
@@ -212,11 +214,26 @@ def get_project_root():
     return get_settings().project_root
 
 
-def get_current_user_id():
+def get_current_user(request: Request) -> dict:
     if get_settings().local:
         return {'id': LOCAL_USER_ID}
 
-    raise ValueError("Could not determine current user")
+    if StackAuth.check_token(request) is not None:
+        try:
+            auth_client = StackAuth.from_settings()
+            auth_client.add_token_from_cookie(request)
+            client = auth_client.get_current_user()
+
+            return client
+        except Exception as e:
+            print(e)
+            # Either the token is invalid or the user is not logged in
+            return {'id': LOCAL_USER_ID}
+
+    print("Unable to determine current user, returning local user")
+    return {'id': LOCAL_USER_ID}
+
+
 
 
 CEAUser = Annotated[dict, Depends(get_current_user)]
