@@ -22,7 +22,7 @@ __status__ = "Production"
 
 
 
-class PlotManager:
+class plotter:
     """Generates a Plotly graph from processed data."""
 
     def __init__(self, dataframe, graph_type="bar"):

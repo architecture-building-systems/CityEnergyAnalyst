@@ -80,8 +80,8 @@ def main(config):
             continue
 
         # Print: Start
-        div_len = 91 - len(scenario)
-        print('━' * 104)
+        div_len = 85 - len(scenario)
+        print('━' * 98)
         print("▼" * 1 + ' Scenario: {scenario} '.format(scenario=scenario) + "-" * div_len)
 
         cea_scenario = os.path.join(project_path, scenario)
@@ -112,7 +112,7 @@ def main(config):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('■' * 104)
+    print('■' * 98)
     if bool_migrate:
         print('CEA\'s attempt to migrate the Database and the input data for CEA-4 is now completed - time elapsed: %.2f seconds.' % time_elapsed)
     else:
