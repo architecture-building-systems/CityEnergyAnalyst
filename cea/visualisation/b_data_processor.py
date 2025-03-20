@@ -61,9 +61,13 @@ class data_processor:
             'enduse_space_heating_demand': 'Qhs_sys_kWh',
             'enduse_dhw_demand': 'Qww_kWh'
         }
+
+        # Get the list of columns to plot
         list_columns = [y_cea_metric_map[key] for key in self.y_metric_to_plot if key in y_cea_metric_map]
-        y_metric = self.df_summary_data[y_cea_metric_map[list_columns]]
-        return y_metric
+
+        # slice the data frame to only keep the useful columns for Y-axis
+        df_y_metrics = self.df_summary_data[list_columns]
+        return df_y_metrics
 
 
 # Main function
@@ -71,10 +75,44 @@ def calc_x_y_metric(config_config, scenario, plot_cea_feature, df_summary_data, 
     plot_instance = data_processor(config_config, scenario, plot_cea_feature, df_summary_data, df_architecture_data)
     df_to_plotly = pd.DataFrame()
     if plot_cea_feature == "demand":
+
+        # Calculating Y: even when no_normalisation is selected, will just divide by 1 to keep the same value (not normalised)
         normaliser_m2 = plot_instance.process_architecture_data()
-        y_metric = plot_instance.process_demand_data()
-        df_to_plotly = y_metric.div(normaliser_m2)
-        df_to_plotly['X'] = df_summary_data.index
-        df_to_plotly['X_facet'] = df_summary_data['name']
+        df_y_metrics = plot_instance.process_demand_data()
+        df_to_plotly = df_y_metrics.div(normaliser_m2)
+
+        # Calculating X:
+        if plot_instance.x_to_plot == 'building':
+            df_to_plotly['X'] = df_summary_data.index
+            if plot_instance.x_faceted is None:
+                pass
+            elif plot_instance.x_faceted == 'months':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_faceted == 'seasons':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_faceted == 'construction_type':
+                df_to_plotly['X_facet'] = df_architecture_data['construction_type']
+            elif plot_instance.x_faceted == 'main_use_type':
+                df_to_plotly['X_facet'] = df_architecture_data['main_use_type']
+            else:
+                raise ValueError(f"Invalid x-facet: {plot_instance.x_faceted}")
+
+        elif plot_instance.x_to_plot == 'period':
+            df_to_plotly['X'] = df_summary_data.index
+            if plot_instance.x_faceted is None:
+                pass
+            elif plot_instance.x_faceted == 'daily':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_faceted == 'monthly':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_faceted == 'seasonally':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_faceted == 'annually_or_selected':
+                df_to_plotly['X_facet'] = df_summary_data['period']
+            else:
+                raise ValueError(f"Invalid x-facet: {plot_instance.x_faceted}")
+
+        else:
+            raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
 
     return df_to_plotly

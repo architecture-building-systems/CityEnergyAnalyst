@@ -44,6 +44,8 @@ class csv_pointer:
         :param hour_start: Start hour for analysis.
         :param hour_end: End hour for analysis.
         """
+
+        x, x_facet = get_x_and_x_facet(config_config.X_to_plot)
         self.config = config_config
         self.scenario = scenario
         self.locator = cea.inputlocator.InputLocator(scenario=scenario)
@@ -53,8 +55,8 @@ class csv_pointer:
         self.buildings = config_config.buildings
         self.y_metric_to_plot = config_config.Y_metric_to_plot
         self.normalised_by = config_config.normalised_by
-        self.x_to_plot = config_config.X_to_plot
-        self.x_faceted = config_config.X_faceted
+        self.x_to_plot = x
+        self.x_faceted = x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
         self.list_construction_type = config_config.filter_buildings_by_construction_type
@@ -135,6 +137,43 @@ class csv_pointer:
                 summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
             )
 
+
+# from X-to-plot to X and X_facet
+def get_x_and_x_facet(x_to_plot):
+    if x_to_plot == "by_building":
+        x = 'building'
+        x_facet = None
+    elif x_to_plot == "by_building_faceted_by_months":
+        x = 'building'
+        x_facet = 'months'
+    elif x_to_plot == "by_building_faceted_by_seasons":
+        x = 'building'
+        x_facet = 'seasons'
+    elif x_to_plot == "by_building_faceted_by_construction_type":
+        x = 'building'
+        x_facet = 'construction_type'
+    elif x_to_plot == "by_building_faceted_by_main_use_type":
+        x = 'building'
+        x_facet = 'main_use_type'
+    elif x_to_plot == "by_district_and_hourly":
+        x = 'period'
+        x_facet = None
+    elif x_to_plot == "by_district_and_daily":
+        x = 'period'
+        x_facet = None
+    elif x_to_plot == "by_district_and_monthly":
+        x = 'period'
+        x_facet = None
+    elif x_to_plot == "by_district_and_seasonally":
+        x = 'period'
+        x_facet = None
+    elif x_to_plot == "by_district_and_annually_or_selected":
+        x = 'period'
+        x_facet =  None
+    else:
+        raise ValueError(f"Invalid x-to-plot: {x_to_plot}")
+
+    return x, x_facet
 
 # Main function
 def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end):

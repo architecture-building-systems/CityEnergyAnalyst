@@ -1416,13 +1416,13 @@ def determine_building_main_use(df_typology):
     result['name'] = df_typology['name']
 
     # Determine the main use type and its ratio
-    result['main_use'] = df_typology.apply(
+    result['main_use_type'] = df_typology.apply(
         lambda row: row['use_type1'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3'],
         axis=1
     )
-    result['main_use_ratio'] = df_typology.apply(
+    result['main_use_type_ratio'] = df_typology.apply(
         lambda row: row['use_type1r'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2r'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3r'],
@@ -1521,7 +1521,7 @@ def filter_by_main_use(df_typology, list_main_use_type):
         raise ValueError("'main_use' column not found in the DataFrame.")
 
     # Filter rows where 'main_use' matches any value in list_main_use_type
-    filtered_df = df_typology[df_typology['main_use'].isin(list_main_use_type)]
+    filtered_df = df_typology[df_typology['main_use_type'].isin(list_main_use_type)]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
@@ -1546,7 +1546,7 @@ def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
     """
 
     # Filter rows where 'main_use_r' is greater than or equal to the threshold
-    filtered_df = df_typology[df_typology['main_use_ratio'] >= ratio_main_use_type]
+    filtered_df = df_typology[df_typology['main_use_type_ratio'] >= ratio_main_use_type]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
