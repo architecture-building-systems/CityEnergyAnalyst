@@ -217,8 +217,15 @@ def get_server_url():
     return worker_url
 
 
-def get_project_root():
-    return settings.project_root
+def get_project_root(user: CEAUser):
+    project_root = settings.project_root
+    user_id = user['id']
+
+    if settings.local or user_id == LOCAL_USER_ID:
+        return project_root
+
+    else:
+        return os.path.join(project_root, user_id)
 
 
 def get_current_user(request: Request) -> dict:
