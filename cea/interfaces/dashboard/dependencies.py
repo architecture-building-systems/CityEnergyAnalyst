@@ -234,6 +234,10 @@ def get_current_user(request: Request) -> dict:
     return {'id': LOCAL_USER_ID}
 
 
+def get_auth_client(request: Request):
+    auth_client = StackAuth.from_settings()
+    auth_client.add_token_from_cookie(request)
+    return auth_client
 
 
 CEAUser = Annotated[dict, Depends(get_current_user)]
@@ -245,3 +249,4 @@ CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
+CEAAuthClient = Annotated[StackAuth, Depends(get_auth_client)]
