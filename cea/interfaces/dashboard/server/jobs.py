@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -41,12 +41,20 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID) -> JobInfo:
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID,
+                         settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
     logger.info(f"Adding new job: args={args}")
 
-    job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
+    parameters = args["parameters"]
+
+    # FIXME: Forcing remote multiprocessing to be disabled for now,
+    #  find solution for restricting number of processes per user
+    if not settings.local:
+        parameters["multiprocessing"] = False
+
+    job = JobInfo(script=args["script"], parameters=parameters, project_id=project_id)
     session.add(job)
     session.commit()
     session.refresh(job)
