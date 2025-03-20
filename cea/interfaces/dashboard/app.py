@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from cea.interfaces.dashboard.lib.database.session import close_db_connection
 from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.server.socketio import socket_app
 
@@ -21,6 +22,8 @@ async def lifespan(_: FastAPI):
     print("Shutting down server...")
     # Shutdown all worker processes on exit
     await server.shutdown_worker_processes()
+    # Close database connections
+    close_db_connection()
 
 
 def get_cors_origins() -> str:

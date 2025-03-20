@@ -72,4 +72,9 @@ def get_session_context():
         yield session
 
 
+def close_db_connection():
+    """Close the database engine connection pool on application shutdown."""
+    engine.dispose()
+
+
 SessionDep = Annotated[Session, Depends(get_session)]
