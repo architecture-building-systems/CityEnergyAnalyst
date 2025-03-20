@@ -107,14 +107,23 @@ class JobInfo(SQLModel, table=True):
         return None
 
 
-def create_db_and_tables():
-    logger.info(f"Preparing database...")
+def initialize_db():
     SQLModel.metadata.create_all(engine)
 
+
+def create_db_and_tables():
+    # FIXME: Only running for local mode since it is expensive for remote connections
+    if not get_settings().local:
+        return
+
+    logger.info("Preparing database...")
+    initialize_db()
+
+
+    # TODO: Remove once in release new version
     # Check and update existing table schemas
     with engine.connect() as conn:
         inspector = inspect(engine)
-        # TODO: Remove once in release new version
         # For project table and owner column
         if 'project' in inspector.get_table_names():
             columns = [col['name'] for col in inspector.get_columns('project')]
@@ -124,13 +133,12 @@ def create_db_and_tables():
                 conn.commit()
 
 
-    if get_settings().local:
-        logger.info("Using local user...")
-        with get_session_context() as session:
-            user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
-            if user is None:
-                logger.warning("Default local user not found. Creating...")
-                user = User(id=LOCAL_USER_ID)
-                session.add(user)
-                session.commit()
+    logger.info("Using local user...")
+    with get_session_context() as session:
+        user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
+        if user is None:
+            logger.warning("Default local user not found. Creating...")
+            user = User(id=LOCAL_USER_ID)
+            session.add(user)
+            session.commit()
     
