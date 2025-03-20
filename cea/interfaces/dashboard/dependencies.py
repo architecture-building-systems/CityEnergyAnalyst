@@ -168,6 +168,14 @@ async def get_project_info(config: CEAConfig) -> ProjectInfo:
         scenario=config.scenario,
     )
 
+def create_project(project_uri: str, owner: CEAUser, session: SessionDep) -> Project:
+    project = Project(uri=project_uri, owner=owner['id'])
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+
+    return project
+
 
 async def get_project_id(session: SessionDep, owner: CEAUser,
                          project_root: CEAProjectRoot, project_info: CEAProjectInfo):
@@ -180,10 +188,7 @@ async def get_project_id(session: SessionDep, owner: CEAUser,
 
     # If project not found, create a new one
     if not project:
-        project = Project(uri=project_uri, owner=owner['id'])
-        session.add(project)
-        session.commit()
-        session.refresh(project)
+        project = create_project(project_uri, owner, session)
 
     return project.id
 

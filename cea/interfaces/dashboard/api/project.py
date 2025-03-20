@@ -23,7 +23,8 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUser
+from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -232,7 +233,8 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
 
 
 @router.post('/')
-async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject):
+async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject,
+                             user: CEAUser, session: SessionDep):
     """
     Create new project folder
     """
@@ -252,6 +254,8 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         os.makedirs(project, exist_ok=True)
+        # Add project to database
+        create_project(project, user, session)
     except OSError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
