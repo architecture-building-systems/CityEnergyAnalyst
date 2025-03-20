@@ -5,6 +5,7 @@ import warnings
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from cea.interfaces.dashboard.lib.logs import logger
 
 class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
@@ -30,7 +31,7 @@ class Settings(BaseSettings):
     def validate_non_local_mode(self):
         if not self.local:
             if self.cors_origin == "*":
-                warnings.warn("Security warning: Running with cors_origin='*'. "
+                logger.warning("Security warning: Running with cors_origin='*'. "
                               "This allows any origin to access your API and may pose security risks.")
             if self.db_url is None:
                 raise ValueError("Database URL not set. Please set db_url in config file.")

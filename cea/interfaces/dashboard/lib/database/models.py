@@ -9,6 +9,7 @@ from sqlmodel import Field, SQLModel, JSON, DateTime, select, inspect, text
 
 import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import engine, get_session_context, get_connection_props
+from cea.interfaces.dashboard.lib.logs import logger
 
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -107,7 +108,7 @@ class JobInfo(SQLModel, table=True):
 
 
 def create_db_and_tables():
-    print(f"Preparing database...")
+    logger.info(f"Preparing database...")
     SQLModel.metadata.create_all(engine)
 
     # Check and update existing table schemas
@@ -118,17 +119,17 @@ def create_db_and_tables():
         if 'project' in inspector.get_table_names():
             columns = [col['name'] for col in inspector.get_columns('project')]
             if 'owner' not in columns:
-                print("Adding 'owner' column to project table...")
+                logger.info("Adding 'owner' column to project table...")
                 conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
                 conn.commit()
 
 
     if get_settings().local:
-        print("Using local user...")
+        logger.info("Using local user...")
         with get_session_context() as session:
             user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
             if user is None:
-                print("Default local user not found. Creating...")
+                logger.warning("Default local user not found. Creating...")
                 user = User(id=LOCAL_USER_ID)
                 session.add(user)
                 session.commit()

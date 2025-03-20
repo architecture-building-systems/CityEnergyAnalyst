@@ -71,7 +71,7 @@ class CEALocalConfig(cea.config.Configuration):
     def save(self, config_file: str = settings.config_path) -> None:
         if config_file.startswith("~"):
             config_file = os.path.expanduser(config_file)
-        print(f"Saving config to {config_file}")
+        logger.info(f"Saving config to {config_file}")
         super().save(config_file)
 
 
@@ -93,7 +93,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     parameter.set(parameter_value)
                 except Exception as e:
-                    print(f"Error setting `{section_name}:{parameter_name}`: {e}")
+                    logger.error(f"Error setting `{section_name}:{parameter_name}`: {e}")
         return self
 
     def to_dict(self) -> dict:
@@ -107,7 +107,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     out[section.name][parameter.name] = parameter.get()
                 except Exception as e:
-                    print(f"Error reading `{section.name}:{parameter.name}`: {e}")
+                    logger.error(f"Error reading `{section.name}:{parameter.name}`: {e}")
                     # default_value = self.default_config.get(section.name, parameter.name)
                     # print(f"Using default value: '{default_value}'")
                     # out[section.name][parameter.name] = default_value
@@ -120,18 +120,18 @@ class CEADatabaseConfig(cea.config.Configuration):
 
             try:
                 if _config:
-                    print("Reading config from database")
+                    logger.info("Reading config from database")
                     self.from_dict(_config.config)
             except Exception as e:
-                print(e)
-                print("Returning local config")
+                logger.error(e)
+                logger.info("Returning local config")
                 return self
 
             return self
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
-        print(f"Saving config to database")
+        logger.info(f"Saving config to database")
         with get_session_context() as session:
             _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
             if _config:
@@ -231,11 +231,11 @@ def get_current_user(request: Request) -> dict:
 
             return client
         except Exception as e:
-            print(e)
+            logger.error(e)
             # Either the token is invalid or the user is not logged in
             return {'id': LOCAL_USER_ID}
 
-    print("Unable to determine current user, returning local user")
+    logger.warning("Unable to determine current user, returning local user")
     return {'id': LOCAL_USER_ID}
 
 
