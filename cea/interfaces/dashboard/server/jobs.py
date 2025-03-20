@@ -12,10 +12,12 @@ from sqlmodel import select
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
 router = APIRouter()
+logger = getCEAServerLogger("cea-server-jobs")
 
 class JobError(BaseModel):
     message: str
@@ -42,7 +44,7 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
-    print(f"NewJob: args={args}")
+    logger.info(f"Adding new job: args={args}")
 
     job = JobInfo(script=args["script"], parameters=args["parameters"], project_id=project_id)
     session.add(job)
@@ -68,7 +70,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         await sio.emit("cea-worker-started", job.model_dump(mode='json'))
         return job
     except Exception as e:
-        print(e)
+        logger.error(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -92,7 +94,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
         await sio.emit("cea-worker-success", job.model_dump(mode='json'))
         return job
     except Exception as e:
-        print(e)
+        logger.error(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -119,11 +121,11 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
             await worker_processes.delete(job.id)
         await sio.emit("cea-worker-error", job.model_dump(mode='json'))
 
-        print(f"Error found in job {job_id}: {job.error}")
-        print(job.stderr)
+        logger.warning(f"Error found in job {job_id}: {job.error}")
+        logger.error(f"stacktrace:\n{job.stderr}")
         return job
     except Exception as e:
-        print(e)
+        logger.error(e)
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -189,20 +191,20 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
 async def kill_job(jobid, worker_processes):
     """Kill the processes associated with a jobid"""
     if jobid not in await worker_processes.keys():
-        print(f"Unable to kill job. Could no find job: {jobid}.")
+        logger.warning(f"Unable to kill job. Could no find job: {jobid}.")
         return
 
     pid = await worker_processes.get(jobid)
     # using code from here: https://stackoverflow.com/a/4229404/2260
     # to terminate child processes too
-    print(f"killing child processes of {jobid} ({pid})")
+    logger.warning(f"killing child processes of {jobid} ({pid})")
     try:
         process = psutil.Process(pid)
     except psutil.NoSuchProcess:
         return
     children = process.children(recursive=True)
     for child in children:
-        print(f"-- killing child {pid}")
+        logger.warning(f"-- killing child {pid}")
         child.kill()
     process.kill()
     await worker_processes.delete(jobid)
