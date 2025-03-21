@@ -124,6 +124,7 @@ class CEADatabaseConfig(cea.config.Configuration):
 
             try:
                 if _config:
+                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
                     self.from_dict(_config.config)
             except Exception as e:
                 logger.error(e)
@@ -224,17 +225,17 @@ def get_project_root(user: CEAUser):
     project_root = settings.project_root
     user_id = user['id']
 
-    if settings.local:
-        return project_root
+    if not settings.local:
+        project_root = os.path.join(project_root, user_id)
 
-    else:
-        return os.path.join(project_root, user_id)
+    logger.info(f"Using project root: {project_root}")
+    return project_root
 
 
 def get_current_user(request: Request) -> dict:
-    # Return local user if local mode or no remote database
-    if settings.local or settings.db_url is None:
-        logger.info("Using local user")
+    # Return local user if local mode
+    if settings.local:
+        logger.info(f"Using `{LOCAL_USER_ID}`")
         return {'id': LOCAL_USER_ID}
 
     # Try to get user id from request cookie
@@ -250,7 +251,7 @@ def get_current_user(request: Request) -> dict:
             # Either the token is invalid or the user is not logged in
             return {'id': LOCAL_USER_ID}
 
-    logger.warning("Unable to determine current user, returning local user")
+    logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
     return {'id': LOCAL_USER_ID}
 
 
@@ -268,7 +269,7 @@ def check_auth(request: Request, user: CEAUser):
     user_id = user['id']
 
     if not settings.local and user_id == LOCAL_USER_ID:
-        logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": {user_id}")
+        logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": `{user_id}`")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unauthorized",
