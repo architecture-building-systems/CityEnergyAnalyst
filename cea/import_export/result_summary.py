@@ -1243,7 +1243,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if only one day is involved
@@ -1252,7 +1252,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
@@ -1261,7 +1261,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
@@ -1270,7 +1270,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
@@ -1278,7 +1278,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
@@ -1286,7 +1286,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
@@ -1294,7 +1294,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
@@ -2000,7 +2000,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
     for time_period in list_time_period:
         # Time resolution processing
-        df_time_path = locator.get_export_results_summary_cea_feature_time_resolution_file(
+        df_time_path = locator.get_export_results_summary_cea_feature_time_period_file(
             summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
         )
         df_time_resolution = pd.read_csv(df_time_path)

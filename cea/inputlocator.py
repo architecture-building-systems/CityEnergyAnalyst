@@ -189,8 +189,8 @@ class InputLocator(object):
             return os.path.join(summary_folder, cea_feature)
 
 
-    def get_export_results_summary_cea_feature_time_resolution_file(self, summary_folder, cea_feature, appendix,
-                                                                    time_period, hour_start, hour_end):
+    def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature, appendix,
+                                                                time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),

@@ -55,7 +55,8 @@ class csv_pointer:
         self.buildings = config_config.buildings
         self.y_metric_to_plot = config_config.y_metric_to_plot
         self.y_normalised_by = config_config.y_normalised_by
-        self.x_to_plot = x
+        self.x_to_plot = config_config.x_to_plot
+        self.x = x
         self.x_facet = x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
@@ -64,7 +65,7 @@ class csv_pointer:
         self.min_ratio_as_main_use = config_config.min_ratio_as_main_use
         self.appendix = plot_cea_feature if plot_cea_feature == "demand" else "default"
 
-        self.bool_aggregate_by_building = self.x_to_plot == "by_building"
+        self.bool_aggregate_by_building = self.x == "by_building"
 
         time_period_map = {
             "by_building": "annually",
@@ -76,9 +77,9 @@ class csv_pointer:
             "by_district_and_daily": "daily",
             "by_district_and_monthly": "monthly",
             "by_district_and_seasonally": "seasonally",
-            "by_district_and_annually_or_selected": "annually"
+            "by_district_and_annually_or_selected_period": "annually"
         }
-        self.time_period = time_period_map.get(self.x_to_plot if self.bool_aggregate_by_building else self.x_to_plot, [])
+        self.time_period = time_period_map.get(self.x_to_plot)
 
     def execute_summary(self):
         """Executes the summary feature to generate the required CSV output."""
@@ -125,7 +126,7 @@ class csv_pointer:
                 self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
             )
         else:
-            return self.locator.get_export_results_summary_cea_feature_time_resolution_file(
+            return self.locator.get_export_results_summary_cea_feature_time_period_file(
                 summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
             )
 
@@ -170,13 +171,14 @@ def get_x_and_x_facet(x_to_plot):
     elif x_to_plot == "by_district_and_seasonally":
         x = 'by_period'
         x_facet = None
-    elif x_to_plot == "by_district_and_annually_or_selected":
+    elif x_to_plot == "by_district_and_annually_or_selected_period":
         x = 'by_period'
         x_facet = None
     else:
         raise ValueError(f"Invalid x-to-plot: {x_to_plot}")
 
     return x, x_facet
+
 
 # Main function
 def plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, hour_end):

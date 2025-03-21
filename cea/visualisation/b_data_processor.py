@@ -4,7 +4,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 """
 
 import pandas as pd
-
+import re
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -25,8 +25,9 @@ class data_processor:
         self.df_architecture_data = df_architecture_data
         self.buildings = config_config.buildings
         self.y_metric_to_plot = config_config.y_metric_to_plot
+        self.y_metric_unit = config_config.y_metric_unit
         self.y_normalised_by = config_config.y_normalised_by
-        self.x_to_plot = plot_instance.x_to_plot
+        self.x_to_plot = plot_instance.x
         self.x_facet = plot_instance.x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
@@ -77,6 +78,93 @@ class data_processor:
         return df_y_metrics
 
 
+def normalize_dataframe_by_index(dataframe_A, dataframe_B):
+    """
+    Normalize each column in dataframe_A by the corresponding value in dataframe_B based on index matching.
+
+    Parameters:
+    - dataframe_A (pd.DataFrame): A DataFrame with potentially repeated index values and one or more columns.
+    - dataframe_B (pd.DataFrame): A DataFrame with unique index values and exactly one column (the normaliser).
+
+    Returns:
+    - pd.DataFrame: A normalized version of dataframe_A with the same shape.
+    """
+
+    # Ensure both inputs are DataFrames
+    if not isinstance(dataframe_A, pd.DataFrame) or not isinstance(dataframe_B, pd.DataFrame):
+        raise ValueError("Both inputs must be pandas DataFrames.")
+
+    # Check that dataframe_B has only one column
+    if dataframe_B.shape[1] != 1:
+        raise ValueError("dataframe_B must have exactly one column.")
+
+    # Copy inputs to avoid modifying them
+    dfA = dataframe_A.copy()
+    dfB = dataframe_B.copy()
+
+    # Reset index for merge
+    dfA_reset = dfA.reset_index()
+    dfB_reset = dfB.reset_index()
+
+    # Get index name for merge
+    key_column = dfB.index.name if dfB.index.name is not None else 'index'
+    dfB_reset.columns = [key_column, 'normaliser']
+
+    if key_column not in dfA_reset.columns:
+        dfA_reset[key_column] = dataframe_A.index
+
+    # Merge
+    merged = dfA_reset.merge(dfB_reset, on=key_column, how='left')
+
+    # Normalize original columns
+    original_columns = dataframe_A.columns
+    for col in original_columns:
+        merged[col] = merged[col] / merged['normaliser']
+
+    # Drop normaliser column
+    merged = merged.drop(columns=['normaliser'])
+
+    # Restore original index
+    merged.set_index(key_column, inplace=True)
+
+    return merged
+
+
+def convert_energy_units(dataframe, target_unit, normalised=False):
+    """
+    Converts energy unit columns in a DataFrame to the specified unit.
+
+    Parameters:
+        dataframe (pd.DataFrame): The input DataFrame with energy columns.
+        target_unit (str): One of ['Wh', 'kWh', 'MWh'].
+        normalised (bool): If True, appends '/m2' to the renamed unit.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with converted energy units and renamed columns.
+    """
+    assert target_unit in ['Wh', 'kWh', 'MWh'], "target_unit must be one of ['Wh', 'kWh', 'MWh']"
+
+    conversion_to_wh = {'Wh': 1, 'kWh': 1_000, 'MWh': 1_000_000}
+    df = dataframe.copy()
+    new_columns = {}
+
+    for col in df.columns:
+        for unit in conversion_to_wh:
+            if col.endswith(f"_{unit}"):
+                # Convert values
+                factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
+                df[col] = df[col] * factor
+
+                # Rename column
+                suffix = f"{target_unit}/m2" if normalised else target_unit
+                new_col = col.replace(f"_{unit}", f"_{suffix}")
+                new_columns[col] = new_col
+                break  # Stop after first match
+
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
 # Main function
 def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data):
     plot_instance = data_processor(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
@@ -88,7 +176,7 @@ def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_d
             # Calculating Y: even when no_normalisation is selected, will just divide by 1 to keep the same value (not normalised)
             normaliser_m2 = plot_instance.process_architecture_data()
             df_y_metrics = plot_instance.process_demand_data()
-            df_to_plotly = df_y_metrics.div(normaliser_m2.iloc[:, 0], axis=0)
+            df_to_plotly = normalize_dataframe_by_index(df_y_metrics, normaliser_m2)
 
             # Calculating X:
             df_to_plotly = df_to_plotly.reset_index(drop=False)
@@ -141,5 +229,13 @@ def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_d
 
         # Drop the index
         df_to_plotly = df_to_plotly.reset_index(drop=True)
+
+        # Convert energy units
+        if plot_instance.y_normalised_by == 'no_normalisation':
+            df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
+        elif plot_instance.y_normalised_by == 'gross_floor_area' or 'conditioned_floor_area':
+            df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
+        else:
+            raise ValueError(f"Invalid y-normalised-by: {plot_instance.y_normalised_by}")
 
     return df_to_plotly
