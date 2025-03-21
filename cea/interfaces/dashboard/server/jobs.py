@@ -5,19 +5,21 @@ import subprocess
 from typing import Dict, Any, List
 
 import psutil
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlmodel import select
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
+    CEACheckAuth
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
-router = APIRouter()
+router = APIRouter(dependencies=[CEACheckAuth])
 logger = getCEAServerLogger("cea-server-jobs")
+
 
 class JobError(BaseModel):
     message: str
@@ -68,7 +70,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     try:
         job.state = JobState.STARTED
         job.start_time = get_current_time()
@@ -88,7 +90,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     try:
         job.state = JobState.SUCCESS
         job.error = None
@@ -108,14 +110,15 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(session: SessionDep, job_id: str, error: JobError, worker_processes: CEAWorkerProcesses) -> JobInfo:
+async def set_job_error(session: SessionDep, job_id: str, error: JobError,
+                        worker_processes: CEAWorkerProcesses) -> JobInfo:
     message = error.message
     stacktrace = error.stacktrace
 
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     try:
         job.state = JobState.ERROR
         job.error = message
@@ -138,7 +141,6 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, worke
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @router.post('/start/{job_id}')
 async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
@@ -155,7 +157,7 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     try:
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
@@ -188,7 +190,7 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         job.state = JobState.DELETED
         session.delete(job)
         session.commit()
-        
+
         return job
     except Exception as e:
         print(e)

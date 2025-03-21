@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException, status
 from sqlmodel import select
 from typing_extensions import Annotated
 
@@ -66,6 +66,9 @@ class AsyncDictCache:
 
 class CEALocalConfig(cea.config.Configuration):
     def __init__(self, config_file: str = settings.config_path):
+        if not settings.local:
+            logger.warning("Using local config in non-local mode")
+
         if config_file.startswith("~"):
             config_file = os.path.expanduser(config_file)
         super().__init__(config_file)
@@ -121,13 +124,12 @@ class CEADatabaseConfig(cea.config.Configuration):
 
             try:
                 if _config:
-                    cea_db_config_logger.info("Reading config from database")
                     self.from_dict(_config.config)
             except Exception as e:
                 logger.error(e)
-                cea_db_config_logger.info("Returning local config")
+                cea_db_config_logger.warning("Returning local config")
 
-            return self
+        return self
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
@@ -188,6 +190,7 @@ async def get_project_id(session: SessionDep, owner: CEAUser,
 
     # If project not found, create a new one
     if not project:
+        logger.info(f"Creating project in database: {project_uri}")
         project = create_project(project_uri, owner, session)
 
     return project.id
@@ -221,7 +224,7 @@ def get_project_root(user: CEAUser):
     project_root = settings.project_root
     user_id = user['id']
 
-    if settings.local or user_id == LOCAL_USER_ID:
+    if settings.local:
         return project_root
 
     else:
@@ -260,6 +263,18 @@ def get_auth_client(request: Request):
     return auth_client
 
 
+def check_auth(request: Request, user: CEAUser):
+    """Check if user is authorized when not in local mode"""
+    user_id = user['id']
+
+    if not settings.local and user_id == LOCAL_USER_ID:
+        logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": {user_id}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+        )
+
+
 CEAUser = Annotated[dict, Depends(get_current_user)]
 CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
@@ -270,3 +285,5 @@ CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
 CEAAuthClient = Annotated[StackAuth, Depends(get_auth_client)]
+
+CEACheckAuth = Depends(check_auth)

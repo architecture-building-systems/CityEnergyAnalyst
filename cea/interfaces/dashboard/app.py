@@ -66,8 +66,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 @app.exception_handler(Exception)
-async def uncaught_exception_handler(request, exc):
-    logger.error(f"Uncaught exception:"
+async def uncaught_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Uncaught exception in \"{request.method} {request.url.path}\":\n"
                  f"{exc}")
 
     return JSONResponse(
