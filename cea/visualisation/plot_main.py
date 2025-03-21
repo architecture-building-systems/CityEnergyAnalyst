@@ -21,6 +21,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.visualisation.a_data_loader import plot_input_processor
+
 
 class CEAFrontEnd:
     """Main interface to handle user input, data processing, visualization, and export."""
@@ -59,3 +61,24 @@ class CEAFrontEnd:
         exporter.export_image("output.png")
 
         return fig  # Return Plotly figure for frontend
+
+
+def plot_all():
+    # 1. Activate a_data_loader
+    plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end)
+
+
+
+def main(config):
+
+    plot_main()
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
