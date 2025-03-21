@@ -45,7 +45,7 @@ class csv_pointer:
         :param hour_end: End hour for analysis.
         """
 
-        x, x_facet = get_x_and_x_facet(config_config.X_to_plot)
+        x, x_facet = get_x_and_x_facet(config_config.x_to_plot)
         self.config = config_config
         self.scenario = scenario
         self.locator = cea.inputlocator.InputLocator(scenario=scenario)
@@ -53,10 +53,10 @@ class csv_pointer:
         self.hour_start = hour_start
         self.hour_end = hour_end
         self.buildings = config_config.buildings
-        self.y_metric_to_plot = config_config.Y_metric_to_plot
-        self.normalised_by = config_config.normalised_by
+        self.y_metric_to_plot = config_config.y_metric_to_plot
+        self.y_normalised_by = config_config.y_normalised_by
         self.x_to_plot = x
-        self.x_faceted = x_facet
+        self.x_facet = x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
         self.list_construction_type = config_config.filter_buildings_by_construction_type
@@ -67,29 +67,32 @@ class csv_pointer:
         self.bool_aggregate_by_building = self.x_to_plot == "by_building"
 
         time_period_map = {
-            "by_months": ["monthly"],
-            "by_seasons": ["seasonally"],
-            "by_district_and_time_period_hourly": ["hourly"],
-            "by_district_and_time_period_daily": ["daily"],
-            "by_district_and_time_period_monthly": ["monthly"],
-            "by_district_and_time_period_seasonally": ["seasonally"],
-            "by_district_and_time_period_annually_or_selected": ["annually"]
+            "by_building": "annually",
+            "by_building_faceted_by_months": "monthly",
+            "by_building_faceted_by_seasons": "seasonally",
+            "by_building_faceted_by_construction_type": "annually",
+            "by_building_faceted_by_main_use_type": "annually",
+            "by_district_and_hourly": 'hourly',
+            "by_district_and_daily": "daily",
+            "by_district_and_monthly": "monthly",
+            "by_district_and_seasonally": "seasonally",
+            "by_district_and_annually_or_selected": "annually"
         }
-        self.time_period = time_period_map.get(self.x_faceted if self.bool_aggregate_by_building else self.x_to_plot, [])
+        self.time_period = time_period_map.get(self.x_to_plot if self.bool_aggregate_by_building else self.x_to_plot, [])
 
     def execute_summary(self):
         """Executes the summary feature to generate the required CSV output."""
         list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
         list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
-        if self.y_metric_to_plot in list_metrics_non_analytics:
+        if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = False
-        elif self.y_metric_to_plot in list_metrics_analytics:
+        elif all(item in list_metrics_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = True
         else:
-            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}")
+            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}. Current combination is not supported.")
         bool_use_acronym = True
 
-        bool_use_conditioned_floor_area_for_normalisation = self.normalised_by == "conditioned_floor_area"
+        bool_use_conditioned_floor_area_for_normalisation = self.y_normalised_by == "conditioned_floor_area"
 
         process_building_summary(
             self.config, self.locator,
@@ -108,12 +111,12 @@ class csv_pointer:
         list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
         list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
 
-        if self.y_metric_to_plot in list_metrics_non_analytics:
+        if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
             return self._get_non_analytics_summary_path(summary_folder)
-        elif self.y_metric_to_plot in list_metrics_analytics:
+        elif all(item in list_metrics_analytics for item in self.y_metric_to_plot):
             return self._get_analytics_summary_path(summary_folder)
         else:
-            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}")
+            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}. Current combination is not supported.")
 
     def _get_non_analytics_summary_path(self, summary_folder):
         """Helper function to retrieve the non-analytics summary CSV path."""
@@ -141,42 +144,42 @@ class csv_pointer:
 # from X-to-plot to X and X_facet
 def get_x_and_x_facet(x_to_plot):
     if x_to_plot == "by_building":
-        x = 'building'
+        x = 'by_building'
         x_facet = None
     elif x_to_plot == "by_building_faceted_by_months":
-        x = 'building'
+        x = 'by_building'
         x_facet = 'months'
     elif x_to_plot == "by_building_faceted_by_seasons":
-        x = 'building'
+        x = 'by_building'
         x_facet = 'seasons'
     elif x_to_plot == "by_building_faceted_by_construction_type":
-        x = 'building'
+        x = 'by_building'
         x_facet = 'construction_type'
     elif x_to_plot == "by_building_faceted_by_main_use_type":
-        x = 'building'
+        x = 'by_building'
         x_facet = 'main_use_type'
     elif x_to_plot == "by_district_and_hourly":
-        x = 'period'
+        x = 'by_period'
         x_facet = None
     elif x_to_plot == "by_district_and_daily":
-        x = 'period'
+        x = 'by_period'
         x_facet = None
     elif x_to_plot == "by_district_and_monthly":
-        x = 'period'
+        x = 'by_period'
         x_facet = None
     elif x_to_plot == "by_district_and_seasonally":
-        x = 'period'
+        x = 'by_period'
         x_facet = None
     elif x_to_plot == "by_district_and_annually_or_selected":
-        x = 'period'
-        x_facet =  None
+        x = 'by_period'
+        x_facet = None
     else:
         raise ValueError(f"Invalid x-to-plot: {x_to_plot}")
 
     return x, x_facet
 
 # Main function
-def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end):
+def plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, hour_end):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -191,7 +194,7 @@ def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_en
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance = csv_pointer(config, scenario, plot_cea_feature, hour_start, hour_end)
+    plot_instance = csv_pointer(config_config, scenario, plot_cea_feature, hour_start, hour_end)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance.get_summary_results_csv_path()
@@ -217,7 +220,7 @@ def plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_en
         print(f"Error loading csv file: {e}")
         df_architecture_data = None
 
-    return df_summary_data, df_architecture_data
+    return df_summary_data, df_architecture_data, plot_instance
 
 
 

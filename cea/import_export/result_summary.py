@@ -1505,22 +1505,22 @@ def filter_by_standard(df_typology, list_standard):
 
 def filter_by_main_use(df_typology, list_main_use_type):
     """
-    Filters rows in the DataFrame based on whether the 'main_use' column matches any item in list_main_use_type.
+    Filters rows in the DataFrame based on whether the 'main_use_type' column matches any item in list_main_use_type.
 
     Parameters:
-    - df_typology (pd.DataFrame): DataFrame with a 'main_use' column.
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_type' column.
     - list_main_use_type (list): List of main use types to filter on.
 
     Returns:
-    - pd.DataFrame: Filtered DataFrame with rows where 'main_use' matches any item in list_main_use_type.
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_type' matches any item in list_main_use_type.
 
     Raises:
-    - ValueError: If 'main_use' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'main_use_type' column is not found or if the filtered DataFrame is empty.
     """
-    if 'main_use' not in df_typology.columns:
-        raise ValueError("'main_use' column not found in the DataFrame.")
+    if 'main_use_type' not in df_typology.columns:
+        raise ValueError("'main_use_type' column not found in the DataFrame.")
 
-    # Filter rows where 'main_use' matches any value in list_main_use_type
+    # Filter rows where 'main_use_type' matches any value in list_main_use_type
     filtered_df = df_typology[df_typology['main_use_type'].isin(list_main_use_type)]
 
     # Check if the filtered DataFrame is empty
@@ -1532,20 +1532,20 @@ def filter_by_main_use(df_typology, list_main_use_type):
 
 def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
     """
-    Filters rows in the DataFrame where the 'main_use_r' column is equal to or larger than a given ratio.
+    Filters rows in the DataFrame where the 'main_use_type_ratio' column is equal to or larger than a given ratio.
 
     Parameters:
-    - df_typology (pd.DataFrame): DataFrame with a 'main_use_r' column.
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_type_ratio' column.
     - ratio_main_use_type (float): The minimum ratio threshold for filtering.
 
     Returns:
-    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_r' >= ratio_main_use_type.
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_type_ratio' >= ratio_main_use_type.
 
     Raises:
-    - ValueError: If 'main_use_r' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'main_use_type_ratio' column is not found or if the filtered DataFrame is empty.
     """
 
-    # Filter rows where 'main_use_r' is greater than or equal to the threshold
+    # Filter rows where 'main_use_type_ratio' is greater than or equal to the threshold
     filtered_df = df_typology[df_typology['main_use_type_ratio'] >= ratio_main_use_type]
 
     # Check if the filtered DataFrame is empty

@@ -22,63 +22,40 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.visualisation.a_data_loader import plot_input_processor
+from cea.visualisation.b_data_processor import calc_x_y_metric
+
+def config_config_locator(config, plot_cea_feature):
+    if plot_cea_feature == 'demand':
+        config_config = config.plots_demand
+    else:
+        raise ValueError(f"Cannot locate the config section for {plot_cea_feature}")
+    return config_config
 
 
-class CEAFrontEnd:
-    """Main interface to handle user input, data processing, visualization, and export."""
+def plot_all(config, scenario, plot_cea_feature, hour_start, hour_end):
+    # Find the config file
+    config_config = config_config_locator(config, plot_cea_feature)
 
-    def __init__(self, user_input):
-        self.user_input = user_input
+    # Activate a_data_loader
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, hour_end)
 
-    def run(self):
-        """Executes the full process and returns the Plotly figure."""
+    # Activate b_data_processor
+    df_to_plotly = calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
 
-        # 1. Process user input
-        input_processor = InputProcessor(self.user_input)
-        csv_path = input_processor.get_csv_path()
-        if not csv_path:
-            print("Error: CSV file not found!")
-            return None
+    # Activate c_plotter
+    # fig_html_path = plotter(config_config, scenario, plot_cea_feature, df_to_plotly)
 
-        # 2. Load data
-        loader = CSVLoader(csv_path)
-        data = loader.load_data()
-        if data is None:
-            print("Error: Could not load CSV!")
-            return None
-
-        # 3. Process data
-        processor = DataProcessor(data)
-        processed_data = processor.process_data()
-
-        # 4. Generate plot
-        plot_manager = PlotManager(processed_data)
-        fig = plot_manager.generate_graph()
-
-        # 5. Provide export options
-        exporter = Exporter(processed_data, fig)
-        exporter.export_csv("output.csv")
-        exporter.export_image("output.png")
-
-        return fig  # Return Plotly figure for frontend
-
-
-def plot_all():
-    # 1. Activate a_data_loader
-    plot_input_processor(config, scenario, plot_cea_feature, hour_start, hour_end)
-
+    return df_to_plotly
 
 
 def main(config):
 
-    plot_main()
-
-
-
-
-
-
-
+    scenario = '/Users/zshi/Library/CloudStorage/Dropbox/CEA2/batch_gh1/_ZRH'
+    plot_cea_feature = 'demand'
+    hour_start = 0
+    hour_end = 8759
+    fig_html_path = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)
+    print(fig_html_path)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
