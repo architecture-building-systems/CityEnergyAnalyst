@@ -59,13 +59,13 @@ class User(SQLModel, table=True):
 class Config(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     config: dict = Field(sa_type=JSON, nullable=False)
-    user_id: str = Field(foreign_key=f"{user_table_ref}.id")
+    user_id: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
 
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     uri: str
-    owner: str = Field(foreign_key=f"{user_table_ref}.id")
+    owner: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
 
 
 class JobInfo(SQLModel, table=True):
@@ -83,7 +83,7 @@ class JobInfo(SQLModel, table=True):
     end_time: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
     stdout: Optional[str] = None
     stderr: Optional[str] = None
-    project_id: str = Field(foreign_key="project.id")
+    project_id: str = Field(foreign_key="project.id", index=True)
 
     @computed_field
     def script_label(self) -> Optional[str]:
