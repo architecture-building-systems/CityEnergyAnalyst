@@ -1,40 +1,37 @@
 import json
+from typing import Optional
 from urllib.parse import unquote
 
+import jwt
 import requests
 from fastapi import Request
 
 from cea.interfaces.dashboard.settings import StackAuthSettings
 
+_settings = StackAuthSettings()
 
 class StackAuth:
-    def __init__(self, project_id, publishable_client_key, access_token = None):
-        self.project_id = project_id
-        self.publishable_client_key = publishable_client_key
+    project_id = _settings.project_id
+    publishable_client_key = _settings.publishable_client_key
 
+    def __init__(self, access_token: str):
         self.access_token = access_token
 
-    @staticmethod
-    def from_settings():
-        settings = StackAuthSettings()
-
-        return StackAuth(settings.project_id, settings.publishable_client_key)
+    def get_jwks_url(self):
+        return f"https://api.stack-auth.com/api/v1/projects/{self.project_id}/.well-known/jwks.json"
 
     @staticmethod
-    def check_token(request: Request):
+    def get_token(request: Request) -> Optional[str]:
         # Get access token from cookie
         cookie_name = StackAuthSettings().cookie_name
         token_string = request.cookies.get(cookie_name)
 
-        return token_string
-
-    def add_token_from_cookie(self, request: Request):
-        token_string = self.check_token(request)
         if token_string is None:
-            raise Exception("Access token not found in cookie. Load token first before sending requests.")
-        token = json.loads(unquote(token_string))[1]
+            # raise Exception("Access token not found in cookie. Load token first before sending requests.")
+            return None
 
-        self.access_token = token
+        token = json.loads(unquote(token_string))[1]
+        return token
 
     def _stack_auth_request(self, method, endpoint, **kwargs):
         if not self.access_token:
@@ -57,6 +54,11 @@ class StackAuth:
         if res.status_code >= 400:
             raise Exception(f"Stack Auth API request failed with {res.status_code}: {res.text}")
         return res.json()
+
+    def get_user_id(self):
+        # TODO: Verify signature
+        data = jwt.decode(self.access_token.encode(), options={"verify_signature": False})
+        return data['sub']
 
     def get_current_user(self):
         res = self._stack_auth_request("GET", "/api/v1/users/me")

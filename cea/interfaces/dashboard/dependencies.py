@@ -144,12 +144,12 @@ class CEADatabaseConfig(cea.config.Configuration):
             session.commit()
 
 
-async def get_cea_config(user: CEAUser):
+async def get_cea_config(user_id: CEAUserID):
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
-    if settings.db_url is not None and user['id'] != LOCAL_USER_ID:
-        return CEADatabaseConfig(user['id'])
+    if settings.db_url is not None and user_id != LOCAL_USER_ID:
+        return CEADatabaseConfig(user_id)
 
     # Read config from file if config_path is set
     if settings.config_path is not None:
@@ -171,8 +171,8 @@ async def get_project_info(config: CEAConfig) -> ProjectInfo:
         scenario=config.scenario,
     )
 
-def create_project(project_uri: str, owner: CEAUser, session: SessionDep) -> Project:
-    project = Project(uri=project_uri, owner=owner['id'])
+def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
+    project = Project(uri=project_uri, owner=owner_id)
     session.add(project)
     session.commit()
     session.refresh(project)
@@ -180,7 +180,7 @@ def create_project(project_uri: str, owner: CEAUser, session: SessionDep) -> Pro
     return project
 
 
-async def get_project_id(session: SessionDep, owner: CEAUser,
+async def get_project_id(session: SessionDep, owner_id: CEAUserID,
                          project_root: CEAProjectRoot, project_info: CEAProjectInfo):
     """Get the project ID from the project URI."""
     project_uri = project_info.project
@@ -192,7 +192,7 @@ async def get_project_id(session: SessionDep, owner: CEAUser,
     # If project not found, create a new one
     if not project:
         logger.info(f"Creating project in database: {project_uri}")
-        project = create_project(project_uri, owner, session)
+        project = create_project(project_uri, owner_id, session)
 
     return project.id
 
@@ -221,9 +221,8 @@ def get_server_url():
     return worker_url
 
 
-def get_project_root(user: CEAUser):
+def get_project_root(user_id: CEAUserID):
     project_root = settings.project_root
-    user_id = user['id']
 
     if not settings.local:
         project_root = os.path.join(project_root, user_id)
@@ -232,43 +231,61 @@ def get_project_root(user: CEAUser):
     return project_root
 
 
-def get_current_user(request: Request) -> dict:
+def get_user_id(request: Request) -> dict:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
-        return {'id': LOCAL_USER_ID}
+        return LOCAL_USER_ID
 
     # Try to get user id from request cookie
-    if StackAuth.check_token(request) is not None:
+    if (token := StackAuth.get_token(request)) is not None:
         try:
-            auth_client = StackAuth.from_settings()
-            auth_client.add_token_from_cookie(request)
-            client = auth_client.get_current_user()
-
-            return client
+            auth_client = StackAuth(token)
+            return auth_client.get_user_id()
         except Exception as e:
             logger.error(e)
-            # Either the token is invalid or the user is not logged in
-            return {'id': LOCAL_USER_ID}
+            # raise Exception("Unable to verify user token")
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
-    return {'id': LOCAL_USER_ID}
+    return LOCAL_USER_ID
+
+
+def get_user(request: Request):
+    if settings.local:
+        return {'id': LOCAL_USER_ID }
+
+    # Try to get user id from request cookie
+    if (token := StackAuth.get_token(request)) is not None:
+        try:
+            auth_client = StackAuth(token)
+            return auth_client.get_current_user()
+        except Exception as e:
+            logger.error(e)
+            # raise Exception("Unable to verify user token")
+
+    logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
+    return {'id': LOCAL_USER_ID }
 
 
 def get_auth_client(request: Request):
     if settings.local:
         raise ValueError("Server running in local mode")
 
-    auth_client = StackAuth.from_settings()
-    auth_client.add_token_from_cookie(request)
-    return auth_client
+    if (token := StackAuth.get_token(request)) is not None:
+        return StackAuth(token)
+
+    raise Exception("Unable get auth client")
 
 
-def check_auth(request: Request, user: CEAUser):
+def check_auth(request: Request, user_id: CEAUserID):
     """Check if user is authorized when not in local mode"""
-    user_id = user['id']
 
-    if not settings.local and user_id == LOCAL_USER_ID:
+    # Pass if local mode
+    if settings.local:
+        return
+
+    # Check if user is authorized
+    if user_id == LOCAL_USER_ID:
         logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": `{user_id}`")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -276,7 +293,8 @@ def check_auth(request: Request, user: CEAUser):
         )
 
 
-CEAUser = Annotated[dict, Depends(get_current_user)]
+CEAUserID = Annotated[str, Depends(get_user_id)]
+CEAUser = Annotated[dict, Depends(get_user)]
 CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
 CEAProjectID = Annotated[str, Depends(get_project_id)]
