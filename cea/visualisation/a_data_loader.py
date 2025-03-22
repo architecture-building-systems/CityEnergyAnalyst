@@ -68,16 +68,16 @@ class csv_pointer:
         self.bool_aggregate_by_building = self.x == "by_building"
 
         time_period_map = {
-            "by_building": "annually",
-            "by_building_grouped_by_months": "monthly",
-            "by_building_grouped_by_seasons": "seasonally",
-            "by_building_grouped_by_construction_type": "annually",
-            "by_building_grouped_by_main_use_type": "annually",
-            "by_district_and_hourly": 'hourly',
-            "by_district_and_daily": "daily",
-            "by_district_and_monthly": "monthly",
-            "by_district_and_seasonally": "seasonally",
-            "by_district_and_annually_or_selected_period": "annually"
+            "building": "annually",
+            "building_grouped_by_months": "monthly",
+            "building_grouped_by_seasons": "seasonally",
+            "building_grouped_by_construction_type": "annually",
+            "building_grouped_by_main_use_type": "annually",
+            "district_and_hourly": 'hourly',
+            "district_and_daily": "daily",
+            "district_and_monthly": "monthly",
+            "district_and_seasonally": "seasonally",
+            "district_and_annually_or_selected_period": "annually"
         }
         self.time_period = time_period_map.get(self.x_to_plot)
 
@@ -144,34 +144,34 @@ class csv_pointer:
 
 # from X-to-plot to X and X_group
 def get_x_and_x_group(x_to_plot):
-    if x_to_plot == "by_building":
+    if x_to_plot == "building":
         x = 'by_building'
         x_group = None
-    elif x_to_plot == "by_building_grouped_by_months":
+    elif x_to_plot == "building_grouped_by_months":
         x = 'by_building'
         x_group = 'months'
-    elif x_to_plot == "by_building_grouped_by_seasons":
+    elif x_to_plot == "building_grouped_by_seasons":
         x = 'by_building'
         x_group = 'seasons'
-    elif x_to_plot == "by_building_grouped_by_construction_type":
+    elif x_to_plot == "building_grouped_by_construction_type":
         x = 'by_building'
         x_group = 'construction_type'
-    elif x_to_plot == "by_building_grouped_by_main_use_type":
+    elif x_to_plot == "building_grouped_by_main_use_type":
         x = 'by_building'
         x_group = 'main_use_type'
-    elif x_to_plot == "by_district_and_hourly":
+    elif x_to_plot == "district_and_hourly":
         x = 'by_period'
         x_group = None
-    elif x_to_plot == "by_district_and_daily":
+    elif x_to_plot == "district_and_daily":
         x = 'by_period'
         x_group = None
-    elif x_to_plot == "by_district_and_monthly":
+    elif x_to_plot == "district_and_monthly":
         x = 'by_period'
         x_group = None
-    elif x_to_plot == "by_district_and_seasonally":
+    elif x_to_plot == "district_and_seasonally":
         x = 'by_period'
         x_group = None
-    elif x_to_plot == "by_district_and_annually_or_selected_period":
+    elif x_to_plot == "district_and_annually_or_selected_period":
         x = 'by_period'
         x_group = None
     else:
