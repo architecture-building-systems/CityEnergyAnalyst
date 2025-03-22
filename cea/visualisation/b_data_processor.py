@@ -28,7 +28,7 @@ class data_processor:
         self.y_metric_unit = config_config.y_metric_unit
         self.y_normalised_by = config_config.y_normalised_by
         self.x_to_plot = plot_instance.x
-        self.x_facet = plot_instance.x_facet
+        self.x_group = plot_instance.x_group
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
         self.list_construction_type = config_config.filter_buildings_by_construction_type
@@ -182,19 +182,19 @@ def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_d
             df_to_plotly = df_to_plotly.reset_index(drop=False)
             df_to_plotly = df_to_plotly.rename(columns={'name': 'X'})
 
-            # Calculating X_facet:
-            if plot_instance.x_facet is None:
+            # Calculating X_group:
+            if plot_instance.x_group is None:
                 pass
-            elif plot_instance.x_facet == 'months':
-                df_to_plotly['X_facet'] = df_summary_data['period']
-            elif plot_instance.x_facet == 'seasons':
-                df_to_plotly['X_facet'] = df_summary_data['period']
-            elif plot_instance.x_facet == 'construction_type':
-                df_to_plotly['X_facet'] = df_architecture_data['construction_type']
-            elif plot_instance.x_facet == 'main_use_type':
-                df_to_plotly['X_facet'] = df_architecture_data['main_use_type']
+            elif plot_instance.x_group == 'months':
+                df_to_plotly['X_group'] = df_summary_data['period']
+            elif plot_instance.x_group == 'seasons':
+                df_to_plotly['X_group'] = df_summary_data['period']
+            elif plot_instance.x_group == 'construction_type':
+                df_to_plotly['X_group'] = df_architecture_data['construction_type']
+            elif plot_instance.x_group == 'main_use_type':
+                df_to_plotly['X_group'] = df_architecture_data['main_use_type']
             else:
-                raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
+                raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
 
         elif plot_instance.x_to_plot == 'by_period':
             # Calculating Y: even when no_normalisation is selected, will just divide by 1 to keep the same value (not normalised)
@@ -210,19 +210,19 @@ def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_d
             df_to_plotly = df_to_plotly.reset_index(drop=False)
             df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
 
-            # Calculating X_facet:
-            if plot_instance.x_facet is None:
+            # Calculating X_group:
+            if plot_instance.x_group is None:
                 pass
-            elif plot_instance.x_facet == 'daily':
-                df_to_plotly['X_facet'] = df_summary_data['period']
-            elif plot_instance.x_facet == 'monthly':
-                df_to_plotly['X_facet'] = df_summary_data['period']
-            elif plot_instance.x_facet == 'seasonally':
-                df_to_plotly['X_facet'] = df_summary_data['period']
-            elif plot_instance.x_facet == 'annually_or_selected':
-                df_to_plotly['X_facet'] = df_summary_data['period']
+            elif plot_instance.x_group == 'daily':
+                df_to_plotly['X_group'] = df_summary_data['period']
+            elif plot_instance.x_group == 'monthly':
+                df_to_plotly['X_group'] = df_summary_data['period']
+            elif plot_instance.x_group == 'seasonally':
+                df_to_plotly['X_group'] = df_summary_data['period']
+            elif plot_instance.x_group == 'annually_or_selected':
+                df_to_plotly['X_group'] = df_summary_data['period']
             else:
-                raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
+                raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
 
         else:
             raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
