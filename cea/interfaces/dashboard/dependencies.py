@@ -11,6 +11,7 @@ from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
+from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
@@ -242,7 +243,7 @@ def get_user_id(request: Request) -> dict:
         try:
             auth_client = StackAuth(token)
             return auth_client.get_user_id()
-        except Exception as e:
+        except CEAAuthError as e:
             logger.error(e)
             # raise Exception("Unable to verify user token")
 
@@ -259,7 +260,7 @@ def get_user(request: Request):
         try:
             auth_client = StackAuth(token)
             return auth_client.get_current_user()
-        except Exception as e:
+        except CEAAuthError as e:
             logger.error(e)
             # raise Exception("Unable to verify user token")
 

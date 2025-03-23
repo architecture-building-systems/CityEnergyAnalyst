@@ -6,6 +6,7 @@ import jwt
 import requests
 from fastapi import Request
 
+from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.settings import StackAuthSettings
 
 _settings = StackAuthSettings()
@@ -38,7 +39,7 @@ class StackAuth:
 
     def _stack_auth_request(self, method, endpoint, **kwargs):
         if not self.access_token:
-            raise Exception("Access token not found. Load token first before sending requests.")
+            raise CEAAuthError("Access token not found. Load token first before sending requests.")
 
         # TODO: Use async requests
         res = requests.request(
@@ -55,7 +56,7 @@ class StackAuth:
             **kwargs,
         )
         if res.status_code >= 400:
-            raise Exception(f"Stack Auth API request failed with {res.status_code}: {res.text}")
+            raise CEAAuthError(f"Stack Auth API request failed with {res.status_code}: {res.text}")
         return res.json()
 
     def get_user_id(self):
