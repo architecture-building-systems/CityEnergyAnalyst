@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
-from fastapi import Depends, Request, HTTPException, status, Cookie
+from fastapi import Depends, Request, HTTPException, status
 from sqlmodel import select
 from typing_extensions import Annotated
 
@@ -135,7 +135,7 @@ class CEADatabaseConfig(cea.config.Configuration):
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
-        logger.info(f"Saving config to database")
+        logger.info("Saving config to database")
         with get_session_context() as session:
             _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
             if _config:

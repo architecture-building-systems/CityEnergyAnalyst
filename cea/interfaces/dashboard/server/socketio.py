@@ -29,7 +29,7 @@ async def connect(sid, environ, auth):
         print('unable to find token')
         raise ConnectionRefusedError('authentication failed')
 
-    token_string = StackAuth.parse_token(token_string[0].split('=')[1])
+    token_string = StackAuth.parse_cookie(token_string[0].split('=')[1])
     user_id = StackAuth(token_string).get_user_id()
 
     await sio.enter_room(sid, f"user-{user_id}")

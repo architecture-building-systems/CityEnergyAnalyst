@@ -11,6 +11,7 @@ from cea.interfaces.dashboard.settings import StackAuthSettings
 
 _settings = StackAuthSettings()
 
+
 class StackAuth:
     project_id = _settings.project_id
     publishable_client_key = _settings.publishable_client_key
@@ -22,20 +23,46 @@ class StackAuth:
         self.access_token = access_token
 
     @staticmethod
-    def parse_token(token_string: str):
-        return json.loads(unquote(token_string))[1]
+    def parse_cookie(cookie_string: str):
+        return json.loads(unquote(cookie_string))[1]
 
-    @staticmethod
-    def get_token(request: Request) -> Optional[str]:
+    @classmethod
+    def get_token(cls, request: Request) -> Optional[str]:
         # Get access token from cookie
-        token_string = request.cookies.get(StackAuth.cookie_name)
+        token_string = request.cookies.get(cls.cookie_name)
 
         if token_string is None:
             # raise Exception("Access token not found in cookie. Load token first before sending requests.")
             return None
 
-        token = StackAuth.parse_token(token_string)
+        token = cls.parse_cookie(token_string)
         return token
+
+    def verify_token(self):
+        """Verify the JWT token signature using cached JWKS"""
+        if not self.access_token:
+            raise CEAAuthError("Access token not found")
+
+        try:
+            jwks_client = jwt.PyJWKClient(self.jwks_url)
+            signing_key = jwks_client.get_signing_key_from_jwt(self.access_token)
+
+            payload = jwt.decode(
+                self.access_token,
+                signing_key,
+                algorithms=["ES256"],
+                audience=self.project_id,
+            )
+
+            return payload
+
+        except jwt.PyJWTError as e:
+            raise CEAAuthError(f"Token verification failed: {str(e)}")
+
+    def get_user_id(self):
+        # Use verified token instead of skipping verification
+        verified_token = self.verify_token()
+        return verified_token['sub']
 
     def _stack_auth_request(self, method, endpoint, **kwargs):
         if not self.access_token:
@@ -58,11 +85,6 @@ class StackAuth:
         if res.status_code >= 400:
             raise CEAAuthError(f"Stack Auth API request failed with {res.status_code}: {res.text}")
         return res.json()
-
-    def get_user_id(self):
-        # TODO: Verify signature
-        data = jwt.decode(self.access_token.encode(), options={"verify_signature": False})
-        return data['sub']
 
     def get_current_user(self):
         res = self._stack_auth_request("GET", "/api/v1/users/me")
