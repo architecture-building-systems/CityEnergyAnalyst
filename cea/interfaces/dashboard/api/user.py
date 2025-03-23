@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, status
 
 from cea.interfaces.dashboard.dependencies import CEAUser, CEAAuthClient
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 async def get_user_info(user: CEAUser):
     return user
 
@@ -12,12 +12,15 @@ async def get_user_info(user: CEAUser):
 @router.delete("/logout")
 async def logout(auth_client: CEAAuthClient):
     try:
-        message =  auth_client.logout()
+        auth_client.logout()
     except Exception as e:
         # TODO: Handle error based on error code
         print(e)
-    
-    response = Response(status_code=204)
-    response.headers["Clear-Site-Data"] = "\"cookies\""
-    return response
+
+    return Response(
+        status_code=status.HTTP_204_NO_CONTENT,
+        headers={
+            "Clear-Site-Data": "\"cookies\""
+        }
+    )
 
