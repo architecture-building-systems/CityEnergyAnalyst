@@ -6,6 +6,8 @@ CEAFrontEnd – Combines everything
 import cea.inputlocator
 import os
 import cea.config
+from cea.visualisation.b_data_processor import calc_x_y_metric
+from cea.visualisation.c_plotter import bar_plot, generate_fig
 import time
 import geopandas as gpd
 import plotly.graph_objects as go
@@ -40,12 +42,14 @@ def plot_all(config, scenario, plot_cea_feature, hour_start, hour_end):
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, hour_end)
 
     # Activate b_data_processor
-    df_to_plotly = calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
+    df_to_plotly, list_y_columns = calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
 
     # Activate c_plotter
-    # fig_html_path = plotter(config_config, scenario, plot_cea_feature, df_to_plotly)
+    fig = generate_fig(config_config, df_to_plotly, list_y_columns)
 
-    return df_to_plotly
+    # bar_plot = plotter(config_config, scenario, plot_cea_feature, df_to_plotly)
+
+    return fig
 
 
 def main(config):
@@ -54,8 +58,9 @@ def main(config):
     plot_cea_feature = 'demand'
     hour_start = 0
     hour_end = 8759
-    fig_html_path = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)
-    print(fig_html_path)
+    fig = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)
+    fig.show()
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

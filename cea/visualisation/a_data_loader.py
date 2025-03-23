@@ -196,17 +196,17 @@ def plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, 
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance = csv_pointer(config_config, scenario, plot_cea_feature, hour_start, hour_end)
+    plot_instance_a = csv_pointer(config_config, scenario, plot_cea_feature, hour_start, hour_end)
 
     # Get the summary results CSV path
-    summary_results_csv_path = plot_instance.get_summary_results_csv_path()
+    summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
 
     # Delete the existing file if it exists
     if os.path.exists(summary_results_csv_path):
         os.remove(summary_results_csv_path)
 
     # Execute the summary process
-    plot_instance.execute_summary()
+    plot_instance_a.execute_summary()
 
     # Load the summary results data
     try:
@@ -217,12 +217,12 @@ def plot_input_processor(config_config, scenario, plot_cea_feature, hour_start, 
 
     # Load the architecture data
     try:
-        df_architecture_data = pd.read_csv(plot_instance.locator.get_export_plots_selected_building_file())
+        df_architecture_data = pd.read_csv(plot_instance_a.locator.get_export_plots_selected_building_file())
     except Exception as e:
         print(f"Error loading csv file: {e}")
         df_architecture_data = None
 
-    return df_summary_data, df_architecture_data, plot_instance
+    return df_summary_data, df_architecture_data, plot_instance_a
 
 
 

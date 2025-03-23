@@ -75,7 +75,7 @@ class data_processor:
             df_y_metrics = self.df_summary_data.set_index('period')[list_columns]
         else:
             raise ValueError(f"Invalid x-to-plot: {self.x_to_plot}")
-        return df_y_metrics
+        return df_y_metrics, list_columns
 
 
 def normalize_dataframe_by_index(dataframe_A, dataframe_B):
@@ -165,77 +165,84 @@ def convert_energy_units(dataframe, target_unit, normalised=False):
     return df
 
 
-# Main function
-def calc_x_y_metric(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data):
-    plot_instance = data_processor(config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
-    df_to_plotly = pd.DataFrame()
-    if plot_cea_feature == "demand":
+def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architecture_data):
+    """
+    Generate a Plotly-ready DataFrame based on a plot_instance configuration.
 
-        # Calculating X:
-        if plot_instance.x_to_plot == 'by_building':
-            # Calculating Y: even when no_normalisation is selected, will just divide by 1 to keep the same value (not normalised)
-            normaliser_m2 = plot_instance.process_architecture_data()
-            df_y_metrics = plot_instance.process_demand_data()
-            df_to_plotly = normalize_dataframe_by_index(df_y_metrics, normaliser_m2)
+    Parameters:
+        plot_instance: An object containing plotting config and methods.
+        df_summary_data (pd.DataFrame): DataFrame of aggregated demand results.
+        df_architecture_data (pd.DataFrame): DataFrame of architecture/building metadata.
 
-            # Calculating X:
-            df_to_plotly = df_to_plotly.reset_index(drop=False)
-            df_to_plotly = df_to_plotly.rename(columns={'name': 'X'})
+    Returns:
+        pd.DataFrame: A normalized, unit-converted dataframe ready for Plotly visualization.
+    """
+    # Process normaliser and demand data
+    normaliser_m2 = plot_instance.process_architecture_data()
+    df_y_metrics, list_y_columns = plot_instance.process_demand_data()
 
-            # Calculating X_group:
-            if plot_instance.x_group is None:
-                pass
-            elif plot_instance.x_group == 'months':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            elif plot_instance.x_group == 'seasons':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            elif plot_instance.x_group == 'construction_type':
-                df_to_plotly['X_group'] = df_architecture_data['construction_type']
-            elif plot_instance.x_group == 'main_use_type':
-                df_to_plotly['X_group'] = df_architecture_data['main_use_type']
-            else:
-                raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
+    if plot_instance.x_to_plot == 'by_building':
+        # Normalize Y
+        df_to_plotly = normalize_dataframe_by_index(df_y_metrics, normaliser_m2)
 
-        elif plot_instance.x_to_plot == 'by_period':
-            # Calculating Y: even when no_normalisation is selected, will just divide by 1 to keep the same value (not normalised)
-            normaliser_m2 = plot_instance.process_architecture_data()
-            normaliser_m2_sum = normaliser_m2.iloc[:, 0].sum()
-            df_y_metrics = plot_instance.process_demand_data()
-            if plot_instance.y_normalised_by == 'no_normalisation':
-                df_to_plotly = df_y_metrics
-            else:
-                df_to_plotly = df_y_metrics / normaliser_m2_sum
+        # Set X
+        df_to_plotly = df_to_plotly.reset_index(drop=False)
+        df_to_plotly = df_to_plotly.rename(columns={'name': 'X'})
 
-            # Calculating X:
-            df_to_plotly = df_to_plotly.reset_index(drop=False)
-            df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
+        # Set X_group
+        if plot_instance.x_group in ['months', 'seasons']:
+            df_to_plotly['X_group'] = df_summary_data['period']
+        elif plot_instance.x_group == 'construction_type':
+            df_to_plotly['X_group'] = df_architecture_data['construction_type']
+        elif plot_instance.x_group == 'main_use_type':
+            df_to_plotly['X_group'] = df_architecture_data['main_use_type']
+        elif plot_instance.x_group is not None:
+            raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
 
-            # Calculating X_group:
-            if plot_instance.x_group is None:
-                pass
-            elif plot_instance.x_group == 'daily':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            elif plot_instance.x_group == 'monthly':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            elif plot_instance.x_group == 'seasonally':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            elif plot_instance.x_group == 'annually_or_selected':
-                df_to_plotly['X_group'] = df_summary_data['period']
-            else:
-                raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
-
-        else:
-            raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
-
-        # Drop the index
-        df_to_plotly = df_to_plotly.reset_index(drop=True)
-
-        # Convert energy units
+    elif plot_instance.x_to_plot == 'by_period':
+        # Normalize Y
         if plot_instance.y_normalised_by == 'no_normalisation':
-            df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
-        elif plot_instance.y_normalised_by == 'gross_floor_area' or 'conditioned_floor_area':
-            df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
+            df_to_plotly = df_y_metrics
         else:
-            raise ValueError(f"Invalid y-normalised-by: {plot_instance.y_normalised_by}")
+            normaliser_m2_sum = normaliser_m2.iloc[:, 0].sum()
+            df_to_plotly = df_y_metrics / normaliser_m2_sum
 
-    return df_to_plotly
+        # Set X
+        df_to_plotly = df_to_plotly.reset_index(drop=False)
+        df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
+
+        # Set X_group
+        if plot_instance.x_group in ['daily', 'monthly', 'seasonally', 'annually_or_selected']:
+            df_to_plotly['X_group'] = df_summary_data['period']
+        elif plot_instance.x_group is not None:
+            raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
+
+    else:
+        raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
+
+    # Clean up
+    df_to_plotly = df_to_plotly.reset_index(drop=True)
+
+    # Convert energy units
+    if plot_instance.y_normalised_by == 'no_normalisation':
+        df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
+    elif plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area']:
+        df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
+    else:
+        raise ValueError(f"Invalid y-normalised-by: {plot_instance.y_normalised_by}")
+
+    return df_to_plotly, list_y_columns
+
+
+# Main function
+def calc_x_y_metric(config_config, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data):
+    plot_instance_b = data_processor(config_config, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data)
+
+    if plot_cea_feature == "demand":
+        df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data)
+
+    else:
+        print("Error: Unsupported feature:", plot_cea_feature)
+        df_to_plotly = pd.DataFrame()   # This is unlikely to be used
+        list_y_columns = []
+    return df_to_plotly, list_y_columns
