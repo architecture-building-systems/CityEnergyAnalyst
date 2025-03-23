@@ -84,6 +84,7 @@ class JobInfo(SQLModel, table=True):
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     project_id: str = Field(foreign_key="project.id", index=True)
+    created_by: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
 
     @computed_field
     def script_label(self) -> Optional[str]:
@@ -119,6 +120,8 @@ def create_db_and_tables():
     logger.info("Preparing database...")
     initialize_db()
 
+    if not get_settings().local:
+        return
 
     # TODO: Remove once in release new version
     # Check and update existing table schemas
@@ -130,6 +133,13 @@ def create_db_and_tables():
             if 'owner' not in columns:
                 logger.info("Adding 'owner' column to project table...")
                 conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
+                conn.commit()
+
+        if 'job' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('job')]
+            if 'created_by' not in columns:
+                logger.info("Adding 'created_by' column to job table...")
+                conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
                 conn.commit()
 
 

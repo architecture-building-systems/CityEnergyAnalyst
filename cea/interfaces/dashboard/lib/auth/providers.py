@@ -14,23 +14,26 @@ class StackAuth:
     project_id = _settings.project_id
     publishable_client_key = _settings.publishable_client_key
 
+    cookie_name = _settings.cookie_name
+    jwks_url = f"https://api.stack-auth.com/api/v1/projects/{project_id}/.well-known/jwks.json"
+
     def __init__(self, access_token: str):
         self.access_token = access_token
 
-    def get_jwks_url(self):
-        return f"https://api.stack-auth.com/api/v1/projects/{self.project_id}/.well-known/jwks.json"
+    @staticmethod
+    def parse_token(token_string: str):
+        return json.loads(unquote(token_string))[1]
 
     @staticmethod
     def get_token(request: Request) -> Optional[str]:
         # Get access token from cookie
-        cookie_name = StackAuthSettings().cookie_name
-        token_string = request.cookies.get(cookie_name)
+        token_string = request.cookies.get(StackAuth.cookie_name)
 
         if token_string is None:
             # raise Exception("Access token not found in cookie. Load token first before sending requests.")
             return None
 
-        token = json.loads(unquote(token_string))[1]
+        token = StackAuth.parse_token(token_string)
         return token
 
     def _stack_auth_request(self, method, endpoint, **kwargs):

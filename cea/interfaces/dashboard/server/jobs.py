@@ -5,19 +5,20 @@ import subprocess
 from typing import Dict, Any, List
 
 import psutil
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
-    CEACheckAuth
+    CEACheckAuth, CEAUserID
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
-router = APIRouter(dependencies=[CEACheckAuth])
+# FIXME: Add auth checks after giving workers access token
+router = APIRouter()
 logger = getCEAServerLogger("cea-server-jobs")
 
 
@@ -43,7 +44,7 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/new")
-async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID,
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     args = payload
@@ -56,12 +57,12 @@ async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_i
     if not settings.local:
         parameters["multiprocessing"] = False
 
-    job = JobInfo(script=args["script"], parameters=parameters, project_id=project_id)
+    job = JobInfo(script=args["script"], parameters=parameters, project_id=project_id, created_by=user_id)
     session.add(job)
     session.commit()
     session.refresh(job)
 
-    await sio.emit("cea-job-created", job.model_dump(mode='json'))
+    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
     return job
 
 
@@ -77,7 +78,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         session.commit()
         session.refresh(job)
 
-        await sio.emit("cea-worker-started", job.model_dump(mode='json'))
+        await sio.emit("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
     except Exception as e:
         logger.error(e)
@@ -101,7 +102,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
-        await sio.emit("cea-worker-success", job.model_dump(mode='json'))
+        await sio.emit("cea-worker-success", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
     except Exception as e:
         logger.error(e)
@@ -130,7 +131,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError,
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
-        await sio.emit("cea-worker-error", job.model_dump(mode='json'))
+        await sio.emit("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
 
         logger.warning(f"Error found in job {job_id}: {job.error}")
         logger.error(f"stacktrace:\n{job.stderr}")
@@ -166,7 +167,7 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         session.refresh(job)
 
         await kill_job(job_id, worker_processes)
-        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'))
+        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
     except Exception as e:
         print(e)

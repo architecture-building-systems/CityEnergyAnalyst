@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
-from fastapi import Depends, Request, HTTPException, status
+from fastapi import Depends, Request, HTTPException, status, Cookie
 from sqlmodel import select
 from typing_extensions import Annotated
 
