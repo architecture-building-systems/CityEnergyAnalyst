@@ -1,6 +1,6 @@
 FROM ghcr.io/reyery/daysim:release AS daysim
 
-FROM mambaorg/micromamba:1.5.10-jammy AS cea
+FROM mambaorg/micromamba:2.0 AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
 USER root
