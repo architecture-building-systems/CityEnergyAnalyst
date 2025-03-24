@@ -1,11 +1,20 @@
 from functools import lru_cache
 from typing import Optional
-import warnings
 
-from pydantic import model_validator
+from pydantic import model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+
+logger = getCEAServerLogger("cea-server-settings")
+
+
+class StackAuthSettings(BaseSettings):
+    project_id: str
+    publishable_client_key: str
+
+    cookie_name: str = "stack-access"
+
 
 class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
@@ -32,7 +41,7 @@ class Settings(BaseSettings):
         if not self.local:
             if self.cors_origin == "*":
                 logger.warning("Security warning: Running with cors_origin='*'. "
-                              "This allows any origin to access your API and may pose security risks.")
+                               "This allows any origin to access your API and may pose security risks.")
             if self.db_url is None:
                 raise ValueError("Database URL not set. Please set db_url in config file.")
         return self
