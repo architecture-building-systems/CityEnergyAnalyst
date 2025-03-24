@@ -27,7 +27,7 @@ class bar_plot:
 
     def __init__(self, config_config, dataframe, list_y_columns):
 
-        # Get the dataframe prepared by the data processor, including Y(s), X, and X_group
+        # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
 
         # Get the settings for the format
@@ -97,20 +97,30 @@ class bar_plot:
         else:
             if self.x_to_plot == 'building':
                 x_label = "Buildings"
-            elif self.x_to_plot == 'building_grouped_by_months':
-                x_label = "Buildings (grouped by months)"
-            elif self.x_to_plot == 'building_grouped_by_seasons':
-                x_label = "Buildings (grouped by seasons)"
-            elif self.x_to_plot == 'building_grouped_by_construction_type':
-                x_label = "Buildings (grouped by construction type)"
-            elif self.x_to_plot == 'building_grouped_by_main_use_type':
-                x_label = "Buildings (grouped by main use type)"
+            elif self.x_to_plot == 'building_faceted_by_months':
+                x_label = "Buildings (faceted by months)"
+            elif self.x_to_plot == 'building_faceted_by_seasons':
+                x_label = "Buildings (faceted by seasons)"
+            elif self.x_to_plot == 'building_faceted_by_construction_type':
+                x_label = "Buildings (faceted by construction type)"
+            elif self.x_to_plot == 'building_faceted_by_main_use_type':
+                x_label = "Buildings (faceted by main use type)"
             elif self.x_to_plot == 'district_and_hourly':
                 x_label = "Hours"
+            elif self.x_to_plot == 'district_and_hourly_faceted_by_months':
+                x_label = "Hours (faceted by months)"
+            elif self.x_to_plot == 'district_and_hourly_faceted_by_seasons':
+                x_label = "Hours (faceted by seasons)"
             elif self.x_to_plot == 'district_and_daily':
                 x_label = "Days"
+            elif self.x_to_plot == 'district_and_daily_faceted_by_months':
+                x_label = "Days (faceted by months)"
+            elif self.x_to_plot == 'district_and_daily_faceted_by_seasons':
+                x_label = "Days (faceted by seasons)"
             elif self.x_to_plot == 'district_and_monthly':
                 x_label = "Months"
+            elif self.x_to_plot == 'district_and_monthly_faceted_by_seasons':
+                x_label = "Months (faceted by seasons)"
             elif self.x_to_plot == 'district_and_seasonally':
                 x_label = "Seasons"
             elif self.x_to_plot == 'district_and_annually_or_selected_period':

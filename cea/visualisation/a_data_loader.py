@@ -45,7 +45,7 @@ class csv_pointer:
         :param hour_end: End hour for analysis.
         """
 
-        x, x_group = get_x_and_x_group(config_config.x_to_plot)
+        x, x_facet = get_x_and_x_facet(config_config.x_to_plot)
         self.config = config_config
         self.scenario = scenario
         self.locator = cea.inputlocator.InputLocator(scenario=scenario)
@@ -57,7 +57,7 @@ class csv_pointer:
         self.y_normalised_by = config_config.y_normalised_by
         self.x_to_plot = config_config.x_to_plot
         self.x = x
-        self.x_group = x_group
+        self.x_facet = x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
         self.list_construction_type = config_config.filter_buildings_by_construction_type
@@ -148,7 +148,7 @@ class csv_pointer:
 
 
 # from X-to-plot to X and X_facet
-def get_x_and_x_group(x_to_plot):
+def get_x_and_x_facet(x_to_plot):
     if x_to_plot == "building":
         x = 'by_building'
         x_facet = None
