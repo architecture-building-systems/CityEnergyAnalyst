@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import ceil
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
+from cea.visualisation.b_data_processor import X_TO_PLOT_BUILDING
 
 
 __author__ = "Zhongming Shi"
@@ -152,9 +153,15 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode
+        if self.x_to_plot in X_TO_PLOT_BUILDING and not self.x_sorted_reversed:
+            title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
+        elif self.x_to_plot in X_TO_PLOT_BUILDING and self.x_sorted_reversed:
+            title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
+        else:
+            title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
         fig.update_layout(
             title=dict(
-                text=f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>",
+                text=title,
                 x=0,
                 y=0.98,
                 xanchor='left',
