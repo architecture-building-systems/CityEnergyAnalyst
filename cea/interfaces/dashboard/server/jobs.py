@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import select
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
-    CEAUserID
+    CEAUserID, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -27,14 +27,14 @@ class JobError(BaseModel):
     stacktrace: str
 
 
-@router.get("/")
+@router.get("/", dependencies=[CEASeverDemoAuthCheck])
 @router.get("/list")
 async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
     """Get a list of jobs for the current project"""
     return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
 
-@router.get("/{job_id}")
+@router.get("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
     job = session.get(JobInfo, job_id)
@@ -43,7 +43,7 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     return job
 
 
-@router.post("/new")
+@router.post("/new", dependencies=[CEASeverDemoAuthCheck])
 async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
@@ -142,7 +142,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post('/start/{job_id}')
+@router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
 async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print(f"tools/route_start: {job_id}")
@@ -153,7 +153,7 @@ async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerU
     return job_id
 
 
-@router.post("/cancel/{job_id}")
+@router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
     job = session.get(JobInfo, job_id)
     if not job:
@@ -175,7 +175,8 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{job_id}")
+@router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     """
     Delete a job from the database. This is only possible if the job is not running.

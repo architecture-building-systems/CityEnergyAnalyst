@@ -9,7 +9,7 @@ import cea.config
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEACheckAuth
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
 
 router = APIRouter()
 
@@ -65,7 +65,7 @@ async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperti
     return out
 
 
-@router.post('/{tool_name}/default', dependencies=[CEACheckAuth])
+@router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
 async def restore_default_config(config: CEAConfig, tool_name: str):
     """Restore the default configuration values for the CEA"""
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
@@ -88,7 +88,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     return 'Success'
 
 
-@router.post('/{tool_name}/save-config', dependencies=[CEACheckAuth])
+@router.post('/{tool_name}/save-config', dependencies=[CEASeverDemoAuthCheck])
 async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
     """Save the configuration for this tool to the configuration file"""
     for parameter in parameters_for_script(tool_name, config):

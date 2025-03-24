@@ -223,6 +223,7 @@ def get_server_url():
 
 
 def get_project_root(user_id: CEAUserID):
+    """Get the project root for the current user"""
     project_root = settings.project_root
 
     if not settings.local:
@@ -278,7 +279,7 @@ def get_auth_client(request: Request):
     raise Exception("Unable get auth client")
 
 
-def check_auth(request: Request, user_id: CEAUserID):
+def check_auth_for_demo(request: Request, user_id: CEAUserID):
     """Check if user is authorized when not in local mode"""
 
     # Pass if local mode
@@ -306,4 +307,4 @@ CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
 CEAAuthClient = Annotated[StackAuth, Depends(get_auth_client)]
 
-CEACheckAuth = Depends(check_auth)
+CEASeverDemoAuthCheck = Depends(check_auth_for_demo)

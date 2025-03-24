@@ -23,7 +23,8 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
+    CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
@@ -232,7 +233,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
     return ProjectInfo(**project_info)
 
 
-@router.post('/')
+@router.post('/', dependencies=[CEASeverDemoAuthCheck])
 async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject,
                              user_id: CEAUserID, session: SessionDep):
     """
@@ -265,7 +266,7 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     return {'message': 'Project folder created', 'project': project}
 
 
-@router.put('/')
+@router.put('/', dependencies=[CEASeverDemoAuthCheck])
 async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
@@ -298,7 +299,7 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
 
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
-@router.post('/scenario/v2')
+@router.post('/scenario/v2', dependencies=[CEASeverDemoAuthCheck])
 async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()]):
     project_path = scenario_form.project
     if project_root is not None and not project_path.startswith(project_root):
@@ -568,7 +569,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
-@router.delete('/scenario/{scenario}', dependencies=[Depends(check_scenario_exists)])
+@router.delete('/scenario/{scenario}', dependencies=[CEASeverDemoAuthCheck, Depends(check_scenario_exists)])
 async def delete(project_info: CEAProjectInfo, scenario: str):
     """Delete scenario from project"""
     scenario_path = secure_path(os.path.join(project_info.project, scenario))
