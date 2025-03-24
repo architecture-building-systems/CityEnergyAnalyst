@@ -177,7 +177,8 @@ class bar_plot:
         #     linecolor="black",          # Axis line color
         #     linewidth=1,
             gridcolor="white",
-            gridwidth=2.5,# Grid line color
+            gridwidth=2.5, # Grid line color
+            tickson='boundaries',
         #     zerolinecolor="grey",       # Zero line (if shown)
         )
 
@@ -186,7 +187,7 @@ class bar_plot:
         #     linecolor="black",
         #     linewidth=0,
             gridcolor="white",
-            gridwidth=1.1,
+            gridwidth=1.2,
         #     zerolinecolor="grey"
         )
 
@@ -337,11 +338,10 @@ def plot_faceted_bars(
 
     # Set the step for Y-axis
     if y_step is not None:
-        for axis in fig.layout:
-            if axis.startswith("yaxis"):
-                fig.layout[axis].update(
-                    dtick=y_step  # change to your desired interval
-                )
+        fig.update_yaxes(
+            dtick=y_step  # or 5, 20, etc. depending on your data
+        )
+
     return fig
 
 
