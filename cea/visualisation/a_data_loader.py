@@ -69,13 +69,18 @@ class csv_pointer:
 
         time_period_map = {
             "building": "annually",
-            "building_grouped_by_months": "monthly",
-            "building_grouped_by_seasons": "seasonally",
-            "building_grouped_by_construction_type": "annually",
-            "building_grouped_by_main_use_type": "annually",
+            "building_faceted_by_months": "monthly",
+            "building_faceted_by_seasons": "seasonally",
+            "building_faceted_by_construction_type": "annually",
+            "building_faceted_by_main_use_type": "annually",
             "district_and_hourly": 'hourly',
+            "district_and_hourly_faceted_by_months": 'hourly',
+            "district_and_hourly_faceted_by_seasons": 'hourly',
             "district_and_daily": "daily",
+            "district_and_daily_faceted_by_months": "daily",
+            "district_and_daily_faceted_by_seasons": "daily",
             "district_and_monthly": "monthly",
+            "district_and_monthly_faceted_by_seasons": "monthly",
             "district_and_seasonally": "seasonally",
             "district_and_annually_or_selected_period": "annually"
         }
@@ -142,42 +147,57 @@ class csv_pointer:
             )
 
 
-# from X-to-plot to X and X_group
+# from X-to-plot to X and X_facet
 def get_x_and_x_group(x_to_plot):
     if x_to_plot == "building":
         x = 'by_building'
-        x_group = None
-    elif x_to_plot == "building_grouped_by_months":
+        x_facet = None
+    elif x_to_plot == "building_faceted_by_months":
         x = 'by_building'
-        x_group = 'months'
-    elif x_to_plot == "building_grouped_by_seasons":
+        x_facet = 'months'
+    elif x_to_plot == "building_faceted_by_seasons":
         x = 'by_building'
-        x_group = 'seasons'
-    elif x_to_plot == "building_grouped_by_construction_type":
+        x_facet = 'seasons'
+    elif x_to_plot == "building_faceted_by_construction_type":
         x = 'by_building'
-        x_group = 'construction_type'
-    elif x_to_plot == "building_grouped_by_main_use_type":
+        x_facet = 'construction_type'
+    elif x_to_plot == "building_faceted_by_main_use_type":
         x = 'by_building'
-        x_group = 'main_use_type'
+        x_facet = 'main_use_type'
     elif x_to_plot == "district_and_hourly":
         x = 'by_period'
-        x_group = None
+        x_facet = None
+    elif x_to_plot == "district_and_hourly_faceted_by_months":
+        x = 'by_period'
+        x_facet = 'months'
+    elif x_to_plot == "district_and_hourly_faceted_by_seasons":
+        x = 'by_period'
+        x_facet = 'seasons'
     elif x_to_plot == "district_and_daily":
         x = 'by_period'
-        x_group = None
+        x_facet = None
+    elif x_to_plot == "district_and_daily_faceted_by_months":
+        x = 'by_period'
+        x_facet = 'months'
+    elif x_to_plot == "district_and_daily_faceted_by_seasons":
+        x = 'by_period'
+        x_facet = 'seasons'
     elif x_to_plot == "district_and_monthly":
         x = 'by_period'
-        x_group = None
+        x_facet = None
+    elif x_to_plot == "district_and_monthly_faceted_by_seasons":
+        x = 'by_period'
+        x_facet = 'seasons'
     elif x_to_plot == "district_and_seasonally":
         x = 'by_period'
-        x_group = None
+        x_facet = None
     elif x_to_plot == "district_and_annually_or_selected_period":
         x = 'by_period'
-        x_group = None
+        x_facet = None
     else:
         raise ValueError(f"Invalid x-to-plot: {x_to_plot}")
 
-    return x, x_group
+    return x, x_facet
 
 
 # Main function

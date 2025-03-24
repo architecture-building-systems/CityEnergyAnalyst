@@ -32,7 +32,6 @@ class bar_plot:
 
         # Get the settings for the format
         self.plot_title = config_config.plot_title
-        self.transposed = config_config.transposed
         self.y_metric_to_plot = config_config.y_metric_to_plot
         self.y_columns = list_y_columns
         self.y_metric_unit = config_config.y_metric_unit
@@ -45,7 +44,6 @@ class bar_plot:
         self.x_to_plot = config_config.x_to_plot
         self.x_sorted_by = config_config.x_sorted_by
         self.x_sorted_reversed = config_config.x_sorted_reversed
-        self.x_faceted_by = config_config.x_faceted_by
         self.x_label = config_config.x_label
 
     def generate_fig(self):
@@ -59,12 +57,9 @@ class bar_plot:
         else:
             df = self.df
 
-        # Combine the two x-axis levels
-        df["x_combined"] = df['X'].astype(str) + "<br>" + df['X_group'].astype(str)
-
         # Create bar chart
         for col, heading in zip(self.y_columns, self.y_metric_to_plot):
-            fig.add_bar(x=df["x_combined"], y=df[col], name=heading)
+            fig.add_bar(x=df["X"], y=df[col], name=heading)
 
         return fig
 
@@ -127,6 +122,8 @@ class bar_plot:
             barmode = 'stack'
         else:
             barmode = self.y_barmode
+
+        # About title, x-axis, y-axis
         fig.update_layout(
             title=title,
             xaxis_title=x_label,
@@ -134,6 +131,7 @@ class bar_plot:
             barmode=barmode
         )
 
+        # About legend
         fig.update_layout(legend=dict(
             orientation="h",          # Horizontal layout
             yanchor="bottom",

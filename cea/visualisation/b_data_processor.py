@@ -28,7 +28,7 @@ class data_processor:
         self.y_metric_unit = config_config.y_metric_unit
         self.y_normalised_by = config_config.y_normalised_by
         self.x_to_plot = plot_instance.x
-        self.x_group = plot_instance.x_group
+        self.x_facet = plot_instance.x_facet
         self.integer_year_start = config_config.filter_buildings_by_year_start
         self.integer_year_end = config_config.filter_buildings_by_year_end
         self.list_construction_type = config_config.filter_buildings_by_construction_type
@@ -189,15 +189,15 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         df_to_plotly = df_to_plotly.reset_index(drop=False)
         df_to_plotly = df_to_plotly.rename(columns={'name': 'X'})
 
-        # Set X_group
-        if plot_instance.x_group in ['months', 'seasons']:
-            df_to_plotly['X_group'] = df_summary_data['period']
-        elif plot_instance.x_group == 'construction_type':
-            df_to_plotly['X_group'] = df_architecture_data['construction_type']
-        elif plot_instance.x_group == 'main_use_type':
-            df_to_plotly['X_group'] = df_architecture_data['main_use_type']
-        elif plot_instance.x_group is not None:
-            raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
+        # Set X_facet
+        if plot_instance.x_facet in ['months', 'seasons']:
+            df_to_plotly['X_facet'] = df_summary_data['period']
+        elif plot_instance.x_facet == 'construction_type':
+            df_to_plotly['X_facet'] = df_architecture_data['construction_type']
+        elif plot_instance.x_facet == 'main_use_type':
+            df_to_plotly['X_facet'] = df_architecture_data['main_use_type']
+        elif plot_instance.x_facet is not None:
+            raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
 
     elif plot_instance.x_to_plot == 'by_period':
         # Normalize Y
@@ -211,11 +211,11 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         df_to_plotly = df_to_plotly.reset_index(drop=False)
         df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
 
-        # Set X_group
-        if plot_instance.x_group in ['daily', 'monthly', 'seasonally', 'annually_or_selected']:
-            df_to_plotly['X_group'] = df_summary_data['period']
-        elif plot_instance.x_group is not None:
-            raise ValueError(f"Invalid x-group: {plot_instance.x_group}")
+        # Set X_facet
+        if plot_instance.x_facet in ['daily', 'monthly', 'seasonally', 'annually_or_selected']:
+            df_to_plotly['X_facet'] = df_summary_data['period']
+        elif plot_instance.x_facet is not None:
+            raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
 
     else:
         raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
