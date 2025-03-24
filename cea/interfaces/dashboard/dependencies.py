@@ -157,21 +157,21 @@ class CEADatabaseConfig(cea.config.Configuration):
                 session.add(Config(user_id=self._user_id, config=self.to_dict()))
             session.commit()
 
-        # Invalidate cache
-        async def invalidate_cache():
+        # Update cache
+        async def update_cache():
             _cache = caches.get(CACHE_NAME)
             cache_key = f"cea_config_{self._user_id}"
-            await _cache.delete(cache_key)
-            cea_db_config_logger.debug(f"Invalidated config cache for user: {self._user_id}")
+            await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
+            cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
 
         # Run in event loop
         import asyncio
         try:
-            asyncio.create_task(invalidate_cache())
+            asyncio.create_task(update_cache())
         except RuntimeError:
             # If no event loop is running
             loop = asyncio.new_event_loop()
-            loop.run_until_complete(invalidate_cache())
+            loop.run_until_complete(update_cache())
             loop.close()
 
 
