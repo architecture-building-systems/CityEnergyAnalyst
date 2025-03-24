@@ -305,8 +305,11 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     daysim_project.write_radiance_parameters(**radiance_parameters)
 
     print('Executing hourly solar isolation calculation')
+    import time
+    start = time.time()
     daysim_project.execute_gen_dc()
     daysim_project.execute_ds_illum()
+    print(f"Daysim calculation took {time.time() - start} seconds")
 
     print('Reading results...')
     solar_res = daysim_project.eval_ill()
