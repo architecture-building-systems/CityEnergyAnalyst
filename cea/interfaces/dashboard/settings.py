@@ -10,6 +10,8 @@ logger = getCEAServerLogger("cea-server-settings")
 
 
 class StackAuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='cea_auth_')
+
     project_id: str
     publishable_client_key: str
 
