@@ -34,7 +34,7 @@ async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInf
     return [job for job in session.exec(select(JobInfo).where(JobInfo.project_id == project_id))]
 
 
-@router.get("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+@router.get("/{job_id}")
 async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
     job = session.get(JobInfo, job_id)
@@ -175,7 +175,6 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     """
