@@ -328,9 +328,9 @@ def plot_faceted_bars(
             )
 
     # Find the global min/max across all value columns
-    if y_max is not None:
+    if y_max is None:
         y_max = df[value_columns].max().max()*1.05
-    if y_min is not None:
+    if y_min is None:
         y_min = df[value_columns].min().min()
 
     fig.update_yaxes(range=[y_min, y_max])
