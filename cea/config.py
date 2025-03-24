@@ -83,9 +83,11 @@ class Configuration:
 
     def __getstate__(self) -> str:
         """when we pickle, we only really need to pickle the user_config"""
-        config_data = io.StringIO()
-        self.user_config.write(config_data)
-        return config_data.getvalue()
+        buffer = io.StringIO()
+        self.user_config.write(buffer)
+        value = buffer.getvalue()
+        buffer.close()
+        return value
 
     def __setstate__(self, state: str):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
@@ -95,7 +97,9 @@ class Configuration:
         self.default_config.read(DEFAULT_CONFIG)
 
         self.user_config = configparser.ConfigParser()
-        self.user_config.read_file(io.StringIO(state))
+        buffer = io.StringIO(state)
+        self.user_config.read_file(buffer)
+        buffer.close()
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 

@@ -28,7 +28,7 @@ caches.set_config({
         }
     }
 })
-
+CONFIG_CACHE_TTL = 300
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
 settings = get_settings()
@@ -80,12 +80,25 @@ class CEALocalConfig(cea.config.Configuration):
         logger.info(f"Saving config to {config_file}")
         super().save(config_file)
 
+
 class CEADatabaseConfig(cea.config.Configuration):
     def __init__(self, user_id: str):
         self._user_id = user_id
 
         super().__init__(cea.config.DEFAULT_CONFIG)
         self.read()
+
+    def __getstate__(self) -> str:
+        # Add user_id to state when pickling
+        string = super().__getstate__()
+        return f"{self._user_id}\n{string}"
+
+    def __setstate__(self, state: str):
+        # Read user_id from state when unpickling
+        user_id, string = state.split("\n", 1)
+        self._user_id = user_id
+
+        super().__setstate__(string)
 
     def from_dict(self, config_dict: dict):
         """
@@ -144,13 +157,46 @@ class CEADatabaseConfig(cea.config.Configuration):
                 session.add(Config(user_id=self._user_id, config=self.to_dict()))
             session.commit()
 
+        # Invalidate cache
+        async def invalidate_cache():
+            _cache = caches.get(CACHE_NAME)
+            cache_key = f"cea_config_{self._user_id}"
+            await _cache.delete(cache_key)
+            cea_db_config_logger.debug(f"Invalidated config cache for user: {self._user_id}")
+
+        # Run in event loop
+        import asyncio
+        try:
+            asyncio.create_task(invalidate_cache())
+        except RuntimeError:
+            # If no event loop is running
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(invalidate_cache())
+            loop.close()
+
 
 async def get_cea_config(user_id: CEAUserID):
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
     if settings.db_url is not None and user_id != LOCAL_USER_ID:
-        return CEADatabaseConfig(user_id)
+        # Try to get config from cache first
+        _cache = caches.get(CACHE_NAME)
+        cache_key = f"cea_config_{user_id}"
+
+        # Try to get from cache
+        config = await _cache.get(cache_key)
+        if config is not None:
+            cea_db_config_logger.debug(f"Using cached config for user: {user_id}")
+            return config
+
+        # Cache miss, read from database
+        cea_db_config_logger.debug(f"Cache miss, reading config from database for user: {user_id}")
+        config = CEADatabaseConfig(user_id)
+
+        # Cache the config
+        await _cache.set(cache_key, config, ttl=CONFIG_CACHE_TTL)
+        return config
 
     # Read config from file if config_path is set
     if settings.config_path is not None:
@@ -171,6 +217,7 @@ async def get_project_info(config: CEAConfig) -> ProjectInfo:
         project=config.project,
         scenario=config.scenario,
     )
+
 
 def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
     project = Project(uri=project_uri, owner=owner_id)
@@ -254,7 +301,7 @@ def get_user_id(request: Request) -> dict:
 
 def get_user(request: Request):
     if settings.local:
-        return {'id': LOCAL_USER_ID }
+        return {'id': LOCAL_USER_ID}
 
     # Try to get user id from request cookie
     if (token := StackAuth.get_token(request)) is not None:
@@ -266,7 +313,7 @@ def get_user(request: Request):
             # raise Exception("Unable to verify user token")
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
-    return {'id': LOCAL_USER_ID }
+    return {'id': LOCAL_USER_ID}
 
 
 def get_auth_client(request: Request):
