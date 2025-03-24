@@ -58,7 +58,7 @@ class bar_plot:
 
         # Process the data if 100% stacked bar chart is selected
         if self.y_barmode == 'stack_percentage':
-            df = convert_to_percent_stacked(self.df, self.y_columns)
+            df = convert_to_percent_stacked(self.df, self.y_columns_normalised)
         else:
             df = self.df
 
@@ -195,7 +195,7 @@ def position_legend_between_title_and_graph(fig):
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=1,  # Slightly below the top of the whole layout
+            y=1.01,  # Slightly below the top of the whole layout
             xanchor="left",
             x=0
         )
@@ -219,7 +219,6 @@ def convert_to_percent_stacked(df, list_y_columns):
     row_sums = df_percent[list_y_columns].sum(axis=1)
     df_percent[list_y_columns] = df_percent[list_y_columns].div(row_sums, axis=0) * 100
     return df_percent
-
 
 
 
