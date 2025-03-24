@@ -5,6 +5,7 @@ PlotManager – Generates the Plotly graph
 
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
 from cea.visualisation.b_data_processor import demand_x_to_plot_building
+from cea.import_export.result_summary import month_names, month_hours, season_mapping, season_names
 from math import ceil
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -68,7 +69,7 @@ class bar_plot:
                                 y_max=self.y_max, y_min=self.y_min, y_step=self.y_step)
 
         # Position legend below
-        fig = position_legend_below(fig, df['X'].unique(), row_height=30)
+        fig = position_legend_between_title_and_graph(fig)
 
         return fig
 
@@ -181,31 +182,23 @@ class bar_plot:
         return fig
 
 
-def position_legend_below(fig, x_labels, row_height=10):
+def position_legend_between_title_and_graph(fig):
     """
-    Dynamically position legend under the x-axis based on number of x-ticks.
+    Position legend between the title and plot, and push the graph downward.
 
     Parameters:
     - fig: plotly.graph_objects.Figure
-    - x_labels: list of strings used for x-axis
-    - row_height: estimated pixel height per row of labels (optional)
     """
-    # Estimate how much space is needed below
-    max_label_length = max(len(str(x)) for x in x_labels)
 
-    # Heuristic: adjust margin bottom and y position based on size
-    margin_bottom = min(150, 50 + int((max_label_length / 10) * row_height))
-    legend_y = -0.1  # fixed so it always goes below, you can tweak this
-
+    # Shrink top margin and push down plot
     fig.update_layout(
         legend=dict(
             orientation='h',
-            yanchor="bottom",
-            y=legend_y,
+            yanchor="top",
+            y=1,  # Slightly below the top of the whole layout
             xanchor="left",
             x=0
-        ),
-        margin=dict(b=margin_bottom)
+        )
     )
 
     return fig
@@ -228,6 +221,8 @@ def convert_to_percent_stacked(df, list_y_columns):
     return df_percent
 
 
+
+
 def plot_faceted_bars(
     df,
     x_col,
@@ -242,12 +237,29 @@ def plot_faceted_bars(
 ):
     is_faceted = facet_col is not None and facet_col in df.columns
 
+    # Define custom facet order
+    season_display_names = {
+        'Spring': "<b>Spring</b> (Feb - Apr)",
+        'Summer': "<b>Summer</b> (May - Aug)",
+        'Autumn': "<b>Autumn</b> (Sep - Nov)",
+        'Winter': "<b>Winter</b> (Dec - Dec)"
+    }
+
     if is_faceted:
-        facets = sorted(df[facet_col].unique())
+        raw_facets = df[facet_col].unique()
+
+        # Apply custom order if possible
+        if all(f in month_names for f in raw_facets):
+            facets = [f for f in month_names if f in raw_facets]
+        elif all(f in season_names for f in raw_facets):
+            facets = [f for f in season_names if f in raw_facets]
+        else:
+            facets = list(raw_facets)  # fallback to original order
+
         num_facets = len(facets)
 
         if number_of_rows_or_columns is None:
-            number_of_rows_or_columns = 2 if num_facets > 1 else 1
+            number_of_rows_or_columns = 4 if num_facets > 1 else 1
 
         if bool_use_rows:
             rows = number_of_rows_or_columns
@@ -259,7 +271,7 @@ def plot_faceted_bars(
         fig = make_subplots(
             rows=rows,
             cols=cols,
-            subplot_titles=[str(f) for f in facets],
+            subplot_titles=[""] * num_facets,
             shared_yaxes=True,
             horizontal_spacing=0.01,
             vertical_spacing=0.125
@@ -289,8 +301,56 @@ def plot_faceted_bars(
                     col=col
                 )
 
+        # --- Adjust subplot vertical layout ---
+        available_height = 0.80
+        row_spacing = 0.125
+        total_spacing = row_spacing * (rows - 1)
+        row_height = (available_height - total_spacing) / rows
+
+        for r in range(1, rows + 1):
+            row_bottom = 0.05 + (rows - r) * (row_height + row_spacing)
+            row_top = row_bottom + row_height
+
+            for c in range(1, cols + 1):
+                subplot_index = (r - 1) * cols + c
+                if subplot_index > len(facets):
+                    continue
+
+                yaxis_name = f'yaxis{"" if subplot_index == 1 else subplot_index}'
+                if yaxis_name in fig.layout:
+                    fig.layout[yaxis_name].domain = [row_bottom, row_top]
+
+        # --- Custom subplot titles ---
+        annotations = []
+        for i, facet in enumerate(facets):
+            subplot_index = i + 1
+            xaxis_key = f'xaxis{"" if subplot_index == 1 else subplot_index}'
+            yaxis_key = f'yaxis{"" if subplot_index == 1 else subplot_index}'
+
+            x_dom = fig.layout[xaxis_key].domain
+            y_dom = fig.layout[yaxis_key].domain
+
+            # Get custom display name
+            if facet in season_display_names:
+                display_text = season_display_names[facet]
+            else:
+                display_text = f"<b>{facet}</b>"
+
+            annotations.append(dict(
+                text=f"<span style='font-size:10pt'>{display_text}</span>",
+                xref='paper',
+                yref='paper',
+                x=x_dom[0],
+                y=y_dom[1] + 0.01,
+                xanchor='left',
+                yanchor='bottom',
+                showarrow=False
+            ))
+
+        fig.update_layout(annotations=annotations)
+
     else:
-        # No faceting — single plot
+        # No faceting
         fig = go.Figure()
         for j, val_col in enumerate(value_columns):
             heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
@@ -308,7 +368,9 @@ def plot_faceted_bars(
                 )
             )
 
-    # Shared y-axis config for both cases
+        fig.update_layout(yaxis=dict(domain=[0.02, 0.82]))
+
+    # --- Y-Axis limits and tick steps ---
     if y_max is None:
         y_max = df[value_columns].max().max() * 1.05
     if y_min is None:
@@ -319,7 +381,10 @@ def plot_faceted_bars(
     if y_step is not None:
         fig.update_yaxes(dtick=y_step)
 
+    print(fig.layout.xaxis.domain)
+
     return fig
+
 
 
 
