@@ -10,11 +10,10 @@ from pydantic import BaseModel
 from sqlmodel import select
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
-    CEAUserID, CEASeverDemoAuthCheck
+    CEAUserID, CEASeverDemoAuthCheck, CEAStreams
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.server.streams import streams
 from cea.interfaces.dashboard.server.socketio import sio
 
 # FIXME: Add auth checks after giving workers access token
@@ -87,7 +86,8 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
+                          worker_processes: CEAWorkerProcesses) -> JobInfo:
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -96,7 +96,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = get_current_time()
-        job.stdout = "".join(streams.get(job_id, []))
+        job.stdout = "".join(await streams.pop(job_id, []))
         session.commit()
         session.refresh(job)
 
@@ -111,7 +111,7 @@ async def set_job_success(session: SessionDep, job_id: str, worker_processes: CE
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(session: SessionDep, job_id: str, error: JobError,
+async def set_job_error(session: SessionDep, job_id: str, error: JobError, streams: CEAStreams,
                         worker_processes: CEAWorkerProcesses) -> JobInfo:
     message = error.message
     stacktrace = error.stacktrace
@@ -124,7 +124,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError,
         job.state = JobState.ERROR
         job.error = message
         job.end_time = get_current_time()
-        job.stdout = "".join(streams.get(job_id, []))
+        job.stdout = "".join(await streams.pop(job_id, []))
         job.stderr = stacktrace
         session.commit()
         session.refresh(job)

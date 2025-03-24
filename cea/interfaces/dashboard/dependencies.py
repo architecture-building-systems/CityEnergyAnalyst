@@ -40,9 +40,14 @@ class AsyncDictCache:
         self._cache = cache
         self._cache_key = cache_key
 
-    async def get(self, item_id):
-        _dict = await self._cache.get(self._cache_key, dict())
-        return _dict[item_id]
+    async def get(self, item_id, default=None):
+        _dict: dict = await self._cache.get(self._cache_key, dict())
+        return _dict.get(item_id, default)
+
+    async def pop(self, item_id, default=None):
+        value = await self.get(item_id, default)
+        await self.delete(item_id)
+        return value
 
     async def set(self, item_id, value):
         _dict = await self._cache.get(self._cache_key, dict())
@@ -262,6 +267,18 @@ async def get_worker_processes():
     return AsyncDictCache(_cache, "worker_processes")
 
 
+async def get_streams():
+    _cache = caches.get(CACHE_NAME)
+    streams = await _cache.get("streams")
+
+    if streams is None:
+        # map jobid to a list of messages
+        streams = dict()
+        await _cache.set("streams", streams)
+
+    return AsyncDictCache(_cache, "streams")
+
+
 def get_server_url():
     host = settings.host
     port = settings.port
@@ -348,7 +365,8 @@ CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
 CEAProjectID = Annotated[str, Depends(get_project_id)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
-CEAWorkerProcesses = Annotated[dict, Depends(get_worker_processes)]
+CEAWorkerProcesses = Annotated[AsyncDictCache, Depends(get_worker_processes)]
+CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
