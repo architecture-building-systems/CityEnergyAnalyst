@@ -4,7 +4,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 """
 
 import pandas as pd
-import re
+
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -15,7 +15,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-X_TO_PLOT_BUILDING = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
+demand_x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
 
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
@@ -289,7 +289,7 @@ def calc_x_y_metric(config_config, plot_instance_a, plot_cea_feature, df_summary
     if plot_cea_feature == "demand":
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data)
 
-        if plot_instance_b.x_to_plot in X_TO_PLOT_BUILDING:
+        if plot_instance_b.x_to_plot in demand_x_to_plot_building:
             df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
 
     else:

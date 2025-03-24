@@ -3,21 +3,12 @@ PlotManager – Generates the Plotly graph
 
 """
 
-import cea.inputlocator
-import os
-import cea.config
-import time
-import geopandas as gpd
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from math import ceil
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
-from cea.visualisation.b_data_processor import X_TO_PLOT_BUILDING
+from cea.visualisation.b_data_processor import demand_x_to_plot_building
+from math import ceil
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 __author__ = "Zhongming Shi"
@@ -153,9 +144,9 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode
-        if self.x_to_plot in X_TO_PLOT_BUILDING and not self.x_sorted_reversed:
+        if self.x_to_plot in demand_x_to_plot_building and not self.x_sorted_reversed:
             title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
-        elif self.x_to_plot in X_TO_PLOT_BUILDING and self.x_sorted_reversed:
+        elif self.x_to_plot in demand_x_to_plot_building and self.x_sorted_reversed:
             title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
         else:
             title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
@@ -245,71 +236,92 @@ def plot_faceted_bars(
     value_columns,
     y_metric_to_plot,
     bool_use_rows=False,
-    number_of_rows_or_columns=None, y_min=None, y_max=None, y_step=None
+    number_of_rows_or_columns=None,
+    y_min=None,
+    y_max=None,
+    y_step=None
 ):
-    facets = sorted(df[facet_col].unique())
-    num_facets = len(facets)
+    is_faceted = facet_col is not None and facet_col in df.columns
 
-    # Fallback if not provided
-    if number_of_rows_or_columns is None:
-        number_of_rows_or_columns = 2 if num_facets > 1 else 1
+    if is_faceted:
+        facets = sorted(df[facet_col].unique())
+        num_facets = len(facets)
 
-    if bool_use_rows:
-        rows = number_of_rows_or_columns
-        cols = ceil(num_facets / rows)
+        if number_of_rows_or_columns is None:
+            number_of_rows_or_columns = 2 if num_facets > 1 else 1
+
+        if bool_use_rows:
+            rows = number_of_rows_or_columns
+            cols = ceil(num_facets / rows)
+        else:
+            cols = number_of_rows_or_columns
+            rows = ceil(num_facets / cols)
+
+        fig = make_subplots(
+            rows=rows,
+            cols=cols,
+            subplot_titles=[str(f) for f in facets],
+            shared_yaxes=True,
+            horizontal_spacing=0.01,
+            vertical_spacing=0.125
+        )
+
+        for i, facet in enumerate(facets):
+            row = (i // cols) + 1
+            col = (i % cols) + 1
+            facet_df = df[df[facet_col] == facet]
+
+            for j, val_col in enumerate(value_columns):
+                heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
+                color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+                bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
+
+                fig.add_trace(
+                    go.Bar(
+                        x=facet_df[x_col],
+                        y=facet_df[val_col],
+                        name=heading,
+                        offsetgroup=j,
+                        legendgroup=heading,
+                        showlegend=(i == 0),
+                        marker=dict(color=bar_color)
+                    ),
+                    row=row,
+                    col=col
+                )
+
     else:
-        cols = number_of_rows_or_columns
-        rows = ceil(num_facets / cols)
-
-    fig = make_subplots(
-        rows=rows,
-        cols=cols,
-        subplot_titles=[str(f) for f in facets],
-        shared_yaxes=True,
-        horizontal_spacing=0.01,
-        vertical_spacing=0.125
-    )
-
-    for i, facet in enumerate(facets):
-        row = (i // cols) + 1
-        col = (i % cols) + 1
-        facet_df = df[df[facet_col] == facet]
-
+        # No faceting — single plot
+        fig = go.Figure()
         for j, val_col in enumerate(value_columns):
             heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
-
-            color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")  # fallback to grey
-            bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")  # fallback RGB
+            color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+            bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
             fig.add_trace(
                 go.Bar(
-                    x=facet_df[x_col],
-                    y=facet_df[val_col],
+                    x=df[x_col],
+                    y=df[val_col],
                     name=heading,
                     offsetgroup=j,
                     legendgroup=heading,
-                    showlegend=(i == 0),  # Show legend only once
                     marker=dict(color=bar_color)
-                ),
-                row=row,
-                col=col
+                )
             )
 
-    # Find the global min/max across all value columns
+    # Shared y-axis config for both cases
     if y_max is None:
-        y_max = df[value_columns].max().max()*1.05
+        y_max = df[value_columns].max().max() * 1.05
     if y_min is None:
         y_min = df[value_columns].min().min()
 
     fig.update_yaxes(range=[y_min, y_max])
 
-    # Set the step for Y-axis
     if y_step is not None:
-        fig.update_yaxes(
-            dtick=y_step  # or 5, 20, etc. depending on your data
-        )
+        fig.update_yaxes(dtick=y_step)
 
     return fig
+
 
 
 # Main function

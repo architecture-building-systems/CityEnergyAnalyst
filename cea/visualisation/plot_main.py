@@ -5,6 +5,8 @@ CEAFrontEnd – Combines everything
 
 import cea.config
 from cea.visualisation.c_plotter import generate_fig
+from cea.visualisation.a_data_loader import plot_input_processor
+from cea.visualisation.b_data_processor import calc_x_y_metric
 
 
 __author__ = "Zhongming Shi"
@@ -16,8 +18,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.visualisation.a_data_loader import plot_input_processor
-from cea.visualisation.b_data_processor import calc_x_y_metric
 
 def config_config_locator(config, plot_cea_feature):
     if plot_cea_feature == 'demand':
