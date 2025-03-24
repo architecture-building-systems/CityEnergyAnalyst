@@ -4,6 +4,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 """
 
 import pandas as pd
+from cea.import_export.result_summary import month_names, month_hours, season_mapping
 
 
 __author__ = "Zhongming Shi"
@@ -237,8 +238,8 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
 
         # Set X_facet
-        if plot_instance.x_facet in ['daily', 'monthly', 'seasonally', 'annually_or_selected']:
-            df_to_plotly['X_facet'] = df_summary_data['period']
+        if plot_instance.x_facet in ['months', 'seasons']:
+            df_to_plotly = calc_x_facet(df_to_plotly, plot_instance.x_facet)
         elif plot_instance.x_facet is not None:
             raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
 
@@ -281,6 +282,41 @@ def sort_df_by_sorting_key(df_1, df_2, descending=False):
     df_2_sorted = df_2_sorted.drop(columns=['_sorting_key'])
 
     return df_2_sorted
+
+
+def calc_x_facet(df_to_plotly, facet_by):
+    def get_month_from_x(x):
+        if x.startswith("hour_"):
+            hour_index = int(x.replace("hour_", ""))
+            total = 0
+            for i, m in enumerate(month_names):
+                total += month_hours[m]
+                if hour_index < total:
+                    return m
+        elif x.startswith("day_"):
+            day_index = int(x.replace("day_", ""))
+            total_days = 0
+            for i, m in enumerate(month_names):
+                days_in_month = month_hours[m] // 24
+                total_days += days_in_month
+                if day_index < total_days:
+                    return m
+        elif x in month_names:
+            return x
+        return None
+
+    if facet_by not in ['months', 'seasons']:
+        raise ValueError("facet_by must be either 'months' or 'season'")
+
+    # Compute months first
+    df_to_plotly['X_facet'] = df_to_plotly['X'].apply(get_month_from_x)
+
+    # If facet_by is season, map month to season
+    if facet_by == 'seasons':
+        df_to_plotly['X_facet'] = df_to_plotly['X_facet'].map(lambda m: season_mapping[month_names.index(m) + 1] if m in month_names else None)
+
+    return df_to_plotly
+
 
 # Main function
 def calc_x_y_metric(config_config, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data):
