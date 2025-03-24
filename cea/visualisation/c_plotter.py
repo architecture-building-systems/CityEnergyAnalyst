@@ -5,7 +5,7 @@ PlotManager – Generates the Plotly graph
 
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
 from cea.visualisation.b_data_processor import demand_x_to_plot_building
-from cea.import_export.result_summary import month_names, month_hours, season_mapping, season_names
+from cea.import_export.result_summary import month_names, season_names
 from math import ceil
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
