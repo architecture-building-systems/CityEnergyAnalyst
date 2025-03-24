@@ -69,7 +69,7 @@ def get_session_context():
 
 
 def create_db_and_tables():
-    print(f"Preparing database...")
+    print("Preparing database...")
     SQLModel.metadata.create_all(engine)
 
     # Check and update existing table schemas

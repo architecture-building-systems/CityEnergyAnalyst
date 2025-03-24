@@ -3,12 +3,6 @@ Exporter – Handles CSV & image export
 
 """
 
-import cea.inputlocator
-import os
-import cea.config
-import time
-import geopandas as gpd
-import plotly.graph_objects as go
 import plotly.io as pio
 
 

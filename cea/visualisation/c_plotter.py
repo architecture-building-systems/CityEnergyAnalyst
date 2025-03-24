@@ -3,7 +3,6 @@ PlotManager – Generates the Plotly graph
 
 """
 
-import pandas as pd
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
 from cea.visualisation.b_data_processor import demand_x_to_plot_building
 from math import ceil

@@ -110,7 +110,7 @@ class CEADatabaseConfig(cea.config.Configuration):
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
-        print(f"Saving config to database")
+        print("Saving config to database")
         with get_session_context() as session:
             session.add(Config(user_id=self.user_id, config=self.to_dict()))
             session.commit()
