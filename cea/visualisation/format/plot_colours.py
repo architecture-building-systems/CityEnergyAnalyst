@@ -39,9 +39,22 @@ COLOURS_TO_RGB = {"red": "rgb(240,77,91)",
                  "white": "rgb(255,255,255)",
                  "orange": "rgb(245,131,69)",
                  "orange_light": "rgb(250,177,133)",
-                 "orange_lighter": "rgb(254,226,207)"
+                 "orange_lighter": "rgb(254,226,207)",
+                  "background_grey": "rgb(247,247,247)",
                   }
 
-COLUMNS_TO_COLOURS = {
-
-}
+COLUMNS_TO_COLOURS = {"GRID_kWh": "purple",
+                      "GRID_kWh/m2": "purple",
+                      "E_sys_kWh": "green",
+                      "E_sys_kWh/m2": "green",
+                      "QC_sys_kWh": "blue_lighter",
+                      "QC_sys_kWh/m2": "blue_lighter",
+                      "Qcs_sys_kWh": "blue",
+                      "Qcs_sys_kWh/m2": "blue",
+                      "QH_sys_kWh/m2": "red_lighter",
+                      "QH_sys_kWh": "red_lighter",
+                      "Qhs_sys_kWh": "red",
+                      "Qhs_sys_kWh/m2": "red",
+                      "Qww_kWh": "orange",
+                      "Qww_kWh/m2": "orange",
+                      }

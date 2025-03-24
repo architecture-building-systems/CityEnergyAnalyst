@@ -16,6 +16,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import ceil
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
 
 
 __author__ = "Zhongming Shi"
@@ -71,7 +72,10 @@ class bar_plot:
             df = self.df
 
         # Create bar chart
-        fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised, y_metric_to_plot=self.y_metric_to_plot, bool_use_rows=self.facet_by_rows, number_of_rows_or_columns=self.facet_by_numbers_wrapped)
+        fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised,
+                                y_metric_to_plot=self.y_metric_to_plot, bool_use_rows=self.facet_by_rows,
+                                number_of_rows_or_columns=self.facet_by_numbers_wrapped,
+                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step)
 
         # Position legend below
         fig = position_legend_below(fig, df['X'].unique(), row_height=10)
@@ -162,6 +166,31 @@ class bar_plot:
             barmode=barmode
         )
 
+        # About background color
+        fig.update_layout(
+            plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),       # Inside the plotting area
+            paper_bgcolor="white",      # Entire figure background (including margins)
+        )
+
+        fig.update_xaxes(
+        #     showline=True,
+        #     linecolor="black",          # Axis line color
+        #     linewidth=1,
+            gridcolor="white",
+            gridwidth=2.5,# Grid line color
+        #     zerolinecolor="grey",       # Zero line (if shown)
+        )
+
+        fig.update_yaxes(
+        #     showline=True,
+        #     linecolor="black",
+        #     linewidth=0,
+            gridcolor="white",
+            gridwidth=1.1,
+        #     zerolinecolor="grey"
+        )
+
+
         # About adding margin
         # fig.update_layout(
         #     margin=dict(l=100, r=40, t=60, b=100)  # Adjust as needed
@@ -248,7 +277,7 @@ def plot_faceted_bars(
     value_columns,
     y_metric_to_plot,
     bool_use_rows=False,
-    number_of_rows_or_columns=None
+    number_of_rows_or_columns=None, y_min=None, y_max=None, y_step=None
 ):
     facets = sorted(df[facet_col].unique())
     num_facets = len(facets)
@@ -281,6 +310,9 @@ def plot_faceted_bars(
         for j, val_col in enumerate(value_columns):
             heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
 
+            color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")  # fallback to grey
+            bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")  # fallback RGB
+
             fig.add_trace(
                 go.Bar(
                     x=facet_df[x_col],
@@ -288,18 +320,28 @@ def plot_faceted_bars(
                     name=heading,
                     offsetgroup=j,
                     legendgroup=heading,
-                    showlegend=(i == 0)  # Show legend only once
+                    showlegend=(i == 0),  # Show legend only once
+                    marker=dict(color=bar_color)
                 ),
                 row=row,
                 col=col
             )
 
     # Find the global min/max across all value columns
-    ymin = df[value_columns].min().min()
-    ymax = df[value_columns].max().max()*1.05
+    if y_max is not None:
+        y_max = df[value_columns].max().max()*1.05
+    if y_min is not None:
+        y_min = df[value_columns].min().min()
 
-    fig.update_yaxes(range=[ymin, ymax])
+    fig.update_yaxes(range=[y_min, y_max])
 
+    # Set the step for Y-axis
+    if y_step is not None:
+        for axis in fig.layout:
+            if axis.startswith("yaxis"):
+                fig.layout[axis].update(
+                    dtick=y_step  # change to your desired interval
+                )
     return fig
 
 
