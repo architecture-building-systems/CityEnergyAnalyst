@@ -3,15 +3,8 @@ CEAFrontEnd – Combines everything
 
 """
 
-import cea.inputlocator
-import os
 import cea.config
-from cea.visualisation.b_data_processor import calc_x_y_metric
-from cea.visualisation.c_plotter import bar_plot, generate_fig
-import time
-import geopandas as gpd
-import plotly.graph_objects as go
-import plotly.io as pio
+from cea.visualisation.c_plotter import generate_fig
 
 
 __author__ = "Zhongming Shi"
@@ -46,8 +39,6 @@ def plot_all(config, scenario, plot_cea_feature, hour_start, hour_end):
 
     # Activate c_plotter
     fig = generate_fig(config_config, df_to_plotly, list_y_columns)
-
-    # bar_plot = plotter(config_config, scenario, plot_cea_feature, df_to_plotly)
 
     return fig
 

@@ -29,7 +29,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
@@ -78,7 +77,7 @@ class bar_plot:
                                 y_max=self.y_max, y_min=self.y_min, y_step=self.y_step)
 
         # Position legend below
-        fig = position_legend_below(fig, df['X'].unique(), row_height=10)
+        fig = position_legend_below(fig, df['X'].unique(), row_height=30)
 
         return fig
 
@@ -87,7 +86,7 @@ class bar_plot:
         if self.plot_title:
             title = self.plot_title
         else:
-            title = "Building Energy Demand"
+            title = "CEA-4 Building Energy Demand"
 
         # Set the y-axis label
         if self.y_label:
@@ -153,12 +152,11 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode
-        title = title + ' - ' + y_label + ' by ' + x_label
         fig.update_layout(
             title=dict(
-                text=f"<b>{title}</b>",  # Bold using HTML
+                text=f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>",
                 x=0,
-                y=1,
+                y=0.98,
                 xanchor='left',
                 yanchor='top',
                 font=dict(size=20)  # Optional: adjust size, color, etc.
@@ -173,53 +171,15 @@ class bar_plot:
         )
 
         fig.update_xaxes(
-        #     showline=True,
-        #     linecolor="black",          # Axis line color
-        #     linewidth=1,
             gridcolor="white",
             gridwidth=2.5, # Grid line color
             tickson='boundaries',
-        #     zerolinecolor="grey",       # Zero line (if shown)
         )
 
         fig.update_yaxes(
-        #     showline=True,
-        #     linecolor="black",
-        #     linewidth=0,
             gridcolor="white",
             gridwidth=1.2,
-        #     zerolinecolor="grey"
         )
-
-
-        # About adding margin
-        # fig.update_layout(
-        #     margin=dict(l=100, r=40, t=60, b=100)  # Adjust as needed
-        # )
-
-        # About X, Y labels
-        # Add X-axis label (below all subplots)
-        # fig.add_annotation(
-        #     text=x_label,
-        #     xref="paper", yref="paper",
-        #     x=0.5, y=-0.025,  # y=0 instead of -0.12 — still below the plots but visible
-        #     showarrow=False,
-        #     font=dict(size=16),
-        #     xanchor='center',
-        #     yanchor='top'
-        # )
-
-        # Add Y-axis label (rotated, to the left of all subplots)
-        # fig.add_annotation(
-        #     text=y_label,
-        #     xref="paper", yref="paper",
-        #     x=-0.02, y=0.5,  # x=0 instead of -0.1
-        #     showarrow=False,
-        #     textangle=-90,
-        #     font=dict(size=16),
-        #     xanchor='right',
-        #     yanchor='middle'
-        # )
 
         return fig
 
@@ -300,7 +260,7 @@ def plot_faceted_bars(
         subplot_titles=[str(f) for f in facets],
         shared_yaxes=True,
         horizontal_spacing=0.01,
-        vertical_spacing=0.075
+        vertical_spacing=0.125
     )
 
     for i, facet in enumerate(facets):
