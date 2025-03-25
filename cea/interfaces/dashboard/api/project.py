@@ -266,7 +266,7 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     return {'message': 'Project folder created', 'project': project}
 
 
-@router.put('/', dependencies=[CEASeverDemoAuthCheck])
+@router.put('/')
 async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenario_path: ScenarioPath):
     """
     Update Project info in config
