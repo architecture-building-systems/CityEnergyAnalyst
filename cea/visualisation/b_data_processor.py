@@ -41,7 +41,11 @@ class data_processor:
 
     def process_architecture_data(self):
         if self.y_normalised_by == 'gross_floor_area':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
+            try:
+                normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
+            except KeyError as e:
+                missing = set(self.buildings) - set(self.df_architecture_data['name'].unique())
+                raise ValueError(f"Missing building entries in architecture data: {missing}") from e
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
         elif self.y_normalised_by == 'conditioned_floor_area':
             normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['Af_m2']].copy()
@@ -56,7 +60,6 @@ class data_processor:
         normaliser_m2 = normaliser_m2[['normaliser_m2']]
 
         return normaliser_m2
-
     def process_sorting_key(self):
         if self.x_sorted_by == 'default':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
