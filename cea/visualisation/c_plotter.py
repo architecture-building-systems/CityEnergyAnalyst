@@ -66,7 +66,7 @@ class bar_plot:
         fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised,
                                 y_metric_to_plot=self.y_metric_to_plot, bool_use_rows=self.facet_by_rows,
                                 number_of_rows_or_columns=self.facet_by_numbers_wrapped,
-                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step)
+                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode)
 
         # Position legend below
         fig = position_legend_between_title_and_graph(fig)
@@ -195,7 +195,7 @@ def position_legend_between_title_and_graph(fig):
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=1.01,  # Slightly below the top of the whole layout
+            y=1.05,  # Slightly below the top of the whole layout
             xanchor="left",
             x=0
         )
@@ -231,8 +231,8 @@ def plot_faceted_bars(
     number_of_rows_or_columns=None,
     y_min=None,
     y_max=None,
-    y_step=None
-):
+    y_step=None,
+    barmode="group"):
 
     season_display_names = {
         'Spring': "<b>Spring</b> (Mar - May)",
@@ -390,9 +390,17 @@ def plot_faceted_bars(
 
     # Y-Axis limits and tick steps
     if y_max is None:
-        y_max = df[value_columns].max().max() * 1.05
+        if barmode == "stack":
+            y_max = df[value_columns].sum(axis=1).max() * 1.05
+        elif barmode == "stack_percentage":
+            y_max = 100
+        elif barmode == "group":
+            y_max = df[value_columns].max().max() * 1.05
+        else:
+            raise ValueError(f"Invalid barmode: {barmode}")
+
     if y_min is None:
-        y_min = df[value_columns].min().min()
+        y_min = 0
 
     fig.update_yaxes(range=[y_min, y_max])
 
