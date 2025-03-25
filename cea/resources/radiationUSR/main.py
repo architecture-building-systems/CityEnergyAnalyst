@@ -223,6 +223,13 @@ def export_radiation_usr_config(config: cea.config.Configuration, output_folder:
             for param_name in radiation_section.parameters
         }
 
+        # Add radiation config
+        config_data.update({
+            'zone-geometry': config.radiation.zone_geometry,
+            'surrounding-geometry': config.radiation.surrounding_geometry,
+            'neglect-adjacent-buildings': config.radiation.neglect_adjacent_buildings
+        })
+
         # Add I/O paths to output
         config_data.update({
             'USR_input_folder': output_folder,
