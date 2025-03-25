@@ -195,7 +195,7 @@ def position_legend_between_title_and_graph(fig):
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=1.05,  # Slightly below the top of the whole layout
+            y=1.02,  # Slightly below the top of the whole layout
             xanchor="left",
             x=0
         )
