@@ -22,7 +22,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
+season_names = ['Spring', 'Summer', 'Autumn', 'Winter']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 season_mapping = {
             3: 'Spring', 4: 'Spring', 5: 'Spring',
