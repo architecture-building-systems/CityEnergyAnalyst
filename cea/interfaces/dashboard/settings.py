@@ -8,9 +8,10 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 logger = getCEAServerLogger("cea-server-settings")
 
+ENV_VAR_PREFIX = "CEA_"
 
 class StackAuthSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='cea_auth_')
+    model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX + "auth_")
 
     project_id: str
     publishable_client_key: str
@@ -20,7 +21,7 @@ class StackAuthSettings(BaseSettings):
 
 class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
-    model_config = SettingsConfigDict(env_prefix='cea_')
+    model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX)
 
     # Settings from cea.config
     host: Optional[str] = None
@@ -45,7 +46,10 @@ class Settings(BaseSettings):
                 logger.warning("Security warning: Running with cors_origin='*'. "
                                "This allows any origin to access your API and may pose security risks.")
             if self.db_url is None:
-                raise ValueError("Database URL not set. Please set db_url in config file.")
+                raise ValueError(f"Database URL not set. Please set {(ENV_VAR_PREFIX + 'db_url').upper()}.")
+
+            if self.project_root is None:
+                raise ValueError(f"Project root not set. Please set {(ENV_VAR_PREFIX + 'project_root').upper()}.")
         return self
 
     def allow_path_transversal(self) -> bool:
