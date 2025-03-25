@@ -221,7 +221,6 @@ def convert_to_percent_stacked(df, list_y_columns):
     return df_percent
 
 
-
 def plot_faceted_bars(
     df,
     x_col,
@@ -234,9 +233,7 @@ def plot_faceted_bars(
     y_max=None,
     y_step=None
 ):
-    is_faceted = facet_col is not None and facet_col in df.columns
 
-    # Define custom facet order
     season_display_names = {
         'Spring': "<b>Spring</b> (Mar - May)",
         'Summer': "<b>Summer</b> (Jun - Aug)",
@@ -244,16 +241,19 @@ def plot_faceted_bars(
         'Winter': "<b>Winter</b> (Dec - Feb)"
     }
 
+    month_order = {month: i for i, month in enumerate(month_names)}
+    is_faceted = facet_col is not None and facet_col in df.columns
+
     if is_faceted:
         raw_facets = df[facet_col].unique()
 
-        # Apply custom order if possible
+        # Apply ordered facet list
         if all(f in month_names for f in raw_facets):
             facets = [f for f in month_names if f in raw_facets]
         elif all(f in season_names for f in raw_facets):
             facets = [f for f in season_names if f in raw_facets]
         else:
-            facets = list(raw_facets)  # fallback to original order
+            facets = list(raw_facets)
 
         num_facets = len(facets)
 
@@ -279,7 +279,30 @@ def plot_faceted_bars(
         for i, facet in enumerate(facets):
             row = (i // cols) + 1
             col = (i % cols) + 1
-            facet_df = df[df[facet_col] == facet]
+            facet_df = df[df[facet_col] == facet].copy()
+
+            # Sort x-axis values inside each facet
+            if df[x_col].str.startswith("hour_").any():
+                facet_df["__sort"] = facet_df[x_col].str.extract(r"hour_(\d+)").astype(int)
+                if facet == "Winter":
+                    facet_df["__sort"] = facet_df["__sort"].apply(lambda x: x if x >= 8016 else x + 8760)
+                facet_df = facet_df.sort_values("__sort")
+
+            elif df[x_col].str.startswith("day_").any():
+                facet_df["__sort"] = facet_df[x_col].str.extract(r"day_(\d+)").astype(int)
+                if facet == "Winter":
+                    facet_df["__sort"] = facet_df["__sort"].apply(lambda x: x if x >= 334 else x + 365)
+                facet_df = facet_df.sort_values("__sort")
+
+            elif df[x_col].isin(month_names).all():
+                facet_df["__sort"] = facet_df[x_col].map(month_order)
+                # Fix Winter sorting: Dec (11) → Jan (0) → Feb (1)
+                if facet == "Winter":
+                    facet_df["__sort"] = facet_df["__sort"].apply(lambda x: x if x >= 11 else x + 12)
+                facet_df = facet_df.sort_values("__sort")
+
+            else:
+                facet_df = facet_df.sort_values(by=x_col)
 
             for j, val_col in enumerate(value_columns):
                 heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
@@ -300,7 +323,7 @@ def plot_faceted_bars(
                     col=col
                 )
 
-        # --- Adjust subplot vertical layout ---
+        # Set subplot vertical domains
         available_height = 0.80
         row_spacing = 0.125
         total_spacing = row_spacing * (rows - 1)
@@ -319,7 +342,7 @@ def plot_faceted_bars(
                 if yaxis_name in fig.layout:
                     fig.layout[yaxis_name].domain = [row_bottom, row_top]
 
-        # --- Custom subplot titles ---
+        # Custom subplot titles
         annotations = []
         for i, facet in enumerate(facets):
             subplot_index = i + 1
@@ -329,11 +352,7 @@ def plot_faceted_bars(
             x_dom = fig.layout[xaxis_key].domain
             y_dom = fig.layout[yaxis_key].domain
 
-            # Get custom display name
-            if facet in season_display_names:
-                display_text = season_display_names[facet]
-            else:
-                display_text = f"<b>{facet}</b>"
+            display_text = season_display_names.get(facet, f"<b>{facet}</b>")
 
             annotations.append(dict(
                 text=f"<span style='font-size:10pt'>{display_text}</span>",
@@ -369,7 +388,7 @@ def plot_faceted_bars(
 
         fig.update_layout(yaxis=dict(domain=[0.02, 0.82]))
 
-    # --- Y-Axis limits and tick steps ---
+    # Y-Axis limits and tick steps
     if y_max is None:
         y_max = df[value_columns].max().max() * 1.05
     if y_min is None:
@@ -380,10 +399,7 @@ def plot_faceted_bars(
     if y_step is not None:
         fig.update_yaxes(dtick=y_step)
 
-
     return fig
-
-
 
 
 # Main function

@@ -25,10 +25,10 @@ __status__ = "Production"
 season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 season_mapping = {
-            1: 'Winter', 2: 'Winter', 12: 'Winter',
             3: 'Spring', 4: 'Spring', 5: 'Spring',
             6: 'Summer', 7: 'Summer', 8: 'Summer',
-            9: 'Autumn', 10: 'Autumn', 11: 'Autumn'
+            9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
+            12: 'Winter', 1: 'Winter', 2: 'Winter'
 }
 
 # Define nominal hours for each month (non-leap year)
