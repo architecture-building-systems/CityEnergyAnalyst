@@ -1,5 +1,7 @@
 FROM ghcr.io/reyery/daysim:release AS daysim
 
+FROM ghcr.io/reyery/cea/usr:latest AS usr
+
 FROM mambaorg/micromamba:2.0 AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
@@ -28,10 +30,14 @@ RUN pip install /tmp/cea && rm -rf /tmp/cea
 # Copy Daysim from build stage
 COPY --from=daysim / /Daysim
 
+# Copy USR binary
+COPY --from=usr /USR /USR
+
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
     && cea-config write --general:scenario-name baseline \
     && cea-config write --radiation:daysim-bin-directory /Daysim \
+    && cea-config write --radiation:usr-bin-directory /USR \
     && cea-config write --server:host 0.0.0.0 \
     # create dummy project folder
     && mkdir -p /project/reference-case-open
