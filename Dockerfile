@@ -31,7 +31,7 @@ RUN pip install /tmp/cea && rm -rf /tmp/cea
 COPY --from=daysim / /Daysim
 
 # Copy USR binary
-COPY --from=usr /USR/radiation /USR/radiation
+COPY --from=usr --chown=$MAMBA_USER:$MAMBA_USER /USR/radiation /USR/radiation
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
