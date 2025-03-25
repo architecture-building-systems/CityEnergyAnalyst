@@ -1,6 +1,5 @@
 import glob
 import sys
-import time
 import os
 from itertools import repeat
 
@@ -24,10 +23,9 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import geometry_generator
-from cea.resources.radiation.daysim import calc_sensors_zone, GridSize, calc_sensors_building
+from cea.resources.radiation.daysim import GridSize, calc_sensors_building
 from cea.resources.radiation.geometry_generator import BuildingGeometry
 from cea.resources.radiation.main import read_surface_properties
-from cea.resources.radiation.radiance import CEADaySim
 from cea.resources.radiationUSR import USRModel
 
 
