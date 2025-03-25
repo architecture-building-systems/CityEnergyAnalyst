@@ -40,7 +40,7 @@ Import & Export:
 
 Solar Radiation Analysis:
   - name: radiation
-    label: Building Solar Radiation
+    label: Building Solar Radiation using DAYSIM
     description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
@@ -53,23 +53,25 @@ Solar Radiation Analysis:
       - [get_terrain]
       - [get_weather_file]
 
-  - name: radiation-simplified
-    label: Building Solar Radiation (simplified)
+  - name: radiation-usr
+    label: Building Solar Radiation using USR
     description: |
-      This Feature is a faster alternative to the original radiation script. 
-      It uses DAYSIM to calculate solar radiation from a sample of buildings in a scenario. 
-      Please note that the accuracy of the results for facades is reduced.
-    interfaces: [cli]
-    module: cea.resources.radiation.simplified.main
-    parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                  radiation, radiation-simplified ]
+      This feature uses Tongji's USR (Urban Solar Radiation) model to perform comprehensive analyses of urban solar radiation, encompassing direct, diffuse, and reflected components. 
+      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion to fast assess building solar exposure in dense urban environments.
+      
+      Cite us:
+      [1] Xiaoyu Wang, et al. "A novel and efficient method for calculating beam shadows on exterior surfaces of buildings in dense urban contexts." Building and Environment 229 (2023): 109937.
+    interfaces: [cli, dashboard]
+    module: cea.resources.radiationUSR.main
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation-usr,
+                 'radiation:zone-geometry', 'radiation:surrounding-geometry', 'radiation:neglect-adjacent-buildings']
     input-files:
-      - [ get_database_envelope_systems ]
-      - [ get_surroundings_geometry ]
-      - [ get_building_architecture ]
-      - [ get_zone_geometry ]
-      - [ get_terrain ]
-      - [ get_weather_file ]
+      - [get_building_architecture]
+      - [get_surroundings_geometry]
+      - [get_zone_geometry]
+      - [get_terrain]
+      - [get_weather_file]
 
 Renewable Energy Potential Assessment:
   - name: photovoltaic
