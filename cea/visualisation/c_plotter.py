@@ -238,10 +238,10 @@ def plot_faceted_bars(
 
     # Define custom facet order
     season_display_names = {
-        'Spring': "<b>Spring</b> (Feb - Apr)",
-        'Summer': "<b>Summer</b> (May - Aug)",
+        'Spring': "<b>Spring</b> (Mar - May)",
+        'Summer': "<b>Summer</b> (Jun - Aug)",
         'Autumn': "<b>Autumn</b> (Sep - Nov)",
-        'Winter': "<b>Winter</b> (Dec - Dec)"
+        'Winter': "<b>Winter</b> (Dec - Feb)"
     }
 
     if is_faceted:
