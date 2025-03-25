@@ -1,4 +1,5 @@
 import glob
+import sys
 import time
 import os
 from itertools import repeat
@@ -383,6 +384,9 @@ def convert_csv_to_feather(input_dir, output_dir, pattern):
 
 
 def main(config):
+    if sys.platform == 'darwin':
+        raise OSError("This script is currently not compatible with MacOS.")
+
     print("Creating building geometry data CSV file for USR")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
