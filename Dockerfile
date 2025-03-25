@@ -37,7 +37,7 @@ COPY --from=usr /USR /USR
 RUN cea-config write --general:project /project/reference-case-open \
     && cea-config write --general:scenario-name baseline \
     && cea-config write --radiation:daysim-bin-directory /Daysim \
-    && cea-config write --radiation:usr-bin-directory /USR \
+    && cea-config write --radiation-usr:usr-bin-directory /USR \
     && cea-config write --server:host 0.0.0.0 \
     # create dummy project folder
     && mkdir -p /project/reference-case-open
