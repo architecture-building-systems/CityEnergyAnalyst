@@ -38,7 +38,6 @@ class bar_plot:
         self.y_min = config_config.y_min
         self.y_max = config_config.y_max
         self.y_step = config_config.y_step
-        self.y_barmode = config_config.y_barmode
         self.y_label = config_config.y_label
         self.x_to_plot = config_config.x_to_plot
         self.facet_by_numbers_wrapped = config_config.facet_by_numbers_wrapped
@@ -46,6 +45,9 @@ class bar_plot:
         self.x_sorted_by = config_config.x_sorted_by
         self.x_sorted_reversed = config_config.x_sorted_reversed
         self.x_label = config_config.x_label
+
+        # Parse plot_type and plot_mode
+        self.plot_type, self.y_barmode = parse_plot_type(config_config.plot_type)
 
         # Update y_columns based on if normalisation is selected
         if self.y_normalised_by == 'no_normalisation':
@@ -427,10 +429,36 @@ def plot_faceted_bars(
     return fig
 
 
+def parse_plot_type(plot_type_str):
+    """
+    Split a plot_type string like 'bar_plot_stack' into ('bar_plot', 'stack').
+
+    Returns:
+        plot_type (str), plot_mode (str)
+    """
+    valid_plot_types = {"bar_plot"}
+    valid_plot_modes = {"group", "stack", "stack_percentage"}
+
+    parts = plot_type_str.lower().split("_")
+
+    for i in range(1, len(parts) + 1):
+        plot_type_candidate = "_".join(parts[:i])
+        plot_mode_candidate = "_".join(parts[i:]) if i < len(parts) else None
+
+        if plot_type_candidate in valid_plot_types:
+            if plot_mode_candidate in valid_plot_modes:
+                return plot_type_candidate, plot_mode_candidate
+            else:
+                return plot_type_candidate, None
+
+    return None, None  # Not recognized
+
+
+
 # Main function
 def generate_fig(config_config, df_to_plotly, list_y_columns):
 
-     if config_config.plot_type == "bar_plot":
+     if config_config.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
         plot_instance_c = bar_plot(config_config, df_to_plotly, list_y_columns)
 
