@@ -31,7 +31,7 @@ RUN pip install /tmp/cea && rm -rf /tmp/cea
 COPY --from=daysim / /Daysim
 
 # Copy USR binary
-COPY --from=usr /USR /opt/conda/lib/python3.8/site-packages/cea/resources/radiationUSR/bin/linux
+COPY --from=usr /USR/radiation /USR/radiation
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
