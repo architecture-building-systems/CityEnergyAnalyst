@@ -380,7 +380,6 @@ def plot_faceted_bars(
     if y_step is not None:
         fig.update_yaxes(dtick=y_step)
 
-    print(fig.layout.xaxis.domain)
 
     return fig
 
