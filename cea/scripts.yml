@@ -64,9 +64,7 @@ Solar Radiation Analysis:
     interfaces: [cli, dashboard]
     module: cea.resources.radiationUSR.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                 radiation-usr, 
-                #  FIXME: Replace this
-                 radiation]
+                 radiation-usr]
     input-files:
       - [get_building_architecture]
       - [get_surroundings_geometry]

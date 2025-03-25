@@ -173,9 +173,9 @@ def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_di
 def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_map, config, geometry_pickle_dir):
     # Config variables
     num_processes = config.get_number_of_processes()
-    zone_simplification = config.radiation.zone_geometry
-    surroundings_simplification = config.radiation.surrounding_geometry
-    neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
+    zone_simplification = config.radiation_usr.zone_geometry
+    surroundings_simplification = config.radiation_usr.surrounding_geometry
+    neglect_adjacent_buildings = config.radiation_usr.neglect_adjacent_buildings
 
     print('Calculating terrain intersection of building geometries')
     zone_buildings_df = zone_df.set_index('name')

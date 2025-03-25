@@ -20,6 +20,8 @@ REQUIRED_USR_BINARIES = [
     "radiation",
 ]
 
+REQUIRED_LIBS = []  # Add necessary library files if required
+
 
 class USR:
     """
@@ -95,12 +97,12 @@ class USR:
         return self.run_cmd(cmd, self.usr_exe_dir, self.usr_lib_dir)
 
 
-def check_usr_exe_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
+def check_usr_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check the directory for required USR executables and return the path to the binaries (and optionally the libraries).
     If the required executables are not found, a ValueError is raised.
     """
-    print("Platform:", sys.platform, "Latest binaries:", latest_binaries)
+    print("Platform:", sys.platform)
 
     def contains_binaries(path: str) -> bool:
         """Check if the required binaries exist in the given path."""
@@ -122,7 +124,6 @@ def check_usr_exe_directory(path_hint: Optional[str] = None, latest_binaries: bo
             libs = set(os.listdir(path))
         except OSError:
             return False
-        REQUIRED_LIBS = []  # Add necessary library files if required
         return all(lib in libs for lib in REQUIRED_LIBS)
 
     # List of directories to check

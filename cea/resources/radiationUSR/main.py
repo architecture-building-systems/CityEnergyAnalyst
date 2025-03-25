@@ -22,7 +22,7 @@ from typing import Dict, Optional
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
-from cea.resources.radiation import geometry_generator, daysim
+from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import calc_sensors_zone, GridSize, calc_sensors_building
 from cea.resources.radiation.geometry_generator import BuildingGeometry
 from cea.resources.radiation.main import read_surface_properties
@@ -310,11 +310,7 @@ def calc_sensors_zone_usr(building_names, locator, grid_size: GridSize, geometry
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def sensor_generate_cea_daysim(chunk_n, cea_daysim, building_names, locator,
-                     grid_size: GridSize, geometry_pickle_dir):
-    # initialize daysim project
-    daysim_project = cea_daysim.initialize_daysim_project('chunk_{n}'.format(n=chunk_n))
-    print('Creating daysim project in: {daysim_dir}'.format(daysim_dir=daysim_project.project_path))
+def sensor_generate_cea_daysim(chunk_n, building_names, locator, grid_size: GridSize, geometry_pickle_dir):
 
     # calculate sensors
     print("Calculating and sending sensor points")
@@ -325,23 +321,18 @@ def sensor_generate_cea_daysim(chunk_n, cea_daysim, building_names, locator,
     sensors_code_zone, \
     sensor_intersection_zone = calc_sensors_zone_usr(building_names, locator, grid_size, geometry_pickle_dir)
 
-    daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone)
-
     #print(f"Starting Daysim simulation for buildings: {names_zone}")
     print(f"Total number of sensors: {len(sensors_coords_zone)}")
 
 
-def run_daysim_sensor_generate(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
-
-
+def run_daysim_sensor_generate(zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     list_of_building_names = [building_name for building_name in settings.buildings
                               if building_name in zone_building_names]
     # get chunks of buildings to iterate
-    chunks = [list_of_building_names[i:i + settings.n_buildings_in_chunk] for i in
+    n_buildings_in_chunk = 100
+    chunks = [list_of_building_names[i:i + n_buildings_in_chunk] for i in
               range(0, len(list_of_building_names),
-                    settings.n_buildings_in_chunk)]
-
-
+                    n_buildings_in_chunk)]
 
     grid_size = GridSize(walls=settings.walls_grid, roof=settings.roof_grid)
 
@@ -349,12 +340,11 @@ def run_daysim_sensor_generate(cea_daysim: CEADaySim, zone_building_names, locat
 
     if num_chunks == 1:
         sensor_generate_cea_daysim(
-            0, cea_daysim, chunks[0], locator, grid_size,
+            0, chunks[0], locator, grid_size,
             geometry_pickle_dir)
     else:
         vectorize(sensor_generate_cea_daysim, num_processes)(
             range(0, num_chunks),
-            repeat(cea_daysim, num_chunks),
             chunks,
             repeat(locator, num_chunks),
             repeat(grid_size, num_chunks),
@@ -451,12 +441,11 @@ def main(config):
     with open(os.path.join(input_folder, "radiation_usr_config.json"), "r", encoding="utf-8") as f:
         content = json.load(f)
 
-    use_latest_usr_binaries = content["use-latest-usr-binaries"]
     usr_bin_directory = content["usr-bin-directory"]
     calculate_sensor_data =content["calculate-sensor-data"]
     using_cea_sensor = content["using-cea-sensor"]
 
-    USR_bin_path, USR_lib_path = USRModel.check_usr_exe_directory(usr_bin_directory, use_latest_usr_binaries)
+    USR_bin_path, USR_lib_path = USRModel.check_usr_exe_directory(usr_bin_directory)
     # Create an instance of USRModel
     USR_model = USRModel.USR(USR_bin_path, USR_lib_path)
 
@@ -464,16 +453,8 @@ def main(config):
     if calculate_sensor_data:
         if using_cea_sensor:
             print("Using CEA method to generate the mesh.")
-            # Import Daysim model to generate sensors
-            daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
-                                                                                 config.radiation.use_latest_daysim_binaries)
-            print(f'Using Daysim binaries from path: {daysim_bin_path}')
-            print(f'Using Daysim data from path: {daysim_lib_path}')
-
-            print("verifying geometry files")
             zone_path = locator.get_zone_geometry()
             surroundings_path = locator.get_surroundings_geometry()
-            trees_path = locator.get_tree_geometry()
 
             print(f"zone: {zone_path}")
             print(f"surroundings: {surroundings_path}")
@@ -484,14 +465,6 @@ def main(config):
             verify_input_geometry_zone(zone_df)
             verify_input_geometry_surroundings(surroundings_df)
 
-            if os.path.exists(trees_path):
-                print(f"trees: {trees_path}")
-                trees_df = gpd.GeoDataFrame.from_file(trees_path)
-            else:
-                print("trees: None")
-                # Create empty area if it does not exist
-                trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
-
             geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")
 
             print("Creating 3D geometry and surfaces")
@@ -499,6 +472,8 @@ def main(config):
             # create geometrical faces of terrain and buildings
             terrain_raster = gdal.Open(locator.get_terrain())
             architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
+
+            trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
 
             (geometry_terrain,
              zone_building_names,
@@ -511,30 +486,7 @@ def main(config):
                                                                architecture_wwr_df,
                                                                geometry_staging_location)
 
-            daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
-            cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
-
-            # create radiance input files
-            print("Creating radiance material file")
-            cea_daysim.create_radiance_material(building_surface_properties)
-            print("Creating radiance geometry file")
-            cea_daysim.create_radiance_geometry(geometry_terrain, building_surface_properties, zone_building_names,
-                                                surroundings_building_names, geometry_staging_location)
-
-            if len(tree_surfaces) > 0:
-                print("Creating radiance shading file")
-                tree_lad = trees_df["density_tc"]
-                cea_daysim.create_radiance_shading(tree_surfaces, tree_lad)
-
-            # FIXME: Remove running weather to get geometry files
-            print("Converting files for DAYSIM")
-            weather_file = locator.get_weather_file()
-            print('Transforming weather files to daysim format')
-            cea_daysim.execute_epw2wea(weather_file)
-            print('Transforming radiance files to daysim format')
-            cea_daysim.execute_radfiles2daysim()
-
-            run_daysim_sensor_generate(cea_daysim, zone_building_names, locator, config.radiation, geometry_staging_location,
+            run_daysim_sensor_generate(zone_building_names, locator, config.radiation_usr, geometry_staging_location,
                                   num_processes=config.get_number_of_processes())  # Call the provided CEA mesh generation method
 
         else:
