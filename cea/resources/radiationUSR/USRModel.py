@@ -64,7 +64,7 @@ class USR:
         # On Windows, prepend the executable directory to the executable name
         if sys.platform == "win32":
             parts[0] = os.path.join(exe_dir, parts[0])
-        process = subprocess.run(parts, capture_output=True, env=env)
+        process = subprocess.run(parts, capture_output=True, env=env, cwd=exe_dir)
         output = process.stdout.decode("utf-8")
         print(output)
 
