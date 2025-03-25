@@ -168,11 +168,28 @@ class bar_plot:
             paper_bgcolor="white",      # Entire figure background (including margins)
         )
 
-        fig.update_xaxes(
-            gridcolor="white",
-            gridwidth=2.5, # Grid line color
-            tickson='boundaries',
-        )
+        # About the grid color
+        if "hourly" in self.x_to_plot:
+            fig.update_xaxes(
+                showgrid=False,
+            )
+            fig.update_layout(
+                bargap=0,         # No gap between bar groups (e.g. Jan, Feb, Mar...)
+                bargroupgap=0     # No gap between bars within each group (if grouped bars)
+            )
+            fig.update_xaxes(type="category")
+        elif "daily" in self.x_to_plot:
+            fig.update_xaxes(
+                gridcolor="white",
+                gridwidth=1.5,    # Grid line color
+                tickson='boundaries',
+            )
+        else:
+            fig.update_xaxes(
+                gridcolor="white",
+                gridwidth=2.5,    # Grid line color
+                tickson='boundaries',
+            )
 
         fig.update_yaxes(
             gridcolor="white",

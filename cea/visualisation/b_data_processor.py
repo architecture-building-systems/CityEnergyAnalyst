@@ -289,15 +289,15 @@ def sort_df_by_sorting_key(df_1, df_2, descending=False):
 
 def calc_x_facet(df_to_plotly, facet_by):
     def get_month_from_x(x):
-        if x.startswith("H"):
-            hour_index = int(x.replace("H", ""))
+        if x.startswith("H_"):
+            hour_index = int(x.replace("H_", ""))
             total = 0
             for i, m in enumerate(month_names):
                 total += month_hours[m]
                 if hour_index < total:
                     return m
-        elif x.startswith("D"):
-            day_index = int(x.replace("D", ""))
+        elif x.startswith("D_"):
+            day_index = int(x.replace("D_", ""))
             total_days = 0
             for i, m in enumerate(month_names):
                 days_in_month = month_hours[m] // 24

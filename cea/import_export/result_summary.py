@@ -1003,9 +1003,9 @@ def add_nominal_actual_and_coverage(df):
             return month_hours[period]
         elif period in season_hours:
             return season_hours[period]
-        elif period.startswith("D"):
+        elif period.startswith("D_"):
             return 24
-        elif period.startswith("H"):
+        elif period.startswith("H_"):
             return 1
         elif period.startswith("Y_"):
             return 8760
@@ -1070,9 +1070,9 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Handle different periods
         if period == 'hourly':
-            df['period'] = 'H' + df['period_hour']
+            df['period'] = 'H_' + df['period_hour']
         elif period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -1080,7 +1080,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
             df['period'] = df[date_column].dt.month.map(season_mapping)
             df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
         elif period == 'annually':
-            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+            df['period'] = 'Y_' + df[date_column].dt.year.astype(str)
         else:
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
@@ -1650,7 +1650,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
         # Handle different periods
         if period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"Day{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
