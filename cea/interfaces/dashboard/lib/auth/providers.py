@@ -9,10 +9,10 @@ from fastapi import Request
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.settings import StackAuthSettings
 
-_settings = StackAuthSettings()
-
 
 class StackAuth:
+    _settings = StackAuthSettings()
+
     project_id = _settings.project_id
     publishable_client_key = _settings.publishable_client_key
 
@@ -20,6 +20,11 @@ class StackAuth:
     jwks_url = f"https://api.stack-auth.com/api/v1/projects/{project_id}/.well-known/jwks.json"
 
     def __init__(self, access_token: str):
+        if self.project_id is None:
+            raise ValueError(f"Project ID not set.")
+        if self.publishable_client_key is None:
+            raise ValueError(f"Publishable client key not set.")
+
         self.access_token = access_token
 
     @staticmethod

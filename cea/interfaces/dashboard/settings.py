@@ -13,8 +13,8 @@ ENV_VAR_PREFIX = "CEA_"
 class StackAuthSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX + "auth_")
 
-    project_id: str
-    publishable_client_key: str
+    project_id: Optional[str] = None
+    publishable_client_key: Optional[str] = None
 
     cookie_name: str = "stack-access"
 
