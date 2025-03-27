@@ -55,7 +55,7 @@ def generate_general_building_data_for_USR(shapefile_path, output_folder, output
     output_csv = os.path.join(output_folder, output_file_name)
 
     # Read the shapefile
-    sf = shapefile.Reader(shapefile_path)
+    sf = shapefile.Reader(shapefile_path, encoding='utf-8')
 
     # Get field names (skip the first deletion field)
     fields = [field[0].lower() for field in sf.fields[1:]]
