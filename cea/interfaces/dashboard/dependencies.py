@@ -46,7 +46,10 @@ class AsyncDictCache:
 
     async def pop(self, item_id, default=None):
         value = await self.get(item_id, default)
-        await self.delete(item_id)
+        try:
+            await self.delete(item_id)
+        except KeyError:
+            pass
         return value
 
     async def set(self, item_id, value):
