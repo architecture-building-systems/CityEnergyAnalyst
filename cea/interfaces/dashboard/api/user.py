@@ -15,7 +15,7 @@ async def logout(auth_client: CEAAuthClient):
         auth_client.logout()
     except Exception as e:
         # TODO: Handle error based on error code
-        print(e)
+        logger.error(f"Error during logout: {e}")
 
     return Response(
         status_code=status.HTTP_204_NO_CONTENT,
