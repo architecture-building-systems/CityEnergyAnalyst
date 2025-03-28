@@ -5,6 +5,7 @@ import tempfile
 import uvicorn
 
 from cea.config import Configuration
+from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings, Settings
 
 
@@ -31,7 +32,7 @@ def main(config):
     # Load settings from env vars (priority) then config file
     settings = get_settings()
     load_from_config(settings, config)
-    print(f"Using settings: {settings}")
+    logger.info(f"Using settings: {settings}")
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:

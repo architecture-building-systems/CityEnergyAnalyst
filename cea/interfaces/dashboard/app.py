@@ -5,7 +5,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from cea.interfaces.dashboard.lib.database.session import create_db_and_tables
+from cea.interfaces.dashboard.lib.database.session import close_db_connection
+from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
+from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.server.socketio import socket_app
 
 import cea.interfaces.dashboard.api as api
@@ -18,9 +20,11 @@ from cea.interfaces.dashboard.settings import get_settings
 async def lifespan(_: FastAPI):
     create_db_and_tables()
     yield
-    print("Shutting down server...")
+    logger.info("Shutting down server...")
     # Shutdown all worker processes on exit
     await server.shutdown_worker_processes()
+    # Close database connections
+    close_db_connection()
 
 
 def get_cors_origins() -> str:
@@ -50,9 +54,8 @@ app.include_router(server.router, prefix='/server')
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # TODO: Log this to logging service
-    print("Found validation errors", exc.errors())
-    print("url", request.url)
+    logger.error("Found validation errors:", exc.errors())
+    logger.error("url", request.url)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -63,8 +66,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 @app.exception_handler(Exception)
-async def uncaught_exception_handler(request, exc):
-    # TODO: Log this to logging service
+async def uncaught_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Uncaught exception in \"{request.method} {request.url.path}\":\n"
+                 f"{exc}")
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": f"Uncaught exception: {exc}"},

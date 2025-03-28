@@ -46,5 +46,6 @@ dependencies:
   - python-multipart # Required by fastapi for file uploads
   - sqlmodel # Required by fastapi for database models
   - psycopg2-binary # Required by sqlmodel for postgres
+  - pyjwt[crypto] # Required by fastapi for JWT authentication
   - wntr==0.2.3
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
