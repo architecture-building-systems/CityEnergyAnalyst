@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Response, status
 
 from cea.interfaces.dashboard.dependencies import CEAUser, CEAAuthClient
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+
+logger = getCEAServerLogger("cea-server-user")
 
 router = APIRouter()
 
