@@ -28,10 +28,10 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
 RUN pip install /tmp/cea && rm -rf /tmp/cea
 
 # Copy Daysim from build stage
-COPY --from=daysim --chown=$MAMBA_USER:$MAMBA_USER / /Daysim
+COPY --from=daysim --chown=$MAMBA_USER:$MAMBA_USER / /opt/conda/lib/python3.8/site-packages/cea/resources/radiation/bin/linux
 
 # Copy USR binary
-COPY --from=crax --chown=$MAMBA_USER:$MAMBA_USER / /CRAX
+COPY --from=crax --chown=$MAMBA_USER:$MAMBA_USER / /opt/conda/lib/python3.8/site-packages/cea/resources/radiationCRAX/bin/linux
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
