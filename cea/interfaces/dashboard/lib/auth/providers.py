@@ -21,9 +21,9 @@ class StackAuth:
 
     def __init__(self, access_token: str):
         if self.project_id is None:
-            raise ValueError(f"Project ID not set.")
+            raise ValueError("Project ID not set.")
         if self.publishable_client_key is None:
-            raise ValueError(f"Publishable client key not set.")
+            raise ValueError("Publishable client key not set.")
 
         self.access_token = access_token
 
