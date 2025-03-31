@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from cea.glossary import read_glossary_df
+from cea.interfaces.dashboard.dependencies import CEAConfig
 
 router = APIRouter()
 
