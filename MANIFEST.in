@@ -13,3 +13,4 @@ recursive-include cea/plots *.html
 recursive-include cea/tests *.config *.yml
 
 graft cea/resources/radiation/bin
+graft cea/resources/radiationCRAX/bin

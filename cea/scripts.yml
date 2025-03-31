@@ -55,21 +55,21 @@ Solar Radiation Analysis:
       - [get_terrain]
       - [get_weather_file]
 
-  - name: radiation-usr
-    label: Building Solar Radiation using USR [BETA]
+  - name: radiation-crax
+    label: Building Solar Radiation using CRAX [BETA]
     description: |
-      **This is currently in BETA and may not work as expected.**  
-      **Only Windows are supported for now.**
+      **This is currently in active development and may not work as expected.**  
       
-      This feature uses Tongji's USR (Urban Solar Radiation) model to perform comprehensive analyses of urban solar radiation, encompassing direct, diffuse, and reflected components. 
-      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion to fast assess building solar exposure in dense urban environments.
+      This feature uses Tongji University's CRAX (CityRadiation Accelerator) model to perform comprehensive analyses of urban solar radiation,
+      encompassing direct, diffuse, and reflected components. 
+      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion
+      to fast assess building solar exposure in dense urban environments.
       
       Reference: https://doi.org/10.1016/j.buildenv.2022.109937
     interfaces: [cli, dashboard]
-    module: cea.resources.radiationUSR.main
+    module: cea.resources.radiationCRAX.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                 radiation-usr,
-                 'radiation:zone-geometry', 'radiation:surrounding-geometry', 'radiation:neglect-adjacent-buildings']
+                 radiation-crax]
     input-files:
       - [get_building_architecture]
       - [get_surroundings_geometry]
