@@ -6,9 +6,9 @@ router = APIRouter()
 
 
 @router.get('/')
-async def get_glossary():
+async def get_glossary(config: CEAConfig):
     # TODO: Add plugin support
-    glossary = read_glossary_df(plugins=[])
+    glossary = read_glossary_df(plugins=config.plugins)
     groups = glossary.groupby('SCRIPT')
     data = []
     for group in groups.groups:

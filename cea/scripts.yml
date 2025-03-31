@@ -3,10 +3,13 @@ Import & Export:
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
     description: |
-      This Feature exports CEA files into Rhino/Grasshopper-ready format. The exported package is to be found at path: {CEA Project}/{Current Scenario}/export/rhino/from_cea.
-      
-      Download the .gh file via the link. Use the Grasshopper components to import the exported package into Rhino/Grasshopper. 
-      https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh
+      This Feature exports CEA files into Rhino/Grasshopper-ready format.  
+      The exported package is to be found at path:
+      ```
+      {CEA Project}/{Current Scenario}/export/rhino/from_cea.
+      ```
+      Download the .gh file [here](https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh).
+      Use the Grasshopper components to import the exported package into Rhino/Grasshopper.  
 
     interfaces: [cli, dashboard]
     module: cea.import_export.export_to_rhino_gh
@@ -19,9 +22,8 @@ Import & Export:
     description: |
       This Feature imports Rhino/Grasshopper-generated files into CEA.
       
-      Download the .gh file via the link to import the Rhino/Grasshopper-generated package. 
+      Download the .gh file [here](https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh) to import the Rhino/Grasshopper-generated package.  
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
-      https://www.cityenergyanalyst.com/s/to_cea_v4alpha22.gh
 
     interfaces: [cli, dashboard]
     module: cea.import_export.import_from_rhino_gh
@@ -53,19 +55,21 @@ Solar Radiation Analysis:
       - [get_terrain]
       - [get_weather_file]
 
-  - name: radiation-usr
-    label: Building Solar Radiation using USR
+  - name: radiation-crax
+    label: Building Solar Radiation using CRAX [BETA]
     description: |
-      This feature uses Tongji's USR (Urban Solar Radiation) model to perform comprehensive analyses of urban solar radiation, encompassing direct, diffuse, and reflected components. 
-      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion to fast assess building solar exposure in dense urban environments.
+      **This is currently in active development and may not work as expected.**  
       
-      Cite us:
-      [1] Xiaoyu Wang, et al. "A novel and efficient method for calculating beam shadows on exterior surfaces of buildings in dense urban contexts." Building and Environment 229 (2023): 109937.
+      This feature uses Tongji University's CRAX (CityRadiation Accelerator) model to perform comprehensive analyses of urban solar radiation,
+      encompassing direct, diffuse, and reflected components. 
+      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion
+      to fast assess building solar exposure in dense urban environments.
+      
+      Reference: https://doi.org/10.1016/j.buildenv.2022.109937
     interfaces: [cli, dashboard]
-    module: cea.resources.radiationUSR.main
+    module: cea.resources.radiationCRAX.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                 radiation-usr,
-                 'radiation:zone-geometry', 'radiation:surrounding-geometry', 'radiation:neglect-adjacent-buildings']
+                 radiation-crax]
     input-files:
       - [get_building_architecture]
       - [get_surroundings_geometry]
