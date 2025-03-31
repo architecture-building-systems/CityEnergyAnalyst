@@ -6,14 +6,13 @@ from typing import Optional, Tuple
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
-                ["Copyright 2025, College of Architecture and Urban Planning (CAUP) - Tongji University"]
+    ["Copyright 2025, College of Architecture and Urban Planning (CAUP) - Tongji University"]
 __credits__ = ["Xiaoyu Wang"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = [""]
 __email__ = ["cea@arch.ethz.ch", "wanglittlerain@163.com"]
 __status__ = "Production"
-
 
 # Define the list of required CRAX executables (without extension)
 REQUIRED_CRAX_BINARIES = [
@@ -83,14 +82,11 @@ class CRAX:
         cmd = f'"{exe_name}" "{json_file}"'
         return self.run_cmd(cmd, self.crax_exe_dir, self.crax_lib_dir)
 
-
     def run_radiation(self, json_file: str):
         """
         Execute the radiation executable with a JSON input file.
 
-        On Windows, the command is prefixed with a PATH assignment so that the folder
-        containing arrow.dll (i.e. self.crax_exe_dir) is included in the environment for
-        the execution of the command.
+        Tries to load the required shared arrow library from conda environment if available.
 
         :param json_file: The full path to the JSON file to be used as input.
         :return: The output from the radiation executable.
@@ -98,10 +94,14 @@ class CRAX:
         exe_name = "radiation.exe" if self.is_windows else "radiation"
         exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
-        # Set the PATH environment variable so radiation.exe can find arrow.dll
         env = os.environ.copy()
-        if self.is_windows:
-            env["PATH"] = f"{exe_dir};{env['PATH']}"
+        if "CONDA_PREFIX" in env:
+            if self.is_windows:
+                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'bin')
+                env["PATH"] = f"{lib_path};{env['PATH']}"
+            else:
+                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
+                env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
 
         # Command to run the exe
         cmd = [os.path.join(exe_dir, exe_name), json_file]
@@ -110,11 +110,9 @@ class CRAX:
         try:
             result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
             result.check_returncode()  # This will raise an error if the command failed
-            #print(result.stdout)
             return result.stdout
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Error running radiation.exe:\n{e.stderr}")
-
 
 
 def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
@@ -134,7 +132,7 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
         for binary in REQUIRED_CRAX_BINARIES:
             expected = binary + (".exe" if sys.platform == "win32" else "")
             if expected not in files:
-                print(f"Expected binary '{expected}' not found in {path}. Found: {files}")
+                # print(f"Expected binary '{expected}' not found in {path}. Found: {files}")
                 return False
         return True
 
@@ -193,10 +191,3 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
                 return sub_bin, lib_path
 
     raise ValueError("Could not find CRAX executables - checked these paths: {}".format(", ".join(folders_to_check)))
-
-
-
-
-
-
-
