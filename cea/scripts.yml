@@ -164,7 +164,7 @@ Renewable Energy Potential Assessment:
 
 Energy Demand Forecasting:
   - name: occupancy-helper
-    label: Building Occupancy
+    label: "Energy Demand Part 1: building occupancy"
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
     module: cea.demand.occupancy_helper
@@ -181,7 +181,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: Building Energy Demand
+    label: "Energy Demand Part 2: R-C model"
     description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -218,7 +218,7 @@ Energy Demand Forecasting:
 Thermal Network Design:
 
   - name: network-layout
-    label: Thermal Network Part I (layout)
+    label: "Thermal Network Part 1: layout"
     description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
@@ -229,7 +229,7 @@ Thermal Network Design:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal Network Part II (simulation)
+    label: "Thermal Network Part 2: simulation"
     description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -279,7 +279,7 @@ Energy Supply System Optimisation:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply System Part I (decentralised)
+    label: "Supply System Part 1: decentralised"
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
@@ -288,7 +288,7 @@ Energy Supply System Optimisation:
       - [get_total_demand]
 
   - name: optimization-new
-    label: Supply System Part II (centralised)
+    label: "Supply System Part 2: centralised"
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
