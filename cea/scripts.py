@@ -4,6 +4,9 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 
 
 import os
+import warnings
+from typing import List
+
 import yaml
 import cea
 import cea.inputlocator
@@ -20,11 +23,41 @@ class CeaScript(object):
         self.interfaces = script_dict.get('interfaces', ['cli'])
         self.label = script_dict.get('label', self.name)
         self.category = category
-        self.parameters = script_dict.get('parameters', [])
+        self.parameters = self._ensure_parameters_order(script_dict.get('parameters', []))
         self.input_files = script_dict.get('input-files', [])
 
     def __repr__(self):
         return '<cea %s>' % self.name
+
+    @staticmethod
+    def _ensure_parameters_order(parameters: List[str]) -> List[str]:
+        """
+        Ensure that the first parameter is `general:scenario` and move it to the first position.
+        Some parameters depend on the scenario parameter, so it should be the first parameter to be set.
+
+        That also means that order of parameters are important if there are dependencies between them.
+        # TODO: Add tests for this
+        """
+        # Ignore if there is only one parameter
+        if len(parameters) <= 1:
+            return parameters
+
+        try:
+            scenario_in_parameters = parameters.index("general:scenario")
+        except ValueError:
+            # Ignore if scenario is not in parameters
+            return parameters
+
+        if scenario_in_parameters != 0:
+            warnings.warn(f"`general:scenario` parameter found and is not the first parameter. "
+                          f"Other parameters could depend on it, therefore this could produce unexpected results. "
+                          f"Moving it to the first position. Please check the script.yml file if this is not intended.")
+
+            # Move scenario to the first position
+            parameters.insert(0, parameters.pop(scenario_in_parameters))
+
+        return parameters
+
 
     def print_script_configuration(self, config, verb='Running'):
         """

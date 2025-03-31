@@ -46,7 +46,8 @@ Solar Radiation Analysis:
     description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
-    parameters: [radiation, 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug']
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation]
     input-files:
       - [get_building_architecture]
       - [get_surroundings_geometry]
@@ -67,7 +68,8 @@ Solar Radiation Analysis:
       Reference: https://doi.org/10.1016/j.buildenv.2022.109937
     interfaces: [cli, dashboard]
     module: cea.resources.radiationCRAX.main
-    parameters: [radiation-crax, 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug']
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation-crax]
     input-files:
       - [get_building_architecture]
       - [get_surroundings_geometry]
