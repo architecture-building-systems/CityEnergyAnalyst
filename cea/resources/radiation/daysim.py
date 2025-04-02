@@ -363,11 +363,12 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     group_dict = labels.to_dict()
 
     # Ensure surface columns (sometimes windows do not exist)
-    missing_labels = set()
-    for label in labels.unique():
-        if label not in SURFACE_DIRECTION_LABELS:
-            raise ValueError(f"Unrecognized surface name {label}")
-        missing_labels.add(label)
+    current_labels = set(labels.unique())
+    missing_labels = SURFACE_DIRECTION_LABELS - current_labels
+
+    extra_labels = current_labels - SURFACE_DIRECTION_LABELS
+    if len(extra_labels) > 0:
+        raise ValueError(f"Unrecognized surface names {extra_labels}")
 
     # Transform data
     sensor_values_kw = sensor_values.multiply(geometry['AREA_m2'], axis="index") / 1000
