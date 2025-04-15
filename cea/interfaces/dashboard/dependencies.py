@@ -300,16 +300,15 @@ def get_project_root(user_id: CEAUserID):
     return project_root
 
 
-def get_user_id(request: Request) -> dict:
+def get_user_id(auth_client: CEAAuthClient) -> dict:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
         return LOCAL_USER_ID
 
     # Try to get user id from request cookie
-    if (token := StackAuth.get_token(request)) is not None:
+    if auth_client is not None:
         try:
-            auth_client = StackAuth(token)
             return auth_client.get_user_id()
         except CEAAuthError as e:
             logger.error(e)
@@ -319,14 +318,13 @@ def get_user_id(request: Request) -> dict:
     return LOCAL_USER_ID
 
 
-def get_user(request: Request):
+def get_user(auth_client: CEAAuthClient):
     if settings.local:
         return {'id': LOCAL_USER_ID}
 
     # Try to get user id from request cookie
-    if (token := StackAuth.get_token(request)) is not None:
+    if auth_client is not None:
         try:
-            auth_client = StackAuth(token)
             return auth_client.get_current_user()
         except CEAAuthError as e:
             logger.error(e)
@@ -338,17 +336,17 @@ def get_user(request: Request):
 
 def get_auth_client(request: Request):
     if settings.local:
-        raise ValueError("Server running in local mode")
+        return None
 
-    if (token := StackAuth.get_token(request)) is not None:
-        return StackAuth(token)
+    auth_client = StackAuth.from_request_cookies(request.cookies)
+    if auth_client.access_token is not None:
+        return auth_client
 
     raise Exception("Unable get auth client")
 
 
 def check_auth_for_demo(request: Request, user_id: CEAUserID):
     """Check if user is authorized when not in local mode"""
-
     # Pass if local mode
     if settings.local:
         return

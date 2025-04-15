@@ -16,8 +16,6 @@ class StackAuthSettings(BaseSettings):
     project_id: Optional[str] = None
     publishable_client_key: Optional[str] = None
 
-    cookie_name: str = "stack-access"
-
 
 class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
