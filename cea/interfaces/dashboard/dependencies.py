@@ -328,7 +328,10 @@ def get_user(auth_client: CEAAuthClient):
             return auth_client.get_current_user()
         except CEAAuthError as e:
             logger.error(e)
-            # raise Exception("Unable to verify user token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e,
+            )
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
     return {'id': LOCAL_USER_ID}

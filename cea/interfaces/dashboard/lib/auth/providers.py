@@ -125,7 +125,9 @@ class StackAuth:
 
         try:
             res = self._stack_auth_request("POST", "/api/v1/auth/sessions/current/refresh",
-                                           headers={"x-stack-refresh-token": self.refresh_token})
+                                           headers={"x-stack-refresh-token": self.refresh_token,
+                                                    # Set access token to None to force a new access token to be generated
+                                                    'x-stack-access-token': None})
 
             new_access_token = res['access_token']
             if not new_access_token:
