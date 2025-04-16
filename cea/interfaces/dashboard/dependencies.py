@@ -142,9 +142,8 @@ class CEADatabaseConfig(cea.config.Configuration):
 
     def read(self):
         with get_session_context() as session:
-            _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-
             try:
+                _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
                 if _config:
                     cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
                     self.from_dict(_config.config)
