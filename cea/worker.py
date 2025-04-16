@@ -11,6 +11,8 @@ as an URL for locating the /server/jobs api.
 """
 
 import sys
+from typing import Any
+
 import requests
 import traceback
 import queue
@@ -113,7 +115,8 @@ def fetch_job(jobid: str, server) -> JobInfo:
 def run_job(job: JobInfo):
     parameters = read_parameters(job)
     script = read_script(job)
-    script(**parameters)
+    output = script(**parameters)
+    return output
 
 
 def read_script(job: JobInfo):
@@ -136,10 +139,10 @@ def post_started(jobid, server):
     requests.post(f"{server}/jobs/started/{jobid}")
 
 
-def post_success(jobid: str, server: str):
+def post_success(jobid: str, server: str, output: Any = None):
     # Close streams before sending success
     close_streams()
-    requests.post(f"{server}/jobs/success/{jobid}")
+    requests.post(f"{server}/jobs/success/{jobid}", json={"output": output})
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
@@ -156,8 +159,8 @@ def worker(jobid: str, server: str):
 
         configure_streams(jobid, server)
         post_started(jobid, server)
-        run_job(job)
-        post_success(jobid, server)
+        output = run_job(job)
+        post_success(jobid, server, output)
     except (SystemExit, Exception) as e:
         message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
         print(f"\nERROR: {message}")
