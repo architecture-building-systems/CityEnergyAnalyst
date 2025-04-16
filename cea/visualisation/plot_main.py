@@ -9,7 +9,6 @@ from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
 
-
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
@@ -45,7 +44,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config, scenario, plot_cea_feature, hour_start=0, hour_end=8759):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature: str, hour_start=0, hour_end=8759):
     # Find the plot config section for the cea feature
     try:
         plot_config = config.sections[f"plots-{plot_cea_feature}"]
@@ -53,10 +52,12 @@ def plot_all(config, scenario, plot_cea_feature, hour_start=0, hour_end=8759):
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, scenario, plot_cea_feature, hour_start, hour_end)
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, scenario, plot_cea_feature,
+                                                                                hour_start, hour_end)
 
     # Activate b_data_processor
-    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data)
+    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_instance, plot_cea_feature, df_summary_data,
+                                                   df_architecture_data)
 
     # Activate c_plotter
     fig = generate_fig(plot_config, df_to_plotly, list_y_columns)
@@ -68,7 +69,10 @@ def main(config):
 
     plot_cea_feature = get_plot_cea_feature(config)
     fig = plot_all(config, scenario, plot_cea_feature)
+
+    plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
     fig.show()
+    return plot_html
 
 
 if __name__ == '__main__':
