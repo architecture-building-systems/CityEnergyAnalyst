@@ -120,9 +120,11 @@ def create_db_and_tables():
     logger.info("Preparing database...")
     initialize_db()
 
-    if not get_settings().local:
-        return
+    if get_settings().local:
+        migrate_db()
 
+
+def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
     with engine.connect() as conn:
