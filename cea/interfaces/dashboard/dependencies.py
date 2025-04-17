@@ -3,16 +3,17 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 
-from aiocache import caches, Cache, BaseCache
-from aiocache.serializers import PickleSerializer
 from fastapi import Depends, Request, HTTPException, status
 from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
+from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
+from cea.interfaces.dashboard.lib.cache.provider import get_cache, get_dict_cache
+from cea.interfaces.dashboard.lib.cache.settings import CONFIG_CACHE_TTL
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
@@ -20,73 +21,10 @@ from cea.interfaces.dashboard.lib.database.session import SessionDep, get_sessio
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
-CACHE_NAME = 'default'
-caches.set_config({
-    CACHE_NAME: {
-        'cache': Cache.MEMORY,
-        'serializer': {
-            'class': PickleSerializer
-        }
-    }
-})
-CONFIG_CACHE_TTL = 300
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
 settings = get_settings()
 cea_db_config_logger = getCEAServerLogger("cea-db-config")
-
-
-class AsyncDictCache:
-    def __init__(self, cache: BaseCache, cache_key: str):
-        self._cache = cache
-        self._cache_key = cache_key
-
-    async def get(self, item_id, default=None):
-        # Try to get the entire dictionary from cache
-        _dict: dict = await self._cache.get(self._cache_key)
-        # If dictionary doesn't exist yet, return default
-        if _dict is None:
-            return default
-        # Otherwise return the requested item or default
-        return _dict.get(item_id, default)
-
-    async def pop(self, item_id, default=None):
-        value = await self.get(item_id, default)
-        try:
-            await self.delete(item_id)
-        except KeyError:
-            pass
-        return value
-
-    async def set(self, item_id, value):
-        # Atomic update pattern to prevent race conditions
-        _dict = await self._cache.get(self._cache_key)
-        if _dict is None:
-            _dict = {}
-        _dict[item_id] = value
-        await self._cache.set(self._cache_key, _dict)
-        return value
-
-    async def delete(self, item_id):
-        _dict = await self._cache.get(self._cache_key)
-        if _dict is None:
-            raise KeyError(f"Cache key '{self._cache_key}' not found")
-        if item_id not in _dict:
-            raise KeyError(f"Item '{item_id}' not found in cache")
-        del _dict[item_id]
-        await self._cache.set(self._cache_key, _dict)
-
-    async def values(self):
-        _dict = await self._cache.get(self._cache_key)
-        if _dict is None:
-            return []
-        return _dict.values()
-
-    async def keys(self):
-        _dict = await self._cache.get(self._cache_key)
-        if _dict is None:
-            return []
-        return _dict.keys()
 
 
 class CEALocalConfig(cea.config.Configuration):
@@ -182,7 +120,7 @@ class CEADatabaseConfig(cea.config.Configuration):
 
         # Update cache
         async def update_cache():
-            _cache = caches.get(CACHE_NAME)
+            _cache = get_cache()
             cache_key = f"cea_config_{self._user_id}"
             await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
             cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
@@ -204,7 +142,7 @@ async def get_cea_config(user_id: CEAUserID):
     # Don't read config from database if user is local
     if settings.db_url is not None and user_id != LOCAL_USER_ID:
         # Try to get config from cache first
-        _cache = caches.get(CACHE_NAME)
+        _cache = get_cache()
         cache_key = f"cea_config_{user_id}"
 
         # Try to get from cache
@@ -237,8 +175,8 @@ class ProjectInfo:
 async def get_project_info(config: CEAConfig) -> ProjectInfo:
     """Get the current project and scenario in the config"""
     return ProjectInfo(
-        project=config.project,
-        scenario=config.scenario,
+        project=str(config.project),
+        scenario=str(config.scenario),
     )
 
 
@@ -274,27 +212,12 @@ async def get_plot_cache(config: CEAConfig):
     return _plot_cache
 
 
-async def get_worker_processes():
-    _cache = caches.get(CACHE_NAME)
-    worker_processes = await _cache.get("worker_processes")
-
-    if worker_processes is None:
-        worker_processes = dict()
-        await _cache.set("worker_processes", worker_processes)
-
-    return AsyncDictCache(_cache, "worker_processes")
+async def get_worker_processes() -> AsyncDictCache:
+    return await get_dict_cache("worker_processes")
 
 
-async def get_streams():
-    _cache = caches.get(CACHE_NAME)
-    streams = await _cache.get("streams")
-
-    if streams is None:
-        # map jobid to a list of messages
-        streams = dict()
-        await _cache.set("streams", streams)
-
-    return AsyncDictCache(_cache, "streams")
+async def get_streams() -> AsyncDictCache:
+    return await get_dict_cache("streams")
 
 
 def get_server_url():
@@ -315,7 +238,7 @@ def get_project_root(user_id: CEAUserID):
     return project_root
 
 
-def get_user_id(auth_client: CEAAuthClient) -> dict:
+def get_user_id(auth_client: CEAAuthClient) -> str:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
@@ -333,8 +256,7 @@ def get_user_id(auth_client: CEAAuthClient) -> dict:
     return LOCAL_USER_ID
 
 
-
-def get_user(auth_client: CEAAuthClient):
+def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
     if settings.local:
         return {'id': LOCAL_USER_ID}
 
@@ -362,6 +284,7 @@ def get_auth_client(request: Request) -> Optional[AuthClient]:
         return auth_client
 
     logger.debug("Unable to determine auth client")
+    return None
 
 
 def check_auth_for_demo(request: Request, user_id: CEAUserID):
