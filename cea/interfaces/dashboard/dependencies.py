@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Optional
 
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
@@ -13,7 +14,7 @@ from typing_extensions import Annotated
 import cea.config
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
-from cea.interfaces.dashboard.lib.auth.providers import StackAuth
+from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
 from cea.interfaces.dashboard.settings import get_settings
@@ -317,6 +318,7 @@ def get_user_id(auth_client: CEAAuthClient) -> dict:
     return LOCAL_USER_ID
 
 
+
 def get_user(auth_client: CEAAuthClient):
     if settings.local:
         return {'id': LOCAL_USER_ID}
@@ -336,7 +338,7 @@ def get_user(auth_client: CEAAuthClient):
     return {'id': LOCAL_USER_ID}
 
 
-def get_auth_client(request: Request):
+def get_auth_client(request: Request) -> Optional[AuthClient]:
     if settings.local:
         return None
 
@@ -344,7 +346,7 @@ def get_auth_client(request: Request):
     if auth_client.access_token is not None:
         return auth_client
 
-    raise Exception("Unable get auth client")
+    logger.debug("Unable to determine auth client")
 
 
 def check_auth_for_demo(request: Request, user_id: CEAUserID):
@@ -373,6 +375,6 @@ CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
-CEAAuthClient = Annotated[StackAuth, Depends(get_auth_client)]
+CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 
 CEASeverDemoAuthCheck = Depends(check_auth_for_demo)

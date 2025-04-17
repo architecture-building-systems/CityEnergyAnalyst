@@ -1,4 +1,5 @@
 import json
+from abc import ABC, abstractmethod
 from typing import Dict, Optional
 from urllib.parse import unquote
 
@@ -9,7 +10,30 @@ from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.settings import StackAuthSettings
 
 
-class StackAuth:
+class AuthClient(ABC):
+    @classmethod
+    @abstractmethod
+    def from_request_cookies(cls, request_cookies: Dict[str, str]) -> "AuthClient":
+        pass
+
+    @abstractmethod
+    def get_current_user(self) -> dict:
+        pass
+
+    @abstractmethod
+    def get_user_id(self) -> str:
+        pass
+
+    @abstractmethod
+    def refresh_access_token(self) -> str:
+        pass
+
+    @abstractmethod
+    def logout(self) -> None:
+        pass
+
+
+class StackAuth(AuthClient):
     _settings = StackAuthSettings()
 
     project_id = _settings.project_id
@@ -44,13 +68,7 @@ class StackAuth:
         token_string = request_cookies.get(cls.refresh_token_name)
         return unquote(token_string) if token_string is not None else None
 
-    @classmethod
-    def from_request_cookies(cls, request_cookies: Dict[str, str]) -> "StackAuth":
-        access_token = cls._read_access_token(request_cookies)
-        refresh_token = cls._read_refresh_token(request_cookies)
-        return StackAuth(access_token, refresh_token)
-
-    def verify_token(self):
+    def _verify_token(self):
         """
         Verify the JWT token signature using cached JWKS. Attempts refresh if expired.
         Returns the decoded token payload.
@@ -70,19 +88,13 @@ class StackAuth:
                 audience=self.project_id,
             )
         except jwt.ExpiredSignatureError:
-            raise CEAAuthError(f"Token expired")
+            raise CEAAuthError("Token expired")
         except jwt.PyJWTError as e:
             # Handle other JWT errors (invalid signature, invalid audience, etc.)
             raise CEAAuthError(f"Token verification failed: {str(e)}")
         except Exception as e:
             # Catch potential errors during JWKS fetching or key retrieval
             raise CEAAuthError(f"An error occurred during token verification process: {str(e)}")
-
-    def get_user_id(self):
-        # Use verified token instead of skipping verification
-        verified_token = self.verify_token()
-        # Handle the case where verify_token indicates refresh occurred if needed downstream
-        return verified_token['sub']
 
     def _stack_auth_request(self, method, endpoint, **kwargs):
         if not self.access_token:
@@ -104,7 +116,7 @@ class StackAuth:
             )
 
             if res.status_code == 401:  # Unauthorized - potentially expired token
-                raise CEAAuthError(f"Unauthorized API request, try re-authenticating.")
+                raise CEAAuthError("Unauthorized API request, try re-authenticating.")
 
             elif res.status_code >= 400:
                 raise CEAAuthError(f"Stack Auth API request failed with {res.status_code}: {res.text}")
@@ -114,6 +126,18 @@ class StackAuth:
         except requests.exceptions.RequestException as e:
             # Handle network or connection errors
             raise CEAAuthError(f"Stack Auth API request network error: {str(e)}")
+
+    @classmethod
+    def from_request_cookies(cls, request_cookies: Dict[str, str]) -> "StackAuth":
+        access_token = cls._read_access_token(request_cookies)
+        refresh_token = cls._read_refresh_token(request_cookies)
+        return StackAuth(access_token, refresh_token)
+
+    def get_user_id(self):
+        # Use verified token instead of skipping verification
+        verified_token = self._verify_token()
+        # Handle the case where verify_token indicates refresh occurred if needed downstream
+        return verified_token['sub']
 
     def get_current_user(self):
         res = self._stack_auth_request("GET", "/api/v1/users/me")
