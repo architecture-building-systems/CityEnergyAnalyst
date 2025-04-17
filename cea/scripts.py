@@ -49,11 +49,7 @@ class CeaScript(object):
             return parameters
 
         if scenario_in_parameters != 0:
-            warnings.warn("`general:scenario` parameter found and is not the first parameter. "
-                          "Other parameters could depend on it, therefore this could produce unexpected results. "
-                          "Moving it to the first position. Please check the script.yml file if this is not intended.")
-
-            # Move scenario to the first position
+            # Move scenario parameter to the first position, since some parameters could depend on it.
             parameters.insert(0, parameters.pop(scenario_in_parameters))
 
         return parameters
