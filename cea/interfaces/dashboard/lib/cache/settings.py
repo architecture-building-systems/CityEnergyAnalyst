@@ -1,14 +1,15 @@
-from aiocache import caches, Cache
-from aiocache.serializers import PickleSerializer
+from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from cea.interfaces.dashboard.settings import ENV_VAR_PREFIX
 
 CACHE_NAME = 'cea-cache'
 CONFIG_CACHE_TTL = 300
 
-caches.set_config({
-    CACHE_NAME: {
-        'cache': Cache.MEMORY,
-        'serializer': {
-            'class': PickleSerializer
-        }
-    }
-})
+
+class CacheSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX + "cache_")
+
+    host: Optional[str] = "localhost"
+    port: Optional[int] = 6379
