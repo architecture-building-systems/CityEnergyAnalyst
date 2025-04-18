@@ -56,12 +56,12 @@ async def connect(sid, environ, auth):
 
     cookie_string = environ.get('HTTP_COOKIE')
     if cookie_string is None:
-        print('authentication failed')
+        logger.error('authentication failed')
         raise ConnectionRefusedError('authentication failed. no cookie found')
 
     cookie_dict = cookie_string_to_dict(cookie_string)
     if len(cookie_dict.keys()) == 0:
-        print('unable to find token')
+        logger.error('unable to find token')
         raise ConnectionRefusedError('authentication failed. no token found')
 
     auth_client = StackAuth.from_request_cookies(cookie_dict)
@@ -69,6 +69,7 @@ async def connect(sid, environ, auth):
     try:
         user_id = auth_client.get_user_id()
     except CEAAuthError:
+        logger.error('unable to determine user id')
         raise ConnectionRefusedError('authentication failed. invalid token')
 
     await sio.enter_room(sid, f"user-{user_id}")
