@@ -27,17 +27,12 @@ async def lifespan(_: FastAPI):
     close_db_connection()
 
 
-def get_cors_origins() -> str:
-    origin = get_settings().cors_origin
-    return origin
-
-
 app = FastAPI(lifespan=lifespan)
 
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[get_cors_origins()],
+    allow_origins=[get_settings().cors_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,7 +56,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.errors()},
         headers={
-            "Access-Control-Allow-Origin": get_cors_origins(),
+            "Access-Control-Allow-Origin": get_settings().cors_origin,
         }
     )
 
@@ -74,6 +69,6 @@ async def uncaught_exception_handler(request: Request, exc: Exception):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": f"Uncaught exception: {exc}"},
         headers={
-            "Access-Control-Allow-Origin": get_cors_origins(),
+            "Access-Control-Allow-Origin": get_settings().cors_origin,
         }
     )

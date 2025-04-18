@@ -8,15 +8,26 @@ from cea.interfaces.dashboard.dependencies import settings
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
+from cea.interfaces.dashboard.settings import get_settings
 
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=[])
+
+def _get_cors_origin():
+    cors_origin = get_settings().cors_origin
+    # Disable cors_origin if wildcard given
+    if cors_origin == '*':
+        return []
+
+    return cors_origin
+
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin())
 socket_app = socketio.ASGIApp(sio)
 
 
 def cookie_string_to_dict(cookie_string: str) -> Dict[str, str]:
     token_string = cookie_string.split('; ')
     token_string = [x for x in token_string if x.startswith(StackAuth.cookie_prefix)]
-    return {k:v for k,v in [x.split('=') for x in token_string]}
+    return {k: v for k, v in [x.split('=') for x in token_string]}
+
 
 @sio.event
 async def connect(sid, environ, auth):
