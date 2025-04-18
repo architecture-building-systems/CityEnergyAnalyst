@@ -9,7 +9,7 @@ from cea.interfaces.dashboard.dependencies import CEAStreams
 from cea.interfaces.dashboard.lib.database.models import JobInfo
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.server.socketio import sio
+from cea.interfaces.dashboard.lib.socketio import sio
 
 logger = getCEAServerLogger("cea-server-streams")
 

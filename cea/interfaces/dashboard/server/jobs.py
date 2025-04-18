@@ -14,7 +14,7 @@ from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcess
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.server.socketio import sio
+from cea.interfaces.dashboard.lib.socketio import sio
 
 # FIXME: Add auth checks after giving workers access token
 router = APIRouter()

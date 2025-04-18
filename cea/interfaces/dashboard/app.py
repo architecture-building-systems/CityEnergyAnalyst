@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from cea.interfaces.dashboard.lib.database.session import close_db_connection
 from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.lib.logs import logger
-from cea.interfaces.dashboard.server.socketio import socket_app
+from cea.interfaces.dashboard.lib.socketio import socket_app
 
 import cea.interfaces.dashboard.api as api
 import cea.interfaces.dashboard.plots.routes as plots
