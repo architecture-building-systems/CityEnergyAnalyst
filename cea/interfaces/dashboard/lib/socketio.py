@@ -7,8 +7,12 @@ from socketio.exceptions import ConnectionRefusedError
 from cea.interfaces.dashboard.dependencies import settings
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
+from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
+
+logger = getCEAServerLogger("cea-server-socketio")
 
 
 def _get_cors_origin():
@@ -19,7 +23,18 @@ def _get_cors_origin():
 
     return cors_origin
 
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin())
+
+def _get_client_manager():
+    cache_settings = CacheSettings()
+    if cache_settings.host and cache_settings.port:
+        mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}')
+        logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
+        return mgr
+
+    return None
+
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin(),
+                           client_manager=_get_client_manager())
 socket_app = socketio.ASGIApp(sio)
 
 
