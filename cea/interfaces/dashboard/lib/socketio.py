@@ -27,11 +27,15 @@ def _get_cors_origin():
 def _get_client_manager():
     cache_settings = CacheSettings()
     if cache_settings.host and cache_settings.port:
-        mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}')
-        logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
-        return mgr
+        try:
+            mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}')
+            logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
+            return mgr
+        except Exception as e:
+            logger.error(f"Failed to connect to Redis: {str(e)}")
 
     return None
+
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin(),
                            client_manager=_get_client_manager())
