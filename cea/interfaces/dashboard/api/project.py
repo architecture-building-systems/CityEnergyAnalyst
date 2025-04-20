@@ -256,7 +256,7 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     try:
         os.makedirs(project, exist_ok=True)
         # Add project to database
-        create_project(project, user_id, session)
+        await create_project(project, user_id, session)
     except OSError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

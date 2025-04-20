@@ -18,13 +18,14 @@ from cea.interfaces.dashboard.settings import get_settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    create_db_and_tables()
+    await create_db_and_tables()
     yield
+
     logger.info("Shutting down server...")
     # Shutdown all worker processes on exit
     await server.shutdown_worker_processes()
     # Close database connections
-    close_db_connection()
+    await close_db_connection()
 
 
 app = FastAPI(lifespan=lifespan)

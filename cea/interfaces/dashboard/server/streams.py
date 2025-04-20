@@ -21,7 +21,7 @@ async def read_stream(session: SessionDep, streams: CEAStreams, job_id: str):
     stdout = await streams.get(job_id)
 
     if stdout is None:
-        job = session.get(JobInfo, job_id)
+        job = await session.get(JobInfo, job_id)
         if job is None:
             print(f"read_stream: job {job_id} not found")
             return ""  # Return empty string for non-existent jobs
@@ -42,7 +42,7 @@ async def write_stream(session: SessionDep, streams: CEAStreams, job_id: str, re
     await streams.set(job_id, stream)
 
     # TODO: Get user id from request from worker
-    job = session.get(JobInfo, job_id)
+    job = await session.get(JobInfo, job_id)
     if job is None:
         return
 

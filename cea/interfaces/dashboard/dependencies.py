@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional, Dict
@@ -25,6 +26,18 @@ IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
 settings = get_settings()
 cea_db_config_logger = getCEAServerLogger("cea-db-config")
+
+
+def run_async(func):
+    """Run a function in an asyncio event loop."""
+    try:
+        asyncio.create_task(func())
+    except RuntimeError:
+        # If no event loop is running
+        logger.error("Using new asyncio event loop")
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(func())
+        loop.close()
 
 
 class CEALocalConfig(cea.config.Configuration):
@@ -94,49 +107,47 @@ class CEADatabaseConfig(cea.config.Configuration):
 
         return out
 
-    def read(self):
-        with get_session_context() as session:
-            try:
-                _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-                if _config:
-                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
-                    self.from_dict(_config.config)
-            except Exception as e:
-                logger.error(e)
-                cea_db_config_logger.warning("Returning local config")
+    def read(self) -> None:
+        logger.info("Reading config from database")
 
-        return self
+        async def _read_async():
+            async with get_session_context() as session:
+                try:
+                    result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                    _config = result.scalar()
+                    if _config:
+                        cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
+                        self.from_dict(_config.config)
+                except Exception as e:
+                    logger.error(e)
+                    cea_db_config_logger.warning("Returning local config")
+
+        run_async(_read_async)
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
         logger.info("Saving config to database")
-        with get_session_context() as session:
-            _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-            if _config:
-                _config.config = self.to_dict()
-            else:
-                session.add(Config(user_id=self._user_id, config=self.to_dict()))
-            session.commit()
 
-        # Update cache
-        async def update_cache():
+        async def _save_async():
+            # Read from database
+            async with get_session_context() as session:
+                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                _config = result.scalar()
+                if _config:
+                    _config.config = self.to_dict()
+                else:
+                    session.add(Config(user_id=self._user_id, config=self.to_dict()))
+
+            # Update cache
             _cache = get_cache()
             cache_key = f"cea_config_{self._user_id}"
             await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
             cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
 
-        # Run in event loop
-        import asyncio
-        try:
-            asyncio.create_task(update_cache())
-        except RuntimeError:
-            # If no event loop is running
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(update_cache())
-            loop.close()
+        run_async(_save_async)
 
 
-async def get_cea_config(user_id: CEAUserID):
+async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
@@ -180,11 +191,11 @@ async def get_project_info(config: CEAConfig) -> ProjectInfo:
     )
 
 
-def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
+async def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
     project = Project(uri=project_uri, owner=owner_id)
     session.add(project)
-    session.commit()
-    session.refresh(project)
+    await session.commit()
+    await session.refresh(project)
 
     return project
 
@@ -196,7 +207,8 @@ async def get_project_id(session: SessionDep, owner_id: CEAUserID,
     if project_root is not None:
         project_uri = os.path.join(project_root, project_uri)
 
-    project = session.exec(select(Project).where(Project.uri == project_uri)).first()
+    result = await session.execute(select(Project).where(Project.uri == project_uri))
+    project = result.scalar()
 
     # If project not found, create a new one
     if not project:
@@ -268,7 +280,7 @@ def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
             logger.error(e)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=e,
+                detail=str(e),
             )
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")

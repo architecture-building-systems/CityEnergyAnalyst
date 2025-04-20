@@ -112,7 +112,7 @@ def initialize_db():
     SQLModel.metadata.create_all(engine)
 
 
-def create_db_and_tables():
+async def create_db_and_tables():
     # FIXME: Only running for local mode since it is expensive for remote connections
     if not get_settings().local:
         return
@@ -121,10 +121,10 @@ def create_db_and_tables():
     initialize_db()
 
     if get_settings().local:
-        migrate_db()
+        await migrate_db()
 
 
-def migrate_db():
+async def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
     with engine.connect() as conn:
@@ -146,11 +146,12 @@ def migrate_db():
 
 
     logger.info("Using local user...")
-    with get_session_context() as session:
-        user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
+    async with get_session_context() as session:
+        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
+        user = result.scalar()
         if user is None:
             logger.warning("Default local user not found. Creating...")
             user = User(id=LOCAL_USER_ID)
             session.add(user)
-            session.commit()
+            await session.commit()
     
