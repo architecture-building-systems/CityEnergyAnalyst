@@ -28,7 +28,10 @@ def _get_client_manager():
     cache_settings = CacheSettings()
     if cache_settings.host and cache_settings.port:
         try:
-            mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}')
+            mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}',
+                                             write_only=False,  # Ensure reading is enabled
+                                             channel='socketio',  # Use a consistent channel name
+                                             )
             logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
             return mgr
         except Exception as e:
@@ -36,9 +39,9 @@ def _get_client_manager():
 
     return None
 
-
+client_manager = _get_client_manager()
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin(),
-                           client_manager=_get_client_manager())
+                           client_manager=client_manager)
 socket_app = socketio.ASGIApp(sio)
 
 

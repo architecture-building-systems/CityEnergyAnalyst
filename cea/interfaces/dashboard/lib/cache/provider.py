@@ -9,7 +9,6 @@ logger = getCEAServerLogger("cea-cache")
 
 _cache_instance = None
 
-
 def get_cache():
     """Gets the singleton cache instance, initializing it on first call."""
     global _cache_instance
@@ -40,3 +39,6 @@ async def get_dict_cache(key: str) -> AsyncDictCache:
         logger.debug(f"Created new cache for key: {key}")
 
     return AsyncDictCache(_cache, key)
+
+# Initialise cache object
+get_cache()
