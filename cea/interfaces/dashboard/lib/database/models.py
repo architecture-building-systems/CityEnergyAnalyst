@@ -64,7 +64,7 @@ class Config(SQLModel, table=True):
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    uri: str
+    uri: str = Field(nullable=False, index=True)
     owner: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
 
 

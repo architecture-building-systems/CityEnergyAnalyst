@@ -213,7 +213,7 @@ async def get_project_id(session: SessionDep, owner_id: CEAUserID,
     # If project not found, create a new one
     if not project:
         logger.info(f"Creating project in database: {project_uri}")
-        project = create_project(project_uri, owner_id, session)
+        project = await create_project(project_uri, owner_id, session)
 
     return project.id
 
