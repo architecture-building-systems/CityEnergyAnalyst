@@ -4,7 +4,6 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 
 
 import os
-import warnings
 from typing import List
 
 import yaml
