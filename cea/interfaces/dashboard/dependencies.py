@@ -4,7 +4,7 @@ import os
 import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 
 from fastapi import Depends, Request, HTTPException, status
 from sqlmodel import select
@@ -129,20 +129,21 @@ class CEADatabaseConfig(cea.config.Configuration):
         logger.info("Saving config to database")
 
         async def _save_async():
-            # Read from database
-            async with get_session_context() as session:
-                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
-                _config = result.scalar()
-                if _config:
-                    _config.config = self.to_dict()
-                else:
-                    session.add(Config(user_id=self._user_id, config=self.to_dict()))
-
-            # Update cache
+            # Update config object in cache
             _cache = get_cache()
             cache_key = f"cea_config_{self._user_id}"
             await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
             cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
+
+            # Save new config to database
+            config_dict = self.to_dict()
+            async with get_session_context() as session:
+                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                _config = result.scalar()
+                if _config:
+                    _config.config = config_dict
+                else:
+                    session.add(Config(user_id=self._user_id, config=config_dict))
 
         run_async(_save_async)
 
@@ -316,7 +317,7 @@ def check_auth_for_demo(request: Request, user_id: CEAUserID):
 
 CEAUserID = Annotated[str, Depends(get_user_id)]
 CEAUser = Annotated[dict, Depends(get_user)]
-CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
+CEAConfig = Annotated[Union[CEALocalConfig, CEADatabaseConfig], Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
 CEAProjectID = Annotated[str, Depends(get_project_id)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
