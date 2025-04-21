@@ -607,7 +607,7 @@ Development:
 Visualisation:
 
   - name: plot-demand
-    label: Plot results for building energy demand
+    label: Plot - Building Energy Demand
     description: This Feature plots bar chart of the results of building energy demand forecasting
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
