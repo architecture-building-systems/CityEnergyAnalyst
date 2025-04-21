@@ -10,6 +10,7 @@ logger = getCEAServerLogger("cea-server-settings")
 
 ENV_VAR_PREFIX = "CEA_"
 
+
 class StackAuthSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX + "auth_")
 
@@ -34,6 +35,7 @@ class Settings(BaseSettings):
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
     cors_origin: str = "*"
 
+    workers: Optional[int] = Field(default=None, description="Number of workers")
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
