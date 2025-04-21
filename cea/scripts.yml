@@ -602,3 +602,17 @@ Development:
     interfaces: [ dev ]
     module: cea.dev.update_zenodo
     parameters: []
+
+
+Visualisation:
+
+  - name: plot-demand
+    label: Plot - Building Energy Demand
+    description: This Feature plots bar chart of the results of building energy demand forecasting
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-demand]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]

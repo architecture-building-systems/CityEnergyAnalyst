@@ -26,6 +26,10 @@ class JobError(BaseModel):
     stacktrace: str
 
 
+class JobOutput(BaseModel):
+    output: Any
+
+
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
 @router.get("/list")
 async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
@@ -87,7 +91,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
 
 @router.post("/success/{job_id}")
 async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
-                          worker_processes: CEAWorkerProcesses) -> JobInfo:
+                          worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfo:
     job = session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -102,7 +106,10 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
-        await sio.emit("cea-worker-success", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+
+        job_info = job.model_dump(mode='json')
+        job_info["output"] = output.output
+        await sio.emit("cea-worker-success", job_info, room=f"user-{job.created_by}")
         return job
     except Exception as e:
         logger.error(e)

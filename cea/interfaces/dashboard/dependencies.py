@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Optional
 
 from aiocache import caches, Cache, BaseCache
 from aiocache.serializers import PickleSerializer
@@ -13,7 +14,7 @@ from typing_extensions import Annotated
 import cea.config
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
-from cea.interfaces.dashboard.lib.auth.providers import StackAuth
+from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
 from cea.interfaces.dashboard.settings import get_settings
@@ -142,9 +143,8 @@ class CEADatabaseConfig(cea.config.Configuration):
 
     def read(self):
         with get_session_context() as session:
-            _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-
             try:
+                _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
                 if _config:
                     cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
                     self.from_dict(_config.config)
@@ -300,16 +300,15 @@ def get_project_root(user_id: CEAUserID):
     return project_root
 
 
-def get_user_id(request: Request) -> dict:
+def get_user_id(auth_client: CEAAuthClient) -> dict:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
         return LOCAL_USER_ID
 
     # Try to get user id from request cookie
-    if (token := StackAuth.get_token(request)) is not None:
+    if auth_client is not None:
         try:
-            auth_client = StackAuth(token)
             return auth_client.get_user_id()
         except CEAAuthError as e:
             logger.error(e)
@@ -319,36 +318,39 @@ def get_user_id(request: Request) -> dict:
     return LOCAL_USER_ID
 
 
-def get_user(request: Request):
+
+def get_user(auth_client: CEAAuthClient):
     if settings.local:
         return {'id': LOCAL_USER_ID}
 
     # Try to get user id from request cookie
-    if (token := StackAuth.get_token(request)) is not None:
+    if auth_client is not None:
         try:
-            auth_client = StackAuth(token)
             return auth_client.get_current_user()
         except CEAAuthError as e:
             logger.error(e)
-            # raise Exception("Unable to verify user token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e,
+            )
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
     return {'id': LOCAL_USER_ID}
 
 
-def get_auth_client(request: Request):
+def get_auth_client(request: Request) -> Optional[AuthClient]:
     if settings.local:
-        raise ValueError("Server running in local mode")
+        return None
 
-    if (token := StackAuth.get_token(request)) is not None:
-        return StackAuth(token)
+    auth_client = StackAuth.from_request_cookies(request.cookies)
+    if auth_client.access_token is not None:
+        return auth_client
 
-    raise Exception("Unable get auth client")
+    logger.debug("Unable to determine auth client")
 
 
 def check_auth_for_demo(request: Request, user_id: CEAUserID):
     """Check if user is authorized when not in local mode"""
-
     # Pass if local mode
     if settings.local:
         return
@@ -373,6 +375,6 @@ CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[str, Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
-CEAAuthClient = Annotated[StackAuth, Depends(get_auth_client)]
+CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 
 CEASeverDemoAuthCheck = Depends(check_auth_for_demo)

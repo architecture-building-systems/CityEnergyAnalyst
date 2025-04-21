@@ -41,6 +41,17 @@ __status__ = "Production"
 from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
                                                    crs_to_epsg)
 
+SURFACE_TYPES = ['walls', 'windows', 'roofs']
+SURFACE_DIRECTION_LABELS = {'windows_east',
+                            'windows_west',
+                            'windows_south',
+                            'windows_north',
+                            'walls_east',
+                            'walls_west',
+                            'walls_south',
+                            'walls_north',
+                            'roofs_top'}
+
 
 def identify_surfaces_type(occface_list):
     roof_list = []

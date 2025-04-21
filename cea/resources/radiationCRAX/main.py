@@ -21,9 +21,10 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
-from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_DIRECTION_LABELS
 from cea.resources.radiation.main import read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
+from cea.utilities.epwreader import epw_reader
 from cea.utilities.parallel import vectorize
 
 __author__ = "Xiaoyu Wang"
@@ -337,6 +338,94 @@ def run_daysim_sensor_generate(zone_building_names, locator, settings, geometry_
         )
 
 
+def calulate_cea_sensor_data(locator, config):
+    print("verifying geometry files")
+    zone_path = locator.get_zone_geometry()
+    surroundings_path = locator.get_surroundings_geometry()
+
+    print(f"zone: {zone_path}")
+    print(f"surroundings: {surroundings_path}")
+
+    zone_df = gpd.GeoDataFrame.from_file(zone_path)
+    surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)
+
+    verify_input_geometry_zone(zone_df)
+    verify_input_geometry_surroundings(surroundings_df)
+
+    # Ignore trees as model does not support them
+    trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
+
+    geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")
+
+    print("Creating 3D geometry and surfaces")
+    print(f"Saving geometry pickle files in: {geometry_staging_location}")
+    # create geometrical faces of terrain and buildings
+    terrain_raster = gdal.Open(locator.get_terrain())
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
+
+    # create custom config to override radiation settings
+    _config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    _config.project = config.project
+    _config.scenario = config.scenario
+    _config.radiation.zone_geometry = config.radiation_crax.zone_geometry
+    _config.radiation.surrounding_geometry = config.radiation_crax.surrounding_geometry
+    _config.radiation.neglect_adjacent_buildings = config.radiation_crax.neglect_adjacent_buildings
+
+    (geometry_terrain,
+     zone_building_names,
+     surroundings_building_names,
+     tree_surfaces) = geometry_generator.geometry_main(_config,
+                                                       zone_df,
+                                                       surroundings_df,
+                                                       trees_df,
+                                                       terrain_raster,
+                                                       architecture_wwr_df,
+                                                       geometry_staging_location)
+
+    run_daysim_sensor_generate(zone_building_names, locator, config.radiation_crax, geometry_staging_location,
+                               num_processes=config.get_number_of_processes())  # Call the provided CEA mesh generation method
+
+
+def post_process_radiation_files(building_names, locator):
+    weather = epw_reader(locator.get_weather_file())
+    date = weather.date
+
+    for building_name in building_names:
+        radiation_file_path = locator.get_radiation_building(building_name)
+        radiation_file = pd.read_csv(radiation_file_path)
+
+        # Add date column
+        radiation_file['date'] = date
+
+        # Fix column names
+        radiation_file.rename(columns={"roofs_top":"roofs_top_kW",
+                                       "walls_e": "walls_east_kW",
+                                       "walls_n": "walls_north_kW",
+                                       "walls_s": "walls_south_kW",
+                                       "walls_w": "walls_west_kW",
+                                       "windows_e": "windows_east_kW",
+                                       "windows_n": "windows_north_kW",
+                                       "windows_s": "windows_south_kW",
+                                       "windows_w": "windows_west_kW",
+                                       }, inplace=True)
+
+        #  Add surface area
+        building_metadata = pd.read_csv(locator.get_radiation_metadata(building_name))
+        surface_area = building_metadata.groupby(['TYPE', 'orientation'])['AREA_m2'].sum()
+        existing_surface_directions = set()
+        for index, value in surface_area.items():
+            surface_direction = f"{index[0]}_{index[1]}"
+            existing_surface_directions.add(surface_direction)
+            radiation_file[f"{surface_direction}_m2"] = round(value, 2)
+        # Add missing surfaces to output
+        missing_surface_directions = SURFACE_DIRECTION_LABELS - existing_surface_directions
+        for surface_direction in missing_surface_directions:
+            radiation_file[f"{surface_direction}_kW"] = 0.0
+            radiation_file[f"{surface_direction}_m2"] = 0.0
+
+        radiation_file.set_index("date").to_csv(radiation_file_path)
+
+
 def main(config):
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
@@ -398,56 +487,13 @@ def main(config):
     # Create an instance of CRAXModel
     CRAX_model = CRAXModel.CRAX(CRAX_bin_path, CRAX_lib_path)
 
-    if calculate_sensor_data:
+    # FIXME: temp solution to get building surface area using cea method
+    if calculate_sensor_data or using_cea_sensor:
+    # if calculate_sensor_data:
         if using_cea_sensor:
             time1 = time.time()
             print("Using CEA method to generate the mesh.")
-
-            print("verifying geometry files")
-            zone_path = locator.get_zone_geometry()
-            surroundings_path = locator.get_surroundings_geometry()
-
-            print(f"zone: {zone_path}")
-            print(f"surroundings: {surroundings_path}")
-
-            zone_df = gpd.GeoDataFrame.from_file(zone_path)
-            surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)
-
-            verify_input_geometry_zone(zone_df)
-            verify_input_geometry_surroundings(surroundings_df)
-
-            # Ignore trees as model does not support them
-            trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
-
-            geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")
-
-            print("Creating 3D geometry and surfaces")
-            print(f"Saving geometry pickle files in: {geometry_staging_location}")
-            # create geometrical faces of terrain and buildings
-            terrain_raster = gdal.Open(locator.get_terrain())
-            architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
-
-            # create custom config to override radiation settings
-            _config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-            _config.project = config.project
-            _config.scenario = config.scenario
-            _config.radiation.zone_geometry = config.radiation_crax.zone_geometry
-            _config.radiation.surrounding_geometry = config.radiation_crax.surrounding_geometry
-            _config.radiation.neglect_adjacent_buildings = config.radiation_crax.neglect_adjacent_buildings
-
-            (geometry_terrain,
-             zone_building_names,
-             surroundings_building_names,
-             tree_surfaces) = geometry_generator.geometry_main(_config,
-                                                               zone_df,
-                                                               surroundings_df,
-                                                               trees_df,
-                                                               terrain_raster,
-                                                               architecture_wwr_df,
-                                                               geometry_staging_location)
-
-            run_daysim_sensor_generate(zone_building_names, locator, config.radiation_crax, geometry_staging_location,
-                                       num_processes=config.get_number_of_processes())  # Call the provided CEA mesh generation method
+            calulate_cea_sensor_data(locator, config)
             print("Grid generation of CEA finished in %.2f mins" % ((time.time() - time1) / 60.0))
         else:
             time2 = time.time()
@@ -461,6 +507,11 @@ def main(config):
     print("Running CRAX radiation calculation")
     CRAX_model.run_radiation(json_abs_path)
     print("CRAX simulation finished in %.2f mins" % ((time.time() - time3) / 60.0))
+
+    # FIXME: temp solution to get building surface area using cea method
+    if using_cea_sensor:
+        print('transforming radiation data to cea format')
+        post_process_radiation_files(config.radiation_crax.buildings, locator)
 
 
 if __name__ == '__main__':

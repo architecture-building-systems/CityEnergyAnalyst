@@ -22,13 +22,13 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-season_names = ['Winter', 'Spring', 'Summer', 'Autumn']
+season_names = ['Spring', 'Summer', 'Autumn', 'Winter']
 month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 season_mapping = {
-            1: 'Winter', 2: 'Winter', 12: 'Winter',
             3: 'Spring', 4: 'Spring', 5: 'Spring',
             6: 'Summer', 7: 'Summer', 8: 'Summer',
-            9: 'Autumn', 10: 'Autumn', 11: 'Autumn'
+            9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
+            12: 'Winter', 1: 'Winter', 2: 'Winter'
 }
 
 # Define nominal hours for each month (non-leap year)
@@ -1003,11 +1003,11 @@ def add_nominal_actual_and_coverage(df):
             return month_hours[period]
         elif period in season_hours:
             return season_hours[period]
-        elif period.startswith("day_"):
+        elif period.startswith("D_"):
             return 24
-        elif period.startswith("hour_"):
+        elif period.startswith("H_"):
             return 1
-        elif period.startswith("year_"):
+        elif period.startswith("Y_"):
             return 8760
         elif period == 'selected_hours':
             return 8760
@@ -1070,9 +1070,9 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Handle different periods
         if period == 'hourly':
-            df['period'] = 'hour_' + df['period_hour']
+            df['period'] = 'H_' + df['period_hour']
         elif period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -1080,7 +1080,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
             df['period'] = df[date_column].dt.month.map(season_mapping)
             df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
         elif period == 'annually':
-            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+            df['period'] = 'Y_' + df[date_column].dt.year.astype(str)
         else:
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
@@ -1243,7 +1243,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if only one day is involved
@@ -1252,7 +1252,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
@@ -1261,7 +1261,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
@@ -1270,7 +1270,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
@@ -1278,7 +1278,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
@@ -1286,7 +1286,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
@@ -1294,7 +1294,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
@@ -1353,7 +1353,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
             if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
                 # Create the .csv file path
                 os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, cea_feature, appendix)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
@@ -1416,13 +1416,13 @@ def determine_building_main_use(df_typology):
     result['name'] = df_typology['name']
 
     # Determine the main use type and its ratio
-    result['main_use'] = df_typology.apply(
+    result['main_use_type'] = df_typology.apply(
         lambda row: row['use_type1'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3'],
         axis=1
     )
-    result['main_use_ratio'] = df_typology.apply(
+    result['main_use_type_ratio'] = df_typology.apply(
         lambda row: row['use_type1r'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2r'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3r'],
@@ -1505,23 +1505,23 @@ def filter_by_standard(df_typology, list_standard):
 
 def filter_by_main_use(df_typology, list_main_use_type):
     """
-    Filters rows in the DataFrame based on whether the 'main_use' column matches any item in list_main_use_type.
+    Filters rows in the DataFrame based on whether the 'main_use_type' column matches any item in list_main_use_type.
 
     Parameters:
-    - df_typology (pd.DataFrame): DataFrame with a 'main_use' column.
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_type' column.
     - list_main_use_type (list): List of main use types to filter on.
 
     Returns:
-    - pd.DataFrame: Filtered DataFrame with rows where 'main_use' matches any item in list_main_use_type.
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_type' matches any item in list_main_use_type.
 
     Raises:
-    - ValueError: If 'main_use' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'main_use_type' column is not found or if the filtered DataFrame is empty.
     """
-    if 'main_use' not in df_typology.columns:
-        raise ValueError("'main_use' column not found in the DataFrame.")
+    if 'main_use_type' not in df_typology.columns:
+        raise ValueError("'main_use_type' column not found in the DataFrame.")
 
-    # Filter rows where 'main_use' matches any value in list_main_use_type
-    filtered_df = df_typology[df_typology['main_use'].isin(list_main_use_type)]
+    # Filter rows where 'main_use_type' matches any value in list_main_use_type
+    filtered_df = df_typology[df_typology['main_use_type'].isin(list_main_use_type)]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
@@ -1532,21 +1532,21 @@ def filter_by_main_use(df_typology, list_main_use_type):
 
 def filter_by_main_use_ratio(df_typology, ratio_main_use_type):
     """
-    Filters rows in the DataFrame where the 'main_use_r' column is equal to or larger than a given ratio.
+    Filters rows in the DataFrame where the 'main_use_type_ratio' column is equal to or larger than a given ratio.
 
     Parameters:
-    - df_typology (pd.DataFrame): DataFrame with a 'main_use_r' column.
+    - df_typology (pd.DataFrame): DataFrame with a 'main_use_type_ratio' column.
     - ratio_main_use_type (float): The minimum ratio threshold for filtering.
 
     Returns:
-    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_r' >= ratio_main_use_type.
+    - pd.DataFrame: Filtered DataFrame with rows where 'main_use_type_ratio' >= ratio_main_use_type.
 
     Raises:
-    - ValueError: If 'main_use_r' column is not found or if the filtered DataFrame is empty.
+    - ValueError: If 'main_use_type_ratio' column is not found or if the filtered DataFrame is empty.
     """
 
-    # Filter rows where 'main_use_r' is greater than or equal to the threshold
-    filtered_df = df_typology[df_typology['main_use_ratio'] >= ratio_main_use_type]
+    # Filter rows where 'main_use_type_ratio' is greater than or equal to the threshold
+    filtered_df = df_typology[df_typology['main_use_type_ratio'] >= ratio_main_use_type]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
@@ -1650,7 +1650,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
         # Handle different periods
         if period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"day_{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"Day{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -1971,13 +1971,13 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
     # Mapping metric names for user-friendly output
     name_mapping = {
-        'grid_electricity_consumption[kWh]': 'EUI - grid electricity [kWh/m²]',
-        'enduse_electricity_demand[kWh]': 'EUI - enduse electricity [kWh/m²]',
-        'enduse_cooling_demand[kWh]': 'EUI - cooling [kWh/m²]',
-        'enduse_space_cooling_demand[kWh]': 'EUI - space cooling [kWh/m²]',
-        'enduse_heating_demand[kWh]': 'EUI - heating [kWh/m²]',
-        'enduse_space_heating_demand[kWh]': 'EUI - space heating [kWh/m²]',
-        'enduse_dhw_demand[kWh]': 'EUI - domestic hot water [kWh/m²]',
+        'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m²]',
+        'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m²]',
+        'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m²]',
+        'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m²]',
+        'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m²]',
+        'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m²]',
+        'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m²]',
     }
 
     # Read and process the architecture DataFrame
@@ -2000,7 +2000,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
     for time_period in list_time_period:
         # Time resolution processing
-        df_time_path = locator.get_export_results_summary_cea_feature_time_resolution_file(
+        df_time_path = locator.get_export_results_summary_cea_feature_time_period_file(
             summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
         )
         df_time_resolution = pd.read_csv(df_time_path)
