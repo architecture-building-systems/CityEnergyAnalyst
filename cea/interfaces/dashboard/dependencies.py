@@ -4,6 +4,7 @@ import os
 import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import wraps
 from typing import Optional, Dict, Union
 
 from fastapi import Depends, Request, HTTPException, status
@@ -29,15 +30,42 @@ cea_db_config_logger = getCEAServerLogger("cea-db-config")
 
 
 def run_async(func):
-    """Run a function in an asyncio event loop."""
-    try:
-        asyncio.create_task(func())
-    except RuntimeError:
-        # If no event loop is running
-        logger.error("Using new asyncio event loop")
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(func())
-        loop.close()
+    """
+    Run a function in an asyncio event loop, ensuring compatibility with FastAPI.
+    
+    This helper handles both cases:
+    1. When called from within an async context (like FastAPI request handlers)
+    2. When called from a synchronous context
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        coro = func(*args, **kwargs)
+        
+        try:
+            # Try to get the current event loop - this will succeed if we're in an async context
+            loop = asyncio.get_event_loop()
+            
+            # Check if we're already in a running event loop
+            if loop.is_running():
+                # We're in FastAPI's event loop, create a task
+                return asyncio.create_task(coro)
+            else:
+                # We have an event loop but it's not running
+                return loop.run_until_complete(coro)
+                
+        except RuntimeError:
+            # No event loop found in this thread, create a new one
+            logger.warning("Creating new asyncio event loop - consider refactoring to avoid this")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(coro)
+            finally:
+                # Clean up
+                loop.close()
+                return None
+
+    return wrapper
 
 
 class CEALocalConfig(cea.config.Configuration):
@@ -110,7 +138,8 @@ class CEADatabaseConfig(cea.config.Configuration):
     def read(self) -> None:
         logger.info("Reading config from database")
 
-        async def _read_async():
+        @run_async
+        async def _read():
             async with get_session_context() as session:
                 try:
                     result = await session.execute(select(Config).where(Config.user_id == self._user_id))
@@ -122,13 +151,14 @@ class CEADatabaseConfig(cea.config.Configuration):
                     logger.error(e)
                     cea_db_config_logger.warning("Returning local config")
 
-        run_async(_read_async)
+        _read()
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
         logger.info("Saving config to database")
 
-        async def _save_async():
+        @run_async
+        async def _save():
             # Update config object in cache
             _cache = get_cache()
             cache_key = f"cea_config_{self._user_id}"
@@ -145,7 +175,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 else:
                     session.add(Config(user_id=self._user_id, config=config_dict))
 
-        run_async(_save_async)
+        _save()
 
 
 async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
