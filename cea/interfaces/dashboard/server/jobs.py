@@ -225,11 +225,16 @@ async def kill_job(jobid, worker_processes):
     logger.warning(f"killing child processes of {jobid} ({pid})")
     try:
         process = psutil.Process(pid)
+
+        children = process.children(recursive=True)
+        for child in children:
+            logger.warning(f"-- killing child {pid}")
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
+        process.kill()
     except psutil.NoSuchProcess:
         return
-    children = process.children(recursive=True)
-    for child in children:
-        logger.warning(f"-- killing child {pid}")
-        child.kill()
-    process.kill()
-    await worker_processes.delete(jobid)
+    finally:
+        await worker_processes.delete(jobid)
