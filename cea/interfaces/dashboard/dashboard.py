@@ -41,7 +41,7 @@ def main(config):
             settings.to_env_file(env_file)
 
             uvicorn.run("cea.interfaces.dashboard.app:app",
-                        reload=config.server.dev if settings.workers is None else False,
+                        reload=config.server.dev,
                         workers=settings.workers,
                         env_file=env_file,
                         host=settings.host, port=settings.port)

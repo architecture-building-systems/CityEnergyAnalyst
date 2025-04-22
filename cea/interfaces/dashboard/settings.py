@@ -4,11 +4,12 @@ from typing import Optional
 from pydantic import model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+ENV_VAR_PREFIX = "CEA_"
+
+from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 logger = getCEAServerLogger("cea-server-settings")
-
-ENV_VAR_PREFIX = "CEA_"
 
 
 class StackAuthSettings(BaseSettings):
@@ -36,6 +37,7 @@ class Settings(BaseSettings):
     cors_origin: str = "*"
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
+
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
@@ -50,6 +52,18 @@ class Settings(BaseSettings):
 
             if self.project_root is None:
                 raise ValueError(f"Project root not set. Please set {(ENV_VAR_PREFIX + 'project_root').upper()}.")
+        return self
+
+    @model_validator(mode='after')
+    def validate_multi_worker_mode(self):
+        """External cache is required for multiple workers to work"""
+        if self.workers:
+            cache_settings = CacheSettings()
+
+            # TODO: Maybe check connection
+            if cache_settings.host is None or cache_settings.port is None:
+                raise ValueError("External cache settings required for multiple workers")
+
         return self
 
     def allow_path_transversal(self) -> bool:
