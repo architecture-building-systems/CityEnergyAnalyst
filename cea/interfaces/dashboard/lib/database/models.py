@@ -1,16 +1,16 @@
+import os
+import uuid
 from datetime import datetime, timezone
 from enum import IntEnum
-import os
 from typing import Optional
-import uuid
 
 from pydantic import AwareDatetime, computed_field
 from sqlmodel import Field, SQLModel, JSON, DateTime, select, inspect, text
 
 import cea.scripts
-from cea.interfaces.dashboard.lib.database.session import engine, get_session_context, get_connection_props
+from cea.interfaces.dashboard.lib.database.session import (engine, get_session_context, get_connection_props,
+                                                           database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
-
 from cea.interfaces.dashboard.settings import get_settings
 
 
@@ -25,8 +25,9 @@ def determine_db_type():
 
 
 LOCAL_USER_ID = "localuser"
-user_table_name = get_settings().user_table_name
-user_table_schema = get_settings().user_table_schema
+
+user_table_name = database_settings.user_table_name
+user_table_schema = database_settings.user_table_schema
 db_type = determine_db_type()
 
 # Include schema name when using postgres
@@ -103,7 +104,7 @@ class JobInfo(SQLModel, table=True):
     @computed_field
     def duration(self) -> Optional[float]:
         """Calculate job execution time in seconds if available"""
-        if self.start_time and self.end_time:
+        if self.start_time is not None and self.end_time is not None:
             return (self.end_time - self.start_time).total_seconds()
         return None
 

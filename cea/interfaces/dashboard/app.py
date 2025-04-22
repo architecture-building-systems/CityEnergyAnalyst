@@ -2,17 +2,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, status, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
-from cea.interfaces.dashboard.lib.database.session import close_db_connection
-from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
-from cea.interfaces.dashboard.lib.logs import logger
-from cea.interfaces.dashboard.lib.socketio import socket_app
+from fastapi.responses import JSONResponse
 
 import cea.interfaces.dashboard.api as api
 import cea.interfaces.dashboard.plots.routes as plots
 import cea.interfaces.dashboard.server as server
+from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
+from cea.interfaces.dashboard.lib.database.session import close_db_connection
+from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.socketio import socket_app
 from cea.interfaces.dashboard.settings import get_settings
 
 

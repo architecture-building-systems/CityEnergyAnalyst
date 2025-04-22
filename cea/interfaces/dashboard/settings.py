@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ENV_VAR_PREFIX = "CEA_"
 
 from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
+from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 logger = getCEAServerLogger("cea-server-settings")
@@ -28,11 +29,6 @@ class Settings(BaseSettings):
     port: Optional[int] = None
     project_root: Optional[str] = None
 
-    db_path: Optional[str] = None
-    db_url: Optional[str] = None
-    user_table_name: str = "user"
-    user_table_schema: str = "public"
-
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
     cors_origin: str = "*"
 
@@ -47,7 +43,8 @@ class Settings(BaseSettings):
             if self.cors_origin == "*":
                 logger.warning("Security warning: Running with cors_origin='*'. "
                                "This allows any origin to access your API and may pose security risks.")
-            if self.db_url is None:
+
+            if database_settings.url is None:
                 raise ValueError(f"Database URL not set. Please set {(ENV_VAR_PREFIX + 'db_url').upper()}.")
 
             if self.project_root is None:

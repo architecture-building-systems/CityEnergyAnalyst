@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -35,8 +36,7 @@ def get_default_db_directory():
 def get_local_database_path():
     """Get the path to the database file."""
     # Try to get from settings (if available)
-    settings = get_settings()
-    db_dir = settings.db_path
+    db_dir = database_settings.path
 
     # Use default location if not configured
     if db_dir is None:
@@ -47,16 +47,14 @@ def get_local_database_path():
 
 
 def get_connection_props():
-    settings = get_settings()
-
     # Only use local database if local mode
     if get_settings().local:
         return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
 
     # Use database_url if set (priority)
     # Support postgres for now
-    if settings.db_url is not None:
-        url = make_url(settings.db_url)
+    if database_settings.url is not None:
+        url = make_url(database_settings.url)
 
         # Replace psycopg2 with asyncpg for PostgreSQL connections
         if url.drivername.startswith("postgresql"):
@@ -66,7 +64,7 @@ def get_connection_props():
             url = url.set(query={k: v for k, v in url.query.items() if k.lower() != "sslmode"})
             return url.render_as_string(hide_password=False), {}
 
-        return settings.db_url, {}
+        return database_settings.url, {}
 
     raise ValueError("Could not determine database properties")
 

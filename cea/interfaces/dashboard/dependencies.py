@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import asyncio
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
@@ -13,13 +13,14 @@ from typing_extensions import Annotated
 
 import cea.config
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
+from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
 from cea.interfaces.dashboard.lib.cache.provider import get_cache, get_dict_cache
 from cea.interfaces.dashboard.lib.cache.settings import CONFIG_CACHE_TTL
-from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
-from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
+from cea.interfaces.dashboard.lib.database.settings import database_settings
+from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
@@ -184,7 +185,7 @@ async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
-    if settings.db_url is not None and user_id != LOCAL_USER_ID:
+    if database_settings.url is not None and user_id != LOCAL_USER_ID:
         # Try to get config from cache first
         _cache = get_cache()
         cache_key = f"cea_config_{user_id}"
