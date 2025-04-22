@@ -63,7 +63,7 @@ def get_connection_props():
             url = url.set(drivername="postgresql+asyncpg")
 
             # strip out sslmode (asyncpg doesn’t accept it)
-            url = url.update_query_dict({k: v for k, v in url.query.items() if k.lower() != "sslmode"})
+            url = url.set(query={k: v for k, v in url.query.items() if k.lower() != "sslmode"})
             return url.render_as_string(hide_password=False), {}
 
         return settings.db_url, {}
