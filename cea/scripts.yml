@@ -181,7 +181,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: "Energy Demand Part 2: R-C model"
+    label: "Energy Demand Part 2: thermal modelling"
     description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -229,7 +229,7 @@ Thermal Network Design:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: "Thermal Network Part 2: simulation"
+    label: "Thermal Network Part 2: flow & sizing"
     description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
