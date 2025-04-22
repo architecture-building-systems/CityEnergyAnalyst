@@ -13,3 +13,6 @@ class CacheSettings(BaseSettings):
 
     host: Optional[str] = None
     port: int = 6379
+
+
+cache_settings = CacheSettings()

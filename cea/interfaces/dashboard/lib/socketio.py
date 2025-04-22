@@ -7,7 +7,7 @@ from socketio.exceptions import ConnectionRefusedError
 from cea.interfaces.dashboard.dependencies import settings
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
-from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
+from cea.interfaces.dashboard.lib.cache.settings import cache_settings
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
@@ -25,7 +25,6 @@ def _get_cors_origin():
 
 
 def _get_client_manager():
-    cache_settings = CacheSettings()
     if cache_settings.host and cache_settings.port:
         try:
             mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}',

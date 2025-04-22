@@ -5,7 +5,7 @@ from pydantic import model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
-from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
+from cea.interfaces.dashboard.lib.cache.settings import cache_settings
 from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
@@ -54,8 +54,6 @@ class Settings(BaseSettings):
     def validate_multi_worker_mode(self):
         """External cache is required for multiple workers to work"""
         if self.workers:
-            cache_settings = CacheSettings()
-
             # TODO: Maybe check connection
             if cache_settings.host is None or cache_settings.port is None:
                 raise ValueError("External cache settings required for multiple workers")
