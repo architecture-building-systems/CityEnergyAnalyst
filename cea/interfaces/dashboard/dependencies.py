@@ -1,77 +1,72 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional
+from functools import wraps
+from typing import Optional, Dict, Union
 
-from aiocache import caches, Cache, BaseCache
-from aiocache.serializers import PickleSerializer
 from fastapi import Depends, Request, HTTPException, status
 from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
-from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
+from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
+from cea.interfaces.dashboard.lib.cache.provider import get_cache, get_dict_cache
+from cea.interfaces.dashboard.lib.cache.settings import CONFIG_CACHE_TTL
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project, Config
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
+from cea.interfaces.dashboard.lib.database.settings import database_settings
+from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 from cea.plots.cache import PlotCache
 
-CACHE_NAME = 'default'
-caches.set_config({
-    CACHE_NAME: {
-        'cache': Cache.MEMORY,
-        'serializer': {
-            'class': PickleSerializer
-        }
-    }
-})
-CONFIG_CACHE_TTL = 300
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
 settings = get_settings()
 cea_db_config_logger = getCEAServerLogger("cea-db-config")
 
 
-class AsyncDictCache:
-    def __init__(self, cache: BaseCache, cache_key: str):
-        self._cache = cache
-        self._cache_key = cache_key
-
-    async def get(self, item_id, default=None):
-        _dict: dict = await self._cache.get(self._cache_key, dict())
-        return _dict.get(item_id, default)
-
-    async def pop(self, item_id, default=None):
-        value = await self.get(item_id, default)
+def run_async(func):
+    """
+    Run a function in an asyncio event loop, ensuring compatibility with FastAPI.
+    
+    This helper handles both cases:
+    1. When called from within an async context (like FastAPI request handlers)
+    2. When called from a synchronous context
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        coro = func(*args, **kwargs)
+        
         try:
-            await self.delete(item_id)
-        except KeyError:
-            pass
-        return value
+            # Try to get the current event loop - this will succeed if we're in an async context
+            loop = asyncio.get_event_loop()
+            
+            # Check if we're already in a running event loop
+            if loop.is_running():
+                # We're in FastAPI's event loop, create a task
+                return asyncio.create_task(coro)
+            else:
+                # We have an event loop but it's not running
+                return loop.run_until_complete(coro)
+                
+        except RuntimeError:
+            # No event loop found in this thread, create a new one
+            logger.warning("Creating new asyncio event loop - consider refactoring to avoid this")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(coro)
+            finally:
+                # Clean up
+                loop.close()
+                return None
 
-    async def set(self, item_id, value):
-        _dict = await self._cache.get(self._cache_key, dict())
-        _dict[item_id] = value
-        await self._cache.set(self._cache_key, _dict)
-
-        return value
-
-    async def delete(self, item_id):
-        _dict = await self._cache.get(self._cache_key, dict())
-        del _dict[item_id]
-        await self._cache.set(self._cache_key, _dict)
-
-    async def values(self):
-        _dict = await self._cache.get(self._cache_key)
-        return _dict.values()
-
-    async def keys(self):
-        _dict = await self._cache.get(self._cache_key)
-        return _dict.keys()
+    return wrapper
 
 
 class CEALocalConfig(cea.config.Configuration):
@@ -141,55 +136,58 @@ class CEADatabaseConfig(cea.config.Configuration):
 
         return out
 
-    def read(self):
-        with get_session_context() as session:
-            try:
-                _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-                if _config:
-                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
-                    self.from_dict(_config.config)
-            except Exception as e:
-                logger.error(e)
-                cea_db_config_logger.warning("Returning local config")
+    def read(self) -> None:
+        logger.info("Reading config from database")
 
-        return self
+        @run_async
+        async def _read():
+            async with get_session_context() as session:
+                try:
+                    result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                    _config = result.scalar()
+                    if _config:
+                        cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
+                        self.from_dict(_config.config)
+                except Exception as e:
+                    logger.error(e)
+                    cea_db_config_logger.warning("Returning local config")
+
+        result = _read()
+        return result
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
         logger.info("Saving config to database")
-        with get_session_context() as session:
-            _config = session.exec(select(Config).where(Config.user_id == self._user_id)).first()
-            if _config:
-                _config.config = self.to_dict()
-            else:
-                session.add(Config(user_id=self._user_id, config=self.to_dict()))
-            session.commit()
 
-        # Update cache
-        async def update_cache():
-            _cache = caches.get(CACHE_NAME)
+        @run_async
+        async def _save():
+            # Update config object in cache
+            _cache = get_cache()
             cache_key = f"cea_config_{self._user_id}"
             await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
             cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
 
-        # Run in event loop
-        import asyncio
-        try:
-            asyncio.create_task(update_cache())
-        except RuntimeError:
-            # If no event loop is running
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(update_cache())
-            loop.close()
+            # Save new config to database
+            config_dict = self.to_dict()
+            async with get_session_context() as session:
+                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                _config = result.scalar()
+                if _config:
+                    _config.config = config_dict
+                else:
+                    session.add(Config(user_id=self._user_id, config=config_dict))
+
+        result = _save()
+        return result
 
 
-async def get_cea_config(user_id: CEAUserID):
+async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
-    if settings.db_url is not None and user_id != LOCAL_USER_ID:
+    if database_settings.url is not None and user_id != LOCAL_USER_ID:
         # Try to get config from cache first
-        _cache = caches.get(CACHE_NAME)
+        _cache = get_cache()
         cache_key = f"cea_config_{user_id}"
 
         # Try to get from cache
@@ -222,16 +220,16 @@ class ProjectInfo:
 async def get_project_info(config: CEAConfig) -> ProjectInfo:
     """Get the current project and scenario in the config"""
     return ProjectInfo(
-        project=config.project,
-        scenario=config.scenario,
+        project=str(config.project),
+        scenario=str(config.scenario),
     )
 
 
-def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
+async def create_project(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> Project:
     project = Project(uri=project_uri, owner=owner_id)
     session.add(project)
-    session.commit()
-    session.refresh(project)
+    await session.commit()
+    await session.refresh(project)
 
     return project
 
@@ -243,12 +241,13 @@ async def get_project_id(session: SessionDep, owner_id: CEAUserID,
     if project_root is not None:
         project_uri = os.path.join(project_root, project_uri)
 
-    project = session.exec(select(Project).where(Project.uri == project_uri)).first()
+    result = await session.execute(select(Project).where(Project.uri == project_uri))
+    project = result.scalar()
 
     # If project not found, create a new one
     if not project:
         logger.info(f"Creating project in database: {project_uri}")
-        project = create_project(project_uri, owner_id, session)
+        project = await create_project(project_uri, owner_id, session)
 
     return project.id
 
@@ -259,27 +258,12 @@ async def get_plot_cache(config: CEAConfig):
     return _plot_cache
 
 
-async def get_worker_processes():
-    _cache = caches.get(CACHE_NAME)
-    worker_processes = await _cache.get("worker_processes")
-
-    if worker_processes is None:
-        worker_processes = dict()
-        await _cache.set("worker_processes", worker_processes)
-
-    return AsyncDictCache(_cache, "worker_processes")
+async def get_worker_processes() -> AsyncDictCache:
+    return await get_dict_cache("worker_processes")
 
 
-async def get_streams():
-    _cache = caches.get(CACHE_NAME)
-    streams = await _cache.get("streams")
-
-    if streams is None:
-        # map jobid to a list of messages
-        streams = dict()
-        await _cache.set("streams", streams)
-
-    return AsyncDictCache(_cache, "streams")
+async def get_streams() -> AsyncDictCache:
+    return await get_dict_cache("streams")
 
 
 def get_server_url():
@@ -300,7 +284,7 @@ def get_project_root(user_id: CEAUserID):
     return project_root
 
 
-def get_user_id(auth_client: CEAAuthClient) -> dict:
+def get_user_id(auth_client: CEAAuthClient) -> str:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
@@ -318,8 +302,7 @@ def get_user_id(auth_client: CEAAuthClient) -> dict:
     return LOCAL_USER_ID
 
 
-
-def get_user(auth_client: CEAAuthClient):
+def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
     if settings.local:
         return {'id': LOCAL_USER_ID}
 
@@ -331,7 +314,7 @@ def get_user(auth_client: CEAAuthClient):
             logger.error(e)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=e,
+                detail=str(e),
             )
 
     logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
@@ -347,6 +330,7 @@ def get_auth_client(request: Request) -> Optional[AuthClient]:
         return auth_client
 
     logger.debug("Unable to determine auth client")
+    return None
 
 
 def check_auth_for_demo(request: Request, user_id: CEAUserID):
@@ -366,7 +350,7 @@ def check_auth_for_demo(request: Request, user_id: CEAUserID):
 
 CEAUserID = Annotated[str, Depends(get_user_id)]
 CEAUser = Annotated[dict, Depends(get_user)]
-CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
+CEAConfig = Annotated[Union[CEALocalConfig, CEADatabaseConfig], Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
 CEAProjectID = Annotated[str, Depends(get_project_id)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]

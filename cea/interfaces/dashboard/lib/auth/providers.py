@@ -134,9 +134,7 @@ class StackAuth(AuthClient):
         return StackAuth(access_token, refresh_token)
 
     def get_user_id(self):
-        # Use verified token instead of skipping verification
         verified_token = self._verify_token()
-        # Handle the case where verify_token indicates refresh occurred if needed downstream
         return verified_token['sub']
 
     def get_current_user(self):

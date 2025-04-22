@@ -1,12 +1,16 @@
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 
 from fastapi import Depends
-from sqlmodel import create_engine, Session
+
+from sqlalchemy.engine.url import make_url
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -32,8 +36,7 @@ def get_default_db_directory():
 def get_local_database_path():
     """Get the path to the database file."""
     # Try to get from settings (if available)
-    settings = get_settings()
-    db_dir = settings.db_path
+    db_dir = database_settings.path
 
     # Use default location if not configured
     if db_dir is None:
@@ -44,39 +47,59 @@ def get_local_database_path():
 
 
 def get_connection_props():
-    settings = get_settings()
-
     # Only use local database if local mode
     if get_settings().local:
         return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
 
     # Use database_url if set (priority)
     # Support postgres for now
-    if settings.db_url is not None:
-        return settings.db_url, {}
+    if database_settings.url is not None:
+        url = make_url(database_settings.url)
+
+        # Replace psycopg2 with asyncpg for PostgreSQL connections
+        if url.drivername.startswith("postgresql"):
+            url = url.set(drivername="postgresql+asyncpg")
+
+            # strip out sslmode (asyncpg doesn’t accept it)
+            url = url.set(query={k: v for k, v in url.query.items() if k.lower() != "sslmode"})
+            return url.render_as_string(hide_password=False), {}
+
+        return database_settings.url, {}
 
     raise ValueError("Could not determine database properties")
 
 
 db_url, connect_args = get_connection_props()
-engine = create_engine(db_url, connect_args=connect_args)
+engine = create_async_engine(db_url, connect_args=connect_args)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-def get_session():
-    with Session(engine) as session:
-        yield session
+async def get_session():
+    async with async_session() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
-@contextmanager
-def get_session_context():
-    with Session(engine) as session:
-        yield session
+@asynccontextmanager
+async def get_session_context():
+    """Async context manager for database sessions."""
+    async with async_session() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
-def close_db_connection():
+async def close_db_connection():
     """Close the database engine connection pool on application shutdown."""
     logger.info("Closing database connection pool...")
-    engine.dispose()
+    await engine.dispose()
 
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]

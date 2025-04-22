@@ -1,16 +1,16 @@
+import os
+import uuid
 from datetime import datetime, timezone
 from enum import IntEnum
-import os
 from typing import Optional
-import uuid
 
 from pydantic import AwareDatetime, computed_field
 from sqlmodel import Field, SQLModel, JSON, DateTime, select, inspect, text
 
 import cea.scripts
-from cea.interfaces.dashboard.lib.database.session import engine, get_session_context, get_connection_props
+from cea.interfaces.dashboard.lib.database.session import (engine, get_session_context, get_connection_props,
+                                                           database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
-
 from cea.interfaces.dashboard.settings import get_settings
 
 
@@ -25,8 +25,9 @@ def determine_db_type():
 
 
 LOCAL_USER_ID = "localuser"
-user_table_name = get_settings().user_table_name
-user_table_schema = get_settings().user_table_schema
+
+user_table_name = database_settings.user_table_name
+user_table_schema = database_settings.user_table_schema
 db_type = determine_db_type()
 
 # Include schema name when using postgres
@@ -64,7 +65,7 @@ class Config(SQLModel, table=True):
 
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    uri: str
+    uri: str = Field(nullable=False, index=True)
     owner: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
 
 
@@ -103,7 +104,7 @@ class JobInfo(SQLModel, table=True):
     @computed_field
     def duration(self) -> Optional[float]:
         """Calculate job execution time in seconds if available"""
-        if self.start_time and self.end_time:
+        if self.start_time is not None and self.end_time is not None:
             return (self.end_time - self.start_time).total_seconds()
         return None
 
@@ -112,7 +113,7 @@ def initialize_db():
     SQLModel.metadata.create_all(engine)
 
 
-def create_db_and_tables():
+async def create_db_and_tables():
     # FIXME: Only running for local mode since it is expensive for remote connections
     if not get_settings().local:
         return
@@ -120,9 +121,11 @@ def create_db_and_tables():
     logger.info("Preparing database...")
     initialize_db()
 
-    if not get_settings().local:
-        return
+    if get_settings().local:
+        await migrate_db()
 
+
+async def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
     with engine.connect() as conn:
@@ -144,11 +147,12 @@ def create_db_and_tables():
 
 
     logger.info("Using local user...")
-    with get_session_context() as session:
-        user = session.exec(select(User).where(User.id == LOCAL_USER_ID)).first()
+    async with get_session_context() as session:
+        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
+        user = result.scalar()
         if user is None:
             logger.warning("Default local user not found. Creating...")
             user = User(id=LOCAL_USER_ID)
             session.add(user)
-            session.commit()
+            await session.commit()
     
