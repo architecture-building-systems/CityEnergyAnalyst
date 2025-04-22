@@ -151,7 +151,8 @@ class CEADatabaseConfig(cea.config.Configuration):
                     logger.error(e)
                     cea_db_config_logger.warning("Returning local config")
 
-        _read()
+        result = _read()
+        return result
 
     def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
@@ -175,7 +176,8 @@ class CEADatabaseConfig(cea.config.Configuration):
                 else:
                     session.add(Config(user_id=self._user_id, config=config_dict))
 
-        _save()
+        result = _save()
+        return result
 
 
 async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
