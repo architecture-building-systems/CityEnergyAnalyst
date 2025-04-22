@@ -21,7 +21,7 @@ def parse_connection_string(connection_string: str) -> Tuple[str, str, str]:
     
     # Check if the host contains authentication information
     if '@' in host:
-        auth_part, endpoint = host.rsplit('@', 1)
+        auth_part, host = host.rsplit('@', 1)
         if ':' in auth_part:
             username, password = auth_part.split(':', 1)
     
