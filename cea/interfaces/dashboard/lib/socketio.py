@@ -39,6 +39,7 @@ def _get_client_manager():
 
     return None
 
+
 client_manager = _get_client_manager()
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_origin(),
                            client_manager=client_manager)
@@ -48,7 +49,7 @@ socket_app = socketio.ASGIApp(sio)
 def cookie_string_to_dict(cookie_string: str) -> Dict[str, str]:
     token_string = cookie_string.split('; ')
     token_string = [x for x in token_string if x.startswith(StackAuth.cookie_prefix)]
-    return {k: v for k, v in [x.split('=') for x in token_string]}
+    return {k: v for k, v in (x.split('=', 1) for x in token_string)}
 
 
 @sio.event
