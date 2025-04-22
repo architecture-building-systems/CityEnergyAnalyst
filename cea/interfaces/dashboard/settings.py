@@ -4,8 +4,7 @@ from typing import Optional
 from pydantic import model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ENV_VAR_PREFIX = "CEA_"
-
+from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
 from cea.interfaces.dashboard.lib.cache.settings import CacheSettings
 from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
