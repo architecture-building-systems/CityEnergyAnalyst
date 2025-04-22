@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from cea.interfaces.dashboard.settings import ENV_VAR_PREFIX
+from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
 
 CACHE_NAME = 'cea-cache'
 CONFIG_CACHE_TTL = 300
