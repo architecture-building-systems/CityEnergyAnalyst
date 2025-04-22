@@ -8,7 +8,7 @@ from pydantic import AwareDatetime, computed_field
 from sqlmodel import Field, SQLModel, JSON, DateTime, select, inspect, text
 
 import cea.scripts
-from cea.interfaces.dashboard.lib.database.session import (engine, get_session_context, get_connection_props,
+from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
                                                            database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings
@@ -110,6 +110,7 @@ class JobInfo(SQLModel, table=True):
 
 
 def initialize_db():
+    engine = get_engine()
     SQLModel.metadata.create_all(engine)
 
 
@@ -128,6 +129,7 @@ async def create_db_and_tables():
 async def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
+    engine = get_engine()
     with engine.connect() as conn:
         inspector = inspect(engine)
         # For project table and owner column

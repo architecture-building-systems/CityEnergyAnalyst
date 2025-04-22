@@ -1,6 +1,7 @@
 import os
 import sys
 from contextlib import asynccontextmanager
+from functools import lru_cache
 
 from fastapi import Depends
 
@@ -60,7 +61,7 @@ def get_connection_props():
         if url.drivername.startswith("postgresql"):
             url = url.set(drivername="postgresql+asyncpg")
 
-            # strip out sslmode (asyncpg doesn’t accept it)
+            # strip out sslmode (asyncpg doesn't accept it)
             url = url.set(query={k: v for k, v in url.query.items() if k.lower() != "sslmode"})
             return url.render_as_string(hide_password=False), {}
 
@@ -69,13 +70,42 @@ def get_connection_props():
     raise ValueError("Could not determine database properties")
 
 
-db_url, connect_args = get_connection_props()
-engine = create_async_engine(db_url, connect_args=connect_args)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+@lru_cache
+def get_engine():
+    """
+    Create and cache a SQLAlchemy engine per-process.
+    Using lru_cache ensures each worker process gets its own engine instance.
+    """
+    db_url, connect_args = get_connection_props()
+    
+    # Customize the pool settings for PostgreSQL with asyncpg
+    if db_url.startswith("postgresql+asyncpg"):
+        # These pool settings work better with multiple uvicorn workers
+        return create_async_engine(
+            db_url,
+            connect_args=connect_args,
+            pool_size=5,              # Limit connections per worker
+            max_overflow=10,          # Allow some overflow connections
+            pool_timeout=30,          # Timeout for getting a connection from pool
+            pool_recycle=1800,        # Recycle connections every 30 minutes
+            pool_pre_ping=True,       # Check connection validity before using it
+        )
+    else:
+        # For SQLite or other databases, use default settings
+        return create_async_engine(db_url, connect_args=connect_args)
+
+
+# Create a session factory function rather than a global session
+def get_async_session_maker():
+    """Create a session factory for the current process"""
+    engine = get_engine()
+    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_session():
-    async with async_session() as session:
+    """FastAPI dependency for getting a session"""
+    session_maker = get_async_session_maker()
+    async with session_maker() as session:
         try:
             yield session
         finally:
@@ -85,7 +115,8 @@ async def get_session():
 @asynccontextmanager
 async def get_session_context():
     """Async context manager for database sessions."""
-    async with async_session() as session:
+    session_maker = get_async_session_maker()
+    async with session_maker() as session:
         try:
             yield session
             await session.commit()
@@ -99,7 +130,10 @@ async def get_session_context():
 async def close_db_connection():
     """Close the database engine connection pool on application shutdown."""
     logger.info("Closing database connection pool...")
-    await engine.dispose()
+    # If the engine exists in this process, dispose it
+    engine = get_engine()
+    if engine:
+        await engine.dispose()
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
