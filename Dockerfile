@@ -5,7 +5,7 @@ FROM ghcr.io/reyery/daysim:release AS daysim
 FROM debian:12-slim AS crax-prebuild
 RUN apt-get update && apt-get install -y curl unzip
 # Download the zip file directly with curl
-RUN curl -L -o /tmp/Linux.zip https://github.com/wanglittlerain/CEA_radiationCRAX/raw/refs/heads/main/bin/Linux.zip
+RUN curl -L -o /tmp/Linux.zip https://github.com/wanglittlerain/CEA_radiationCRAX/raw/f427fd4ffadb12a34ed59b8838b2fb38c9da9551/bin/Linux.zip
 # Extract only the files inside the Linux folder to the root directory
 RUN mkdir -p /tmp/extract && unzip /tmp/Linux.zip -d /tmp/extract && \
     mkdir -p /CRAX && cp -r /tmp/extract/Linux/* /CRAX && \
