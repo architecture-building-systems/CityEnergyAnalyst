@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y curl unzip
 RUN curl -L -o /tmp/Linux.zip https://github.com/wanglittlerain/CEA_radiationCRAX/raw/refs/heads/main/bin/Linux.zip
 # Extract only the files inside the Linux folder to the root directory
 RUN mkdir -p /tmp/extract && unzip /tmp/Linux.zip -d /tmp/extract && \
-    cp -r /tmp/extract/Linux/* /CRAX && \
+    mkdir -p /CRAX && cp -r /tmp/extract/Linux/* /CRAX && \
     rm -rf /tmp/extract /tmp/Linux.zip
 
 FROM mambaorg/micromamba:2.0 AS cea
