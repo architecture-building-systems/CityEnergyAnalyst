@@ -33,9 +33,9 @@ class JobError(BaseModel):
 class JobOutput(BaseModel):
     output: Any
 
-def is_cpulimit_available():
-    """Check if cpulimit is available on the system"""
-    return platform.system() == "Linux" and shutil.which("cpulimit") is not None
+def is_systemd_run_available():
+    """Check if systemd-run is available on the system"""
+    return platform.system() == "Linux" and shutil.which("systemd-run") is not None
 
 
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
@@ -168,8 +168,8 @@ async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerU
     
     # FIXME: Forcing remote multiprocessing to be disabled for now,
     #  find solution for restricting number of processes per user
-    if not settings.local and is_cpulimit_available():
-        command = ["cpulimit", "-l", "100", "-m", "--"] + base_command
+    if not settings.local and is_systemd_run_available():
+        command = ["systemd-run", "--user", "--scope", "-p", "CPUQuota=100%"] + base_command
         logger.info("Starting job with CPU limit")
     else:
         command = base_command
