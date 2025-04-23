@@ -18,6 +18,17 @@ USER root
 # create directory for projects and set MAMBA_USER as owner
 RUN mkdir -p /project && chown $MAMBA_USER /project
 
+# Install Arrow libraries and dependencies to support CRAX binaries
+RUN apt-get update && apt-get install -y \
+    lsb-release \
+    wget \
+    && wget -O - https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb | apt-get install -y --no-install-recommends ./- \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libarrow-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 USER $MAMBA_USER
 # create conda environment and configure matplotlib
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
