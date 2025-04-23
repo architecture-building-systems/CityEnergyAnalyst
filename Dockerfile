@@ -41,6 +41,9 @@ COPY --from=daysim --chown=$MAMBA_USER:$MAMBA_USER / /opt/conda/lib/python3.8/si
 
 # Copy USR binary
 COPY --from=crax-prebuild --chown=$MAMBA_USER:$MAMBA_USER /CRAX /opt/conda/lib/python3.8/site-packages/cea/resources/radiationCRAX/bin/linux
+# Ensure container user is able to execute the binaries
+RUN chmod -R +x /opt/conda/lib/python3.8/site-packages/cea/resources/radiationCRAX/bin/linux
+
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
