@@ -4,7 +4,6 @@ import asyncio
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from functools import wraps
 from typing import Optional, Dict, Union
 
 from fastapi import Depends, Request, HTTPException, status
@@ -30,45 +29,6 @@ settings = get_settings()
 cea_db_config_logger = getCEAServerLogger("cea-db-config")
 
 
-def run_async(func):
-    """
-    Run a function in an asyncio event loop, ensuring compatibility with FastAPI.
-    
-    This helper handles both cases:
-    1. When called from within an async context (like FastAPI request handlers)
-    2. When called from a synchronous context
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        coro = func(*args, **kwargs)
-        
-        try:
-            # Try to get the current event loop - this will succeed if we're in an async context
-            loop = asyncio.get_event_loop()
-            
-            # Check if we're already in a running event loop
-            if loop.is_running():
-                # We're in FastAPI's event loop, create a task
-                return asyncio.create_task(coro)
-            else:
-                # We have an event loop but it's not running
-                return loop.run_until_complete(coro)
-                
-        except RuntimeError:
-            # No event loop found in this thread, create a new one
-            logger.warning("Creating new asyncio event loop - consider refactoring to avoid this")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(coro)
-            finally:
-                # Clean up
-                loop.close()
-                return None
-
-    return wrapper
-
-
 class CEALocalConfig(cea.config.Configuration):
     def __init__(self, config_file: str = settings.config_path):
         if not settings.local:
@@ -90,7 +50,6 @@ class CEADatabaseConfig(cea.config.Configuration):
         self._user_id = user_id
 
         super().__init__(cea.config.DEFAULT_CONFIG)
-        self.read()
 
     def __getstate__(self) -> str:
         # Add user_id to state when pickling
@@ -136,38 +95,46 @@ class CEADatabaseConfig(cea.config.Configuration):
 
         return out
 
-    def read(self) -> None:
+    async def read(self) -> None:
         logger.info("Reading config from database")
 
-        @run_async
-        async def _read():
-            async with get_session_context() as session:
-                try:
-                    result = await session.execute(select(Config).where(Config.user_id == self._user_id))
-                    _config = result.scalar()
-                    if _config:
-                        cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
-                        self.from_dict(_config.config)
-                except Exception as e:
-                    logger.error(e)
-                    cea_db_config_logger.warning("Returning local config")
+        # Try to get config from cache first
+        _cache = get_cache()
+        cache_key = f"cea_config_{self._user_id}"
 
-        result = _read()
-        return result
+        # Try to get from cache
+        config = await _cache.get(cache_key)
+        if config is not None:
+            cea_db_config_logger.debug(f"Using cached config for user: {self._user_id}")
+            self.user_config = config.user_config
+            return
+        else:
+            logger.warning(f"Cache miss: {self._user_id}")
 
-    def save(self, config_file: str = None) -> None:
+        async with get_session_context() as session:
+            try:
+                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                _config = result.scalar()
+                if _config:
+                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
+                    self.from_dict(_config.config)
+            except Exception as e:
+                logger.error(e)
+                cea_db_config_logger.warning("Returning local config")
+
+    async def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
         logger.info("Saving config to database")
 
-        @run_async
-        async def _save():
-            # Update config object in cache
-            _cache = get_cache()
-            cache_key = f"cea_config_{self._user_id}"
-            await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
-            cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
+        # Update config object in cache
+        _cache = get_cache()
+        cache_key = f"cea_config_{self._user_id}"
 
-            # Save new config to database
+        await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
+        cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
+
+        # Save new config to database
+        async def _save_to_db():
             config_dict = self.to_dict()
             async with get_session_context() as session:
                 result = await session.execute(select(Config).where(Config.user_id == self._user_id))
@@ -177,31 +144,15 @@ class CEADatabaseConfig(cea.config.Configuration):
                 else:
                     session.add(Config(user_id=self._user_id, config=config_dict))
 
-        result = _save()
-        return result
-
+        asyncio.create_task(_save_to_db())
 
 async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
     """Get configuration remote database or local file"""
 
     # Don't read config from database if user is local
     if database_settings.url is not None and user_id != LOCAL_USER_ID:
-        # Try to get config from cache first
-        _cache = get_cache()
-        cache_key = f"cea_config_{user_id}"
-
-        # Try to get from cache
-        config = await _cache.get(cache_key)
-        if config is not None:
-            cea_db_config_logger.debug(f"Using cached config for user: {user_id}")
-            return config
-
-        # Cache miss, read from database
-        cea_db_config_logger.debug(f"Cache miss, reading config from database for user: {user_id}")
         config = CEADatabaseConfig(user_id)
-
-        # Cache the config
-        await _cache.set(cache_key, config, ttl=CONFIG_CACHE_TTL)
+        await config.read()
         return config
 
     # Read config from file if config_path is set

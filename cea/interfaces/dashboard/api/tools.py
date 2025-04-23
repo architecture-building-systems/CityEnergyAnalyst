@@ -9,7 +9,7 @@ import cea.config
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck
 
 router = APIRouter()
 
@@ -84,7 +84,12 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
             continue
 
         parameter.set(default_value)
-    config.save()
+    
+    if isinstance(config, CEADatabaseConfig):
+        await config.save()
+    else:
+        config.save()
+
     return 'Success'
 
 
@@ -96,7 +101,11 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             value = payload[parameter.name]
             print('%s: %s' % (parameter.name, value))
             parameter.set(value)
-    config.save()
+    
+    if isinstance(config, CEADatabaseConfig):
+        await config.save()
+    else:
+        config.save()
     return 'Success'
 
 

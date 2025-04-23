@@ -23,7 +23,7 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
     CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
@@ -283,7 +283,11 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
-            config.save()
+            if isinstance(config, CEADatabaseConfig):
+                await config.save()
+            else:
+                config.save()
+
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
             raise HTTPException(
@@ -559,7 +563,10 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
             os.rename(scenario_path, new_path)
             if config.scenario_name == scenario:
                 config.scenario_name = new_scenario_name
-                config.save()
+                if isinstance(config, CEADatabaseConfig):
+                    await config.save()
+                else:
+                    config.save()
             return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(
