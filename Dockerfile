@@ -19,7 +19,10 @@ USER root
 RUN mkdir -p /project && chown $MAMBA_USER /project
 
 # Install Arrow libraries and dependencies to support CRAX binaries
-RUN curl -sSL https://dl.apache.org/arrow/debian/apache-arrow-apt-source-latest-$(lsb_release -cs).deb > apache-arrow-latest.deb && \
+RUN apt-get update && apt-get install -y \
+    lsb-release \
+    curl && \
+    curl -sSL https://dl.apache.org/arrow/debian/apache-arrow-apt-source-latest-$(lsb_release -cs).deb > apache-arrow-latest.deb && \
     dpkg -i apache-arrow-latest.deb && \
     rm apache-arrow-latest.deb&& apt-get update \
     && apt-get install -y --no-install-recommends \
