@@ -1,6 +1,8 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
+import platform
+import shutil
 import subprocess
 from typing import Dict, Any, List
 
@@ -29,6 +31,10 @@ class JobError(BaseModel):
 
 class JobOutput(BaseModel):
     output: Any
+
+def is_cpulimit_available():
+    """Check if cpulimit is available on the system"""
+    return platform.system() == "Linux" and shutil.which("cpulimit") is not None
 
 
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
@@ -152,12 +158,23 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
-async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str):
+async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
+                    settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print(f"tools/route_start: {job_id}")
-    process = subprocess.Popen([
-        "python", "-m", "cea.worker", f"{job_id}", f"{server_url}"
-    ])
+
+    base_command = ["python", "-m", "cea.worker", f"{job_id}", f"{server_url}"]
+    
+    # FIXME: Forcing remote multiprocessing to be disabled for now,
+    #  find solution for restricting number of processes per user
+    if not settings.local and is_cpulimit_available():
+        command = ["cpulimit", "-l", "100", "-P"] + base_command
+        logger.info("Starting job with CPU limit")
+    else:
+        command = base_command
+    
+    process = subprocess.Popen(command)
+
     await worker_processes.set(job_id, process.pid)
     return job_id
 

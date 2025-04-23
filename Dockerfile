@@ -31,6 +31,13 @@ RUN mkdir -p /project && chown $MAMBA_USER /project
 #     && apt-get clean \
 #     && rm -rf /var/lib/apt/lists/*
 
+# Install cpulimit to have allow for controlling CPU usage for jobs
+RUN apt-get update && apt-get install -y cpulimit \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean autoclean \
+    && apt-get autoremove --yes \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/
+
 USER $MAMBA_USER
 # create conda environment and configure matplotlib
 # bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
