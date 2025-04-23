@@ -16,7 +16,7 @@ __status__ = "Production"
 
 # Define the list of required CRAX executables (without extension)
 REQUIRED_CRAX_BINARIES = [
-    "radiation"
+    "radiation", "mesh-generation"
 ]
 
 
@@ -88,6 +88,10 @@ class CRAX:
 
         Tries to load the required shared arrow library from conda environment if available.
 
+        On Windows, the command is prefixed with a PATH assignment so that the folder
+        containing arrow.dll (i.e. self.crax_exe_dir) is included in the environment for
+        the execution of the command.
+
         :param json_file: The full path to the JSON file to be used as input.
         :return: The output from the radiation executable.
         """
@@ -110,6 +114,7 @@ class CRAX:
         try:
             result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
             result.check_returncode()  # This will raise an error if the command failed
+            print(result.stdout)
             return result.stdout
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Error running radiation.exe:\n{e.stderr}")

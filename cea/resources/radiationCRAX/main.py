@@ -21,15 +21,15 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
-from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_DIRECTION_LABELS
+from cea.resources.radiation.geometry_generator import BuildingGeometry
 from cea.resources.radiation.main import read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
-from cea.utilities.epwreader import epw_reader
 from cea.utilities.parallel import vectorize
+
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
-    ["Copyright 2025, College of Architecture and Urban Planning (CAUP) - Tongji University"]
+                ["Copyright 2025, College of Architecture and Urban Planning (CAUP) - Tongji University"]
 __credits__ = ["Xiaoyu Wang"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -257,11 +257,11 @@ def calc_sensors_zone_crax(building_names, locator, grid_size: GridSize, geometr
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
-            sensors_coords_building, \
-            sensors_type_building, \
-            sensors_area_building, \
-            sensor_orientation_building, \
-            sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
+        sensors_coords_building, \
+        sensors_type_building, \
+        sensors_area_building, \
+        sensor_orientation_building, \
+        sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -302,11 +302,11 @@ def sensor_generate_cea_daysim(building_names, locator, grid_size: GridSize, geo
     # calculate sensors
     print("Calculating and sending sensor points")
     sensors_coords_zone, \
-        sensors_dir_zone, \
-        sensors_number_zone, \
-        names_zone, \
-        sensors_code_zone, \
-        sensor_intersection_zone = calc_sensors_zone_crax(building_names, locator, grid_size, geometry_pickle_dir)
+    sensors_dir_zone, \
+    sensors_number_zone, \
+    names_zone, \
+    sensors_code_zone, \
+    sensor_intersection_zone = calc_sensors_zone_crax(building_names, locator, grid_size, geometry_pickle_dir)
 
     # print(f"Starting Daysim simulation for buildings: {names_zone}")
     print(f"Total number of sensors: {len(sensors_coords_zone)}")
@@ -386,44 +386,44 @@ def calulate_cea_sensor_data(locator, config):
                                num_processes=config.get_number_of_processes())  # Call the provided CEA mesh generation method
 
 
-def post_process_radiation_files(building_names, locator):
-    weather = epw_reader(locator.get_weather_file())
-    date = weather.date
-
-    for building_name in building_names:
-        radiation_file_path = locator.get_radiation_building(building_name)
-        radiation_file = pd.read_csv(radiation_file_path)
-
-        # Add date column
-        radiation_file['date'] = date
-
-        # Fix column names
-        radiation_file.rename(columns={"roofs_top":"roofs_top_kW",
-                                       "walls_e": "walls_east_kW",
-                                       "walls_n": "walls_north_kW",
-                                       "walls_s": "walls_south_kW",
-                                       "walls_w": "walls_west_kW",
-                                       "windows_e": "windows_east_kW",
-                                       "windows_n": "windows_north_kW",
-                                       "windows_s": "windows_south_kW",
-                                       "windows_w": "windows_west_kW",
-                                       }, inplace=True)
-
-        #  Add surface area
-        building_metadata = pd.read_csv(locator.get_radiation_metadata(building_name))
-        surface_area = building_metadata.groupby(['TYPE', 'orientation'])['AREA_m2'].sum()
-        existing_surface_directions = set()
-        for index, value in surface_area.items():
-            surface_direction = f"{index[0]}_{index[1]}"
-            existing_surface_directions.add(surface_direction)
-            radiation_file[f"{surface_direction}_m2"] = round(value, 2)
-        # Add missing surfaces to output
-        missing_surface_directions = SURFACE_DIRECTION_LABELS - existing_surface_directions
-        for surface_direction in missing_surface_directions:
-            radiation_file[f"{surface_direction}_kW"] = 0.0
-            radiation_file[f"{surface_direction}_m2"] = 0.0
-
-        radiation_file.set_index("date").to_csv(radiation_file_path)
+# def post_process_radiation_files(building_names, locator):
+#     weather = epw_reader(locator.get_weather_file())
+#     date = weather.date
+#
+#     for building_name in building_names:
+#         radiation_file_path = locator.get_radiation_building(building_name)
+#         radiation_file = pd.read_csv(radiation_file_path)
+#
+#         # Add date column
+#         radiation_file['date'] = date
+#
+#         # Fix column names
+#         radiation_file.rename(columns={"roofs_top":"roofs_top_kW",
+#                                        "walls_e": "walls_east_kW",
+#                                        "walls_n": "walls_north_kW",
+#                                        "walls_s": "walls_south_kW",
+#                                        "walls_w": "walls_west_kW",
+#                                        "windows_e": "windows_east_kW",
+#                                        "windows_n": "windows_north_kW",
+#                                        "windows_s": "windows_south_kW",
+#                                        "windows_w": "windows_west_kW",
+#                                        }, inplace=True)
+#
+#         #  Add surface area
+#         building_metadata = pd.read_csv(locator.get_radiation_metadata(building_name))
+#         surface_area = building_metadata.groupby(['TYPE', 'orientation'])['AREA_m2'].sum()
+#         existing_surface_directions = set()
+#         for index, value in surface_area.items():
+#             surface_direction = f"{index[0]}_{index[1]}"
+#             existing_surface_directions.add(surface_direction)
+#             radiation_file[f"{surface_direction}_m2"] = round(value, 2)
+#         # Add missing surfaces to output
+#         missing_surface_directions = SURFACE_DIRECTION_LABELS - existing_surface_directions
+#         for surface_direction in missing_surface_directions:
+#             radiation_file[f"{surface_direction}_kW"] = 0.0
+#             radiation_file[f"{surface_direction}_m2"] = 0.0
+#
+#         radiation_file.set_index("date").to_csv(radiation_file_path)
 
 
 def main(config):
@@ -488,8 +488,8 @@ def main(config):
     CRAX_model = CRAXModel.CRAX(CRAX_bin_path, CRAX_lib_path)
 
     # FIXME: temp solution to get building surface area using cea method
-    if calculate_sensor_data or using_cea_sensor:
-    # if calculate_sensor_data:
+    # if calculate_sensor_data or using_cea_sensor:
+    if calculate_sensor_data:
         if using_cea_sensor:
             time1 = time.time()
             print("Using CEA method to generate the mesh.")
@@ -509,9 +509,9 @@ def main(config):
     print("CRAX simulation finished in %.2f mins" % ((time.time() - time3) / 60.0))
 
     # FIXME: temp solution to get building surface area using cea method
-    if using_cea_sensor:
-        print('transforming radiation data to cea format')
-        post_process_radiation_files(config.radiation_crax.buildings, locator)
+    # if using_cea_sensor:
+    #     print('transforming radiation data to cea format')
+    #     post_process_radiation_files(config.radiation_crax.buildings, locator)
 
 
 if __name__ == '__main__':
