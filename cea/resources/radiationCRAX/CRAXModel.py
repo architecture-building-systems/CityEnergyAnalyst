@@ -16,7 +16,7 @@ __status__ = "Production"
 
 # Define the list of required CRAX executables (without extension)
 REQUIRED_CRAX_BINARIES = [
-    "radiation"
+    "radiation", "mesh-generation"
 ]
 
 
@@ -78,15 +78,31 @@ class CRAX:
         :param json_file: The full path to the JSON file to be used as input.
         """
         exe_name = "mesh-generation.exe" if self.is_windows else "mesh-generation"
-        # Command includes the json file argument
-        cmd = f'"{exe_name}" "{json_file}"'
-        return self.run_cmd(cmd, self.crax_exe_dir, self.crax_lib_dir)
+        exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
+
+        env = os.environ.copy()
+
+        # Command to run the exe
+        cmd = [os.path.join(exe_dir, exe_name), json_file]
+
+        # Run the command with cwd set to exe_dir and using the modified env
+        try:
+            result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
+            result.check_returncode()  # This will raise an error if the command failed
+            print(result.stdout)
+            return result.stdout
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Error running mesh-generation:\n{e.stderr}")
 
     def run_radiation(self, json_file: str):
         """
         Execute the radiation executable with a JSON input file.
 
         Tries to load the required shared arrow library from conda environment if available.
+
+        On Windows, the command is prefixed with a PATH assignment so that the folder
+        containing arrow.dll (i.e. self.crax_exe_dir) is included in the environment for
+        the execution of the command.
 
         :param json_file: The full path to the JSON file to be used as input.
         :return: The output from the radiation executable.
@@ -110,9 +126,10 @@ class CRAX:
         try:
             result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
             result.check_returncode()  # This will raise an error if the command failed
+            print(result.stdout)
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Error running radiation.exe:\n{e.stderr}")
+            raise RuntimeError(f"Error running radiation:\n{e.stderr}")
 
 
 def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
