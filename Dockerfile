@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     curl && \
     curl -sSL https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb > apache-arrow-latest.deb && \
-    apt-get install apache-arrow-latest.deb && \
+    apt-get install ./apache-arrow-latest.deb && \
     rm apache-arrow-latest.deb && apt-get update \
     && apt-get install -y --no-install-recommends \
     libarrow-dev \
