@@ -1,6 +1,15 @@
 FROM ghcr.io/reyery/daysim:release AS daysim
 
-FROM ghcr.io/reyery/cea/crax:latest AS crax
+#FROM ghcr.io/reyery/cea/crax:latest AS crax
+# Fetch from prebuild
+FROM debian:12-slim AS crax-prebuild
+RUN apt-get update && apt-get install -y curl unzip
+# Download the zip file directly with curl
+RUN curl -L -o /tmp/Linux.zip https://github.com/wanglittlerain/CEA_radiationCRAX/raw/refs/heads/main/bin/Linux.zip
+# Extract only the files inside the Linux folder to the root directory
+RUN mkdir -p /tmp/extract && unzip /tmp/Linux.zip -d /tmp/extract && \
+    cp -r /tmp/extract/Linux/* /CRAX && \
+    rm -rf /tmp/extract /tmp/Linux.zip
 
 FROM mambaorg/micromamba:2.0 AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
@@ -31,7 +40,7 @@ RUN pip install /tmp/cea && rm -rf /tmp/cea
 COPY --from=daysim --chown=$MAMBA_USER:$MAMBA_USER / /opt/conda/lib/python3.8/site-packages/cea/resources/radiation/bin/linux
 
 # Copy USR binary
-COPY --from=crax --chown=$MAMBA_USER:$MAMBA_USER / /opt/conda/lib/python3.8/site-packages/cea/resources/radiationCRAX/bin/linux
+COPY --from=crax-prebuild --chown=$MAMBA_USER:$MAMBA_USER /CRAX /opt/conda/lib/python3.8/site-packages/cea/resources/radiationCRAX/bin/linux
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
