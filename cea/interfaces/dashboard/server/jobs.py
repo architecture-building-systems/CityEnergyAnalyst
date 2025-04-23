@@ -4,6 +4,7 @@ jobs: maintain a list of jobs to be simulated.
 import platform
 import shutil
 import subprocess
+import sys
 from typing import Dict, Any, List
 
 import psutil
@@ -163,12 +164,12 @@ async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerU
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
     print(f"tools/route_start: {job_id}")
 
-    base_command = ["python", "-m", "cea.worker", f"{job_id}", f"{server_url}"]
+    base_command = [sys.executable, "-m", "cea.worker", f"{job_id}", f"{server_url}"]
     
     # FIXME: Forcing remote multiprocessing to be disabled for now,
     #  find solution for restricting number of processes per user
     if not settings.local and is_cpulimit_available():
-        command = ["cpulimit", "-l", "100", "-m"] + base_command
+        command = ["cpulimit", "-l", "100", "-m", "-P"] + base_command
         logger.info("Starting job with CPU limit")
     else:
         command = base_command
