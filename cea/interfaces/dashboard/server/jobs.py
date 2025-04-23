@@ -168,7 +168,7 @@ async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerU
     # FIXME: Forcing remote multiprocessing to be disabled for now,
     #  find solution for restricting number of processes per user
     if not settings.local and is_cpulimit_available():
-        command = ["cpulimit", "-l", "100", "-P"] + base_command
+        command = ["cpulimit", "-l", "100", "-m"] + base_command
         logger.info("Starting job with CPU limit")
     else:
         command = base_command
