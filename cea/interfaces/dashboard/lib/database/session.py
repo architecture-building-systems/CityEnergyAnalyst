@@ -50,7 +50,7 @@ def get_local_database_path():
 def get_connection_props():
     # Only use local database if local mode
     if get_settings().local:
-        return f"sqlite:///{get_local_database_path()}", {"check_same_thread": False}
+        return f"sqlite+aiosqlite:///{get_local_database_path()}", {"check_same_thread": False}
 
     # Use database_url if set (priority)
     # Support postgres for now
