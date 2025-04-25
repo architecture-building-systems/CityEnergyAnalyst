@@ -17,7 +17,12 @@ from cea.interfaces.dashboard.settings import get_settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await create_db_and_tables()
+    try:
+        # FIXME: sqlite not working with async adapter
+        await create_db_and_tables()
+    except Exception:
+        logger.warning("Failed to create database tables")
+
     yield
 
     logger.info("Shutting down server...")
