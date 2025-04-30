@@ -1,8 +1,6 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
-import platform
-import shutil
 import subprocess
 import sys
 from typing import Dict, Any, List
@@ -32,10 +30,6 @@ class JobError(BaseModel):
 
 class JobOutput(BaseModel):
     output: Any
-
-def is_systemd_run_available():
-    """Check if systemd-run is available on the system"""
-    return platform.system() == "Linux" and shutil.which("systemd-run") is not None
 
 
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
@@ -162,18 +156,8 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
                     settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
-    print(f"tools/route_start: {job_id}")
-
-    base_command = [sys.executable, "-m", "cea.worker", f"{job_id}", f"{server_url}"]
-    
-    # FIXME: Forcing remote multiprocessing to be disabled for now,
-    #  find solution for restricting number of processes per user
-    if not settings.local and is_systemd_run_available():
-        command = ["systemd-run", "--user", "--scope", "-p", "CPUQuota=100%"] + base_command
-        logger.info("Starting job with CPU limit")
-    else:
-        command = base_command
-    
+    command = [sys.executable, "-m", "cea.worker", f"{job_id}", f"{server_url}"]
+    logger.debug(f"command: {command}")
     process = subprocess.Popen(command)
 
     await worker_processes.set(job_id, process.pid)
@@ -197,7 +181,7 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
     except Exception as e:
-        print(e)
+        logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -226,7 +210,7 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
 
         return job
     except Exception as e:
-        print(e)
+        logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
