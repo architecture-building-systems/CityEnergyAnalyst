@@ -26,7 +26,6 @@ from cea.resources.radiation.main import read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
 from cea.utilities.parallel import vectorize
 
-
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
                 ["Copyright 2025, College of Architecture and Urban Planning (CAUP) - Tongji University"]
@@ -43,14 +42,19 @@ def generate_general_building_data_for_CRAX(shapefile_path, output_folder, outpu
     Reads a shapefile using GeoPandas to avoid issues with special characters in field names.
     Extracts the 'name', 'height_ag', and 'floors_ag' fields along with geometry data (building footprint).
     Saves the extracted information into a CSV file in the specified output folder.
+    If the shapefile is not found, creates an empty CSV with the appropriate headers.
     """
     # Ensure the output directory exists
     os.makedirs(output_folder, exist_ok=True)
     output_csv = os.path.join(output_folder, output_file_name)
 
-    # Check if the shapefile exists at the specified path
+    # If the shapefile does not exist, write an empty CSV and return
     if not os.path.exists(shapefile_path):
-        raise FileNotFoundError(f"Shapefile not found: {shapefile_path}")
+        # Define columns for the empty DataFrame
+        columns = ["BuildingID", "BuildingBase", "BuildingFloors", "BuildingHeight"]
+        empty_df = pd.DataFrame(columns=columns)
+        empty_df.to_csv(output_csv, index=False)
+        return output_csv
 
     try:
         # Read the shapefile using GeoPandas
@@ -105,6 +109,7 @@ def add_terrain_elevation(tif_path, building_data_csv):
     """
     df = pd.read_csv(building_data_csv)
 
+    # FIXME: Ensure bounding box of terrain includes all buildings
     with rasterio.open(tif_path) as src:
         dem_array = src.read(1)  # Read the first band of the DEM
         nodata = src.nodata  # Get the nodata value
@@ -146,7 +151,7 @@ def add_terrain_elevation(tif_path, building_data_csv):
                 avg_elevation = np.mean(sample_values) if sample_values else np.nan
             except Exception as e:
                 print(f"Error processing building index {idx}: {e}")
-                avg_elevation = np.nan
+                avg_elevation = 0
 
             terrain_elevations.append(avg_elevation)
 
@@ -216,22 +221,26 @@ def export_radiation_crax_config(config: cea.config.Configuration, output_folder
         # Build full file path
         output_path = os.path.join(output_folder, output_filename)
 
-        # Get configuration section
+        # Get configuration sections
         radiation_section = config.sections['radiation-crax']
 
-        # Build configuration dictionary
+        # Build configuration dictionary from radiation-crax parameters
         config_data = {
             param_name: radiation_section.parameters[param_name].get()
             for param_name in radiation_section.parameters
         }
 
-        # Add I/O paths to output
+        # Add multiprocessing flag and I/O paths to output
         config_data.update({
+            'multiprocessing': config.multiprocessing,
             'CRAX_input_folder': output_folder,
             'CRAX_result_folder': crax_result_folder
         })
 
-        # Write to file
+        # Ensure output directory exists
+        os.makedirs(output_folder, exist_ok=True)
+
+        # Write to JSON file
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(config_data, f, indent=4, ensure_ascii=False)
 
@@ -239,7 +248,7 @@ def export_radiation_crax_config(config: cea.config.Configuration, output_folder
         return config_data
 
     except KeyError:
-        print("Error: radiation-crax section not found in configuration")
+        print("Error: required configuration section not found in configuration")
         return None
     except Exception as e:
         print(f"Error saving file: {str(e)}")
@@ -505,13 +514,8 @@ def main(config):
 
     time3 = time.time()
     print("Running CRAX radiation calculation")
-    CRAX_model.run_radiation(json_abs_path)
+    CRAX_model.run_radiation(json_abs_path)  # Run radiation calculation via CRAXModel
     print("CRAX simulation finished in %.2f mins" % ((time.time() - time3) / 60.0))
-
-    # FIXME: temp solution to get building surface area using cea method
-    # if using_cea_sensor:
-    #     print('transforming radiation data to cea format')
-    #     post_process_radiation_files(config.radiation_crax.buildings, locator)
 
 
 if __name__ == '__main__':
