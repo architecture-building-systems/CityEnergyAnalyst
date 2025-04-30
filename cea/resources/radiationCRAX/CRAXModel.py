@@ -92,7 +92,7 @@ class CRAX:
             print(result.stdout)
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Error running mesh-generation:\n{e.stderr}")
+            raise RuntimeError(f"Error running mesh-generation (exited with code {e.returncode}):\n{e.stderr}")
 
     def run_radiation(self, json_file: str):
         """
@@ -129,7 +129,7 @@ class CRAX:
             print(result.stdout)
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Error running radiation:\n{e.stderr}")
+            raise RuntimeError(f"Error running radiation (exited with code {e.returncode}):\n{e.stderr}")
 
 
 def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
