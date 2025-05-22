@@ -1,4 +1,4 @@
-__version__ = "4.0.0-alpha.23"
+__version__ = "4.0.0-alpha.24"
 
 
 class CEAException(Exception):
