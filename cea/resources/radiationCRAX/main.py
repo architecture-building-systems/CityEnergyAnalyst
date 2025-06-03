@@ -443,7 +443,7 @@ def check_os():
 
     Currently Intel Macs are not supported.
     """
-    if sys.platform == "darwin" and "arm" not in platform.processor():
+    if sys.platform == "darwin" and platform.machine() == "x86_64":
         raise ValueError("Intel Macs are not supported.")
 
 def main(config):
