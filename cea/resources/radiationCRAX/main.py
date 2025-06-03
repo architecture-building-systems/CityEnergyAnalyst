@@ -1,4 +1,6 @@
 import os
+import platform
+import sys
 import time
 from itertools import repeat
 
@@ -435,7 +437,18 @@ def calulate_cea_sensor_data(locator, config):
 #         radiation_file.set_index("date").to_csv(radiation_file_path)
 
 
+def check_os():
+    """
+    Raise error if the operating system is not supported.
+
+    Currently Intel Macs are not supported.
+    """
+    if sys.platform == "darwin" and "arm" not in platform.processor():
+        raise ValueError("Intel Macs are not supported.")
+
 def main(config):
+    check_os()
+
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
