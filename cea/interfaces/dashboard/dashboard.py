@@ -1,6 +1,5 @@
 import os
 import sys
-import tempfile
 
 import uvicorn
 
@@ -35,16 +34,12 @@ def main(config):
     logger.info(f"Using settings: {settings}")
 
     try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            env_file = os.path.join(temp_dir, "cea.env")
-            # Rewrite settings to env file to be loaded by uvicorn process
-            settings.to_env_file(env_file)
+        settings.to_env_vars()
 
-            uvicorn.run("cea.interfaces.dashboard.app:app",
-                        reload=config.server.dev,
-                        workers=settings.workers,
-                        env_file=env_file,
-                        host=settings.host, port=settings.port)
+        uvicorn.run("cea.interfaces.dashboard.app:app",
+                    reload=config.server.dev,
+                    workers=settings.workers,
+                    host=settings.host, port=settings.port)
     except KeyboardInterrupt:
         sys.exit(0)
 
