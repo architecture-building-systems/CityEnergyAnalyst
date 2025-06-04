@@ -20,8 +20,8 @@ async def lifespan(_: FastAPI):
     try:
         # FIXME: sqlite not working with async adapter
         await create_db_and_tables()
-    except Exception:
-        logger.warning("Failed to create database tables")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
 
     yield
 
