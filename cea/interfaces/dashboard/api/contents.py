@@ -86,12 +86,12 @@ async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
     """
     Get information of the content path provided
     """
-    if project_root is None:
-        project_root = ""
-
     try:
-        # Check path first
-        full_path = secure_path(os.path.join(project_root, content_path))
+        _content_path = content_path
+        if project_root is not None:
+            _content_path = os.path.join(project_root, content_path)
+        
+        full_path = secure_path(_content_path)
         content_info = get_content_info(full_path, content_type, show_hidden=show_hidden)
         return content_info.as_dict()
     except ContentPathNotFound:

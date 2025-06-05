@@ -19,12 +19,16 @@ def load_from_config(settings: Settings, config: Configuration) -> None:
         settings.port = config.server.port
 
     if settings.project_root is None:
-        settings.project_root = config.server.project_root
+        config_project_root = config.server.project_root
 
-        # Ensure project root exists before starting the server
-        if settings.project_root != "" and not os.path.exists(settings.project_root):
-            raise ValueError(f"The path `{settings.project_root}` does not exist. "
-                             f"Make sure project_root in config is set correctly.")
+        # Treat empty string in config as unset and ignore
+        if config_project_root != "":
+            settings.project_root = config_project_root
+
+            # Ensure project root exists before starting the server
+            if not os.path.exists(settings.project_root):
+                raise ValueError(f"The path `{settings.project_root}` does not exist. "
+                                f"Make sure project_root in config is set correctly.")
 
 
 def main(config):

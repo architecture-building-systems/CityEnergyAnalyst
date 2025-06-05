@@ -224,11 +224,14 @@ def get_server_url():
     return worker_url
 
 
-def get_project_root(user_id: CEAUserID):
+def get_project_root(user_id: CEAUserID) -> Optional[str]:
     """Get the project root for the current user"""
     project_root = settings.project_root
 
+    # Use user ID as project root for non-local mode
     if not settings.local:
+        if project_root is None:
+            raise ValueError("Project root not set. Unable to determine project root.")
         project_root = os.path.join(project_root, user_id)
 
     logger.info(f"Using project root: {project_root}")
@@ -308,7 +311,7 @@ CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAWorkerProcesses = Annotated[AsyncDictCache, Depends(get_worker_processes)]
 CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
-CEAProjectRoot = Annotated[str, Depends(get_project_root)]
+CEAProjectRoot = Annotated[Optional[str], Depends(get_project_root)]
 CEAServerSettings = Annotated[dict, Depends(get_settings)]
 CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 

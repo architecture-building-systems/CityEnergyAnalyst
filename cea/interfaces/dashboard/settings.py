@@ -63,9 +63,9 @@ class Settings(BaseSettings):
 
     def allow_path_transversal(self) -> bool:
         """
-        Allow path transversal if project_root is set to empty string
+        Allow path transversal if project_root is not set
         """
-        return self.project_root == ""
+        return self.project_root is None
 
     def to_env_vars(self):
         """
@@ -75,11 +75,6 @@ class Settings(BaseSettings):
         for key, value in self.__dict__.items():
             if value is not None:
                 env_var_name = f"{ENV_VAR_PREFIX}{key.upper()}"
-                # Fix for empty strings on Windows
-                if value == "":
-                    os.environ[env_var_name] = " "
-                    continue
-
                 os.environ[env_var_name] = str(value)
 
 

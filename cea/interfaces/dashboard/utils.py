@@ -20,8 +20,11 @@ def secure_path(path: str) -> str:
 
     # TODO: Remove dependency on settings
     if not get_settings().allow_path_transversal():
-        project_root = os.path.realpath(get_settings().project_root)
-
+        settings_project_root = get_settings().project_root
+        if settings_project_root is None:
+            raise ValueError("Project root not set. Unable to determine project root.")
+        
+        project_root = os.path.realpath(settings_project_root)
         prefix = os.path.commonpath((project_root, real_path))
         if project_root != prefix:
             raise OutsideProjectRootError(path)
