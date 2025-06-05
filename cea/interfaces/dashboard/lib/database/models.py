@@ -130,10 +130,7 @@ async def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
     engine = get_engine()
-    async with engine.connect() as conn:
-        # Use run_sync to execute synchronous inspection operations
-        inspector = await conn.run_sync(lambda sync_conn: inspect(sync_conn))
-        
+    async with engine.connect() as conn:        
         # Get table names
         table_names = await conn.run_sync(lambda sync_conn: inspect(sync_conn).get_table_names())
         
