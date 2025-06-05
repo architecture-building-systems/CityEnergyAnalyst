@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 from typing import Optional
 
 from pydantic import model_validator, Field
@@ -62,19 +63,19 @@ class Settings(BaseSettings):
 
     def allow_path_transversal(self) -> bool:
         """
-        Allow path transversal if project_root is set to empty string
+        Allow path transversal if project_root is not set
         """
-        return self.project_root == ""
+        return self.project_root is None
 
-    def to_env_file(self, path: str):
+    def to_env_vars(self):
         """
-        Write settings to env file in the format CEA_{KEY}={VALUE}
+        Write settings to env variables in the format {ENV_VAR_PREFIX}{KEY}={VALUE}
         """
-        with open(path, "w") as f:
-            for key, value in self.__dict__.items():
-                if value is not None:
-                    f.write(f"CEA_{key.upper()}={value}\n")
-            f.flush()
+        # Set environment variables 
+        for key, value in self.__dict__.items():
+            if value is not None:
+                env_var_name = f"{ENV_VAR_PREFIX}{key.upper()}"
+                os.environ[env_var_name] = str(value)
 
 
 @lru_cache

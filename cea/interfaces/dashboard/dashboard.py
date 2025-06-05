@@ -1,6 +1,5 @@
 import os
 import sys
-import tempfile
 
 import uvicorn
 
@@ -20,12 +19,16 @@ def load_from_config(settings: Settings, config: Configuration) -> None:
         settings.port = config.server.port
 
     if settings.project_root is None:
-        settings.project_root = config.server.project_root
+        config_project_root = config.server.project_root
 
-        # Ensure project root exists before starting the server
-        if settings.project_root != "" and not os.path.exists(settings.project_root):
-            raise ValueError(f"The path `{settings.project_root}` does not exist. "
-                             f"Make sure project_root in config is set correctly.")
+        # Treat empty string in config as unset and ignore
+        if config_project_root != "":
+            settings.project_root = config_project_root
+
+            # Ensure project root exists before starting the server
+            if not os.path.exists(settings.project_root):
+                raise ValueError(f"The path `{settings.project_root}` does not exist. "
+                                f"Make sure project_root in config is set correctly.")
 
 
 def main(config):
@@ -35,16 +38,12 @@ def main(config):
     logger.info(f"Using settings: {settings}")
 
     try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            env_file = os.path.join(temp_dir, "cea.env")
-            # Rewrite settings to env file to be loaded by uvicorn process
-            settings.to_env_file(env_file)
+        settings.to_env_vars()
 
-            uvicorn.run("cea.interfaces.dashboard.app:app",
-                        reload=config.server.dev,
-                        workers=settings.workers,
-                        env_file=env_file,
-                        host=settings.host, port=settings.port)
+        uvicorn.run("cea.interfaces.dashboard.app:app",
+                    reload=config.server.dev,
+                    workers=settings.workers,
+                    host=settings.host, port=settings.port)
     except KeyboardInterrupt:
         sys.exit(0)
 

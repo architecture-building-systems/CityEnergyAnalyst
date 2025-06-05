@@ -109,10 +109,10 @@ class JobInfo(SQLModel, table=True):
         return None
 
 
-def initialize_db():
+async def initialize_db():
     engine = get_engine()
-    SQLModel.metadata.create_all(engine)
-
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
 
 async def create_db_and_tables():
     # FIXME: Only running for local mode since it is expensive for remote connections
@@ -120,7 +120,7 @@ async def create_db_and_tables():
         return
 
     logger.info("Preparing database...")
-    initialize_db()
+    await initialize_db()
 
     if get_settings().local:
         await migrate_db()
@@ -130,22 +130,24 @@ async def migrate_db():
     # TODO: Remove once in release new version
     # Check and update existing table schemas
     engine = get_engine()
-    with engine.connect() as conn:
-        inspector = inspect(engine)
+    async with engine.connect() as conn:        
+        # Get table names
+        table_names = await conn.run_sync(lambda sync_conn: inspect(sync_conn).get_table_names())
+        
         # For project table and owner column
-        if 'project' in inspector.get_table_names():
-            columns = [col['name'] for col in inspector.get_columns('project')]
+        if 'project' in table_names:
+            columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('project')])
             if 'owner' not in columns:
                 logger.info("Adding 'owner' column to project table...")
-                conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
-                conn.commit()
+                await conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
+                await conn.commit()
 
-        if 'job' in inspector.get_table_names():
-            columns = [col['name'] for col in inspector.get_columns('job')]
+        if 'job' in table_names:
+            columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('job')])
             if 'created_by' not in columns:
                 logger.info("Adding 'created_by' column to job table...")
-                conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
-                conn.commit()
+                await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
+                await conn.commit()
 
 
     logger.info("Using local user...")
@@ -157,4 +159,3 @@ async def migrate_db():
             user = User(id=LOCAL_USER_ID)
             session.add(user)
             await session.commit()
-    
