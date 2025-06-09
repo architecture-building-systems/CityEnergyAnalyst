@@ -325,12 +325,12 @@ def print_terrain_intersection_progress(i, n, _, __):
     print("Calculation of terrain intersection for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
-def are_buildings_close_to_eachother(x_1, y_1, solid2):
+def are_buildings_close_to_eachother(x_1, y_1, solid2, dist=100):
     box2 = calculate.get_bounding_box(solid2)
     x_2 = box2[0]
     y_2 = box2[1]
     delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
-    if delta <= 100:
+    if delta <= dist:
         return True
     else:
         return False
