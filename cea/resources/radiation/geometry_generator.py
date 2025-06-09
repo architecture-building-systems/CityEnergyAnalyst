@@ -175,15 +175,20 @@ def calc_building_solids(buildings_df, geometry_simplification, elevation_map, n
     :return: a list of elevations corresponding to each building solid, where each elevation is a float value.
     :rtype: list[float]
     """
-    height_col_name = 'height_ag'
-    nfloor_col_name = "floors_ag"
 
     # simplify geometry for buildings of interest
     geometries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
 
-    height = buildings_df[height_col_name].astype(float)
-    nfloors = buildings_df[nfloor_col_name].astype(int)
-    range_floors = nfloors.map(lambda floors: range(floors + 1))
+    height = buildings_df['height_ag'].astype(float)
+    nfloors = buildings_df['floors_ag'].astype(int)
+    void_decks = buildings_df['void_deck'].astype(int)
+    # range_floors = nfloors.map(lambda floors: range(floors + 1))
+    # check if each building's void deck is smaller or equal to the number of floors.
+    if not all(void_decks <= nfloors):
+        raise ValueError(f"Void deck values must be less than or equal to the number of floors for each building. "
+                         f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
+    
+    range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
     floor_to_floor_height = calc_floor_to_floor_height(height, nfloors)
 
     n = len(geometries)
@@ -281,6 +286,10 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
 
     print('Calculating terrain intersection of building geometries')
     zone_buildings_df = zone_df.set_index('name')
+    # merge architecture wwr data into zone buildings dataframe with "name" column,
+    # because we want to use void_deck when creating the building solid.
+    void_deck_s = architecture_wwr_df.set_index('name')['void_deck']
+    zone_df['void_deck'] = zone_df['name'].map(void_deck_s)
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
@@ -306,6 +315,7 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
         all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
     else:
         all_building_solid_list = []
+    # TODO: maybe move calc_building_solid into this function and avoid using archiecture_wwr_df, because it's already merged into zone_buildings_df.
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
                                                           zone_building_solid_list,
                                                           repeat(all_building_solid_list, n),
@@ -410,6 +420,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     # check if buildings are close together and it merits to check the intersection
     # close together is defined as:
     # if two building bounding boxes' southwest corner are smaller than 100m on their xy-plane projection (ignoring z-axis).
+    # TODO: maybe also check if one building's top roof is within another building's volume when two buildings are stacked.
     potentially_intersecting_solids = []
     if not neglect_adjacent_buildings:
         box = calculate.get_bounding_box(building_solid)
