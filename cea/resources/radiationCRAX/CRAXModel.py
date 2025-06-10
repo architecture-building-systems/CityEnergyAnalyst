@@ -39,6 +39,7 @@ class CRAX:
         self.crax_exe_dir = crax_exe_dir
         self.crax_lib_dir = crax_lib_dir
         self.is_windows = sys.platform == "win32"
+        self.is_mac = sys.platform == "darwin"
 
     @staticmethod
     def run_cmd(cmd: str, exe_dir: str, lib_dir: Optional[str] = None) -> str:
@@ -115,6 +116,9 @@ class CRAX:
             if self.is_windows:
                 lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'bin')
                 env["PATH"] = f"{lib_path};{env['PATH']}"
+            elif self.is_mac:
+                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
+                env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
             else:
                 lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
                 env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
