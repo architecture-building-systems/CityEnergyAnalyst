@@ -294,15 +294,19 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
 
-    surroundings_buildings_df = surroundings_df.set_index('name')
-    surroundings_building_names = surroundings_buildings_df.index.values
-    surroundings_building_solid_list, _ = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
-                                                               elevation_map, num_processes)
-
-    # calculate geometry for the surroundings
-    print('Generating geometry for surrounding buildings')
-    geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
-                                zip(surroundings_building_names, surroundings_building_solid_list)]
+    # Check if there are any buildings in surroundings_df before processing
+    if not surroundings_df.empty:
+        surroundings_buildings_df = surroundings_df.set_index('name')
+        surroundings_building_names = surroundings_buildings_df.index.values
+        surroundings_building_solid_list, _ = calc_building_solids(
+            surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
+        # calculate geometry for the surroundings
+        print('Generating geometry for surrounding buildings')
+        geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
+                                    zip(surroundings_building_names, surroundings_building_solid_list)]
+    else:
+        surroundings_building_solid_list = []
+        geometry_3D_surroundings = []
 
     # calculate geometry for the zone of analysis
     print('Generating geometry for buildings in the zone of analysis')

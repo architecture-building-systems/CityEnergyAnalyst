@@ -153,9 +153,14 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
-async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
+async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
                     settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
     command = [sys.executable, "-m", "cea.worker", f"{job_id}", f"{server_url}"]
     logger.debug(f"command: {command}")
     process = subprocess.Popen(command)

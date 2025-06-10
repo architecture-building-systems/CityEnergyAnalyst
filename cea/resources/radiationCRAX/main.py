@@ -1,4 +1,6 @@
 import os
+import platform
+import sys
 import time
 from itertools import repeat
 
@@ -435,7 +437,18 @@ def calulate_cea_sensor_data(locator, config):
 #         radiation_file.set_index("date").to_csv(radiation_file_path)
 
 
+def check_os():
+    """
+    Raise error if the operating system is not supported.
+
+    Currently Intel Macs are not supported.
+    """
+    if sys.platform == "darwin" and platform.machine() == "x86_64":
+        raise ValueError("Intel Macs are not supported.")
+
 def main(config):
+    check_os()
+
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -455,17 +468,24 @@ def main(config):
     # Step 1: Automatically generate building geometry data CSV
     zone_building_geometry_csv = generate_general_building_data_for_CRAX(zone_shapefile_path, input_folder,
                                                                          'zone_building_geometry.csv')
-    surroundings_building_geometry_csv = generate_general_building_data_for_CRAX(surroundings_shapefile_path,
-                                                                                 input_folder,
-                                                                                 'surroundings_building_geometry.csv')
-
+    
     # Step 2: Add terrain elevation data to the generated CSV
     add_terrain_elevation(tif_path, zone_building_geometry_csv)
-    add_terrain_elevation(tif_path, surroundings_building_geometry_csv)
 
     # Step 3: Add window wall ratio (WWR) data to the same CSV
     add_window_wall_ratio(envelope_csv, zone_building_geometry_csv)
-    add_window_wall_ratio(envelope_csv, surroundings_building_geometry_csv)
+
+    # Step 4: repeat step 1-3 for surrounding buildings if there's any.
+    try:
+        gdf_surroundings = gpd.read_file(surroundings_shapefile_path)
+        if not gdf_surroundings.empty:
+            surroundings_building_geometry_csv = generate_general_building_data_for_CRAX(surroundings_shapefile_path,
+                                                                                         input_folder,
+                                                                                         'surroundings_building_geometry.csv')
+            add_terrain_elevation(tif_path, surroundings_building_geometry_csv)
+            add_window_wall_ratio(envelope_csv, surroundings_building_geometry_csv)
+    except Exception as e:
+        print(f"Could not read surroundings shapefile: {e}")
 
     # import material properties of buildings
     print("Getting geometry materials")

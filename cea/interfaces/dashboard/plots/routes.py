@@ -11,6 +11,9 @@ import cea.plots.categories
 import cea.schemas
 from cea import MissingInputDataException
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+
+logger = getCEAServerLogger("cea-server-plots")
 
 router = APIRouter()
 
@@ -72,7 +75,8 @@ async def route_div(config: CEAConfig, plot_cache: CEAPlotCache,
     except MissingInputDataException:
         return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
-        return HTMLResponse(f'<p>{e}</p>', 404)
+        logger.error("NotImplementedError occurred: %s", e, exc_info=True)
+        return HTMLResponse('<p>An internal error has occurred.</p>', 404)
     # Remove parent <div> if exists due to plotly v4
     if plot_div.startswith("<div>"):
         plot_div = plot_div[5:-5].strip()
@@ -97,7 +101,8 @@ async def route_plot(config: CEAConfig, plot_cache: CEAPlotCache,
     except MissingInputDataException:
         return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
-        return HTMLResponse(f'<p>{e}</p>', 404)
+        logger.error("NotImplementedError occurred: %s", e, exc_info=True)
+        return HTMLResponse('<p>An internal error has occurred.</p>', 404)
     return render_plot(request, plot_div, plot_title)
 
 # @blueprint.app_errorhandler(500)
