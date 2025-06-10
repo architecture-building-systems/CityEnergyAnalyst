@@ -22,7 +22,7 @@ __status__ = "Production"
 from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
-from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
 
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
@@ -189,9 +189,8 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
     sensor_area_list = []
     sensor_orientation_list = []
     sensor_intersection_list = []
-    surfaces_types = ['walls', 'windows', 'roofs']
 
-    for srf_type in surfaces_types:
+    for srf_type in SURFACE_TYPES:
         occface_list = getattr(building_geometry, srf_type)
         if srf_type == 'roofs':
             orientation_list = ['top'] * len(occface_list)
@@ -267,6 +266,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
                       'SURFACE': sensors_code,
                       'orientation': sensor_orientation_building,
                       'intersection': sensor_intersection_building,
+                      'terrain_elevation': building_geometry.terrain_elevation,
                       'Xcoor': [x[0] for x in sensors_coords_building],
                       'Ycoor': [x[1] for x in sensors_coords_building],
                       'Zcoor': [x[2] for x in sensors_coords_building],
@@ -304,8 +304,11 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     daysim_project.write_radiance_parameters(**radiance_parameters)
 
     print('Executing hourly solar isolation calculation')
+    import time
+    start = time.time()
     daysim_project.execute_gen_dc()
     daysim_project.execute_ds_illum()
+    print(f"Daysim calculation took {time.time() - start} seconds")
 
     print('Reading results...')
     solar_res = daysim_project.eval_ill()
@@ -360,20 +363,12 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     group_dict = labels.to_dict()
 
     # Ensure surface columns (sometimes windows do not exist)
-    surfaces = {'windows_east',
-                'windows_west',
-                'windows_south',
-                'windows_north',
-                'walls_east',
-                'walls_west',
-                'walls_south',
-                'walls_north',
-                'roofs_top'}
+    current_labels = set(labels.unique())
+    missing_labels = SURFACE_DIRECTION_LABELS - current_labels
 
-    for label in labels.unique():
-        if label not in surfaces:
-            raise ValueError(f"Unrecognized surface name {label}")
-        surfaces.remove(label)
+    extra_labels = current_labels - SURFACE_DIRECTION_LABELS
+    if len(extra_labels) > 0:
+        raise ValueError(f"Unrecognized surface names {extra_labels}")
 
     # Transform data
     sensor_values_kw = sensor_values.multiply(geometry['AREA_m2'], axis="index") / 1000
@@ -386,7 +381,7 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     data = pd.concat([data, area_cols], axis=1)
 
     # Add missing surfaces to output
-    for surface in surfaces:
+    for surface in missing_labels:
         data[f"{surface}_kW"] = 0.0
         data[f"{surface}_m2"] = 0.0
 

@@ -72,12 +72,14 @@ def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.
     if index:
         out = out.set_index(index)
 
+    out.replace({'T': True, 'F': False}, inplace=True)
+
     return out
 
 
 def csv_xlsx_to_dbf(input_file, output_path, output_file_name):
     if input_file.endswith('.csv'):
-        df = pd.read_csv(input_file, sep=None)
+        df = pd.read_csv(input_file, sep=None, engine='python')
     if input_file.endswith('.xlsx'):
         df = pd.read_excel(input_file)
     output_file = os.path.join(output_path, output_file_name)

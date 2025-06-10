@@ -82,7 +82,7 @@ class Domain(object):
         """
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = shp_file.name
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
         network_type = self.config.optimization_new.network_type
@@ -94,11 +94,12 @@ class Domain(object):
                     continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
+                building.check_demand_energy_carrier()
                 self.buildings.append(building)
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None):
+    def load_potentials(self, buildings_in_domain=None, pv_panel_type='PV1'):
         """
         Import energy potentials from the current scenario.
 
@@ -111,8 +112,9 @@ class Domain(object):
             buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
-        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
-        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
+        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
+        pvtet_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "ET")
+        pvtfp_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "FP")
         scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
         scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
 
@@ -121,7 +123,9 @@ class Domain(object):
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
 
-        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
+        for potential in [pv_potential,
+                          pvtet_potential, pvtfp_potential,
+                          scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 
@@ -194,7 +198,7 @@ class Domain(object):
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = set(toolbox.population(n = algorithm.population - 1))
+        population = set(toolbox.population(n=algorithm.population - 1))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
@@ -597,19 +601,18 @@ class Domain(object):
 
     def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
+        Component.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
         Fitness.initialize_class_variables(self)
 
     def _initialize_energy_system_descriptor_classes(self):
-        print("1. Creating available supply system components...")
-        Component.initialize_class_variables(self)
-        print("2. Finding possible network paths (this may take a while)...")
+        print("1. Finding possible network paths (this may take a while)...")
         Network.initialize_class_variables(self)
-        print("3. Establishing district energy system structure...")
+        print("2. Establishing district energy system structure...")
         DistrictEnergySystem.initialize_class_variables(self)
         SupplySystemStructure.initialize_class_variables(self)
         SupplySystem.initialize_class_variables(self)
-        print("4. Defining possible connectivity vectors...")
+        print("3. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
     def _initialize_algorithm_helper_classes(self):

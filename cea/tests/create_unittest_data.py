@@ -7,48 +7,40 @@ unit tests. You can safely ignore the output printed to STDOUT - it is used for 
 
 NOTE: Check first to make sure the core algorithms are correct, i.e. the changes to the outputs behave as expected.
 """
-
-
-
 import configparser
 import json
 import os
-import tempfile
-import zipfile
 
 import pandas as pd
 
+from cea.config import Configuration, DEFAULT_CONFIG
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.schedule_maker.schedule_maker import schedule_maker_main
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.inputlocator import InputLocator
+from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 
 
 def main(output_file):
-    import cea.examples
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-    archive.extractall(tempfile.gettempdir())
+    config = Configuration(DEFAULT_CONFIG)
+    locator = ReferenceCaseOpenLocator()
 
-    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-    config.project = os.path.join(tempfile.gettempdir(), 'reference-case-open')
-    config.scenario_name = 'baseline'
+    config.project = locator.project_path
+    config.scenario = locator.scenario
 
-    locator = InputLocator(config.scenario)
     weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.data_initializer import main as data_initializer
-    config.data_initializer.databases_path = "CH"
-    config.data_initializer.databases = ["archetypes", "assemblies", "components"]
-    data_initializer(config)
+    from cea.datamanagement.database_helper import main as database_helper
+    config.database_helper.databases_path = "CH"
+    config.database_helper.databases = ["archetypes", "assemblies", "components"]
+    database_helper(config)
 
     # run properties script
     import cea.datamanagement.archetypes_mapper
-    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True, [])
     cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True,
                                                            locator.get_zone_building_names())
 
@@ -65,7 +57,7 @@ def main(output_file):
     print("data for test_calc_thermal_loads:")
     print(building_properties.list_building_names())
 
-    schedule_maker_main(locator, config, building='B1011')
+    occupancy_helper_main(locator, config, building='B1011')
 
     bpr = building_properties['B1011']
     result = calc_thermal_loads('B1011', bpr, weather_data, date_range, locator,
@@ -138,7 +130,7 @@ def run_for_single_building(building, bpr, weather_data, date_range, locator,
                             use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                             massflows_output, temperatures_output, config, debug):
     config.multiprocessing = False
-    schedule_maker_main(locator, config, building=building)
+    occupancy_helper_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date_range, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, config, debug)

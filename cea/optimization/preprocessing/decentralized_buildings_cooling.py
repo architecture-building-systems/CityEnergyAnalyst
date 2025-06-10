@@ -107,12 +107,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     ## Get hourly hot water supply condition of Solar Collectors (SC)
     # Flat Plate Solar Collectors
     SC_FP_data, T_hw_in_FP_C, el_aux_SC_FP_Wh, q_sc_gen_FP_Wh = get_SC_data(building_name, locator, panel_type="FP")
-    Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0],
+    Capex_a_SC_FP_USD, Opex_SC_FP_USD, Capex_SC_FP_USD = solar_collector.calc_Cinv_SC(SC_FP_data['area_SC_m2'][0],
                                                                                       locator,
                                                                                       panel_type="FP")
     # Evacuated Tube Solar Collectors
     SC_ET_data, T_hw_in_ET_C, el_aux_SC_ET_Wh, q_sc_gen_ET_Wh = get_SC_data(building_name, locator, panel_type="ET")
-    Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0],
+    Capex_a_SC_ET_USD, Opex_SC_ET_USD, Capex_SC_ET_USD = solar_collector.calc_Cinv_SC(SC_ET_data['area_SC_m2'][0],
                                                                                       locator,
                                                                                       panel_type="ET")
     ## Calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
@@ -134,7 +134,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     print('{building_name} Config 0: Direct Expansion Units -> AHU,ARU,SCU'.format(building_name=building_name))
     el_DX_hourly_Wh, \
     q_DX_chw_Wh = np.vectorize(dx.calc_DX)(mdot_AHU_ARU_SCU_kgpers, T_sup_AHU_ARU_SCU_K, T_re_AHU_ARU_SCU_K)
-    DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
+    # DX_Status = np.where(q_DX_chw_Wh > 0.0, 1, 0)
     # add electricity costs, CO2, PE
     operation_results[0][7] += sum(prices.ELEC_PRICE * el_DX_hourly_Wh)
     operation_results[0][8] += sum(calc_emissions_Whyr_to_tonCO2yr(el_DX_hourly_Wh, lca.EL_TO_CO2_EQ))  # ton CO2
@@ -157,7 +157,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     # VCC operation
     el_VCC_Wh, q_VCC_cw_Wh, q_VCC_chw_Wh = calc_VCC_operation(T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
                                                               mdot_AHU_ARU_SCU_kgpers, VCC_chiller)
-    VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
+    # VCC_Status = np.where(q_VCC_chw_Wh > 0.0, 1, 0)
     # CT operation
     q_CT_VCC_to_AHU_ARU_SCU_Wh = q_VCC_cw_Wh
     Q_nom_CT_VCC_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_SCU_Wh)
@@ -193,7 +193,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
     q_hw_single_ACH_Wh, \
     q_chw_single_ACH_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_AHU_ARU_SCU_K, T_sup_AHU_ARU_SCU_K,
                                              chiller_prop, mdot_AHU_ARU_SCU_kgpers, ACH_TYPE_SINGLE)
-    ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
+    # ACH_Status = np.where(q_chw_single_ACH_Wh > 0.0, 1, 0)
     # CT operation
     q_CT_FP_to_single_ACH_to_AHU_ARU_SCU_Wh = q_cw_single_ACH_Wh
     Q_nom_CT_FP_to_single_ACH_to_AHU_ARU_SCU_W, el_CT_Wh = calc_CT_operation(
@@ -302,12 +302,12 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         el_VCC_to_AHU_ARU_Wh, \
         q_cw_VCC_to_AHU_ARU_Wh, \
         q_chw_VCC_to_AHU_ARU_Wh = calc_VCC_operation(T_re_AHU_ARU_K, T_sup_AHU_ARU_K, mdot_AHU_ARU_kgpers, VCC_chiller)
-        VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
+        # VCC_LT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
         # VCC(SCU) operation
         el_VCC_to_SCU_Wh, \
         q_cw_VCC_to_SCU_Wh, \
         q_chw_VCC_to_SCU_Wh = calc_VCC_operation(T_re_SCU_K, T_sup_SCU_K, mdot_SCU_kgpers, VCC_chiller)
-        VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
+        # VCC_HT_Status = np.where(q_chw_VCC_to_AHU_ARU_Wh > 0.0, 1, 0)
         # CT operation
         q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = q_cw_VCC_to_AHU_ARU_Wh + q_cw_VCC_to_SCU_Wh
         Q_nom_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W, el_CT_Wh = calc_CT_operation(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W)
@@ -347,7 +347,7 @@ def disconnected_cooling_for_building(building_name, supply_systems, lca, locato
         q_hw_FP_ACH_to_SCU_Wh, \
         q_chw_FP_ACH_to_SCU_Wh = calc_ACH_operation(T_ground_K, T_hw_in_FP_C, T_re_SCU_K, T_sup_SCU_K, chiller_prop,
                                                     mdot_SCU_kgpers, ACH_TYPE_SINGLE)
-        ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
+        # ACH_HT_Status = np.where(q_chw_FP_ACH_to_SCU_Wh > 0.0, 1, 0)
         # boiler operation
         q_gas_for_boiler_Wh, \
         Q_nom_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_W, \
@@ -673,7 +673,7 @@ def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, absorp
 
 def get_SC_data(building_name, locator, panel_type):
     SC_data = pd.read_csv(locator.SC_results(building_name, panel_type),
-                          usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2",
+                          usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "area_SC_m2",
                                    "Eaux_SC_kWh"])
     q_sc_gen_Wh = (SC_data['Q_SC_gen_kWh'] * 1000).values
     q_sc_gen_Wh = np.where(q_sc_gen_Wh < 0.0, 0.0, q_sc_gen_Wh)
@@ -755,7 +755,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     supply_systems = SupplySystemsDatabase(locator)
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name
+    building_names = total_demand.name
     prices = Prices(supply_systems)
     lca = LcaCalculations(supply_systems)
     disconnected_buildings_cooling_main(locator, building_names, total_demand, config, prices, lca)

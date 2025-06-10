@@ -3,8 +3,6 @@ Databases verification
 This tool is used as to check the format of each database
 """
 
-
-
 from cea.schemas import schemas
 import pandas as pd
 import re
@@ -12,15 +10,19 @@ import re
 from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
-COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
-COLUMNS_SURROUNDINGS_GEOMETRY = ['Name', 'height_ag', 'floors_ag']
-COLUMNS_ZONE_TYPOLOGY = ['Name', 'STANDARD', 'YEAR', '1ST_USE', '1ST_USE_R', '2ND_USE', '2ND_USE_R', '3RD_USE',
-                         '3RD_USE_R']
+COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
+COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
+                         'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
+NAME_COLUMN = 'name'
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference', 'geometry',
+                'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
+                'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
-def assert_columns_names(zone_df, columns):
+def assert_columns_names(dataframe: pd.DataFrame, columns):
     try:
-        zone_df[columns]
+        dataframe[columns]
     except ValueError:
         print(
             "one or more columns in the Zone or Surroundings input files is not compatible with CEA, please ensure the column" +
@@ -84,10 +86,26 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
 
 def assert_input_geometry_only_polygon(buildings_df):
     not_polygon = buildings_df.geometry.type != 'Polygon'
-    invalid_buildings = buildings_df[not_polygon]['Name'].values
+    invalid_buildings = buildings_df[not_polygon]['name'].values
     if len(invalid_buildings):
         raise Exception(
             'Some buildings are not of type "Polygon": {buildings}'.format(buildings=', '.join(invalid_buildings)))
+
+
+def check_duplicated_names(df):
+    duplicated_names = df[NAME_COLUMN].duplicated()
+    if duplicated_names.any():
+        raise Exception(
+            'Duplicated names in the input file: {names}'.format(names=', '.join(df[duplicated_names][NAME_COLUMN].values)))
+
+
+def check_na_values(df, columns=None):
+    if columns is not None:
+        df = df[columns]
+
+    na_columns = df.columns[df.isna().any()].tolist()
+    if na_columns:
+        raise ValueError(f'There are NA values detected in the following required columns: {", ".join(na_columns)}')
 
 
 def verify_input_geometry_zone(zone_df):
@@ -99,6 +117,10 @@ def verify_input_geometry_zone(zone_df):
 
     # Verification 3. verify geometries only contain Polygon
     assert_input_geometry_only_polygon(zone_df)
+
+    check_na_values(zone_df, columns=COLUMNS_ZONE_GEOMETRY)
+
+    check_duplicated_names(zone_df)
 
 
 def verify_input_geometry_surroundings(surroundings_df):
@@ -115,6 +137,10 @@ def verify_input_geometry_surroundings(surroundings_df):
 def verify_input_typology(typology_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(typology_df, COLUMNS_ZONE_TYPOLOGY)
+
+    check_na_values(typology_df, columns=COLUMNS_ZONE_TYPOLOGY)
+
+    check_duplicated_names(typology_df)
 
 
 def verify_input_terrain(terrain_raster):
@@ -172,7 +198,7 @@ class InputFileValidator(object):
         missing_columns = [col for col in columns if col not in data.columns]
         extra_columns = [col for col in data.columns if col not in columns]
         return [[{'column': str(col)}, 'Column is missing'] for col in missing_columns] + \
-               [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
+            [[{'column': str(col)}, 'Column is not in schema'] for col in extra_columns]
 
     def assert_column_values(self, data, data_schema):
         """

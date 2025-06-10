@@ -47,11 +47,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
 
     * ``scenario/outputs/data/demand``
 
-      * ``${Name}.csv`` for each building
+      * ``${name}.csv`` for each building
 
     * temporary folder (as returned by ``tempfile.gettempdir()``)
 
-      * ``${Name}T.csv`` for each building
+      * ``${name}T.csv`` for each building
 
     daren-thomas: as far as I can tell, these are the only side-effects.
 
@@ -366,7 +366,7 @@ def initialize_inputs(bpr, weather_data, locator):
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
-    occupancy_yearly_schedules = pd.read_csv(locator.get_schedule_model_file(building_name))
+    occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
     tsd['people'] = occupancy_yearly_schedules['people_p']
     tsd['ve_lps'] = occupancy_yearly_schedules['Ve_lps']
@@ -605,10 +605,10 @@ def get_hours(bpr):
 
     if bpr.hvac['has-heating-season']:
         # if has heating season start simulating at [before] start of heating season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heat_starts'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['hvac_heat_starts'])
     elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
         # if has no heating season but cooling season start at [before] start of cooling season
-        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cool_starts'])
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['hvac_cool_starts'])
     elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
         # no heating or cooling
         hour_start_simulation = 0

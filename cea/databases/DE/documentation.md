@@ -100,24 +100,24 @@ term `-EAST` designates the eastern german (former GDR) buildings.
 
 Source for descriptions of the parameters: [^cea-desc].
 
-| Parameter  | Description  | Method |
-|---|---|---|
-| `STANDARD`  | building archetype name | One for each TABULA, EPISCOPE and IWU building archetype in Germany (See abbreviations above)  |
-| `type_cons` | Type of construction assembly (relates to "code" in ENVELOPE assemblies) | Standard values as defined in p. 8 of the common calculation method of TABULA[^tab-com] (and unit conversion to CEA) |
-| `type_leak` | Tightness level assembly (relates to "code" in ENVELOPE assemblies) | According to values defined in the common calculation method of TABULA[^tab-com] p.13 and each building typology. For IWU and BMVBS it was assumed medium or low depending on age |
-| `type_win` |  Window assembly (relates to "code" in ENVELOPE assemblies) | Values depending on renovation status defined in TABULA with additional assumptions |
-| `type_roof` |  Roof construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA, BMBVS or IWU, and assumptions for missing values |
-| `type_part` |  Internal partitions construction assembly (relates to "code" in ENVELOPE assemblies) | One standard assumption for all |
-| `type_wall` |  External wall construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA, and assumptions for missing values |
-| `type_floor` |  Internal floor construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA |
-| `type_base` |  Internal floor construction assembly (relates to "code" in ENVELOPE assemblies) | Assumed equal to floor insulation of each building typology for TABULA DE (not measured) |
-| `type_shade` |  Shading system assembly (relates to "code" in ENVELOPE assemblies) | Assumed as vertical window for all typologies (TABULA p. 8 TABULA common calculation method[^tab-com]) |
-| `Es` |  Fraction of gross floor area with energy demands | Default tabula value = 0.85 |
-| `Hs_ag` |  Fraction of above ground gross floor area air-conditioned | Equal to Es, TABULA assumption |
-| `Hs_bg` |  Fraction of below ground gross floor area air-conditioned | Assumption of 0 |
-| `Ns` |  Fraction of net gross floor area | Assumption of 0.85 |
-| `void_deck`|  Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | 0 |
-|`wwr_[]` | Window to wall ratio in in facades directions | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU |
+| Parameter           | Description                                                                                                | Method                                                                                                                                                                            |
+|---------------------|------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `STANDARD`          | building archetype name                                                                                    | One for each TABULA, EPISCOPE and IWU building archetype in Germany (See abbreviations above)                                                                                     |
+| `type_cons`         | Type of construction assembly (relates to "code" in ENVELOPE assemblies)                                   | Standard values as defined in p. 8 of the common calculation method of TABULA[^tab-com] (and unit conversion to CEA)                                                              |
+| `type_leak`         | Tightness level assembly (relates to "code" in ENVELOPE assemblies)                                        | According to values defined in the common calculation method of TABULA[^tab-com] p.13 and each building typology. For IWU and BMVBS it was assumed medium or low depending on age |
+| `type_win`          | Window assembly (relates to "code" in ENVELOPE assemblies)                                                 | Values depending on renovation status defined in TABULA with additional assumptions                                                                                               |
+| `type_roof`         | Roof construction assembly (relates to "code" in ENVELOPE assemblies)                                      | Values for all building typologies defined in TABULA, BMBVS or IWU, and assumptions for missing values                                                                            |
+| `type_part`         | Internal partitions construction assembly (relates to "code" in ENVELOPE assemblies)                       | One standard assumption for all                                                                                                                                                   |
+| `type_wall`         | External wall construction assembly (relates to "code" in ENVELOPE assemblies)                             | Values for all building typologies defined in TABULA, and assumptions for missing values                                                                                          |
+| `type_floor`        | Internal floor construction assembly (relates to "code" in ENVELOPE assemblies)                            | Values for all building typologies defined in TABULA                                                                                                                              |
+| `type_base`         | Internal floor construction assembly (relates to "code" in ENVELOPE assemblies)                            | Assumed equal to floor insulation of each building typology for TABULA DE (not measured)                                                                                          |
+| `type_shade`        | Shading system assembly (relates to "code" in ENVELOPE assemblies)                                         | Assumed as vertical window for all typologies (TABULA p. 8 TABULA common calculation method[^tab-com])                                                                            |
+| `Es`                | Fraction of gross floor area with energy demands                                                           | Default tabula value = 0.85                                                                                                                                                       |
+| `Hs`                | Fraction of gross floor area air-conditioned                                                               | Equal to Es, TABULA assumption                                                                                                                                                    |
+| `occupied_bg` | True if floors below ground are conditioned/occupied, False if not.                                        | Assumed False                                                                                                                                                                     |
+| `Ns`                | Fraction of net gross floor area                                                                           | Assumption of 0.85                                                                                                                                                                |
+| `void_deck`         | Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | 0                                                                                                                                                                                 |
+| `wwr_[]`            | Window to wall ratio in facades directions                                                                 | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU                                                                     |
 
 #### HVAC_ASSMEBLIES
 

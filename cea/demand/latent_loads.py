@@ -240,8 +240,8 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
         convert_rh_to_moisture_content(tsd['rh_ext'][t-1], tsd['T_ext'][t - 1])
 
     # get (de)humidification loads
-    g_hu_ld_ztc_t = tsd['g_hu_ld'][t]
-    g_dhu_ld_ztc_t = tsd['g_dhu_ld'][t]
+    # g_hu_ld_ztc_t = tsd['g_hu_ld'][t]
+    # g_dhu_ld_ztc_t = tsd['g_dhu_ld'][t]
 
     # sum ventilation moisture + (de)humidification
     x_int_a = (m_ve_mech * x_ve_mech_sup + m_ve_inf * x_ve_inf + g_int_ztc_t + (

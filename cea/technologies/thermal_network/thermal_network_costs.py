@@ -570,8 +570,8 @@ def main(config):
     ## read in basic information and save to object, e.g. building demand, names, total number of buildings
 
     total_demand = pd.read_csv(locator.get_total_demand())
-    network_info.building_names = total_demand.Name.values
-    network_info.number_of_buildings_in_district = total_demand.Name.count()
+    network_info.building_names = total_demand.name.values
+    network_info.number_of_buildings_in_district = total_demand.name.count()
 
     # write disconnected_buildings_index into network_info
     disconnected_buildings_list = config.network_layout.disconnected_buildings

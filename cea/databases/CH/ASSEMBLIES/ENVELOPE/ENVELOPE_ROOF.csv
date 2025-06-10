@@ -1,0 +1,13 @@
+description,code,U_roof,a_roof,e_roof,r_roof,GHG_roof_kgCO2m2,GHG_biogenic_roof_kgCO2m2,Service_Life_roof,Reference Service life,Reference U-Value
+concrete or rock pebbles finishing - new construction,ROOF_AS1,0.2,0.6,0.94,0.4,112,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+clay tiles - old contruction,ROOF_AS2,0.3,0.55,0.91,0.44999999999999996,112,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+aluminum tiles - old construction,ROOF_AS3,0.3,0.3,0.09,0.7,112,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+greenery - new roof,ROOF_AS4,0.15,0.5,0.95,0.5,112,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+white paint  over plaster over concrete - new roof,ROOF_AS5,0.15,0.3,0.84,0.7,113,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+dark paint over plaster over concrete - new roof,ROOF_AS6,0.15,0.85,0.94,0.15000000000000002,113,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+concrete or rock pebbles finishing - Singapore,ROOF_AS7,0.6,0.6,0.94,0.4,112,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.", 
+"retrofit flat roof, add insulation, conventional, sia 380",ROOF_AS8_C,0.25,0.85,0.94,0.15000000000000002,37,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.",SIA 380/1 / 2016 D - Heizwärmebedarf 
+"retrofit flat roof, add insulation, low carbon, sia 380",ROOF_AS8_L,0.25,0.85,0.94,0.15000000000000002,9,-6,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.",SIA 380/1 / 2016 D - Heizwärmebedarf 
+"new building, flat roof, conventional, sia 380",ROOF_AS9_C,0.17,0.85,0.94,0.15,156,0,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.",SIA 380/1 / 2016 D - Heizwärmebedarf 
+"new building, flat roof, low carbon, sia 380",ROOF_AS9_L,0.17,0.85,0.94,0.15,115,-10,60,"SIA, “SIA 2032 Graue Energie von Gebäuden,” no. 2010. Schweizerischer Ingenieur- und Architektenverein, Zürich, 2010.",SIA 380/1 / 2016 D - Heizwärmebedarf 
+NoRotrofit,ROOF_NoRet,0.2,0.6,0.94,0.4,0,0,60,,

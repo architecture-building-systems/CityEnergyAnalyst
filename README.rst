@@ -7,7 +7,7 @@
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.14903253.svg
    :target: https://doi.org/10.5281/zenodo.14903253
 
-.. image:: cea_logo.png
+.. image:: logo/cea_logo.png
     :scale: 25 %
     :alt: City Energy Analyst (CEA) logo
     :target: https://www.cityenergyanalyst.com

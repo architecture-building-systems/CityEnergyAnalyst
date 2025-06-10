@@ -81,24 +81,24 @@ T_C_REF_RE_0 = 5  # (°C) refactored from refrigeration loads, without original 
 T_C_DATA_RE_0 = 15  # (°C) refactored from data center loads, without original source
 T_C_DATA_SUP_0 = 7  # (°C) refactored from data center loads, without original source
 
-VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2p': 'OCCUPANCY',
-                                  'Qs_Wp': 'OCCUPANCY',
-                                  'X_ghp': 'OCCUPANCY',
-                                  'Ve_lsp': 'OCCUPANCY',
-                                  'Ea_Wm2': 'APPLIANCES',
-                                  'El_Wm2': 'LIGHTING',
-                                  'Ed_Wm2': 'SERVERS',
-                                  'Vww_ldp': 'WATER',
-                                  'Vw_ldp': 'WATER',
-                                  'Ths_set_C': 'HEATING',
-                                  'Tcs_set_C': 'COOLING',
-                                  'Qcre_Wm2': 'PROCESSES',
-                                  'Qhpro_Wm2': 'PROCESSES',
-                                  'Qcpro_Wm2': 'PROCESSES',
-                                  'Epro_Wm2': 'PROCESSES',
-                                  'Ev_kWveh': 'ELECTROMOBILITY',
+VARIABLE_CEA_SCHEDULE_RELATION = {'Occ_m2p': 'occupancy',
+                                  'Qs_Wp': 'occupancy',
+                                  'X_ghp': 'occupancy',
+                                  'Ve_lsp': 'occupancy',
+                                  'Ea_Wm2': 'appliances',
+                                  'El_Wm2': 'lighting',
+                                  'Ed_Wm2': 'servers',
+                                  'Vww_ldp': 'hot_water',
+                                  'Vw_ldp': 'hot_water',
+                                  'Ths_set_C': 'heating',
+                                  'Tcs_set_C': 'cooling',
+                                  'Qcre_Wm2': 'processes',
+                                  'Qhpro_Wm2': 'processes',
+                                  'Qcpro_Wm2': 'processes',
+                                  'Epro_Wm2': 'processes',
+                                  'Ev_kWveh': 'electromobility',
                                   }
 
-TEMPERATURE_VARIABLES = ['HEATING', 'COOLING']
-PEOPLE_DEPENDENT_VARIABLES = ['OCCUPANCY', 'WATER']
-AREA_DEPENDENT_VARIABLES = ['APPLIANCES', 'LIGHTING', 'PROCESSES', 'SERVERS']
+TEMPERATURE_VARIABLES = ['heating', 'cooling']
+PEOPLE_DEPENDENT_VARIABLES = ['occupancy', 'hot_water']
+AREA_DEPENDENT_VARIABLES = ['appliances', 'lighting', 'processes', 'servers']

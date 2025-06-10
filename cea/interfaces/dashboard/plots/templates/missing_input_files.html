@@ -8,7 +8,8 @@
 <p>Try running these scripts first:</p>
 <ul>
   {% for script in script_suggestions %}
-  <li><a href="/tools/{{script.name}}">{{script.label}}</a></li>
+<!--  <li><a href="/tools/{{script.name}}">{{script.label}}</a></li>-->
+  <li>{{script.label}}</li>
   {% endfor %}
 </ul>
 {% endif %}

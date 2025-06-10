@@ -12,7 +12,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
-BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
+BUILDINGS_DEMANDS_COLUMNS = ['name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
                              'Qcdata_sys_kWh', 'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'mcpcdata_sys_kWperC',
                              'Qcre_sys_kWh', 'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'mcpcre_sys_kWperC',
@@ -173,7 +173,7 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
     # Dataframes for storage
     hex_areas = pd.DataFrame(columns=area_columns, index=['0'])
     UA_data = pd.DataFrame(columns=UA_columns, index=['0'])
-    Q_nom_data = pd.DataFrame(columns=Q_columns, index=[building_demand['Name'].values[0]])
+    Q_nom_data = pd.DataFrame(columns=Q_columns, index=[building_demand['name'].values[0]])
 
     ## Heating
     for system in substation_systems['heating']:
@@ -856,11 +856,11 @@ def main(config):
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME
-    network = 'DH'  # FIXME
-    delta_cap_mass_flow = 0  # Assume all edge mass flows sufficiently high
-    cc_old_sh = 0  # not relevant here.
-    cc_old_dhw = 0
-    ch_old = 0
+    # network = 'DH'  # FIXME
+    # delta_cap_mass_flow = 0  # Assume all edge mass flows sufficiently high
+    # cc_old_sh = 0  # not relevant here.
+    # cc_old_dhw = 0
+    # ch_old = 0
 
     thermal_network.buildings_demands = determine_building_supply_temperatures(thermal_network.building_names, locator)
     thermal_network.substations_HEX_specs = substation_HEX_design_main(thermal_network.buildings_demands)

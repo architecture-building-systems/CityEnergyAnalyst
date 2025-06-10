@@ -4,7 +4,6 @@ costs according to supply systems
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
 import itertools
 import cea.config
 import cea.inputlocator
@@ -19,11 +18,13 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.technologies.supply_systems_database import get_csv_filenames
+
 
 def costs_main(locator, config):
     # get local variables
-    capital = config.costs.capital
-    operational = config.costs.operational
+    # capital = config.costs.capital
+    # operational = config.costs.operational
 
     # get demand
     demand = pd.read_csv(locator.get_total_demand())
@@ -91,7 +92,7 @@ def costs_main(locator, config):
                 result[value] += result[field]
 
     # add name and create dataframe
-    result.update({'Name': demand.Name.values})
+    result.update({'name': demand.name.values})
     result_out = pd.DataFrame(result)
 
     # save dataframe
@@ -172,13 +173,16 @@ def calc_scale_costs(value, flag_scale):
 
 
 def get_databases(demand, locator):
-    supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
-    factors_heating = data_all_in_one_systems['HEATING']
-    factors_dhw = data_all_in_one_systems['HOT_WATER']
-    factors_cooling = data_all_in_one_systems['COOLING']
-    factors_electricity = data_all_in_one_systems['ELECTRICITY']
-    factors_resources = pd.read_excel(locator.get_database_feedstocks(), sheet_name=None)
+    supply_systems = pd.read_csv(locator.get_building_supply())
+    factors_heating = pd.read_csv(locator.get_database_assemblies_supply_heating())
+    factors_dhw = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+    factors_cooling = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+    factors_electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity())
+
+    factors_resources = {}
+    list_feedstocks = get_csv_filenames(locator.get_db4_components_feedstocks_library_folder())
+    for feedstock in list_feedstocks:
+        factors_resources[feedstock] = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv(feedstocks=feedstock))
     # get the mean of all values for this
     factors_resources_simple = [(name, values['Opex_var_buy_USD2015kWh'].mean()) for name, values in
                                 factors_resources.items() if name != 'ENERGY_CARRIERS']
@@ -202,10 +206,10 @@ def get_databases(demand, locator):
     electricity_costs = factors_electricity.merge(factors_resources_simple, left_on='feedstock', right_on='code')[
         ['code_x', 'feedstock', 'scale', 'efficiency', 'Opex_var_buy_USD2015kWh', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%',
          'IR_%']]
-    heating = supply_systems.merge(demand, on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
-    dhw = supply_systems.merge(demand, on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
-    cooling = supply_systems.merge(demand, on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
-    electricity = supply_systems.merge(demand, on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
+    heating = supply_systems.merge(demand, on='name').merge(heating_costs, left_on='supply_type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='name').merge(dhw_costs, left_on='supply_type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='name').merge(cooling_costs, left_on='supply_type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='name').merge(electricity_costs, left_on='supply_type_el', right_on='code_x')
     return cooling, dhw, electricity, heating
 
 

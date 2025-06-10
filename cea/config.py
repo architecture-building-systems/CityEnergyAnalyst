@@ -70,7 +70,7 @@ class Configuration:
 
     def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter in the general section"""
-        if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
+        if key in {'default_config', 'user_config', 'sections', 'restricted_to'} or key.startswith('_'):
             # make sure the __init__ method doesn't trigger this
             return super().__setattr__(key, value)
 
@@ -83,9 +83,11 @@ class Configuration:
 
     def __getstate__(self) -> str:
         """when we pickle, we only really need to pickle the user_config"""
-        config_data = io.StringIO()
-        self.user_config.write(config_data)
-        return config_data.getvalue()
+        buffer = io.StringIO()
+        self.user_config.write(buffer)
+        value = buffer.getvalue()
+        buffer.close()
+        return value
 
     def __setstate__(self, state: str):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
@@ -95,7 +97,9 @@ class Configuration:
         self.default_config.read(DEFAULT_CONFIG)
 
         self.user_config = configparser.ConfigParser()
-        self.user_config.read_file(io.StringIO(state))
+        buffer = io.StringIO(state)
+        self.user_config.read_file(buffer)
+        buffer.close()
 
         cea.plugin.add_plugins(self.default_config, self.user_config)
 
@@ -181,16 +185,18 @@ class Configuration:
 
         for section, parameter in self.matching_parameters(option_list):
             if parameter.name in command_line_args:
+                command_line_arg = command_line_args.pop(parameter.name)
                 try:
-                    parameter.set(
-                        parameter.decode(
-                            parameter.replace_references(
-                                command_line_args[parameter.name])))
+                    raw_value = parameter.replace_references(command_line_arg)
+
+                    # Allow boolean parameters to be set to empty string to be interpreted as True
+                    if (raw_value == "" and isinstance(parameter, BooleanParameter)):
+                        parameter.set(True)
+                    else:
+                        parameter.set(parameter.decode(raw_value))
                 except Exception as e:
                     raise ValueError(
-                        f"ERROR setting {section.name}:{parameter.name} to {command_line_args[parameter.name]}") from e
-
-                del command_line_args[parameter.name]
+                        f"ERROR setting {section.name}:{parameter.name} to {command_line_arg}") from e
 
         if len(command_line_args) != 0:
             raise ValueError(f"Unexpected parameters: {command_line_args}")
@@ -470,6 +476,13 @@ class PathParameter(Parameter):
     def decode(self, value):
         """Always return a canonical path"""
         return str(os.path.normpath(os.path.abspath(os.path.expanduser(value))))
+
+
+class NullablePathParameter(PathParameter):
+    def decode(self, value):
+        if value == '':
+            return value
+        return super().decode(value)
 
 
 class FileParameter(Parameter):
@@ -793,7 +806,8 @@ class DatabasePathParameter(Parameter):
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
-                         if os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
+                         if
+                         os.path.isdir(os.path.join(self.locator.db_path, p)) and p not in ['weather', '__pycache__']}
 
     def encode(self, value):
         return str(value)
@@ -877,7 +891,7 @@ class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
     def initialize(self, parser):
-        pass
+        self.exclude_current = parser.get(self.section.name, f"{self.name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -893,8 +907,11 @@ class ScenarioNameParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        return get_scenarios_list(self.config.project)
+        choices = get_scenarios_list(self.config.project)
+        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
+            choices.remove(self.config.scenario_name)
 
+        return choices
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
@@ -940,19 +957,22 @@ class MultiChoiceParameter(ChoiceParameter):
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
-    def encode(self, value):
-        if isinstance(value, str):
-            raise ValueError(f"Bad value for encode of parameter {self.name}")
-        for choice in value:
-            if str(choice) not in self._choices:
-                raise ValueError(f"Invalid parameter value {value} for {self.name}, choose from: {self._choices}")
+    def encode(self, value: list):
+        if not isinstance(value, list):
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
+
+        not_in_choices = set(value) - set(self._choices)
+        if len(not_in_choices) > 0:
+            raise ValueError(f"Invalid parameter values {not_in_choices} for {self.name}, choose from: {self._choices}")
+
         return ', '.join(map(str, value))
 
     def decode(self, value):
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
-        return [choice for choice in choices if choice in self._choices]
+        valid_choices = set(self._choices)
+        return [choice for choice in choices if choice in valid_choices]
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
@@ -1130,8 +1150,11 @@ class CoordinateListParameter(ListParameter):
 
 
 def get_scenarios_list(project_path: str) -> List[str]:
-    # return empty list if project path does not exist
-    if not os.path.exists(project_path):
+    # TODO: Allow for remote projects
+    normalized_path = os.path.normpath(project_path)
+
+    if not os.path.exists(normalized_path):
+        # return empty list if project path does not exist
         return []
 
     def is_valid_scenario(folder_name):
@@ -1139,13 +1162,15 @@ def get_scenarios_list(project_path: str) -> List[str]:
         A scenario must be a valid path
         A scenario can't start with a `.` like `.config`
         """
-        folder_path = os.path.join(project_path, folder_name)
+        folder_path = os.path.join(normalized_path, folder_name)
 
+        # TODO: Use .gitignore to ignore scenarios
         return all([os.path.isdir(folder_path),
                     not folder_name.startswith('.'),
-                    folder_name != "__pycache__"])
+                    folder_name != "__pycache__",
+                    folder_name != "__MACOSX"])
 
-    return [folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)]
+    return sorted([folder_name for folder_name in os.listdir(normalized_path) if is_valid_scenario(folder_name)])
 
 
 def get_systems_list(scenario_path):
@@ -1158,6 +1183,10 @@ def get_systems_list(scenario_path):
             iterations.update(data_checkpoint['systems_to_show'])
     unique_iterations = [str(x) for x in iterations]
     return unique_iterations
+
+
+class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
+    pass
 
 
 def parse_string_to_list(line):
@@ -1189,6 +1218,71 @@ def parse_string_coordinate_list(string_tuples):
         coordinates_list.append(coord_tuple)
 
     return coordinates_list
+
+
+class ColumnChoiceParameter(ChoiceParameter):
+    _supported_extensions = ['.csv']
+
+    @staticmethod
+    def _parse_kwargs(value: str) -> Dict[str, str]:
+        """
+        Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary
+        """
+        kwargs = dict()
+        if value is None:
+            return kwargs
+
+        try:
+            value = value.strip()
+
+            if value:
+                for kwarg in value.split(','):
+                    key, value = kwarg.strip().split('=')
+                    kwargs[key] = value
+
+            return kwargs
+        except Exception as e:
+            raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
+
+
+    def initialize(self, parser):
+        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
+        self.column_name = parser.get(self.section.name, f"{self.name}.column")
+        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+
+    @property
+    def _choices(self):
+        # set the `._choices` attribute to PV codes
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+
+        ext = os.path.splitext(location)[1]
+        if ext not in self._supported_extensions:
+            raise ValueError(f'Invalid file type {ext}, expected one of {self._supported_extensions}')
+
+        try:
+            import pandas as pd
+            df = pd.read_csv(location)
+
+            if self.column_name not in df.columns:
+                raise ValueError(f'Column {self.column_name} not found in source file')
+
+            codes = df[self.column_name].unique()
+            return list(codes)
+        except FileNotFoundError as e:
+            # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
+            raise FileNotFoundError(f'Could not find source file at {location}') from e
+        except Exception as e:
+            raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
+
+
+class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
+    pass
 
 
 def validate_coord_tuple(coord_tuple):

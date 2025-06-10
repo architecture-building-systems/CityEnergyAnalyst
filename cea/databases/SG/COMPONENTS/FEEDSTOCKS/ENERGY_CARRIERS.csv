@@ -1,0 +1,31 @@
+description,code,type,subtype,qualifier,unit_qual,mean_qual,feedstock_file,reference
+Hot air,T100A,thermal,air,temperature,°C,100,-,
+Warm air,T35A,thermal,air,temperature,°C,35,-,
+Room temperature air,T25A,thermal,air,temperature,°C,25,-,
+Cold air,T10A,thermal,air,temperature,°C,10,-,
+Cold brine,T0B,thermal,brine,temperature,°C,0,-,
+Hot water (high temperature),T100W,thermal,water,temperature,°C,100,-,
+Hot water (medium temperature),T60W,thermal,water,temperature,°C,60,-,
+Warm water (room temperature),T30W,thermal,water,temperature,°C,30,-,
+Fresh water,T20W,thermal,water,temperature,°C,20,-,
+Cold water,T10W,thermal,water,temperature,°C,10,-,
+Ice,T0W,thermal,water,temperature,°C,0,-,
+Electricity - alternate current (low voltage),E230AC,electrical,AC,voltage,V,230,GRID,"voltage: https://www.ntu.edu.sg/docs/librariesprovider60/publications/grid-2-0.pdf?sfvrsn=c1803649_2#:~:text=Electricity%20Grid%20in%20Singapore,-The%20electricity%20grid&text=The%20transmission%20%26%20distribution%20network%20of,spanning%20more%20than%2015%2C000%20kilometres. 
+price: https://www.ema.gov.sg/Residential_Electricity_Tariffs.aspx 
+emission-intensity: https://www.ema.gov.sg/singapore-energy-statistics/Ch02/index2"
+Electricity - alternate current (medium voltage),E22kAC,electrical,AC,voltage,V,22000,GRID,"voltage: https://www.ntu.edu.sg/docs/librariesprovider60/publications/grid-2-0.pdf?sfvrsn=c1803649_2#:~:text=Electricity%20Grid%20in%20Singapore,-The%20electricity%20grid&text=The%20transmission%20%26%20distribution%20network%20of,spanning%20more%20than%2015%2C000%20kilometres. price: https://www.emcsg.com/marketdata/priceinformation#priceDataView
+emission-intensity: https://www.ema.gov.sg/singapore-energy-statistics/Ch02/index2"
+Electricity - alternate current (high voltage),E66kAC,electrical,AC,voltage,V,66000,GRID,"voltage: https://www.ntu.edu.sg/docs/librariesprovider60/publications/grid-2-0.pdf?sfvrsn=c1803649_2#:~:text=Electricity%20Grid%20in%20Singapore,-The%20elect6ricity%20grid&text=The%20transmission%20%26%20distribution%20network%20of,spanning%20more%20than%2015%2C000%20kilometres.
+price:https://www.emcsg.com/marketdata/priceinformation#priceDataView
+emission-intensity: https://www.ema.gov.sg/singapore-energy-statistics/Ch02/index2"
+Wood,Cwod,combustible,biofuel,chemical composition,-,-,WOOD,"KBOB 2009/1:2016, ID 41.006 Stückholz (average), cost from CEA"
+Wet biomass,Cwbm,combustible,biofuel,chemical composition,-,-,WETBIOMASS,"KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA"
+Dry biomass,Cdbm,combustible,biofuel,chemical composition,-,-,DRYBIOMASS,"KBOB 2009/1:2016, ID 42.001 Kehrichtverbrennung, cost from CEA"
+Coal,Ccoa,combustible,fossil,chemical composition,-,-,COAL,"KBOB 2009/1:2016, ID 41.004/41.005 (average), cost from CEA"
+Oil,Coil,combustible,fossil,chemical composition,-,-,OIL,"KBOB 2009/1:2016, ID 41.001 Heizöl, cost from CEA"
+Natural gas,Cgas,combustible,fossil,chemical composition,-,-,NATURALGAS,"PEN and CO2 from ecoinvent 3.4 - market for natural gas, burned in gas motor, for storage_GLO_2017_Allocation, cut-off,cost from Werke am Zurich see"
+Biogas,Cbig,combustible,biofuel,chemical composition,-,-,BIOGAS,"KBOB 2009/1:2016, ID 41.009 Biogas, cost from CEA, cost from Werke am Zurich see"
+Hydrogen,Chyd,combustible,biofuel,chemical composition,-,-,HYDROGEN,https://file.go.gov.sg/studyofhydrogenimportsanddownstreamapplicationsforsingapore.pdf
+Sunlight,Rsun,radiation,-,wavelength,-,-,-,https://en.wikipedia.org/wiki/Sunlight
+Ultraviolet,Rsun,radiation,-,wavelength,nm,200,-,https://en.wikipedia.org/wiki/Sunlight
+Infrared light,Rsun,radiation,-,wavelength,nm,1500,-,https://en.wikipedia.org/wiki/Sunlight

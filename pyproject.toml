@@ -16,7 +16,7 @@ dynamic = ["version"]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
 docs = ["setuptools"]
 
 [project.urls]
@@ -42,3 +42,6 @@ namespaces = false
 
 [tool.setuptools.dynamic]
 version = { attr = "cea.__version__" }
+
+[tool.ruff]
+exclude = ["*.ipynb"]

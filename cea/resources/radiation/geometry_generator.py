@@ -41,6 +41,17 @@ __status__ = "Production"
 from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
                                                    crs_to_epsg)
 
+SURFACE_TYPES = ['walls', 'windows', 'roofs']
+SURFACE_DIRECTION_LABELS = {'windows_east',
+                            'windows_west',
+                            'windows_south',
+                            'windows_north',
+                            'walls_east',
+                            'walls_west',
+                            'walls_south',
+                            'walls_north',
+                            'roofs_top'}
+
 
 def identify_surfaces_type(occface_list):
     roof_list = []
@@ -130,7 +141,9 @@ def calc_building_solids(buildings_df, geometry_simplification, elevation_map, n
     out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
         geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
-    return out
+
+    solids, elevations = zip(*out)
+    return list(solids), list(elevations)
 
 
 def calc_floor_to_floor_height(building_height, number_of_floors):
@@ -143,11 +156,11 @@ def calc_floor_to_floor_height(building_height, number_of_floors):
 def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
     elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
     # burn buildings footprint into the terrain and return the location of the new face
-    face_footprint = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
+    face_footprint, elevation = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
     building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
-    return building_solid
+    return building_solid, elevation
 
 
 def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_dir):
@@ -176,20 +189,24 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
 
     print('Calculating terrain intersection of building geometries')
-    zone_buildings_df = zone_df.set_index('Name')
+    zone_buildings_df = zone_df.set_index('name')
     zone_building_names = zone_buildings_df.index.values
-    zone_building_solid_list = calc_building_solids(zone_buildings_df, zone_simplification, elevation_map,
-                                                    num_processes)
+    zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
+                                                                     elevation_map, num_processes)
 
-    surroundings_buildings_df = surroundings_df.set_index('Name')
-    surroundings_building_names = surroundings_buildings_df.index.values
-    surroundings_building_solid_list = calc_building_solids(surroundings_buildings_df, surroundings_simplification,
-                                                            elevation_map, num_processes)
-
-    # calculate geometry for the surroundings
-    print('Generating geometry for surrounding buildings')
-    geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
-                                zip(surroundings_building_names, surroundings_building_solid_list)]
+    # Check if there are any buildings in surroundings_df before processing
+    if not surroundings_df.empty:
+        surroundings_buildings_df = surroundings_df.set_index('name')
+        surroundings_building_names = surroundings_buildings_df.index.values
+        surroundings_building_solid_list, _ = calc_building_solids(
+            surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
+        # calculate geometry for the surroundings
+        print('Generating geometry for surrounding buildings')
+        geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
+                                    zip(surroundings_building_names, surroundings_building_solid_list)]
+    else:
+        surroundings_building_solid_list = []
+        geometry_3D_surroundings = []
 
     # calculate geometry for the zone of analysis
     print('Generating geometry for buildings in the zone of analysis')
@@ -207,7 +224,9 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
                                                           repeat(all_building_solid_list, n),
                                                           repeat(architecture_wwr_df, n),
                                                           repeat(geometry_pickle_dir, n),
-                                                          repeat(neglect_adjacent_buildings, n))
+                                                          repeat(neglect_adjacent_buildings, n),
+                                                          zone_elevations)
+
     return geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -232,7 +251,7 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2):
 
 class BuildingGeometry(object):
     __slots__ = ["name", "windows", "walls", "roofs", "footprint", "orientation_walls", "orientation_windows",
-                 "normals_windows", "normals_walls", "intersect_walls"]
+                 "normals_windows", "normals_walls", "intersect_walls", "terrain_elevation"]
 
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -264,7 +283,7 @@ class BuildingGeometry(object):
 
 
 def calc_building_geometry_zone(name, building_solid, all_building_solid_list, architecture_wwr_df,
-                                geometry_pickle_dir, neglect_adjacent_buildings):
+                                geometry_pickle_dir, neglect_adjacent_buildings, elevation):
     # now get all surfaces and create windows only if the buildings are in the area of study
     window_list = []
     wall_list = []
@@ -356,7 +375,7 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
                         "normals_windows": normals_win, "normals_walls": normals_walls,
                         "intersect_walls": intersect_wall}
 
-    building_geometry = BuildingGeometry(**geometry_3D_zone)
+    building_geometry = BuildingGeometry(**geometry_3D_zone, terrain_elevation=elevation)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'zone', str(name)))
     return name
 
@@ -384,7 +403,7 @@ def burn_buildings(geometry, elevation_map, tolerance):
     # reconstruct the footprint with the elevation
     loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
     face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
-    return face
+    return face, inter_pt.Z()
 
 
 def calc_solid(face_footprint, range_floors, floor_to_floor_height):
@@ -458,6 +477,11 @@ def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
             normals_wall.append(standard_normal)
             wall_intersects.append(1)
         else:
+            try:    # Ensure wwr is a float
+                wwr = float(wwr)
+            except ValueError:
+                raise ValueError(f"Invalid value for wwr: {wwr}. It must be a numeric value.")
+
             # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
                 # for window
@@ -610,7 +634,7 @@ def tree_geometry_generator(tree_df, terrain_raster):
 
     with Pool(cpu_count() - 1) as pool:
         surfaces = [
-            fetch.faces_frm_solid(result) for result in pool.starmap(
+            fetch.faces_frm_solid(solid) for (solid, _) in pool.starmap(
                 process_geometries, (
                     (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
                 )
@@ -626,7 +650,7 @@ def geometry_main(config, zone_df, surroundings_df, trees_df, terrain_raster, ar
         zone_df, surroundings_df, trees_df, terrain_raster)
 
     # clear in case there are repeated buildings from zone in surroundings file
-    filter_surrounding_buildings = ~surroundings_df["Name"].isin(zone_df["Name"])
+    filter_surrounding_buildings = ~surroundings_df["name"].isin(zone_df["name"])
     surroundings_df = surroundings_df[filter_surrounding_buildings]
 
     check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster)

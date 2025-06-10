@@ -41,7 +41,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         cls.expected_results_costs = json.loads(cls.test_config.get("test_storage_tank", "expected_results_costs"))
 
         # getting the number of storage systems available
-        cls.storage_properties = pd.read_excel(cls.locator.get_database_conversion_systems(), sheet_name="THERMAL_ENERGY_STORAGES")
+        cls.storage_properties = pd.read_csv(cls.locator.get_db4_components_conversion_conversion_technology_csv("THERMAL_ENERGY_STORAGES"))
         cls.type_storage_list = cls.locator.get_database_conversion_systems_cold_thermal_storage_names()
         cls.type_storage = cls.type_storage_list[0]
 
