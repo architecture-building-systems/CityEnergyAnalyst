@@ -285,11 +285,14 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
 
     print('Calculating terrain intersection of building geometries')
-    zone_buildings_df = zone_df.set_index('name')
+    zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use void_deck when creating the building solid.
-    void_deck_s = architecture_wwr_df.set_index('name')['void_deck']
-    zone_df['void_deck'] = zone_df['name'].map(void_deck_s)
+    # print(architecture_wwr_df)
+    void_deck_s = architecture_wwr_df['void_deck']
+    print(void_deck_s)
+    print(zone_buildings_df)
+    zone_buildings_df['void_deck'] = void_deck_s
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
@@ -336,7 +339,7 @@ def print_progress(i, n, _, __):
 
 
 def print_terrain_intersection_progress(i, n, _, __):
-    print("Calculation of terrain intersection for building {i} completed out of {n}".format(i=i + 1, n=n))
+    print("Creating geometry for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
 def are_buildings_close_to_eachother(x_1, y_1, solid2, dist=100):
