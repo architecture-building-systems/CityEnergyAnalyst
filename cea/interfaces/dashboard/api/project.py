@@ -276,7 +276,12 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         project_path = os.path.join(project_root, project_path)
 
     project = secure_path(project_path)
-    scenario_name = scenario_path.scenario_name
+    scenario_name = os.path.normpath(scenario_path.scenario_name)
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
 
     if project and scenario_name:
         # Project path must exist but scenario does not have to
@@ -317,12 +322,18 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             detail=str(e),
         )
 
-    new_scenario_path = secure_path(os.path.join(cea_project, str(scenario_form.scenario_name).strip()))
+    scenario_name = os.path.normpath(scenario_form.scenario_name)
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
 
+    new_scenario_path = secure_path(os.path.join(cea_project, str(scenario_name).strip()))
     if os.path.exists(new_scenario_path):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Scenario already exists - project: {cea_project}, scenario_name: {scenario_form.scenario_name}',
+            detail=f'Scenario already exists - project: {cea_project}, scenario_name: {scenario_name}',
         )
 
     async def create_zone(scenario_form, locator):
@@ -517,7 +528,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
     return {
         'message': 'Scenario created successfully',
         'project': scenario_form.project,
-        'scenario_name': scenario_form.scenario_name
+        'scenario_name': scenario_name
     }
 
 
@@ -530,7 +541,7 @@ def glob_shapefile_auxilaries(shapefile_path):
 async def check_scenario_exists(request: Request, scenario: str = Path()):
     try:
         data = await request.json()
-        project = data.get("project")
+        project = secure_path(data.get("project"))
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -557,17 +568,28 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
     scenario_path = secure_path(os.path.join(config.project, scenario))
     new_scenario_name: str = payload.get('name')
+
+    # Assume no operations done, return None
+    if new_scenario_name is None:
+        return None
+
+    scenario_name = os.path.normpath(new_scenario_name)
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
+
     try:
-        if new_scenario_name is not None:
-            new_path = secure_path(os.path.join(config.project, new_scenario_name))
-            os.rename(scenario_path, new_path)
-            if config.scenario_name == scenario:
-                config.scenario_name = new_scenario_name
-                if isinstance(config, CEADatabaseConfig):
-                    await config.save()
-                else:
-                    config.save()
-            return {'name': new_scenario_name}
+        new_path = secure_path(os.path.join(config.project, new_scenario_name))
+        os.rename(scenario_path, new_path)
+        if config.scenario_name == scenario:
+            config.scenario_name = new_scenario_name
+            if isinstance(config, CEADatabaseConfig):
+                await config.save()
+            else:
+                config.save()
+        return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
