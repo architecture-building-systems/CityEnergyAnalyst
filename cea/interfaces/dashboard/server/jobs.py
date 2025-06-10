@@ -3,7 +3,9 @@ jobs: maintain a list of jobs to be simulated.
 """
 import subprocess
 import sys
+import uuid
 from typing import Dict, Any, List
+from urllib.parse import urlparse
 
 import psutil
 import sqlalchemy.exc
@@ -157,11 +159,28 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
                     settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
 
+    # Validate job_id is a valid UUID
+    try:
+        uuid.UUID(job_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid job_id format. Must be a valid UUID.")
+
+    # Validate server_url is a valid HTTP/HTTPS URL
+    try:
+        parsed_url = urlparse(str(server_url))
+        if not parsed_url.scheme or parsed_url.scheme not in ['http', 'https']:
+            raise HTTPException(status_code=400, detail="Invalid server_url. Must be a valid HTTP or HTTPS URL.")
+        if not parsed_url.netloc:
+            raise HTTPException(status_code=400, detail="Invalid server_url. Missing hostname.")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid server_url format.")
+
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    command = [sys.executable, "-m", "cea.worker", f"{job_id}", f"{server_url}"]
+    # Use validated parameters in command
+    command = [sys.executable, "-m", "cea.worker", job_id, str(server_url)]
     logger.debug(f"command: {command}")
     process = subprocess.Popen(command)
 
