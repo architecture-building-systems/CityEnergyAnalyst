@@ -117,7 +117,7 @@ Source for descriptions of the parameters: [^cea-desc].
 | `occupied_bg` | True if floors below ground are conditioned/occupied, False if not.                                        | Assumed False                                                                                                                                                                     |
 | `Ns`                | Fraction of net gross floor area                                                                           | Assumption of 0.85                                                                                                                                                                |
 | `void_deck`         | Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | 0                                                                                                                                                                                 |
-| `wwr_[]`            | Window to wall ratio in in facades directions                                                              | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU                                                                     |
+| `wwr_[]`            | Window to wall ratio in facades directions                                                                 | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU                                                                     |
 
 #### HVAC_ASSMEBLIES
 
