@@ -1151,8 +1151,10 @@ class CoordinateListParameter(ListParameter):
 
 def get_scenarios_list(project_path: str) -> List[str]:
     # TODO: Allow for remote projects
-    # return empty list if project path does not exist
-    if not os.path.exists(project_path):
+    normalized_path = os.path.normpath(project_path)
+
+    if not os.path.exists(normalized_path):
+        # return empty list if project path does not exist
         return []
 
     def is_valid_scenario(folder_name):
@@ -1160,7 +1162,7 @@ def get_scenarios_list(project_path: str) -> List[str]:
         A scenario must be a valid path
         A scenario can't start with a `.` like `.config`
         """
-        folder_path = os.path.join(project_path, folder_name)
+        folder_path = os.path.join(normalized_path, folder_name)
 
         # TODO: Use .gitignore to ignore scenarios
         return all([os.path.isdir(folder_path),
@@ -1168,7 +1170,7 @@ def get_scenarios_list(project_path: str) -> List[str]:
                     folder_name != "__pycache__",
                     folder_name != "__MACOSX"])
 
-    return sorted([folder_name for folder_name in os.listdir(project_path) if is_valid_scenario(folder_name)])
+    return sorted([folder_name for folder_name in os.listdir(normalized_path) if is_valid_scenario(folder_name)])
 
 
 def get_systems_list(scenario_path):
