@@ -11,10 +11,10 @@ from pydantic import BaseModel
 import cea.inputlocator
 from cea.databases import get_regions, get_database_tree, databases_folder_path
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
+from cea.interfaces.dashboard.utils import secure_path
 from cea.utilities.schedule_reader import schedule_to_dataframe
 
 router = APIRouter()
-
 
 DATABASES_SCHEMA_KEYS = {
     "CONSTRUCTION_STANDARD": ["get_database_construction_standards"],
@@ -152,16 +152,16 @@ async def validate_database(data: ValidateDatabase):
         if data.path is None:
             raise HTTPException(status_code=400, detail="Missing path")
 
+        database_path = secure_path(data.path)
         try:
             # FIXME: Update verify_database_template to be able to verify databases from a path
             with tempfile.TemporaryDirectory() as tmpdir:
                 scenario = os.path.join(tmpdir, "scenario")
-                db_path = os.path.join(scenario, "inputs", "database")
-                os.makedirs(db_path, exist_ok=True)
+                temp_db_path = os.path.join(scenario, "inputs", "database")
+                os.makedirs(temp_db_path, exist_ok=True)
 
                 # Copy the databases to the temporary directory
-                shutil.copytree(data.path, db_path, dirs_exist_ok=True)
-
+                shutil.copytree(database_path, temp_db_path, dirs_exist_ok=True)
 
                 try:
                     dict_missing_db = cea4_verify_db(scenario, verbose=True)
@@ -193,4 +193,3 @@ async def validate_database(data: ValidateDatabase):
 
         return {}
     return {}
-
