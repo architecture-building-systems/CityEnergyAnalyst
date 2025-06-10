@@ -188,11 +188,8 @@ def lca_embodied(year_to_calculate, locator):
         'windows_ag']
 
     # fix according to the void deck
-    # TODO: check if the calculation of empty_envelope_ratio is correct
-    # 1 - void_deck_height [m] / uncorrected facade area [m2]. Units do not match, problematic!
     data_merged_df['empty_envelope_ratio'] = 1 - (
-            (data_merged_df['void_deck'] * (data_merged_df['height_ag'] / data_merged_df['floors_ag'])) / ( # height of the void decks in meters
-            data_merged_df['area_walls_ext_ag'] + data_merged_df['windows_ag'])) # total area of external facade (wall+window)
+            (data_merged_df['void_deck']  / data_merged_df['floors_ag'])) # total area of external facade (wall+window)
     data_merged_df['windows_ag'] = data_merged_df['windows_ag'] * data_merged_df['empty_envelope_ratio']
     data_merged_df['area_walls_ext_ag'] = data_merged_df['area_walls_ext_ag'] * data_merged_df['empty_envelope_ratio']
 

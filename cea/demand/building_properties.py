@@ -371,18 +371,7 @@ class BuildingProperties(object):
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 
-        def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
-            if (Awall + Awin) > 0.0:
-                empty_envelope_ratio = 1 - ((void_deck_floors * (height / floors)) / (Awall + Awin))
-            else:
-                empty_envelope_ratio = 1
-            return empty_envelope_ratio
-
-        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'],
-                                                                                  x['height_ag'],
-                                                                                  x['floors_ag'],
-                                                                                  x['Awall_ag'],
-                                                                                  x['Awin_ag']), axis=1)
+        df['empty_envelope_ratio'] = df["void_deck"] / df["floors_ag"] # same formula in cea\analysis\lca\embodied.py line 191
 
         # adjust envelope areas with Void_deck
         df['Awin_ag'] = df['Awin_ag'] * df['empty_envelope_ratio']
