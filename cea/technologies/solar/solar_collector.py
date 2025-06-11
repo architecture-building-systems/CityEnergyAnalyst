@@ -114,7 +114,7 @@ def calc_SC(locator, config, type_panel, latitude, longitude, weather_data, date
                                     index_label='SURFACE',
                                     float_format='%.2f', na_rep='nan')  # print selected metadata of the selected sensors
 
-        print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
+        print(f'Building {building_name} done - time elapsed: {(time.perf_counter() - t0):.2f} seconds')
     else:  # This loop is activated when a building has not sufficient solar potential
         panel_type = panel_properties_SC['type']
         Final = pd.DataFrame(
