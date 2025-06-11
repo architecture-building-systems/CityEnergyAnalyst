@@ -6,16 +6,17 @@ dependencies:
 - fiona
 - geopandas=0.13 # Due to python3.8 support
 - libpysal
-- numba=0.57
+- numba=0.58 # Due to python3.8 support
 - numpy=1.24 # Due to python3.8 support
-- osmnx=1.8
+- osmnx=1.9.4 # Due to python3.8 support
+- networkx=2.5 # Due to python3.8 support and wntr
 - pip
 - psutil
 - pvlib
 - python=3.8 # Held back by wntr version
 - pythonocc-core==7.7.0 # Avoid deprecation warnings
 - pyyaml
-- scikit-learn=1.3.2
+- scikit-learn
 - scipy=1.10 # Due to python3.8 support
 - shapely=2
 - matplotlib
@@ -38,7 +39,6 @@ dependencies:
   # Python packages
   - deap
   - ephem
-  - networkx==2.8
   - numpy-financial
   - python-louvain
   - pytz # Not required from 3.9

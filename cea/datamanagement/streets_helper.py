@@ -6,6 +6,7 @@ import os
 
 import osmnx
 import osmnx.utils_graph
+import networkx.exception
 import pandas as pd
 
 import cea.config
@@ -62,8 +63,13 @@ def geometry_extractor_osm(locator, config):
     lat_max = bounding_box_surroundings_file[3]
 
     # Get and clean the streets
-    G = osmnx.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
-                              network_type=type_streets)
+    try:
+        G = osmnx.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
+                                  network_type=type_streets)
+    except networkx.exception.NetworkXPointlessConcept:
+        print("Unable to find streets in the area (empty graph returned from Open Street Maps). No streets will be extracted.")
+        return
+    
     data = osmnx.utils_graph.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
 
     # Project coordinate system
