@@ -18,11 +18,27 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from cea.config import Configuration
+    from cea.inputlocator import InputLocator
+    from cea.demand.building_properties import BuildingPropertiesRow
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
-                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, config, debug):
+def calc_thermal_loads(building_name: str, 
+                       bpr: BuildingPropertiesRow, 
+                       weather_data: pd.DataFrame, 
+                       date_range: pd.date_range, 
+                       locator: InputLocator,
+                       use_dynamic_infiltration_calculation: bool, 
+                       resolution_outputs: str, 
+                       loads_output: List[str], 
+                       massflows_output: List[str],
+                       temperatures_output: List[str], 
+                       config: Configuration, 
+                       debug: bool,
+                       ):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -65,13 +81,27 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
     :type weather_data: pandas.DataFrame
 
-    :param locator:
-    :param use_dynamic_infiltration_calculation:
+    :param locator: object containing methods of locating scenario files
+    :type locator: cea.inputlocator.InputLocator
+    :param use_dynamic_infiltration_calculation: True if dynamic infiltration calculations are considered (slower run times!).
+    :rtype use_dynamic_infiltration_calculation: bool
+    :param resolution_outputs: Time step resolution of the demand simulation (hourly or monthly).
+    :type resolution_outputs: str
+    :param loads_output: List of loads output by the demand simulation (to simulate all load types in demand_writer, leave blank).
+    :type loads_output: list[str]
+    :param massflows_output: List of mass flow rates output by the demand simulation (to simulate all system mass flow rates in demand_writer, leave blank).
+    :type massflows_output: list[str]
+    :param temperatures_output: List of temperatures output by the demand simulation (to simulate all temperatures in demand_writer, leave blank).
+    :type temperatures_output: list[str]
+    :param config: cea configuration
+    :type config: cea.configuration.Configuration
+    :param debug: Enable debugging-specific behaviors.
+    :type debug: bool
 
     :returns: This function does not return anything
     :rtype: NoneType
 
-"""
+    """
     schedules, tsd = initialize_inputs(bpr, weather_data, locator)
 
     # CALCULATE ELECTRICITY LOADS
