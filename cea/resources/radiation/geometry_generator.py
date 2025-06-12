@@ -6,6 +6,7 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
+from __future__ import annotations
 import math
 import os
 import pickle
@@ -23,11 +24,20 @@ from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from osgeo import osr, gdal
 from py4design import urbangeom
+from typing import TYPE_CHECKING, List, Tuple, Literal
 
 import cea
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
+
+from cea.resources.radiation.test_display_geometry import display
+
+if TYPE_CHECKING:
+    import geopandas as gpd
+    from osgeo import gdal
+    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
+    import shapely
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -53,7 +63,12 @@ SURFACE_DIRECTION_LABELS = {'windows_east',
                             'roofs_top'}
 
 
-def identify_surfaces_type(occface_list):
+def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS_Face], 
+                                                                     List[TopoDS_Face], 
+                                                                     List[TopoDS_Face], 
+                                                                     List[TopoDS_Face], 
+                                                                     List[TopoDS_Face], 
+                                                                     List[TopoDS_Face]]:
     roof_list = []
     footprint_list = []
     facade_list_north = []
@@ -110,7 +125,10 @@ def calc_intersection(surface, edges_coords, edges_dir, tolerance):
         return None, None
 
 
-def create_windows(surface, wwr, ref_pypt):
+def create_windows(surface: TopoDS_Face, 
+                   wwr: float, 
+                   ref_pypt: Tuple[float, float, float],
+                   ) -> TopoDS_Face:
     """
     This function creates a window by schrinking the surface according to the wwr around the reference point.
     The generated window has the same shape as the original surface.
@@ -129,7 +147,9 @@ def create_windows(surface, wwr, ref_pypt):
     return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
 
 
-def create_hollowed_facade(surface_facade, window):
+def create_hollowed_facade(surface_facade: TopoDS_Face, 
+                           window: TopoDS_Face,
+                           ) -> Tuple[List[TopoDS_Face], TopoDS_Face]:
     """
     clips the raw surface_facade with the window to create a hollowed facade using boolean difference.
     This will generate two surfaces in a list, and the first one selected to be the hollowed facade.
@@ -153,7 +173,11 @@ def create_hollowed_facade(surface_facade, window):
     return hollowed_facade_clean, hole_facade
 
 
-def calc_building_solids(buildings_df, geometry_simplification, elevation_map, num_processes):
+def calc_building_solids(buildings_df: gpd.GeoDataFrame, 
+                         geometry_simplification: float, 
+                         elevation_map: ElevationMap, 
+                         num_processes: int,
+                         ) -> Tuple[List[TopoDS_Solid], List[float]]:
     """create building solids respecting their elevation, from building GeoDataFrame and elevation map.
 
     :param buildings_df: either the zone or surroundings buildings dataframe. 
@@ -207,7 +231,11 @@ def calc_floor_to_floor_height(building_height, number_of_floors):
     return building_height / number_of_floors
 
 
-def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_height):
+def process_geometries(geometry: shapely.Polygon, 
+                       elevation_map: ElevationMap, 
+                       range_floors: range, 
+                       floor_to_floor_height: float,
+                       ) -> Tuple[TopoDS_Solid, float]:
     """
     gets the 2D geometry as well as the height and number of floors, and returns a solid representing the building. 
     Also returns the elevation of the building footprint using elevation_map.
@@ -234,7 +262,10 @@ def process_geometries(geometry, elevation_map, range_floors, floor_to_floor_hei
     return building_solid, elevation
 
 
-def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_dir):
+def calc_building_geometry_surroundings(name: str, 
+                                        building_solid: TopoDS_Solid, 
+                                        geometry_pickle_dir: str,
+                                        ) -> str:
     facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
     geometry_3D_surroundings = {"name": name,
                                 "windows": [],
@@ -252,7 +283,13 @@ def calc_building_geometry_surroundings(name, building_solid, geometry_pickle_di
     return name
 
 
-def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_map, config, geometry_pickle_dir):
+def building_2d_to_3d(zone_df: gpd.GeoDataFrame, 
+                      surroundings_df: gpd.GeoDataFrame, 
+                      architecture_wwr_df: pd.DataFrame, 
+                      elevation_map: ElevationMap, 
+                      config: cea.config.Configuration, 
+                      geometry_pickle_dir: str
+                      ) -> Tuple[List[str], List[str]]:
     """reconstruct 3D building geometries with windows and store each building's 3D data into a file.
 
     :param zone_df: data and 2D geometry of all analyzed building in the site, typically read from `zone.shp`.
@@ -288,10 +325,7 @@ def building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df, elevation_m
     zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use void_deck when creating the building solid.
-    # print(architecture_wwr_df)
     void_deck_s = architecture_wwr_df['void_deck']
-    print(void_deck_s)
-    print(zone_buildings_df)
     zone_buildings_df['void_deck'] = void_deck_s
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
@@ -386,8 +420,14 @@ class BuildingGeometry(object):
         return pickle_location
 
 
-def calc_building_geometry_zone(name, building_solid, all_building_solid_list, architecture_wwr_df,
-                                geometry_pickle_dir, neglect_adjacent_buildings, elevation):
+def calc_building_geometry_zone(name: str, 
+                                building_solid: TopoDS_Solid, 
+                                all_building_solid_list: List[TopoDS_Solid], 
+                                architecture_wwr_df: gpd.GeoDataFrame,
+                                geometry_pickle_dir: str, 
+                                neglect_adjacent_buildings: bool, 
+                                elevation: float,
+                                ) -> str:
     """_summary_
 
     :param name: name of building.
@@ -442,10 +482,10 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
     # get window properties
-    wwr_west = architecture_wwr_df.loc[name, "wwr_west"]
-    wwr_east = architecture_wwr_df.loc[name, "wwr_east"]
-    wwr_north = architecture_wwr_df.loc[name, "wwr_north"]
-    wwr_south = architecture_wwr_df.loc[name, "wwr_south"]
+    wwr_west = float(architecture_wwr_df.loc[name, "wwr_west"])
+    wwr_east = float(architecture_wwr_df.loc[name, "wwr_east"])
+    wwr_north = float(architecture_wwr_df.loc[name, "wwr_north"])
+    wwr_south = float(architecture_wwr_df.loc[name, "wwr_south"])
 
     window_west, \
     wall_west, \
@@ -514,7 +554,10 @@ def calc_building_geometry_zone(name, building_solid, all_building_solid_list, a
     return name
 
 
-def burn_buildings(geometry, elevation_map, tolerance):
+def burn_buildings(geometry: shapely.Polygon, 
+                   elevation_map: ElevationMap, 
+                   tolerance: float,
+                   ) -> Tuple[TopoDS_Face, float]:
     """find the elevation of building footprint polygon by intersecting the center point of the polygon 
     with the terrain elevation map, then move the polygon to that elevation.
 
@@ -554,7 +597,10 @@ def burn_buildings(geometry, elevation_map, tolerance):
     return face, inter_pt.Z()
 
 
-def calc_solid(face_footprint, range_floors, floor_to_floor_height):
+def calc_solid(face_footprint: TopoDS_Face, 
+               range_floors: range, 
+               floor_to_floor_height: float,
+               ) -> TopoDS_Solid:
     """
     extrudes the footprint surface into a 3D solid.
 
@@ -621,7 +667,14 @@ class Points(object):
         self.point_to_evaluate = point_to_evaluate
 
 
-def calc_windows_walls(facade_list, wwr, potentially_intersecting_solids):
+def calc_windows_walls(facade_list: List[TopoDS_Face], 
+                       wwr: float, 
+                       potentially_intersecting_solids: List[TopoDS_Solid],
+                       ) -> Tuple[List[TopoDS_Face], 
+                                  List[TopoDS_Face], 
+                                  List[Tuple[float, float, float]], 
+                                  List[Tuple[float, float, float]], 
+                                  List[Literal[0, 1]]]:
     """
     Classify each façade face as window or wall, generate any required geometry 
     (triangulated wall panels, punched windows), and return normals plus an intersection flag.
@@ -849,22 +902,32 @@ def tree_geometry_generator(tree_df, terrain_raster):
     return surfaces
 
 
-def geometry_main(config, zone_df, surroundings_df, trees_df, terrain_raster, architecture_wwr_df, geometry_pickle_dir):
+def geometry_main(config: cea.config.Configuration, 
+                  zone_df: gpd.GeoDataFrame, 
+                  surroundings_df: gpd.GeoDataFrame, 
+                  trees_df: gpd.GeoDataFrame, 
+                  terrain_raster: gdal.Dataset, 
+                  architecture_wwr_df: pd.DataFrame, 
+                  geometry_pickle_dir: str,
+                  ) -> Tuple[List[TopoDS_Face], 
+                             List[str], 
+                             List[str], 
+                             List[List[TopoDS_Face]]]:
     """reads the input data of a scenario, generates and stores 3D data of each building, 
     and generate 3D geometry of the terrain.
 
     :param config: Configuration object with the settings (general and radiation)
     :type config: cea.config.Configuration
     :param zone_df: data and 2D geometry of all analyzed building in the site, typically read from `zone.shp`.
-    :type zone_df: GeoDataFrame
+    :type zone_df: gpd.GeoDataFrame
     :param surroundings_df: data and 2D geometry of surrounding buildings.
-    :type surroundings_df: GeoDataFrame
+    :type surroundings_df: gpd.GeoDataFrame
     :param trees_df: geometry and data of trees in the site (if any).
-    :type trees_df: GeoDataFrame
+    :type trees_df: gpd.GeoDataFrame
     :param terrain_raster: the raw terrain grayscale graph containing elevation information.
-    :type terrain_raster: GDALDataset
+    :type terrain_raster: gdal.Dataset
     :param architecture_wwr_df: detailed envelope information of each building.
-    :type architecture_wwr_df: Dataframe
+    :type architecture_wwr_df: pd.DataFrame
     :param geometry_pickle_dir: directory where building 3D geometry data is stored.
     :type geometry_pickle_dir: str
     :return: a list of OCCface triangles representing the 3D mesh of the terrain.
