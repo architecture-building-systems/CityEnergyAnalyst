@@ -18,7 +18,7 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Dict, Tuple, Union
 
 if TYPE_CHECKING:
     from cea.config import Configuration
@@ -102,7 +102,8 @@ def calc_thermal_loads(building_name: str,
     :rtype: NoneType
 
     """
-    schedules, tsd = initialize_inputs(bpr, weather_data, locator)
+    tsd = initialize_timestep_data(weather_data)
+    schedules, tsd = initialize_schedules(bpr, tsd, locator)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, schedules)
@@ -374,8 +375,13 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
     return tsd
 
 
-def initialize_inputs(bpr, weather_data, locator):
+def initialize_schedules(bpr: BuildingPropertiesRow, 
+                         tsd: Dict[str, np.ndarray],
+                         locator: InputLocator,
+                         ) -> Tuple[pd.DataFrame, 
+                                    Dict[str, Union[np.ndarray, pd.Series]]]:
     """
+    This function reads schedules, and update the timesereis data based on schedules read.
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
@@ -388,13 +394,8 @@ def initialize_inputs(bpr, weather_data, locator):
     :returns: one dict of schedules, one dict of time step data
     :rtype: dict
     """
-    # TODO: documentation, this function is actually two functions
-
     # get the building name
     building_name = bpr.name
-
-    # this is used in the NN please do not erase or change!!
-    tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
     occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
@@ -442,7 +443,7 @@ TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
 
-def initialize_timestep_data(bpr, weather_data):
+def initialize_timestep_data(weather_data: pd.DataFrame) -> Dict[str, np.ndarray]:
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 
