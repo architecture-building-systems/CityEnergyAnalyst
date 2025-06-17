@@ -939,6 +939,7 @@ class MultiChoiceParameter(ChoiceParameter):
     @property
     def default(self):
         _default = self.config.default_config.get(self.section.name, self.name)
+        # Avoid listing the whole default value
         if _default == '':
             return []
         return self.decode(_default)
@@ -970,9 +971,9 @@ class MultiChoiceParameter(ChoiceParameter):
     def decode(self, value):
         if value == '':
             return self._choices
-        choices = parse_string_to_list(value)
+        choices = set(parse_string_to_list(value))
         valid_choices = set(self._choices)
-        return [choice for choice in choices if choice in valid_choices]
+        return list(choices.intersection(valid_choices))
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
