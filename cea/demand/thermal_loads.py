@@ -341,7 +341,10 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
+def calc_Qhs_Qcs(bpr: BuildingPropertiesRow, 
+                 tsd: Dict[str, np.ndarray], 
+                 use_dynamic_infiltration_calculation: bool, 
+                 config: Configuration):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)

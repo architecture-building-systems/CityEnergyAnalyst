@@ -31,8 +31,6 @@ import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
 
-from cea.resources.radiation.test_display_geometry import display
-
 if TYPE_CHECKING:
     import geopandas as gpd
     from osgeo import gdal

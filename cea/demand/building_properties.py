@@ -1,7 +1,7 @@
 """
 Classes of building properties
 """
-
+from __future__ import annotations
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -12,6 +12,10 @@ from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.technologies import blinds
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -198,7 +202,12 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.loc[name_building]
 
-    def calc_prop_rc_model(self, locator, typology, envelope, geometry, hvac_temperatures):
+    def calc_prop_rc_model(self, 
+                           locator: InputLocator, 
+                           typology: Gdf, 
+                           envelope: Gdf, 
+                           geometry: Gdf, 
+                           hvac_temperatures: pd.DataFrame) -> pd.DataFrame:
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
@@ -326,7 +335,10 @@ class BuildingProperties(object):
         return result
 
 
-    def geometry_reader_radiation_daysim(self, locator, envelope, geometry):
+    def geometry_reader_radiation_daysim(self, 
+                                         locator: InputLocator, 
+                                         envelope: Gdf, 
+                                         geometry: Gdf) -> pd.DataFrame:
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
@@ -864,7 +876,7 @@ def verify_has_season(building_name, start, end):
         return True
 
 
-def get_envelope_properties(locator, prop_architecture):
+def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFrame) -> pd.DataFrame:
     """
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
@@ -1053,6 +1065,7 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     # define surface thermal resistances according to ISO 6946
     h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
+    # generate an array of 0.5 * (sky_temp(t) + air_temp(t-1))
     theta_ss = 0.5 * (
             weather_data['skytemp_C'].values +
             np.array([weather_data['drybulb_C'].values[0]] +

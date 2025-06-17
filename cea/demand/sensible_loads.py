@@ -5,10 +5,14 @@ EN-13970
 """
 
 
-
+from __future__ import annotations
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
 from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from building_properties import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -73,7 +77,7 @@ def calc_I_sol(t, bpr, tsd):
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
 
-def calc_I_rad(t, tsd, bpr):
+def calc_I_rad(t, tsd: dict, bpr: BuildingPropertiesRow):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
     See Eq. (46) in 11.3.5

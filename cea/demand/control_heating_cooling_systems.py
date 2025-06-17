@@ -3,10 +3,15 @@
 
 
 
-
+from __future__ import annotations
 import numpy as np
 import datetime
 from cea.constants import HOURS_IN_YEAR
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from building_properties import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -351,14 +356,15 @@ def is_cooling_season(t, bpr):
 # temperature controllers
 
 
-def get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules):
+def get_temperature_setpoints_incl_seasonality(tsd: dict, bpr: BuildingPropertiesRow, schedules: pd.DataFrame):
     """
 
     :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
     :type tsd: dict
     :param bpr: BuildingPropertiesRow
     :type bpr: cea.demand.building_properties.BuildingPropertiesRow
-    :param weekday:
+    :param schedules: a dataframe containing schedule information of analyzed building.
+    :type schedules: pd.DataFrame
     :return: tsd with updated columns
     :rtype: dict
     """
