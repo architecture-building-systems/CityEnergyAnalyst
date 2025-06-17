@@ -215,6 +215,7 @@ class BuildingProperties(object):
 
             - n50: Air tightness at 50 Pa [h^-1].
             - type_shade: shading system type.
+            - void_deck: Number of floors (from the ground up) with an open envelope.
             - win_wall: window to wall ratio.
             - U_base: U value of the floor construction [W/m2K]
             - U_roof: U value of roof construction [W/m2K]
@@ -296,12 +297,21 @@ class BuildingProperties(object):
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
         df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
+        # check if buildings are completely above ground
+        is_above_ground = (df["void_deck"] > 0).astype(int)
+
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['Aroof'] * df['U_roof'] * df['Hs_ag']
+        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
+        + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
+        + is_above_ground * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
 
         # steady-state Thermal transmission coefficient to the ground. in W/K
-        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
+        # Aop_bg: opaque surface area below ground level;
+        # U_base: basement U value, defined in envelope.csv
+        # Hs_bg: Fraction of underground floor area air-conditioned.
+        # 1 - is_above_ground: 1 if building touches ground, 0 if building is floating (void_deck > 0)
+        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg'] * (1 - is_above_ground)
 
         # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
@@ -371,17 +381,17 @@ class BuildingProperties(object):
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 
-        df['empty_envelope_ratio'] = df["void_deck"] / df["floors_ag"] # same formula in cea\analysis\lca\embodied.py line 191
+        df['empty_envelope_ratio'] = 1 - df["void_deck"] / df["floors_ag"] # same formula in cea\analysis\lca\embodied.py line 191
 
         # adjust envelope areas with Void_deck
         df['Awin_ag'] = df['Awin_ag'] * df['empty_envelope_ratio']
         df['Awall_ag'] = df['Awall_ag'] * df['empty_envelope_ratio']
         df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
 
-        # get other cuantities.
-        df['floors'] = df['floors_bg'] + df['floors_ag']
+        # get other quantities.
+        df['floors'] = df['floors_bg'] + df['floors_ag'] - df["void_deck"]
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['GFA_ag_m2'] = df['footprint'] * df['floors_ag']
+        df['GFA_ag_m2'] = df['footprint'] * (df['floors_ag'] - df["void_deck"])
         df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
 
         return df
@@ -652,6 +662,7 @@ class EnvelopeProperties(object):
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
+        self.void_deck = envelope['void_deck']
 
 
 class SolarProperties(object):
