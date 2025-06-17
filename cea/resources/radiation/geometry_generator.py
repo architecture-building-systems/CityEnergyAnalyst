@@ -213,7 +213,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
     
     range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
-    floor_to_floor_height = calc_floor_to_floor_height(height, nfloors)
+    floor_to_floor_height = height / nfloors
 
     n = len(geometries)
     out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
@@ -222,14 +222,6 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
 
     solids, elevations = zip(*out)
     return list(solids), list(elevations)
-
-
-def calc_floor_to_floor_height(building_height, number_of_floors):
-    '''
-    This function calculates the floor to floor height for a building.
-    '''
-    return building_height / number_of_floors
-
 
 def process_geometries(geometry: shapely.Polygon, 
                        elevation_map: ElevationMap, 

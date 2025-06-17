@@ -11,7 +11,6 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
-from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.technologies import blinds
 
 __author__ = "Gabriel Happle"
@@ -481,8 +480,7 @@ class BuildingPropertiesRow(object):
 
         self.name = name
         self.geometry = geometry
-        self.geometry['floor_height'] = calc_floor_to_floor_height(self.geometry['height_ag'],
-                                                                   self.geometry['floors_ag'])
+        self.geometry['floor_height'] = self.geometry['height_ag'] / self.geometry['floors_ag']
         envelope['Hs_ag'], envelope['Hs_bg'], envelope['Ns_ag'], envelope['Ns_bg'] = \
             split_above_and_below_ground_shares(
                 envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
