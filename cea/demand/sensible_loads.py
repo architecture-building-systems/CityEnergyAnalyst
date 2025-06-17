@@ -95,14 +95,16 @@ def calc_I_rad(t, tsd, bpr):
     # delta_theta_er is the average difference between outdoor air temperature and sky temperature
     delta_theta_er = tsd['T_ext'][t] - tsd['T_sky'][t]  # [see 11.3.5 in ISO 13790]
 
-    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
+    Fform_wall, Fform_win, Fform_roof, Fform_base = 0.5, 0.5, 1, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
     I_rad_win = tsd['RSE_win'][t] * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
         'Awin_ag'] * delta_theta_er
     I_rad_roof = tsd['RSE_roof'][t] * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
         'Aroof'] * delta_theta_er
     I_rad_wall = tsd['RSE_wall'][t] * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
         'Awall_ag'] * delta_theta_er
-    I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
+    I_rad_base = tsd['RSE_base'][t] * bpr.rc_model['U_base'] * calc_hr(bpr.architecture.e_base, theta_ss) * bpr.rc_model[
+        'footprint'] * delta_theta_er
+    I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof + Fform_base * I_rad_base
 
     return I_rad
 
