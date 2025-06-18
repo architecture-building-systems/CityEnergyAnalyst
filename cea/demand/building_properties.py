@@ -310,10 +310,10 @@ class BuildingProperties(object):
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
-        + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
-        + is_above_ground * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
-
+        df['HD'] = (df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
+                    + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
+                    + is_above_ground * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
+                    )
         # steady-state Thermal transmission coefficient to the ground. in W/K
         # Aop_bg: opaque surface area below ground level;
         # U_base: basement U value, defined in envelope.csv
