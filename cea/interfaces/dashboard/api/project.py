@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List, Union
 
 import geopandas
 import pandas as pd
+import sqlalchemy.exc
 from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
 from geopandas import GeoDataFrame
 from osgeo import gdal
@@ -26,9 +27,12 @@ from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
     CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
+
+logger = getCEAServerLogger("cea-server-project")
 
 router = APIRouter()
 
@@ -255,12 +259,22 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         os.makedirs(project, exist_ok=True)
-        # Add project to database
-        await create_project(project, user_id, session)
+        try:
+            # Add project to database
+            await create_project(project, user_id, session)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            # Remove folder if failed to create in database
+            logger.error(e)
+            os.rmdir(project)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to create new project",
+            )
     except OSError as e:
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Failed to create new project",
         )
 
     return {'message': 'Project folder created', 'project': project}
