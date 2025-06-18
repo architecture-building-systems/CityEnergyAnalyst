@@ -52,16 +52,18 @@ def occupancy_helper_main(locator, config, building=None):
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
 
     # reproject to projected coordinate system (in meters) to calculate area
     lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
     prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
-
     prop_geometry['footprint'] = prop_geometry.area
-    prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'])
-    prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * prop_geometry['floors_ag']
+    # prop_geometry['empty_envelope_ratio'] = 1 - prop_geometry['void_deck'] / prop_geometry['floors_ag']
+    # prop_geometry['GFA_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] + prop_geometry['floors_bg'] - prop_geometry['void_deck'])
+    prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] - prop_geometry['void_deck'])
     prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
-    prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
+    prop_geometry['GFA_m2'] = prop_geometry['GFA_ag_m2'] + prop_geometry['GFA_bg_m2']
+    
     prop_geometry = calc_useful_areas(prop_geometry)
 
     # get calculation year from weather file
