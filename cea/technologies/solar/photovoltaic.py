@@ -128,7 +128,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
                                     float_format='%.2f',
                                     na_rep='nan')  # print selected metadata of the selected sensors
 
-        print(building_name, 'done - time elapsed: %.2f seconds' % (time.perf_counter() - t0))
+        print(f'Building {building_name} done - time elapsed: {(time.perf_counter() - t0):.2f} seconds')
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
             {'date': datetime_local, 'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0,

@@ -119,7 +119,7 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
                                     index_label='SURFACE',
                                     float_format='%.2f',  na_rep='nan')  # print selected metadata of the selected sensors
 
-        print('Building', building_name, 'done - time elapsed:', (time.perf_counter() - t0), ' seconds')
+        print(f'Building {building_name} done - time elapsed: {(time.perf_counter() - t0):.2f} seconds')
 
     else:  # This block is activated when a building has not sufficient solar potential
 

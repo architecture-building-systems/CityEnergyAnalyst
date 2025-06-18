@@ -15,11 +15,11 @@ district of your choice.
 For the moment, CEA supports neighbourhoods and districts in Temperate (e.g., Switzerland) and Tropical climates
 (e.g., Singapore).
 
-`Learn more. <https://docs.google.com/presentation/d/1ZDiMlifMhCt3e3JcIX3JdVfG8PeHl1-Shs4DVWC3U8A/edit#slide=id.gc6f73a04f_0_0>`__.
+.. Learn more. <https://docs.google.com/presentation/d/1ZDiMlifMhCt3e3JcIX3JdVfG8PeHl1-Shs4DVWC3U8A/edit#slide=id.gc6f73a04f_0_0>`__.
 
-Visit www.cityenergyanalyst.com_ for more information on the CEA.
+Visit cityenergyanalyst.com_ for more information on the CEA.
 
-.. _www.cityenergyanalyst.com: https://www.cityenergyanalyst.com
+.. _cityenergyanalyst.com: https://cityenergyanalyst.com
 
 .. include:: common/cea-legacy.rst
 
