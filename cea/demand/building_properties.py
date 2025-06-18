@@ -456,11 +456,12 @@ def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_b
     conditioned/occupied or not.
     For simplicity, the same share is assumed for all conditioned/occupied floors (whether above or below ground)
     '''
-
-    Hs_ag = Hs * floors_ag / (floors_ag + floors_bg * occupied_bg)
-    Hs_bg = Hs * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
-    Ns_ag = Ns * floors_ag / (floors_ag + floors_bg * occupied_bg)
-    Ns_bg = Ns * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
+    share_ag = floors_ag / (floors_ag + floors_bg * occupied_bg)
+    share_bg = 1 - share_ag
+    Hs_ag = Hs * share_ag
+    Hs_bg = Hs * share_bg
+    Ns_ag = Ns * share_ag
+    Ns_bg = Ns * share_bg
 
     return Hs_ag, Hs_bg, Ns_ag, Ns_bg
 
@@ -468,7 +469,7 @@ def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_b
 def calc_useful_areas(df):
     # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
     df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = split_above_and_below_ground_shares(
-        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'], df['floors_bg'])
+        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'] - df['void_deck'], df['floors_bg'])
     # occupied floor area: all occupied areas in the building
     df['Aocc'] = df['GFA_ag_m2'] * df['Ns_ag'] + df['GFA_bg_m2'] * df['Ns_bg']
     # conditioned area: areas that are heated/cooled

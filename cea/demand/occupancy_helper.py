@@ -17,6 +17,7 @@ from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
+from typing import List
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -30,10 +31,10 @@ __status__ = "Production"
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 
-def occupancy_helper_main(locator, config, building=None):
+def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
     # local variables
-    buildings = config.occupancy_helper.buildings
-    occupancy_model = config.occupancy_helper.occupancy_model
+    buildings: List[str] = config.occupancy_helper.buildings
+    occupancy_model: str = config.occupancy_helper.occupancy_model
 
     if occupancy_model == 'deterministic':
         stochastic_schedule = False
