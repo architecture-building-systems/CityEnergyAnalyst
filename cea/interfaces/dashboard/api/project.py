@@ -157,17 +157,7 @@ class ConfigProjectInfo(BaseModel):
     project: str
     scenario: str
 
-
-
-@router.get('/choices')
-async def get_project_choices(project_root: CEAProjectRoot):
-    """Return project choices based on the project root"""
-    if project_root is None or project_root == "":
-        raise HTTPException(
-            status_code=400,
-            detail="Project root not defined",
-        )
-
+async def get_project_choices(project_root):
     try:
         projects = []
         for _path in os.listdir(project_root):
@@ -192,8 +182,20 @@ async def get_project_choices(project_root: CEAProjectRoot):
             status_code=500,
             detail=f"Failed to read project root: {str(e)}",
         )
+
+    return projects
+
+@router.get('/choices')
+async def get_project_choices_route(project_root: CEAProjectRoot):
+    """Return project choices based on the project root"""
+    if project_root is None or project_root == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Project root not defined",
+        )
+
     return {
-        "projects": projects
+        "projects": await get_project_choices(project_root),
     }
 
 @router.get('/config')

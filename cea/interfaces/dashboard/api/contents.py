@@ -1,12 +1,22 @@
 import os.path
+import tempfile
+import zipfile
 from dataclasses import dataclass, asdict
 from enum import Enum
+from io import BytesIO
+from pathlib import Path
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Form, UploadFile
+from pydantic import BaseModel
+from typing_extensions import Annotated, Literal
 
+from cea.interfaces.dashboard.api.project import get_project_choices
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+
+logger = getCEAServerLogger("cea-server-contents")
 
 router = APIRouter()
 
@@ -109,3 +119,103 @@ async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+class UploadScenario(BaseModel):
+    file: UploadFile
+    type: Literal["current", "existing", "new"]
+    project: str
+
+
+VALID_EXTENSIONS = {".shp", ".dbf", ".prj", ".cpg", ".shx",
+                    ".csv", ".xls", ".xlsx",
+                    ".epw", ".tiff", ".tif", ".txt",
+                    ".feather"}
+
+def filter_valid_files(file_list: List[str]) -> List[str]:
+    return list(filter(lambda f: Path(f).suffix in VALID_EXTENSIONS, file_list))
+
+@router.post("/scenario/upload")
+async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot):
+    # Validate file is a zip
+    if not form.file.filename.endswith('.zip'):
+        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+
+    # TODO: Catch HTTPException(s) at app level to logger errors
+    # Ensure project root
+    if project_root is None or project_root == "":
+        logger.error("Unable to determine project path")
+        raise HTTPException(
+            status_code=400,
+            detail="Project root not defined",
+        )
+
+    project_name = form.project
+    project_path = Path(project_root, project_name)
+
+    # Check for existing projects
+    if form.type == "current" or form.type == "existing":
+        project_choices = await get_project_choices(project_root)
+        if project_name not in project_choices:
+            logger.error("Project not found")
+            raise HTTPException(status_code=400, detail="Project not found")
+
+    # Create new project
+    elif form.type == "new":
+        if project_path.exists():
+            logger.error("Project already exists")
+            raise HTTPException(status_code=400, detail="Project already exists")
+        os.makedirs(project_path, exist_ok=True)
+    else:
+        logger.error("Unable to determine operation")
+        raise HTTPException(status_code=400, detail="Unknown operation type")
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with zipfile.ZipFile(BytesIO(await form.file.read())) as zf:
+                paths = zf.namelist()
+
+                def is_zone_path(path: str):
+                    return path.endswith("/zone.shp")
+
+                # TODO: Improve valid scenario detection
+                # Determine valid scenarios using zone files
+                zone_files = list(filter(is_zone_path, paths))
+                if len(zone_files) == 0:
+                    raise ValueError("No valid scenarios found")
+
+                # Case 1: Scenario in root and name is zip name e.g. inputs/
+                if len(zone_files) == 1 and zone_files[0].startswith("inputs"):
+                    scenario_name = form.file.filename[:-4]
+                    logger.info(f"One scenario found in root, using name {scenario_name}")
+                    # Check if scenario names already exist and rename
+                    if os.path.exists(scenario_name):
+                        scenario_name = f"{scenario_name} copy"
+
+                    new_scenario_path = os.path.join(project_path, scenario_name)
+                    os.makedirs(new_scenario_path, exist_ok=True)
+                    logger.info(f"Extracting to {new_scenario_path}")
+                    for path in filter_valid_files(paths):
+                        zf.extract(path, new_scenario_path)
+
+                # Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
+                # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
+                def get_zone_paths(path: str):
+                    parts = path.split("/")
+                    return parts[1] == "inputs" or parts[2] == "inputs"
+
+                scenarios = list(filter(get_zone_paths, zone_files))
+
+                print(scenarios)
+                zf.extractall(tmpdir)
+
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Return success response
+    return {
+        "status": "success",
+        "message": "File uploaded and processed successfully",
+        "project": project_name
+    }
