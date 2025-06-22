@@ -1,3 +1,4 @@
+import aiofiles
 import os.path
 import shutil
 import tempfile
@@ -10,6 +11,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, status, Form, UploadFile
 from pydantic import BaseModel
+from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
 from cea.interfaces.dashboard.api.project import get_project_choices
@@ -270,3 +272,83 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         "message": "File uploaded and processed successfully",
         "project": project_name
     }
+
+
+class DownloadScenario(BaseModel):
+    project: str
+    scenarios: List[str]
+    input_files: bool
+
+
+@router.post("/scenario/download")
+async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
+    if not form.project or not form.scenarios:
+        raise HTTPException(status_code=400, detail="Missing project or scenarios")
+
+    # Ensure project root
+    if project_root is None or project_root == "":
+        logger.error("Unable to determine project path")
+        raise HTTPException(
+            status_code=400,
+            detail="Project root not defined",
+        )
+
+    project = form.project.strip()
+    scenarios = form.scenarios
+    input_files_only = form.input_files
+
+    filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
+
+    temp_file_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file_path = temp_file.name
+            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                base_path = Path(project_root) / project
+                
+                for scenario in scenarios:
+                    scenario_path = base_path / scenario
+                    if not scenario_path.exists():
+                        continue
+                        
+                    target_path = (scenario_path / "inputs") if input_files_only else scenario_path
+                    prefix = f"{scenario}/inputs" if input_files_only else scenario
+                    
+                    for item_path in target_path.rglob('*'):
+                        if item_path.is_file() and item_path.suffix in VALID_EXTENSIONS:
+                            relative_path = str(Path(prefix) / item_path.relative_to(target_path))
+                            zip_file.write(item_path, arcname=relative_path)
+        
+        # Get the file size for Content-Length header
+        file_size = os.path.getsize(temp_file_path)
+        
+        # Define the streaming function
+        async def file_streamer():
+            try:
+                async with aiofiles.open(temp_file_path, 'rb') as f:
+                    while True:
+                        chunk = await f.read(1024 * 1024)  # 1MB chunks
+                        if not chunk:
+                            break
+                        yield chunk
+            finally:
+                # Clean up the temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+        
+        return StreamingResponse(
+            file_streamer(),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(file_size),  # Add Content-Length header
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
+        )
+    
+    except Exception as e:
+        # Clean up the temporary file if there was an error
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.unlink(temp_file_path)
+        logger.error(f"Error creating zip: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
