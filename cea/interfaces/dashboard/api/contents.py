@@ -174,84 +174,84 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         raise HTTPException(status_code=400, detail="Unknown operation type")
 
     try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with zipfile.ZipFile(BytesIO(await form.file.read())) as zf:
-                paths = zf.namelist()
+        with zipfile.ZipFile(BytesIO(await form.file.read())) as zf:
+            paths = zf.namelist()
 
-                def is_zone_path(path: str):
-                    return path.endswith("/zone.shp")
+            def is_zone_path(path: str):
+                return path.endswith("/zone.shp")
 
-                # TODO: Improve valid scenario detection
-                # Determine valid scenarios using zone files
-                zone_files = list(filter(is_zone_path, paths))
-                if len(zone_files) == 0:
-                    raise ValueError("No valid scenarios found")
+            # TODO: Improve valid scenario detection
+            # Determine valid scenarios using zone files
+            zone_files = list(filter(is_zone_path, paths))
+            if len(zone_files) == 0:
+                raise ValueError("No valid scenarios found")
 
-                # Case 1: Scenario in root and name is zip name e.g. inputs/
-                if len(zone_files) == 1 and zone_files[0].startswith("inputs"):
-                    scenario_name = form.file.filename[:-4]
-                    logger.info(f"Scenario found as root, using name `{scenario_name}`")
-                    # Check if scenario names already exist and rename
-                    if os.path.exists(os.path.join(project_path, scenario_name)):
-                        # TODO: Find way to rename new scenario and extract
-                        raise HTTPException(status_code=400, detail=f"Scenario `{scenario_name}` already exists in project")
-                    # Create scenario directory
-                    new_scenario_path = os.path.join(project_path, scenario_name)
-                    os.makedirs(new_scenario_path, exist_ok=True)
-
-                    logger.info(f"Extracting to {new_scenario_path}")
-                    # Extract only valid files with extensions
-                    for path in filter_valid_files(paths):
-                        zf.extract(path, new_scenario_path)
-
-                # Case 2: More than 1 scenario in zip
-                scenario_names = []
-                existing_scenario_names = []
-                # Check for existing scenario names
-                for zone_file in zone_files:
-                    parts = zone_file.split("/")
-
-                    # Case 2a: Scenario names are the first level folder names e.g. scenario/inputs/..
-                    if parts[1] == "inputs":
-                        scenario_name = parts[0]
-                    # Case 2b: Project name is the first level folder name e.g. project/scenario/inputs/..
-                    elif parts[2] == "inputs":
-                        scenario_name = parts[1]
-                    else:
-                        continue
-
-                    scenario_names.append(scenario_name)
-                    if os.path.exists(os.path.join(project_path, scenario_name)):
-                        existing_scenario_names.append(scenario_name)
-
-                logger.info(f"Scenario found: {scenario_names}")
-                if len(existing_scenario_names):
+            # Case 1: Scenario in root and name is zip name e.g. inputs/
+            if len(zone_files) == 1 and zone_files[0].startswith("inputs"):
+                scenario_name = form.file.filename[:-4]
+                logger.info(f"Scenario found as root, using name `{scenario_name}`")
+                # Check if scenario names already exist and rename
+                if os.path.exists(os.path.join(project_path, scenario_name)):
                     # TODO: Find way to rename new scenario and extract
-                    raise HTTPException(status_code=400,
-                                        detail=f"Scenarios {existing_scenario_names} already exists in project")
+                    raise HTTPException(status_code=400, detail=f"Scenario `{scenario_name}` already exists in project")
+                # Create scenario directory
+                new_scenario_path = os.path.join(project_path, scenario_name)
+                os.makedirs(new_scenario_path, exist_ok=True)
+
+                logger.info(f"Extracting to {new_scenario_path}")
+                # Extract only valid files with extensions
+                for path in filter_valid_files(paths):
+                    zf.extract(path, new_scenario_path)
+
+            # Case 2: More than 1 scenario in zip
+            scenario_names = []
+            existing_scenario_names = []
+            # Check for existing scenario names
+            for zone_file in zone_files:
+                parts = zone_file.split("/")
+
+                # Case 2a: Scenario names are the first level folder names e.g. scenario/inputs/..
+                if parts[1] == "inputs":
+                    scenario_name = parts[0]
+                # Case 2b: Project name is the first level folder name e.g. project/scenario/inputs/..
+                elif parts[2] == "inputs":
+                    scenario_name = parts[1]
+                else:
+                    continue
+
+                scenario_names.append(scenario_name)
+                if os.path.exists(os.path.join(project_path, scenario_name)):
+                    existing_scenario_names.append(scenario_name)
+
+            logger.info(f"Scenario found: {scenario_names}")
+            if len(existing_scenario_names):
+                # TODO: Find way to rename new scenario and extract
+                raise HTTPException(status_code=400,
+                                    detail=f"Scenarios {existing_scenario_names} already exists in project")
 
 
-                for zone_file in zone_files:
-                    parts = zone_file.split("/")
+            for zone_file in zone_files:
+                parts = zone_file.split("/")
 
-                    # Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
-                    if parts[1] == "inputs":
-                        scenario_name = parts[0]
-                        logger.info(f"Scenario found in root, using name `{scenario_name}`")
-                        scenario_files = list(filter(lambda x: x.startswith(f"{scenario_name}/"), paths))
+                # Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
+                if parts[1] == "inputs":
+                    scenario_name = parts[0]
+                    logger.info(f"Scenario found in root, using name `{scenario_name}`")
+                    scenario_files = list(filter(lambda x: x.startswith(f"{scenario_name}/"), paths))
 
-                        logger.info(f"Extracting to {project_path}")
-                        for path in filter_valid_files(scenario_files):
-                            zf.extract(path, project_path)
+                    logger.info(f"Extracting to {project_path}")
+                    for path in filter_valid_files(scenario_files):
+                        zf.extract(path, project_path)
 
-                    # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
-                    if parts[2] == "inputs":
-                        project_name = parts[0]
-                        scenario_name = parts[1]
-                        logger.info(f"Scenario found in a project folder, using name `{scenario_name}`")
-                        scenario_files = list(filter(lambda x: x.startswith("/".join(parts[:1])), paths))
+                # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
+                if parts[2] == "inputs":
+                    project_name = parts[0]
+                    scenario_name = parts[1]
+                    logger.info(f"Scenario found in a project folder, using name `{scenario_name}`")
+                    scenario_files = list(filter(lambda x: x.startswith("/".join(parts[:1])), paths))
 
-                        # Extract to temp first
+                    # Extract to temp first
+                    with tempfile.TemporaryDirectory() as tmpdir:
                         logger.info(f"Extracting to {tmpdir}")
                         for path in filter_valid_files(scenario_files):
                             zf.extract(path, tmpdir)
@@ -259,8 +259,6 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                         temp_scenario_path = os.path.join(tmpdir, project_name, scenario_name)
                         logger.info(f"Moving {temp_scenario_path} to {project_path}")
                         shutil.move(temp_scenario_path, project_path)
-
-                zf.extractall(tmpdir)
 
     except Exception as e:
         logger.error(e)
