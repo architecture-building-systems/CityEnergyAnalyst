@@ -68,7 +68,6 @@ target/
 *.pyc
 
 *.bak
-test/reference-case/Radiation2000-2009.csv
 *.spyderworkspace
 *.DS_Store
 demand.prof
@@ -90,9 +89,6 @@ setup/cea_version.txt
 .doit.db
 
 docs/*.html
-cea/surrogate/dummy_file.py
-cea/demand/calibration/clustering/
-cea/demand/metamodel/nn_generator/
 *.orig
 
 # Excel temporary
@@ -100,30 +96,14 @@ cea/demand/metamodel/nn_generator/
 
 # Excel Backup File
 *.xlk
-cea/technologies/thermal_network/thermal_network_matrix.pstat
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.cpg
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.dbf
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.prj
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.shp
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/grid.shx
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/nodes_buildings.dbf
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.cpg
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.dbf
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.prj
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shp
-cea/concept_project/data/reference-case-WTP-reduced/WTP_MIX_m/inputs/networks/thermal_network.shx
-cea/concept_project/data/reference-case-WTP/MIX_high_density/inputs/networks/nodes_buildings.dbf
-
 
 # Ignore ipython notebook checkpoints
 **/*.ipynb_checkpoints/
-CityEnergyAnalyst.srctrlbm
-CityEnergyAnalyst.srctrldb
-CityEnergyAnalyst.srctrldb_tmp
-CityEnergyAnalyst.srctrlprj
 *.~csv
 setup/Dependencies/Python.tar
 setup/Dependencies/Python/*
 setup/win-unpacked/*
 setup/CityEnergyAnalyst-GUI-win32-x64/*
 setup/Dependencies/cityenergyanalyst.tar.gz
+
+*.local
