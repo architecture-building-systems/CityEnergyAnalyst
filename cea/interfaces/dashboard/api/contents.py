@@ -21,6 +21,8 @@ from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
 MAX_FILE_SIZE = 1000 * 1024 * 1024  # 1GB
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
 
 
 logger = getCEAServerLogger("cea-server-contents")
@@ -182,8 +184,19 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         logger.error("Unable to determine operation")
         raise HTTPException(status_code=400, detail="Unknown operation type")
 
+    temp_file_path = None
     try:
-        with zipfile.ZipFile(BytesIO(await form.file.read())) as zf:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file_path = temp_file.name            
+            while True:
+                chunk = await form.file.read(UPLOAD_CHUNK_SIZE)
+                if not chunk:
+                    break
+                temp_file.write(chunk)
+            
+            temp_file.flush()
+
+        with zipfile.ZipFile(temp_file_path) as zf:
             paths = zf.namelist()
 
             def is_zone_path(path: str):
@@ -272,6 +285,10 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temp file
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.unlink(temp_file_path)
 
     # Return success response
     return {
@@ -334,7 +351,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
             try:
                 async with aiofiles.open(temp_file_path, 'rb') as f:
                     while True:
-                        chunk = await f.read(1024 * 1024)  # 1MB chunks
+                        chunk = await f.read(DOWNLOAD_CHUNK_SIZE)
                         if not chunk:
                             break
                         yield chunk
