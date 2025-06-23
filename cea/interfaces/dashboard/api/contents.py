@@ -141,7 +141,7 @@ def filter_valid_files(file_list: List[str]) -> List[str]:
 @router.post("/scenario/upload")
 async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot):
     # Validate file is a zip
-    if not form.file.filename.endswith('.zip'):
+    if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
 
     # TODO: Catch HTTPException(s) at app level to logger errors
@@ -153,8 +153,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             detail="Project root not defined",
         )
 
-    project_name = form.project
-    project_path = Path(project_root, project_name)
+    project_name = form.project.strip()
+    project_path = Path(secure_path(Path(project_root, project_name).resolve()))
 
     # Check for existing projects
     if form.type == "current" or form.type == "existing":
