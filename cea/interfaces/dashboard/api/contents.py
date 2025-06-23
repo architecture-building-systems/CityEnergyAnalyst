@@ -19,6 +19,10 @@ from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
+# TODO: Make this configurable
+MAX_FILE_SIZE = 1000 * 1024 * 1024  # 1GB
+
+
 logger = getCEAServerLogger("cea-server-contents")
 
 router = APIRouter()
@@ -143,6 +147,11 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+    # Check file size
+    if form.file.size is None:
+        raise HTTPException(status_code=400, detail="Unable to determine file size")
+    elif form.file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large")
 
     # TODO: Catch HTTPException(s) at app level to logger errors
     # Ensure project root
