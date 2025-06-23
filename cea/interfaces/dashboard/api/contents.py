@@ -178,7 +178,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             paths = zf.namelist()
 
             def is_zone_path(path: str):
-                return path.endswith("/zone.shp")
+                return path.endswith("inputs/building-geometry/zone.shp")
 
             # TODO: Improve valid scenario detection
             # Determine valid scenarios using zone files
