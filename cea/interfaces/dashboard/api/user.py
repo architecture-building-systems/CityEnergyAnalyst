@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from cea.interfaces.dashboard.dependencies import CEAUser, CEAAuthClient
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -39,9 +39,25 @@ async def refresh_session(auth_client: CEAAuthClient, response: Response):
 
 
 @router.delete("/logout")
-async def logout(auth_client: CEAAuthClient, response: Response):
+async def logout(auth_client: CEAAuthClient, request: Request, response: Response):
     try:
         auth_client.logout()
+
+        # Get domain from request URL
+        url = str(request.url)
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname
+        
+        # Convert to cookie domain (e.g., app.uuen.cloud -> .uuen.cloud)
+        if hostname and "." in hostname:
+            parts = hostname.split(".")
+            if len(parts) >= 2:
+                cookie_domain = f".{'.'.join(parts[-2:])}"
+            else:
+                cookie_domain = hostname
+        else:
+            cookie_domain = hostname
 
         # Set expired cookies to clear them 
         if hasattr(auth_client, 'access_token_name') and auth_client.access_token_name is not None:
@@ -51,6 +67,9 @@ async def logout(auth_client: CEAAuthClient, response: Response):
                 value="",
                 expires=0,
                 max_age=0,
+                # FIXME
+                domain=cookie_domain,
+                path="/", 
                 httponly=True,
                 secure=True,
                 samesite="lax"
@@ -62,6 +81,8 @@ async def logout(auth_client: CEAAuthClient, response: Response):
                 value="",
                 expires=0,
                 max_age=0,
+                domain=cookie_domain,
+                path="/", 
                 httponly=True,
                 secure=True,
                 samesite="lax"
