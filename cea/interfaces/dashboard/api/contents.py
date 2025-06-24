@@ -5,7 +5,6 @@ import tempfile
 import zipfile
 from dataclasses import dataclass, asdict
 from enum import Enum
-from io import BytesIO
 from pathlib import Path
 from typing import Optional, List
 
