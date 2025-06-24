@@ -17,7 +17,6 @@ from shapely.geometry import shape
 from starlette.datastructures import UploadFile as _UploadFile
 from typing_extensions import Annotated
 
-import cea.api
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
@@ -26,9 +25,12 @@ from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
     CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
+
+looger = getCEAServerLogger("cea-server-project")
 
 router = APIRouter()
 
@@ -538,11 +540,13 @@ def glob_shapefile_auxilaries(shapefile_path):
     return glob.glob('{basepath}.*'.format(basepath=os.path.splitext(shapefile_path)[0]))
 
 
+# TODO: Check if this is able to get user ID from request
 async def check_scenario_exists(request: Request, scenario: str = Path()):
     try:
         data = await request.json()
         project = secure_path(data.get("project"))
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not determine project and scenario",
@@ -598,10 +602,17 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
-@router.delete('/scenario/{scenario}', dependencies=[CEASeverDemoAuthCheck, Depends(check_scenario_exists)])
+@router.delete('/scenario/{scenario}', dependencies=[CEASeverDemoAuthCheck])
 async def delete(project_info: CEAProjectInfo, scenario: str):
     """Delete scenario from project"""
     scenario_path = secure_path(os.path.join(project_info.project, scenario))
+
+    if not os.path.exists(scenario_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Scenario does not exist.',
+        )
+
     try:
         # TODO: Check for any current open scenarios or jobs
         shutil.rmtree(scenario_path)
