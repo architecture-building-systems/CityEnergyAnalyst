@@ -12,6 +12,13 @@
     :alt: City Energy Analyst (CEA) logo
     :target: https://www.cityenergyanalyst.com
 
+.. |repobeats| image:: https://repobeats.axiom.co/api/embed/31055fb15ba781904f1dcb1e51de1f17436a8816.svg
+    :alt: Repo Contribuitions
+
+.. |contrib.rocks| image:: https://contrib.rocks/image?repo=architecture-building-systems/CityEnergyAnalyst
+    :target: https://github.com/architecture-building-systems/CityEnergyAnalyst/graphs/contributors
+    :alt: Repo Contribuitions
+
 City Energy Analyst (CEA)
 --------------------------
 
@@ -24,8 +31,13 @@ The `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urba
 
 * Click `here <https://www.cityenergyanalyst.com/contact>`__ to contact us
 
-
-Cite us:
+Cite us
 --------
 
 The CEA Team. (2025). City Energy Analyst (v3.39.4). Zenodo. https://doi.org/10.5281/zenodo.14903253
+
+
+Contributors
+------------
+|repobeats|
+|contrib.rocks|
