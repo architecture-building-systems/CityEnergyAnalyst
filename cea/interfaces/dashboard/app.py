@@ -55,9 +55,9 @@ app.include_router(server.router, prefix='/server')
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error("Found validation errors:", exc.errors())
+    logger.error(f"Found validation errors: {exc.errors()}")
     if request:
-        logger.error("request", request)
+        logger.error(f"request: {request}")
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

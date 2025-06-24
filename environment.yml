@@ -25,6 +25,7 @@ dependencies:
 - git
 - pip:
   # Web
+  - aiofiles
   - aiocache[redis]
   - fastapi
   - pydantic-settings

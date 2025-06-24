@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List, Union
 
 import geopandas
 import pandas as pd
+import sqlalchemy.exc
 from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
 from geopandas import GeoDataFrame
 from osgeo import gdal
@@ -30,7 +31,7 @@ from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
-looger = getCEAServerLogger("cea-server-project")
+logger = getCEAServerLogger("cea-server-project")
 
 router = APIRouter()
 
@@ -155,17 +156,7 @@ class ConfigProjectInfo(BaseModel):
     project: str
     scenario: str
 
-
-
-@router.get('/choices')
-async def get_project_choices(project_root: CEAProjectRoot):
-    """Return project choices based on the project root"""
-    if project_root is None or project_root == "":
-        raise HTTPException(
-            status_code=400,
-            detail="Project root not defined",
-        )
-
+async def get_project_choices(project_root):
     try:
         projects = []
         for _path in os.listdir(project_root):
@@ -190,8 +181,20 @@ async def get_project_choices(project_root: CEAProjectRoot):
             status_code=500,
             detail=f"Failed to read project root: {str(e)}",
         )
+
+    return projects
+
+@router.get('/choices')
+async def get_project_choices_route(project_root: CEAProjectRoot):
+    """Return project choices based on the project root"""
+    if project_root is None or project_root == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Project root not defined",
+        )
+
     return {
-        "projects": projects
+        "projects": await get_project_choices(project_root),
     }
 
 @router.get('/config')
@@ -257,12 +260,22 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         os.makedirs(project, exist_ok=True)
-        # Add project to database
-        await create_project(project, user_id, session)
+        try:
+            # Add project to database
+            await create_project(project, user_id, session)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            # Remove folder if failed to create in database
+            logger.error(e)
+            os.rmdir(project)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to create new project",
+            )
     except OSError as e:
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Failed to create new project",
         )
 
     return {'message': 'Project folder created', 'project': project}
