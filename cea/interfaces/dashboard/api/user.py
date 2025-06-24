@@ -39,18 +39,43 @@ async def refresh_session(auth_client: CEAAuthClient, response: Response):
 
 
 @router.delete("/logout")
-async def logout(auth_client: CEAAuthClient):
+async def logout(auth_client: CEAAuthClient, response: Response):
     try:
         auth_client.logout()
+
+        # Set expired cookies to clear them 
+        if hasattr(auth_client, 'access_token_name') and auth_client.access_token_name is not None:
+            print(auth_client.access_token_name)
+            response.set_cookie(
+                key=auth_client.access_token_name,
+                value="",
+                expires=0,
+                max_age=0,
+                httponly=True,
+                secure=True,
+                samesite="lax"
+            )
+        if hasattr(auth_client, 'refresh_token_name') and auth_client.refresh_token_name is not None:
+            print(auth_client.refresh_token_name)
+            response.set_cookie(
+                key=auth_client.refresh_token_name, 
+                value="",
+                expires=0,
+                max_age=0,
+                httponly=True,
+                secure=True,
+                samesite="lax"
+            )
     except Exception as e:
         # TODO: Handle error based on error code
         logger.error(f"Error during logout: {e}")
 
+    # Firefox-compatible headers
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
     return Response(
         status_code=status.HTTP_204_NO_CONTENT,
-        headers={
-            "Clear-Site-Data": "\"cookies\"",
-            "Cache-Control": "no-store",
-            "Pragma": "no-cache"
-        }
+        headers=response.headers
     )
