@@ -39,5 +39,5 @@ The CEA Team. (2025). City Energy Analyst (v3.39.4). Zenodo. https://doi.org/10.
 
 Contributors
 ------------
-|repobeats|
 |contrib.rocks|
+|repobeats|
