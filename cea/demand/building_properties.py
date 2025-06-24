@@ -306,20 +306,20 @@ class BuildingProperties(object):
         df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
         # check if buildings are completely above ground
-        is_above_ground = (df["void_deck"] > 0).astype(int)
+        is_floating = (df["void_deck"] > 0).astype(int)
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
         df['HD'] = (df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
                     + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
-                    + is_above_ground * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
+                    + is_floating * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
                     )
         # steady-state Thermal transmission coefficient to the ground. in W/K
         # Aop_bg: opaque surface area below ground level;
         # U_base: basement U value, defined in envelope.csv
         # Hs_bg: Fraction of underground floor area air-conditioned.
         # 1 - is_above_ground: 1 if building touches ground, 0 if building is floating (void_deck > 0)
-        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg'] * (1 - is_above_ground)
+        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
