@@ -88,6 +88,9 @@ class InputLocator(object):
     @staticmethod
     def _clear_folder(folder):
         """Delete all files in a folder"""
+        if not os.path.exists(folder):
+            return
+
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
