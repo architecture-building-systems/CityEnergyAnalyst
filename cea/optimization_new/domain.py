@@ -374,6 +374,7 @@ class Domain(object):
 
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
+            self.locator.ensure_parent_folder_exists(building_file)
             Domain._write_system_structure(building_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems

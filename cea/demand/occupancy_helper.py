@@ -274,6 +274,7 @@ def calc_schedules(locator,
     }
 
     yearly_occupancy_schedules = pd.DataFrame(final_dict)
+    locator.ensure_parent_folder_exists(locator.get_occupancy_model_file(building))
     yearly_occupancy_schedules.to_csv(locator.get_occupancy_model_file(building), index=False, na_rep='OFF',
                                       float_format='%.3f')
 

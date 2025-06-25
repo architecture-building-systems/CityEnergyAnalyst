@@ -96,6 +96,7 @@ def costs_main(locator, config):
     result_out = pd.DataFrame(result)
 
     # save dataframe
+    locator.ensure_parent_folder_exists(locator.get_costs_operation_file())
     result_out.to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f',  na_rep='nan')
 
 

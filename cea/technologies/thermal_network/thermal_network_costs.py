@@ -623,6 +623,7 @@ def main(config):
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
+    locator.ensure_parent_folder_exists(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     return
 

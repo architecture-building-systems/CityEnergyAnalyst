@@ -100,12 +100,14 @@ class HourlyDemandWriter(DemandWriter):
         super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
+        locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'csv'))
         hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns,
                            float_format=FLOAT_FORMAT, na_rep='nan')
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # fixing columns with strings
         hourly_data.drop('name', inplace=True, axis=1)
+        locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'hdf'))
         hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key='dataset')
 
 
@@ -120,6 +122,7 @@ class MonthlyDemandWriter(DemandWriter):
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
         monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
+        locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'csv'))
         monthly_data_new.to_csv(locator.get_demand_results_file(building_name, 'csv'), index=False,
                                 float_format=FLOAT_FORMAT, na_rep='nan')
 
@@ -173,7 +176,10 @@ class YearlyDemandWriter:
                 df = pd.read_csv(temporary_file)
             else:
                 df = pd.concat([df, pd.read_csv(temporary_file)], ignore_index=True)
-        df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
+        
+        if df is not None:
+            locator.ensure_parent_folder_exists(locator.get_total_demand('csv'))
+            df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f', na_rep='nan')
 
     @staticmethod
     def write_aggregate_hourly(locator, building_names):
@@ -190,6 +196,7 @@ class YearlyDemandWriter:
         aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['name', 'x_int'])
 
         # save hourly results
+        locator.ensure_parent_folder_exists(locator.get_total_demand_hourly('csv'))
         aggregated_hourly_results_df.to_csv(locator.get_total_demand_hourly('csv'),
                                             index=True, float_format='%.3f', na_rep='nan')
 
