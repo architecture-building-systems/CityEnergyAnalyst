@@ -52,7 +52,7 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 
 class Domain(object):
-    def __init__(self, config, locator):
+    def __init__(self, config, locator: InputLocator):
         self.config = config
         self.locator = locator
         self.weather = self._load_weather(locator)
@@ -341,6 +341,7 @@ class Domain(object):
                                                                                                 network.identifier)
             network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
             network_layout = network_layout.to_crs(get_geographic_coordinate_system())
+            self.locator.ensure_parent_folder_exists(network_layout_file)
             network_layout.to_file(network_layout_file, driver='GeoJSON')
 
         return
