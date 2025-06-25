@@ -1329,11 +1329,6 @@ class InputLocator(object):
     def get_radiation_metadata(self, building):
         """scenario/outputs/data/solar-radiation/{building}_geometrgy.csv"""
         return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' % building)
- 
-    def get_radiation_metadata_usr(self, building):
-        base_folder = os.path.join(self.get_solar_radiation_folder(), "input_files_USR", "BuildingSensorGeometry")
-        os.makedirs(base_folder, exist_ok=True)
-        return os.path.join(base_folder, '%s_geometry.csv' % building)
 
     def get_radiation_materials(self):
         """scenario/outputs/data/solar-radiation/{building}_geometry.csv"""
