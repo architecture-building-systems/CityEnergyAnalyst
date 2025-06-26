@@ -47,6 +47,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
 
         for name in buildings_name_with_heating:
             substation_demand = total_demand[(total_demand.Name == name)]
+            locator.ensure_parent_folder_exists(locator.get_optimization_substations_total_file(DHN_barcode, 'DH'))
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DHN_barcode, 'DH'), sep=',',
                                      index=False, float_format='%.3f')
 
@@ -127,6 +128,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
 
         for name in buildings_name_with_cooling:
             substation_demand = total_demand[(total_demand.Name == name)]
+            locator.ensure_parent_folder_exists(locator.get_optimization_substations_total_file(DCN_barcode, 'DC'))
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DCN_barcode, 'DC'), sep=',',
                                      index=False, float_format='%.3f')
             # calculate substation parameters per building
@@ -368,7 +370,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
          "Q_space_cooling_and_refrigeration_W": Qcs_sys_W + Qcre_sys_W,
          "Q_space_cooling_data_center_and_refrigeration_W": Qcs_sys_W + Qcdata_sys_W + Qcre_sys_W,
          })
-
+    
+    locator.ensure_parent_folder_exists(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode))
     results.to_csv(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode), sep=',', index=False,
                    float_format='%.3f')
     return results
@@ -548,6 +551,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                                           "Q_heating_W": Qhs_sys_W,
                                           "Q_dhw_W": Qww_sys_W})
 
+    locator.ensure_parent_folder_exists(locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
     substation_activation.to_csv(locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode),
                                  sep=',',
                                  index=False,

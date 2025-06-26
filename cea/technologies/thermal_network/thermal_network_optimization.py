@@ -209,6 +209,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
     all_individuals_df.columns = network_info.generation_info + network_info.cost_info
     all_individuals_df = all_individuals_df.sort_values(by=['total'])
+    locator.ensure_parent_folder_exists(locator.get_optimization_network_all_individuals_results_file(network_info.network_type))
     all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
                               index=False)
     return np.nan

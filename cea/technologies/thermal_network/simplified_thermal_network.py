@@ -418,6 +418,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                                                                      k_kWperK,
                                                                      )
     # WRITE TO DISK
+    locator.ensure_parent_folder_exists(locator.get_thermal_network_folder())
 
     # LINEAR PRESSURE LOSSES (EDGES)
     linear_pressure_loss_Paperm.to_csv(locator.get_network_linear_pressure_drop_edges(network_type, network_name),

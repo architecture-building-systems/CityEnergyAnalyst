@@ -292,6 +292,7 @@ def calc_sensors_zone_crax(building_names, locator, grid_size: GridSize, geometr
         names_zone.append(building_name)
 
         # save sensors geometry result to disk
+        locator.ensure_parent_folder_exists(locator.get_radiation_metadata(building_name))
         pd.DataFrame({'BUILDING': building_name,
                       'SURFACE': sensors_code,
                       'orientation': sensor_orientation_building,

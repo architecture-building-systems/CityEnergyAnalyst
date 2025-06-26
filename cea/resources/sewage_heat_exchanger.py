@@ -67,6 +67,7 @@ def calc_sewage_heat_exchanger(locator, config):
                                                                               heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external)
 
     #save to disk
+    locator.ensure_parent_folder_exists(locator.get_sewage_heat_potential())
     pd.DataFrame({"date": pd.to_datetime(date_range), "Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : twaste_zone,
                   "mww_zone_kWperC":mcpwaste_total,
                     "T_out_HP_C" : tout_e, "T_in_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
