@@ -182,7 +182,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: "Energy Demand Part 2: thermal modelling"
+    label: "Energy Demand Part 2: load modelling"
     description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -280,7 +280,7 @@ Energy Supply System Optimisation:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: "Supply System Part 1: decentralised"
+    label: "Suppy System Optimisation: building-scale"
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
@@ -289,7 +289,7 @@ Energy Supply System Optimisation:
       - [get_total_demand]
 
   - name: optimization-new
-    label: "Supply System Part 2: centralised"
+    label: "Suppy System Optimisation: district-scale"
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
