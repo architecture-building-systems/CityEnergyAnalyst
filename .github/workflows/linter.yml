@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches: [ master ]
+    paths: ['cea/**']
 
 jobs:
   ruff:
