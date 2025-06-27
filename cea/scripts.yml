@@ -22,7 +22,7 @@ Import & Export:
     description: |
       This Feature imports Rhino/Grasshopper-generated files into CEA.
       
-      Download the .gh file and a .3dm example [here](https://www.cityenergyanalyst.com/s/cea4_beta_01.zip) to import the Rhino/Grasshopper-generated package.
+      Download the .gh file and a .3dm example [here](https://www.cityenergyanalyst.com/s/cea4_beta_01.zip) to import the Rhino/Grasshopper-generated files.
       
       Ensure that the current Scenario is the Scenario generated using the Grasshopper components from the link.
 

@@ -37,6 +37,7 @@ def exec_cea_commands(config, cea_scenario):
     """
     # acquire the user-defined CEA commands
     export_to_rhino_gh = config.batch_process_workflow.export_to_rhino_gh
+    import_from_rhino_gh = config.batch_process_workflow.import_from_rhino_gh
 
     database_helper = config.batch_process_workflow.database_helper
     archetypes_mapper = config.batch_process_workflow.archetypes_mapper
@@ -66,9 +67,16 @@ def exec_cea_commands(config, cea_scenario):
     results_summary_and_analytics = config.batch_process_workflow.results_summary_and_analytics
 
     # execute selected CEA commands
-    if export_to_rhino_gh:
+    if export_to_rhino_gh and not import_from_rhino_gh:
         subprocess.run(['cea', 'export-to-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
+
+    if import_from_rhino_gh and not export_to_rhino_gh:
+        subprocess.run(['cea', 'import-from-rhino-gh', '--scenario', cea_scenario], env=my_env, check=True,
+                       capture_output=True)
+
+    if import_from_rhino_gh and export_to_rhino_gh:
+        raise ValueError("Cannot import from and export to Rhino/Grasshopper at the same time.")
 
     if database_helper:
         subprocess.run(['cea', 'data-helper', '--scenario', cea_scenario], env=my_env, check=True,
