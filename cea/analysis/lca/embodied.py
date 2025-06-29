@@ -208,6 +208,7 @@ def lca_embodied(year_to_calculate, locator):
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
     # building, both total (in t CO2-eq. and GJ) and per square meter (in kg CO2-eq./m2 and MJ/m2)
+    locator.ensure_parent_folder_exists(locator.get_lca_embodied())
     result_emissions.to_csv(locator.get_lca_embodied(),
                             index=False,
                             float_format='%.2f', na_rep='nan')

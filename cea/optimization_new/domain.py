@@ -52,7 +52,7 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 
 class Domain(object):
-    def __init__(self, config, locator):
+    def __init__(self, config, locator: InputLocator):
         self.config = config
         self.locator = locator
         self.weather = self._load_weather(locator)
@@ -341,6 +341,7 @@ class Domain(object):
                                                                                                 network.identifier)
             network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
             network_layout = network_layout.to_crs(get_geographic_coordinate_system())
+            self.locator.ensure_parent_folder_exists(network_layout_file)
             network_layout.to_file(network_layout_file, driver='GeoJSON')
 
         return
@@ -374,6 +375,7 @@ class Domain(object):
 
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
+            self.locator.ensure_parent_folder_exists(building_file)
             Domain._write_system_structure(building_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems

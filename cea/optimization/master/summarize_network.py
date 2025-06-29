@@ -250,7 +250,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
                                 "Q_DC_space_cooling_and_refrigeration_losses_W": Q_DC_space_cooling_and_refrigeration_losses_W,
                                 "Q_DC_space_cooling_data_center_and_refrigeration_losses_W": Q_DC_space_cooling_data_center_and_refrigeration_losses_W})
 
-
+    locator.ensure_parent_folder_exists(locator.get_optimization_network_results_summary(network_type, key))
     results.to_csv(locator.get_optimization_network_results_summary(network_type, key), index=False, float_format='%.3f')
 
     print(round(time.perf_counter() - t0), "seconds process time for Network summary for configuration", key)

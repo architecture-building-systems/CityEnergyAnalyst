@@ -263,6 +263,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
         names_zone.append(building_name)
 
         # save sensors geometry result to disk
+        locator.ensure_parent_folder_exists(locator.get_radiation_metadata(building_name))
         pd.DataFrame({'BUILDING': building_name,
                       'SURFACE': sensors_code,
                       'orientation': sensor_orientation_building,
@@ -391,4 +392,5 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     data["Date"] = date
     data.set_index("Date", inplace=True)
 
+    locator.ensure_parent_folder_exists(locator.get_radiation_building(building_name))
     data.to_csv(locator.get_radiation_building(building_name))

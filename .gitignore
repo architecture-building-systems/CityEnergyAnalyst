@@ -105,3 +105,5 @@ setup/Dependencies/Python/*
 setup/win-unpacked/*
 setup/CityEnergyAnalyst-GUI-win32-x64/*
 setup/Dependencies/cityenergyanalyst.tar.gz
+
+*.local

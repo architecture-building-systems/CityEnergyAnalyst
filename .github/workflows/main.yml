@@ -3,6 +3,7 @@ name: Push to Master
 on:
   push:
     branches: [master]
+    paths: ['cea/**', 'conda-lock.yml']
 
 jobs:
   test:

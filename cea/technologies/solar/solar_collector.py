@@ -109,7 +109,9 @@ def calc_SC(locator, config, type_panel, latitude, longitude, weather_data, date
 
         # save SC generation potential and metadata of the selected sensors
         panel_type = panel_properties_SC['type']
+        locator.ensure_parent_folder_exists(locator.SC_results(building_name, panel_type))
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
+        locator.ensure_parent_folder_exists(locator.SC_metadata_results(building_name, panel_type))
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f', na_rep='nan')  # print selected metadata of the selected sensors
@@ -133,12 +135,14 @@ def calc_SC(locator, config, type_panel, latitude, longitude, weather_data, date
              'date':date_local},
             index=np.zeros(HOURS_IN_YEAR))
         Final.set_index('date', inplace=True)
+        locator.ensure_parent_folder_exists(locator.SC_results(building_name, panel_type))
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
+        locator.ensure_parent_folder_exists(locator.SC_metadata_results(building_name, panel_type))
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     float_format='%.2f', na_rep="nan")
 

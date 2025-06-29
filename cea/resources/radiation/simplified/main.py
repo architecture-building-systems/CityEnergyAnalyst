@@ -111,6 +111,7 @@ def main(config):
     # import material properties of buildings
     print("Getting geometry materials")
     building_surface_properties = read_surface_properties(locator)
+    locator.ensure_parent_folder_exists(locator.get_radiation_materials())
     building_surface_properties.to_csv(locator.get_radiation_materials())
 
     geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")

@@ -11,6 +11,9 @@ from cea.interfaces.dashboard.settings import StackAuthSettings
 
 
 class AuthClient(ABC):
+    access_token_name: str
+    refresh_token_name: str
+
     @classmethod
     @abstractmethod
     def from_request_cookies(cls, request_cookies: Dict[str, str]) -> "AuthClient":

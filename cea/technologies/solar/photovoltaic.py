@@ -120,9 +120,10 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
 
         final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
                                    panel_properties_PV)
-
+        locator.ensure_parent_folder_exists(locator.PV_results(building=building_name, panel_type=type_PVpanel))
         final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=True,
                      float_format='%.2f')  # print PV generation potential
+        locator.ensure_parent_folder_exists(locator.PV_metadata_results(building=building_name))
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f',
@@ -136,12 +137,14 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
              'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
              'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
              'E_PV_gen_kWh': 0, 'area_PV_m2': 0, 'radiation_kWh': 0}, index=range(HOURS_IN_YEAR))
+        locator.ensure_parent_folder_exists(locator.PV_results(building=building_name, panel_type=type_PVpanel))
         final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=False, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
+        locator.ensure_parent_folder_exists(locator.PV_metadata_results(building=building_name))
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building=building_name), index=False,
                                     float_format='%.2f', na_rep='nan')
 
@@ -802,9 +805,11 @@ def write_aggregate_results(locator, type_PVpanel, building_names):
                 aggregated_annual_results = pd.concat([aggregated_annual_results, annual_results], axis=1, sort=False)
 
     # save hourly results
+    locator.ensure_parent_folder_exists(locator.PV_totals(panel_type=type_PVpanel))
     aggregated_hourly_results_df.to_csv(locator.PV_totals(panel_type=type_PVpanel), index=True, float_format='%.2f', na_rep='nan')
     # save annual results
     aggregated_annual_results_df = pd.DataFrame(aggregated_annual_results).T
+    locator.ensure_parent_folder_exists(locator.PV_total_buildings(type_PVpanel))
     aggregated_annual_results_df.to_csv(locator.PV_total_buildings(type_PVpanel), index=True, index_label="name",
                                         float_format='%.2f', na_rep='nan')
 

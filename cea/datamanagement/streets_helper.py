@@ -74,6 +74,7 @@ def geometry_extractor_osm(locator, config):
 
     # Project coordinate system
     data = data.to_crs(get_projected_coordinate_system(float(lat_min), float(lon_min)))
+    locator.ensure_parent_folder_exists(shapefile_out_path)
     data[['geometry']].to_file(shapefile_out_path)
 
 

@@ -1,7 +1,7 @@
 import importlib
 import inspect
 import os
-from typing import List, Any, Type
+from typing import List, Any, Type, Union
 
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -12,7 +12,7 @@ class OutsideProjectRootError(Exception):
         super().__init__(f"Path `{path}` is not a valid path.")
         self.path = path
 
-def secure_path(path: str) -> str:
+def secure_path(path: Union[str, os.PathLike]) -> str:
     """
     Simple sanitation of path
     """
