@@ -712,7 +712,7 @@ def calc_windows_walls(facade_list: List[TopoDS_Face],
         else:
             intersects = 0
 
-        if intersects > 0:  # the face intersects so it is a wall
+        if intersects > 0:  # the face intersects so it is a partition wall, and no window is created
             wall_list.append(surface_facade)
             normals_wall.append(standard_normal)
             wall_intersects.append(1)
@@ -729,11 +729,10 @@ def calc_windows_walls(facade_list: List[TopoDS_Face],
                 window_list.append(window)
                 normals_win.append(standard_normal)
                 # for walls
-                hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
-                                                                      window)  # accounts for hole created by window
-                wall_intersects.extend([intersects] * len(hollowed_facade))
-                wall_list.extend(hollowed_facade)
-                normals_wall.extend([standard_normal] * len(hollowed_facade))
+                hollowed_facades, _ = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
+                wall_intersects.extend([intersects] * len(hollowed_facades))
+                wall_list.extend(hollowed_facades)
+                normals_wall.extend([standard_normal] * len(hollowed_facades))
 
             elif wwr == 1.0:
                 window_list.append(surface_facade)

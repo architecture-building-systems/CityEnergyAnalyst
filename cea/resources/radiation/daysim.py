@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Optional, Tuple, NamedTuple
+from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,9 @@ from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
 
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
@@ -356,7 +359,7 @@ def write_sensor_results(sensor_data_path, sensor_values):
     feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
-def write_aggregated_results(building_name, sensor_values, locator, date):
+def write_aggregated_results(building_name, sensor_values: pd.DataFrame, locator: InputLocator, date):
     # Get sensor properties
     geometry = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
 

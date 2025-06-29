@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def read_surface_properties(locator) -> pd.DataFrame:
+def read_surface_properties(locator: cea.inputlocator.InputLocator) -> pd.DataFrame:
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
