@@ -300,7 +300,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             
             # Recheck number of scenarios after extraction
             num_scenarios += len(scenario_names)
-            if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
+            if limit_settings.num_scenarios is not None and limit_settings.num_scenarios < num_scenarios:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
