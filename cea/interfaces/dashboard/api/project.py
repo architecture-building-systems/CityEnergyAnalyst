@@ -621,11 +621,18 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
-@router.delete('/scenario/{scenario}', dependencies=[CEASeverDemoAuthCheck])
-async def delete(project_info: CEAProjectInfo, scenario: str):
+@router.delete('/scenario', dependencies=[CEASeverDemoAuthCheck])
+async def delete(project_root: CEAProjectRoot, scenario_info: ScenarioPath):
     """Delete scenario from project"""
-    scenario_path = secure_path(os.path.join(project_info.project, scenario))
+    project_path = scenario_info.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
 
+    project = secure_path(project_path)
+    scenario = scenario_info.scenario_name
+    validate_scenario_name(scenario)
+
+    scenario_path = secure_path(os.path.join(project, scenario))
     if not os.path.exists(scenario_path):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -635,9 +642,10 @@ async def delete(project_info: CEAProjectInfo, scenario: str):
     try:
         # TODO: Check for any current open scenarios or jobs
         shutil.rmtree(scenario_path)
-        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
-    except OSError:
+        return {'scenarios': cea.config.get_scenarios_list(project)}
+    except OSError as e:
         traceback.print_exc()
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Make sure that the scenario you are trying to delete is not open in any application. '
@@ -646,7 +654,7 @@ async def delete(project_info: CEAProjectInfo, scenario: str):
 
 
 
-@router.post('/scenario/{scenario}/duplicate')
+@router.post('/scenario/{scenario}/duplicate', dependencies=[CEASeverDemoAuthCheck])
 async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_scenario_info: NewScenarioInfo):
     """Duplicate Scenario"""
     scenario_path = secure_path(os.path.join(project_info.project, scenario))
