@@ -315,13 +315,13 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                     
         # Validate all scenarios
         for scenario in upload_result.scenarios:
-            scenarion_path = os.path.join(project_path, scenario.name)
+            scenario_path = os.path.join(project_path, scenario.name)
             try:
-                migrate_cea3_to_cea4(scenarion_path)
-                errors = cea4_verify(scenarion_path)
+                migrate_cea3_to_cea4(scenario_path)
+                errors = cea4_verify(scenario_path)
 
-                migrate_cea3_to_cea4_db(scenarion_path)
-                db_errors = cea4_verify_db(scenarion_path, verbose=True)
+                migrate_cea3_to_cea4_db(scenario_path)
+                db_errors = cea4_verify_db(scenario_path, verbose=True)
 
                 if any(errors.values()) or any(db_errors.values()):
                     raise ValueError("Verification failed even after migrating to CEA-4")
