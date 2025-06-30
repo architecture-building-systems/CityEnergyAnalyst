@@ -221,17 +221,22 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         with zipfile.ZipFile(temp_file_path) as zf:
             paths = zf.namelist()
 
+            # Case a: Check for zone geometry files
             def is_zone_path(path: str):
                 return path.endswith("inputs/building-geometry/zone.shp")
+            # Case b: Check for GH export files
+            def is_gh_export_path(path: str):
+                return path.endswith("export/rhino/to_cea/zone_in.csv")
 
             # TODO: Improve valid scenario detection
             # Determine valid scenarios using zone files
             zone_files = list(filter(is_zone_path, paths))
-            if len(zone_files) == 0:
-                raise ValueError("No valid scenarios found")
+            gh_export_files = list(filter(is_gh_export_path, paths))
+            if len(zone_files) == 0 and len(gh_export_files) == 0:
+                raise ValueError("No valid Scenarios found")
 
-            # Case 1: Scenario in root and name is zip name e.g. inputs/
-            if len(zone_files) == 1 and zone_files[0].startswith("inputs"):
+            # Case 1a/b: Scenario in root and name is zip name e.g. inputs/ or export/
+            if len(zone_files) == 1 and zone_files[0].startswith("inputs") or len(gh_export_files) == 1 and gh_export_files[0].startswith("export"):
                 scenario_name = form.file.filename[:-4]
                 logger.info(f"Scenario found as root, using name `{scenario_name}`")
                 # Check if scenario names already exist and rename
@@ -250,25 +255,26 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 upload_result.scenarios.append(
                     UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
 
-            # Case 2: More than 1 scenario in zip
-            scenario_names = []
-            existing_scenario_names = []
+            # Case 2a/b: More than 1 scenario in zip, take into account scenario could have both zone geometry and gh export files
+            scenario_names = set()
+            existing_scenario_names = set()
+            potential_scenario_paths = set(zone_files + gh_export_files)
             # Check for existing scenario names
-            for zone_file in zone_files:
-                parts = zone_file.split("/")
+            for potential_scenario in potential_scenario_paths:
+                parts = potential_scenario.split("/")
 
-                # Case 2a: Scenario names are the first level folder names e.g. scenario/inputs/..
-                if parts[1] == "inputs":
+                # Case 2.1a/b: Scenario names are the first level folder names e.g. scenario/inputs/.. or scenario/export/..
+                if parts[1] == "inputs" or parts[1] == "export":
                     scenario_name = parts[0]
-                # Case 2b: Project name is the first level folder name e.g. project/scenario/inputs/..
-                elif parts[2] == "inputs":
+                # Case 2.2a/b: Project name is the first level folder name e.g. project/scenario/inputs/.. or project/scenario/export/..
+                elif parts[2] == "inputs" or parts[2] == "export":
                     scenario_name = parts[1]
                 else:
                     continue
 
-                scenario_names.append(scenario_name)
+                scenario_names.add(scenario_name)
                 if os.path.exists(os.path.join(project_path, scenario_name)):
-                    existing_scenario_names.append(scenario_name)
+                    existing_scenario_names.add(scenario_name)
 
             logger.info(f"Scenario found: {scenario_names}")
             if len(existing_scenario_names):
@@ -277,27 +283,36 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                                     detail=f"Scenarios {existing_scenario_names} already exists in project")
 
 
-            for zone_file in zone_files:
-                parts = zone_file.split("/")
+            for potential_scenario in potential_scenario_paths:
+                parts = potential_scenario.split("/")
 
                 # Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
-                if parts[1] == "inputs":
+                if parts[1] == "inputs" or parts[1] == "export":
                     scenario_name = parts[0]
                     logger.info(f"Scenario found in root, using name `{scenario_name}`")
+                    # Skip if scenario has already been processed
+                    if scenario_name not in scenario_names:
+                        logger.info(f"Skipping scenario {scenario_name} as it has already been processed")
+                        continue
                     scenario_files = list(filter(lambda x: x.startswith(f"{scenario_name}/"), paths))
 
                     logger.info(f"Extracting to {project_path}")
                     for path in filter_valid_files(scenario_files):
                         zf.extract(path, project_path)
-                    
+
+                    scenario_names.remove(scenario_name)
                     upload_result.scenarios.append(
                         UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
 
                 # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
-                if parts[2] == "inputs":
+                if parts[2] == "inputs" or parts[2] == "export":
                     project_name = parts[0]
                     scenario_name = parts[1]
                     logger.info(f"Scenario found in a project folder, using name `{scenario_name}`")
+                    # Skip if scenario has already been processed
+                    if scenario_name not in scenario_names:
+                        logger.info(f"Skipping scenario {scenario_name} as it has already been processed")
+                        continue
                     scenario_files = list(filter(lambda x: x.startswith("/".join(parts[:1])), paths))
 
                     # Extract to temp first
@@ -309,7 +324,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                         temp_scenario_path = os.path.join(tmpdir, project_name, scenario_name)
                         logger.info(f"Moving {temp_scenario_path} to {project_path}")
                         shutil.move(temp_scenario_path, project_path)
-
+                        
+                    scenario_names.remove(scenario_name)
                     upload_result.scenarios.append(
                         UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
                     
