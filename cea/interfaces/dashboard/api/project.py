@@ -386,6 +386,13 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
 
+            limit_settings = LimitSettings()
+            if limit_settings.num_buildings is not None and limit_settings.num_buildings <= len(zone_df):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {len(zone_df)}",
+                )
+
         # Copy zone from user-input
         else:
             # Copy zone using path
