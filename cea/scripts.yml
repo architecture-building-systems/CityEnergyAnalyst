@@ -2,6 +2,7 @@ Import & Export:
 
   - name: export-to-rhino-gh
     label: Export to Rhino/Grasshopper
+    short_description: Export CEA files to Rhino/Grasshopper-ready format
     description: |
       This Feature exports CEA files into Rhino/Grasshopper-ready format.  
       The exported package is to be found at path:
@@ -19,6 +20,7 @@ Import & Export:
 
   - name: import-from-rhino-gh
     label: Import from Rhino/Grasshopper
+    short_description: Import Rhino/Grasshopper-generated files into CEA
     description: |
       This Feature imports Rhino/Grasshopper-generated files into CEA.
       
@@ -32,6 +34,7 @@ Import & Export:
 
   - name: export-results-csv
     label: Export Results to .csv (Summary & Analytics)
+    short_description: Generate CSV files with CEA results summary and analytics
     description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
@@ -43,6 +46,7 @@ Import & Export:
 Solar Radiation Analysis:
   - name: radiation
     label: Building Solar Radiation using DAYSIM
+    short_description: Perform solar radiation analysis using DAYSIM
     description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
@@ -57,6 +61,7 @@ Solar Radiation Analysis:
 
   - name: radiation-crax
     label: Building Solar Radiation using CRAX [BETA]
+    short_description: Perform solar radiation analysis using CRAX model (BETA)
     description: |
       **This is currently in active development and may not work as expected.**  
       
@@ -80,6 +85,7 @@ Solar Radiation Analysis:
 Renewable Energy Potential Assessment:
   - name: photovoltaic
     label: Photovoltaic (PV) Panels
+    short_description: Calculate PV electricity yields from solar panels
     description: This Feature calculates PV electricity yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic
@@ -97,6 +103,7 @@ Renewable Energy Potential Assessment:
 
   - name: photovoltaic-thermal
     label: Photovoltaic-Thermal (PVT) Panels
+    short_description: Calculate PVT electricity and heat yields from hybrid panels
     description: This Feature calculates PVT electricity & heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
@@ -123,6 +130,7 @@ Renewable Energy Potential Assessment:
 
   - name: solar-collector
     label: Solar Collectors (SC)
+    short_description: Calculate heat yields from solar collectors
     description: This Feature calculates SC heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.solar_collector
@@ -140,6 +148,7 @@ Renewable Energy Potential Assessment:
 
   - name: shallow-geothermal-potential
     label: Shallow Geothermal Potential
+    short_description: Calculate heat extracted from shallow geothermal probes
     description: This Feature calculates the heat extracted from a geothermal probes (up to 50 m deep).
     interfaces: [cli, dashboard]
     module: cea.resources.geothermal
@@ -147,6 +156,7 @@ Renewable Energy Potential Assessment:
 
   - name: water-body-potential
     label: Water Body Potential
+    short_description: Calculate heat extracted from water bodies
     description: This Feature calculates the heat extracted from a water body such as a lake or a reservoir.
     interfaces: [cli, dashboard]
     module: cea.resources.water_body_potential
@@ -154,6 +164,7 @@ Renewable Energy Potential Assessment:
 
   - name: sewage-potential
     label: Sewage Heat Potential
+    short_description: Calculate heat extracted from sewage heat exchangers
     description: This Feature calculates the heat extracted from sewage heat exchangers.
     interfaces: [cli, dashboard]
     module: cea.resources.sewage_heat_exchanger
@@ -165,6 +176,7 @@ Renewable Energy Potential Assessment:
 Energy Demand Forecasting:
   - name: occupancy-helper
     label: "Energy Demand Part 1: building occupancy"
+    short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
     module: cea.demand.occupancy_helper
@@ -182,6 +194,7 @@ Energy Demand Forecasting:
 
   - name: demand
     label: "Energy Demand Part 2: load modelling"
+    short_description: Forecast energy demand of buildings using CEA models
     description: This Feature uses CEA models to forecast the energy demand of buildings.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
@@ -219,6 +232,7 @@ Thermal Network Design:
 
   - name: network-layout
     label: "Thermal Network Part 1: layout"
+    short_description: Create thermal network piping layout using minimum spanning tree
     description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
@@ -230,6 +244,7 @@ Thermal Network Design:
 
   - name: thermal-network
     label: "Thermal Network Part 2: flow & sizing"
+    short_description: Solve thermal hydraulic network flow and sizing
     description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
@@ -247,6 +262,7 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
+    short_description: Calculate embodied and operational emissions of buildings
     description: This Feature calculates the embodied and operational emissions of buildings.
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
@@ -259,6 +275,7 @@ Life Cycle Analysis:
 
   - name: system-costs
     label: Energy Supply System Costs
+    short_description: Calculate costs for energy supply systems
     description: This Feature calculates the costs for energy supply systems.
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.system_costs
@@ -272,6 +289,7 @@ Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
     label: Thermal Network Optimisation
+    short_description: Optimize thermal network design variables
     description: This Feature optimises network design variables (plant locations, layout,...).
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
@@ -280,6 +298,7 @@ Energy Supply System Optimisation:
 
   - name: decentralized
     label: "Suppy System Optimisation: building-scale"
+    short_description: Optimize decentralized energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
@@ -289,6 +308,7 @@ Energy Supply System Optimisation:
 
   - name: optimization-new
     label: "Suppy System Optimisation: district-scale"
+    short_description: Optimize centralized energy supply systems
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
@@ -303,6 +323,7 @@ Data Management:
 
   - name: database-helper
     label: Database Helper
+    short_description: Load CEA Database into current scenario
     description: This Feature loads a CEA Database into the current Scenario.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.database_helper
@@ -310,6 +331,7 @@ Data Management:
 
   - name: archetypes-mapper
     label: Archetypes Mapper
+    short_description: Populate building properties using archetypal database
     description: This Feature populates building properties and systems types for buildings based on the CEA Archetypal Database.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.archetypes_mapper
@@ -319,6 +341,7 @@ Data Management:
 
   - name: weather-helper
     label: Weather Helper
+    short_description: Fetch weather data from third party sources
     description: |
       This Feature fetches .epw weather data from third party sources if no file is provided by the user.
     interfaces: [cli, dashboard]
@@ -329,6 +352,7 @@ Data Management:
 
   - name: surroundings-helper
     label: Surroundings Helper
+    short_description: Query surrounding building geometry from OpenStreetMap
     description: This Feature queries geometry of surrounding buildings from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.surroundings_helper
@@ -338,6 +362,7 @@ Data Management:
 
   - name: terrain-helper
     label: Terrain Helper
+    short_description: Fetch topography data from third party sources
     description:  This Feature fetches .tif topography data from third party sources.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.terrain_helper
@@ -348,6 +373,7 @@ Data Management:
 
   - name: streets-helper
     label: Streets Helper
+    short_description: Query streets geometry from OpenStreetMap
     description: This Feature queries streets geometry from OpenStreetMap.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.streets_helper
@@ -357,6 +383,7 @@ Data Management:
 
   - name: trees-helper
     label: Trees Helper
+    short_description: Import tree geometries into scenario
     description: This Feature imports tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
     interfaces: [ cli, dashboard ]
     module: cea.datamanagement.trees_helper
@@ -370,6 +397,7 @@ Utilities:
 
   - name: cea4-format-helper
     label: CEA-4 Format Helper
+    short_description: Verify and migrate inputs to CEA-4 format
     description: |
       This Feature verifies the inputs are in the correct format for CEA-4.
       It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
@@ -380,6 +408,7 @@ Utilities:
 
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate
+    short_description: Migrate Late-CEA-3 inputs to CEA-4 format
     description: |
       This Feature migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
@@ -389,6 +418,7 @@ Utilities:
 
   - name: cea4-verify
     label: CEA-4 Format Helper - Verify
+    short_description: Verify inputs are in correct CEA-4 format
     description: |
       This Feature verifies the inputs are in the correct format for CEA-4.
 
@@ -398,6 +428,7 @@ Utilities:
 
   - name: sensitivity-analysis-sampler
     label: Generate Samples for Sensitivity Analysis (SA)
+    short_description: Generate samples for sensitivity analysis using Sobol method
     description: This Feature generates samples for sensitivity analysis using Sobol Method.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
@@ -405,6 +436,7 @@ Utilities:
 
   - name: batch-process-workflow
     label: Batch Process Workflow
+    short_description: Batch process scenarios using configured workflow
     description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
@@ -412,6 +444,7 @@ Utilities:
 
   - name: dbf-to-csv-to-dbf
     label: .dbf to .csv to .dbf
+    short_description: Convert files between DBF and CSV formats
     description: This Feature converts files from .dbf to .csv (.xlsx) and back to .dbf.
     interfaces: [cli, dashboard]
     module: cea.utilities.dbf
@@ -419,6 +452,7 @@ Utilities:
 
   - name: shp-to-csv-to-shp
     label: .shp to .csv to .shp
+    short_description: Convert files between shapefile and CSV formats
     description: This Feature converts files from .shp to .csv (.xlsx) and back to .shp.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.shapefile
@@ -426,6 +460,7 @@ Utilities:
 
   - name: create-new-scenario
     label: Create a New Scenario
+    short_description: Facilitate creating a new scenario
     description: This Feature facilitate creating a new scenario.
     interfaces: []
     module: cea.datamanagement.create_new_scenario
@@ -433,6 +468,7 @@ Utilities:
 
   - name: rename-building
     label: Rename Building
+    short_description: Facilitate renaming buildings in scenario
     description: This Feature facilitates renaming a Building.
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
@@ -442,6 +478,7 @@ Utilities:
 
   - name: create-mixed-use-type
     label: Create mixed-use type
+    short_description: Create new use-type by aggregating existing use-types
     description: This Feature facilitates creating a new use-type by aggregating values from a list of different use-types
     interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
@@ -451,6 +488,7 @@ Utilities:
 
   - name: test
     label: Test CEA
+    short_description: Run CEA tests
     description: Run some tests on the CEA
     interfaces: [cli]
     module: cea.tests
@@ -458,6 +496,7 @@ Utilities:
 
   - name: run-unit-tests
     label: Unit tests
+    short_description: Run all unit tests in the cea/tests folder
     description: Run all the unit tests in the cea/tests folder
     interfaces: [test, cli]
     module: cea.tests.run_unit_tests
@@ -465,6 +504,7 @@ Utilities:
 
   - name: run-all-plots
     label: Run all plots
+    short_description: Run all plots for testing purposes
     description: Run all the plots for test purposes
     interfaces: [test, cli]
     module: cea.tests.run_all_plots
@@ -475,6 +515,7 @@ default:
 
   - name: multi-criteria-analysis
     label: Multicriteria analysis
+    short_description: Perform multicriteria analysis
     description: Multicriteria analysis
     interfaces: [cli]
     module: cea.analysis.multicriteria.main
@@ -482,6 +523,7 @@ default:
 
   - name: zone-helper
     label: Zone helper
+    short_description: Query zone geometry from OpenStreetMap
     description: Query zone geometry from Open Street Maps
     interfaces: [cli]
     module: cea.datamanagement.zone_helper
@@ -491,6 +533,7 @@ default:
 
   - name: create-polygon
     label: Create Polygon
+    short_description: Create polygon shapefile from coordinate tuples
     description: Creates a polygon shapefile from a list of comma-separated coordinate tuples
     interfaces: [cli]
     module: cea.utilities.create_polygon
@@ -498,6 +541,7 @@ default:
 
   - name: compile
     label: compile
+    short_description: Compile PYD files
     description: compile
     interfaces: [cli]
     module: cea.utilities.compile_pyd_files
@@ -505,6 +549,7 @@ default:
 
   - name: dashboard
     label: dashboard
+    short_description: Launch CEA dashboard interface
     description: dashboard
     interfaces: [cli]
     module: cea.interfaces.dashboard.dashboard
@@ -512,6 +557,7 @@ default:
 
   - name: excel-to-shapefile
     label: excel-to-shapefile
+    short_description: Convert Excel files to shapefile format
     description: excel-to-shapefile
     interfaces: [cli]
     module: cea.interfaces.cli.excel_to_shapefile
@@ -519,6 +565,7 @@ default:
 
   - name: extract-reference-case
     label: extract-reference-case
+    short_description: Extract reference case examples
     description: extract-reference-case
     interfaces: [cli]
     module: cea.examples.extract_reference_case
@@ -526,6 +573,7 @@ default:
 
   - name: list-demand-graphs-fields
     label: list-demand-graphs-fields
+    short_description: List available fields for demand graphs
     description: list-demand-graphs-fields
     interfaces: [cli]
     module: cea.interfaces.cli.list_demand_graphs_fields
@@ -533,6 +581,7 @@ default:
 
   - name: shapefile-to-excel
     label: shapefile-to-excel
+    short_description: Convert shapefile to Excel format
     description: shapefile-to-excel
     interfaces: [cli]
     module: cea.interfaces.cli.shapefile_to_excel
@@ -540,6 +589,7 @@ default:
 
   - name: trace-inputlocator
     label: trace-inputlocator
+    short_description: Trace all InputLocator calls for a script
     description: trace all calls to the InputLocator for a script
     interfaces: [cli]
     module: cea.tests.trace_inputlocator
@@ -547,6 +597,7 @@ default:
 
   - name: workflow
     label: Workflow
+    short_description: Run workflow.yml file from start to end
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow
@@ -555,6 +606,7 @@ default:
 Documentation:
   - name: html
     label: html
+    short_description: Run all documentation methods via command line
     description: Run all documentation methods via the command line
     interfaces: [doc]
     module: cea.utilities.doc_html
@@ -562,6 +614,7 @@ Documentation:
 
   - name: graphviz
     label: graphviz
+    short_description: Render graphviz files for all scripts
     description: Render the graphviz.gv files for all scripts in the schema data
     interfaces: [doc]
     module: cea.utilities.doc_graphviz
@@ -569,6 +622,7 @@ Documentation:
 
   - name: glossary
     label: glossary
+    short_description: Update glossary documentation
     description: Updates the glossary documentation
     interfaces: [doc]
     module: cea.utilities.doc_glossary
@@ -576,6 +630,7 @@ Documentation:
 
   - name: schema
     label: schema
+    short_description: Display schema information for locator methods
     description: Display schema information of an (existing) file given a locator method
     interfaces: [doc]
     module: cea.utilities.doc_schemas
@@ -584,6 +639,7 @@ Documentation:
 Development:
   - name: build
     label: build
+    short_description: Build new installer for current version
     description: build a new installer for the current version
     interfaces: [dev]
     module: cea.dev.build
@@ -591,6 +647,7 @@ Development:
 
   - name: release
     label: release
+    short_description: Build installer for release version
     description: build a new installer for the current version
     interfaces: [ dev ]
     module: cea.dev.release
@@ -598,6 +655,7 @@ Development:
 
   - name: update-zenodo
     label: update-zenodo
+    short_description: Update Zenodo references to latest available online
     description: Updates relevant Zenodo references to the latest available online
     interfaces: [ dev ]
     module: cea.dev.update_zenodo
@@ -608,6 +666,7 @@ Visualisation:
 
   - name: plot-demand
     label: Plot - Building Energy Demand
+    short_description: Plot bar chart of building energy demand results
     description: This Feature plots bar chart of the results of building energy demand forecasting
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
