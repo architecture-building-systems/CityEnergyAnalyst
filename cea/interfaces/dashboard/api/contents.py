@@ -195,13 +195,13 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
+            detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
         )
     num_scenarios = len(cea.config.get_scenarios_list(str(project_path)))
     if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+            detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
             )
 
     # Check for existing projects
@@ -303,7 +303,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+                    detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
                     )
 
 
