@@ -19,6 +19,7 @@ class CeaScript(object):
         self.name = script_dict['name']
         self.module = script_dict['module']
         self.description = script_dict.get('description', '')
+        self.short_description = script_dict.get('short_description', '')
         self.interfaces = script_dict.get('interfaces', ['cli'])
         self.label = script_dict.get('label', self.name)
         self.category = category
