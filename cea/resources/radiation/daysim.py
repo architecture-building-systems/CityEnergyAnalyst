@@ -196,18 +196,9 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
 
     for srf_type in SURFACE_TYPES:
         occface_list = getattr(building_geometry, srf_type)
-        if srf_type == 'roofs':
-            orientation_list = ['top'] * len(occface_list)
-            normals_list = [(0.0, 0.0, 1.0)] * len(occface_list)
-            interesection_list = [0] * len(occface_list)
-        elif srf_type == 'windows':
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = [0] * len(occface_list)
-        else:
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
+        orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+        normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
+        interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
