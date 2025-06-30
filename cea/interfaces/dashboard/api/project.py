@@ -250,10 +250,11 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     Create new project folder
     """
     limit_settings = LimitSettings()
-    if limit_settings.num_projects is not None and limit_settings.num_projects <= len(await get_project_choices(project_root)):
+    num_projects = len(await get_project_choices(project_root))
+    if limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of projects reached",
+            detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
         )
 
     if new_project.project_root is None and project_root is None:
@@ -350,10 +351,11 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         )
     
     limit_settings = LimitSettings()
-    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= len(cea.config.get_scenarios_list(cea_project)):
+    num_scenarios = len(cea.config.get_scenarios_list(cea_project))
+    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of scenarios reached",
+            detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
         )
 
     scenario_name = os.path.normpath(scenario_form.scenario_name)
@@ -387,10 +389,11 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             zone_df = geopandas.read_file(locator.get_zone_geometry())
 
             limit_settings = LimitSettings()
-            if limit_settings.num_buildings is not None and limit_settings.num_buildings <= len(zone_df):
+            num_buildings = len(zone_df)
+            if limit_settings.num_buildings is not None and limit_settings.num_buildings <= num_buildings:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {len(zone_df)}",
+                    detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {num_buildings}",
                 )
 
         # Copy zone from user-input

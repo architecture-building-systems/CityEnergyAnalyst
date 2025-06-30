@@ -191,17 +191,17 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     project_path = Path(secure_path(Path(project_root, project_name).resolve()))
 
     limit_settings = LimitSettings()
-
-    if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= len(await get_project_choices(project_root)):
+    num_projects = len(await get_project_choices(project_root))
+    if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of projects reached",
+            detail="Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
         )
-
-    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= len(cea.config.get_scenarios_list(str(project_path))):
+    num_scenarios = len(cea.config.get_scenarios_list(str(project_path)))
+    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum number of scenarios reached",
+            detail="Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
             )
 
     # Check for existing projects
@@ -297,6 +297,14 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 # TODO: Find way to rename new scenario and extract
                 raise HTTPException(status_code=400,
                                     detail=f"Scenarios {existing_scenario_names} already exists in project")
+            
+            # Recheck number of scenarios after extraction
+            num_scenarios += len(scenario_names)
+            if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+                    )
 
 
             for potential_scenario in potential_scenario_paths:
