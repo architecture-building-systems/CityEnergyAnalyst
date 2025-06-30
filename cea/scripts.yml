@@ -289,7 +289,7 @@ Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
     label: Thermal Network Optimisation
-    short_description: Optimize thermal network design variables
+    short_description: Optimise thermal network design variables
     description: This Feature optimises network design variables (plant locations, layout,...).
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
@@ -298,7 +298,7 @@ Energy Supply System Optimisation:
 
   - name: decentralized
     label: "Suppy System Optimisation: building-scale"
-    short_description: Optimize decentralized energy supply systems
+    short_description: Optimise decentralised energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
@@ -308,7 +308,7 @@ Energy Supply System Optimisation:
 
   - name: optimization-new
     label: "Suppy System Optimisation: district-scale"
-    short_description: Optimize centralized energy supply systems
+    short_description: Optimise centralised energy supply systems
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
