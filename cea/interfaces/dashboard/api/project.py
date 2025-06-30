@@ -44,11 +44,12 @@ GENERATE_TERRAIN_CEA = 'generate-terrain-cea'
 GENERATE_STREET_CEA = 'generate-street-cea'
 EMTPY_GEOMETRY = 'none'
 
+class ProjectPath(BaseModel):
+    project: str
 
 class ScenarioPath(BaseModel):
     project: str
     scenario_name: str
-
 
 class NewProject(BaseModel):
     project_name: str
@@ -621,8 +622,36 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
+@router.delete('/', dependencies=[CEASeverDemoAuthCheck])
+async def delete_project(project_root: CEAProjectRoot, project_info: ProjectPath):
+    """Delete project"""
+    project_path = project_info.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    project = secure_path(project_path)
+    print(project)
+    if not os.path.exists(project):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Project does not exist.',
+        )
+
+    try:
+        # TODO: Check for any current open scenarios or jobs
+        shutil.rmtree(project)
+        return {'message': 'Project deleted', 'project': project_info.project}
+    except OSError as e:
+        traceback.print_exc()
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Make sure that the project you are trying to delete is not open in any application. '
+                   'Try and refresh the page again.',
+        )
+
 @router.delete('/scenario', dependencies=[CEASeverDemoAuthCheck])
-async def delete(project_root: CEAProjectRoot, scenario_info: ScenarioPath):
+async def delete_scenario(project_root: CEAProjectRoot, scenario_info: ScenarioPath):
     """Delete scenario from project"""
     project_path = scenario_info.project
     if project_root is not None and not project_path.startswith(project_root):
