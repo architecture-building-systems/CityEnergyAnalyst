@@ -163,6 +163,9 @@ jobs:
   
       - name: Enable Corepack
         run: corepack enable
+      
+      - name: Clean dist directory
+        run: rm -rf gui/dist/*
 
       - name: Package CEA GUI
         env:
@@ -174,7 +177,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
           cd gui
-          rm -rf dist/*
           yarn
           yarn version $CEA_VERSION
           yarn electron:release --arm64 --x64
