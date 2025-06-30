@@ -4,6 +4,7 @@ import cea
 import cea.interfaces.dashboard.server.jobs as jobs
 import cea.interfaces.dashboard.server.streams as streams
 from cea.interfaces.dashboard.dependencies import get_worker_processes, CEAServerSettings
+from cea.interfaces.dashboard.settings import LimitSettings
 
 router = APIRouter()
 
@@ -30,4 +31,6 @@ async def get_version():
 
 @router.get("/settings")
 async def get_settings(settings: CEAServerSettings):
-    return {'allow_path_transversal': settings.allow_path_transversal()}
+    # TODO: Shift limits to user properties
+    limits = LimitSettings()
+    return {'limits': limits}
