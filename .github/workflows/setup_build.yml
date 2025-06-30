@@ -163,12 +163,6 @@ jobs:
   
       - name: Enable Corepack
         run: corepack enable
-      
-      - name: Clean dist directory
-        run: |
-          rm -rf gui/dist
-          rm -rf gui/node_modules/.cache/
-          npm cache clean --force
 
       - name: Package CEA GUI
         env:
