@@ -13,6 +13,10 @@ from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
+from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
+from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
+from cea.datamanagement.format_helper.cea4_verify import cea4_verify
+from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -140,11 +144,29 @@ VALID_EXTENSIONS = {".shp", ".dbf", ".prj", ".cpg", ".shx",
                     ".epw", ".tiff", ".tif", ".txt",
                     ".feather"}
 
+
+class UploadScenarioResult(BaseModel):
+    class Info(BaseModel):
+        class Status(str, Enum):
+            PENDING = "pending"
+            WARNING = "warning"
+            SUCCESS = "success"
+            FAILED = "failed"
+            SKIPPED = "skipped"
+        
+        name: str
+        status: Status
+        message: Optional[str] = None
+
+    project: str
+    scenarios: List[Info]
+
+
 def filter_valid_files(file_list: List[str]) -> List[str]:
     return list(filter(lambda f: Path(f).suffix in VALID_EXTENSIONS, file_list))
 
 @router.post("/scenario/upload")
-async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot):
+async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot) -> UploadScenarioResult:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
@@ -183,6 +205,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         logger.error("Unable to determine operation")
         raise HTTPException(status_code=400, detail="Unknown operation type")
 
+    upload_result = UploadScenarioResult(project=project_name, scenarios=[])
     temp_file_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -223,6 +246,9 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 # Extract only valid files with extensions
                 for path in filter_valid_files(paths):
                     zf.extract(path, new_scenario_path)
+                
+                upload_result.scenarios.append(
+                    UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
 
             # Case 2: More than 1 scenario in zip
             scenario_names = []
@@ -263,6 +289,9 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                     logger.info(f"Extracting to {project_path}")
                     for path in filter_valid_files(scenario_files):
                         zf.extract(path, project_path)
+                    
+                    upload_result.scenarios.append(
+                        UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
 
                 # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
                 if parts[2] == "inputs":
@@ -281,6 +310,32 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                         logger.info(f"Moving {temp_scenario_path} to {project_path}")
                         shutil.move(temp_scenario_path, project_path)
 
+                    upload_result.scenarios.append(
+                        UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
+                    
+        # Validate all scenarios
+        for scenario in upload_result.scenarios:
+            scenario_path = os.path.join(project_path, scenario.name)
+            try:
+                migrate_cea3_to_cea4(scenario_path)
+                errors = cea4_verify(scenario_path)
+
+                migrate_cea3_to_cea4_db(scenario_path)
+                db_errors = cea4_verify_db(scenario_path, verbose=True)
+
+                if any(errors.values()) or any(db_errors.values()):
+                    raise ValueError("Verification failed even after migrating to CEA-4")
+                
+                scenario.status = UploadScenarioResult.Info.Status.SUCCESS
+            except ValueError as e:
+                logger.error(e)
+                scenario.status = UploadScenarioResult.Info.Status.WARNING
+                scenario.message = "Format issues found. Use CEA-4 Format Helper for details."
+            except Exception as e:
+                logger.error(e)
+                scenario.status = UploadScenarioResult.Info.Status.FAILED
+                scenario.message = "Unknown error when migrating scenario"
+
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -289,12 +344,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
-    # Return success response
-    return {
-        "status": "success",
-        "message": "File uploaded and processed successfully",
-        "project": project_name
-    }
+    return upload_result
 
 
 class DownloadScenario(BaseModel):

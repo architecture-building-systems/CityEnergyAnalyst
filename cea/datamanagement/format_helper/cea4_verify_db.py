@@ -5,6 +5,7 @@ Verify the format of DB for CEA-4 model.
 
 
 import os
+from typing import Dict, List
 import cea.config
 import time
 import pandas as pd
@@ -619,7 +620,7 @@ def add_values_to_dict(existing_dict, key, values):
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def cea4_verify_db(scenario, verbose=False):
+def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
     """
     Verify the database for the CEA-4 format.
 
