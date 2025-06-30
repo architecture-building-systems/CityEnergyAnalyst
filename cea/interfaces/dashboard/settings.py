@@ -21,6 +21,14 @@ class StackAuthSettings(BaseSettings):
     publishable_client_key: Optional[str] = None
 
 
+class LimitSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX + "limit_",
+                                      env_file=('.env', '.env.local'), extra="ignore")
+    num_projects: Optional[int] = None
+    num_scenarios: Optional[int] = None
+    num_buildings: Optional[int] = None
+
+
 class Settings(BaseSettings):
     # Use "cea_" as prefix for env vars
     model_config = SettingsConfigDict(env_prefix=ENV_VAR_PREFIX,
