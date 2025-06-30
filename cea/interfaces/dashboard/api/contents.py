@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
+import cea.config
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
@@ -20,6 +21,7 @@ from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.interfaces.dashboard.settings import LimitSettings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
@@ -187,6 +189,20 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
     project_name = form.project.strip()
     project_path = Path(secure_path(Path(project_root, project_name).resolve()))
+
+    limit_settings = LimitSettings()
+
+    if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= len(await get_project_choices(project_root)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum number of projects reached",
+        )
+
+    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= len(cea.config.get_scenarios_list(str(project_path))):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum number of scenarios reached",
+            )
 
     # Check for existing projects
     if form.type == "current" or form.type == "existing":
