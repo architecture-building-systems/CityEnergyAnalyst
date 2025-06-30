@@ -156,6 +156,9 @@ class ConfigProjectInfo(BaseModel):
     project: str
     scenario: str
 
+class NewScenarioInfo(BaseModel):
+    name: str
+
 async def get_project_choices(project_root):
     try:
         projects = []
@@ -571,6 +574,13 @@ async def check_scenario_exists(request: Request, scenario: str = Path()):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Scenario does not exist.',
         )
+    
+def validate_scenario_name(scenario_name: str):
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
 
 
 # FIXME: Potential Issue. Need to check if the scenario being deleted/renamed is running in scripts.
@@ -591,11 +601,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         return None
 
     scenario_name = os.path.normpath(new_scenario_name)
-    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
-        )
+    validate_scenario_name(scenario_name)
 
     try:
         new_path = secure_path(os.path.join(config.project, new_scenario_name))
@@ -636,6 +642,35 @@ async def delete(project_info: CEAProjectInfo, scenario: str):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Make sure that the scenario you are trying to delete is not open in any application. '
                    'Try and refresh the page again.',
+        )
+
+
+
+@router.post('/scenario/{scenario}/duplicate')
+async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_scenario_info: NewScenarioInfo):
+    """Duplicate Scenario"""
+    scenario_path = secure_path(os.path.join(project_info.project, scenario))
+
+    if not os.path.exists(scenario_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Scenario does not exist.',
+        )
+
+    new_scenario_name = new_scenario_info.name
+    validate_scenario_name(new_scenario_name)
+
+    new_path = secure_path(os.path.join(project_info.project, new_scenario_name))
+    try:
+        # TODO: Check for any current open scenarios or jobs
+        # TODO: Copy only necessary files
+        shutil.copytree(scenario_path, new_path)
+        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
+    except OSError as e:
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Unable to duplicate scenario.',
         )
 
 
