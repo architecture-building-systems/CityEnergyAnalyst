@@ -630,7 +630,6 @@ async def delete_project(project_root: CEAProjectRoot, project_info: ProjectPath
         project_path = os.path.join(project_root, project_path)
 
     project = secure_path(project_path)
-    print(project)
     if not os.path.exists(project):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
