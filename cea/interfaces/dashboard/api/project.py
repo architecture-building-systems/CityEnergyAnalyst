@@ -27,7 +27,7 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, 
     CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings
+from cea.interfaces.dashboard.settings import LimitSettings, get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -178,7 +178,7 @@ async def get_project_choices(project_root):
         )
     except FileNotFoundError:
         raise HTTPException(
-            status_code=404,
+            status_code=400,
             detail="Project root directory not found",
         )
     except OSError as e:
@@ -249,13 +249,16 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     """
     Create new project folder
     """
+    settings = get_settings()
     limit_settings = LimitSettings()
-    num_projects = len(await get_project_choices(project_root))
-    if limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
-        )
+    # FIXME: project_choices will not work if project_root is not a directory
+    if not settings.local and os.path.exists(project_root):
+        num_projects = len(await get_project_choices(project_root))
+        if limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
+            )
 
     if new_project.project_root is None and project_root is None:
         raise HTTPException(
@@ -350,13 +353,15 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             detail=str(e),
         )
     
+    settings = get_settings()
     limit_settings = LimitSettings()
-    num_scenarios = len(cea.config.get_scenarios_list(cea_project))
-    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
-        )
+    if not settings.local:
+        num_scenarios = len(cea.config.get_scenarios_list(cea_project))
+        if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+            )
 
     scenario_name = os.path.normpath(scenario_form.scenario_name)
     if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
@@ -388,13 +393,13 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
 
-            limit_settings = LimitSettings()
-            num_buildings = len(zone_df)
-            if limit_settings.num_buildings is not None and limit_settings.num_buildings <= num_buildings:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {num_buildings}",
-                )
+            if not settings.local:
+                num_buildings = len(zone_df)
+                if limit_settings.num_buildings is not None and limit_settings.num_buildings <= num_buildings:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {num_buildings}",
+                    )
 
         # Copy zone from user-input
         else:
