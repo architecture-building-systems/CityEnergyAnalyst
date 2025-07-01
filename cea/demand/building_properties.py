@@ -328,8 +328,7 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
-                  'empty_envelope_ratio', 'Awall_ag', 'footprint']
+                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
@@ -392,11 +391,8 @@ class BuildingProperties(object):
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 
-        df['empty_envelope_ratio'] = 1 - df["void_deck"] / df["floors_ag"] # same formula in cea\analysis\lca\embodied.py line 191
 
         # adjust envelope areas with Void_deck
-        df['Awin_ag'] = df['Awin_ag'] * df['empty_envelope_ratio']
-        df['Awall_ag'] = df['Awall_ag'] * df['empty_envelope_ratio']
         df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
 
         # get other quantities.
@@ -992,7 +988,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
     return result
 
 
-def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface):
+def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_rc_model, thermal_resistance_surface):
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -1022,8 +1018,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_wall = I_sol_wall * \
                  prop_envelope.loc[building_name, 'a_wall'] * \
                  thermal_resistance_surface['RSE_wall'] * \
-                 prop_rc_model.loc[building_name, 'U_wall'] * \
-                 prop_rc_model.loc[building_name, 'empty_envelope_ratio']
+                 prop_rc_model.loc[building_name, 'U_wall']
 
     # sum roof
     # solar incident on all roofs [W]
@@ -1047,8 +1042,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     I_sol_win = I_sol_win * \
                 Fsh_win * \
-                (1 - prop_envelope.loc[building_name, 'F_F']) * \
-                prop_rc_model.loc[building_name, 'empty_envelope_ratio']
+                (1 - prop_envelope.loc[building_name, 'F_F'])
     
     #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
     I_sol_base = np.zeros_like(I_sol_win) * thermal_resistance_surface['RSE_base'] 
