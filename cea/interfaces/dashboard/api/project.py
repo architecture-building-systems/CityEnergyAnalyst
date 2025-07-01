@@ -178,7 +178,7 @@ async def get_project_choices(project_root):
         )
     except FileNotFoundError:
         raise HTTPException(
-            status_code=404,
+            status_code=400,
             detail="Project root directory not found",
         )
     except OSError as e:
@@ -251,7 +251,8 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     """
     settings = get_settings()
     limit_settings = LimitSettings()
-    if not settings.local:
+    # FIXME: project_choices will not work if project_root is not a directory
+    if not settings.local and os.path.exists(project_root):
         num_projects = len(await get_project_choices(project_root))
         if limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
             raise HTTPException(
