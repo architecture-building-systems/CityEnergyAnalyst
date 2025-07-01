@@ -4,6 +4,7 @@ Verify the format of the input data for CEA-4 model.
 """
 
 import os
+from typing import Dict, List
 import cea.config
 import time
 import geopandas as gpd
@@ -433,7 +434,7 @@ def add_values_to_dict(existing_dict, key, values):
 ## Unique traits for the CEA-4 format
 ## --------------------------------------------------------------------------------------------------------------------
 
-def cea4_verify(scenario, verbose=False):
+def cea4_verify(scenario, verbose=False) -> Dict[str, List[str]]:
 
     #1. about zone.shp and surroundings.shp
     list_missing_attributes_zone = []

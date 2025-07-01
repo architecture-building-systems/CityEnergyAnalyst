@@ -27,6 +27,7 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, 
     CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.interfaces.dashboard.settings import LimitSettings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -44,11 +45,12 @@ GENERATE_TERRAIN_CEA = 'generate-terrain-cea'
 GENERATE_STREET_CEA = 'generate-street-cea'
 EMTPY_GEOMETRY = 'none'
 
+class ProjectPath(BaseModel):
+    project: str
 
 class ScenarioPath(BaseModel):
     project: str
     scenario_name: str
-
 
 class NewProject(BaseModel):
     project_name: str
@@ -156,6 +158,9 @@ class ConfigProjectInfo(BaseModel):
     project: str
     scenario: str
 
+class NewScenarioInfo(BaseModel):
+    name: str
+
 async def get_project_choices(project_root):
     try:
         projects = []
@@ -165,7 +170,7 @@ async def get_project_choices(project_root):
                 # Optionally: Add validation that this is a valid project directory
                 projects.append(_path)
         if not projects:
-            return {"projects": [], "warning": "No valid projects found in directory"}
+            logger.warning("No valid projects found in directory")
     except PermissionError:
         raise HTTPException(
             status_code=403,
@@ -244,6 +249,14 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
     """
     Create new project folder
     """
+    limit_settings = LimitSettings()
+    num_projects = len(await get_project_choices(project_root))
+    if limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
+        )
+
     if new_project.project_root is None and project_root is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -336,6 +349,14 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+    
+    limit_settings = LimitSettings()
+    num_scenarios = len(cea.config.get_scenarios_list(cea_project))
+    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+        )
 
     scenario_name = os.path.normpath(scenario_form.scenario_name)
     if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
@@ -366,6 +387,14 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
 
             # Ensure that zone exists
             zone_df = geopandas.read_file(locator.get_zone_geometry())
+
+            limit_settings = LimitSettings()
+            num_buildings = len(zone_df)
+            if limit_settings.num_buildings is not None and limit_settings.num_buildings <= num_buildings:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Maximum number of buildings reached ({limit_settings.num_buildings}). Number of buildings found: {num_buildings}",
+                )
 
         # Copy zone from user-input
         else:
@@ -571,6 +600,13 @@ async def check_scenario_exists(request: Request, scenario: str = Path()):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Scenario does not exist.',
         )
+    
+def validate_scenario_name(scenario_name: str):
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
 
 
 # FIXME: Potential Issue. Need to check if the scenario being deleted/renamed is running in scripts.
@@ -591,11 +627,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         return None
 
     scenario_name = os.path.normpath(new_scenario_name)
-    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
-        )
+    validate_scenario_name(scenario_name)
 
     try:
         new_path = secure_path(os.path.join(config.project, new_scenario_name))
@@ -615,11 +647,45 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
-@router.delete('/scenario/{scenario}', dependencies=[CEASeverDemoAuthCheck])
-async def delete(project_info: CEAProjectInfo, scenario: str):
-    """Delete scenario from project"""
-    scenario_path = secure_path(os.path.join(project_info.project, scenario))
+@router.delete('/', dependencies=[CEASeverDemoAuthCheck])
+async def delete_project(project_root: CEAProjectRoot, project_info: ProjectPath):
+    """Delete project"""
+    project_path = project_info.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
 
+    project = secure_path(project_path)
+    if not os.path.exists(project):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Project does not exist.',
+        )
+
+    try:
+        # TODO: Check for any current open scenarios or jobs
+        shutil.rmtree(project)
+        return {'message': 'Project deleted', 'project': project_info.project}
+    except OSError as e:
+        traceback.print_exc()
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Make sure that the project you are trying to delete is not open in any application. '
+                   'Try and refresh the page again.',
+        )
+
+@router.delete('/scenario', dependencies=[CEASeverDemoAuthCheck])
+async def delete_scenario(project_root: CEAProjectRoot, scenario_info: ScenarioPath):
+    """Delete scenario from project"""
+    project_path = scenario_info.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    project = secure_path(project_path)
+    scenario = scenario_info.scenario_name
+    validate_scenario_name(scenario)
+
+    scenario_path = secure_path(os.path.join(project, scenario))
     if not os.path.exists(scenario_path):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -629,13 +695,43 @@ async def delete(project_info: CEAProjectInfo, scenario: str):
     try:
         # TODO: Check for any current open scenarios or jobs
         shutil.rmtree(scenario_path)
-        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
-    except OSError:
+        return {'scenarios': cea.config.get_scenarios_list(project)}
+    except OSError as e:
         traceback.print_exc()
+        logger.error(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Make sure that the scenario you are trying to delete is not open in any application. '
                    'Try and refresh the page again.',
+        )
+
+
+
+@router.post('/scenario/{scenario}/duplicate', dependencies=[CEASeverDemoAuthCheck])
+async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_scenario_info: NewScenarioInfo):
+    """Duplicate Scenario"""
+    scenario_path = secure_path(os.path.join(project_info.project, scenario))
+
+    if not os.path.exists(scenario_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Scenario does not exist.',
+        )
+
+    new_scenario_name = new_scenario_info.name
+    validate_scenario_name(new_scenario_name)
+
+    new_path = secure_path(os.path.join(project_info.project, new_scenario_name))
+    try:
+        # TODO: Check for any current open scenarios or jobs
+        # TODO: Copy only necessary files
+        shutil.copytree(scenario_path, new_path)
+        return {'scenarios': cea.config.get_scenarios_list(project_info.project)}
+    except OSError as e:
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Unable to duplicate scenario.',
         )
 
 

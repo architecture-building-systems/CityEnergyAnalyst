@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import groupby
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -18,7 +18,7 @@ class ToolDescription(BaseModel):
     name: str
     label: str
     description: str
-
+    short_description: Optional[str] = None
 
 class ToolProperties(ToolDescription):
     category: str
@@ -33,7 +33,7 @@ async def get_tool_list() -> Dict[str, List[ToolDescription]]:
     result = dict()
     for category, group in groupby(tools, lambda t: t.category):
         result[category] = [
-            ToolDescription(name=t.name, label=t.label, description=t.description) for t in group
+            ToolDescription(name=t.name, label=t.label, description=t.description, short_description=t.short_description) for t in group
         ]
     return result
 
@@ -57,6 +57,7 @@ async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperti
         name=tool_name,
         label=script.label,
         description=script.description,
+        short_description=script.short_description,
         category=script.category,
         categorical_parameters=categories,
         parameters=parameters,
