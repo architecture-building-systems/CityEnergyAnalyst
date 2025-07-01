@@ -102,13 +102,17 @@ def calc_h_em(h_op_m: float, h_mc: float) -> float:
 
     :param h_op_m: total heat loss factor: `U_op * A_op`, including conduction, convection and radiation.
     :type h_op_m: float
-    :param h_mc: heat loss factor due to convection and radiation.
+    :param h_mc: heat loss factor from thermal mass to internal air due to convection and radiation.
     :type h_mc: float
     :return: heat loss factor due to only conduction between mass node and outside.
     :rtype: float
     """
-    # 
-    h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
+    if h_op_m > 0:
+        h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
+    else:
+        # h_op_m = 0, no heat transfer from mass to outside air. 
+        # Therefore h_em (part of heat transfer from mass to outside air) should also be 0.
+        h_em = 0
 
     return h_em
 
