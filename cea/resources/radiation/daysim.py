@@ -27,6 +27,7 @@ from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
+    from cea.resources.radiation.radiance import CEADaySim
 
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
@@ -275,7 +276,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data,
+def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, radiance_parameters, write_sensor_data,
                      grid_size: GridSize,
                      max_global, weatherfile, geometry_pickle_dir):
     # initialize daysim project

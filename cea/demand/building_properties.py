@@ -312,7 +312,7 @@ class BuildingProperties(object):
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
         df['HD'] = (df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
                     + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
-                    + is_floating * df['footprint'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
+                    + is_floating * df['Aunderside'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
                     )
         # steady-state Thermal transmission coefficient to the ground. in W/K
         # Aop_bg: opaque surface area below ground level;
@@ -328,7 +328,7 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'Awall_ag', 'footprint']
+                  'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
@@ -375,6 +375,7 @@ class BuildingProperties(object):
         envelope['Awall_ag'] = np.nan
         envelope['Awin_ag'] = np.nan
         envelope['Aroof'] = np.nan
+        envelope['Aunderside'] = np.nan
 
         # call all building geometry files in a loop
         for building_name in self.building_names:
@@ -388,6 +389,7 @@ class BuildingProperties(object):
                                                      geometry_data['windows_south_m2'][0] + \
                                                      geometry_data['windows_north_m2'][0]
             envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 

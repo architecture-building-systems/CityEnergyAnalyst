@@ -49,7 +49,7 @@ __status__ = "Production"
 from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
                                                    crs_to_epsg)
 
-SURFACE_TYPES = ['walls', 'windows', 'roofs']
+SURFACE_TYPES = ['walls', 'windows', 'roofs', 'undersides']
 SURFACE_DIRECTION_LABELS = {'windows_east',
                             'windows_west',
                             'windows_south',
@@ -58,7 +58,9 @@ SURFACE_DIRECTION_LABELS = {'windows_east',
                             'walls_west',
                             'walls_south',
                             'walls_north',
-                            'roofs_top'}
+                            'roofs_top',
+                            'undersides_bottom',
+                            }
 
 
 def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS_Face], 
@@ -378,11 +380,14 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2, dist=100):
 
 
 class BuildingGeometry(object):
-    __slots__ = ["name", "footprint", "terrain_elevation",
-                 "windows", "orientation_windows", "normals_windows", "intersect_windows",
-                 "walls",   "orientation_walls",   "normals_walls",   "intersect_walls",
-                 "roofs",   "orientation_roofs",   "normals_roofs",   "intersect_roofs",
+    __slots__ = ["name", "terrain_elevation", "footprint",
+                 "windows",    "orientation_windows",    "normals_windows",    "intersect_windows",
+                 "walls",      "orientation_walls",      "normals_walls",      "intersect_walls",
+                 "roofs",      "orientation_roofs",      "normals_roofs",      "intersect_roofs",
+                 "undersides", "orientation_undersides", "normals_undersides", "intersect_undersides",
                 ]
+    # footprint means the building's projection on the ground, 
+    # undersides means the bottom surface of the building.
 
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -498,14 +503,20 @@ def calc_building_geometry_zone(name: str,
     process_facade(facade_list_south, wwr_south, 'south')
 
     intersect_windows = [0] * len(window_list)
+
     _, _, _, normals_roof, intersect_roof = calc_windows_walls(roof_list, 0.0, potentially_intersecting_solids)
     orientation_roofs = ["top"] * len(roof_list)
 
-    geometry_3D_zone = {"name": name, "footprint": footprint_list, 
-                        "windows": window_list, "orientation_windows": orientation_win, "normals_windows": normals_win, "intersect_windows": intersect_windows,
-                        "walls": wall_list,     "orientation_walls": orientation,       "normals_walls": normals_walls, "intersect_walls": intersect_wall,
-                        "roofs": roof_list,     "orientation_roofs": orientation_roofs, "normals_roofs": normals_roof, "intersect_roofs": intersect_roof,
+    _, _, _, normals_footprint, intersect_footprint = calc_windows_walls(footprint_list, 0.0, potentially_intersecting_solids)
+    orientation_footprint = ["bottom"] * len(footprint_list)
+
+    geometry_3D_zone = {"name": name, "footprint": footprint_list,
+                        "windows": window_list,       "orientation_windows": orientation_win,          "normals_windows": normals_win,          "intersect_windows": intersect_windows,
+                        "walls": wall_list,           "orientation_walls": orientation,                "normals_walls": normals_walls,          "intersect_walls": intersect_wall,
+                        "roofs": roof_list,           "orientation_roofs": orientation_roofs,          "normals_roofs": normals_roof,           "intersect_roofs": intersect_roof,
+                        "undersides": footprint_list, "orientation_undersides": orientation_footprint, "normals_undersides": normals_footprint, "intersect_undersides": intersect_footprint, 
                         }
+    # see class BuildingGeometry for the difference between footprint and undersides.
 
     building_geometry = BuildingGeometry(**geometry_3D_zone, terrain_elevation=elevation)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'zone', str(name)))
