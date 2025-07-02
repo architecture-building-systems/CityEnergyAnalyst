@@ -89,11 +89,10 @@ class CreateScenario(BaseModel):
 
     @staticmethod
     async def _get_geometry_data(file: Union[str, UploadFile], filename: str) -> GeoDataFrame:
-        source = file
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            if isinstance(source, _UploadFile):
-
+        if isinstance(file, str):
+            file_path = file
+        elif isinstance(file, _UploadFile):  # Save file to temporary directory if it is a UploadFile
+            with tempfile.TemporaryDirectory() as tmpdir:
                 def extract_zip(filestream: bytes, destination: str) -> None:
                     import zipfile
                     from io import BytesIO
@@ -101,16 +100,21 @@ class CreateScenario(BaseModel):
                     with zipfile.ZipFile(BytesIO(filestream)) as zf:
                         zf.extractall(destination)
 
-                extract_zip(await source.read(), tmpdir)
+                try:
+                    extract_zip(await file.read(), tmpdir)
 
-                source = os.path.join(tmpdir, filename)
-                if not os.path.exists(source):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f'Could not find {filename} in zip file',
-                    )
+                    file_path = os.path.join(tmpdir, filename)
+                    if not os.path.exists(file_path):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f'Could not find {filename} in zip file',
+                        )
+                finally:
+                    # Explicitly close file buffer
+                    await file.close()
 
-            data = geopandas.read_file(source).to_crs(get_geographic_coordinate_system())
+        # Read file from path
+        data = geopandas.read_file(file_path).to_crs(get_geographic_coordinate_system())
         return data
 
     async def get_zone_file(self):
@@ -456,7 +460,14 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             if extension == ".dbf":
                 typology_df = dbf_to_dataframe(scenario_form.typology)
             elif extension == ".xlsx":
-                typology_df = pd.read_excel(scenario_form.typology)
+                # Explicitly handle Excel file resources
+                try:
+                    typology_df = pd.read_excel(scenario_form.typology)
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Failed to read Excel file: {str(e)}"
+                    )
             else:
                 raise Exception("Typology file must be a .dbf or .xlsx file")
 
@@ -509,9 +520,15 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             async with scenario_form.get_terrain_file() as terrain_path:
                 # Ensure terrain is the same projection system
                 terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-                driver = gdal.GetDriverByName('GTiff')
-                verify_input_terrain(terrain)
-                driver.CreateCopy(locator.get_terrain(), terrain)
+                try:
+                    driver = gdal.GetDriverByName('GTiff')
+                    verify_input_terrain(terrain)
+                    driver.CreateCopy(locator.get_terrain(), terrain)
+                finally:
+                    # Properly close GDAL objects to prevent resource warnings
+                    if terrain is not None:
+                        terrain = None
+                    driver = None
 
     async def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
