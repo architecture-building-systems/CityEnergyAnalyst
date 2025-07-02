@@ -35,7 +35,7 @@ def raster_to_WSG_and_UTM(raster_path, lat, lon):
         inSRS_converter.ImportFromProj4(get_projected_coordinate_system(lat, lon))
         target_projection_wkt = inSRS_converter.ExportToWkt()
         new_raster = gdal.AutoCreateWarpedVRT(raster, source_projection_wkt, target_projection_wkt,
-                                            gdal.GRA_NearestNeighbour)
+                                              gdal.GRA_NearestNeighbour)
     finally:
         raster = None
     return new_raster
