@@ -59,14 +59,17 @@ def get_projected_coordinate_system(lat, lon):
     # UTM North zones: 32601-32660
     # UTM South zones: 32701-32760
 
-    is_northern = zone_letter >= 'N'
-    epsg = f"326{zone_number}" if is_northern else f"327{zone_number}"
+    is_northern = zone_letter is not None and zone_letter >= 'N'
+    epsg = f"326{zone_number:02d}" if is_northern else f"327{zone_number:02d}"
 
     return CRS.from_epsg(int(epsg)).to_wkt()
 
 
 def crs_to_epsg(crs: str) -> int:
-    return CRS.from_string(crs).to_epsg()
+    epsg = CRS.from_string(crs).to_epsg()
+    if epsg is None:
+        raise ValueError(f"Could not determine EPSG code for CRS: {crs}")
+    return epsg
 
 
 def get_lat_lon_projected_shapefile(data):
