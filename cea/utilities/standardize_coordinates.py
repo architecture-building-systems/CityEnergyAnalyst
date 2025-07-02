@@ -28,17 +28,24 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
 
 
 def raster_to_WSG_and_UTM(raster_path, lat, lon):
+    raster = None
     try:
         raster = gdal.Open(raster_path)
+        if raster is None:
+            raise ValueError(f"Could not open raster file: {raster_path}")
+            
         source_projection_wkt = raster.GetProjection()
         inSRS_converter = osr.SpatialReference()
         inSRS_converter.ImportFromProj4(get_projected_coordinate_system(lat, lon))
         target_projection_wkt = inSRS_converter.ExportToWkt()
+        
         new_raster = gdal.AutoCreateWarpedVRT(raster, source_projection_wkt, target_projection_wkt,
                                               gdal.GRA_NearestNeighbour)
+        return new_raster
     finally:
-        raster = None
-    return new_raster
+        # Properly close the source raster
+        if raster is not None:
+            raster = None
 
 
 def get_geographic_coordinate_system():
