@@ -90,18 +90,18 @@ class CreateScenario(BaseModel):
     @staticmethod
     async def _get_geometry_data(file: Union[str, UploadFile], filename: str) -> GeoDataFrame:
         if isinstance(file, str):
-            file_path = file
-        elif isinstance(file, _UploadFile):  # Save file to temporary directory if it is a UploadFile
+            data = geopandas.read_file(file).to_crs(get_geographic_coordinate_system())
+            return data
+        
+         # Save file to temporary directory if it is a UploadFile
+        elif isinstance(file, _UploadFile):                 
             with tempfile.TemporaryDirectory() as tmpdir:
-                def extract_zip(filestream: bytes, destination: str) -> None:
+                try:
                     import zipfile
                     from io import BytesIO
 
-                    with zipfile.ZipFile(BytesIO(filestream)) as zf:
-                        zf.extractall(destination)
-
-                try:
-                    extract_zip(await file.read(), tmpdir)
+                    with zipfile.ZipFile(BytesIO(await file.read())) as zf:
+                        zf.extractall(tmpdir)
 
                     file_path = os.path.join(tmpdir, filename)
                     if not os.path.exists(file_path):
@@ -109,13 +109,17 @@ class CreateScenario(BaseModel):
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f'Could not find {filename} in zip file',
                         )
+                    
+                    data = geopandas.read_file(file_path).to_crs(get_geographic_coordinate_system())
+                    return data
                 finally:
                     # Explicitly close file buffer
                     await file.close()
 
-        # Read file from path
-        data = geopandas.read_file(file_path).to_crs(get_geographic_coordinate_system())
-        return data
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Could not process file: {filename}',
+        )
 
     async def get_zone_file(self):
         return await self._get_geometry_data(self.user_zone, "zone.shp")
