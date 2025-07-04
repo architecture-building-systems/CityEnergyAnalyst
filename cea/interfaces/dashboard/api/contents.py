@@ -384,6 +384,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
     finally:
+        # Explicitly close file buffer
+        await form.file.close()
         # Clean up temp file
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)

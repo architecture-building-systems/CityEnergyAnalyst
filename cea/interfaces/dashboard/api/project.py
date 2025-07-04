@@ -89,29 +89,37 @@ class CreateScenario(BaseModel):
 
     @staticmethod
     async def _get_geometry_data(file: Union[str, UploadFile], filename: str) -> GeoDataFrame:
-        source = file
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            if isinstance(source, _UploadFile):
-
-                def extract_zip(filestream: bytes, destination: str) -> None:
+        if isinstance(file, str):
+            data = geopandas.read_file(file).to_crs(get_geographic_coordinate_system())
+            return data
+        
+         # Save file to temporary directory if it is a UploadFile
+        if isinstance(file, _UploadFile):                 
+            with tempfile.TemporaryDirectory() as tmpdir:
+                try:
                     import zipfile
                     from io import BytesIO
 
-                    with zipfile.ZipFile(BytesIO(filestream)) as zf:
-                        zf.extractall(destination)
+                    with zipfile.ZipFile(BytesIO(await file.read())) as zf:
+                        zf.extractall(tmpdir)
 
-                extract_zip(await source.read(), tmpdir)
+                    file_path = os.path.join(tmpdir, filename)
+                    if not os.path.exists(file_path):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f'Could not find {filename} in zip file',
+                        )
+                    
+                    data = geopandas.read_file(file_path).to_crs(get_geographic_coordinate_system())
+                    return data
+                finally:
+                    # Explicitly close file buffer
+                    await file.close()
 
-                source = os.path.join(tmpdir, filename)
-                if not os.path.exists(source):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f'Could not find {filename} in zip file',
-                    )
-
-            data = geopandas.read_file(source).to_crs(get_geographic_coordinate_system())
-        return data
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Could not process file: {filename}',
+        )
 
     async def get_zone_file(self):
         return await self._get_geometry_data(self.user_zone, "zone.shp")
@@ -456,7 +464,14 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             if extension == ".dbf":
                 typology_df = dbf_to_dataframe(scenario_form.typology)
             elif extension == ".xlsx":
-                typology_df = pd.read_excel(scenario_form.typology)
+                # Explicitly handle Excel file resources
+                try:
+                    typology_df = pd.read_excel(scenario_form.typology)
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Failed to read Excel file: {str(e)}"
+                    )
             else:
                 raise Exception("Typology file must be a .dbf or .xlsx file")
 
@@ -509,9 +524,15 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             async with scenario_form.get_terrain_file() as terrain_path:
                 # Ensure terrain is the same projection system
                 terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
-                driver = gdal.GetDriverByName('GTiff')
-                verify_input_terrain(terrain)
-                driver.CreateCopy(locator.get_terrain(), terrain)
+                try:
+                    driver = gdal.GetDriverByName('GTiff')
+                    verify_input_terrain(terrain)
+                    driver.CreateCopy(locator.get_terrain(), terrain)
+                finally:
+                    # Properly close GDAL objects to prevent resource warnings
+                    if terrain is not None:
+                        terrain = None
+                    driver = None
 
     async def create_street(scenario_form, locator):
         if scenario_form.should_generate_street():
