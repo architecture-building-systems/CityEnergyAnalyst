@@ -94,7 +94,7 @@ class CreateScenario(BaseModel):
             return data
         
          # Save file to temporary directory if it is a UploadFile
-        elif isinstance(file, _UploadFile):                 
+        if isinstance(file, _UploadFile):                 
             with tempfile.TemporaryDirectory() as tmpdir:
                 try:
                     import zipfile
