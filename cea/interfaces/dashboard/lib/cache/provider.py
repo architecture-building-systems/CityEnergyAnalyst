@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from aiocache import SimpleMemoryCache, RedisCache
 from aiocache.serializers import PickleSerializer
@@ -12,7 +12,7 @@ logger = getCEAServerLogger("cea-cache")
 _cache_instance = None
 
 
-def parse_connection_string(connection_string: str) -> Tuple[str, str, str]:
+def parse_connection_string(connection_string: str) -> Tuple[str, Optional[str], Optional[str]]:
     """Parse a connection string and extract authentication information"""
     # Parse connection string if it contains authentication info
     host = connection_string
@@ -69,6 +69,23 @@ async def get_dict_cache(key: str) -> AsyncDictCache:
         logger.debug(f"Created new cache for key: {key}")
 
     return AsyncDictCache(_cache, key)
+
+
+async def cleanup_cache_connections():
+    """Clean up cache connections on application shutdown."""
+    global _cache_instance
+    if _cache_instance is not None:
+        try:
+            # Close cache connections - different methods for different cache types
+            if hasattr(_cache_instance, 'close'):
+                await _cache_instance.close()
+                logger.info("Closed cache connections")
+            else:
+                logger.info("Cache cleanup not required for this cache type")
+        except Exception as e:
+            logger.error(f"Error closing cache connections: {e}")
+        finally:
+            _cache_instance = None
 
 # Initialise cache object
 get_cache()

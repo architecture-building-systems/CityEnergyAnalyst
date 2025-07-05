@@ -1,7 +1,7 @@
 """
 A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 """
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -59,14 +59,17 @@ def dataframe_to_dbf(df: pd.DataFrame, dbf_path: str, specs=None) -> str:
     return dbf_path
 
 
-def dbf_to_dataframe(dbf_path, index: str = None, cols: List[str] = None) -> pd.DataFrame:
+def dbf_to_dataframe(dbf_path, index: Optional[str] = None, cols: Optional[List[str]] = None) -> pd.DataFrame:
     dbf = libpysal.io.open(dbf_path)
-    if cols is None:
-        cols = dbf.header
 
-    data = dbf.read()
-    df = pd.DataFrame(data, columns=dbf.header)
-    dbf.close()
+    try:
+        if cols is None:
+            cols = dbf.header
+
+        data = dbf.read()
+        df = pd.DataFrame(data, columns=dbf.header)
+    finally:
+        dbf.close()
 
     out = df.loc[:, cols]
     if index:

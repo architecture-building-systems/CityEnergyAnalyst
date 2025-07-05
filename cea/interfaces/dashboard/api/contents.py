@@ -21,7 +21,7 @@ from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings
+from cea.interfaces.dashboard.settings import LimitSettings, get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
@@ -190,19 +190,21 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     project_name = form.project.strip()
     project_path = Path(secure_path(Path(project_root, project_name).resolve()))
 
+    settings = get_settings()
     limit_settings = LimitSettings()
-    num_projects = len(await get_project_choices(project_root))
-    if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
-        )
-    num_scenarios = len(cea.config.get_scenarios_list(str(project_path)))
-    if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+    if not settings.local:
+        num_projects = len(await get_project_choices(project_root))
+        if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Maximum number of projects reached ({limit_settings.num_projects}). Number of projects found: {num_projects}",
             )
+        num_scenarios = len(cea.config.get_scenarios_list(str(project_path)))
+        if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+                )
 
     # Check for existing projects
     if form.type == "current" or form.type == "existing":
@@ -299,12 +301,14 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                                     detail=f"Scenarios {existing_scenario_names} already exists in project")
             
             # Recheck number of scenarios after extraction
-            num_scenarios += len(scenario_names)
-            if limit_settings.num_scenarios is not None and limit_settings.num_scenarios < num_scenarios:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
-                    )
+            if not settings.local:
+                num_scenarios = len(cea.config.get_scenarios_list(str(project_path)))
+                num_scenarios += len(scenario_names)
+                if limit_settings.num_scenarios is not None and limit_settings.num_scenarios < num_scenarios:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
+                        )
 
 
             for potential_scenario in potential_scenario_paths:
@@ -380,6 +384,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
     finally:
+        # Explicitly close file buffer
+        await form.file.close()
         # Clean up temp file
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
