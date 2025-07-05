@@ -763,9 +763,14 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     theta_ea = rc_model_temperatures['theta_ea']
 
     # backwards calculate individual heat transfer coefficient
-    h_wall_em = h_em * bpr.rc_model['Awall_ag'] * bpr.rc_model['U_wall'] / h_op_m
-    h_base_em = h_em * bpr.rc_model['Aop_bg'] * B_F * bpr.rc_model['U_base'] / h_op_m
-    h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
+    if h_op_m == 0:
+        h_wall_em = 0.0
+        h_base_em = 0.0
+        h_roof_em = 0.0
+    else:
+        h_wall_em = h_em * bpr.rc_model['Awall_ag'] * bpr.rc_model['U_wall'] / h_op_m
+        h_base_em = h_em * bpr.rc_model['Aop_bg'] * B_F * bpr.rc_model['U_base'] / h_op_m
+        h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
     tsd['Q_gain_sen_wall'][t] = h_wall_em * (theta_em - theta_m)
