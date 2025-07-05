@@ -66,7 +66,7 @@ def geometry_extractor_osm(locator, config):
     try:
         G = osmnx.graph_from_bbox(north=lat_max, south=lat_min, east=lon_max, west=lon_min,
                                   network_type=type_streets)
-    except networkx.exception.NetworkXPointlessConcept:
+    except (ValueError, networkx.exception.NetworkXPointlessConcept):
         print("Unable to find streets in the area (empty graph returned from Open Street Maps). No streets will be extracted.")
         return
     
