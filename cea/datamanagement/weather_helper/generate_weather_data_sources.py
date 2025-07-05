@@ -39,6 +39,10 @@ def main():
     combined_tmyx = pd.concat([latest_tmyx, diff_tmyx])
     combined_tmyx["url"] = combined_tmyx["URL"].str.extract(r'https?://climate.onebuilding.org/([^ ]+\.zip)')
 
+    # Rename Turkey to Turkiye
+    tur_rows = combined_tmyx.loc[combined_tmyx["url"].str.contains("TUR_Turkey")]
+    combined_tmyx.loc[tur_rows.index, "url"] = tur_rows["url"].str.replace("TUR_Turkey", "TUR_Turkiye")
+
     # Write to geojson
     gdf = gpd.GeoDataFrame(
         combined_tmyx,
