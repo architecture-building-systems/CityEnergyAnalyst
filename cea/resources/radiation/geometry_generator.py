@@ -33,7 +33,6 @@ import cea.utilities.parallel
 
 if TYPE_CHECKING:
     import geopandas as gpd
-    from osgeo import gdal
     from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
     import shapely
 
@@ -387,7 +386,7 @@ class BuildingGeometry(object):
                  "walls",      "orientation_walls",      "normals_walls",      "intersect_walls",
                  "roofs",      "orientation_roofs",      "normals_roofs",      "intersect_roofs",
                  "undersides", "orientation_undersides", "normals_undersides", "intersect_undersides",
-                ]
+                 ]
     # footprint means the building's projection on the ground, 
     # undersides means the bottom surface of the building.
 

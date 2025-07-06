@@ -159,9 +159,9 @@ def calc_h_ea(m_ve_mech: float, m_ve_window: float, m_ve_inf_simple: float) -> f
 
     :param m_ve_mech: mass flow rate for mechanical ventilation in [kg/s]
     :type m_ve_mech: float
-    :param m_ve_window: mass flow for rate window ventilation in [m3/s]
+    :param m_ve_window: mass flow rate for window ventilation in [kg/s]
     :type m_ve_window: float
-    :param m_ve_inf_simple: mass flow rate for infiltration in [m3/s]
+    :param m_ve_inf_simple: mass flow rate for infiltration in [kg/s]
     :type m_ve_inf_simple: float
     :return: `h_ea`: heat loss factor from outside to the air node, used in 5R1C model.
     :rtype: float
