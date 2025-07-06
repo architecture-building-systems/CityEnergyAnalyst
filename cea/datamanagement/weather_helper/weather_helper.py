@@ -42,6 +42,9 @@ def fetch_weather_data(weather_file: str, zone_file: str):
 
     print(f"Downloading weather data: {url}")
     r = requests.get(url)
+    if r.status_code != 200:
+        raise ValueError(f"Failed to download weather data from {url}")
+
     with TemporaryDirectory() as tmpdir, ZipFile(BytesIO(r.content)) as z:
         for file_info in z.infolist():
             if file_info.filename.endswith('.epw'):
