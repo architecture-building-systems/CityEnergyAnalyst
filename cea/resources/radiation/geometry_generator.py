@@ -205,6 +205,8 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
 
     height = buildings_df['height_ag'].astype(float)
     nfloors = buildings_df['floors_ag'].astype(int)
+    if 'void_deck' not in buildings_df.columns:
+        buildings_df['void_deck'] = 0
     void_decks = buildings_df['void_deck'].astype(int)
     # range_floors = nfloors.map(lambda floors: range(floors + 1))
     # check if each building's void deck is smaller or equal to the number of floors.
