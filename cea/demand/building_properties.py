@@ -658,7 +658,7 @@ class EnvelopeProperties(object):
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
         self.e_roof = envelope['e_roof']
-        self.e_base = 0.0 # dummy values for emissivity of base as 0.
+        self.e_underside = 0.0 # dummy values for emissivity of underside (bottom surface) as 0.
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
@@ -979,7 +979,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
 
     # for every building
     for building_name in building_names:
-        thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win', 'RSE_base'],
+        thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win', 'RSE_underside'],
                                               get_thermal_resistance_surface(prop_envelope.loc[building_name],
                                                                              weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
@@ -1047,10 +1047,10 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
                 (1 - prop_envelope.loc[building_name, 'F_F'])
     
     #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
-    I_sol_base = np.zeros_like(I_sol_win) * thermal_resistance_surface['RSE_base'] 
+    I_sol_underside = np.zeros_like(I_sol_win) * thermal_resistance_surface['RSE_underside'] 
 
     # sum
-    I_sol = I_sol_wall + I_sol_roof + I_sol_win + I_sol_base
+    I_sol = I_sol_wall + I_sol_roof + I_sol_win + I_sol_underside
 
     return I_sol
 
@@ -1070,9 +1070,9 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
     thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
     thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
-    thermal_resistance_surface_base = np.zeros_like(h_c)
+    thermal_resistance_surface_underside = np.zeros_like(h_c)
 
-    return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win, thermal_resistance_surface_base
+    return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win, thermal_resistance_surface_underside
 
 
 def verify_hvac_system_combination(result, locator):

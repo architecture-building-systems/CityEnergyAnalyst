@@ -145,7 +145,7 @@ def calc_thermal_loads(building_name: str,
         tsd['RSE_wall'], \
         tsd['RSE_roof'], \
         tsd['RSE_win'], \
-        tsd['RSE_base'] = get_thermal_resistance_surface(bpr.architecture, weather_data)
+        tsd['RSE_underside'] = get_thermal_resistance_surface(bpr.architecture, weather_data)
         # calculate heat gains
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
