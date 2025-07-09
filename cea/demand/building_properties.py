@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-from cea.demand import constants
 
 from typing import TYPE_CHECKING
 
@@ -18,7 +17,7 @@ from cea.demand.building_envelope import BuildingEnvelope
 from cea.demand.building_hvac import BuildingHVAC
 from cea.demand.building_typology import BuildingTypology
 from cea.demand.building_solar import BuildingSolar
-
+from cea.demand.constants import LAMBDA_AT
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -32,12 +31,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-# import constants
-H_MS = constants.H_MS
-H_IS = constants.H_IS
-B_F = constants.B_F
-LAMBDA_AT = constants.LAMBDA_AT
 
 
 class BuildingProperties:
