@@ -7,11 +7,13 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.demand.building_properties.base import BuildingPropertiesDatabase
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
-class BuildingEnvelope:
+class BuildingEnvelope(BuildingPropertiesDatabase):
     """
     Groups building envelope properties used for the calc-thermal-loads functions.
     """
@@ -49,48 +51,40 @@ class BuildingEnvelope:
         """
         # Database mappings: (locator_method, join_column_name, columns_to_extract)
         db_mappings = {
-            'construction': (locator.get_database_assemblies_envelope_mass,
-                             'type_mass',
-                             ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']),
-            'leakage': (locator.get_database_assemblies_envelope_tightness,
-                        'type_leak',
-                        ['n50']),
-            'roof': (locator.get_database_assemblies_envelope_roof,
-                     'type_roof',
-                     ['e_roof', 'a_roof', 'U_roof']),
-            'wall': (locator.get_database_assemblies_envelope_wall,
-                     'type_wall',
-                     ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']),
-            'window': (locator.get_database_assemblies_envelope_window,
-                       'type_win',
-                       ['e_win', 'G_win', 'U_win', 'F_F']),
-            'shading': (locator.get_database_assemblies_envelope_shading,
-                        'type_shade',
-                        ['rf_sh']),
-            'floor': (locator.get_database_assemblies_envelope_floor,
-                      'type_base',
-                      ['U_base'])
+            'construction': (
+                locator.get_database_assemblies_envelope_mass,
+                'type_mass',
+                ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
+            ),
+            'leakage': (
+                locator.get_database_assemblies_envelope_tightness,
+                'type_leak',
+                ['n50']
+            ),
+            'roof': (
+                locator.get_database_assemblies_envelope_roof,
+                'type_roof',
+                ['e_roof', 'a_roof', 'U_roof']
+            ),
+            'wall': (
+                locator.get_database_assemblies_envelope_wall,
+                'type_wall',
+                ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']),
+            'window': (
+                locator.get_database_assemblies_envelope_window,
+                'type_win',
+                ['e_win', 'G_win', 'U_win', 'F_F']),
+            'shading':
+                (locator.get_database_assemblies_envelope_shading,
+                 'type_shade',
+                 ['rf_sh']),
+            'floor': (
+                locator.get_database_assemblies_envelope_floor,
+                'type_base',
+                ['U_base'])
         }
 
-        # Read databases and merge with building properties
-        envelope_dfs = []
-        for component_type, (locator_method, join_column_name, columns) in db_mappings.items():
-            prop_data = pd.read_csv(locator_method())
-            merged_df = (prop_envelope.reset_index()
-                         .merge(prop_data, left_on=join_column_name, right_on='code', how='left')
-                         .set_index('name'))
-
-            # Validate merge
-            invalid_buildings = merged_df['code'].isna()
-            if invalid_buildings.sum() > 0:
-                raise ValueError(f'WARNING: Invalid {component_type} type found in envelope inputs.')
-
-            envelope_dfs.append(merged_df[columns])
-
-        # Concatenate all envelope properties
-        envelope_prop = pd.concat(envelope_dfs, axis=1)
-
-        return envelope_prop
+        return BuildingEnvelope.merge_database_properties(locator, prop_envelope, db_mappings)
 
     def __getitem__(self, building_name: str) -> dict:
         """Get envelope properties of a building by name"""
