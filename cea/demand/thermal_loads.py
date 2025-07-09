@@ -13,7 +13,7 @@ from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation
 from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-from cea.demand.building_solar import get_thermal_resistance_surface
+from cea.demand.building_properties.building_solar import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
 from typing import TYPE_CHECKING, List, Dict, Tuple, Union

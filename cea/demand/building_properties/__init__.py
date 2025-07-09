@@ -1,0 +1,1 @@
+from .building_properties import BuildingProperties
