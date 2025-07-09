@@ -2,9 +2,10 @@
 Building envelope properties
 """
 from __future__ import annotations
-import pandas as pd
 
 from typing import TYPE_CHECKING
+
+import pandas as pd
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -22,14 +23,11 @@ class BuildingEnvelope:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
-        prop_architectures = pd.read_csv(locator.get_building_architecture())
-        self._prop_envelope = self.get_envelope_properties(locator, prop_architectures).set_index('name')
+        prop_envelope = pd.read_csv(locator.get_building_architecture()).set_index('name').loc[building_names]
+        self._prop_envelope = self.get_envelope_properties(locator, prop_envelope)
 
     @staticmethod
-    def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFrame) -> pd.DataFrame:
+    def get_envelope_properties(locator: InputLocator, prop_envelope: pd.DataFrame) -> pd.DataFrame:
         """
         Gets the building envelope properties from
         ``databases/Systems/emission_systems.csv``, including the following:
@@ -49,71 +47,53 @@ class BuildingEnvelope:
         :rtype: DataFrame
 
         """
+        # Database mappings: (locator_method, join_column_name, columns_to_extract)
+        db_mappings = {
+            'construction': (locator.get_database_assemblies_envelope_mass,
+                             'type_mass',
+                             ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']),
+            'leakage': (locator.get_database_assemblies_envelope_tightness,
+                        'type_leak',
+                        ['n50']),
+            'roof': (locator.get_database_assemblies_envelope_roof,
+                     'type_roof',
+                     ['e_roof', 'a_roof', 'U_roof']),
+            'wall': (locator.get_database_assemblies_envelope_wall,
+                     'type_wall',
+                     ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']),
+            'window': (locator.get_database_assemblies_envelope_window,
+                       'type_win',
+                       ['e_win', 'G_win', 'U_win', 'F_F']),
+            'shading': (locator.get_database_assemblies_envelope_shading,
+                        'type_shade',
+                        ['rf_sh']),
+            'floor': (locator.get_database_assemblies_envelope_floor,
+                      'type_base',
+                      ['U_base'])
+        }
 
-        def check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor):
-            if len(df_construction.loc[df_construction['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid construction type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_construction.loc[df_shading['code'].isna()]['name'])))
-            if len(df_leakage.loc[df_leakage['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid leakage type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_leakage.loc[df_leakage['code'].isna()]['name'])))
-            if len(df_roof[df_roof['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid roof type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_roof.loc[df_roof['code'].isna()]['name'])))
-            if len(df_wall.loc[df_wall['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid wall type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_wall.loc[df_wall['code'].isna()]['name'])))
-            if len(df_win.loc[df_win['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid window type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_win.loc[df_win['code'].isna()]['name'])))
-            if len(df_shading.loc[df_shading['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid shading type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_shading.loc[df_shading['code'].isna()]['name'])))
-            if len(df_floor.loc[df_floor['code'].isna()]) > 0:
-                raise ValueError(
-                    'WARNING: Invalid floor type found in architecture inputs. The following buildings will not be modeled: {}.'.format(
-                        list(df_floor.loc[df_floor['code'].isna()]['name'])))
+        # Read databases and merge with building properties
+        envelope_dfs = []
+        for component_type, (locator_method, join_column_name, columns) in db_mappings.items():
+            prop_data = pd.read_csv(locator_method())
+            merged_df = (prop_envelope.reset_index()
+                         .merge(prop_data, left_on=join_column_name, right_on='code', how='left')
+                         .set_index('name'))
 
-        prop_roof = pd.read_csv(locator.get_database_assemblies_envelope_roof())
-        prop_wall = pd.read_csv(locator.get_database_assemblies_envelope_wall())
-        prop_floor = pd.read_csv(locator.get_database_assemblies_envelope_floor())
-        prop_win = pd.read_csv(locator.get_database_assemblies_envelope_window())
-        prop_shading = pd.read_csv(locator.get_database_assemblies_envelope_shading())
-        prop_construction = pd.read_csv(locator.get_database_assemblies_envelope_mass())
-        prop_leakage = pd.read_csv(locator.get_database_assemblies_envelope_tightness())
+            # Validate merge
+            invalid_buildings = merged_df['code'].isna()
+            if invalid_buildings.sum() > 0:
+                raise ValueError(f'WARNING: Invalid {component_type} type found in envelope inputs.')
 
-        df_construction = prop_architecture.merge(prop_construction, left_on='type_mass', right_on='code', how='left')
-        df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code', how='left')
-        df_floor = prop_architecture.merge(prop_floor, left_on='type_base', right_on='code', how='left')
-        df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code', how='left')
-        df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code', how='left')
-        df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code', how='left')
-        df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code', how='left')
+            envelope_dfs.append(merged_df[columns])
 
-        check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
-
-        fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
-        fields_leakage = ['name', 'n50']
-        fields_basement = ['name', 'U_base']
-        fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
-        fields_wall = ['name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']
-        fields_win = ['name', 'e_win', 'G_win', 'U_win', 'F_F']
-        fields_shading = ['name', 'rf_sh']
-
-        envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='name').merge(df_win[fields_win],
-                                                                                          on='name').merge(
-            df_shading[fields_shading], on='name').merge(df_construction[fields_construction], on='name').merge(
-            df_leakage[fields_leakage], on='name').merge(
-            df_floor[fields_basement], on='name')
+        # Concatenate all envelope properties
+        envelope_prop = pd.concat(envelope_dfs, axis=1)
 
         return envelope_prop
 
     def __getitem__(self, building_name: str) -> dict:
         """Get envelope properties of a building by name"""
+        if building_name not in self._prop_envelope.index:
+            raise KeyError(f"Building envelope properties for {building_name} not found")
         return self._prop_envelope.loc[building_name].to_dict()
