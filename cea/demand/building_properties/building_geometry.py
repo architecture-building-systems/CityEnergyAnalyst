@@ -25,11 +25,7 @@ class BuildingGeometry:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
-        self.building_names = building_names
-        prop_geometry: Gdf = Gdf.from_file(locator.get_zone_geometry())
+        prop_geometry: Gdf = Gdf.from_file(locator.get_zone_geometry()).set_index('name').loc[building_names]
 
         # reproject to projected coordinate system (in meters) to calculate area
         lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
@@ -39,7 +35,8 @@ class BuildingGeometry:
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
-        self._prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('name')
+
+        self._prop_geometry = prop_geometry.drop('geometry', axis=1)
 
     @staticmethod
     def calc_bounding_box_geom(gdf: Gdf) -> tuple[list[float], list[float]]:
@@ -75,4 +72,6 @@ class BuildingGeometry:
 
     def __getitem__(self, building_name: str) -> dict:
         """Get geometry of a building by name"""
+        if building_name not in self._prop_geometry.index:
+            raise KeyError(f"Building geometry properties for {building_name} not found")
         return self._prop_geometry.loc[building_name].to_dict()

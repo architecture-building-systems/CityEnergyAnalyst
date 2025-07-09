@@ -24,17 +24,15 @@ class BuildingTypology:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
-        zone_gdf = Gdf.from_file(locator.get_zone_geometry())
-        self._prop_typology = zone_gdf[COLUMNS_ZONE_TYPOLOGY].set_index('name')
+        self._prop_typology = Gdf.from_file(locator.get_zone_geometry())[COLUMNS_ZONE_TYPOLOGY].set_index('name').loc[building_names]
         # Drop 'REFERENCE' column if it exists
         if 'reference' in self._prop_typology:
             self._prop_typology.drop('reference', axis=1, inplace=True)
 
     def __getitem__(self, building_name: str) -> dict:
         """Get typology properties of a building by name"""
+        if building_name not in self._prop_typology.index:
+            raise KeyError(f"Building typology properties for {building_name} not found")
         return self._prop_typology.loc[building_name].to_dict()
 
     def list_uses(self):

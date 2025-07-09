@@ -27,13 +27,13 @@ class BuildingSolar:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
-        self._prop_solar = self.get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weather_data).set_index('name')
+        self._prop_solar = self.get_prop_solar(
+            locator, building_names, prop_rc_model, prop_envelope, weather_data).set_index('name').loc[building_names]
 
     def __getitem__(self, building_name: str) -> dict:
         """Get comfort properties of a building by name"""
+        if building_name not in self._prop_solar.index:
+            raise KeyError(f"Building solar properties for {building_name} not found")
         return self._prop_solar.loc[building_name].to_dict()
 
 

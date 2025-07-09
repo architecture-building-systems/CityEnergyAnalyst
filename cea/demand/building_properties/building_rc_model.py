@@ -4,7 +4,6 @@ Building RC Model properties
 from __future__ import annotations
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as Gdf
 
 from cea.demand.constants import H_MS, H_IS, B_F, LAMBDA_AT
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
@@ -33,12 +32,7 @@ class BuildingRCModel:
         :param geometry: Building geometry properties
         :param hvac_temperatures: HVAC temperatures
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
         self.building_names = building_names
-        self._locator = locator # Store locator for use in methods
-
         self._prop_rc_model = self.calc_prop_rc_model(locator, typology, envelope, geometry, hvac_temperatures)
 
     def __getitem__(self, building_name: str) -> dict:
@@ -55,11 +49,12 @@ class BuildingRCModel:
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
 
+        :param locator: an InputLocator for locating the input files
+
         :param typology: The contents of the `typology.shp` file, indexed by building name. Each column is the name of an
             typology type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
             "PFloor" column which is a fraction of heated floor area.
             The typology types must add up to 1.0.
-        :type typology: Gdf
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
             It contains the following fields:
@@ -75,20 +70,13 @@ class BuildingRCModel:
             - Hs: Fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
             - Cm_Af: Internal heat capacity per unit of area [J/K.m2]
 
-        :type envelope: Gdf
-
         :param geometry: The contents of the `zone.shp` file indexed by building name - the list of buildings, their floor
             counts, heights etc.
             Includes additional fields "footprint" and "perimeter" as calculated in `read_building_properties`.
-        :type geometry: Gdf
 
         :param hvac_temperatures: The return value of `get_properties_technical_systems`.
-        :type hvac_temperatures: DataFrame
 
         :returns: RC model properties per building
-        :rtype: DataFrame
-
-
 
         Sample result data calculated or manipulated by this method:
 
@@ -177,8 +165,8 @@ class BuildingRCModel:
 
     def geometry_reader_radiation_daysim(self,
                                          locator: InputLocator,
-                                         envelope: Gdf,
-                                         geometry: Gdf) -> pd.DataFrame:
+                                         envelope: pd.DataFrame,
+                                         geometry: pd.DataFrame) -> pd.DataFrame:
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
