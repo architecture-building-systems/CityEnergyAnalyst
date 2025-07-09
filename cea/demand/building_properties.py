@@ -990,7 +990,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
     return result
 
 
-def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_rc_model, thermal_resistance_surface):
+def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_rc_model, thermal_resistance_surface)-> pd.Series:
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -1014,7 +1014,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     I_sol_wall = (radiation_data['walls_east_kW'] +
                   radiation_data['walls_west_kW'] +
                   radiation_data['walls_north_kW'] +
-                  radiation_data['walls_south_kW']).values * 1000  # in W
+                  radiation_data['walls_south_kW']) * 1000  # in W
 
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * \
@@ -1024,7 +1024,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
 
     # sum roof
     # solar incident on all roofs [W]
-    I_sol_roof = radiation_data['roofs_top_kW'].values * 1000  # in W
+    I_sol_roof = radiation_data['roofs_top_kW'] * 1000  # in W
 
     # sensible gain on all roofs [W]
     I_sol_roof = I_sol_roof * \
@@ -1036,7 +1036,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     I_sol_win = (radiation_data['windows_east_kW'] +
                  radiation_data['windows_west_kW'] +
                  radiation_data['windows_north_kW'] +
-                 radiation_data['windows_south_kW']).values * 1000  # in W
+                 radiation_data['windows_south_kW']) * 1000  # in W
 
     Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_win,
                                                           prop_envelope.loc[building_name, 'G_win'],
