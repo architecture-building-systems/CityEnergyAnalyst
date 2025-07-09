@@ -1,0 +1,233 @@
+"""
+Building HVAC properties
+"""
+from __future__ import annotations
+import pandas as pd
+from datetime import datetime
+from collections import namedtuple
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
+
+
+class BuildingHVAC:
+    """
+    Groups building HVAC properties used for the calc-thermal-loads functions.
+    """
+
+    def __init__(self, locator: InputLocator, building_names: list[str]):
+        """
+        Read building HVAC properties from input shape files and construct a new BuildingHVAC object.
+
+        :param locator: an InputLocator for locating the input files
+        :param building_names: list of buildings to read properties for
+        """
+        if building_names is None:
+            building_names = locator.get_zone_building_names()
+
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning())
+        # get temperatures of operation
+        self._prop_hvac = self.get_properties_technical_systems(locator, prop_hvac).set_index('name')
+
+    @staticmethod
+    def get_properties_technical_systems(locator, prop_hvac: pd.DataFrame):
+        """
+        Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
+        file to look up properties
+
+        :param locator: an InputLocator for locating the input files
+        :type locator: cea.inputlocator.InputLocator
+
+        :param prop_hvac: HVAC properties for each building (type of cooling system, control system, domestic hot water
+                          system and heating system.
+        :type prop_hvac: geopandas.GeoDataFrame
+
+        Sample data (first 5 rows)::
+
+                         name type_cs type_ctrl type_dhw type_hs type_vent
+                0     B154862      T0        T1       T1      T1       T0
+                1     B153604      T0        T1       T1      T1       T0
+                2     B153831      T0        T1       T1      T1       T0
+                3  B302022960      T0        T0       T0      T0       T0
+                4  B302034063      T0        T0       T0      T0       T0
+
+        :returns: A DataFrame containing temperature data for each building in the scenario. More information can be
+        :rtype: DataFrame
+
+        Each row contains the following fields:
+
+        ==========    =======   ===========================================================================
+        Column           e.g.   Description
+        ==========    =======   ===========================================================================
+        name          B154862   (building name)
+        type_hs            T1   (copied from input, code for type of heating system)
+        type_cs            T0   (copied from input, code for type of cooling system)
+        type_dhw           T1   (copied from input, code for type of hot water system)
+        type_ctrl          T1   (copied from input, code for type of controller for heating and cooling system)
+        type_vent          T1   (copied from input, code for type of ventilation system)
+        Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
+        dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
+        Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
+        dThs_C           0.15   (correction temperature of emission losses due to type of heating system [C])
+        Tscs0_C             0   (cooling system supply temperature at nominal conditions [C])
+        dTcs0_C             0   (delta of cooling system temperature at nominal conditions [C])
+        Qcsmax_Wm2          0   (maximum cooling system power capacity per unit of gross built area [W/m2])
+        dTcs_C            0.5   (correction temperature of emission losses due to type of cooling system [C])
+        dT_Qhs            1.2   (correction temperature of emission losses due to control system of heating [C])
+        dT_Qcs           -1.2   (correction temperature of emission losses due to control system of cooling[C])
+        Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
+        Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
+        MECH_VENT        True   (copied from input, ventilation system configuration)
+        WIN_VENT        False   (copied from input, ventilation system configuration)
+        HEAT_REC         True   (copied from input, ventilation system configuration)
+        NIGHT_FLSH       True   (copied from input, ventilation system control strategy)
+        ECONOMIZER      False   (copied from input, ventilation system control strategy)
+        ==========    =======   ===========================================================================
+
+        Data is read from :py:meth:`cea.inputlocator.InputLocator.get_technical_emission_systems`
+        (e.g.
+        ``db/Systems/emission_systems.csv``)
+
+        """
+
+        prop_emission_heating = pd.read_csv(locator.get_database_assemblies_hvac_heating())
+        prop_emission_cooling = pd.read_csv(locator.get_database_assemblies_hvac_cooling())
+        prop_emission_dhw = pd.read_csv(locator.get_database_assemblies_hvac_hot_water())
+        prop_emission_control_heating_and_cooling = pd.read_csv(locator.get_database_assemblies_hvac_controller())
+        prop_ventilation_system_and_control = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
+        df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='hvac_type_hs', right_on='code')
+        df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='hvac_type_cs', right_on='code')
+        df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
+                                                                  left_on='hvac_type_ctrl', right_on='code')
+        df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='hvac_type_dhw', right_on='code')
+        df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='hvac_type_vent',
+                                                            right_on='code')
+        fields_emission_heating = ['name', 'hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent', 'hvac_heat_starts',
+                                   'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs', 'convection_hs',
+                                   'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
+                                   'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+        fields_emission_cooling = ['name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
+                                   'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                                   'class_cs', 'convection_cs']
+        fields_emission_control_heating_and_cooling = ['name', 'dT_Qhs', 'dT_Qcs']
+        fields_emission_dhw = ['name', 'class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
+        fields_system_ctrl_vent = ['name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
+
+        result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
+                                                                    on='name').merge(
+            df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
+            on='name').merge(df_emission_dhw[fields_emission_dhw],
+                             on='name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='name')
+        # verify hvac and ventilation combination
+        verify_hvac_system_combination(result, locator)
+        # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
+        result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['name'],
+                                                                                x['hvac_heat_starts'],
+                                                                                x['hvac_heat_ends']), axis=1)
+        result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x['name'],
+                                                                                x['hvac_cool_starts'],
+                                                                                x['hvac_cool_ends']), axis=1)
+
+        # verify seasons do not overlap
+        result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x['name'],
+                                                                                x['has-heating-season'],
+                                                                                x['has-cooling-season'],
+                                                                                x['hvac_heat_starts'],
+                                                                                x['hvac_heat_ends'],
+                                                                                x['hvac_cool_starts'],
+                                                                                x['hvac_cool_ends']), axis=1)
+        return result
+
+    def __getitem__(self, building_name: str) -> dict:
+        """Get HVAC properties of a building by name"""
+        return self._prop_hvac.loc[building_name].to_dict()
+
+
+def verify_overlap_season(building_name, has_heating_season, has_cooling_season, heat_start, heat_end, cool_start,
+                          cool_end):
+    if has_cooling_season and has_heating_season:
+        Range = namedtuple('Range', ['start', 'end'])
+
+        # for heating
+        day1, month1 = map(int, heat_start.split('|'))
+        day2, month2 = map(int, heat_end.split('|'))
+        if month2 > month1:
+            r1 = Range(start=datetime(2012, month1, day1), end=datetime(2012, month2, day2))
+        else:
+            r1 = Range(start=datetime(2012, month1, day1), end=datetime(2013, month2, day2))
+
+        # for cooling
+        day1, month1 = map(int, cool_start.split('|'))
+        day2, month2 = map(int, cool_end.split('|'))
+        if month2 > month1:
+            r2 = Range(start=datetime(2012, month1, day1), end=datetime(2012, month2, day2))
+        else:
+            r2 = Range(start=datetime(2012, month1, day1), end=datetime(2013, month2, day2))
+
+        latest_start = max(r1.start, r2.start)
+        earliest_end = min(r1.end, r2.end)
+        delta = (earliest_end - latest_start).days + 1
+        overlap = max(0, delta)
+        if overlap > 0:
+            raise Exception(
+                'invalid input found for building %s. heating and cooling seasons cannot overlap in CEA' % building_name)
+        else:
+            return False
+
+
+def verify_has_season(building_name, start, end):
+    def invalid_date(date):
+        if len(date) != 5 or "|" not in date:
+            return True
+        elif "00" in date.split("|"):
+            return True
+        else:
+            return False
+
+    if start == '00|00' or end == '00|00':
+        return False
+    elif invalid_date(start) or invalid_date(end):
+        raise Exception(
+            'invalid input found for building %s. dates of season must comply to DD|MM format, DD|00 are values are not valid' % building_name)
+    else:
+        return True
+
+
+def verify_hvac_system_combination(result, locator):
+    '''
+    This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
+    If an infeasible combination is selected, a warning is printed and the simulation is stopped.
+    '''
+
+    needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
+    list_exceptions = []
+    for idx in result.loc[needs_mech_vent & (~ result.MECH_VENT)].index:
+        building_name = result.loc[idx, 'name']
+        class_cs = result.loc[idx, 'class_cs']
+        type_vent = result.loc[idx,'type_vent']
+        hvac_database = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
+        mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
+        list_exceptions.append(Exception(
+            f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
+            f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}'))
+    if len(list_exceptions) > 0:
+        raise_multiple(list_exceptions)
+    return
+
+def raise_multiple(exceptions):
+    '''
+    This function raises multiple exceptions recursively. Exceptions in a list are raised one by one until the list
+    is empty.
+    '''
+
+    if not exceptions:
+        # if list of exceptions is empty, recursion ends
+        return
+    try:
+        # raise one exception, then remove it from list
+        raise exceptions.pop()
+    finally:
+        # repeat the process until list is empty
+        raise_multiple(exceptions)

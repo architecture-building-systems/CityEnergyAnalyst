@@ -3,8 +3,6 @@
 Demand model of thermal loads
 """
 
-
-
 from __future__ import annotations
 import numpy as np
 import pandas as pd
@@ -15,7 +13,7 @@ from cea.demand import hourly_procedure_heating_cooling_system_load, ventilation
 from cea.demand import latent_loads
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-from cea.demand.building_properties import get_thermal_resistance_surface
+from cea.demand.building_solar import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
 from typing import TYPE_CHECKING, List, Dict, Tuple, Union
@@ -29,7 +27,7 @@ if TYPE_CHECKING:
 def calc_thermal_loads(building_name: str, 
                        bpr: BuildingPropertiesRow, 
                        weather_data: pd.DataFrame, 
-                       date_range: pd.date_range, 
+                       date_range: pd.DatetimeIndex, 
                        locator: InputLocator,
                        use_dynamic_infiltration_calculation: bool, 
                        resolution_outputs: str, 
