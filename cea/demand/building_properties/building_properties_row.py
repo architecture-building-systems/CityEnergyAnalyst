@@ -1,204 +1,237 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 import pandas as pd
+from typing_extensions import Annotated
 
+
+@dataclass(frozen=True)
 class BuildingPropertiesRow:
-    """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
-    read-only."""
+    """
+    Encapsulate the data of a single row in the DataSets of BuildingProperties.
+    This class meant to be read-only.
+    """
+    name: str
+    geometry: dict
+    architecture: EnvelopeProperties
+    typology: dict
+    hvac: dict
+    rc_model: dict
+    comfort: dict
+    internal_loads: dict
+    age: dict
+    solar: SolarProperties
+    supply: dict
+    building_systems: pd.Series
 
-    def __init__(self, name, geometry, envelope, typology, hvac,
-                 rc_model, comfort, internal_loads, age, solar, supply):
+    @classmethod
+    def from_dataframes(cls, name: str, geometry: dict, envelope: dict, typology: dict, hvac: dict,
+                        rc_model: dict, comfort: dict, internal_loads: dict, age: dict,
+                        solar: dict, supply: dict):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
-        self.name = name
-        self.geometry = geometry
-        self.geometry['floor_height'] = self.geometry['height_ag'] / self.geometry['floors_ag']
+        geometry['floor_height'] = cls.get_floor_height(geometry)
+
         envelope['Hs_ag'], envelope['Hs_bg'], envelope['Ns_ag'], envelope['Ns_bg'] = \
             split_above_and_below_ground_shares(
                 envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
-        self.architecture = EnvelopeProperties(envelope)
-        self.typology = typology  # FIXME: rename to uses!
-        self.hvac = hvac
-        self.rc_model = rc_model
-        self.comfort = comfort
-        self.internal_loads = internal_loads
-        self.age = age
-        self.solar = SolarProperties(solar)
-        self.supply = supply
-        self.building_systems = self._get_properties_building_systems()
+        architecture = EnvelopeProperties.from_dict(envelope)
 
-    def _get_properties_building_systems(self):
+        building_systems = _get_properties_building_systems(geometry, hvac, age)
 
-        """
-        Method for defining the building system properties, specifically the nominal supply and return temperatures,
-        equivalent pipe lengths and transmittance losses. The systems considered include an ahu (air
-        handling unit, rsu(air recirculation unit), and scu/shu (sensible cooling / sensible heating unit).
-        Note: it is assumed that building with less than a floor and less than 2 floors underground do not require
-        heating and cooling, and are not considered when calculating the building system properties.
+        return cls(name=name, geometry=geometry, architecture=architecture, typology=typology, hvac=hvac,
+                   rc_model=rc_model, comfort=comfort, internal_loads=internal_loads, age=age,
+                   solar=SolarProperties.from_dict(solar), supply=supply, building_systems=building_systems)
 
-        :return: building_systems dict containing the following information:
-
-            Pipe Lengths:
-
-                - Lcww_dis: length of hot water piping in the distribution circuit (????) [m]
-                - Lsww_dis: length of hot water piping in the distribution circuit (????) [m]
-                - Lvww_dis: length of hot water piping in the distribution circuit (?????) [m]
-                - Lvww_c: length of piping in the heating system circulation circuit (ventilated/recirc?) [m]
-                - Lv: length vertical lines [m]
-
-            Heating Supply Temperatures:
-
-                - Ths_sup_ahu_0: heating supply temperature for AHU (C)
-                - Ths_sup_aru_0: heating supply temperature for ARU (C)
-                - Ths_sup_shu_0: heating supply temperature for SHU (C)
-
-            Heating Return Temperatures:
-
-                - Ths_re_ahu_0: heating return temperature for AHU (C)
-                - Ths_re_aru_0: heating return temperature for ARU (C)
-                - Ths_re_shu_0: heating return temperature for SHU (C)
-
-            Cooling Supply Temperatures:
-
-                - Tcs_sup_ahu_0: cooling supply temperature for AHU (C)
-                - Tcs_sup_aru_0: cooling supply temperature for ARU (C)
-                - Tcs_sup_scu_0: cooling supply temperature for SCU (C)
-
-            Cooling Return Temperatures:
-
-                - Tcs_re_ahu_0: cooling return temperature for AHU (C)
-                - Tcs_re_aru_0: cooling return temperature for ARU (C)
-                - Tcs_re_scu_0: cooling return temperature for SCU (C)
-
-            Water supply temperature??:
-
-                - Tww_sup_0: ?????
-
-            Thermal losses in pipes:
-
-                - Y: Linear trasmissivity coefficients of piping depending on year of construction [W/m.K]
-
-            Form Factor Adjustment:
-
-                - fforma: form factor comparison between real surface and rectangular ???
-
-        :rtype: dict
+    @staticmethod
+    def get_floor_height(geometry: dict) -> float:
+        return geometry['height_ag'] / geometry['floors_ag']
 
 
-        """
+def _get_properties_building_systems(geometry: dict, hvac: dict, age: dict) -> pd.Series:
+    """
+    Method for defining the building system properties, specifically the nominal supply and return temperatures,
+    equivalent pipe lengths and transmittance losses. The systems considered include an ahu (air
+    handling unit, rsu(air recirculation unit), and scu/shu (sensible cooling / sensible heating unit).
+    Note: it is assumed that building with less than a floor and less than 2 floors underground do not require
+    heating and cooling, and are not considered when calculating the building system properties.
 
-        # Refactored from CalcThermalLoads
+    :return: building_systems dict containing the following information:
 
-        # geometry properties.
+        Pipe Lengths:
 
-        Ll = self.geometry['Blength']
-        Lw = self.geometry['Bwidth']
-        nf_ag = self.geometry['floors_ag']
-        nf_bg = self.geometry['floors_bg']
-        phi_pipes = self._calculate_pipe_transmittance_values()
+            - Lcww_dis: length of hot water piping in the distribution circuit (????) [m]
+            - Lsww_dis: length of hot water piping in the distribution circuit (????) [m]
+            - Lvww_dis: length of hot water piping in the distribution circuit (?????) [m]
+            - Lvww_c: length of piping in the heating system circulation circuit (ventilated/recirc?) [m]
+            - Lv: length vertical lines [m]
 
-        # nominal temperatures
-        Ths_sup_ahu_0 = float(self.hvac['Tshs0_ahu_C'])
-        Ths_re_ahu_0 = float(Ths_sup_ahu_0 - self.hvac['dThs0_ahu_C'])
-        Ths_sup_aru_0 = float(self.hvac['Tshs0_aru_C'])
-        Ths_re_aru_0 = float(Ths_sup_aru_0 - self.hvac['dThs0_aru_C'])
-        Ths_sup_shu_0 = float(self.hvac['Tshs0_shu_C'])
-        Ths_re_shu_0 = float(Ths_sup_shu_0 - self.hvac['dThs0_shu_C'])
-        Tcs_sup_ahu_0 = self.hvac['Tscs0_ahu_C']
-        Tcs_re_ahu_0 = Tcs_sup_ahu_0 + self.hvac['dTcs0_ahu_C']
-        Tcs_sup_aru_0 = self.hvac['Tscs0_aru_C']
-        Tcs_re_aru_0 = Tcs_sup_aru_0 + self.hvac['dTcs0_aru_C']
-        Tcs_sup_scu_0 = self.hvac['Tscs0_scu_C']
-        Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
+        Heating Supply Temperatures:
 
-        Tww_sup_0 = self.hvac['Tsww0_C']
-        # Identification of equivalent lengths
-        fforma = self._calc_form()  # factor form comparison real surface and rectangular
-        Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
-        if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
-            Lcww_dis = 0
-            Lvww_c = 0
-        else:
-            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * self.geometry['floor_height']) * fforma  # length hot water piping circulation circuit
-            Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
+            - Ths_sup_ahu_0: heating supply temperature for AHU (C)
+            - Ths_sup_aru_0: heating supply temperature for ARU (C)
+            - Ths_sup_shu_0: heating supply temperature for SHU (C)
 
-        Lsww_dis = 0.038 * Ll * Lw * nf_ag * self.geometry['floor_height'] * fforma  # length hot water piping distribution circuit
-        Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
+        Heating Return Temperatures:
 
-        building_systems = pd.Series({'Lcww_dis': Lcww_dis,
-                                      'Lsww_dis': Lsww_dis,
-                                      'Lv': Lv,
-                                      'Lvww_c': Lvww_c,
-                                      'Lvww_dis': Lvww_dis,
-                                      'Ths_sup_ahu_0': Ths_sup_ahu_0,
-                                      'Ths_re_ahu_0': Ths_re_ahu_0,
-                                      'Ths_sup_aru_0': Ths_sup_aru_0,
-                                      'Ths_re_aru_0': Ths_re_aru_0,
-                                      'Ths_sup_shu_0': Ths_sup_shu_0,
-                                      'Ths_re_shu_0': Ths_re_shu_0,
-                                      'Tcs_sup_ahu_0': Tcs_sup_ahu_0,
-                                      'Tcs_re_ahu_0': Tcs_re_ahu_0,
-                                      'Tcs_sup_aru_0': Tcs_sup_aru_0,
-                                      'Tcs_re_aru_0': Tcs_re_aru_0,
-                                      'Tcs_sup_scu_0': Tcs_sup_scu_0,
-                                      'Tcs_re_scu_0': Tcs_re_scu_0,
-                                      'Tww_sup_0': Tww_sup_0,
-                                      'Y': phi_pipes,
-                                      'fforma': fforma})
-        return building_systems
+            - Ths_re_ahu_0: heating return temperature for AHU (C)
+            - Ths_re_aru_0: heating return temperature for ARU (C)
+            - Ths_re_shu_0: heating return temperature for SHU (C)
 
-    def _calculate_pipe_transmittance_values(self):
-        """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['year'] >= 1995:
-            phi_pipes = [0.2, 0.3, 0.3]
-        # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
-        elif 1985 <= self.age['year'] < 1995:
-            phi_pipes = [0.3, 0.4, 0.4]
-        else:
-            phi_pipes = [0.4, 0.4, 0.4]
-        return phi_pipes
+        Cooling Supply Temperatures:
 
-    def _calc_form(self):
-        factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
-        return factor
+            - Tcs_sup_ahu_0: cooling supply temperature for AHU (C)
+            - Tcs_sup_aru_0: cooling supply temperature for ARU (C)
+            - Tcs_sup_scu_0: cooling supply temperature for SCU (C)
+
+        Cooling Return Temperatures:
+
+            - Tcs_re_ahu_0: cooling return temperature for AHU (C)
+            - Tcs_re_aru_0: cooling return temperature for ARU (C)
+            - Tcs_re_scu_0: cooling return temperature for SCU (C)
+
+        Water supply temperature??:
+
+            - Tww_sup_0: ?????
+
+        Thermal losses in pipes:
+
+            - Y: Linear trasmissivity coefficients of piping depending on year of construction [W/m.K]
+
+        Form Factor Adjustment:
+
+            - fforma: form factor comparison between real surface and rectangular ???
+
+    :rtype: dict
 
 
+    """
+    # geometry properties.
 
-class EnvelopeProperties(object):
-    """Encapsulate a single row of the architecture input file for a building"""
+    Ll = geometry['Blength']
+    Lw = geometry['Bwidth']
+    nf_ag = geometry['floors_ag']
+    nf_bg = geometry['floors_bg']
+    phi_pipes = _calculate_pipe_transmittance_values(age)
 
-    def __init__(self, envelope):
-        self.A_op = envelope['Awin_ag'] + envelope['Awall_ag']
-        self.a_roof = envelope['a_roof']
-        self.n50 = envelope['n50']
-        self.win_wall = envelope['Awin_ag'] / self.A_op if self.A_op != 0 else 0.0
-        self.a_wall = envelope['a_wall']
-        self.rf_sh = envelope['rf_sh']
-        self.e_wall = envelope['e_wall']
-        self.e_roof = envelope['e_roof']
-        self.e_underside = 0.0 # dummy values for emissivity of underside (bottom surface) as 0.
-        self.G_win = envelope['G_win']
-        self.e_win = envelope['e_win']
-        self.U_roof = envelope['U_roof']
-        self.Hs_ag = envelope['Hs_ag']
-        self.Hs_bg = envelope['Hs_bg']
-        self.Ns_ag = envelope['Ns_ag']
-        self.Ns_bg = envelope['Ns_bg']
-        self.Es = envelope['Es']
-        self.occupied_bg = envelope['occupied_bg']
-        self.Cm_Af = envelope['Cm_Af']
-        self.U_wall = envelope['U_wall']
-        self.U_base = envelope['U_base']
-        self.U_win = envelope['U_win']
-        self.void_deck = envelope['void_deck']
+    # nominal temperatures
+    Ths_sup_ahu_0 = float(hvac['Tshs0_ahu_C'])
+    Ths_re_ahu_0 = float(Ths_sup_ahu_0 - hvac['dThs0_ahu_C'])
+    Ths_sup_aru_0 = float(hvac['Tshs0_aru_C'])
+    Ths_re_aru_0 = float(Ths_sup_aru_0 - hvac['dThs0_aru_C'])
+    Ths_sup_shu_0 = float(hvac['Tshs0_shu_C'])
+    Ths_re_shu_0 = float(Ths_sup_shu_0 - hvac['dThs0_shu_C'])
+    Tcs_sup_ahu_0 = hvac['Tscs0_ahu_C']
+    Tcs_re_ahu_0 = Tcs_sup_ahu_0 + hvac['dTcs0_ahu_C']
+    Tcs_sup_aru_0 = hvac['Tscs0_aru_C']
+    Tcs_re_aru_0 = Tcs_sup_aru_0 + hvac['dTcs0_aru_C']
+    Tcs_sup_scu_0 = hvac['Tscs0_scu_C']
+    Tcs_re_scu_0 = Tcs_sup_scu_0 + hvac['dTcs0_scu_C']
+
+    Tww_sup_0 = hvac['Tsww0_C']
+    # Identification of equivalent lengths
+    fforma = _calc_form(geometry)  # factor form comparison real surface and rectangular
+    Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
+    if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
+        Lcww_dis = 0
+        Lvww_c = 0
+    else:
+        Lcww_dis = 2 * (
+                Ll + 2.5 + nf_ag * geometry['floor_height']) * fforma  # length hot water piping circulation circuit
+        Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
+
+    Lsww_dis = 0.038 * Ll * Lw * nf_ag * geometry[
+        'floor_height'] * fforma  # length hot water piping distribution circuit
+    Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
+
+    building_systems = pd.Series({'Lcww_dis': Lcww_dis,
+                                  'Lsww_dis': Lsww_dis,
+                                  'Lv': Lv,
+                                  'Lvww_c': Lvww_c,
+                                  'Lvww_dis': Lvww_dis,
+                                  'Ths_sup_ahu_0': Ths_sup_ahu_0,
+                                  'Ths_re_ahu_0': Ths_re_ahu_0,
+                                  'Ths_sup_aru_0': Ths_sup_aru_0,
+                                  'Ths_re_aru_0': Ths_re_aru_0,
+                                  'Ths_sup_shu_0': Ths_sup_shu_0,
+                                  'Ths_re_shu_0': Ths_re_shu_0,
+                                  'Tcs_sup_ahu_0': Tcs_sup_ahu_0,
+                                  'Tcs_re_ahu_0': Tcs_re_ahu_0,
+                                  'Tcs_sup_aru_0': Tcs_sup_aru_0,
+                                  'Tcs_re_aru_0': Tcs_re_aru_0,
+                                  'Tcs_sup_scu_0': Tcs_sup_scu_0,
+                                  'Tcs_re_scu_0': Tcs_re_scu_0,
+                                  'Tww_sup_0': Tww_sup_0,
+                                  'Y': phi_pipes,
+                                  'fforma': fforma})
+    return building_systems
 
 
-class SolarProperties(object):
-    """Encapsulates the solar properties of a building"""
+def _calculate_pipe_transmittance_values(age: dict) -> list[float]:
+    """linear trasmissivity coefficients of piping W/(m.K)"""
+    if age['year'] >= 1995:
+        phi_pipes = [0.2, 0.3, 0.3]
+    # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+    elif 1985 <= age['year'] < 1995:
+        phi_pipes = [0.3, 0.4, 0.4]
+    else:
+        phi_pipes = [0.4, 0.4, 0.4]
+    return phi_pipes
 
-    __slots__ = ['I_sol']
 
-    def __init__(self, solar):
-        self.I_sol = solar['I_sol']
+def _calc_form(geometry: dict):
+    factor = geometry['footprint'] / (geometry['Bwidth'] * geometry['Blength'])
+    return factor
+
+
+@dataclass(frozen=True)
+class EnvelopeProperties:
+    A_op: Annotated[float, "Opaque area above ground [m2]"]
+    a_roof: Annotated[float, "Solar absorptance of roof [-]"]
+    n50: Annotated[float, "Air tightness at 50 Pa [1/h]"]
+    win_wall: Annotated[float, "Window to wall ratio [-]"]
+    a_wall: Annotated[float, "Solar absorptance of wall [-]"]
+    rf_sh: Annotated[float, "Roof shading factor [-]"]
+    e_wall: Annotated[float, "Emissivity of wall [-]"]
+    e_roof: Annotated[float, "Emissivity of roof [-]"]
+    e_underside: Annotated[float, "Emissivity of underside [-]"]
+    G_win: Annotated[float, "Solar heat gain coefficient [-]"]
+    e_win: Annotated[float, "Emissivity of windows [-]"]
+    U_roof: Annotated[float, "U-value of roof [W/m2K]"]
+    Hs_ag: Annotated[float, "Conditioned share above ground [-]"]
+    Hs_bg: Annotated[float, "Conditioned share below ground [-]"]
+    Ns_ag: Annotated[float, "Occupied share above ground [-]"]
+    Ns_bg: Annotated[float, "Occupied share below ground [-]"]
+    Es: Annotated[float, "Heated/cooled share [-]"]
+    occupied_bg: Annotated[float, "Basement occupation factor [-]"]
+    Cm_Af: Annotated[float, "Internal heat capacity [J/m2K]"]
+    U_wall: Annotated[float, "U-value of wall [W/m2K]"]
+    U_base: Annotated[float, "U-value of basement [W/m2K]"]
+    U_win: Annotated[float, "U-value of windows [W/m2K]"]
+    void_deck: Annotated[float, "Void deck factor [-]"]
+
+    @classmethod
+    def from_dict(cls, envelope: dict):
+        # Calculate derived fields
+        A_op = envelope['Awin_ag'] + envelope['Awall_ag']
+        envelope['A_op'] = A_op
+        envelope['win_wall'] = envelope['Awin_ag'] / A_op if A_op != 0 else 0.0
+        envelope['e_underside'] = 0.0  # dummy value for emissivity of underside
+
+        field_names = cls.__annotations__.keys()
+        filtered_envelope = {k: envelope[k] for k in field_names if k in envelope}
+        return cls(**filtered_envelope)
+
+
+@dataclass(frozen=True)
+class SolarProperties:
+    I_sol: Annotated[float, "Isolated solar [kWh]"]
+
+    @classmethod
+    def from_dict(cls, solar: dict):
+        return cls(I_sol=solar['I_sol'])
 
 
 def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_bg):
@@ -215,4 +248,3 @@ def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_b
     Ns_bg = Ns * share_bg
 
     return Hs_ag, Hs_bg, Ns_ag, Ns_bg
-

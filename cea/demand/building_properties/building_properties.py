@@ -124,14 +124,14 @@ class BuildingProperties:
 
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
-        return BuildingPropertiesRow(name=building_name,
-                                     geometry=self.geometry[building_name],
-                                     envelope=self.envelope[building_name],
-                                     typology=self.typology[building_name],
-                                     hvac=self.hvac[building_name],
-                                     rc_model=self.rc_model[building_name],
-                                     comfort=self.comfort[building_name],
-                                     internal_loads=self.internal_loads[building_name],
-                                     age=self.get_prop_age(building_name),
-                                     solar=self.get_solar(building_name),
-                                     supply=self.supply_systems[building_name])
+        return BuildingPropertiesRow.from_dataframes(name=building_name,
+                                                     geometry=self.geometry[building_name],
+                                                     envelope=self.envelope[building_name],
+                                                     typology=self.typology[building_name],
+                                                     hvac=self.hvac[building_name],
+                                                     rc_model=self.rc_model[building_name],
+                                                     comfort=self.comfort[building_name],
+                                                     internal_loads=self.internal_loads[building_name],
+                                                     age=self.get_prop_age(building_name),
+                                                     solar=self.get_solar(building_name),
+                                                     supply=self.supply_systems[building_name])
