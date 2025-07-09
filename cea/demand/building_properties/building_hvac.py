@@ -24,12 +24,9 @@ class BuildingHVAC:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        if building_names is None:
-            building_names = locator.get_zone_building_names()
-
-        prop_hvac = pd.read_csv(locator.get_building_air_conditioning())
+        prop_hvac = pd.read_csv(locator.get_building_air_conditioning()).set_index('name').loc[building_names]
         # get temperatures of operation
-        self._prop_hvac = self.get_properties_technical_systems(locator, prop_hvac).set_index('name')
+        self._prop_hvac = self.get_properties_technical_systems(locator, prop_hvac)
 
     @staticmethod
     def get_properties_technical_systems(locator, prop_hvac: pd.DataFrame):
@@ -91,47 +88,71 @@ class BuildingHVAC:
         ``db/Systems/emission_systems.csv``)
 
         """
+        
+        # HVAC database mappings: (locator_method, join_column, fields_to_extract)
+        hvac_mappings = {
+            'heating': (
+                locator.get_database_assemblies_hvac_heating, 
+                'hvac_type_hs',
+                ['hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent', 
+                 'hvac_heat_starts', 'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs', 
+                 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 
+                 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+            ),
+            'cooling': (
+                locator.get_database_assemblies_hvac_cooling,
+                'hvac_type_cs', 
+                ['Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
+                 'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                 'class_cs', 'convection_cs']
+            ),
+            'control': (
+                locator.get_database_assemblies_hvac_controller,
+                'hvac_type_ctrl',
+                ['dT_Qhs', 'dT_Qcs']
+            ),
+            'dhw': (
+                locator.get_database_assemblies_hvac_hot_water,
+                'hvac_type_dhw',
+                ['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
+            ),
+            'ventilation': (
+                locator.get_database_assemblies_hvac_ventilation,
+                'hvac_type_vent',
+                ['MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
+            )
+        }
+        
+        # Read databases and merge with building properties
+        hvac_dfs = []
+        for system_type, (locator_method, join_column, fields) in hvac_mappings.items():
+            prop_data = pd.read_csv(locator_method())
+            merged_df = (prop_hvac.reset_index()
+                         .merge(prop_data, left_on=join_column, right_on='code', how='left')
+                         .set_index('name'))
+        
+            # Validate merge
+            invalid_buildings = merged_df['code'].isna()
+            if invalid_buildings.sum() > 0:
+                raise ValueError(f'WARNING: Invalid {system_type} type found in hvac inputs.')
 
-        prop_emission_heating = pd.read_csv(locator.get_database_assemblies_hvac_heating())
-        prop_emission_cooling = pd.read_csv(locator.get_database_assemblies_hvac_cooling())
-        prop_emission_dhw = pd.read_csv(locator.get_database_assemblies_hvac_hot_water())
-        prop_emission_control_heating_and_cooling = pd.read_csv(locator.get_database_assemblies_hvac_controller())
-        prop_ventilation_system_and_control = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
-        df_emission_heating = prop_hvac.merge(prop_emission_heating, left_on='hvac_type_hs', right_on='code')
-        df_emission_cooling = prop_hvac.merge(prop_emission_cooling, left_on='hvac_type_cs', right_on='code')
-        df_emission_control_heating_and_cooling = prop_hvac.merge(prop_emission_control_heating_and_cooling,
-                                                                  left_on='hvac_type_ctrl', right_on='code')
-        df_emission_dhw = prop_hvac.merge(prop_emission_dhw, left_on='hvac_type_dhw', right_on='code')
-        df_ventilation_system_and_control = prop_hvac.merge(prop_ventilation_system_and_control, left_on='hvac_type_vent',
-                                                            right_on='code')
-        fields_emission_heating = ['name', 'hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent', 'hvac_heat_starts',
-                                   'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs', 'convection_hs',
-                                   'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
-                                   'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
-        fields_emission_cooling = ['name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
-                                   'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
-                                   'class_cs', 'convection_cs']
-        fields_emission_control_heating_and_cooling = ['name', 'dT_Qhs', 'dT_Qcs']
-        fields_emission_dhw = ['name', 'class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
-        fields_system_ctrl_vent = ['name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
+            hvac_dfs.append(merged_df[fields])
 
-        result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                    on='name').merge(
-            df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
-            on='name').merge(df_emission_dhw[fields_emission_dhw],
-                             on='name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='name')
+        # Concatenate all envelope properties
+        result = pd.concat(hvac_dfs, axis=1)
+        
         # verify hvac and ventilation combination
         verify_hvac_system_combination(result, locator)
         # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-        result['has-heating-season'] = result.apply(lambda x: verify_has_season(x['name'],
+        result['has-heating-season'] = result.apply(lambda x: verify_has_season(x.index,
                                                                                 x['hvac_heat_starts'],
                                                                                 x['hvac_heat_ends']), axis=1)
-        result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x['name'],
+        result['has-cooling-season'] = result.apply(lambda x: verify_has_season(x.index,
                                                                                 x['hvac_cool_starts'],
                                                                                 x['hvac_cool_ends']), axis=1)
 
         # verify seasons do not overlap
-        result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x['name'],
+        result['overlap-season'] = result.apply(lambda x: verify_overlap_season(x.index,
                                                                                 x['has-heating-season'],
                                                                                 x['has-cooling-season'],
                                                                                 x['hvac_heat_starts'],
@@ -142,6 +163,8 @@ class BuildingHVAC:
 
     def __getitem__(self, building_name: str) -> dict:
         """Get HVAC properties of a building by name"""
+        if building_name not in self._prop_hvac.index:
+            raise KeyError(f"Building HVAC properties for {building_name} not found")
         return self._prop_hvac.loc[building_name].to_dict()
 
 
