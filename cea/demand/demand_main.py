@@ -5,7 +5,6 @@ Analytical energy demand model algorithm
 
 import os
 import time
-import warnings
 from itertools import repeat
 
 import cea.config
@@ -18,7 +17,6 @@ from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
 
-warnings.filterwarnings("ignore")
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -123,7 +121,6 @@ def print_progress(i, n, args, _):
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with dynamic infiltration=%s' %
