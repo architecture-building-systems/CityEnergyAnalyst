@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def read_surface_properties(locator) -> pd.DataFrame:
+def read_surface_properties(locator: cea.inputlocator.InputLocator) -> pd.DataFrame:
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
@@ -124,7 +124,7 @@ def main(config):
     of interest. The number of sensor points depends on the size of the grid selected in the config file and
     are generated automatically.
 
-    :param config: Configuration object with the settings (genera and radiation)
+    :param config: Configuration object with the settings (general and radiation)
     :type config: cea.config.Configuration
     :return:
     """

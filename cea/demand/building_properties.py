@@ -1,7 +1,7 @@
 """
 Classes of building properties
 """
-
+from __future__ import annotations
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -11,8 +11,11 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
 from cea.demand import constants
 from cea.demand.sensible_loads import calc_hr, calc_hc
-from cea.resources.radiation.geometry_generator import calc_floor_to_floor_height
 from cea.technologies import blinds
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -199,7 +202,12 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.loc[name_building]
 
-    def calc_prop_rc_model(self, locator, typology, envelope, geometry, hvac_temperatures):
+    def calc_prop_rc_model(self, 
+                           locator: InputLocator, 
+                           typology: Gdf, 
+                           envelope: Gdf, 
+                           geometry: Gdf, 
+                           hvac_temperatures: pd.DataFrame) -> pd.DataFrame:
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
@@ -215,6 +223,7 @@ class BuildingProperties(object):
 
             - n50: Air tightness at 50 Pa [h^-1].
             - type_shade: shading system type.
+            - void_deck: Number of floors (from the ground up) with an open envelope.
             - win_wall: window to wall ratio.
             - U_base: U value of the floor construction [W/m2K]
             - U_roof: U value of roof construction [W/m2K]
@@ -296,11 +305,20 @@ class BuildingProperties(object):
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
         df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
 
+        # check if buildings are completely above ground
+        is_floating = (df["void_deck"] > 0).astype(int)
+
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) + df['Aroof'] * df['U_roof'] * df['Hs_ag']
-
+        df['HD'] = (df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
+                    + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
+                    + is_floating * df['Aunderside'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
+                    )
         # steady-state Thermal transmission coefficient to the ground. in W/K
+        # Aop_bg: opaque surface area below ground level;
+        # U_base: basement U value, defined in envelope.csv
+        # Hs_bg: Fraction of underground floor area air-conditioned.
+        # 1 - is_above_ground: 1 if building touches ground, 0 if building is floating (void_deck > 0)
         df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties
@@ -310,14 +328,16 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
-                  'empty_envelope_ratio', 'Awall_ag', 'footprint']
+                  'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'Awall_ag', 'footprint']
         result = df[fields]
 
         return result
 
 
-    def geometry_reader_radiation_daysim(self, locator, envelope, geometry):
+    def geometry_reader_radiation_daysim(self, 
+                                         locator: InputLocator, 
+                                         envelope: Gdf, 
+                                         geometry: Gdf) -> pd.DataFrame:
         """
 
         Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
@@ -342,9 +362,9 @@ class BuildingProperties(object):
 
         :rtype: DataFrame
 
-        Data is read from :py:meth:`cea.inputlocator.InputLocator.get_radiation_metadata`
+        Data is read from :py:meth:`cea.inputlocator.InputLocator.get_radiation_building`
         (e.g.
-        ``C:/scenario/outputs/data/solar-radiation/{building_name}_geometry.csv``)
+        ``C:/scenario/outputs/data/solar-radiation/{building_name}_radiation.csv``)
 
         Note: File generated by the radiation script. It contains the fields Name, Freeheight, FactorShade, height_ag and
         Shape_Leng. This data is used to calculate the wall and window areas.)
@@ -355,6 +375,7 @@ class BuildingProperties(object):
         envelope['Awall_ag'] = np.nan
         envelope['Awin_ag'] = np.nan
         envelope['Aroof'] = np.nan
+        envelope['Aunderside'] = np.nan
 
         # call all building geometry files in a loop
         for building_name in self.building_names:
@@ -368,31 +389,20 @@ class BuildingProperties(object):
                                                      geometry_data['windows_south_m2'][0] + \
                                                      geometry_data['windows_north_m2'][0]
             envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            if 'undersides_bottom_m2' not in geometry_data.columns:
+                geometry_data['undersides_bottom_m2'] = 0
+            envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
 
-        def calc_empty_envelope_ratio(void_deck_floors, height, floors, Awall, Awin):
-            if (Awall + Awin) > 0.0:
-                empty_envelope_ratio = 1 - ((void_deck_floors * (height / floors)) / (Awall + Awin))
-            else:
-                empty_envelope_ratio = 1
-            return empty_envelope_ratio
-
-        df['empty_envelope_ratio'] = df.apply(lambda x: calc_empty_envelope_ratio(x['void_deck'],
-                                                                                  x['height_ag'],
-                                                                                  x['floors_ag'],
-                                                                                  x['Awall_ag'],
-                                                                                  x['Awin_ag']), axis=1)
 
         # adjust envelope areas with Void_deck
-        df['Awin_ag'] = df['Awin_ag'] * df['empty_envelope_ratio']
-        df['Awall_ag'] = df['Awall_ag'] * df['empty_envelope_ratio']
         df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
 
-        # get other cuantities.
-        df['floors'] = df['floors_bg'] + df['floors_ag']
+        # get other quantities.
+        df['floors'] = df['floors_bg'] + df['floors_ag'] - df["void_deck"]
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['GFA_ag_m2'] = df['footprint'] * df['floors_ag']
+        df['GFA_ag_m2'] = df['footprint'] * (df['floors_ag'] - df["void_deck"])
         df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
 
         return df
@@ -446,11 +456,12 @@ def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_b
     conditioned/occupied or not.
     For simplicity, the same share is assumed for all conditioned/occupied floors (whether above or below ground)
     '''
-
-    Hs_ag = Hs * floors_ag / (floors_ag + floors_bg * occupied_bg)
-    Hs_bg = Hs * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
-    Ns_ag = Ns * floors_ag / (floors_ag + floors_bg * occupied_bg)
-    Ns_bg = Ns * (floors_bg * occupied_bg) / (floors_ag + floors_bg * occupied_bg)
+    share_ag = floors_ag / (floors_ag + floors_bg * occupied_bg)
+    share_bg = 1 - share_ag
+    Hs_ag = Hs * share_ag
+    Hs_bg = Hs * share_bg
+    Ns_ag = Ns * share_ag
+    Ns_bg = Ns * share_bg
 
     return Hs_ag, Hs_bg, Ns_ag, Ns_bg
 
@@ -458,7 +469,7 @@ def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_b
 def calc_useful_areas(df):
     # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
     df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = split_above_and_below_ground_shares(
-        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'], df['floors_bg'])
+        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'] - df['void_deck'], df['floors_bg'])
     # occupied floor area: all occupied areas in the building
     df['Aocc'] = df['GFA_ag_m2'] * df['Ns_ag'] + df['GFA_bg_m2'] * df['Ns_bg']
     # conditioned area: areas that are heated/cooled
@@ -482,8 +493,7 @@ class BuildingPropertiesRow(object):
 
         self.name = name
         self.geometry = geometry
-        self.geometry['floor_height'] = calc_floor_to_floor_height(self.geometry['height_ag'],
-                                                                   self.geometry['floors_ag'])
+        self.geometry['floor_height'] = self.geometry['height_ag'] / self.geometry['floors_ag']
         envelope['Hs_ag'], envelope['Hs_bg'], envelope['Ns_ag'], envelope['Ns_bg'] = \
             split_above_and_below_ground_shares(
                 envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
@@ -650,6 +660,7 @@ class EnvelopeProperties(object):
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
         self.e_roof = envelope['e_roof']
+        self.e_underside = 0.0 # dummy values for emissivity of underside (bottom surface) as 0.
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof = envelope['U_roof']
@@ -663,6 +674,7 @@ class EnvelopeProperties(object):
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
+        self.void_deck = envelope['void_deck']
 
 
 class SolarProperties(object):
@@ -865,7 +877,7 @@ def verify_has_season(building_name, start, end):
         return True
 
 
-def get_envelope_properties(locator, prop_architecture):
+def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFrame) -> pd.DataFrame:
     """
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
@@ -969,7 +981,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
 
     # for every building
     for building_name in building_names:
-        thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win'],
+        thermal_resistance_surface = dict(zip(['RSE_wall', 'RSE_roof', 'RSE_win', 'RSE_underside'],
                                               get_thermal_resistance_surface(prop_envelope.loc[building_name],
                                                                              weather_data)))
         I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface)
@@ -980,7 +992,7 @@ def get_prop_solar(locator, building_names, prop_rc_model, prop_envelope, weathe
     return result
 
 
-def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface):
+def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_rc_model, thermal_resistance_surface):
     """
     Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
     and building envelope properties.
@@ -1010,8 +1022,7 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     I_sol_wall = I_sol_wall * \
                  prop_envelope.loc[building_name, 'a_wall'] * \
                  thermal_resistance_surface['RSE_wall'] * \
-                 prop_rc_model.loc[building_name, 'U_wall'] * \
-                 prop_rc_model.loc[building_name, 'empty_envelope_ratio']
+                 prop_rc_model.loc[building_name, 'U_wall']
 
     # sum roof
     # solar incident on all roofs [W]
@@ -1035,11 +1046,13 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     I_sol_win = I_sol_win * \
                 Fsh_win * \
-                (1 - prop_envelope.loc[building_name, 'F_F']) * \
-                prop_rc_model.loc[building_name, 'empty_envelope_ratio']
+                (1 - prop_envelope.loc[building_name, 'F_F'])
+    
+    #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
+    I_sol_underside = np.zeros_like(I_sol_win) * thermal_resistance_surface['RSE_underside'] 
 
     # sum
-    I_sol = I_sol_wall + I_sol_roof + I_sol_win
+    I_sol = I_sol_wall + I_sol_roof + I_sol_win + I_sol_underside
 
     return I_sol
 
@@ -1051,6 +1064,7 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
 
     # define surface thermal resistances according to ISO 6946
     h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
+    # generate an array of 0.5 * (sky_temp(t) + air_temp(t-1))
     theta_ss = 0.5 * (
             weather_data['skytemp_C'].values +
             np.array([weather_data['drybulb_C'].values[0]] +
@@ -1058,8 +1072,9 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
     thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
     thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
+    thermal_resistance_surface_underside = np.zeros_like(h_c)
 
-    return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win
+    return thermal_resistance_surface_wall, thermal_resistance_surface_roof, thermal_resistance_surface_win, thermal_resistance_surface_underside
 
 
 def verify_hvac_system_combination(result, locator):

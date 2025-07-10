@@ -1,10 +1,11 @@
+from __future__ import annotations
 import atexit
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Optional, Tuple, NamedTuple
+from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,10 @@ from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
+    from cea.resources.radiation.radiance import CEADaySim
 
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
@@ -192,18 +197,9 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
 
     for srf_type in SURFACE_TYPES:
         occface_list = getattr(building_geometry, srf_type)
-        if srf_type == 'roofs':
-            orientation_list = ['top'] * len(occface_list)
-            normals_list = [(0.0, 0.0, 1.0)] * len(occface_list)
-            interesection_list = [0] * len(occface_list)
-        elif srf_type == 'windows':
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = [0] * len(occface_list)
-        else:
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
+        orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+        normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
+        interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
@@ -280,7 +276,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data,
+def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, radiance_parameters, write_sensor_data,
                      grid_size: GridSize,
                      max_global, weatherfile, geometry_pickle_dir):
     # initialize daysim project
@@ -355,7 +351,7 @@ def write_sensor_results(sensor_data_path, sensor_values):
     feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
-def write_aggregated_results(building_name, sensor_values, locator, date):
+def write_aggregated_results(building_name, sensor_values: pd.DataFrame, locator: InputLocator, date):
     # Get sensor properties
     geometry = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
 

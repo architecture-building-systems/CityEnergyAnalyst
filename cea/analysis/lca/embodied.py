@@ -189,8 +189,7 @@ def lca_embodied(year_to_calculate, locator):
 
     # fix according to the void deck
     data_merged_df['empty_envelope_ratio'] = 1 - (
-            (data_merged_df['void_deck'] * (data_merged_df['height_ag'] / data_merged_df['floors_ag'])) / (
-            data_merged_df['area_walls_ext_ag'] + data_merged_df['windows_ag']))
+            (data_merged_df['void_deck']  / data_merged_df['floors_ag'])) # total area of external facade (wall+window)
     data_merged_df['windows_ag'] = data_merged_df['windows_ag'] * data_merged_df['empty_envelope_ratio']
     data_merged_df['area_walls_ext_ag'] = data_merged_df['area_walls_ext_ag'] * data_merged_df['empty_envelope_ratio']
 

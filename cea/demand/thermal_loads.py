@@ -5,7 +5,7 @@ Demand model of thermal loads
 
 
 
-
+from __future__ import annotations
 import numpy as np
 import pandas as pd
 
@@ -18,11 +18,27 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.demand.building_properties import get_thermal_resistance_surface
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.utilities import reporting
+from typing import TYPE_CHECKING, List, Dict, Tuple, Union
+
+if TYPE_CHECKING:
+    from cea.config import Configuration
+    from cea.inputlocator import InputLocator
+    from cea.demand.building_properties import BuildingPropertiesRow
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
-                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, config, debug):
+def calc_thermal_loads(building_name: str, 
+                       bpr: BuildingPropertiesRow, 
+                       weather_data: pd.DataFrame, 
+                       date_range: pd.date_range, 
+                       locator: InputLocator,
+                       use_dynamic_infiltration_calculation: bool, 
+                       resolution_outputs: str, 
+                       loads_output: List[str], 
+                       massflows_output: List[str],
+                       temperatures_output: List[str], 
+                       config: Configuration, 
+                       debug: bool,
+                       ):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -65,14 +81,29 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
     :type weather_data: pandas.DataFrame
 
-    :param locator:
-    :param use_dynamic_infiltration_calculation:
+    :param locator: object containing methods of locating scenario files
+    :type locator: cea.inputlocator.InputLocator
+    :param use_dynamic_infiltration_calculation: True if dynamic infiltration calculations are considered (slower run times!).
+    :rtype use_dynamic_infiltration_calculation: bool
+    :param resolution_outputs: Time step resolution of the demand simulation (hourly or monthly).
+    :type resolution_outputs: str
+    :param loads_output: List of loads output by the demand simulation (to simulate all load types in demand_writer, leave blank).
+    :type loads_output: list[str]
+    :param massflows_output: List of mass flow rates output by the demand simulation (to simulate all system mass flow rates in demand_writer, leave blank).
+    :type massflows_output: list[str]
+    :param temperatures_output: List of temperatures output by the demand simulation (to simulate all temperatures in demand_writer, leave blank).
+    :type temperatures_output: list[str]
+    :param config: cea configuration
+    :type config: cea.configuration.Configuration
+    :param debug: Enable debugging-specific behaviors.
+    :type debug: bool
 
     :returns: This function does not return anything
     :rtype: NoneType
 
-"""
-    schedules, tsd = initialize_inputs(bpr, weather_data, locator)
+    """
+    tsd = initialize_timestep_data(weather_data)
+    schedules, tsd = initialize_schedules(bpr, tsd, locator)
 
     # CALCULATE ELECTRICITY LOADS
     tsd = electrical_loads.calc_Eal_Epro(tsd, schedules)
@@ -113,7 +144,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, date_range, locator,
         # get hourly thermal resistances of external surfaces
         tsd['RSE_wall'], \
         tsd['RSE_roof'], \
-        tsd['RSE_win'] = get_thermal_resistance_surface(bpr.architecture, weather_data)
+        tsd['RSE_win'], \
+        tsd['RSE_underside'] = get_thermal_resistance_surface(bpr.architecture, weather_data)
         # calculate heat gains
         tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
@@ -309,7 +341,10 @@ def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
+def calc_Qhs_Qcs(bpr: BuildingPropertiesRow, 
+                 tsd: Dict[str, np.ndarray], 
+                 use_dynamic_infiltration_calculation: bool, 
+                 config: Configuration):
     # get ventilation flows
     ventilation_air_flows_simple.calc_m_ve_required(tsd)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
@@ -343,8 +378,13 @@ def calc_Qhs_Qcs(bpr, tsd, use_dynamic_infiltration_calculation, config):
     return tsd
 
 
-def initialize_inputs(bpr, weather_data, locator):
+def initialize_schedules(bpr: BuildingPropertiesRow, 
+                         tsd: Dict[str, np.ndarray],
+                         locator: InputLocator,
+                         ) -> Tuple[pd.DataFrame, 
+                                    Dict[str, Union[np.ndarray, pd.Series]]]:
     """
+    This function reads schedules, and update the timeseries data based on schedules read.
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
@@ -357,13 +397,8 @@ def initialize_inputs(bpr, weather_data, locator):
     :returns: one dict of schedules, one dict of time step data
     :rtype: dict
     """
-    # TODO: documentation, this function is actually two functions
-
     # get the building name
     building_name = bpr.name
-
-    # this is used in the NN please do not erase or change!!
-    tsd = initialize_timestep_data(bpr, weather_data)
 
     # get occupancy file
     occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
@@ -411,7 +446,7 @@ TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
 
-def initialize_timestep_data(bpr, weather_data):
+def initialize_timestep_data(weather_data: pd.DataFrame) -> Dict[str, np.ndarray]:
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 

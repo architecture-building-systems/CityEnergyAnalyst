@@ -29,13 +29,15 @@ T_WARNING_HIGH = constants.T_WARNING_HIGH
 # TODO: documentation
 
 # SIA 2044 constants
-h_cv_i = 2.5  # (W/m2K) (4) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-h_r_i = 5.5  # (W/m2K) (5) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-h_ic = 9.1  # (W/m2K) (6) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-f_sa = 0.1  # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-f_r_l = 0.7  # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-f_r_p = 0.5  # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-f_r_a = 0.2  # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+# section 2.1.3 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+h_cv_i = 2.5  # (W/m2K) heat transfer coefficient for convection on internal area
+h_r_i = 5.5  # (W/m2K) heat trasnfer coefficient for long wave radiation
+h_ic = 9.1  # (W/m2K) total heat transfer coefficient on internal area, = h_cv_i + 1.2*h_r_i
+# section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+f_sa = 0.1  # (-) share of solar radiation that turns to convective heat
+f_r_l = 0.7  # (-)
+f_r_p = 0.5  # (-)
+f_r_a = 0.2  # (-)
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -58,15 +60,20 @@ def calc_h_mc(a_m):
     return h_mc
 
 
-def calc_h_ac(a_t):
+def calc_h_ac(a_t: float) -> float:
     """
-    :param a_t: equivalent to ``bpr.rc_model['Atot']``
-    :return:
+    Source: (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+
+    :param a_t: area of all surfaces facing the building zone in [m2], equivalent to `bpr.rc_model['Atot']`. 
+                See documentation for `calc_prop_rc_model`.
+    :type a_t: float
+    :return: `h_ac`: heat loss factor from air node to central node, used in 5R1C model.
+    :rtype: float
     """
 
     # get properties from bpr # TODO: to be addressed in issue #443
 
-    # (8) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+    # 
 
     h_ac = a_t / (1 / h_cv_i - 1 / h_ic)
 
@@ -87,10 +94,25 @@ def calc_h_op_m(Htr_op):
     return h_op_m
 
 
-def calc_h_em(h_op_m, h_mc):
+def calc_h_em(h_op_m: float, h_mc: float) -> float:
+    """
+    Source: (11) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
+    calculates `h_em` for the 5R1C model.
+
+    :param h_op_m: total heat loss factor: `U_op * A_op`, including conduction, convection and radiation.
+    :type h_op_m: float
+    :param h_mc: heat loss factor from thermal mass to internal air due to convection and radiation.
+    :type h_mc: float
+    :return: heat loss factor due to only conduction between mass node and outside.
+    :rtype: float
+    """
+    if h_op_m > 0:
+        h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
+    else:
+        # h_op_m = 0, no heat transfer from mass to outside air. 
+        # Therefore h_em (part of heat transfer from mass to outside air) should also be 0.
+        h_em = 0
 
     return h_em
 
@@ -107,10 +129,21 @@ def calc_h_j_em():
     return None
 
 
-def calc_h_ec(Htr_w):
+def calc_h_ec(Htr_w: float) -> float:
+    """
+    Source: (12) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011.\\
+    Calculates transmission heat loss factor of all components with negligible thermal mass. 
+    This category can include window, linear thermal bridge and point thermal bridge.\\
+    
+    Current simplified formula: `h_ec = Htr_w`, where Htr_w is the only input; \\
+    Or conceptually, `h_ec = a_j_l * u_j`, 
+    where a_j_l is the area of j-th light component, u_j is its U-value.
 
-    # (12) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    # h_ec = a_j_l * u_j
+    :param Htr_w: transmission heat loss factor of windows.
+    :type Htr_w: float
+    :return: transmission heat loss factor of light component `h_ec`, used in the 5R1C model.
+    :rtype: float
+    """
     # This formula in the future should take specific properties of the location of the building into account.
     # TODO: can incorporate point or linear thermal bridges
 
@@ -119,7 +152,20 @@ def calc_h_ec(Htr_w):
     return h_ec
 
 
-def calc_h_ea(m_ve_mech, m_ve_window, m_ve_inf_simple):
+def calc_h_ea(m_ve_mech: float, m_ve_window: float, m_ve_inf_simple: float) -> float:
+    """
+    source: (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011.\\
+    Adapted for mass flows instead of volume flows
+
+    :param m_ve_mech: mass flow rate for mechanical ventilation in [kg/s]
+    :type m_ve_mech: float
+    :param m_ve_window: mass flow rate for window ventilation in [kg/s]
+    :type m_ve_window: float
+    :param m_ve_inf_simple: mass flow rate for infiltration in [kg/s]
+    :type m_ve_inf_simple: float
+    :return: `h_ea`: heat loss factor from outside to the air node, used in 5R1C model.
+    :rtype: float
+    """
     cp = 1.005 / 3.6  # (Wh/kg/K)
     # TODO: check units of air flow
 
@@ -128,8 +174,6 @@ def calc_h_ea(m_ve_mech, m_ve_window, m_ve_inf_simple):
     m_v_w = m_ve_window * 3600  # mass flow rate window ventilation
     m_v_inf = m_ve_inf_simple * 3600  # mass flow rate infiltration
 
-    # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    # adapted for mass flows instead of volume flows
     h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
 
     return h_ea
@@ -192,27 +236,51 @@ def calc_phi_c(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_ic, f_sc):
     return phi_c
 
 
-def calc_phi_i_p(Qs): # _Wp, people):
+def calc_phi_i_p(Qs: float) -> float:  # _Wp, people):
+    """internal gain due to occupancy.
+
+    :param Qs: total internal load from people in [W]
+    :type Qs: float
+    :return: total internal load from people in [W]
+    :rtype: float
+    """
+
     # # internal gains from people
     # phi_i_p = people * Qs_Wp
     return Qs # phi_i_p
 
 
-def calc_phi_i_a(Eaf, Epro):
+def calc_phi_i_a(Eaf: float, Epro: float) -> float:
+    """internal gains from appliances and industrial processes.
+
+    :param Eaf: appliance load in W
+    :type Eaf: float
+    :param Epro: industrial process load in W
+    :type Epro: float
+    :return: `phi_i_a`, total internal gain due to appliances and industrial processes in [W]
+    :rtype: float
+    """
     # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen()
     # TODO make function and dynamic, check factor
     phi_i_a = 0.9 * (Eaf + Epro)
     return phi_i_a
 
 
-def calc_phi_i_l(Elf):
-    # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen()
+def calc_phi_i_l(Elf: float) -> float:
+    """internal gains from lighting.
+
+    :param Elf: lighting load in W
+    :type Elf: float
+    :return: `phi_i_l`, total internal gain due to lighting load in [W].
+    :rtype: float
+    """
+    # factor of 0.9 taken from old method calc_Qgain_sen()
     # TODO make function and dynamic, check factor
     phi_i_l = 0.9 * Elf
     return phi_i_l
 
 
-def calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm):
+def calc_phi_m(phi_hc_r, phi_i_l: float, phi_i_a, phi_i_p, I_sol, f_im, f_sm):
 
     # (16) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
@@ -239,42 +307,43 @@ def calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm):
     return phi_m
 
 
-def calc_f_ic(a_t, a_m, h_ec):
+def calc_f_ic(a_t: float, a_m: float, h_ec: float) -> float:
     """
+    Source: (17) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011\\
+    Gabriel Happle 01.12.2016
 
-    :param a_t: see ``bpr.rc_model['Atot']``
-    :param a_m: see ``bpr.rc_model['Am']``
-    :param h_ec: see ``calc_h_ec``
-    :return:
+    :param a_t: area of all surfaces facing the building zone in [m2], equivalent to `bpr.rc_model['Atot']`. 
+                See documentation for `calc_prop_rc_model`.
+    :type a_t: float
+    :param a_m: effective mass area in [m2], see `bpr.rc_model['Am']` and documentation for `calc_prop_rc_model`.
+    :type a_m: float
+    :param h_ec: transmission heat loss factor of light component, see function `calc_h_ec`.
+    :type h_ec: float
+    :return: fraction of internal radiant heat gain (occupants, equipments, etc.) distributed to central node.
+    :rtype: float
     """
-
-    # (17) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    # Gabriel Happle 01.12.2016
-
-    #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
-
     f_ic = (a_t - a_m - h_ec / h_ic) / a_t
 
     return f_ic
 
 
-def calc_f_sc(a_t, a_m, a_w, h_ec):
+def calc_f_sc(a_t: float, a_m: float, a_w: float, h_ec: float) -> float:
     """
+    Source: (18) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011\\
+    Gabriel Happle 01.12.2016
 
-    :param a_t: see ``bpr.rc_model['Atot']``
-    :param a_m: see ``bpr.rc_model['Am']``
-    :param a_w: see ``bpr.rc_model['Aw']``
-    :param h_ec: see ``calc_h_ec``
-    :return:
+    :param a_t: area of all surfaces facing the building zone in [m2], equivalent to `bpr.rc_model['Atot']`. 
+                See documentation for `calc_prop_rc_model`.
+    :type a_t: float
+    :param a_m: effective mass area in [m2], see `bpr.rc_model['Am']` and documentation for `calc_prop_rc_model`.
+    :type a_m: float
+    :param a_w: area of all windows. See `bpr.rc_model['Aw']` and documentation for `calc_prop_rc_model`.
+    :type a_w: float
+    :param h_ec: transmission heat loss factor of light component, see function `calc_h_ec`.
+    :type h_ec: float
+    :return: fraction of solar gain that feeds to central node in 5R1C model.
+    :rtype: float
     """
-
-    # (18) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    # Gabriel Happle 01.12.2016
-
-    # get values from bpr
-
-    #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
-
     f_sc = (a_t-a_m-a_w-h_ec/h_ic) / (a_t - a_w)
 
     return f_sc
@@ -413,29 +482,63 @@ def calc_theta_m_t(phi_m_tot, theta_m_t_1, h_em, h_3, c_m):
     return theta_m_t
 
 
-def calc_h_1(h_ea, h_ac):
+def calc_h_1(h_ea: float, h_ac: float) -> float:
+    """
+    source: (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+
+    Calculates the series heat transmittance from central node to outdoor air via convection.
+
+    :param h_ea: heat loss factor between outdoor air and air node.
+    :type h_ea: float
+    :param h_ac: heat loss factor between air node and central node (e.g., via surface convection). 
+    :type h_ac: float
+    :return: augmented heat loss factor from central node to outdoor air.
+    :rtype: float
+    """
 
     # get values
     h_ea = h_ea
     h_ac = h_ac
-
-    # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     h_1 = 1 / (1 / h_ea + 1 / h_ac)
 
     return h_1
 
 
-def calc_h_2(h_1, h_ec):
-    # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+def calc_h_2(h_1: float, h_ec: float) -> float:
+    """
+    Source: (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+
+    Calculates total heat loss factor from central node to outdoor air via both convection and conduction.
+
+    :param h_1: heat loss factor from central node via air node to outside air (e.g., through convection).
+    :type h_1: float
+    :param h_ec: heat loss factor from central node to outside air (e.g., through conduction).
+    :type h_ec: float
+    :return: total heat loss factor from central node to outdoor air via both paths.
+    :rtype: float
+    """
 
     h_2 = h_1 + h_ec
 
     return h_2
 
 
-def calc_h_3(h_2, h_mc):
-    # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+def calc_h_3(h_2: float, h_mc: float) -> float:
+    """
+    Source: (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+
+    Calculates the heat loss factor from mass node via central node (via conduction) 
+    to the outside (via conduction and convection).
+
+    :param h_2: total heat loss factor from central node to outside air via convection and conduction
+    :type h_2: float
+    :param h_mc: heat loss factor from mass node to central node via conduction.
+    :type h_mc: float
+    :return: augmented heat loss factor from mass node via central node to outside air.
+    :rtype: float
+    """
+
     h_3 = 1.0 / (1.0 / h_2 + 1.0 / h_mc)
     return h_3
 
@@ -670,10 +773,10 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t, config):
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
     heating energy demand
 
-    :py:func: `cea.demand.rc_model_SIA.lookup_f_hc_cv_heating`
-    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
-    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_r`
-    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures`
+    .. py:function:: `cea.demand.rc_model_SIA.lookup_f_hc_cv_heating`
+    .. py:function:: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
+    .. py:function:: `cea.demand.rc_model_SIA.calc_phi_hc_r`
+    .. py:function:: `cea.demand.rc_model_SIA.calc_rc_model_temperatures`
 
     Author: Gabriel Happle
     Date: FEB 2017
