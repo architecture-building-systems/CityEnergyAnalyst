@@ -382,7 +382,7 @@ def initialize_schedules(bpr: BuildingPropertiesRow,
                          ) -> Tuple[pd.DataFrame, 
                                     Dict[str, Union[np.ndarray, pd.Series]]]:
     """
-    This function reads schedules, and update the timesereis data based on schedules read.
+    This function reads schedules, and update the timeseries data based on schedules read.
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
