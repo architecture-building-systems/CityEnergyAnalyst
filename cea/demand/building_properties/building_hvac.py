@@ -94,16 +94,17 @@ class BuildingHVAC(BuildingPropertiesDatabase):
 
         # HVAC database mappings: (locator_method, join_column, column_renames, fields_to_extract)
         hvac_mappings = {
-            'heating': (
+            'hvac heating': (
                 locator.get_database_assemblies_hvac_heating,
                 'hvac_type_hs',
                 None,
+                # TODO: Remove columns from building hvac properties from database filter
                 ['hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent',
                  'hvac_heat_starts', 'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs',
                  'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
                  'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
             ),
-            'cooling': (
+            'hvac cooling': (
                 locator.get_database_assemblies_hvac_cooling,
                 'hvac_type_cs',
                 None,
@@ -111,19 +112,19 @@ class BuildingHVAC(BuildingPropertiesDatabase):
                  'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
                  'class_cs', 'convection_cs']
             ),
-            'control': (
+            'hvac control': (
                 locator.get_database_assemblies_hvac_controller,
                 'hvac_type_ctrl',
                 None,
                 ['dT_Qhs', 'dT_Qcs']
             ),
-            'dhw': (
+            'hvac dhw': (
                 locator.get_database_assemblies_hvac_hot_water,
                 'hvac_type_dhw',
                 None,
                 ['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
             ),
-            'ventilation': (
+            'hvac ventilation': (
                 locator.get_database_assemblies_hvac_ventilation,
                 'hvac_type_vent',
                 None,
@@ -131,7 +132,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
             )
         }
 
-        result = BuildingHVAC.merge_database_properties(prop_hvac, hvac_mappings, validate_merges=False)
+        result = BuildingHVAC.merge_database_properties(prop_hvac, hvac_mappings)
 
         # verify hvac and ventilation combination
         verify_hvac_system_combination(result, locator)

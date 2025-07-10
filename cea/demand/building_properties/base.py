@@ -19,14 +19,12 @@ class BuildingPropertiesDatabase:
     def merge_database_properties(
         building_properties: pd.DataFrame,
         db_mappings: Dict[str, Tuple[Callable, str, Optional[Dict[str, str]], List[str]]],
-        validate_merges: bool = True
     ) -> pd.DataFrame:
         """
         Common method to merge building properties with database properties.
         
         :param building_properties: DataFrame with building properties to merge
         :param db_mappings: Dictionary mapping component types to (locator_method, join_column, column_renames, fields_to_extract)
-        :param validate_merges: Whether to validate successful merges
         :return: Concatenated DataFrame with all merged properties
         """
         merged_dfs = []
@@ -48,14 +46,14 @@ class BuildingPropertiesDatabase:
             if column_renames:
                 merged_df.rename(columns=column_renames, inplace=True)
             
-            # Validate merge if requested
-            if validate_merges:
-                invalid_buildings = merged_df.loc[merged_df['code'].isna()]
-                if len(invalid_buildings) > 0:
-                    raise ValueError(
-                        f'WARNING: Invalid {component_type} type found in architecture inputs. '
-                        f'The following buildings will not be modeled: {list(invalid_buildings.index)}.')
-            
+            # Validate merge, ensure there are no empty values
+            print(f"Checking building {component_type} properties...")
+            invalid_buildings = merged_df.loc[merged_df['code'].isna()]
+            if len(invalid_buildings) > 0:
+                raise ValueError(
+                    f'WARNING: Invalid {component_type} type found in building {component_type} properties.'
+                    f'Check the building properties for: {list(invalid_buildings.index)}.')
+
             merged_dfs.append(merged_df[fields])
         
         # Return concatenated or merged result

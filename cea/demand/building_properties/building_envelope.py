@@ -51,34 +51,35 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
         """
         # Database mappings: (locator_method, join_column_name, columns_to_extract)
         db_mappings = {
-            'construction': (
+            'envelope construction': (
                 locator.get_database_assemblies_envelope_mass,
                 'type_mass',
+                # TODO: Remove columns from building envelope properties from database filter
                 ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
             ),
-            'leakage': (
+            'envelope leakage': (
                 locator.get_database_assemblies_envelope_tightness,
                 'type_leak',
                 ['n50']
             ),
-            'roof': (
+            'envelope roof': (
                 locator.get_database_assemblies_envelope_roof,
                 'type_roof',
                 ['e_roof', 'a_roof', 'U_roof']
             ),
-            'wall': (
+            'envelope wall': (
                 locator.get_database_assemblies_envelope_wall,
                 'type_wall',
                 ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']),
-            'window': (
+            'envelope window': (
                 locator.get_database_assemblies_envelope_window,
                 'type_win',
                 ['e_win', 'G_win', 'U_win', 'F_F']),
-            'shading':
+            'envelope shading':
                 (locator.get_database_assemblies_envelope_shading,
                  'type_shade',
                  ['rf_sh']),
-            'floor': (
+            'envelope floor': (
                 locator.get_database_assemblies_envelope_floor,
                 'type_base',
                 ['U_base'])
