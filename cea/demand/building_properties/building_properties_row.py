@@ -193,22 +193,39 @@ def _calc_form(geometry: dict):
 
 @dataclass(frozen=True)
 class EnvelopeProperties:
-    A_op: Annotated[float, "Opaque area above ground [m2]"]
-    a_roof: Annotated[float, "Solar absorptance of roof [-]"]
-    n50: Annotated[float, "Air tightness at 50 Pa [1/h]"]
-    win_wall: Annotated[float, "Window to wall ratio [-]"]
-    a_wall: Annotated[float, "Solar absorptance of wall [-]"]
-    rf_sh: Annotated[float, "Roof shading factor [-]"]
-    e_wall: Annotated[float, "Emissivity of wall [-]"]
-    e_roof: Annotated[float, "Emissivity of roof [-]"]
-    e_underside: Annotated[float, "Emissivity of underside [-]"]
-    G_win: Annotated[float, "Solar heat gain coefficient [-]"]
-    e_win: Annotated[float, "Emissivity of windows [-]"]
-    U_roof: Annotated[float, "U-value of roof [W/m2K]"]
-    U_wall: Annotated[float, "U-value of wall [W/m2K]"]
-    U_base: Annotated[float, "U-value of basement [W/m2K]"]
-    U_win: Annotated[float, "U-value of windows [W/m2K]"]
+    # Construction properties
     Cm_Af: Annotated[float, "Internal heat capacity [J/m2K]"]
+
+    # Leakage properties
+    n50: Annotated[float, "Air tightness at 50 Pa [1/h]"]
+
+    # Roof properties
+    e_roof: Annotated[float, "Emissivity of roof [-]"]
+    a_roof: Annotated[float, "Solar absorptance of roof [-]"]
+    U_roof: Annotated[float, "U-value of roof [W/m2K]"]
+
+    # Wall properties
+    e_wall: Annotated[float, "Emissivity of wall [-]"]
+    a_wall: Annotated[float, "Solar absorptance of wall [-]"]
+    U_wall: Annotated[float, "U-value of wall [W/m2K]"]
+
+    # Window properties
+    e_win: Annotated[float, "Emissivity of windows [-]"]
+    G_win: Annotated[float, "Solar heat gain coefficient of windows [-]"]
+    U_win: Annotated[float, "U-value of windows [W/m2K]"]
+
+    # Floor properties
+    U_base: Annotated[float, "U-value of floor [W/m2K]"]
+
+    # Shading properties
+    rf_sh: Annotated[float, "Roof shading factor [-]"]
+
+    # Additional properties
+    e_underside: Annotated[float, "Emissivity of underside [-]"]
+
+    # Derived fields
+    A_op: Annotated[float, "Opaque area above ground [m2]"]
+    win_wall: Annotated[float, "Window to wall ratio [-]"]
 
     # FIXME: These fields does not neccessarily describe the building envelope
     Es: Annotated[float, "Heated/cooled share [-]"]
