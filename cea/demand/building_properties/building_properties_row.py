@@ -20,7 +20,7 @@ class BuildingPropertiesRow:
     comfort: dict
     internal_loads: dict
 
-    architecture: EnvelopeProperties
+    envelope: EnvelopeProperties
     hvac: dict
     supply: dict
 
@@ -46,7 +46,7 @@ class BuildingPropertiesRow:
 
         return cls(name=name, geometry=geometry, typology=typology,
                    comfort=comfort, internal_loads=internal_loads,
-                   architecture= EnvelopeProperties.from_dict(envelope), hvac=hvac, supply=supply,
+                   envelope= EnvelopeProperties.from_dict(envelope), hvac=hvac, supply=supply,
                    building_systems=building_systems,
                    rc_model=rc_model, solar=SolarProperties.from_dict(solar))
 

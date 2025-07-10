@@ -142,7 +142,7 @@ def calc_m_ve_leakage_simple(bpr: BuildingPropertiesRow, tsd):
     # 'flat rate' infiltration considered for all buildings
 
     # get properties
-    n50 = bpr.architecture.n50
+    n50 = bpr.envelope.n50
     area_f = bpr.rc_model['Af']
 
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6

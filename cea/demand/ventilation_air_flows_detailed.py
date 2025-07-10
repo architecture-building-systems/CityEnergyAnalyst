@@ -109,7 +109,7 @@ def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     :returns: dictionary containing natural ventilation properties of zone
     """
 
-    n50 = bpr.architecture.n50
+    n50 = bpr.envelope.n50
     vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(bpr.geometry)
