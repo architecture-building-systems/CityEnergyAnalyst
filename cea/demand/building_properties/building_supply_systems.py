@@ -59,7 +59,7 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
             )
         }
 
-        return BuildingSupplySystems.merge_database_properties(locator, properties_supply, supply_mappings,
+        return BuildingSupplySystems.merge_database_properties(properties_supply, supply_mappings,
                                                                validate_merges=False)
 
     def __getitem__(self, building_name: str) -> dict:

@@ -84,7 +84,7 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
                 ['U_base'])
         }
 
-        return BuildingEnvelope.merge_database_properties(locator, prop_envelope, db_mappings)
+        return BuildingEnvelope.merge_database_properties(prop_envelope, db_mappings)
 
     def __getitem__(self, building_name: str) -> dict:
         """Get envelope properties of a building by name"""

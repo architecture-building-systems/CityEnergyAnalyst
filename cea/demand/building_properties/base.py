@@ -17,7 +17,6 @@ class BuildingPropertiesDatabase:
 
     @staticmethod
     def merge_database_properties(
-        locator: 'InputLocator',
         building_properties: pd.DataFrame,
         db_mappings: Dict[str, Tuple[Callable, str, Optional[Dict[str, str]], List[str]]],
         validate_merges: bool = True
@@ -25,7 +24,6 @@ class BuildingPropertiesDatabase:
         """
         Common method to merge building properties with database properties.
         
-        :param locator: InputLocator for accessing database files
         :param building_properties: DataFrame with building properties to merge
         :param db_mappings: Dictionary mapping component types to (locator_method, join_column, column_renames, fields_to_extract)
         :param validate_merges: Whether to validate successful merges
