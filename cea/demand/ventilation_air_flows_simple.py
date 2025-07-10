@@ -143,7 +143,7 @@ def calc_m_ve_leakage_simple(bpr: BuildingPropertiesRow, tsd):
 
     # get properties
     n50 = bpr.envelope.n50
-    area_f = bpr.rc_model['Af']
+    area_f = bpr.rc_model.Af
 
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
     n_inf = 0.5 * n50 * (DELTA_P_DIM / 50) ** (2 / 3)  # [air changes per hour] m3/h.m2

@@ -26,7 +26,7 @@ class BuildingPropertiesRow:
 
     building_systems: pd.Series
 
-    rc_model: dict
+    rc_model: RCModelProperties
     solar: SolarProperties
 
     @property
@@ -48,7 +48,7 @@ class BuildingPropertiesRow:
                    comfort=comfort, internal_loads=internal_loads,
                    envelope= EnvelopeProperties.from_dict(envelope), hvac=hvac, supply=supply,
                    building_systems=building_systems,
-                   rc_model=rc_model, solar=SolarProperties.from_dict(solar))
+                   rc_model=RCModelProperties.from_dict(rc_model), solar=SolarProperties.from_dict(solar))
 
     @staticmethod
     def get_floor_height(geometry: dict) -> float:
@@ -252,3 +252,45 @@ class SolarProperties:
     @classmethod
     def from_dict(cls, solar: dict):
         return cls(I_sol=solar['I_sol'])
+
+
+@dataclass(frozen=True)
+class RCModelProperties:
+    # --- Area properties ---
+    Atot: Annotated[float, "Total area [m2]"]
+    Af: Annotated[float, "Floor area [m2]"]
+    GFA_m2: Annotated[float, "Gross floor area [m2]"]
+    footprint: Annotated[float, "Building footprint area [m2]"]
+    Aroof: Annotated[float, "Roof area [m2]"]
+    Aunderside: Annotated[float, "Underside area [m2]"]
+    Awall_ag: Annotated[float, "Above ground wall area [m2]"]
+    Awin_ag: Annotated[float, "Above ground window area [m2]"]
+    Am: Annotated[float, "Mass area [m2]"]
+    Aef: Annotated[float, "Effective area [m2]"]
+    Aocc: Annotated[float, "Occupied area [m2]"]
+    Aop_bg: Annotated[float, "Opaque area below ground [m2]"]
+    Hs_ag: Annotated[float, "Above ground surface area [m2]"]
+
+    # --- Thermal properties ---
+    Cm: Annotated[float, "Thermal capacity [J/K]"]
+    Hg: Annotated[float, "Solar heat gain [W]"]
+    HD: Annotated[float, "Direct solar gain [W]"]
+
+    # --- Heat transfer coefficients ---
+    Htr_is: Annotated[float, "Transmission heat transfer coefficient (internal surfaces) [W/K]"]
+    Htr_em: Annotated[float, "Transmission heat transfer coefficient (external mass) [W/K]"]
+    Htr_ms: Annotated[float, "Transmission heat transfer coefficient (mass to surface) [W/K]"]
+    Htr_op: Annotated[float, "Transmission heat transfer coefficient (opaque) [W/K]"]
+    Htr_w: Annotated[float, "Transmission heat transfer coefficient (windows) [W/K]"]
+
+    # --- U-values (Duplicated Envelope properties) ---
+    U_wall: Annotated[float, "U-value of wall [W/m2K]"]
+    U_roof: Annotated[float, "U-value of roof [W/m2K]"]
+    U_win: Annotated[float, "U-value of windows [W/m2K]"]
+    U_base: Annotated[float, "U-value of floor [W/m2K]"]
+
+    @classmethod
+    def from_dict(cls, rc_model: dict):
+        field_names = cls.__annotations__.keys()
+        filtered_envelope = {k: rc_model[k] for k in field_names if k in rc_model}
+        return cls(**filtered_envelope)

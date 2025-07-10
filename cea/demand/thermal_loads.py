@@ -132,7 +132,7 @@ def calc_thermal_loads(building_name: str,
         tsd['Edata'] = tsd['E_cdata'] = np.zeros(HOURS_IN_YEAR)
 
     # CALCULATE SPACE CONDITIONING DEMANDS
-    if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
+    if np.isclose(bpr.rc_model.Af, 0.0):  # if building does not have conditioned area
         tsd['T_int'] = tsd['T_ext']
         tsd['x_int'] = np.vectorize(convert_rh_to_moisture_content)(tsd['rh_ext'], tsd['T_int'])
         tsd['E_cs'] = tsd['E_hs'] = np.zeros(HOURS_IN_YEAR)

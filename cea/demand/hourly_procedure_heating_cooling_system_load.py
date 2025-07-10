@@ -757,9 +757,9 @@ def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model
         h_base_em = 0.0
         h_roof_em = 0.0
     else:
-        h_wall_em = h_em * bpr.rc_model['Awall_ag'] * bpr.rc_model['U_wall'] / h_op_m
-        h_base_em = h_em * bpr.rc_model['Aop_bg'] * B_F * bpr.rc_model['U_base'] / h_op_m
-        h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
+        h_wall_em = h_em * bpr.rc_model.Awall_ag * bpr.rc_model.U_wall / h_op_m
+        h_base_em = h_em * bpr.rc_model.Aop_bg * B_F * bpr.rc_model.U_base / h_op_m
+        h_roof_em = h_em * bpr.rc_model.Aroof * bpr.rc_model.U_roof / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
     tsd['Q_gain_sen_wall'][t] = h_wall_em * (theta_em - theta_m)
@@ -859,7 +859,7 @@ def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
         # STEP 2
         # ******
         # calculate temperatures with 10 W/m2 heating power
-        phi_hc_10 = 10.0 * bpr.rc_model['Af']
+        phi_hc_10 = 10.0 * bpr.rc_model.Af
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t, config)
 
         t_int_10 = rc_model_temperatures_10['T_int']
@@ -873,7 +873,7 @@ def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
         # STEP 3
         # ******
         # check if available power is sufficient
-        phi_h_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model['Af']
+        phi_h_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model.Af
 
         if 0.0 < phi_hc_ul <= phi_h_max:
             # case heating with phi_hc_ul
@@ -943,7 +943,7 @@ def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
         # STEP 2
         # ******
         # calculate temperatures with 10 W/m2 cooling power
-        phi_hc_10 = 10.0 * bpr.rc_model['Af']
+        phi_hc_10 = 10.0 * bpr.rc_model.Af
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t, config)
 
         t_int_10 = rc_model_temperatures_10['T_int']
@@ -957,7 +957,7 @@ def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
         # STEP 3
         # ******
         # check if available power is sufficient
-        phi_c_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
+        phi_c_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model.Af
 
         if 0.0 > phi_hc_ul >= phi_c_max:
             # case heating with phi_hc_ul

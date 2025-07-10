@@ -49,7 +49,7 @@ def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd, t):
     theta_int_ini = tsd['T_int'][t]
     q_em_out = tsd['Qcs_sen_sys'][t]
 
-    q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
+    q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model.Af
 
     delta_theta_int_inc = calc_delta_theta_int_inc_cooling(bpr)
 
@@ -84,7 +84,7 @@ def calc_q_em_ls_heating(bpr: BuildingPropertiesRow, tsd, hoy):
     theta_int_ini = tsd['T_int'][hoy]
     q_em_out = tsd['Qhs_sen_sys'][hoy]
 
-    q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model['Af']
+    q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model.Af
 
     delta_theta_int_inc = calc_delta_theta_int_inc_heating(bpr)
 

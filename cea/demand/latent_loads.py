@@ -47,7 +47,7 @@ def calc_humidification_moisture_load(bpr: BuildingPropertiesRow, tsd, t):
     x_int_a_prev = tsd['x_int'][t - 1]
 
     # zone volume
-    vol_int_a = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # calculate
     g_hu_ld = m_ve_mech * (x_set_min - x_ve_mech) + m_ve_inf * (x_set_min - x_ve_inf) - g_int + \
@@ -90,7 +90,7 @@ def calc_dehumidification_moisture_load(bpr: BuildingPropertiesRow, tsd, t):
     x_int_a_prev = tsd['x_int'][t-1]
 
     # zone volume
-    vol_int_a = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # calculate
     g_dhu_ld = -m_ve_mech * (x_set_max - x_ve_mech) - m_ve_inf * (x_set_max - x_ve_inf) + g_int - \
@@ -220,7 +220,7 @@ def calc_moisture_in_zone_central(bpr: BuildingPropertiesRow, tsd, t):
     # (80) in ISO 52016-1:2017
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a_ztc = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -282,7 +282,7 @@ def calc_moisture_content_in_zone_local(bpr: BuildingPropertiesRow, tsd, t):
     """
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a_ztc = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -328,7 +328,7 @@ def total_moisture_in_zone(bpr: BuildingPropertiesRow, x_int):
     """
 
     # air mass in zone
-    m_air_zone = bpr.rc_model['Af'] * bpr.geometry['floor_height'] * RHO_A
+    m_air_zone = bpr.rc_model.Af * bpr.geometry['floor_height'] * RHO_A
 
     # return total mass of water in kg
     return m_air_zone * x_int

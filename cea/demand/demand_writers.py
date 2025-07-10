@@ -67,8 +67,8 @@ class DemandWriter(object):
         columns = self.OTHER_VARS
         columns.extend(keys)
         # add other default elements
-        data.update({'name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
-                     'GFA_m2': bpr.rc_model['GFA_m2'], 'Aocc_m2': bpr.rc_model['Aocc'],
+        data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.rc_model.Aroof,
+                     'GFA_m2': bpr.rc_model.GFA_m2, 'Aocc_m2': bpr.rc_model.Aocc,
                      'people0': tsd['people'].max()})
         return columns, data
 
