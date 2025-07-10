@@ -1,30 +1,19 @@
 # -*- coding: utf-8 -*-
-
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import warnings
 import numpy as np
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \
     space_emission_systems, latent_loads, constants
 
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
-__author__ = "Gabriel Happle"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Gabriel Happle"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
-__status__ = "Production"
-
-
-# this is used in 'detailed_thermal_balance_to_tsd'
 B_F = constants.B_F
 
 
-def calc_heating_cooling_loads(bpr, tsd, t, config):
+def calc_heating_cooling_loads(bpr: BuildingPropertiesRow, tsd, t, config):
     """
 
     :param bpr:
@@ -127,7 +116,7 @@ def calc_heating_cooling_loads(bpr, tsd, t, config):
     return
 
 
-def calc_heat_loads_radiator(bpr, t, tsd, config):
+def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Procedure for hourly heating system load calculation for a building with a radiative heating system.
 
@@ -184,7 +173,7 @@ def calc_heat_loads_radiator(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_radiator(bpr, t, tsd, config):
+def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Procedure for hourly cooling system load calculation for a building with a radiative cooling system.
 
@@ -243,7 +232,7 @@ def calc_cool_loads_radiator(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_heat_loads_central_ac(bpr, t, tsd, config):
+def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Procedure for hourly heating system load calculation for a building with a central AC heating system.
 
@@ -361,7 +350,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_mini_split_ac(bpr, t, tsd, config):
+def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Calculation procedure for cooling system loads of an ARU subsystem of a mini-split AC system
 
@@ -430,7 +419,7 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_central_ac(bpr, t, tsd, config):
+def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Calculation procedure for cooling system loads of AHU and ARU subsystems of a central AC system
 
@@ -533,7 +522,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_3for2(bpr, t, tsd, config):
+def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     """
     Calculation procedure for cooling system loads of AHU, ARU and SCU subsystems of 3for2 system
 
@@ -726,7 +715,7 @@ def update_tsd_no_cooling(tsd, t):
     return
 
 
-def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
+def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model_temperatures):
     """
     Back calculate energy flows in RC model for dashboard of energy balance visualization
 
@@ -786,7 +775,7 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     return
 
 
-def calc_rc_no_loads(bpr, tsd, t, config):
+def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -830,7 +819,7 @@ def calc_rc_no_loads(bpr, tsd, t, config):
     return rc_model_temperatures
 
 
-def calc_rc_heating_demand(bpr, tsd, t, config):
+def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -908,7 +897,7 @@ def calc_rc_heating_demand(bpr, tsd, t, config):
     return phi_h_act, rc_model_temperatures
 
 
-def calc_rc_cooling_demand(bpr, tsd, t, config):
+def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011

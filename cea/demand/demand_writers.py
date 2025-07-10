@@ -3,11 +3,16 @@ A collection of classes that write out the demand results files. The default is 
 that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_demand` module for an example of using
 the `MonthlyDemandWriter`.
 """
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
 FLOAT_FORMAT = '%.3f'
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 
 class DemandWriter(object):
@@ -28,7 +33,7 @@ class DemandWriter(object):
 
         self.OTHER_VARS = ['name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
-    def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
+    def results_to_hdf5(self, tsd, bpr: BuildingPropertiesRow, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
         self.write_to_hdf5(building_name, columns, hourly_data, locator)
 
@@ -41,7 +46,7 @@ class DemandWriter(object):
             locator.get_temporary_file('%(building_name)sT.hdf' % locals()),
             key='dataset')
 
-    def results_to_csv(self, tsd, bpr, locator, date, building_name):
+    def results_to_csv(self, tsd, bpr: BuildingPropertiesRow, locator, date, building_name):
         # save hourly data
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
         self.write_to_csv(building_name, columns, hourly_data, locator)
@@ -52,7 +57,7 @@ class DemandWriter(object):
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
             index=False, columns=columns, float_format='%.3f', na_rep='nan')
 
-    def calc_yearly_dataframe(self, bpr, building_name, tsd):
+    def calc_yearly_dataframe(self, bpr: BuildingPropertiesRow, building_name, tsd):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
         data = dict((x + '_MWhyr', np.nan_to_num(tsd[x]).sum() / 1000000) for x in self.load_vars)

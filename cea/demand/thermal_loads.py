@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, List, Dict, Tuple, Union
 if TYPE_CHECKING:
     from cea.config import Configuration
     from cea.inputlocator import InputLocator
-    from cea.demand.building_properties import BuildingPropertiesRow
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 
 def calc_thermal_loads(building_name: str, 
@@ -202,7 +202,7 @@ def calc_QH_sys_QC_sys(tsd):
     return tsd
 
 
-def write_results(bpr, building_name, date, loads_output, locator, massflows_output,
+def write_results(bpr: BuildingPropertiesRow, building_name, date, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd, debug):
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -221,7 +221,7 @@ def write_results(bpr, building_name, date, loads_output, locator, massflows_out
     writer.results_to_csv(tsd, bpr, locator, date, building_name)
 
 
-def calc_Qcs_sys(bpr, tsd):
+def calc_Qcs_sys(bpr: BuildingPropertiesRow, tsd):
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_cs']
     scale_technology = bpr.supply['scale_cs']
@@ -253,7 +253,7 @@ def calc_Qcs_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qhs_sys(bpr, tsd):
+def calc_Qhs_sys(bpr: BuildingPropertiesRow, tsd):
     """
     it calculates final loads
     """
@@ -329,7 +329,7 @@ def calc_Qhs_sys(bpr, tsd):
     return tsd
 
 
-def calc_set_points(bpr, date, tsd, building_name, config, locator, schedules):
+def calc_set_points(bpr: BuildingPropertiesRow, date, tsd, building_name, config, locator, schedules):
     # get internal comfort properties
     tsd = control_heating_cooling_systems.get_temperature_setpoints_incl_seasonality(tsd, bpr, schedules)
 
@@ -627,7 +627,7 @@ def update_timestep_data_no_conditioned_area(tsd):
     return tsd
 
 
-def get_hours(bpr):
+def get_hours(bpr: BuildingPropertiesRow):
     """
 
 

@@ -1,13 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-__author__ = "Gabriel Happle"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Gabriel Happle"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
-__status__ = "Production"
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 # constants in standards
 P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
@@ -18,7 +15,7 @@ H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in I
 DELTA_T = 3600  # (s/h)
 
 
-def calc_humidification_moisture_load(bpr, tsd, t):
+def calc_humidification_moisture_load(bpr: BuildingPropertiesRow, tsd, t):
     """
     (71) in ISO 52016-1:2017
 
@@ -61,7 +58,7 @@ def calc_humidification_moisture_load(bpr, tsd, t):
     return g_hu_ld
 
 
-def calc_dehumidification_moisture_load(bpr, tsd, t):
+def calc_dehumidification_moisture_load(bpr: BuildingPropertiesRow, tsd, t):
     """
     (72) in ISO 52016-1:2017
 
@@ -105,7 +102,7 @@ def calc_dehumidification_moisture_load(bpr, tsd, t):
     return g_dhu_ld
 
 
-def calc_min_moisture_set_point(bpr, tsd, t):
+def calc_min_moisture_set_point(bpr: BuildingPropertiesRow, tsd, t):
     """
     (75) in ISO 52016-1:2017
 
@@ -134,7 +131,7 @@ def calc_min_moisture_set_point(bpr, tsd, t):
     return x_set_min
 
 
-def calc_max_moisture_set_point(bpr, tsd, t):
+def calc_max_moisture_set_point(bpr: BuildingPropertiesRow, tsd, t):
     """
     (76) in ISO 52016-1:2017
 
@@ -204,7 +201,7 @@ def calc_required_moisture_mech_vent_dhu(tsd, t):
     return x_a_sup_dhu_req
 
 
-def calc_moisture_in_zone_central(bpr, tsd, t):
+def calc_moisture_in_zone_central(bpr: BuildingPropertiesRow, tsd, t):
     """
 
 
@@ -268,7 +265,7 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
     return
 
 
-def calc_moisture_content_in_zone_local(bpr, tsd, t):
+def calc_moisture_content_in_zone_local(bpr: BuildingPropertiesRow, tsd, t):
     """
     (84) in ISO 52016-1:2017
 
@@ -316,7 +313,7 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     return
 
 
-def total_moisture_in_zone(bpr, x_int):
+def total_moisture_in_zone(bpr: BuildingPropertiesRow, x_int):
     """
     calculate total mass of moisture in zone
 

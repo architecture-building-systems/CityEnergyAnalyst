@@ -6,10 +6,14 @@ EN 15316-2
 prEN 15316-2:2014
 
 """
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +25,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_q_em_ls_cooling(bpr, tsd, t):
+def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd, t):
     """
     __author__ = "Gabriel Happle"
 
@@ -56,7 +60,7 @@ def calc_q_em_ls_cooling(bpr, tsd, t):
     return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_em_max)
 
 
-def calc_q_em_ls_heating(bpr, tsd, hoy):
+def calc_q_em_ls_heating(bpr: BuildingPropertiesRow, tsd, hoy):
     """
     calculation procedure for space emissions losses in the heating case [prEN 15316-2:2014]
 
@@ -164,7 +168,7 @@ def calc_theta_e_comb_heating(theta_e):
     return theta_e
 
 
-def calc_theta_e_comb_cooling(theta_e, bpr):
+def calc_theta_e_comb_cooling(theta_e, bpr: BuildingPropertiesRow):
     """
     Eq. (10) in [prEN 15316-2:2014]
     
@@ -181,7 +185,7 @@ def calc_theta_e_comb_cooling(theta_e, bpr):
     return theta_e + get_delta_theta_e_sol(bpr)
 
 
-def get_delta_theta_e_sol(bpr):
+def get_delta_theta_e_sol(bpr: BuildingPropertiesRow):
     """
     Appendix B.7 in [prEN 15316-2:2014]
 
@@ -203,7 +207,7 @@ def get_delta_theta_e_sol(bpr):
     return delta_theta_e_sol
 
 
-def calc_delta_theta_int_inc_heating(bpr):
+def calc_delta_theta_int_inc_heating(bpr: BuildingPropertiesRow):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
@@ -238,7 +242,7 @@ def calc_delta_theta_int_inc_heating(bpr):
     return delta_theta_int_inc_heating
 
 
-def calc_delta_theta_int_inc_cooling(bpr):
+def calc_delta_theta_int_inc_cooling(bpr: BuildingPropertiesRow):
     """
     Model of losses in the emission and control system for space heating and cooling.
 

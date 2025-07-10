@@ -2,13 +2,16 @@
 """
 refrigeration loads
 """
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -20,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def has_refrigeration_load(bpr):
+def has_refrigeration_load(bpr: BuildingPropertiesRow):
     """
     Checks if building has a hot water system
 
@@ -36,7 +39,7 @@ def has_refrigeration_load(bpr):
         return False
 
 
-def calc_Qcre_sys(bpr, tsd, schedules):
+def calc_Qcre_sys(bpr: BuildingPropertiesRow, tsd, schedules):
     # calculate refrigeration loads
     tsd['Qcre'] = schedules['Qcre_W'] * -1.0  # cooling loads are negative
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
@@ -73,7 +76,7 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
 
 
-def calc_Qref(locator, bpr, tsd):
+def calc_Qref(locator, bpr: BuildingPropertiesRow, tsd):
     """
     it calculates final loads
     """

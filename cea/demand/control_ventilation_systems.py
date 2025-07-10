@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
-
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from cea.demand import control_heating_cooling_systems
 from cea.demand.constants import TEMPERATURE_ZONE_CONTROL_NIGHT_FLUSHING, DELTA_T_NIGHT_FLUSHING
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +21,7 @@ __status__ = "Production"
 #  CHECK SYSTEM STATUS
 #
 
-def is_mechanical_ventilation_active(bpr, tsd, t):
+def is_mechanical_ventilation_active(bpr: BuildingPropertiesRow, tsd, t):
 
     # TODO: check for ventilation schedule
     if has_mechanical_ventilation(bpr) \
@@ -40,7 +40,7 @@ def is_mechanical_ventilation_active(bpr, tsd, t):
         return False
 
 
-def is_window_ventilation_active(bpr, tsd, t):
+def is_window_ventilation_active(bpr: BuildingPropertiesRow, tsd, t):
 
     if has_window_ventilation(bpr) \
             and not is_mechanical_ventilation_active(bpr, tsd, t):
@@ -52,7 +52,7 @@ def is_window_ventilation_active(bpr, tsd, t):
         return False
 
 
-def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
+def is_mechanical_ventilation_heat_recovery_active(bpr: BuildingPropertiesRow, tsd, t):
     """
     Control of activity of heat exchanger of mechanical ventilation system
     
@@ -97,7 +97,7 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
         return False
 
 
-def is_night_flushing_active(bpr, tsd, t):
+def is_night_flushing_active(bpr: BuildingPropertiesRow, tsd, t):
 
     # night flushing is available for window ventilation (manual) and mechanical ventilation (automatic)
     # night flushing is active during the night if the outdoor conditions are favourable
@@ -114,7 +114,7 @@ def is_night_flushing_active(bpr, tsd, t):
         return False
 
 
-def is_economizer_active(bpr, tsd, t):
+def is_economizer_active(bpr: BuildingPropertiesRow, tsd, t):
     """
     Control of activity of economizer of mechanical ventilation system
     Economizer of mechanical ventilation is controlled via zone set point temperatures, indoor air temperature and
@@ -151,7 +151,7 @@ def is_economizer_active(bpr, tsd, t):
 # CHECK SYSTEM CONFIGURATION
 #
 
-def has_mechanical_ventilation(bpr):
+def has_mechanical_ventilation(bpr: BuildingPropertiesRow):
 
     if bpr.hvac['MECH_VENT']:
         return True
@@ -161,7 +161,7 @@ def has_mechanical_ventilation(bpr):
         raise ValueError(bpr.hvac['MECH_VENT'])
 
 
-def has_window_ventilation(bpr):
+def has_window_ventilation(bpr: BuildingPropertiesRow):
 
     if bpr.hvac['WIN_VENT']:
         return True
@@ -171,7 +171,7 @@ def has_window_ventilation(bpr):
         raise ValueError(bpr.hvac['WIN_VENT'])
 
 
-def has_mechanical_ventilation_heat_recovery(bpr):
+def has_mechanical_ventilation_heat_recovery(bpr: BuildingPropertiesRow):
 
     if bpr.hvac['HEAT_REC']:
         return True
@@ -181,7 +181,7 @@ def has_mechanical_ventilation_heat_recovery(bpr):
         raise ValueError(bpr.hvac['HEAT_REC'])
 
 
-def has_night_flushing(bpr):
+def has_night_flushing(bpr: BuildingPropertiesRow):
 
     if bpr.hvac['NIGHT_FLSH']:
         return True
@@ -191,7 +191,7 @@ def has_night_flushing(bpr):
         raise ValueError(bpr.hvac['NIGHT_FLSH'])
 
 
-def has_mechanical_ventilation_economizer(bpr):
+def has_mechanical_ventilation_economizer(bpr: BuildingPropertiesRow):
 
     if bpr.hvac['ECONOMIZER']:
         return True

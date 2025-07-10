@@ -957,7 +957,7 @@ def has_sensible_heating_demand(t_int_0, tsd, t):
 # 3.8.1
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def lookup_f_hc_cv_heating(bpr):
+def lookup_f_hc_cv_heating(bpr: BuildingPropertiesRow):
 
     # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -967,7 +967,7 @@ def lookup_f_hc_cv_heating(bpr):
     return f_hc_cv
 
 
-def lookup_f_hc_cv_cooling(bpr):
+def lookup_f_hc_cv_cooling(bpr: BuildingPropertiesRow):
 
     # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 

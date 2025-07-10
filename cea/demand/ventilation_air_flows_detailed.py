@@ -14,16 +14,17 @@ Ventilation according to [DIN-16798-7]_ and [ISO-9972]_
 
 Convention: all temperature inputs in (°C)
 """
-
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from cea.demand import constants
 from cea.utilities.physics import calc_rho_air
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -99,7 +100,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     return qm_sum_in, qm_sum_out
 
 
-def get_properties_natural_ventilation(bpr):
+def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     """
     gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.demand import control_ventilation_systems, constants
 from cea.utilities import physics
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -26,7 +27,7 @@ ETA_REC = constants.ETA_REC  # constant efficiency of Heat recovery
 DELTA_P_DIM = constants.DELTA_P_DIM
 
 
-def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
+def calc_air_mass_flow_mechanical_ventilation(bpr: BuildingPropertiesRow, tsd, t):
     """
     Calculates minimum mass flow rate of mechanical ventilation at time step t according to ventilation control options and
      building systems properties
@@ -78,7 +79,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
     return
 
 
-def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
+def calc_air_mass_flow_window_ventilation(bpr: BuildingPropertiesRow, tsd, t):
     """
     Calculates mass flow rate of window ventilation at time step t according to ventilation control options and
      building systems properties
@@ -121,7 +122,7 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
     return
 
 
-def calc_m_ve_leakage_simple(bpr, tsd):
+def calc_m_ve_leakage_simple(bpr: BuildingPropertiesRow, tsd):
     """
     Calculates mass flow rate of leakage at time step t according to ventilation control options and
      building systems properties
@@ -153,7 +154,7 @@ def calc_m_ve_leakage_simple(bpr, tsd):
     return
 
 
-def calc_theta_ve_mech(bpr, tsd, t):
+def calc_theta_ve_mech(bpr: BuildingPropertiesRow, tsd, t):
     """
     Calculates supply temperature of mechanical ventilation system according to ventilation control options and
      building systems properties

@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
-
-
 from __future__ import annotations
 import numpy as np
 import datetime
@@ -62,7 +57,7 @@ def has_cooling_system(hvac_class_cs):
             hvac_class_cs, supported.extend(unsupported)))
 
 
-def has_radiator_heating_system(bpr):
+def has_radiator_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has radiator heating system
 
@@ -82,7 +77,7 @@ def has_radiator_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_floor_heating_system(bpr):
+def has_floor_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has floor heating system
 
@@ -102,7 +97,7 @@ def has_floor_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_central_ac_heating_system(bpr):
+def has_central_ac_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has central AC heating system
 
@@ -122,7 +117,7 @@ def has_central_ac_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_local_ac_cooling_system(bpr):
+def has_local_ac_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has mini-split unit AC cooling system
 
@@ -143,7 +138,7 @@ def has_local_ac_cooling_system(bpr):
 
 
 
-def has_central_ac_cooling_system(bpr):
+def has_central_ac_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has central AC cooling system
 
@@ -162,7 +157,7 @@ def has_central_ac_cooling_system(bpr):
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
-def has_3for2_cooling_system(bpr):
+def has_3for2_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has 3for2 cooling system
 
@@ -182,7 +177,7 @@ def has_3for2_cooling_system(bpr):
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
-def has_ceiling_cooling_system(bpr):
+def has_ceiling_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has ceiling cooling system
 
@@ -201,7 +196,7 @@ def has_ceiling_cooling_system(bpr):
     else:
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
-def has_floor_cooling_system(bpr):
+def has_floor_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has ceiling cooling system
 
@@ -220,7 +215,7 @@ def has_floor_cooling_system(bpr):
     else:
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
-def cooling_system_is_active(bpr, tsd, t):
+def cooling_system_is_active(bpr: BuildingPropertiesRow, tsd, t):
     """
     Checks whether the cooling system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
@@ -278,7 +273,7 @@ def convert_date_to_hour(date):
     return int(delta.total_seconds() / SECONDS_PER_HOUR)
 
 
-def is_heating_season(t, bpr):
+def is_heating_season(t, bpr: BuildingPropertiesRow):
     """
     checks if time step is part of the heating season for the building
 
@@ -316,7 +311,7 @@ def is_heating_season(t, bpr):
         return False
 
 
-def is_cooling_season(t, bpr):
+def is_cooling_season(t, bpr: BuildingPropertiesRow):
     """
     checks if time step is part of the cooling season for the building
 
@@ -378,7 +373,7 @@ def get_temperature_setpoints_incl_seasonality(tsd: dict, bpr: BuildingPropertie
     return tsd
 
 
-def get_heating_system_set_point(t, Ths_set_C, bpr):
+def get_heating_system_set_point(t, Ths_set_C, bpr: BuildingPropertiesRow):
     """
 
     :param people:
@@ -400,7 +395,7 @@ def get_heating_system_set_point(t, Ths_set_C, bpr):
         return np.nan  # huge so the system will be off
 
 
-def get_cooling_system_set_point(t, Tcs_set_C, bpr):
+def get_cooling_system_set_point(t, Tcs_set_C, bpr: BuildingPropertiesRow):
     """
 
     :param people:

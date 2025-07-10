@@ -12,7 +12,7 @@ from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from building_properties import BuildingPropertiesRow
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -43,7 +43,7 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
 # solar and heat gains
 
 
-def calc_Qgain_sen(t, tsd, bpr):
+def calc_Qgain_sen(t, tsd, bpr: BuildingPropertiesRow):
     # TODO
 
     # internal loads
@@ -52,7 +52,7 @@ def calc_Qgain_sen(t, tsd, bpr):
     return tsd
 
 
-def calc_I_sol(t, bpr, tsd):
+def calc_I_sol(t, bpr: BuildingPropertiesRow, tsd):
     """
     This function calculates the net solar radiation (incident - reflected - re-irradiated) according to ISO 13790
     see Eq. (23) in 11.3.1
@@ -175,7 +175,7 @@ def calc_Qhs_sys_Qcs_sys(tsd):
 # temperature of emission/control system
 
 
-def calc_temperatures_emission_systems(bpr, tsd):
+def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd):
     """
     Calculate temperature of emission systems.
     Using radiator function also for cooling ('radiators.calc_radiator')
@@ -505,7 +505,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 # space heating/cooling losses
 
 
-def calc_Qhs_Qcs_loss(bpr, tsd):
+def calc_Qhs_Qcs_loss(bpr: BuildingPropertiesRow, tsd):
     """
     Calculate distribution losses of emission systems.
 

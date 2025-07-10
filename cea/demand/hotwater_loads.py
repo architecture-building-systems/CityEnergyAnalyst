@@ -1,6 +1,8 @@
 """
 Hotwater load (it also calculates fresh water needs)
 """
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import math
 
@@ -10,6 +12,9 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.constants import HOURS_IN_YEAR
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -72,7 +77,7 @@ def calc_water_temperature(T_ambient_C, depth_m):
     return Tg  # in C
 
 
-def calc_Qww_sys(bpr, tsd):
+def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -116,7 +121,7 @@ def calc_Qww_sys(bpr, tsd):
 
 # end-use hot water demand calculation
 
-def calc_Qww(bpr, tsd, schedules):
+def calc_Qww(bpr: BuildingPropertiesRow, tsd, schedules):
     """
     Calculates the DHW demand according to the supply temperature and flow rate.
     :param mdot_dhw_kgpers: required DHW flow rate in [kg/s]
@@ -144,7 +149,7 @@ def calc_Qww(bpr, tsd, schedules):
 
 
 # final hot water demand calculation
-def calc_Qwwf(bpr, tsd):
+def calc_Qwwf(bpr: BuildingPropertiesRow, tsd):
 
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply["source_dhw"]
@@ -350,7 +355,7 @@ def calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_di
     return Tww_tank_C, Qww_sys
 
 
-def has_hot_water_technical_system(bpr):
+def has_hot_water_technical_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has a hot water system
 

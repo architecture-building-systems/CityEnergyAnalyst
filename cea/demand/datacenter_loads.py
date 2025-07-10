@@ -1,14 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 datacenter loads
 """
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.technologies import heatpumps
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +21,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def has_data_load(bpr):
+def has_data_load(bpr: BuildingPropertiesRow):
     """
     Checks if building has a data center load
 
@@ -52,7 +54,7 @@ def calc_mcpcdata(Qcdata_sys):
         mcpcdata_sys = 0.0
     return mcpcdata_sys, Tcdata_sys_re, Tcdata_sys_sup
 
-def calc_Qcdata_sys(bpr, tsd):
+def calc_Qcdata_sys(bpr: BuildingPropertiesRow, tsd):
     # calculate cooling loads for data center
     tsd['Qcdata'] = 0.9 * tsd['Edata'] * -1.0  # cooling loads are negative
 
@@ -69,7 +71,7 @@ def calc_Qcdata_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qcdataf(locator, bpr, tsd):
+def calc_Qcdataf(locator, bpr: BuildingPropertiesRow, tsd):
     """
     it calculates final loads
     """
