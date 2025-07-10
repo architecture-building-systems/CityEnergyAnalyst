@@ -2,9 +2,10 @@
 Base class for building properties with common database merge functionality
 """
 from __future__ import annotations
-import pandas as pd
 
 from typing import Dict, List, Tuple, Optional
+
+import pandas as pd
 
 
 class BuildingPropertiesDatabase:
@@ -31,7 +32,7 @@ class BuildingPropertiesDatabase:
 
             # Read database and merge
             prop_data = pd.read_csv(file_path)
-            merged_df = (building_properties.reset_index()
+            merged_df = (building_properties[[join_column]].reset_index()
                          .merge(prop_data, left_on=join_column, right_on='code', how='left')
                          .set_index('name'))
 
@@ -49,16 +50,4 @@ class BuildingPropertiesDatabase:
 
             merged_dfs.append(merged_df[fields])
 
-        # Return concatenated or merged result
-        if len(merged_dfs) == 1:
-            return merged_dfs[0]
-
-        # For envelope properties, concatenate columns
-        if 'name' not in merged_dfs[0].columns:
-            return pd.concat(merged_dfs, axis=1)
-
-        # For HVAC/supply properties, merge on 'name'
-        result = merged_dfs[0]
-        for df in merged_dfs[1:]:
-            result = result.merge(df, on='name')
-        return result
+        return pd.concat(merged_dfs, axis=1)
