@@ -220,6 +220,8 @@ class BuildingRCModel:
                                                      geometry_data['windows_south_m2'][0] + \
                                                      geometry_data['windows_north_m2'][0]
             envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            if 'undersides_bottom_m2' not in geometry_data.columns:
+                geometry_data['undersides_bottom_m2'] = 0
             envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
