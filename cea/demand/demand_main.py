@@ -1,4 +1,3 @@
-# coding=utf-8
 """
 Analytical energy demand model algorithm
 """
@@ -72,23 +71,7 @@ def demand_calculation(locator, config):
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties = BuildingProperties(locator, weather_data, building_names)
-
-    # add a message i2065 of warning. This needs a more elegant solution
-    def calc_buildings_less_100m2(building_properties):
-        footprint = building_properties._prop_geometry.footprint
-        floors = building_properties._prop_geometry.floors_ag
-        names = building_properties._prop_geometry.index
-        GFA_m2 = [x * y for x, y in zip(footprint, floors)]
-        list_buildings_less_100m2 = []
-        for name, gfa in zip(names, GFA_m2):
-            if gfa < 100.0:
-                list_buildings_less_100m2.append(name)
-        return list_buildings_less_100m2
-
-    list_buildings_less_100m2 = calc_buildings_less_100m2(building_properties)
-    if list_buildings_less_100m2 != []:
-        print(
-            'Warning! The following list of buildings have less than 100 m2 of gross floor area, CEA might fail: %s' % list_buildings_less_100m2)
+    building_properties.check_buildings()
 
     # DEMAND CALCULATION
     n = len(building_names)

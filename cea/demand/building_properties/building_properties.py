@@ -99,3 +99,21 @@ class BuildingProperties:
                                                      internal_loads=self.internal_loads[building_name],
                                                      solar=self.solar[building_name],
                                                      supply=self.supply_systems[building_name])
+
+    def check_buildings(self, min_gfa: float = 100):
+        """
+        Check the buildings for potential issues that might cause problems in the demand calculations.
+
+        This includes checking for buildings with less than 100 m2 of gross floor area.
+        """
+
+        # FIXME: This is not a very good indicator of potential issue which causes overheating problems in some cases.
+        footprint = self.geometry._prop_geometry.footprint
+        floors = self.geometry._prop_geometry.floors_ag
+
+        GFA_m2 = footprint * floors
+        small_buildings = GFA_m2[GFA_m2 < min_gfa]
+
+        if len(small_buildings) > 0:
+            print(f'Warning! The following list of buildings have less than 100 m2 of gross floor area, '
+                  f'this might cause potential issues with demand calculation: {small_buildings.index.tolist()}')
