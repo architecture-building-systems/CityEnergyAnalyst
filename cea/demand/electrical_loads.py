@@ -2,9 +2,8 @@
 """
 Electrical loads
 """
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -12,6 +11,9 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
 from cea.demand import control_heating_cooling_systems, constants
 from cea.utilities import physics
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -70,7 +72,7 @@ def calc_E_sys(tsd):
     return tsd
 
 
-def calc_Ef(bpr, tsd):
+def calc_Ef(bpr: BuildingPropertiesRow, tsd):
     """
     Calculate the compound of final electricity loads
     with contain the end-use demand,
@@ -138,7 +140,7 @@ def calc_Eaux(tsd):
     return tsd
 
 
-def calc_Eaux_fw(tsd, bpr, schedules):
+def calc_Eaux_fw(tsd, bpr: BuildingPropertiesRow, schedules):
     """
     Calculate auxiliary electricity consumption (Eaux_fw) to distribute fresh water (fw) in the building.
 
@@ -163,7 +165,7 @@ def calc_Eaux_fw(tsd, bpr, schedules):
     return tsd
 
 
-def calc_Eaux_ww(tsd, bpr):
+def calc_Eaux_ww(tsd, bpr: BuildingPropertiesRow):
     """
     Calculate auxiliary electricity consumption (Eaux_ww) to distribute hot water (ww) in the building.
 
@@ -177,7 +179,7 @@ def calc_Eaux_ww(tsd, bpr):
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww_kgs']
     Qww = tsd['Qww']
-    Year = bpr.age['year']
+    Year = bpr.year
     nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
@@ -195,7 +197,7 @@ def calc_Eaux_ww(tsd, bpr):
     return tsd
 
 
-def calc_Eaux_Qhs_Qcs(tsd, bpr):
+def calc_Eaux_Qhs_Qcs(tsd, bpr: BuildingPropertiesRow):
     """
     Auxiliary electric loads
     from Legacy
@@ -228,7 +230,7 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     Ths_re_shu = tsd['Ths_sys_re_shu']
     Ths_sup_shu = tsd['Ths_sys_sup_shu']
 
-    Year = bpr.age['year']
+    Year = bpr.year
     nf_ag = bpr.geometry['floors_ag']
 
     # split up the final demands according to the fraction of energy

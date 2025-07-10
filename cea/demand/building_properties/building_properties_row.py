@@ -13,21 +13,30 @@ class BuildingPropertiesRow:
     This class meant to be read-only.
     """
     name: str
+
     geometry: dict
-    architecture: EnvelopeProperties
     typology: dict
-    hvac: dict
-    rc_model: dict
+
     comfort: dict
     internal_loads: dict
-    age: dict
-    solar: SolarProperties
+
+    architecture: EnvelopeProperties
+    hvac: dict
     supply: dict
+
     building_systems: pd.Series
+
+    rc_model: dict
+    solar: SolarProperties
+
+    @property
+    def year(self) -> int:
+        """Return the year of construction of the building."""
+        return self.typology['year']
 
     @classmethod
     def from_dataframes(cls, name: str, geometry: dict, envelope: dict, typology: dict, hvac: dict,
-                        rc_model: dict, comfort: dict, internal_loads: dict, age: dict,
+                        rc_model: dict, comfort: dict, internal_loads: dict,
                         solar: dict, supply: dict):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
@@ -39,18 +48,19 @@ class BuildingPropertiesRow:
                 envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
         architecture = EnvelopeProperties.from_dict(envelope)
 
-        building_systems = _get_properties_building_systems(geometry, hvac, age)
+        building_systems = _get_properties_building_systems(geometry, hvac, typology['year'])
 
-        return cls(name=name, geometry=geometry, architecture=architecture, typology=typology, hvac=hvac,
-                   rc_model=rc_model, comfort=comfort, internal_loads=internal_loads, age=age,
-                   solar=SolarProperties.from_dict(solar), supply=supply, building_systems=building_systems)
+        return cls(name=name, geometry=geometry, typology=typology,
+                   comfort=comfort, internal_loads=internal_loads,
+                   architecture=architecture, hvac=hvac, supply=supply, building_systems=building_systems,
+                   rc_model=rc_model, solar=SolarProperties.from_dict(solar))
 
     @staticmethod
     def get_floor_height(geometry: dict) -> float:
         return geometry['height_ag'] / geometry['floors_ag']
 
 
-def _get_properties_building_systems(geometry: dict, hvac: dict, age: dict) -> pd.Series:
+def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd.Series:
     """
     Method for defining the building system properties, specifically the nominal supply and return temperatures,
     equivalent pipe lengths and transmittance losses. The systems considered include an ahu (air
@@ -169,12 +179,12 @@ def _get_properties_building_systems(geometry: dict, hvac: dict, age: dict) -> p
     return building_systems
 
 
-def _calculate_pipe_transmittance_values(age: dict) -> list[float]:
+def _calculate_pipe_transmittance_values(building_year: int) -> list[float]:
     """linear trasmissivity coefficients of piping W/(m.K)"""
-    if age['year'] >= 1995:
+    if building_year >= 1995:
         phi_pipes = [0.2, 0.3, 0.3]
     # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
-    elif 1985 <= age['year'] < 1995:
+    elif 1985 <= building_year < 1995:
         phi_pipes = [0.3, 0.4, 0.4]
     else:
         phi_pipes = [0.4, 0.4, 0.4]
