@@ -157,7 +157,9 @@ class BuildingRCModel:
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg', 'Awall_ag', 'footprint']
+                  'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
+                  'Awall_ag', 'footprint', 'Hs_ag']
+
         result = df[fields]
 
         return result

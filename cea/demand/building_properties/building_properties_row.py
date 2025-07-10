@@ -42,17 +42,12 @@ class BuildingPropertiesRow:
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
 
         geometry['floor_height'] = cls.get_floor_height(geometry)
-
-        envelope['Hs_ag'], envelope['Hs_bg'], envelope['Ns_ag'], envelope['Ns_bg'] = \
-            split_above_and_below_ground_shares(
-                envelope['Hs'], envelope['Ns'], envelope['occupied_bg'], geometry['floors_ag'], geometry['floors_bg'])
-        architecture = EnvelopeProperties.from_dict(envelope)
-
         building_systems = _get_properties_building_systems(geometry, hvac, typology['year'])
 
         return cls(name=name, geometry=geometry, typology=typology,
                    comfort=comfort, internal_loads=internal_loads,
-                   architecture=architecture, hvac=hvac, supply=supply, building_systems=building_systems,
+                   architecture= EnvelopeProperties.from_dict(envelope), hvac=hvac, supply=supply,
+                   building_systems=building_systems,
                    rc_model=rc_model, solar=SolarProperties.from_dict(solar))
 
     @staticmethod
@@ -210,16 +205,14 @@ class EnvelopeProperties:
     G_win: Annotated[float, "Solar heat gain coefficient [-]"]
     e_win: Annotated[float, "Emissivity of windows [-]"]
     U_roof: Annotated[float, "U-value of roof [W/m2K]"]
-    Hs_ag: Annotated[float, "Conditioned share above ground [-]"]
-    Hs_bg: Annotated[float, "Conditioned share below ground [-]"]
-    Ns_ag: Annotated[float, "Occupied share above ground [-]"]
-    Ns_bg: Annotated[float, "Occupied share below ground [-]"]
-    Es: Annotated[float, "Heated/cooled share [-]"]
-    occupied_bg: Annotated[float, "Basement occupation factor [-]"]
-    Cm_Af: Annotated[float, "Internal heat capacity [J/m2K]"]
     U_wall: Annotated[float, "U-value of wall [W/m2K]"]
     U_base: Annotated[float, "U-value of basement [W/m2K]"]
     U_win: Annotated[float, "U-value of windows [W/m2K]"]
+    Cm_Af: Annotated[float, "Internal heat capacity [J/m2K]"]
+
+    # FIXME: These fields does not neccessarily describe the building envelope
+    Es: Annotated[float, "Heated/cooled share [-]"]
+    occupied_bg: Annotated[float, "Basement occupation factor [-]"]
     void_deck: Annotated[float, "Void deck factor [-]"]
 
     @classmethod
@@ -242,19 +235,3 @@ class SolarProperties:
     @classmethod
     def from_dict(cls, solar: dict):
         return cls(I_sol=solar['I_sol'])
-
-
-def split_above_and_below_ground_shares(Hs, Ns, occupied_bg, floors_ag, floors_bg):
-    '''
-    Split conditioned (Hs) and occupied (Ns) shares of ground floor area based on whether the basement
-    conditioned/occupied or not.
-    For simplicity, the same share is assumed for all conditioned/occupied floors (whether above or below ground)
-    '''
-    share_ag = floors_ag / (floors_ag + floors_bg * occupied_bg)
-    share_bg = 1 - share_ag
-    Hs_ag = Hs * share_ag
-    Hs_bg = Hs * share_bg
-    Ns_ag = Ns * share_ag
-    Ns_bg = Ns * share_bg
-
-    return Hs_ag, Hs_bg, Ns_ag, Ns_bg
