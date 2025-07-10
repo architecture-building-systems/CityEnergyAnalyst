@@ -36,8 +36,7 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
                 locator.get_database_assemblies_supply_heating(),
                 'supply_type_hs',
                 {"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
-                ['supply_type_hs', 'supply_type_cs', 'supply_type_dhw', 'supply_type_el', 'source_hs', 'scale_hs',
-                 'eff_hs']
+                ['source_hs', 'scale_hs', 'eff_hs']
             ),
             'supply cooling': (
                 locator.get_database_assemblies_supply_cooling(),

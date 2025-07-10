@@ -49,14 +49,14 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
         :rtype: DataFrame
 
         """
+        # TODO: Get mappings from schema or similar to avoid hardcoding
         # Database mappings: (locator_method, join_column_name, columns_to_extract)
         db_mappings = {
             'envelope construction': (
                 locator.get_database_assemblies_envelope_mass(),
                 'type_mass',
                 None,
-                # TODO: Remove columns from building envelope properties from database filter
-                ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
+                ['Cm_Af']
             ),
             'envelope leakage': (
                 locator.get_database_assemblies_envelope_tightness(),
@@ -74,7 +74,7 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
                 locator.get_database_assemblies_envelope_wall(),
                 'type_wall',
                 None,
-                ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']
+                ['e_wall', 'a_wall', 'U_wall']
             ),
             'envelope window': (
                 locator.get_database_assemblies_envelope_window(),

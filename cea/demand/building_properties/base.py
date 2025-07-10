@@ -24,7 +24,7 @@ class BuildingPropertiesDatabase:
         :param db_mappings: Dictionary mapping component types to (file_path, join_column, column_renames, fields_to_extract)
         :return: Concatenated DataFrame with all merged properties
         """
-        merged_dfs = []
+        merged_dfs = [building_properties]
 
         for component_type, mapping in db_mappings.items():
             file_path, join_column, column_renames, fields = mapping

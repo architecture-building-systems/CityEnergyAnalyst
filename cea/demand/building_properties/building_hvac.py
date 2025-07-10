@@ -99,9 +99,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
                 'hvac_type_hs',
                 None,
                 # TODO: Remove columns from building hvac properties from database filter
-                ['hvac_type_hs', 'hvac_type_cs', 'hvac_type_dhw', 'hvac_type_ctrl', 'hvac_type_vent',
-                 'hvac_heat_starts', 'hvac_heat_ends', 'hvac_cool_starts', 'hvac_cool_ends', 'class_hs',
-                 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
+                ['class_hs', 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
                  'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
             ),
             'hvac cooling': (
