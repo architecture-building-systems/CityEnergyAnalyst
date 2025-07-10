@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
-    from building_properties import BuildingPropertiesRow
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
