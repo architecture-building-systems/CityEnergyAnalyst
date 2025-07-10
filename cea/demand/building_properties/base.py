@@ -26,6 +26,7 @@ class BuildingPropertiesDatabase:
         :return: Concatenated DataFrame with all merged properties
         """
         merged_dfs = [building_properties]
+        errors = []
 
         for component_type, mapping in db_mappings.items():
             file_path, join_column, column_renames, fields = mapping
@@ -44,10 +45,21 @@ class BuildingPropertiesDatabase:
             print(f"Checking building {component_type} properties...")
             invalid_buildings = merged_df.loc[merged_df['code'].isna()]
             if len(invalid_buildings) > 0:
-                raise ValueError(
-                    f'WARNING: Invalid {component_type} type found in building {component_type} properties.'
-                    f'Check the building properties for: {list(invalid_buildings.index)}.')
+                errors.append({
+                    "component_type": component_type,
+                    "invalid_column": join_column,
+                    "invalid_values": invalid_buildings[join_column].tolist(),
+                    "invalid_buildings": invalid_buildings.index.tolist(),
+                })
 
             merged_dfs.append(merged_df[fields])
+
+        if errors:
+            errors = [f"Invalid codes {error['invalid_values']} "
+                      f"found in building property '{error['invalid_column']}' "
+                      f"for buildings: {error['invalid_buildings']}"
+                      for error in errors]
+            errors += ["Please check the respective values in building properties."]
+            raise ValueError("Errors found in building properties\n\n" + "\n".join(errors))
 
         return pd.concat(merged_dfs, axis=1)
