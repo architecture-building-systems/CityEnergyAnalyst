@@ -130,7 +130,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
             )
         }
 
-        result = BuildingHVAC.merge_database_properties(prop_hvac, hvac_mappings)
+        result = BuildingHVAC.map_database_properties(prop_hvac, hvac_mappings)
 
         # verify hvac and ventilation combination
         verify_hvac_system_combination(result, locator)

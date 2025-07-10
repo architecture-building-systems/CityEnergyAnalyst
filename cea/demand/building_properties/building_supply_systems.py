@@ -58,7 +58,7 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
             )
         }
 
-        return BuildingSupplySystems.merge_database_properties(properties_supply, supply_mappings)
+        return BuildingSupplySystems.map_database_properties(properties_supply, supply_mappings)
 
     def __getitem__(self, building_name: str) -> dict:
         """Get supply systems properties of a building by name"""

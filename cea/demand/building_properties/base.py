@@ -13,7 +13,7 @@ class BuildingPropertiesDatabase:
     """
 
     @staticmethod
-    def merge_database_properties(
+    def map_database_properties(
             building_properties: pd.DataFrame,
             db_mappings: Dict[str, Tuple[str, str, Optional[Dict[str, str]], List[str]]],
     ) -> pd.DataFrame:
