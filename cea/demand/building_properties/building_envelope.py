@@ -52,36 +52,46 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
         # Database mappings: (locator_method, join_column_name, columns_to_extract)
         db_mappings = {
             'envelope construction': (
-                locator.get_database_assemblies_envelope_mass,
+                locator.get_database_assemblies_envelope_mass(),
                 'type_mass',
+                None,
                 # TODO: Remove columns from building envelope properties from database filter
                 ['Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
             ),
             'envelope leakage': (
-                locator.get_database_assemblies_envelope_tightness,
+                locator.get_database_assemblies_envelope_tightness(),
                 'type_leak',
+                None,
                 ['n50']
             ),
             'envelope roof': (
-                locator.get_database_assemblies_envelope_roof,
+                locator.get_database_assemblies_envelope_roof(),
                 'type_roof',
+                None,
                 ['e_roof', 'a_roof', 'U_roof']
             ),
             'envelope wall': (
-                locator.get_database_assemblies_envelope_wall,
+                locator.get_database_assemblies_envelope_wall(),
                 'type_wall',
-                ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']),
+                None,
+                ['wwr_north', 'wwr_west', 'wwr_east', 'wwr_south', 'e_wall', 'a_wall', 'U_wall']
+            ),
             'envelope window': (
-                locator.get_database_assemblies_envelope_window,
+                locator.get_database_assemblies_envelope_window(),
                 'type_win',
-                ['e_win', 'G_win', 'U_win', 'F_F']),
-            'envelope shading':
-                (locator.get_database_assemblies_envelope_shading,
-                 'type_shade',
-                 ['rf_sh']),
+                None,
+                ['e_win', 'G_win', 'U_win', 'F_F']
+            ),
+            'envelope shading': (
+                locator.get_database_assemblies_envelope_shading(),
+                'type_shade',
+                None,
+                ['rf_sh']
+            ),
             'envelope floor': (
-                locator.get_database_assemblies_envelope_floor,
+                locator.get_database_assemblies_envelope_floor(),
                 'type_base',
+                None,
                 ['U_base'])
         }
 

@@ -29,30 +29,30 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
         self._prop_supply_systems = self.get_properties_supply_sytems(locator, prop_supply_systems_building)
 
     @staticmethod
-    def get_properties_supply_sytems(locator, properties_supply):
+    def get_properties_supply_sytems(locator: InputLocator, properties_supply: pd.DataFrame):
         # Supply system mappings: (locator_method, join_column, column_renames, fields_to_extract)
         supply_mappings = {
             'supply heating': (
-                locator.get_database_assemblies_supply_heating,
+                locator.get_database_assemblies_supply_heating(),
                 'supply_type_hs',
                 {"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
                 ['supply_type_hs', 'supply_type_cs', 'supply_type_dhw', 'supply_type_el', 'source_hs', 'scale_hs',
                  'eff_hs']
             ),
             'supply cooling': (
-                locator.get_database_assemblies_supply_cooling,
+                locator.get_database_assemblies_supply_cooling(),
                 'supply_type_cs',
                 {"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"},
                 ['source_cs', 'scale_cs', 'eff_cs']
             ),
             'supply dhw': (
-                locator.get_database_assemblies_supply_hot_water,
+                locator.get_database_assemblies_supply_hot_water(),
                 'supply_type_dhw',
                 {"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"},
                 ['source_dhw', 'scale_dhw', 'eff_dhw']
             ),
             'supply electricity': (
-                locator.get_database_assemblies_supply_electricity,
+                locator.get_database_assemblies_supply_electricity(),
                 'supply_type_el',
                 {"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
                 ['source_el', 'scale_el', 'eff_el']

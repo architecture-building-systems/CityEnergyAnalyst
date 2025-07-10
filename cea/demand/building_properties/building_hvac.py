@@ -32,7 +32,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
         self._prop_hvac = self.get_properties_technical_systems(locator, prop_hvac)
 
     @staticmethod
-    def get_properties_technical_systems(locator, prop_hvac: pd.DataFrame):
+    def get_properties_technical_systems(locator: InputLocator, prop_hvac: pd.DataFrame):
         """
         Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
         file to look up properties
@@ -95,7 +95,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
         # HVAC database mappings: (locator_method, join_column, column_renames, fields_to_extract)
         hvac_mappings = {
             'hvac heating': (
-                locator.get_database_assemblies_hvac_heating,
+                locator.get_database_assemblies_hvac_heating(),
                 'hvac_type_hs',
                 None,
                 # TODO: Remove columns from building hvac properties from database filter
@@ -105,7 +105,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
                  'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
             ),
             'hvac cooling': (
-                locator.get_database_assemblies_hvac_cooling,
+                locator.get_database_assemblies_hvac_cooling(),
                 'hvac_type_cs',
                 None,
                 ['Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
@@ -113,19 +113,19 @@ class BuildingHVAC(BuildingPropertiesDatabase):
                  'class_cs', 'convection_cs']
             ),
             'hvac control': (
-                locator.get_database_assemblies_hvac_controller,
+                locator.get_database_assemblies_hvac_controller(),
                 'hvac_type_ctrl',
                 None,
                 ['dT_Qhs', 'dT_Qcs']
             ),
             'hvac dhw': (
-                locator.get_database_assemblies_hvac_hot_water,
+                locator.get_database_assemblies_hvac_hot_water(),
                 'hvac_type_dhw',
                 None,
                 ['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
             ),
             'hvac ventilation': (
-                locator.get_database_assemblies_hvac_ventilation,
+                locator.get_database_assemblies_hvac_ventilation(),
                 'hvac_type_vent',
                 None,
                 ['MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
