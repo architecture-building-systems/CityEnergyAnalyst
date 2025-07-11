@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from cea.demand.constants import H_MS, H_IS, B_F, LAMBDA_AT
+from cea.demand.constants import H_MS, H_IS, B_F
+from cea.demand.building_properties.useful_areas import calc_useful_areas
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 
 from typing import TYPE_CHECKING
@@ -119,7 +120,7 @@ class BuildingRCModel:
                     building=building))
 
         # Calculate useful (electrified/conditioned/occupied) floor areas
-        df = self.calc_useful_areas(df)
+        df = calc_useful_areas(df)
 
         # if 'Cm_Af' in self.get_overrides_columns():
         #     # Internal heat capacity is not part of input, calculate [J/K]
@@ -257,34 +258,3 @@ class BuildingRCModel:
             return 2.5
         else:
             return 3.2
-
-    def split_above_and_below_ground_shares(self, Hs, Ns, occupied_bg, floors_ag, floors_bg):
-        '''
-        Split conditioned (Hs) and occupied (Ns) shares of ground floor area based on whether the basement
-        conditioned/occupied or not.
-        For simplicity, the same share is assumed for all conditioned/occupied floors (whether above or below ground)
-        '''
-        share_ag = floors_ag / (floors_ag + floors_bg * occupied_bg)
-        share_bg = 1 - share_ag
-        Hs_ag = Hs * share_ag
-        Hs_bg = Hs * share_bg
-        Ns_ag = Ns * share_ag
-        Ns_bg = Ns * share_bg
-
-        return Hs_ag, Hs_bg, Ns_ag, Ns_bg
-
-
-    def calc_useful_areas(self, df):
-        # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
-        df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = self.split_above_and_below_ground_shares(
-            df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'] - df['void_deck'], df['floors_bg'])
-        # occupied floor area: all occupied areas in the building
-        df['Aocc'] = df['GFA_ag_m2'] * df['Ns_ag'] + df['GFA_bg_m2'] * df['Ns_bg']
-        # conditioned area: areas that are heated/cooled
-        df['Af'] = df['GFA_ag_m2'] * df['Hs_ag'] + df['GFA_bg_m2'] * df['Hs_bg']
-        # electrified area: share of gross floor area that is also electrified
-        df['Aef'] = df['GFA_m2'] * df['Es']
-        # area of all surfaces facing the building zone
-        df['Atot'] = df['Af'] * LAMBDA_AT
-
-        return df

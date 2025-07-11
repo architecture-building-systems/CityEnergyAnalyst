@@ -15,6 +15,7 @@ from cea.technologies import storage_tank as storage_tank
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -77,7 +78,7 @@ def calc_water_temperature(T_ambient_C, depth_m):
     return Tg  # in C
 
 
-def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd):
+def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -85,9 +86,9 @@ def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :return: modifies tsd
-    :rtype: None
+    :rtype: cea.demand.time_series_data.TimeSeriesData
     :return: mcp_tap_water_kWperK: tap water capacity masss flow rate in kW_C
     """
 
@@ -95,33 +96,33 @@ def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd):
     Lsww_dis = bpr.building_systems['Lsww_dis']
     Lvww_c = bpr.building_systems['Lvww_c']
     Lvww_dis = bpr.building_systems['Lvww_dis']
-    T_ext_C = tsd['T_ext']
-    T_int_C = tsd['T_int']
+    T_ext_C = tsd.weather.T_ext
+    T_int_C = tsd.rc_model_temperatures.T_int
     Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
     Y = bpr.building_systems['Y']
-    Qww_nom_W = tsd['Qww'].max()
+    Qww_nom_W = tsd.heating_loads.Qww.max()
 
     # distribution and circulation losses
     V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * math.pi  # m3, volume inside distribution pipe
-    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd['Qww'].copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
+    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd.heating_loads.Qww.copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
                                                  V_dist_pipes_m3,Tww_sup_0_C)
-    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
+    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd.heating_loads.Qww.copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
                                                    V_dist_pipes_m3,Tww_sup_0_C, T_ext_C)
     # storage losses
-    Tww_tank_C, tsd['Qww_sys'] = calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
+    Tww_tank_C, tsd.heating_loads.Qww_sys = calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, tsd.heating_loads.Qww.copy(), tsd.water.vww_m3perh,
                                                             Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
 
-    tsd['mcpww_sys'] = tsd['Qww_sys'] / abs(Tww_tank_C - tsd['Tww_re'])
+    tsd.heating_system_mass_flows.mcpww_sys = tsd.heating_loads.Qww_sys / abs(Tww_tank_C - tsd.heating_system_temperatures.Tww_re)
 
     # erase points where the load is zero
-    tsd['Tww_sys_sup'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], Tww_tank_C)]
-    tsd['Tww_sys_re'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], tsd['Tww_re'])]
+    tsd.heating_system_temperatures.Tww_sys_sup = [0.0 if x <= 0.0 else y for x, y in zip(tsd.heating_loads.Qww, Tww_tank_C)]
+    tsd.heating_system_temperatures.Tww_sys_re = [0.0 if x <= 0.0 else y for x, y in zip(tsd.heating_loads.Qww, tsd.heating_system_temperatures.Tww_re)]
 
     return tsd
 
 # end-use hot water demand calculation
 
-def calc_Qww(bpr: BuildingPropertiesRow, tsd, schedules):
+def calc_Qww(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, schedules) -> TimeSeriesData:
     """
     Calculates the DHW demand according to the supply temperature and flow rate.
     :param mdot_dhw_kgpers: required DHW flow rate in [kg/s]
@@ -135,21 +136,21 @@ def calc_Qww(bpr: BuildingPropertiesRow, tsd, schedules):
         mcp_dhw_WperK = mdot_dhw_kgpers * CP_KJPERKGK * 1000  # W/K
         return mcp_dhw_WperK * (T_dhw_sup_C - T_dhw_re_C)  # heating for dhw in W
 
-    tsd['Tww_re'] = calc_water_temperature(tsd['T_ext'], depth_m=1)
+    tsd.heating_system_temperatures.Tww_re = calc_water_temperature(tsd.weather.T_ext, depth_m=1)
     Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
 
     # calc end-use demand
-    tsd['vww_m3perh'] = schedules['Vww_lph'] / 1000  # m3/h
-    tsd['mww_kgs'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
-    tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
+    tsd.water.vww_m3perh = schedules['Vww_lph'] / 1000  # m3/h
+    tsd.heating_system_mass_flows.mww_kgs = tsd.water.vww_m3perh * P_WATER / 3600  # kg/s
+    tsd.heating_system_mass_flows.mcptw = (tsd.water.vfw_m3perh - tsd.water.vww_m3perh) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
-    tsd['Qww'] = np.vectorize(function)(tsd['mww_kgs'], Tww_sup_0_C, tsd['Tww_re'])
+    tsd.heating_loads.Qww = np.vectorize(function)(tsd.heating_system_mass_flows.mww_kgs, Tww_sup_0_C, tsd.heating_system_temperatures.Tww_re)
 
     return tsd
 
 
 # final hot water demand calculation
-def calc_Qwwf(bpr: BuildingPropertiesRow, tsd):
+def calc_Qwwf(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
 
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply["source_dhw"]
@@ -158,71 +159,71 @@ def calc_Qwwf(bpr: BuildingPropertiesRow, tsd):
 
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            tsd['E_ww'] =  tsd['Qww_sys']/ efficiency_average_year
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww =  tsd.heating_loads.Qww_sys/ efficiency_average_year
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NATURALGAS":
-            tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "OIL":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "COAL":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "WOOD":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "SOLAR":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['SOLAR_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.SOLAR_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
     elif scale_technology == "DISTRICT":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = tsd.heating_loads.Qww_sys / efficiency_average_year
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
-            tsd['NG_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['COAL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['OIL_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['WOOD_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DH_ww'] = np.zeros(HOURS_IN_YEAR)
-            tsd['E_ww'] = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.NG_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.COAL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.OIL_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.fuel_source.WOOD_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.heating_loads.DH_ww = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_ww = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
 

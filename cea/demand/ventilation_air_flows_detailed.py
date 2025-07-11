@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Ventilation according to [DIN-16798-7]_ and [ISO-9972]_
 

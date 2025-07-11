@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 refrigeration loads
 """
@@ -12,6 +11,7 @@ from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -39,19 +39,19 @@ def has_refrigeration_load(bpr: BuildingPropertiesRow):
         return False
 
 
-def calc_Qcre_sys(bpr: BuildingPropertiesRow, tsd, schedules):
+def calc_Qcre_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, schedules) -> TimeSeriesData:
     # calculate refrigeration loads
-    tsd['Qcre'] = schedules['Qcre_W'] * -1.0  # cooling loads are negative
+    tsd.cooling_loads.Qcre = schedules['Qcre_W'] * -1.0  # cooling loads are negative
     # calculate distribution losses for refrigeration loads analogously to space cooling distribution losses
     Y = bpr.building_systems['Y'][0]
     Lv = bpr.building_systems['Lv']
-    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd['T_ext']) * (tsd['Qcre'] / np.nanmin(tsd['Qcre'])) * (Lv * Y)
+    Qcre_d_ls = ((T_C_REF_SUP_0 + T_C_REF_RE_0) / 2.0 - tsd.weather.T_ext) * (tsd.cooling_loads.Qcre / np.nanmin(tsd.cooling_loads.Qcre)) * (Lv * Y)
 
     # calculate system loads for data center
-    tsd['Qcre_sys'] = abs(tsd['Qcre'] + Qcre_d_ls) #make sure you get the right mcpcre positive
+    tsd.cooling_loads.Qcre_sys = abs(tsd.cooling_loads.Qcre + Qcre_d_ls) #make sure you get the right mcpcre positive
     # writing values to tsd, replacing function and np.vectorize call with simple for loop
-    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] =\
-        np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd['Qcre_sys'])
+    tsd.cooling_system_mass_flows.mcpcre_sys, tsd.cooling_system_temperatures.Tcre_sys_re, tsd.cooling_system_temperatures.Tcre_sys_sup =\
+        np.vectorize(calc_refrigeration_temperature_and_massflow)(tsd.cooling_loads.Qcre_sys)
 
     return tsd
 
@@ -76,7 +76,7 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
 
 
-def calc_Qref(locator, bpr: BuildingPropertiesRow, tsd):
+def calc_Qref(locator, bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
     """
     it calculates final loads
     """
@@ -86,24 +86,24 @@ def calc_Qref(locator, bpr: BuildingPropertiesRow, tsd):
     efficiency_average_year = bpr.supply["eff_cs"]
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            t_source = (tsd['T_ext'] + 273)
+            t_source = (tsd.weather.T_ext + 273)
             # heat pump energy
-            tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
-                                                                (tsd['Tcre_sys_re'] + 273), t_source)
+            tsd.electrical_loads.E_cre = np.vectorize(heatpumps.HP_air_air)(tsd.cooling_system_mass_flows.mcpcre_sys, (tsd.cooling_system_temperatures.Tcre_sys_sup + 273),
+                                                                (tsd.cooling_system_temperatures.Tcre_sys_re + 273), t_source)
             # final to district is zero
-            tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
+            tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
-            tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
-            tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
+            tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
+            tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
 
     elif scale_technology == "DISTRICT":
-        tsd['DC_cre'] = tsd['Qcs_sys'] / efficiency_average_year
-        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+        tsd.cooling_loads.DC_cre = tsd.cooling_loads.Qcs_sys / efficiency_average_year
+        tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
     elif scale_technology == "NONE":
-        tsd['DC_cre'] = np.zeros(HOURS_IN_YEAR)
-        tsd['E_cre'] = np.zeros(HOURS_IN_YEAR)
+        tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     return tsd

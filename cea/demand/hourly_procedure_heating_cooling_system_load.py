@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
@@ -43,7 +42,7 @@ def calc_heating_cooling_loads(bpr: BuildingPropertiesRow, tsd, t, config):
             # radiator or floor heating
             rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd, config)
 
-            tsd['Ehs_lat_aux'][t] = 0  # TODO
+            tsd.electrical_loads.Ehs_lat_aux[t] = 0  # TODO
 
         # elif has_local_ac_heating_system:
             # TODO: here could be a heating system using the mini-split unit ("T5")
@@ -134,40 +133,40 @@ def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (2) A radiative system does not act on humidity
     # no action on humidity
-    tsd['g_hu_ld'][t] = 0.0  # no humidification or dehumidification
-    tsd['g_dhu_ld'][t] = 0.0
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification or dehumidification
+    tsd.moisture.g_dhu_ld[t] = 0.0
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # moisture balance for zone
 
     # (3) Results are passed to tsd
     # write sensible loads to tsd
-    tsd['Qhs_sen_rc'][t] = qh_sen_rc_demand  # demand is load
-    tsd['Qhs_sen_shu'][t] = qh_sen_rc_demand
-    tsd['Qhs_sen_ahu'][t] = 0.0
-    tsd['sys_status_ahu'][t] = 'no system'
-    tsd['Qhs_sen_aru'][t] = 0.0
-    tsd['sys_status_aru'][t] = 'no system'
-    tsd['Qhs_sen_sys'][t] = qh_sen_rc_demand  # sum system loads
+    tsd.heating_loads.Qhs_sen_rc[t] = qh_sen_rc_demand  # demand is load
+    tsd.heating_loads.Qhs_sen_shu[t] = qh_sen_rc_demand
+    tsd.heating_loads.Qhs_sen_ahu[t] = 0.0
+    tsd.system_status.sys_status_ahu[t] = 'no system'
+    tsd.heating_loads.Qhs_sen_aru[t] = 0.0
+    tsd.system_status.sys_status_aru[t] = 'no system'
+    tsd.heating_loads.Qhs_sen_sys[t] = qh_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
-    tsd['Qhs_lat_sys'][t] = 0.0
+    tsd.heating_loads.Qhs_lat_sys[t] = 0.0
     # mass flows to tsd
-    tsd['ma_sup_hs_ahu'][t] = 0.0
-    tsd['ta_sup_hs_ahu'][t] = np.nan
-    tsd['ta_re_hs_ahu'][t] = np.nan
-    tsd['ma_sup_hs_aru'][t] = 0.0
-    tsd['ta_sup_hs_aru'][t] = np.nan
-    tsd['ta_re_hs_aru'][t] = np.nan
+    tsd.heating_system_mass_flows.ma_sup_hs_ahu[t] = 0.0
+    tsd.heating_system_temperatures.ta_sup_hs_ahu[t] = np.nan
+    tsd.heating_system_temperatures.ta_re_hs_ahu[t] = np.nan
+    tsd.heating_system_mass_flows.ma_sup_hs_aru[t] = 0.0
+    tsd.heating_system_temperatures.ta_sup_hs_aru[t] = np.nan
+    tsd.heating_system_temperatures.ta_re_hs_aru[t] = np.nan
 
     # (4) Calculate emission losses and pass to tsd
     # emission losses
     q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
-    tsd['Qhs_em_ls'][t] = q_em_ls_heating
+    tsd.heating_loads.Qhs_em_ls[t] = q_em_ls_heating
 
     # (5) System status to tsd
     if qh_sen_rc_demand > 0.0:
-        tsd['sys_status_sen'][t] = 'On'
+        tsd.system_status.sys_status_sen[t] = 'On'
     else:
-        tsd['sys_status_sen'][t] = 'Off'
+        tsd.system_status.sys_status_sen[t] = 'Off'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -191,42 +190,42 @@ def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (2) A radiative system does not act on humidity
     # no action on humidity
-    tsd['g_hu_ld'][t] = 0.0  # no humidification or dehumidification
-    tsd['g_dhu_ld'][t] = 0.0
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification or dehumidification
+    tsd.moisture.g_dhu_ld[t] = 0.0
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # moisture balance for zone
 
     # (3) Results are passed to tsd
     # write sensible loads to tsd
-    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand  # demand is load
-    tsd['Qcs_sen_scu'][t] = qc_sen_rc_demand
-    tsd['Qcs_sen_ahu'][t] = 0.0
-    tsd['sys_status_ahu'][t] = 'no system'
-    tsd['Qcs_sen_aru'][t] = 0.0
-    tsd['sys_status_aru'][t] = 'no system'
-    tsd['Qcs_sen_sys'][t] = qc_sen_rc_demand  # sum system loads
+    tsd.cooling_loads.Qcs_sen_rc[t] = qc_sen_rc_demand  # demand is load
+    tsd.cooling_loads.Qcs_sen_scu[t] = qc_sen_rc_demand
+    tsd.cooling_loads.Qcs_sen_ahu[t] = 0.0
+    tsd.system_status.sys_status_ahu[t] = 'no system'
+    tsd.cooling_loads.Qcs_sen_aru[t] = 0.0
+    tsd.system_status.sys_status_aru[t] = 'no system'
+    tsd.cooling_loads.Qcs_sen_sys[t] = qc_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
-    tsd['Qcs_lat_ahu'][t] = 0.0
-    tsd['Qcs_lat_aru'][t] = 0.0
-    tsd['Qcs_lat_sys'][t] = 0.0
+    tsd.cooling_loads.Qcs_lat_ahu[t] = 0.0
+    tsd.cooling_loads.Qcs_lat_aru[t] = 0.0
+    tsd.cooling_loads.Qcs_lat_sys[t] = 0.0
     # mass flows to tsd
-    tsd['ma_sup_cs_ahu'][t] = 0.0
-    tsd['ta_sup_cs_ahu'][t] = np.nan
-    tsd['ta_re_cs_ahu'][t] = np.nan
-    tsd['ma_sup_cs_aru'][t] = 0.0
-    tsd['ta_sup_cs_aru'][t] = np.nan
-    tsd['ta_re_cs_aru'][t] = np.nan
+    tsd.cooling_system_mass_flows.ma_sup_cs_ahu[t] = 0.0
+    tsd.cooling_system_temperatures.ta_sup_cs_ahu[t] = np.nan
+    tsd.cooling_system_temperatures.ta_re_cs_ahu[t] = np.nan
+    tsd.cooling_system_mass_flows.ma_sup_cs_aru[t] = 0.0
+    tsd.cooling_system_temperatures.ta_sup_cs_aru[t] = np.nan
+    tsd.cooling_system_temperatures.ta_re_cs_aru[t] = np.nan
 
     # (4) Calculate emission losses and pass to tsd
     # emission losses
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
-    tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+    tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # (5) System status to tsd
     if qc_sen_rc_demand < 0.0:
-        tsd['sys_status_sen'][t] = 'On'
+        tsd.system_status.sys_status_sen[t] = 'On'
     else:
-        tsd['sys_status_sen'][t] = 'Off'
+        tsd.system_status.sys_status_sen[t] = 'Off'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -246,11 +245,11 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (0) Extract values from tsd
     # get values from tsd
-    m_ve_mech = tsd['m_ve_mech'][t]
-    t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    t_int_prev = tsd['T_int'][t - 1]
-    ta_hs_set = tsd['ta_hs_set'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    t_ve_mech_after_hex = tsd.rc_model_temperatures.theta_ve_mech[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    t_int_prev = tsd.rc_model_temperatures.T_int[t - 1]
+    ta_hs_set = tsd.rc_model_temperatures.ta_hs_set[t]
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
@@ -277,8 +276,8 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = 0.0
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
-        tsd['sys_status_aru'][t] = 'Off'
-        tsd['sys_status_ahu'][t] = 'On:over heating'
+        tsd.system_status.sys_status_aru[t] = 'Off'
+        tsd.system_status.sys_status_ahu[t] = 'On:over heating'
 
     elif 0.0 <= qh_sen_central_ac_load < qh_sen_rc_demand:
 
@@ -293,13 +292,13 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = system_loads_aru['ma_sup_hs_aru']
         ta_sup_hs_aru = system_loads_aru['ta_sup_hs_aru']
         ta_re_hs_aru = system_loads_aru['ta_re_hs_aru']
-        tsd['sys_status_aru'][t] = 'On'
+        tsd.system_status.sys_status_aru[t] = 'On'
 
         # check status of ahu
         if qh_sen_central_ac_load > 0.0:
-            tsd['sys_status_ahu'][t] = 'On'
+            tsd.system_status.sys_status_ahu[t] = 'On'
         elif qh_sen_central_ac_load == 0.0:
-            tsd['sys_status_ahu'][t] = 'Off'
+            tsd.system_status.sys_status_ahu[t] = 'Off'
             # this state happens during sensible demand but zero mechanical ventilation air flow
             #  (= sufficient infiltration)
 
@@ -310,41 +309,41 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = 0.0
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
-        tsd['sys_status_aru'][t] = 'Off'
-        tsd['sys_status_ahu'][t] = 'Off'
+        tsd.system_status.sys_status_aru[t] = 'Off'
+        tsd.system_status.sys_status_ahu[t] = 'Off'
 
     else:
         raise Exception("Something went wrong in the central AC heating load calculation.")
 
     # act on humidity
-    tsd['T_int'][t] = rc_model_temperatures['T_int']  # humidification load needs zone temperature
+    tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']  # humidification load needs zone temperature
     g_hu_ld = latent_loads.calc_humidification_moisture_load(bpr, tsd, t)  # calc local humidification load
-    tsd['Ehs_lat_aux'][t] = airconditioning_model.electric_humidification_unit(g_hu_ld, m_ve_mech)  # calc electricity of humidification unit
-    tsd['g_hu_ld'][t] = g_hu_ld   # humidification
-    tsd['g_dhu_ld'][t] = 0.0  # no dehumidification
+    tsd.electrical_loads.Ehs_lat_aux[t] = airconditioning_model.electric_humidification_unit(g_hu_ld, m_ve_mech)  # calc electricity of humidification unit
+    tsd.moisture.g_hu_ld[t] = g_hu_ld   # humidification
+    tsd.moisture.g_dhu_ld[t] = 0.0  # no dehumidification
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # calculate moisture in zone
 
     # write sensible loads to tsd
-    tsd['Qhs_sen_rc'][t] = qh_sen_rc_demand
-    tsd['Qhs_sen_shu'][t] = 0.0
-    tsd['sys_status_sen'][t] = 'no system'
-    tsd['Qhs_sen_ahu'][t] = qh_sen_central_ac_load
-    tsd['Qhs_sen_aru'][t] = qh_sen_aru
+    tsd.heating_loads.Qhs_sen_rc[t] = qh_sen_rc_demand
+    tsd.heating_loads.Qhs_sen_shu[t] = 0.0
+    tsd.system_status.sys_status_sen[t] = 'no system'
+    tsd.heating_loads.Qhs_sen_ahu[t] = qh_sen_central_ac_load
+    tsd.heating_loads.Qhs_sen_aru[t] = qh_sen_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
-    tsd['Qhs_sen_sys'][t] = qh_sen_central_ac_load + qh_sen_aru  # sum system loads
-    tsd['Qhs_lat_sys'][t] = 0.0
+    tsd.heating_loads.Qhs_sen_sys[t] = qh_sen_central_ac_load + qh_sen_aru  # sum system loads
+    tsd.heating_loads.Qhs_lat_sys[t] = 0.0
 
     # mass flows to tsd
-    tsd['ma_sup_hs_ahu'][t] = system_loads_ahu['ma_sup_hs_ahu']
-    tsd['ta_sup_hs_ahu'][t] = system_loads_ahu['ta_sup_hs_ahu']
-    tsd['ta_re_hs_ahu'][t] = system_loads_ahu['ta_re_hs_ahu']
-    tsd['ma_sup_hs_aru'][t] = ma_sup_hs_aru
-    tsd['ta_sup_hs_aru'][t] = ta_sup_hs_aru
-    tsd['ta_re_hs_aru'][t] = ta_re_hs_aru
+    tsd.heating_system_mass_flows.ma_sup_hs_ahu[t] = system_loads_ahu['ma_sup_hs_ahu']
+    tsd.heating_system_temperatures.ta_sup_hs_ahu[t] = system_loads_ahu['ta_sup_hs_ahu']
+    tsd.heating_system_temperatures.ta_re_hs_ahu[t] = system_loads_ahu['ta_re_hs_ahu']
+    tsd.heating_system_mass_flows.ma_sup_hs_aru[t] = ma_sup_hs_aru
+    tsd.heating_system_temperatures.ta_sup_hs_aru[t] = ta_sup_hs_aru
+    tsd.heating_system_temperatures.ta_re_hs_aru[t] = ta_re_hs_aru
 
     # emission losses
     q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
-    tsd['Qhs_em_ls'][t] = q_em_ls_heating
+    tsd.heating_loads.Qhs_em_ls[t] = q_em_ls_heating
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -362,8 +361,8 @@ def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (0) Extract values from tsd
     # get values from tsd
-    t_int_prev = tsd['T_int'][t - 1]
-    x_int_prev = tsd['x_int'][t - 1]
+    t_int_prev = tsd.rc_model_temperatures.T_int[t - 1]
+    x_int_prev = tsd.moisture.x_int[t - 1]
 
     # (1) The RC-model gives the sensible energy demand for the hour
     # calculate rc model demand
@@ -380,40 +379,40 @@ def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     g_dhu_aru = aru_system_loads['g_dhu_aru']
     qc_lat_aru = aru_system_loads['qc_lat_aru']
     # action on moisture
-    tsd['g_hu_ld'][t] = 0.0  # no humidification
-    tsd['g_dhu_ld'][t] = g_dhu_aru
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification
+    tsd.moisture.g_dhu_ld[t] = g_dhu_aru
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
 
     # () Values to tsd
-    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand
-    tsd['Qcs_sen_ahu'][t] = 0.0
-    tsd['Qcs_sen_aru'][t] = qc_sen_aru
-    tsd['Qcs_sen_scu'][t] = 0.0 # not present in this system
-    tsd['Qcs_lat_ahu'][t] = 0.0
-    tsd['Qcs_lat_aru'][t] = qc_lat_aru
-    tsd['Qcs_sen_sys'][t] = qc_sen_aru  # sum system loads
-    tsd['Qcs_lat_sys'][t] = qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_rc[t] = qc_sen_rc_demand
+    tsd.cooling_loads.Qcs_sen_ahu[t] = 0.0
+    tsd.cooling_loads.Qcs_sen_aru[t] = qc_sen_aru
+    tsd.cooling_loads.Qcs_sen_scu[t] = 0.0 # not present in this system
+    tsd.cooling_loads.Qcs_lat_ahu[t] = 0.0
+    tsd.cooling_loads.Qcs_lat_aru[t] = qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_sys[t] = qc_sen_aru  # sum system loads
+    tsd.cooling_loads.Qcs_lat_sys[t] = qc_lat_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
 
     # air flow
-    tsd['m_ve_rec'][t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.ventilation_mass_flows.m_ve_rec[t] = aru_system_loads['ma_sup_cs_aru']
 
     # mass flows to tsd
-    tsd['ma_sup_cs_ahu'][t] = 0.0
-    tsd['ta_sup_cs_ahu'][t] = np.nan
-    tsd['ta_re_cs_ahu'][t] = np.nan
-    tsd['ma_sup_cs_aru'][t] = aru_system_loads['ma_sup_cs_aru']
-    tsd['ta_sup_cs_aru'][t] = aru_system_loads['ta_sup_cs_aru']
-    tsd['ta_re_cs_aru'][t] = aru_system_loads['ta_re_cs_aru']
+    tsd.cooling_system_mass_flows.ma_sup_cs_ahu[t] = 0.0
+    tsd.cooling_system_temperatures.ta_sup_cs_ahu[t] = np.nan
+    tsd.cooling_system_temperatures.ta_re_cs_ahu[t] = np.nan
+    tsd.cooling_system_mass_flows.ma_sup_cs_aru[t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_sup_cs_aru[t] = aru_system_loads['ta_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_re_cs_aru[t] = aru_system_loads['ta_re_cs_aru']
 
     # () emission losses
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
-    tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+    tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd['sys_status_aru'][t] = 'On:T'
-    tsd['sys_status_ahu'][t] = 'no system'
-    tsd['sys_status_sen'][t] = 'no system'
+    tsd.system_status.sys_status_aru[t] = 'On:T'
+    tsd.system_status.sys_status_ahu[t] = 'no system'
+    tsd.system_status.sys_status_sen[t] = 'no system'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -431,11 +430,11 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     :return:
     """
     # get values from tsd
-    m_ve_mech = tsd['m_ve_mech'][t]
-    t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    t_int_prev = tsd['T_int'][t - 1]
-    x_int_prev = tsd['x_int'][t - 1]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    t_ve_mech_after_hex = tsd.rc_model_temperatures.theta_ve_mech[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    t_int_prev = tsd.rc_model_temperatures.T_int[t - 1]
+    x_int_prev = tsd.moisture.x_int[t - 1]
 
     # ***
     # RC MODEL
@@ -449,7 +448,7 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     loads_ahu = airconditioning_model.central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr)
     qc_sen_ahu = loads_ahu['qc_sen_ahu']
     qc_lat_ahu = loads_ahu['qc_lat_ahu']
-    tsd['x_ve_mech'][t] = loads_ahu['x_sup_c_ahu']  # update tsd['x_ve_mech'] is needed for dehumidification
+    tsd.moisture.x_ve_mech[t] = loads_ahu['x_sup_c_ahu']  # update tsd.moisture.x_ve_mech is needed for dehumidification
                                                     # load calculation
     # ***
     # ARU
@@ -457,7 +456,7 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     # calculate recirculation unit dehumidification demand
     # NOTE: here we might make some error, as we calculate the moisture set point for the
     # uncorrected zone air temperature (i.e. no over cooling)
-    tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
+    tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
     g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(bpr, tsd, t)
     # calculate remaining sensible demand to be attained by aru
     qc_sen_demand_aru = np.min([0.0, qc_sen_rc_demand - qc_sen_ahu])
@@ -479,31 +478,31 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     # ZONE MOISTURE
     # ***
     # action on moisture
-    tsd['g_hu_ld'][t] = 0.0  # no humidification
-    tsd['g_dhu_ld'][t] = g_dhu_aru
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification
+    tsd.moisture.g_dhu_ld[t] = g_dhu_aru
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
 
     # write to tsd
-    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand
-    tsd['Qcs_sen_ahu'][t] = qc_sen_ahu
-    tsd['Qcs_sen_aru'][t] = qc_sen_aru
-    tsd['Qcs_sen_scu'][t] = 0.0  # not present in this system
-    tsd['Qcs_lat_ahu'][t] = qc_lat_ahu
-    tsd['Qcs_lat_aru'][t] = qc_lat_aru
-    tsd['Qcs_sen_sys'][t] = qc_sen_ahu + qc_sen_aru  # sum system loads
-    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_rc[t] = qc_sen_rc_demand
+    tsd.cooling_loads.Qcs_sen_ahu[t] = qc_sen_ahu
+    tsd.cooling_loads.Qcs_sen_aru[t] = qc_sen_aru
+    tsd.cooling_loads.Qcs_sen_scu[t] = 0.0  # not present in this system
+    tsd.cooling_loads.Qcs_lat_ahu[t] = qc_lat_ahu
+    tsd.cooling_loads.Qcs_lat_aru[t] = qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_sys[t] = qc_sen_ahu + qc_sen_aru  # sum system loads
+    tsd.cooling_loads.Qcs_lat_sys[t] = qc_lat_ahu + qc_lat_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
 
     # air flow
-    tsd['m_ve_rec'][t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.ventilation_mass_flows.m_ve_rec[t] = aru_system_loads['ma_sup_cs_aru']
 
     # mass flows to tsd
-    tsd['ma_sup_cs_ahu'][t] = loads_ahu['ma_sup_cs_ahu']
-    tsd['ta_sup_cs_ahu'][t] = loads_ahu['ta_sup_cs_ahu']
-    tsd['ta_re_cs_ahu'][t] = loads_ahu['ta_re_cs_ahu']
-    tsd['ma_sup_cs_aru'][t] = aru_system_loads['ma_sup_cs_aru']
-    tsd['ta_sup_cs_aru'][t] = aru_system_loads['ta_sup_cs_aru']
-    tsd['ta_re_cs_aru'][t] = aru_system_loads['ta_re_cs_aru']
+    tsd.cooling_system_mass_flows.ma_sup_cs_ahu[t] = loads_ahu['ma_sup_cs_ahu']
+    tsd.cooling_system_temperatures.ta_sup_cs_ahu[t] = loads_ahu['ta_sup_cs_ahu']
+    tsd.cooling_system_temperatures.ta_re_cs_ahu[t] = loads_ahu['ta_re_cs_ahu']
+    tsd.cooling_system_mass_flows.ma_sup_cs_aru[t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_sup_cs_aru[t] = aru_system_loads['ta_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_re_cs_aru[t] = aru_system_loads['ta_re_cs_aru']
 
     # ***
     # emission losses
@@ -511,12 +510,12 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     # emission losses on total sensible load
     # TODO: check
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
-    tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+    tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd['sys_status_ahu'][t] = 'On'
-    tsd['sys_status_aru'][t] = 'On:T/R'
-    tsd['sys_status_sen'][t] = 'no system'
+    tsd.system_status.sys_status_ahu[t] = 'On'
+    tsd.system_status.sys_status_aru[t] = 'On:T/R'
+    tsd.system_status.sys_status_sen[t] = 'no system'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -535,11 +534,11 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     """
 
     # get values from tsd
-    m_ve_mech = tsd['m_ve_mech'][t]
-    t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    t_int_prev = tsd['T_int'][t - 1]
-    x_int_prev = tsd['x_int'][t - 1]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    t_ve_mech_after_hex = tsd.rc_model_temperatures.theta_ve_mech[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    t_int_prev = tsd.rc_model_temperatures.T_int[t - 1]
+    x_int_prev = tsd.moisture.x_int[t - 1]
 
     # ***
     # RC MODEL
@@ -554,12 +553,12 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     ahu_loads = airconditioning_model.central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr)
     qc_sen_ahu = ahu_loads['qc_sen_ahu']
     qc_lat_ahu = ahu_loads['qc_lat_ahu']
-    tsd['x_ve_mech'][t] = ahu_loads['x_sup_c_ahu']
+    tsd.moisture.x_ve_mech[t] = ahu_loads['x_sup_c_ahu']
     # ***
     # ARU
     # ***
     # calculate recirculation unit dehumidification demand
-    tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
+    tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
     # NOTE: here we might make some error, as we calculate the moisture set point for the
     # uncorrected zone air temperature (i.e. no over cooling)
     g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(bpr, tsd, t)
@@ -590,8 +589,8 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     # ZONE MOISTURE
     # ***
     # action on moisture
-    tsd['g_hu_ld'][t] = 0.0  # no humidification
-    tsd['g_dhu_ld'][t] = g_dhu_aru
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification
+    tsd.moisture.g_dhu_ld[t] = g_dhu_aru
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
     # ***
     # emission losses
@@ -600,44 +599,44 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     # TODO: check
 
     # write to tsd
-    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand
-    tsd['Qcs_sen_ahu'][t] = qc_sen_ahu
-    tsd['Qcs_sen_aru'][t] = qc_sen_aru
-    tsd['Qcs_sen_scu'][t] = qc_sen_scu
-    tsd['Qcs_lat_ahu'][t] = qc_lat_ahu
-    tsd['Qcs_lat_aru'][t] = qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_rc[t] = qc_sen_rc_demand
+    tsd.cooling_loads.Qcs_sen_ahu[t] = qc_sen_ahu
+    tsd.cooling_loads.Qcs_sen_aru[t] = qc_sen_aru
+    tsd.cooling_loads.Qcs_sen_scu[t] = qc_sen_scu
+    tsd.cooling_loads.Qcs_lat_ahu[t] = qc_lat_ahu
+    tsd.cooling_loads.Qcs_lat_aru[t] = qc_lat_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
-    tsd['Qcs_sen_sys'][t] = qc_sen_ahu + qc_sen_aru + qc_sen_scu  # sum system loads
-    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_lat_aru
+    tsd.cooling_loads.Qcs_sen_sys[t] = qc_sen_ahu + qc_sen_aru + qc_sen_scu  # sum system loads
+    tsd.cooling_loads.Qcs_lat_sys[t] = qc_lat_ahu + qc_lat_aru
 
     # air flow
-    tsd['m_ve_rec'][t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.ventilation_mass_flows.m_ve_rec[t] = aru_system_loads['ma_sup_cs_aru']
 
     # mass flows to tsd
-    tsd['ma_sup_cs_ahu'][t] = ahu_loads['ma_sup_cs_ahu']
-    tsd['ta_sup_cs_ahu'][t] = ahu_loads['ta_sup_cs_ahu']
-    tsd['ta_re_cs_ahu'][t] = ahu_loads['ta_re_cs_ahu']
-    tsd['ma_sup_cs_aru'][t] = aru_system_loads['ma_sup_cs_aru']
-    tsd['ta_sup_cs_aru'][t] = aru_system_loads['ta_sup_cs_aru']
-    tsd['ta_re_cs_aru'][t] = aru_system_loads['ta_re_cs_aru']
+    tsd.cooling_system_mass_flows.ma_sup_cs_ahu[t] = ahu_loads['ma_sup_cs_ahu']
+    tsd.cooling_system_temperatures.ta_sup_cs_ahu[t] = ahu_loads['ta_sup_cs_ahu']
+    tsd.cooling_system_temperatures.ta_re_cs_ahu[t] = ahu_loads['ta_re_cs_ahu']
+    tsd.cooling_system_mass_flows.ma_sup_cs_aru[t] = aru_system_loads['ma_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_sup_cs_aru[t] = aru_system_loads['ta_sup_cs_aru']
+    tsd.cooling_system_temperatures.ta_re_cs_aru[t] = aru_system_loads['ta_re_cs_aru']
 
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
-    tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+    tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd['sys_status_ahu'][t] = 'On'
-    tsd['sys_status_aru'][t] = 'On:R'
-    tsd['sys_status_sen'][t] = 'On'
+    tsd.system_status.sys_status_ahu[t] = 'On'
+    tsd.system_status.sys_status_aru[t] = 'On:R'
+    tsd.system_status.sys_status_sen[t] = 'On'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
 def rc_temperatures_to_tsd(rc_model_temperatures, tsd, t):
-    tsd['T_int'][t] = rc_model_temperatures['T_int']
-    tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-    tsd['theta_c'][t] = rc_model_temperatures['theta_c']
-    tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+    tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']
+    tsd.rc_model_temperatures.theta_m[t] = rc_model_temperatures['theta_m']
+    tsd.rc_model_temperatures.theta_c[t] = rc_model_temperatures['theta_c']
+    tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
 
 
 def update_tsd_no_heating(tsd, t):
@@ -653,26 +652,26 @@ def update_tsd_no_heating(tsd, t):
     """
 
     # no sensible loads
-    tsd['Qhs_sen_rc'][t] = 0.0
-    tsd['Qhs_sen_shu'][t] = 0.0
-    tsd['Qhs_sen_aru'][t] = 0.0
-    tsd['Qhs_sen_ahu'][t] = 0.0
+    tsd.heating_loads.Qhs_sen_rc[t] = 0.0
+    tsd.heating_loads.Qhs_sen_shu[t] = 0.0
+    tsd.heating_loads.Qhs_sen_aru[t] = 0.0
+    tsd.heating_loads.Qhs_sen_ahu[t] = 0.0
 
     # no latent loads
-    tsd['Qhs_lat_aru'][t] = 0.0
-    tsd['Qhs_lat_ahu'][t] = 0.0
-    tsd['Qhs_sen_sys'][t] = 0.0
-    tsd['Qhs_lat_sys'][t] = 0.0
-    tsd['Qhs_em_ls'][t] = 0.0
-    tsd['Ehs_lat_aux'][t] = 0.0
+    tsd.heating_loads.Qhs_lat_aru[t] = 0.0
+    tsd.heating_loads.Qhs_lat_ahu[t] = 0.0
+    tsd.heating_loads.Qhs_sen_sys[t] = 0.0
+    tsd.heating_loads.Qhs_lat_sys[t] = 0.0
+    tsd.heating_loads.Qhs_em_ls[t] = 0.0
+    tsd.electrical_loads.Ehs_lat_aux[t] = 0.0
 
     # mass flows to tsd
-    tsd['ma_sup_hs_ahu'][t] = 0.0
-    tsd['ta_sup_hs_ahu'][t] = np.nan
-    tsd['ta_re_hs_ahu'][t] = np.nan
-    tsd['ma_sup_hs_aru'][t] = 0.0
-    tsd['ta_sup_hs_aru'][t] = np.nan
-    tsd['ta_re_hs_aru'][t] = np.nan
+    tsd.heating_system_mass_flows.ma_sup_hs_ahu[t] = 0.0
+    tsd.heating_system_temperatures.ta_sup_hs_ahu[t] = np.nan
+    tsd.heating_system_temperatures.ta_re_hs_ahu[t] = np.nan
+    tsd.heating_system_mass_flows.ma_sup_hs_aru[t] = 0.0
+    tsd.heating_system_temperatures.ta_sup_hs_aru[t] = np.nan
+    tsd.heating_system_temperatures.ta_re_hs_aru[t] = np.nan
 
     return
 
@@ -690,27 +689,27 @@ def update_tsd_no_cooling(tsd, t):
     """
 
     # no sensible loads
-    tsd['Qcs_sen_rc'][t] = 0.0
-    tsd['Qcs_sen_scu'][t] = 0.0
-    tsd['Qcs_sen_aru'][t] = 0.0
-    tsd['Qcs_sen_ahu'][t] = 0.0
+    tsd.cooling_loads.Qcs_sen_rc[t] = 0.0
+    tsd.cooling_loads.Qcs_sen_scu[t] = 0.0
+    tsd.cooling_loads.Qcs_sen_aru[t] = 0.0
+    tsd.cooling_loads.Qcs_sen_ahu[t] = 0.0
 
     # no latent loads
-    tsd['Qcs_lat_aru'][t] = 0.0
-    tsd['Qcs_lat_ahu'][t] = 0.0
+    tsd.cooling_loads.Qcs_lat_aru[t] = 0.0
+    tsd.cooling_loads.Qcs_lat_ahu[t] = 0.0
 
     # no losses
-    tsd['Qcs_sen_sys'][t] = 0.0
-    tsd['Qcs_lat_sys'][t] = 0.0
-    tsd['Qcs_em_ls'][t] = 0.0
+    tsd.cooling_loads.Qcs_sen_sys[t] = 0.0
+    tsd.cooling_loads.Qcs_lat_sys[t] = 0.0
+    tsd.cooling_loads.Qcs_em_ls[t] = 0.0
 
     # mass flows to tsd
-    tsd['ma_sup_cs_ahu'][t] = 0.0
-    tsd['ta_sup_cs_ahu'][t] = np.nan
-    tsd['ta_re_cs_ahu'][t] = np.nan
-    tsd['ma_sup_cs_aru'][t] = 0.0
-    tsd['ta_sup_cs_aru'][t] = np.nan
-    tsd['ta_re_cs_aru'][t] = np.nan
+    tsd.cooling_system_mass_flows.ma_sup_cs_ahu[t] = 0.0
+    tsd.cooling_system_temperatures.ta_sup_cs_ahu[t] = np.nan
+    tsd.cooling_system_temperatures.ta_re_cs_ahu[t] = np.nan
+    tsd.cooling_system_mass_flows.ma_sup_cs_aru[t] = 0.0
+    tsd.cooling_system_temperatures.ta_sup_cs_aru[t] = np.nan
+    tsd.cooling_system_temperatures.ta_re_cs_aru[t] = np.nan
 
     return
 
@@ -727,14 +726,14 @@ def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model
     """
 
     # internal gains from lights
-    tsd['Q_gain_sen_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['El'][t])
+    tsd.energy_balance_dashboard.Q_gain_sen_light[t] = rc_model_SIA.calc_phi_i_l(tsd.electrical_loads.El[t])
     # internal gains from appliances, data centres and losses from refrigeration
-    tsd['Q_gain_sen_app'][t] = (rc_model_SIA.calc_phi_i_a(tsd['Ea'][t], tsd['Epro'][t]) - 0.9*tsd['Epro'][t])/0.9
-    tsd['Q_gain_sen_pro'][t] = tsd['Epro'][t]
-    tsd['Q_gain_sen_data'][t] = tsd['Qcdata_sys'][t]
-    tsd['Q_loss_sen_ref'] = -tsd['Qcre_sys'][t]
+    tsd.energy_balance_dashboard.Q_gain_sen_app[t] = (rc_model_SIA.calc_phi_i_a(tsd.electrical_loads.Ea[t], tsd.electrical_loads.Epro[t]) - 0.9*tsd.electrical_loads.Epro[t])/0.9
+    tsd.energy_balance_dashboard.Q_gain_sen_pro[t] = tsd.electrical_loads.Epro[t]
+    tsd.energy_balance_dashboard.Q_gain_sen_data[t] = tsd.cooling_loads.Qcdata_sys[t]
+    tsd.energy_balance_dashboard.Q_loss_sen_ref = -tsd.cooling_loads.Qcre_sys[t]
     # internal gains from people
-    tsd['Q_gain_sen_peop'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
+    tsd.energy_balance_dashboard.Q_gain_sen_peop[t] = rc_model_SIA.calc_phi_i_p(tsd.people.Qs[t])
 
     # losses / gains from ventilation
     # tsd['']
@@ -762,15 +761,15 @@ def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model
         h_roof_em = h_em * bpr.rc_model.Aroof * bpr.rc_model.U_roof / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
-    tsd['Q_gain_sen_wall'][t] = h_wall_em * (theta_em - theta_m)
-    tsd['Q_gain_sen_base'][t] = h_base_em * (theta_em - theta_m)
-    tsd['Q_gain_sen_roof'][t] = h_roof_em * (theta_em - theta_m)
+    tsd.energy_balance_dashboard.Q_gain_sen_wall[t] = h_wall_em * (theta_em - theta_m)
+    tsd.energy_balance_dashboard.Q_gain_sen_base[t] = h_base_em * (theta_em - theta_m)
+    tsd.energy_balance_dashboard.Q_gain_sen_roof[t] = h_roof_em * (theta_em - theta_m)
 
     # calculate heat fluxes between central and outside through windows
-    tsd['Q_gain_sen_wind'][t] = h_ec * (theta_ec - theta_c)
+    tsd.energy_balance_dashboard.Q_gain_sen_wind[t] = h_ec * (theta_ec - theta_c)
 
     # calculate heat between outside and inside air through ventilation
-    tsd['Q_gain_sen_vent'][t] = h_ea * (theta_ea - T_int)
+    tsd.energy_balance_dashboard.Q_gain_sen_vent[t] = h_ea * (theta_ea - T_int)
 
     return
 
@@ -801,20 +800,20 @@ def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd, t, config):
     rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t, config)
 
     # calculate humidity
-    tsd['g_hu_ld'][t] = 0.0  # no humidification or dehumidification
-    tsd['g_dhu_ld'][t] = 0.0
+    tsd.moisture.g_hu_ld[t] = 0.0  # no humidification or dehumidification
+    tsd.moisture.g_dhu_ld[t] = 0.0
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
 
     # write to tsd
-    tsd['T_int'][t] = rc_model_temperatures['T_int']
-    tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-    tsd['theta_c'][t] = rc_model_temperatures['theta_c']
-    tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+    tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']
+    tsd.rc_model_temperatures.theta_m[t] = rc_model_temperatures['theta_m']
+    tsd.rc_model_temperatures.theta_c[t] = rc_model_temperatures['theta_c']
+    tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
     update_tsd_no_cooling(tsd, t)
     update_tsd_no_heating(tsd, t)
-    tsd['sys_status_ahu'][t] = 'system off'
-    tsd['sys_status_aru'][t] = 'system off'
-    tsd['sys_status_sen'][t] = 'system off'
+    tsd.system_status.sys_status_ahu[t] = 'system off'
+    tsd.system_status.sys_status_aru[t] = 'system off'
+    tsd.system_status.sys_status_sen[t] = 'system off'
 
     return rc_model_temperatures
 
@@ -864,7 +863,7 @@ def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
 
         t_int_10 = rc_model_temperatures_10['T_int']
 
-        t_int_set = tsd['ta_hs_set'][t]
+        t_int_set = tsd.rc_model_temperatures.ta_hs_set[t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -948,7 +947,7 @@ def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
 
         t_int_10 = rc_model_temperatures_10['T_int']
 
-        t_int_set = tsd['ta_cs_set'][t]
+        t_int_set = tsd.rc_model_temperatures.ta_cs_set[t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011

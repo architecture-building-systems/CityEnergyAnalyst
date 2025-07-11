@@ -1,1 +1,2 @@
 from .building_properties import BuildingProperties
+from .useful_areas import calc_useful_areas

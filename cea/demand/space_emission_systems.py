@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """
-
 Space emission systems (heating and cooling)
 EN 15316-2
 prEN 15316-2:2014
@@ -14,6 +12,7 @@ from cea.demand.control_heating_cooling_systems import has_heating_system, has_c
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -25,7 +24,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd, t):
+def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> float:
     """
     __author__ = "Gabriel Happle"
 
@@ -35,19 +34,19 @@ def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd, t):
     :type bpr: BuildingPropertiesRow object
     
     :param tsd: time step data
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     
     :param t: hour of year (0..8759)
     :type t: int
     
     :return: emission losses of cooling system for time step [W]
-    :rtype: double
+    :rtype: float
     """
 
     # get properties
-    theta_e = tsd['T_ext'][t]
-    theta_int_ini = tsd['T_int'][t]
-    q_em_out = tsd['Qcs_sen_sys'][t]
+    theta_e = tsd.weather.T_ext[t]
+    theta_int_ini = tsd.rc_model_temperatures.T_int[t]
+    q_em_out = tsd.cooling_loads.Qcs_sen_sys[t]
 
     q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model.Af
 
@@ -60,7 +59,7 @@ def calc_q_em_ls_cooling(bpr: BuildingPropertiesRow, tsd, t):
     return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_em_max)
 
 
-def calc_q_em_ls_heating(bpr: BuildingPropertiesRow, tsd, hoy):
+def calc_q_em_ls_heating(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, hoy: int) -> float:
     """
     calculation procedure for space emissions losses in the heating case [prEN 15316-2:2014]
 
@@ -68,21 +67,21 @@ def calc_q_em_ls_heating(bpr: BuildingPropertiesRow, tsd, hoy):
     :type bpr: BuildingPropertiesRow object
     
     :param tsd: time step data
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     
     :param hoy: hour of year (0..8759)
     :type hoy: int
     
     :return: emission losses of heating system for time step [W]
-    :rtype: double
+    :rtype: float
 
     Author: Gabriel Happle
 
     """
     # get properties
-    theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['T_int'][hoy]
-    q_em_out = tsd['Qhs_sen_sys'][hoy]
+    theta_e = tsd.weather.T_ext[hoy]
+    theta_int_ini = tsd.rc_model_temperatures.T_int[hoy]
+    q_em_out = tsd.heating_loads.Qhs_sen_sys[hoy]
 
     q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model.Af
 
@@ -103,22 +102,22 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
     With modification of capping emission losses at system capacity [Happle 01/2017]
 
     :param q_em_out: heating power of emission system (W)
-    :type q_em_out: double
+    :type q_em_out: float
     
     :param delta_theta_int_inc: delta temperature caused by all losses (K)
-    :type delta_theta_int_inc: double
+    :type delta_theta_int_inc: float
     
     :param theta_int_inc: equivalent room temperature (°C)
-    :type theta_int_inc: double
+    :type theta_int_inc: float
     
     :param theta_e_comb: ?comb? outdoor temperature (°C)
-    :type theta_e_comb: double
+    :type theta_e_comb: float
     
     :param q_em_max: maximum emission capacity of heating/cooling system [W]
-    :type q_em_max: double
+    :type q_em_max: float
     
     :return: emission losses of heating/cooling system [W]
-    :rtype: double
+    :rtype: float
 
     Author: Gabriel Happle
     """
@@ -142,13 +141,13 @@ def calc_theta_int_inc(theta_int_ini, delta_theta_int_inc):
     Eq. (1) in [prEN 15316-2:2014]
 
     :param theta_int_ini: temperature [C]
-    :type theta_int_ini: double
+    :type theta_int_ini: float
     
     :param delta_theta_int_inc: temperature [C]
-    :type delta_theta_int_inc: double
+    :type delta_theta_int_inc: float
     
     :return: sum of temperatures [C]
-    :rtype: double
+    :rtype: float
     """
 
     return theta_int_ini + delta_theta_int_inc
@@ -159,10 +158,10 @@ def calc_theta_e_comb_heating(theta_e):
     Eq. (9) in [prEN 15316-2:2014]
     
     :param theta_e: outdoor temperature [C]
-    :type theta_e: double
+    :type theta_e: float
 
     :return: temperature [C]
-    :rtype: double
+    :rtype: float
     """
 
     return theta_e
@@ -173,13 +172,13 @@ def calc_theta_e_comb_cooling(theta_e, bpr: BuildingPropertiesRow):
     Eq. (10) in [prEN 15316-2:2014]
     
     :param theta_e: outdoor temperature [C]
-    :type theta_e: double
+    :type theta_e: float
 
     :param bpr: BuildingPropertiesRow 
     :type bpr: BuildingPropertiesRow object
     
     :return: temperature [C]
-    :rtype: double
+    :rtype: float
     """
 
     return theta_e + get_delta_theta_e_sol(bpr)
@@ -226,7 +225,7 @@ def calc_delta_theta_int_inc_heating(bpr: BuildingPropertiesRow):
     :type bpr: BuildingPropertiesRow object
 
     :returns: delta T to correct the set point temperature for heating
-    :rtype: double
+    :rtype: float
 
     Author: Shanshan Hsieh, Gabriel Happle
     Credits: Shanshan Hsieh, Daren Thomas
@@ -261,7 +260,7 @@ def calc_delta_theta_int_inc_cooling(bpr: BuildingPropertiesRow):
     :type bpr: BuildingPropertiesRow object
 
     :returns: delta T to correct the set point temperature for cooling
-    :rtype: double
+    :rtype: float
 
     Author: Shanshan Hsieh, Gabriel Happle
     Credits: Shanshan Hsieh, Daren Thomas

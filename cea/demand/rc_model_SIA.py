@@ -6,6 +6,7 @@ from cea.demand import constants
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -652,7 +653,7 @@ def calc_phi_m_tot_tabs():
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def calc_rc_model_temperatures_no_heating_cooling(bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_model_temperatures_no_heating_cooling(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     """
     Calculates R-C-Model temperatures are calculated with zero heating/cooling power according to SIA 2044 procedure.
 
@@ -682,28 +683,28 @@ def calc_rc_model_temperatures_no_heating_cooling(bpr: BuildingPropertiesRow, ts
     return rc_model_temp
 
 
-def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     # calculate node temperatures of RC model
-    theta_m_t_1 = tsd['theta_m'][t - 1]
+    theta_m_t_1 = tsd.rc_model_temperatures.theta_m[t - 1]
     if np.isnan(theta_m_t_1):
-        theta_m_t_1 = tsd['T_ext'][t - 1]
+        theta_m_t_1 = tsd.weather.T_ext[t - 1]
 
     # copy data required for calculation from `tsd` for this timestep
-    m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_window = tsd['m_ve_window'][t]
-    m_ve_inf = tsd['m_ve_inf'][t]
-    El = tsd['El'][t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0) # account for a proportion of internal gains
-    Ea = tsd['Ea'][t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0)  # account for a proportion of internal gains
-    Epro = tsd['Epro'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    m_ve_window = tsd.ventilation_mass_flows.m_ve_window[t]
+    m_ve_inf = tsd.ventilation_mass_flows.m_ve_inf[t]
+    El = tsd.electrical_loads.El[t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0) # account for a proportion of internal gains
+    Ea = tsd.electrical_loads.Ea[t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0)  # account for a proportion of internal gains
+    Epro = tsd.electrical_loads.Epro[t]
     # account for a proportion of solar gains. This is very simplified for now.
-    I_sol = tsd['I_sol_and_I_rad'][t] * np.sqrt(bpr.rc_model.Hs_ag)
-    T_ext = tsd['T_ext'][t]
-    theta_ve_mech = tsd['theta_ve_mech'][t]
+    I_sol = tsd.solar.I_sol_and_I_rad[t] * np.sqrt(bpr.rc_model.Hs_ag)
+    T_ext = tsd.weather.T_ext[t]
+    theta_ve_mech = tsd.rc_model_temperatures.theta_ve_mech[t]
 
     # copy data from `bpr`
     Htr_op = bpr.rc_model.Htr_op
     Htr_w = bpr.rc_model.Htr_w
-    Qs = tsd['Qs'][t]
+    Qs = tsd.people.Qs[t]
     a_t = bpr.rc_model.Atot
     a_m = bpr.rc_model.Am
     a_w = bpr.rc_model.Awin_ag
@@ -768,7 +769,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext,
     return T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m
 
 
-def calc_rc_model_temperatures_heating(phi_hc, bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_model_temperatures_heating(phi_hc, bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     """
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
     heating energy demand
@@ -806,7 +807,7 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr: BuildingPropertiesRow, tsd, 
     return rc_model_temp
 
 
-def calc_rc_model_temperatures_cooling(phi_hc, bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_model_temperatures_cooling(phi_hc, bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):    
     """
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
     cooling energy demand
@@ -844,7 +845,7 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr: BuildingPropertiesRow, tsd, 
     return rc_model_temp
 
 
-def has_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
+def has_heating_demand(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     """
     This function checks whether the building R-C-Model has a heating demand according to the procedure in SIA 2044.
     R-C-Model temperatures are calculated with zero heating power and checked versus the set-point temperature.
@@ -870,7 +871,7 @@ def has_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     # tolerance is consistent with maximum temperature difference that can be reported with the current precision
     # of the demand *.csv file
 
-    ta_hs_set = tsd['ta_hs_set'][t]
+    ta_hs_set = tsd.rc_model_temperatures.ta_hs_set[t]
     if np.isnan(ta_hs_set):
         # no set point = system off
         return False
@@ -882,7 +883,7 @@ def has_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     return rc_model_temp['T_int'] < ta_hs_set - temp_tolerance
 
 
-def has_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
+def has_cooling_demand(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     """
     This function checks whether the building R-C-Model has a cooling demand according to the procedure in SIA 2044.
     R-C-Model temperatures are calculated with zero cooling power and checked versus the set-point temperature.
@@ -908,7 +909,7 @@ def has_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     # tolerance is consistent with maximum temperature difference that can be reported with the current precision
     # of the demand *.csv file
 
-    ta_cs_set = tsd['ta_cs_set'][t]
+    ta_cs_set = tsd.rc_model_temperatures.ta_cs_set[t]
     if np.isnan(ta_cs_set):
         # no set point = system off
         return False
@@ -920,13 +921,13 @@ def has_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     return rc_model_temp['T_int'] > ta_cs_set + temp_tolerance
 
 
-def has_sensible_cooling_demand(t_int_0, tsd, t):
+def has_sensible_cooling_demand(t_int_0, tsd: TimeSeriesData, t: int):
     temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
     #  i.e. heating is turned on if temperature is temp_tolerance below the set point
     # tolerance is consistent with maximum temperature difference that can be reported with the current precision
     # of the demand *.csv file
 
-    ta_cs_set = tsd['ta_cs_set'][t]
+    ta_cs_set = tsd.rc_model_temperatures.ta_cs_set[t]
     if np.isnan(ta_cs_set):
         # no set point = system off
         return False
@@ -935,13 +936,13 @@ def has_sensible_cooling_demand(t_int_0, tsd, t):
     return t_int_0 > ta_cs_set + temp_tolerance
 
 
-def has_sensible_heating_demand(t_int_0, tsd, t):
+def has_sensible_heating_demand(t_int_0, tsd: TimeSeriesData, t: int):
     temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
     #  i.e. heating is turned on if temperature is temp_tolerance below the set point
     # tolerance is consistent with maximum temperature difference that can be reported with the current precision
     # of the demand *.csv file
 
-    ta_hs_set = tsd['ta_hs_set'][t]
+    ta_hs_set = tsd.rc_model_temperatures.ta_hs_set[t]
     if np.isnan(ta_hs_set):
         # no set point = system off
         return False
