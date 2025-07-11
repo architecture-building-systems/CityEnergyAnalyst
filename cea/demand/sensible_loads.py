@@ -270,7 +270,7 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         tsd.heating_system_mass_flows.mcphs_sys_aru = mcphs
 
         # SHU
-        tsd.heating_system_temperatures.Ths_sup_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd.heating_system_temperatures.Ths_sys_re_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd.heating_system_mass_flows.mcphs_sys_shu = np.zeros(HOURS_IN_YEAR)
 
