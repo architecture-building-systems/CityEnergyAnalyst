@@ -21,6 +21,8 @@ from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.inputlocator import ReferenceCaseOpenLocator
+from cea.utilities import epwreader
+from cea.utilities.date import get_date_range_hours_from_year
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
