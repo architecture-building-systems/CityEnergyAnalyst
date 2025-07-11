@@ -247,7 +247,7 @@ class EnvelopeProperties:
 
 @dataclass(frozen=True)
 class SolarProperties:
-    I_sol: Annotated[float, "Isolated solar [kWh]"]
+    I_sol: Annotated[pd.Series, "Isolated solar [kWh]"]
 
     @classmethod
     def from_dict(cls, solar: dict):
