@@ -4,6 +4,8 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -20,7 +22,7 @@ FLOAT_FORMAT = '%.3f'
 TSD_KEYS_ENERGY_BALANCE_DASHBOARD = list(EnergyBalanceDashboard.__dataclass_fields__.keys())
 TSD_KEYS_SOLAR = list(Solar.__dataclass_fields__.keys())
 
-class DemandWriter(object):
+class DemandWriter(ABC):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
     Subclasses are expected to:
@@ -36,6 +38,19 @@ class DemandWriter(object):
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
         self.OTHER_VARS = ['name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
+
+
+    @abstractmethod
+    def write_to_csv(self, building_name, columns, hourly_data, locator):
+        """
+        Write the hourly data to a CSV file.
+        """
+    
+    @abstractmethod
+    def write_to_hdf5(self, building_name, columns, hourly_data, locator):
+        """
+        Write the hourly data to an HDF5 file.
+        """
 
     def results_to_hdf5(self, tsd: TimeSeriesData, bpr: BuildingPropertiesRow, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
