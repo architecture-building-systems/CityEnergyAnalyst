@@ -7,12 +7,16 @@ from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cool
     space_emission_systems, latent_loads, constants
 
 if TYPE_CHECKING:
+    from cea.config import Configuration
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
+
+from cea.demand.time_series_data import AHUStatus, ARUStatus, SENStatus
 
 B_F = constants.B_F
 
 
-def calc_heating_cooling_loads(bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_heating_cooling_loads(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t, config: Configuration):
     """
 
     :param bpr:
@@ -115,7 +119,7 @@ def calc_heating_cooling_loads(bpr: BuildingPropertiesRow, tsd, t, config):
     return
 
 
-def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Procedure for hourly heating system load calculation for a building with a radiative heating system.
 
@@ -142,9 +146,9 @@ def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
     tsd.heating_loads.Qhs_sen_rc[t] = qh_sen_rc_demand  # demand is load
     tsd.heating_loads.Qhs_sen_shu[t] = qh_sen_rc_demand
     tsd.heating_loads.Qhs_sen_ahu[t] = 0.0
-    tsd.system_status.sys_status_ahu[t] = 'no system'
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.NO_SYSTEM
     tsd.heating_loads.Qhs_sen_aru[t] = 0.0
-    tsd.system_status.sys_status_aru[t] = 'no system'
+    tsd.system_status.sys_status_aru[t] = ARUStatus.NO_SYSTEM
     tsd.heating_loads.Qhs_sen_sys[t] = qh_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
@@ -164,15 +168,15 @@ def calc_heat_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (5) System status to tsd
     if qh_sen_rc_demand > 0.0:
-        tsd.system_status.sys_status_sen[t] = 'On'
+        tsd.system_status.sys_status_sen[t] = SENStatus.ON
     else:
-        tsd.system_status.sys_status_sen[t] = 'Off'
+        tsd.system_status.sys_status_sen[t] = SENStatus.OFF
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
-def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Procedure for hourly cooling system load calculation for a building with a radiative cooling system.
 
@@ -199,9 +203,9 @@ def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
     tsd.cooling_loads.Qcs_sen_rc[t] = qc_sen_rc_demand  # demand is load
     tsd.cooling_loads.Qcs_sen_scu[t] = qc_sen_rc_demand
     tsd.cooling_loads.Qcs_sen_ahu[t] = 0.0
-    tsd.system_status.sys_status_ahu[t] = 'no system'
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.NO_SYSTEM
     tsd.cooling_loads.Qcs_sen_aru[t] = 0.0
-    tsd.system_status.sys_status_aru[t] = 'no system'
+    tsd.system_status.sys_status_aru[t] = ARUStatus.NO_SYSTEM
     tsd.cooling_loads.Qcs_sen_sys[t] = qc_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
@@ -223,15 +227,15 @@ def calc_cool_loads_radiator(bpr: BuildingPropertiesRow, t, tsd, config):
 
     # (5) System status to tsd
     if qc_sen_rc_demand < 0.0:
-        tsd.system_status.sys_status_sen[t] = 'On'
+        tsd.system_status.sys_status_sen[t] = SENStatus.ON
     else:
-        tsd.system_status.sys_status_sen[t] = 'Off'
+        tsd.system_status.sys_status_sen[t] = SENStatus.OFF
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
-def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Procedure for hourly heating system load calculation for a building with a central AC heating system.
 
@@ -276,8 +280,8 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = 0.0
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
-        tsd.system_status.sys_status_aru[t] = 'Off'
-        tsd.system_status.sys_status_ahu[t] = 'On:over heating'
+        tsd.system_status.sys_status_aru[t] = ARUStatus.OFF
+        tsd.system_status.sys_status_ahu[t] = AHUStatus.ON_OVER_HEATING
 
     elif 0.0 <= qh_sen_central_ac_load < qh_sen_rc_demand:
 
@@ -292,13 +296,13 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = system_loads_aru['ma_sup_hs_aru']
         ta_sup_hs_aru = system_loads_aru['ta_sup_hs_aru']
         ta_re_hs_aru = system_loads_aru['ta_re_hs_aru']
-        tsd.system_status.sys_status_aru[t] = 'On'
+        tsd.system_status.sys_status_aru[t] = ARUStatus.ON
 
         # check status of ahu
         if qh_sen_central_ac_load > 0.0:
-            tsd.system_status.sys_status_ahu[t] = 'On'
+            tsd.system_status.sys_status_ahu[t] = AHUStatus.ON
         elif qh_sen_central_ac_load == 0.0:
-            tsd.system_status.sys_status_ahu[t] = 'Off'
+            tsd.system_status.sys_status_ahu[t] = AHUStatus.OFF
             # this state happens during sensible demand but zero mechanical ventilation air flow
             #  (= sufficient infiltration)
 
@@ -309,8 +313,8 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
         ma_sup_hs_aru = 0.0
         ta_sup_hs_aru = np.nan
         ta_re_hs_aru = np.nan
-        tsd.system_status.sys_status_aru[t] = 'Off'
-        tsd.system_status.sys_status_ahu[t] = 'Off'
+        tsd.system_status.sys_status_aru[t] = ARUStatus.OFF
+        tsd.system_status.sys_status_ahu[t] = AHUStatus.OFF
 
     else:
         raise Exception("Something went wrong in the central AC heating load calculation.")
@@ -326,7 +330,7 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     # write sensible loads to tsd
     tsd.heating_loads.Qhs_sen_rc[t] = qh_sen_rc_demand
     tsd.heating_loads.Qhs_sen_shu[t] = 0.0
-    tsd.system_status.sys_status_sen[t] = 'no system'
+    tsd.system_status.sys_status_sen[t] = SENStatus.NO_SYSTEM
     tsd.heating_loads.Qhs_sen_ahu[t] = qh_sen_central_ac_load
     tsd.heating_loads.Qhs_sen_aru[t] = qh_sen_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
@@ -349,7 +353,7 @@ def calc_heat_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     return rc_model_temperatures
 
 
-def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Calculation procedure for cooling system loads of an ARU subsystem of a mini-split AC system
 
@@ -410,15 +414,15 @@ def calc_cool_loads_mini_split_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd.system_status.sys_status_aru[t] = 'On:T'
-    tsd.system_status.sys_status_ahu[t] = 'no system'
-    tsd.system_status.sys_status_sen[t] = 'no system'
+    tsd.system_status.sys_status_aru[t] = ARUStatus.ON_T
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.NO_SYSTEM
+    tsd.system_status.sys_status_sen[t] = SENStatus.NO_SYSTEM
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
-def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Calculation procedure for cooling system loads of AHU and ARU subsystems of a central AC system
 
@@ -513,15 +517,15 @@ def calc_cool_loads_central_ac(bpr: BuildingPropertiesRow, t, tsd, config):
     tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd.system_status.sys_status_ahu[t] = 'On'
-    tsd.system_status.sys_status_aru[t] = 'On:T/R'
-    tsd.system_status.sys_status_sen[t] = 'no system'
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.ON
+    tsd.system_status.sys_status_aru[t] = ARUStatus.ON_T_R
+    tsd.system_status.sys_status_sen[t] = SENStatus.NO_SYSTEM
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
-def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
+def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, config):
     """
     Calculation procedure for cooling system loads of AHU, ARU and SCU subsystems of 3for2 system
 
@@ -624,22 +628,22 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd, config):
     tsd.cooling_loads.Qcs_em_ls[t] = q_em_ls_cooling
 
     # system status
-    tsd.system_status.sys_status_ahu[t] = 'On'
-    tsd.system_status.sys_status_aru[t] = 'On:R'
-    tsd.system_status.sys_status_sen[t] = 'On'
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.ON
+    tsd.system_status.sys_status_aru[t] = ARUStatus.ON_R
+    tsd.system_status.sys_status_sen[t] = SENStatus.ON
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
 
 
-def rc_temperatures_to_tsd(rc_model_temperatures, tsd, t):
+def rc_temperatures_to_tsd(rc_model_temperatures, tsd: TimeSeriesData, t):
     tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']
     tsd.rc_model_temperatures.theta_m[t] = rc_model_temperatures['theta_m']
     tsd.rc_model_temperatures.theta_c[t] = rc_model_temperatures['theta_c']
     tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
 
 
-def update_tsd_no_heating(tsd, t):
+def update_tsd_no_heating(tsd: TimeSeriesData, t):
     """
     updates NaN values in tsd for case of no heating demand
 
@@ -676,7 +680,7 @@ def update_tsd_no_heating(tsd, t):
     return
 
 
-def update_tsd_no_cooling(tsd, t):
+def update_tsd_no_cooling(tsd: TimeSeriesData, t):
     """
     updates NaN values in tsd for case of no cooling demand
 
@@ -714,7 +718,7 @@ def update_tsd_no_cooling(tsd, t):
     return
 
 
-def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model_temperatures):
+def detailed_thermal_balance_to_tsd(tsd: TimeSeriesData, bpr: BuildingPropertiesRow, t, rc_model_temperatures):
     """
     Back calculate energy flows in RC model for dashboard of energy balance visualization
 
@@ -774,7 +778,7 @@ def detailed_thermal_balance_to_tsd(tsd, bpr: BuildingPropertiesRow, t, rc_model
     return
 
 
-def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -811,14 +815,14 @@ def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd, t, config):
     tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
     update_tsd_no_cooling(tsd, t)
     update_tsd_no_heating(tsd, t)
-    tsd.system_status.sys_status_ahu[t] = 'system off'
-    tsd.system_status.sys_status_aru[t] = 'system off'
-    tsd.system_status.sys_status_sen[t] = 'system off'
+    tsd.system_status.sys_status_ahu[t] = AHUStatus.SYSTEM_OFF
+    tsd.system_status.sys_status_aru[t] = ARUStatus.SYSTEM_OFF
+    tsd.system_status.sys_status_sen[t] = SENStatus.SYSTEM_OFF
 
     return rc_model_temperatures
 
 
-def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -896,7 +900,7 @@ def calc_rc_heating_demand(bpr: BuildingPropertiesRow, tsd, t, config):
     return phi_h_act, rc_model_temperatures
 
 
-def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd, t, config):
+def calc_rc_cooling_demand(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t, config):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
        following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011

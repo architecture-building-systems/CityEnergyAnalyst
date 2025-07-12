@@ -4,9 +4,41 @@ calculations.
 """
 from typing_extensions import Annotated
 from dataclasses import dataclass, field
+from enum import Enum
 import numpy as np
 import numpy.typing as npt
 from cea.constants import HOURS_IN_YEAR
+
+
+class AHUStatus(str, Enum):
+    """Enum for AHU (Air Handling Unit) system status values."""
+    UNKNOWN = "unknown"
+    NO_SYSTEM = "no system"
+    ON_OVER_HEATING = "On:over heating"
+    ON = "On"
+    OFF = "Off"
+    SYSTEM_OFF = "system off"
+
+
+class ARUStatus(str, Enum):
+    """Enum for ARU (Air Recirculation Unit) system status values."""
+    UNKNOWN = "unknown"
+    NO_SYSTEM = "no system"
+    OFF = "Off"
+    ON = "On"
+    ON_T = "On:T"  # Temperature control only
+    ON_T_R = "On:T/R"  # Temperature and Recirculation
+    ON_R = "On:R"  # Recirculation only
+    SYSTEM_OFF = "system off"
+
+
+class SENStatus(str, Enum):
+    """Enum for SEN (Sensible heat recovery) system status values."""
+    UNKNOWN = "unknown"
+    ON = "On"
+    OFF = "Off"
+    NO_SYSTEM = "no system"
+    SYSTEM_OFF = "system off"
 
 
 def empty_array():
@@ -19,9 +51,13 @@ def empty_array():
 def empty_char_array():
     """
     Creates an empty numpy chararray of size HOURS_IN_YEAR, filled with 'unknown'.
+    
+    Uses numpy chararray for consistency with the codebase's numpy-based time series data.
+    Memory usage: ~175KB per array (itemsize=20 * 8760 hours), which is acceptable
+    for the performance benefits of vectorized operations.
     """
     arr = np.chararray(HOURS_IN_YEAR, itemsize=20)
-    arr[:] = 'unknown'
+    arr[:] = AHUStatus.UNKNOWN.value  # Using enum default value
     return arr
 
 
