@@ -82,7 +82,6 @@ class People:
     ve_lps: Annotated[npt.NDArray[np.float64], "Ventilation per person [lps]"] = field(default_factory=empty_array)
     Qs: Annotated[npt.NDArray[np.float64], "Sensible heat gain from people [W]"] = field(default_factory=empty_array)
     w_int: Annotated[npt.NDArray[np.float64], "Internal moisture gains [kg/s]"] = field(default_factory=empty_array)
-    ve: Annotated[npt.NDArray[np.float64], "Ventilation [m3/s]"] = field(default_factory=empty_array)
 
 
 @dataclass
