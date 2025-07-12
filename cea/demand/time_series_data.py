@@ -99,7 +99,7 @@ class ElectricalLoads:
     GRID: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid [Wh]"] = field(default_factory=empty_array)
     GRID_a: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for appliances [Wh]"] = field(default_factory=empty_array)
     GRID_l: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for lighting [Wh]"] = field(default_factory=empty_array)
-    GRID_v: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for ventilation [Wh]"] = field(default_factory=empty_array)
+    GRID_v: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for electric vehicles [Wh]"] = field(default_factory=empty_array)
     GRID_ve: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for ventilation [Wh]"] = field(default_factory=empty_array)
     GRID_data: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for data centers [Wh]"] = field(default_factory=empty_array)
     GRID_pro: Annotated[npt.NDArray[np.float64], "Electricity demand from the grid for process [Wh]"] = field(default_factory=empty_array)
