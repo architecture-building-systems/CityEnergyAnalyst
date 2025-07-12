@@ -170,7 +170,7 @@ def calc_Qhs_sys_Qcs_sys(tsd: TimeSeriesData):
 # temperature of emission/control system
 
 
-def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeriesData):
+def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
     """
     Calculate temperature of emission systems.
     Using radiator function also for cooling ('radiators.calc_radiator')
@@ -183,7 +183,6 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
     :param tsd: Time series data of building
     :type tsd: cea.demand.time_series_data.TimeSeriesData
     :return: modifies tsd
-    :rtype: None
     """
 
     from cea.technologies import radiators, heating_coils
@@ -500,7 +499,7 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 # space heating/cooling losses
 
 
-def calc_Qhs_Qcs_loss(bpr: BuildingPropertiesRow, tsd: TimeSeriesData):
+def calc_Qhs_Qcs_loss(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
     """
     Calculate distribution losses of emission systems.
 
@@ -514,7 +513,6 @@ def calc_Qhs_Qcs_loss(bpr: BuildingPropertiesRow, tsd: TimeSeriesData):
     :param tsd: Time series data of building
     :type tsd: cea.demand.time_series_data.TimeSeriesData
     :return: modifies tsd
-    :rtype: None
     """
 
     # look up properties

@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
     from cea.demand.time_series_data import TimeSeriesData
 
@@ -161,7 +163,7 @@ def calc_max_moisture_set_point(bpr: BuildingPropertiesRow, tsd: TimeSeriesData,
     return x_set_max
 
 
-def calc_saturation_pressure(theta: float) -> float:
+def calc_saturation_pressure(theta: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     (77) in ISO 52016-1:2017
 
@@ -170,7 +172,6 @@ def calc_saturation_pressure(theta: float) -> float:
     :param theta: air temperature (C)
     :type theta: float
     :return: saturation pressure (Pa)
-    :rtype: float
     """
 
     p_sat_int = 611.2 * np.exp(17.62 * theta / (243.12 + theta))
@@ -178,7 +179,7 @@ def calc_saturation_pressure(theta: float) -> float:
     return p_sat_int
 
 
-def calc_required_moisture_mech_vent_hu(tsd: TimeSeriesData, t: int) -> float:
+def calc_required_moisture_mech_vent_hu(tsd: TimeSeriesData, t: int) -> npt.NDArray[np.float64]:
     # (78) in ISO 52016-1:2017
 
     x_a_e = tsd.moisture.x_ve_mech[t]  # external air moisture content (after possible HEX)
@@ -190,7 +191,7 @@ def calc_required_moisture_mech_vent_hu(tsd: TimeSeriesData, t: int) -> float:
     return x_a_sup_hu_req
 
 
-def calc_required_moisture_mech_vent_dhu(tsd: TimeSeriesData, t: int) -> float:
+def calc_required_moisture_mech_vent_dhu(tsd: TimeSeriesData, t: int) -> npt.NDArray[np.float64]:
     # (79) in ISO 52016-1:2017
 
     x_a_e = tsd.moisture.x_ve_mech[t]  # external air moisture content (after possible HEX)
@@ -335,7 +336,7 @@ def total_moisture_in_zone(bpr: BuildingPropertiesRow, x_int: float) -> float:
     return m_air_zone * x_int
 
 
-def convert_rh_to_moisture_content(rh: float, theta: float) -> float:
+def convert_rh_to_moisture_content(rh: npt.NDArray[np.float64], theta: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     convert relative humidity to moisture content
 
@@ -379,23 +380,15 @@ def calc_moisture_content_airflows(tsd: TimeSeriesData, t: int):
     return
 
 
-def calc_Qgain_lat(tsd: TimeSeriesData, schedules) -> TimeSeriesData:
+def calc_Qgain_lat(tsd: TimeSeriesData, X_gh: npt.NDArray[np.float64]) -> TimeSeriesData:
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    """
 
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :return w_int: yearly schedule
-
-    """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     KG_PER_GRAM = 0.001
     HOURS_PER_SEC = 1 / 3600
 
-
-    tsd.occupancy.w_int = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
+    tsd.occupancy.w_int = X_gh * KG_PER_GRAM * HOURS_PER_SEC # kg/s
     tsd.energy_balance_dashboard.Q_gain_lat_peop = tsd.occupancy.w_int * H_WE # (J/s = W)
 
     return tsd

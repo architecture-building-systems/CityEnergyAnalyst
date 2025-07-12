@@ -116,10 +116,10 @@ def calc_thermal_loads(building_name: str,
         tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
 
     # CALCULATE PROCESS HEATING
-    tsd.heating_loads.Qhpro_sys = schedules['Qhpro_W']  # in Wh
+    tsd.heating_loads.Qhpro_sys = schedules['Qhpro_W'].to_numpy()  # in Wh
 
     # CALCULATE PROCESS COOLING
-    tsd.cooling_loads.Qcpro_sys = schedules['Qcpro_W']  # in Wh
+    tsd.cooling_loads.Qcpro_sys = schedules['Qcpro_W'].to_numpy()  # in Wh
 
     # CALCULATE DATA CENTER LOADS
     if datacenter_loads.has_data_load(bpr):
@@ -145,7 +145,7 @@ def calc_thermal_loads(building_name: str,
         tsd.thermal_resistance.RSE_win, \
         tsd.thermal_resistance.RSE_underside = get_thermal_resistance_surface(bpr.envelope, weather_data)
         # calculate heat gains
-        tsd = latent_loads.calc_Qgain_lat(tsd, schedules)
+        tsd = latent_loads.calc_Qgain_lat(tsd, schedules['X_gh'].to_numpy())
         tsd = calc_set_points(bpr, date_range, tsd, building_name, config, locator,
                               schedules)  # calculate the setpoints for every hour
         tsd = calc_Qhs_Qcs(bpr, tsd,
@@ -159,11 +159,11 @@ def calc_thermal_loads(building_name: str,
         tsd = calc_Qhs_sys(bpr, tsd)  # final : including fuels and renewables
 
         # Positive loads
-        tsd.cooling_loads.Qcs_lat_sys = abs(tsd.cooling_loads.Qcs_lat_sys)
-        tsd.cooling_loads.DC_cs = abs(tsd.cooling_loads.DC_cs)
-        tsd.cooling_loads.Qcs_sys = abs(tsd.cooling_loads.Qcs_sys)
-        tsd.cooling_loads.Qcre_sys = abs(tsd.cooling_loads.Qcre_sys)  # inverting sign of cooling loads for reporting and graphs
-        tsd.cooling_loads.Qcdata_sys = abs(tsd.cooling_loads.Qcdata_sys)  # inverting sign of cooling loads for reporting and graphs
+        tsd.cooling_loads.Qcs_lat_sys = np.abs(tsd.cooling_loads.Qcs_lat_sys)
+        tsd.cooling_loads.DC_cs = np.abs(tsd.cooling_loads.DC_cs)
+        tsd.cooling_loads.Qcs_sys = np.abs(tsd.cooling_loads.Qcs_sys)
+        tsd.cooling_loads.Qcre_sys = np.abs(tsd.cooling_loads.Qcre_sys)  # inverting sign of cooling loads for reporting and graphs
+        tsd.cooling_loads.Qcdata_sys = np.abs(tsd.cooling_loads.Qcdata_sys)  # inverting sign of cooling loads for reporting and graphs
 
     # CALCULATE HOT WATER LOADS
     if hotwater_loads.has_hot_water_technical_system(bpr):
@@ -384,13 +384,10 @@ def initialize_schedules(bpr: BuildingPropertiesRow,
     This function reads schedules, and update the timeseries data based on schedules read.
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
-    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
-        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
-    :type weather_data: pandas.DataFrame
-    :param date_range: the pd.date_range of the calculation year
-    :type date_range: pd.date_range
+    :param tsd: time series data object to be updated with schedules
+    :type tsd: TimeSeriesData
     :param locator: the input locator
-    :type locator: cea.inpultlocator.InputLocator
+    :type locator: cea.inputlocator.InputLocator
     :returns: one dict of schedules, one dict of time step data
     :rtype: dict
     """
@@ -400,9 +397,9 @@ def initialize_schedules(bpr: BuildingPropertiesRow,
     # get occupancy file
     occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
-    tsd.occupancy.people = occupancy_yearly_schedules['people_p']
-    tsd.occupancy.ve_lps = occupancy_yearly_schedules['Ve_lps']
-    tsd.occupancy.Qs = occupancy_yearly_schedules['Qs_W']
+    tsd.occupancy.people = occupancy_yearly_schedules['people_p'].to_numpy()
+    tsd.occupancy.ve_lps = occupancy_yearly_schedules['Ve_lps'].to_numpy()
+    tsd.occupancy.Qs = occupancy_yearly_schedules['Qs_W'].to_numpy()
 
     return occupancy_yearly_schedules, tsd
 
@@ -411,8 +408,6 @@ def initialize_timestep_data(weather_data: pd.DataFrame) -> TimeSeriesData:
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 
-    :param bpr: a collection of building properties for the building used for thermal loads calculation
-    :type bpr: BuildingPropertiesRow
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
         ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
     :type weather_data: pandas.DataFrame

@@ -4,8 +4,6 @@ Hotwater load (it also calculates fresh water needs)
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import math
-
 import numpy as np
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
@@ -14,6 +12,8 @@ from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
     from cea.demand.time_series_data import TimeSeriesData
 
@@ -58,7 +58,7 @@ def calc_mww(schedule, water_lpd):
 # final hot water demand calculation
 
 
-def calc_water_temperature(T_ambient_C, depth_m):
+def calc_water_temperature(T_ambient_C: npt.NDArray[np.float64], depth_m: float) -> npt.NDArray[np.float64]:
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
@@ -70,10 +70,11 @@ def calc_water_temperature(T_ambient_C, depth_m):
 
     T_max = max(T_ambient_C) + 273.15  # to K
     T_avg = np.mean(T_ambient_C) + 273.15  # to K
-    e = depth_m * math.sqrt(
-        (math.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil))  # soil constants
-    Tg = [(T_avg + (T_max - T_avg) * math.exp(-e) * math.cos((2 * math.pi * (i + 1) / HOURS_IN_YEAR) - e)) - 274
-          for i in range(HOURS_IN_YEAR)]
+    e = depth_m * np.sqrt(
+        (np.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil))  # soil constants
+    
+    i = np.arange(HOURS_IN_YEAR)
+    Tg = (T_avg + (T_max - T_avg) * np.exp(-e) * np.cos((2 * np.pi * (i + 1) / HOURS_IN_YEAR) - e)) - 274
 
     return Tg  # in C
 
@@ -103,7 +104,7 @@ def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesD
     Qww_nom_W = tsd.heating_loads.Qww.max()
 
     # distribution and circulation losses
-    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * math.pi  # m3, volume inside distribution pipe
+    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * np.pi  # m3, volume inside distribution pipe
     Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd.heating_loads.Qww.copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
                                                  V_dist_pipes_m3,Tww_sup_0_C)
     Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd.heating_loads.Qww.copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
