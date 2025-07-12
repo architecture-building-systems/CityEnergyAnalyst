@@ -115,8 +115,9 @@ def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesD
     tsd.heating_system_mass_flows.mcpww_sys = tsd.heating_loads.Qww_sys / abs(Tww_tank_C - tsd.heating_system_temperatures.Tww_re)
 
     # erase points where the load is zero
-    tsd.heating_system_temperatures.Tww_sys_sup = [0.0 if x <= 0.0 else y for x, y in zip(tsd.heating_loads.Qww, Tww_tank_C)]
-    tsd.heating_system_temperatures.Tww_sys_re = [0.0 if x <= 0.0 else y for x, y in zip(tsd.heating_loads.Qww, tsd.heating_system_temperatures.Tww_re)]
+    zero_load_mask = tsd.heating_loads.Qww <= 0.0
+    tsd.heating_system_temperatures.Tww_sys_sup = np.where(zero_load_mask, 0.0, Tww_tank_C)
+    tsd.heating_system_temperatures.Tww_sys_re = np.where(zero_load_mask, 0.0, tsd.heating_system_temperatures.Tww_re)
 
     return tsd
 
