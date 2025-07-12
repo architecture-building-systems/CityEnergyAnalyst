@@ -42,7 +42,7 @@ def calc_humidification_moisture_load(bpr: BuildingPropertiesRow, tsd: TimeSerie
     x_set_min = calc_min_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
-    g_int = tsd.people.w_int[t]  # gains from occupancy
+    g_int = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
     x_int_a_prev = tsd.moisture.x_int[t - 1]
@@ -85,7 +85,7 @@ def calc_dehumidification_moisture_load(bpr: BuildingPropertiesRow, tsd: TimeSer
     x_set_max = calc_max_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
-    g_int = tsd.people.w_int[t]  # gains from occupancy
+    g_int = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
     x_int_a_prev = tsd.moisture.x_int[t-1]
@@ -231,7 +231,7 @@ def calc_moisture_in_zone_central(bpr: BuildingPropertiesRow, tsd: TimeSeriesDat
     x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get internal gains
-    g_int_ztc_t = tsd.people.w_int[t]  # gains from occupancy
+    g_int_ztc_t = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
     x_int_a_ztc_t_1 = tsd.moisture.x_int[t - 1] if not np.isnan(tsd.moisture.x_int[t - 1]) else\
@@ -292,7 +292,7 @@ def calc_moisture_content_in_zone_local(bpr: BuildingPropertiesRow, tsd: TimeSer
     x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get internal gains
-    g_int_ztc_t = tsd.people.w_int[t]  # gains from occupancy
+    g_int_ztc_t = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
     x_int_a_ztc_t_1 = tsd.moisture.x_int[t-1]
@@ -395,7 +395,7 @@ def calc_Qgain_lat(tsd: TimeSeriesData, schedules) -> TimeSeriesData:
     HOURS_PER_SEC = 1 / 3600
 
 
-    tsd.people.w_int = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
-    tsd.energy_balance_dashboard.Q_gain_lat_peop = tsd.people.w_int * H_WE # (J/s = W)
+    tsd.occupancy.w_int = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
+    tsd.energy_balance_dashboard.Q_gain_lat_peop = tsd.occupancy.w_int * H_WE # (J/s = W)
 
     return tsd

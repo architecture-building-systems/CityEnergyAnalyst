@@ -74,7 +74,7 @@ class Weather:
 
 
 @dataclass
-class People:
+class Occupancy:
     """
     Data related to building occupancy.
     """
@@ -381,7 +381,7 @@ class TimeSeriesData:
     A dataclass to store all time series data for the demand calculations.
     """
     weather: Weather
-    people: People = field(default_factory=People)
+    occupancy: Occupancy = field(default_factory=Occupancy)
     electrical_loads: ElectricalLoads = field(default_factory=ElectricalLoads)
     heating_loads: HeatingLoads = field(default_factory=HeatingLoads)
     cooling_loads: CoolingLoads = field(default_factory=CoolingLoads)
