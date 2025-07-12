@@ -1,13 +1,13 @@
 """
 Ventilation according to [DIN-16798-7]_ and [ISO-9972]_
 
-.. [DIN-16798-7]  Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8 –
+.. [DIN-16798-7]  Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8
     Berechnungsmethoden zur Bestimmung der Luftvolumenströme in Gebäuden inklusive Infiltration;
     Deutsche Fassung prEN 16798-7:2014
 
 
-.. [ISO-9972] Wärmetechnisches Verhalten von Gebäuden –
-    Bestimmung der Luftdurchlässigkeit von Gebäuden –
+.. [ISO-9972] Wärmetechnisches Verhalten von Gebäuden 
+    Bestimmung der Luftdurchlässigkeit von Gebäuden
     Differenzdruckverfahren (ISO 9972:2015);
     Deutsche Fassung EN ISO 9972:2015
 
@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize
+from scipy.optimize import minimize, OptimizeResult
+
 from cea.demand import constants
 from cea.utilities.physics import calc_rho_air
 
@@ -90,6 +91,9 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
                    options=solver_options_cobyla)
     # print(res)
     # get zone pressure of air flow mass balance
+    if not isinstance(res, OptimizeResult):
+        raise ValueError("Failed to find a solution for the air flow mass balance.")
+
     p_zone = res.x
 
     # calculate air flows at zone pressure
@@ -801,6 +805,8 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return abs(qm_balance)  # for minimization the mass balance is the output
     elif option == 'calculate':
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
+    
+    raise ValueError(f"Unknown option for air flow mass balance calculation: {option}")
 
 
 def create_windows(df_prop_surfaces, gdf_building_architecture):
