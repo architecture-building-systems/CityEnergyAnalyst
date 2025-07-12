@@ -3,13 +3,15 @@
 Air conditioning equipment component models
 
 """
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.latent_loads import convert_rh_to_moisture_content, total_moisture_in_zone
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -54,7 +56,7 @@ def electric_humidification_unit(g_hu, m_ve_mech):
     return e_hs_lat_aux
 
 
-def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
+def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr: BuildingPropertiesRow):
     """
     the central air handling unit acts on the mechanical ventilation air stream
     it has a fixed coil and fixed supply temperature
@@ -121,7 +123,7 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
             'ma_sup_cs_ahu': ma_sup_cs_ahu, 'ta_sup_cs_ahu': ta_sup_cs_ahu, 'ta_re_cs_ahu': ta_re_cs_ahu}
 
 
-def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, ta_hs_set, T_int, bpr):
+def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, ta_hs_set, T_int, bpr: BuildingPropertiesRow):
     """
     the central air handling unit acts on the mechanical ventilation air stream
     it has a fixed coil and fixed supply temperature
@@ -181,7 +183,7 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
             'ma_sup_hs_ahu' : ma_sup_hs_ahu, 'ta_sup_hs_ahu' : ta_sup_hs_ahu, 'ta_re_hs_ahu' : ta_re_hs_ahu}
 
 
-def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
+def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr: BuildingPropertiesRow):
     """
     the local air recirculation unit recirculates internal air
     it determines the mass flow of air according to the demand of sensible heating
@@ -218,7 +220,7 @@ def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
             'ta_re_hs_aru': ta_re_hs_aru}
 
 
-def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr, t_control,
+def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr: BuildingPropertiesRow,t_control,
                                          x_control):
     """
     the local air recirculation unit recirculates internal air

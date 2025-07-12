@@ -1,13 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-__author__ = "Gabriel Happle"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Gabriel Happle"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
-__status__ = "Production"
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 # constants in standards
 P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
@@ -18,7 +18,7 @@ H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in I
 DELTA_T = 3600  # (s/h)
 
 
-def calc_humidification_moisture_load(bpr, tsd, t):
+def calc_humidification_moisture_load(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> float:
     """
     (71) in ISO 52016-1:2017
 
@@ -27,30 +27,30 @@ def calc_humidification_moisture_load(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: humidification load (kg/s)
-    :rtype: double
+    :rtype: float
     """
 
     # get air flows
-    m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_inf = tsd['m_ve_inf'][t] + tsd['m_ve_window'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    x_ve_inf = tsd['x_ve_inf'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    m_ve_inf = tsd.ventilation_mass_flows.m_ve_inf[t] + tsd.ventilation_mass_flows.m_ve_window[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get set points
     x_set_min = calc_min_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
-    g_int = tsd['w_int'][t]  # gains from occupancy
+    g_int = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_prev = tsd['x_int'][t - 1]
+    x_int_a_prev = tsd.moisture.x_int[t - 1]
 
     # zone volume
-    vol_int_a = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # calculate
     g_hu_ld = m_ve_mech * (x_set_min - x_ve_mech) + m_ve_inf * (x_set_min - x_ve_inf) - g_int + \
@@ -61,7 +61,7 @@ def calc_humidification_moisture_load(bpr, tsd, t):
     return g_hu_ld
 
 
-def calc_dehumidification_moisture_load(bpr, tsd, t):
+def calc_dehumidification_moisture_load(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> float:
     """
     (72) in ISO 52016-1:2017
 
@@ -70,30 +70,30 @@ def calc_dehumidification_moisture_load(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: dehumidification load (kg/s)
-    :rtype: double
+    :rtype: float
     """
 
     # get air flows
-    m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_inf = tsd['m_ve_inf'][t] + tsd['m_ve_window'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    x_ve_inf = tsd['x_ve_inf'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    m_ve_inf = tsd.ventilation_mass_flows.m_ve_inf[t] + tsd.ventilation_mass_flows.m_ve_window[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get set points
     x_set_max = calc_max_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
-    g_int = tsd['w_int'][t]  # gains from occupancy
+    g_int = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_prev = tsd['x_int'][t-1]
+    x_int_a_prev = tsd.moisture.x_int[t-1]
 
     # zone volume
-    vol_int_a = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # calculate
     g_dhu_ld = -m_ve_mech * (x_set_max - x_ve_mech) - m_ve_inf * (x_set_max - x_ve_inf) + g_int - \
@@ -105,7 +105,7 @@ def calc_dehumidification_moisture_load(bpr, tsd, t):
     return g_dhu_ld
 
 
-def calc_min_moisture_set_point(bpr, tsd, t):
+def calc_min_moisture_set_point(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> float:
     """
     (75) in ISO 52016-1:2017
 
@@ -114,17 +114,17 @@ def calc_min_moisture_set_point(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: min moisture set point (kg/kg_dry_air)
-    :rtype: double
+    :rtype: float
     """
 
     # from bpr get set point for humidification
     phi_int_set_hu = bpr.comfort['RH_min_pc']
 
-    t_int = tsd['T_int'][t]
+    t_int = tsd.rc_model_temperatures.T_int[t]
 
     p_sat_int = calc_saturation_pressure(t_int)
 
@@ -134,7 +134,7 @@ def calc_min_moisture_set_point(bpr, tsd, t):
     return x_set_min
 
 
-def calc_max_moisture_set_point(bpr, tsd, t):
+def calc_max_moisture_set_point(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> float:
     """
     (76) in ISO 52016-1:2017
 
@@ -143,17 +143,17 @@ def calc_max_moisture_set_point(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: max moisture set point (kg/kg_dry_air)
-    :rtype: double
+    :rtype: float
     """
 
     # from bpr get set point for humidification
     phi_int_set_dhu = bpr.comfort['RH_max_pc']
 
-    t_int = tsd['T_int'][t]
+    t_int = tsd.rc_model_temperatures.T_int[t]
 
     p_sat_int = calc_saturation_pressure(t_int)
 
@@ -163,16 +163,15 @@ def calc_max_moisture_set_point(bpr, tsd, t):
     return x_set_max
 
 
-def calc_saturation_pressure(theta):
+def calc_saturation_pressure(theta: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     (77) in ISO 52016-1:2017
 
     Gabriel Happle, Feb. 2018
 
     :param theta: air temperature (C)
-    :type theta: double
+    :type theta: float
     :return: saturation pressure (Pa)
-    :rtype: double
     """
 
     p_sat_int = 611.2 * np.exp(17.62 * theta / (243.12 + theta))
@@ -180,31 +179,31 @@ def calc_saturation_pressure(theta):
     return p_sat_int
 
 
-def calc_required_moisture_mech_vent_hu(tsd, t):
+def calc_required_moisture_mech_vent_hu(tsd: TimeSeriesData, t: int) -> npt.NDArray[np.float64]:
     # (78) in ISO 52016-1:2017
 
-    x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
-    g_hu_ld = tsd['g_hu_ld'][t]
-    m_ve_mech = tsd['m_ve_mech'][t]
+    x_a_e = tsd.moisture.x_ve_mech[t]  # external air moisture content (after possible HEX)
+    g_hu_ld = tsd.moisture.g_hu_ld[t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
 
     x_a_sup_hu_req = x_a_e + g_hu_ld / m_ve_mech
 
     return x_a_sup_hu_req
 
 
-def calc_required_moisture_mech_vent_dhu(tsd, t):
+def calc_required_moisture_mech_vent_dhu(tsd: TimeSeriesData, t: int) -> npt.NDArray[np.float64]:
     # (79) in ISO 52016-1:2017
 
-    x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
-    g_dhu_ld = tsd['g_dhu_ld'][t]
-    m_ve_mech = tsd['m_ve_mech'][t]
+    x_a_e = tsd.moisture.x_ve_mech[t]  # external air moisture content (after possible HEX)
+    g_dhu_ld = tsd.moisture.g_dhu_ld[t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
 
     x_a_sup_dhu_req = x_a_e - g_dhu_ld / m_ve_mech
 
     return x_a_sup_dhu_req
 
 
-def calc_moisture_in_zone_central(bpr, tsd, t):
+def calc_moisture_in_zone_central(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int):
     """
 
 
@@ -213,35 +212,35 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: dehumidification load (kg/s)
-    :rtype: double
+    :rtype: float
     """
 
     # (80) in ISO 52016-1:2017
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a_ztc = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # get air flows
-    m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_inf = tsd['m_ve_inf'][t] + tsd['m_ve_window'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    x_ve_mech_sup = tsd['x_ve_mech'][t] # TODO: THAT IS FIXED! get supply moisture >= required moisture ----> can not be lower than dew point moisture at 6C
-    x_ve_inf = tsd['x_ve_inf'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    m_ve_inf = tsd.ventilation_mass_flows.m_ve_inf[t] + tsd.ventilation_mass_flows.m_ve_window[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    x_ve_mech_sup = tsd.moisture.x_ve_mech[t] # TODO: THAT IS FIXED! get supply moisture >= required moisture ----> can not be lower than dew point moisture at 6C
+    x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get internal gains
-    g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
+    g_int_ztc_t = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_ztc_t_1 = tsd['x_int'][t - 1] if not np.isnan(tsd['x_int'][t - 1]) else\
-        convert_rh_to_moisture_content(tsd['rh_ext'][t-1], tsd['T_ext'][t - 1])
+    x_int_a_ztc_t_1 = tsd.moisture.x_int[t - 1] if not np.isnan(tsd.moisture.x_int[t - 1]) else\
+        convert_rh_to_moisture_content(tsd.weather.rh_ext[t-1], tsd.weather.T_ext[t - 1])
 
     # get (de)humidification loads
-    # g_hu_ld_ztc_t = tsd['g_hu_ld'][t]
-    # g_dhu_ld_ztc_t = tsd['g_dhu_ld'][t]
+    # g_hu_ld_ztc_t = tsd.moisture.g_hu_ld[t]
+    # g_dhu_ld_ztc_t = tsd.moisture.g_dhu_ld[t]
 
     # sum ventilation moisture + (de)humidification
     x_int_a = (m_ve_mech * x_ve_mech_sup + m_ve_inf * x_ve_inf + g_int_ztc_t + (
@@ -261,14 +260,14 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
     phi_dhu_ld_central = H_WE * g_dhu_central
 
     # set results
-    tsd['x_int'][t] = x_int_a
-    tsd['qh_lat_central'][t] = phi_hu_ld_central
-    tsd['qc_lat_central'][t] = phi_dhu_ld_central
+    tsd.moisture.x_int[t] = x_int_a
+    tsd.moisture.qh_lat_central[t] = phi_hu_ld_central
+    tsd.moisture.qc_lat_central[t] = phi_dhu_ld_central
 
     return
 
 
-def calc_moisture_content_in_zone_local(bpr, tsd, t):
+def calc_moisture_content_in_zone_local(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int):
     """
     (84) in ISO 52016-1:2017
 
@@ -277,7 +276,7 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: writes zone internal moisture content to tsd
@@ -285,23 +284,23 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     """
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * bpr.geometry['floor_height']
+    vol_int_a_ztc = bpr.rc_model.Af * bpr.geometry['floor_height']
 
     # get air flows
-    m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_inf = tsd['m_ve_inf'][t] + tsd['m_ve_window'][t]
-    x_ve_mech = tsd['x_ve_mech'][t]
-    x_ve_inf = tsd['x_ve_inf'][t]
+    m_ve_mech = tsd.ventilation_mass_flows.m_ve_mech[t]
+    m_ve_inf = tsd.ventilation_mass_flows.m_ve_inf[t] + tsd.ventilation_mass_flows.m_ve_window[t]
+    x_ve_mech = tsd.moisture.x_ve_mech[t]
+    x_ve_inf = tsd.moisture.x_ve_inf[t]
 
     # get internal gains
-    g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
+    g_int_ztc_t = tsd.occupancy.w_int[t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_ztc_t_1 = tsd['x_int'][t-1]
+    x_int_a_ztc_t_1 = tsd.moisture.x_int[t-1]
 
     # get (de)humidification loads
-    g_hu_ld_ztc_t = tsd['g_hu_ld'][t]
-    g_dhu_ld_ztc_t = tsd['g_dhu_ld'][t]
+    g_hu_ld_ztc_t = tsd.moisture.g_hu_ld[t]
+    g_dhu_ld_ztc_t = tsd.moisture.g_dhu_ld[t]
 
     # sum ventilation moisture + (de)humidification
     x_int_a_t = (m_ve_mech * x_ve_mech + m_ve_inf * x_ve_inf +
@@ -312,11 +311,11 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     if x_int_a_t < 0:
         raise Exception("Bug in moisture balance in zone. Negative moisture content detected.")
 
-    tsd['x_int'][t] = x_int_a_t
+    tsd.moisture.x_int[t] = x_int_a_t
     return
 
 
-def total_moisture_in_zone(bpr, x_int):
+def total_moisture_in_zone(bpr: BuildingPropertiesRow, x_int: float) -> float:
     """
     calculate total mass of moisture in zone
 
@@ -325,30 +324,30 @@ def total_moisture_in_zone(bpr, x_int):
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param x_int: moisture content in zone (kg/kg_dry_air)
-    :type x_int: double
+    :type x_int: float
     :return: total mass of moisture in zone (kg)
-    :rtype: double
+    :rtype: float
     """
 
     # air mass in zone
-    m_air_zone = bpr.rc_model['Af'] * bpr.geometry['floor_height'] * RHO_A
+    m_air_zone = bpr.rc_model.Af * bpr.geometry['floor_height'] * RHO_A
 
     # return total mass of water in kg
     return m_air_zone * x_int
 
 
-def convert_rh_to_moisture_content(rh, theta):
+def convert_rh_to_moisture_content(rh: npt.NDArray[np.float64], theta: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     convert relative humidity to moisture content
 
     Gabriel Happle, Feb. 2018
 
     :param rh: relative humidity (%)
-    :type rh: double
+    :type rh: float
     :param theta: temperature (C)
-    :type theta: double
+    :type theta: float
     :return: moisture content (kg/kg_dry_air)
-    :rtype: double
+    :rtype: float
     """
 
     p_sat = calc_saturation_pressure(theta)
@@ -358,46 +357,38 @@ def convert_rh_to_moisture_content(rh, theta):
     return x
 
 
-def calc_moisture_content_airflows(tsd, t):
+def calc_moisture_content_airflows(tsd: TimeSeriesData, t: int):
     """
     convert relative humidity of ventilation airflows to moisture content
 
     Gabriel Happle, Feb. 2018
 
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :param t: time step / hour of the year
     :type t: int
     :return: adds moisture content of ventilation air flows to tsd
     :rtype: None
     """
 
-    rh_ext = tsd['rh_ext'][t]
-    theta_ext = tsd['T_ext'][t]
+    rh_ext = tsd.weather.rh_ext[t]
+    theta_ext = tsd.weather.T_ext[t]
 
-    tsd['x_ve_inf'][t] = convert_rh_to_moisture_content(rh_ext, theta_ext)
-    tsd['x_ve_mech'][t] = convert_rh_to_moisture_content(rh_ext, theta_ext)
+    tsd.moisture.x_ve_inf[t] = convert_rh_to_moisture_content(rh_ext, theta_ext)
+    tsd.moisture.x_ve_mech[t] = convert_rh_to_moisture_content(rh_ext, theta_ext)
 
     return
 
 
-def calc_Qgain_lat(tsd, schedules):
+def calc_Qgain_lat(tsd: TimeSeriesData, X_gh: npt.NDArray[np.float64]) -> TimeSeriesData:
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    """
 
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :return w_int: yearly schedule
-
-    """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     KG_PER_GRAM = 0.001
     HOURS_PER_SEC = 1 / 3600
 
-
-    tsd['w_int'] = schedules['X_gh'] * KG_PER_GRAM * HOURS_PER_SEC # kg/s
-    tsd['Q_gain_lat_peop'] = tsd['w_int'] * H_WE # (J/s = W)
+    tsd.occupancy.w_int = X_gh * KG_PER_GRAM * HOURS_PER_SEC # kg/s
+    tsd.energy_balance_dashboard.Q_gain_lat_peop = tsd.occupancy.w_int * H_WE # (J/s = W)
 
     return tsd
