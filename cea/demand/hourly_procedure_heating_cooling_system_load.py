@@ -737,7 +737,7 @@ def detailed_thermal_balance_to_tsd(tsd: TimeSeriesData, bpr: BuildingProperties
     tsd.energy_balance_dashboard.Q_gain_sen_data[t] = tsd.cooling_loads.Qcdata_sys[t]
     tsd.energy_balance_dashboard.Q_loss_sen_ref = -tsd.cooling_loads.Qcre_sys[t]
     # internal gains from people
-    tsd.energy_balance_dashboard.Q_gain_sen_peop[t] = rc_model_SIA.calc_phi_i_p(tsd.people.Qs[t])
+    tsd.energy_balance_dashboard.Q_gain_sen_peop[t] = rc_model_SIA.calc_phi_i_p(tsd.occupancy.Qs[t])
 
     # losses / gains from ventilation
     # tsd['']

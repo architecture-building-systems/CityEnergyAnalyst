@@ -88,7 +88,7 @@ class DemandWriter(ABC):
         # add other default elements
         data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.rc_model.Aroof,
                      'GFA_m2': bpr.rc_model.GFA_m2, 'Aocc_m2': bpr.rc_model.Aocc,
-                     'people0': tsd.people.people.max()})
+                     'people0': tsd.occupancy.people.max()})
         return columns, data
 
     def calc_hourly_dataframe(self, building_name, date, tsd: TimeSeriesData):
@@ -112,7 +112,7 @@ class DemandWriter(ABC):
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'date': date, 'name': building_name, 'people': tsd.people.people, 'x_int': tsd.moisture.x_int * 1000})
+        data.update({'date': date, 'name': building_name, 'people': tsd.occupancy.people, 'x_int': tsd.moisture.x_int * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('date')
         return columns, hourly_data

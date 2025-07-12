@@ -704,7 +704,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
     # copy data from `bpr`
     Htr_op = bpr.rc_model.Htr_op
     Htr_w = bpr.rc_model.Htr_w
-    Qs = tsd.people.Qs[t]
+    Qs = tsd.occupancy.Qs[t]
     a_t = bpr.rc_model.Atot
     a_m = bpr.rc_model.Am
     a_w = bpr.rc_model.Awin_ag

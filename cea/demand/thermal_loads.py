@@ -400,9 +400,9 @@ def initialize_schedules(bpr: BuildingPropertiesRow,
     # get occupancy file
     occupancy_yearly_schedules = pd.read_csv(locator.get_occupancy_model_file(building_name))
 
-    tsd.people.people = occupancy_yearly_schedules['people_p']
-    tsd.people.ve_lps = occupancy_yearly_schedules['Ve_lps']
-    tsd.people.Qs = occupancy_yearly_schedules['Qs_W']
+    tsd.occupancy.people = occupancy_yearly_schedules['people_p']
+    tsd.occupancy.ve_lps = occupancy_yearly_schedules['Ve_lps']
+    tsd.occupancy.Qs = occupancy_yearly_schedules['Qs_W']
 
     return occupancy_yearly_schedules, tsd
 

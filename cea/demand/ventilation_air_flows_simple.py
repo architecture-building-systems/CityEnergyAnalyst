@@ -204,6 +204,6 @@ def calc_m_ve_required(tsd: TimeSeriesData):
     :return: updates tsd
     """
     rho_kgm3 = physics.calc_rho_air(tsd.weather.T_ext[:])
-    tsd.ventilation_mass_flows.m_ve_required = np.array(tsd.people.ve_lps) * rho_kgm3 * 0.001  # kg/s
+    tsd.ventilation_mass_flows.m_ve_required = np.array(tsd.occupancy.ve_lps) * rho_kgm3 * 0.001  # kg/s
 
     return
