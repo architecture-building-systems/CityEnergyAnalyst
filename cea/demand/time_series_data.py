@@ -365,6 +365,7 @@ class Water:
     vww_m3perh: Annotated[npt.NDArray[np.float64], "Hot water consumption [m3/h]"] = field(default_factory=empty_array)
 
 
+# TODO: Check if SystemStatus is used anywhere - comprehensive analysis shows all fields are write-only/unused
 @dataclass
 class SystemStatus:
     """
@@ -396,8 +397,11 @@ class TimeSeriesData:
     solar: Solar = field(default_factory=Solar)
     fuel_source: FuelSource = field(default_factory=FuelSource)
     water: Water = field(default_factory=Water)
-    system_status: SystemStatus = field(default_factory=SystemStatus)
     thermal_resistance: ThermalResistance = field(default_factory=ThermalResistance)
+
+    # TODO: Check if SystemStatus is still needed - comprehensive analysis shows all fields are write-only/unused
+    system_status: SystemStatus = field(default_factory=SystemStatus)
+
 
     def get_load_value(self, load_type: str):
         """
