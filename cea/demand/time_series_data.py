@@ -56,7 +56,7 @@ def empty_char_array():
     for the performance benefits of vectorized operations.
     """
     arr = np.chararray(HOURS_IN_YEAR, itemsize=20)
-    arr[:] = AHUStatus.UNKNOWN.value  # Using enum default value
+    arr[:] = AHUStatus.UNKNOWN  # Using enum default value
     return arr
 
 
@@ -741,13 +741,13 @@ class SystemStatus:
     Data related to system status.
     """
 
-    sys_status_ahu: npt.NDArray[np.str_] = field(default_factory=empty_char_array)
+    sys_status_ahu: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
     """Status of the AHU (AHUStatus values)"""
 
-    sys_status_aru: npt.NDArray[np.str_] = field(default_factory=empty_char_array)
+    sys_status_aru: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
     """Status of the ARU (ARUStatus values)"""
 
-    sys_status_sen: npt.NDArray[np.str_] = field(default_factory=empty_char_array)
+    sys_status_sen: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
     """Status of the sensible heat recovery (SENStatus values)"""
 
 
