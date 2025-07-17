@@ -20,11 +20,16 @@ import py4design.py3dmodel.construct as construct
 import py4design.py3dmodel.fetch as fetch
 import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
+from compas.datastructures import Mesh
+from compas.geometry import Point, Vector, Polyline, Polygon, Translation, Brep, BrepEdge
+from compas.geometry import intersection_ray_mesh, delaunay_triangulation, centroid_polygon
+from compas_occ.brep import OCCBrep, OCCBrepEdge
+from compas_occ.geometry import OCCCurve
 from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from osgeo import osr, gdal
 from py4design import urbangeom
-from typing import TYPE_CHECKING, List, Tuple, Literal
+from typing import TYPE_CHECKING, List, Tuple, Literal, Optional
 
 import cea
 import cea.config
@@ -32,9 +37,9 @@ import cea.inputlocator
 import cea.utilities.parallel
 
 if TYPE_CHECKING:
+    import shapely
     import geopandas as gpd
     from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
-    import shapely
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -102,27 +107,32 @@ def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
 
-def calc_intersection(surface, edges_coords, edges_dir, tolerance):
+def calc_intersection(surface: Mesh, edges_coords: Point, edges_dir: Vector) -> Tuple[Optional[int], Optional[Point]]:
     """
     This script calculates the intersection of the building edges to the terrain,
     """
-    point = gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2])
-    direction = gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])
-    line = gp_Lin(gp_Ax1(point, direction))
-
-    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
-    terrain_intersection_curves.Load(surface, tolerance)
-    terrain_intersection_curves.PerformNearest(line, float("-inf"), float("+inf"))
-
-    if terrain_intersection_curves.IsDone():
-        npts = terrain_intersection_curves.NbPnt()
-        if npts != 0:
-            return terrain_intersection_curves.Pnt(1), terrain_intersection_curves.Face(1)
-        else:
-            return None, None
+    ray = (edges_coords, edges_dir)
+    hits: List[Tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
+    idx_face, u, v, t = hits[0] if hits else (None, None, None, None)
+    # u, v are the barycentric coordinates of the intersection point on the face.
+    if idx_face is not None:
+        face_points = surface.face_points(idx_face)
+        w = 1 - u - v
+        p0 = face_points[0]
+        p1 = face_points[1]
+        p2 = face_points[2]
+        inter_pt = Point(
+            p0.x * w + p1.x * v + p2.x * u,
+            p0.y * w + p1.y * v + p2.y * u,
+            p0.z * w + p1.z * v + p2.z * u
+        )
+        from compas.geometry import barycentric_coordinates
+        pt_list = barycentric_coordinates(inter_pt, face_points)
+        
+        return idx_face, inter_pt
     else:
+        # No intersection found
         return None, None
-
 
 def create_windows(surface: TopoDS_Face, 
                    wwr: float, 
@@ -427,7 +437,9 @@ def calc_building_geometry_zone(name: str,
                                 neglect_adjacent_buildings: bool, 
                                 elevation: float,
                                 ) -> str:
-    """_summary_
+    """
+    calculates the 3D geometry of a building, including its windows and walls,
+    and saves the geometry into a file.
 
     :param name: name of building.
     :type name: str
@@ -527,7 +539,7 @@ def calc_building_geometry_zone(name: str,
 def burn_buildings(geometry: shapely.Polygon, 
                    elevation_map: ElevationMap, 
                    tolerance: float,
-                   ) -> Tuple[TopoDS_Face, float]:
+                   ) -> Tuple[Polygon, float]:
     """find the elevation of building footprint polygon by intersecting the center point of the polygon 
     with the terrain elevation map, then move the polygon to that elevation.
 
@@ -543,31 +555,22 @@ def burn_buildings(geometry: shapely.Polygon,
     :rtype: float
     """
     if geometry.has_z:
-        # remove elevation - we'll add it back later by intersecting with the topography
         point_list_2D = ((a, b) for (a, b, _) in geometry.exterior.coords)
     else:
         point_list_2D = geometry.exterior.coords
-    point_list_3D = [(a, b, 0) for (a, b) in point_list_2D]  # add 0 elevation
-
-    # creating floor surface in pythonocc
-    face = construct.make_polygon(point_list_3D)
-    # get the midpt of the face
-    face_midpt = calculate.face_midpt(face)
 
     terrain_tin = elevation_map.generate_tin(tolerance)
-    # make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell(terrain_tin)
-
-    # project the face_midpt to the terrain and get the elevation
-    inter_pt, inter_face = calc_intersection(terrain_shell, face_midpt, (0, 0, 1), tolerance)
-
-    # reconstruct the footprint with the elevation
-    loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
-    face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
-    return face, inter_pt.Z()
+    point_list_3D = [[a, b, 0] for (a, b) in point_list_2D]  # add 0 elevation
+    footprint_polygon = Polygon(point_list_3D)
+    footprint_midpt = Point(*centroid_polygon(footprint_polygon))
+    proj_vector = Vector(0, 0, 1)  # project upwards
+    face_id, inter_pt = calc_intersection(terrain_tin, footprint_midpt, proj_vector)
+    move_vector = Vector(0, 0, inter_pt.z)
+    footprint_polygon.transform(Translation.from_vector(move_vector))
+    return footprint_polygon, inter_pt.z
 
 
-def calc_solid(face_footprint: TopoDS_Face, 
+def calc_solid(face_footprint: Polygon, 
                range_floors: range, 
                floor_to_floor_height: float,
                ) -> TopoDS_Solid:
@@ -587,49 +590,23 @@ def calc_solid(face_footprint: TopoDS_Face,
     :return: a solid representing the building, made from footprint + vertical external walls + roof.
     :rtype: OCCsolid
     """
-    # create faces for every floor and extrude the solid
 
-    def cal_face_list(floor_counter):
-        """
-        This function moves the face_footprint to the correct height for a given floor_counter level.
+    floors = []
+    for ifloor in range_floors:
+        dist_to_move = ifloor * floor_to_floor_height
+        floor: Polygon = face_footprint.transformed(Translation.from_vector([0, 0, dist_to_move]))
+        floors.append(floor)
 
-        :param floor_counter: number of the floor to be offset. 0 stands for the ground floor.
-        :type floor_counter: int
-        :return: vertically offset face on the given floor height (0m for ground floor)
-        :rtype: OCCface
-        """
-        dist2mve = floor_counter * floor_to_floor_height
-        # get midpt of face
-        orig_pt = calculate.face_midpt(face_footprint)
-        # move the pt 1 level up
-        dest_pt = modify.move_pt(orig_pt, (0, 0, 1), dist2mve)
-        moved_face = modify.move(orig_pt, dest_pt, face_footprint)
-
-        return moved_face
-
-    moved_face_list = np.vectorize(cal_face_list)(range_floors)
-    # make checks to satisfy a closed geometry also called a shell
-
-    vertical_shell = construct.make_loft(moved_face_list)
-    vertical_face_list = fetch.topo_explorer(vertical_shell, "face")
-    roof = moved_face_list[-1]
-    footprint = moved_face_list[0]
-    all_faces = []
-    all_faces.append(footprint)
-    all_faces.extend(vertical_face_list)
-    all_faces.append(roof)
-    building_shell_list = construct.sew_faces(all_faces)
-
-    # make sure all the normals are correct (they are pointing out)
-    bldg_solid = construct.make_solid(building_shell_list[0])
-    bldg_solid = modify.fix_close_solid(bldg_solid)
-    #
-    # if config.general.debug:
-    #     # visualize building progress while debugging
-    #     face_list = fetch.topo_explorer(bldg_solid, "face")
-    #     edges = calculate.face_normal_as_edges(face_list,5)
-    #     utility.visualise([face_list,edges],["WHITE","BLACK"])
-    return bldg_solid
+    floor_edges = [Polyline(floor.points + [floor.points[0]]) for floor in floors]
+    # facade_breps = [OCCBrep.from_extrusion(OCCBrepEdge.from_curve(OCCCurve(floor_edge.points)), Vector(0, 0, floor_to_floor_height)) for floor_edge in floor_edges[:-1]] # no facade for roof
+    facade_breps = []
+    for floor_edge in floor_edges[:-1]:
+        # create vertical walls for each floor
+        curve = OCCCurve(floor_edge.points)
+        brep_edge = OCCBrepEdge(BrepEdge.from_curve(curve))
+        brep_extrusion = OCCBrep.from_extrusion(brep_edge, Vector(0, 0, floor_to_floor_height))
+        facade_breps.append(brep_extrusion)
+    return facade_breps
 
 
 class Points(object):
@@ -791,7 +768,7 @@ class ElevationMap(object):
 
         return ElevationMap(new_elevation_map, new_x_coords, new_y_coords, self.x_size, self.y_size, self.nodata)
 
-    def generate_tin(self, tolerance=1e-6):
+    def generate_tin(self, tolerance=1e-6) -> Mesh:
         """generates a 3D mesh from the elevation raster map.
 
         :param tolerance: The minimal surface area of each triangulated face. 
@@ -805,11 +782,16 @@ class ElevationMap(object):
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
 
-        raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
+        # raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
+        raster_points_list = [[float(x), float(y), float(z)] for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index])]
 
-        tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
-
-        return tin_occface_list
+        # tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
+        tri_vertices, tri_faces = delaunay_triangulation(raster_points_list)
+        import math
+        decimals = int(round(-math.log10(tolerance)))
+        tin_mesh = Mesh.from_vertices_and_faces(tri_vertices, tri_faces)
+        tin_mesh.weld(precision=decimals)  # Ensure the mesh is welded to remove duplicate vertices
+        return tin_mesh
 
 
 def standardize_coordinate_systems(zone_df, surroundings_df, trees_df, terrain_raster):
