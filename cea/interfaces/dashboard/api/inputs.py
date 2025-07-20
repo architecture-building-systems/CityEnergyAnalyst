@@ -390,7 +390,6 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
             detail=str(e),
         )
 
-
 @router.get('/databases')
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
@@ -445,22 +444,20 @@ async def copy_input_database(project_info: CEAProjectInfo, database_path: Datab
     shutil.copytree(locator.get_databases_folder(), copy_path)
     return {'message': 'Database copied to {}'.format(copy_path)}
 
-
+# Move to database route
 @router.get('/databases/check')
 async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
     dict_missing_db = cea4_verify_db(scenario, verbose=True)
-
-    if dict_missing_db:
-        missing_dbs = list(dict_missing_db.keys())
-        missing_dbs.sort()
+    
+    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail= json.dumps(dict_missing_db),
         )
-
-    return {'message': 'Database in path seems to be valid.'}
+    
+    return {'message': True }
 
 
 @router.get("/databases/validate")
