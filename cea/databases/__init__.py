@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 import os
+from typing import TYPE_CHECKING
+
+import numpy as np
 
 from cea.datamanagement.database.archetypes import Archetypes
 from cea.datamanagement.database.assemblies import Assemblies
@@ -24,6 +26,18 @@ def get_regions():
 def get_weather_files():
     weather_folder_path = os.path.join(databases_folder_path, 'weather')
     return [os.path.splitext(f)[0] for f in os.listdir(weather_folder_path) if f.endswith('.epw')]
+
+
+def _replace_nan_with_none(obj):
+    """Recursively replace NaN values with None for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: _replace_nan_with_none(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_replace_nan_with_none(item) for item in obj]
+    elif isinstance(obj, float) and np.isnan(obj):
+        return None
+    else:
+        return obj
 
 
 class CEADatabase:
