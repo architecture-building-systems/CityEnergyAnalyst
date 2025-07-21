@@ -42,14 +42,18 @@ def _replace_nan_with_none(obj):
 
 class CEADatabase:
     def __init__(self, locator: InputLocator):
+        self.archetypes = Archetypes.init_database(locator)
         self.assemblies = Assemblies.init_database(locator)
         self.components = Components.init_database(locator)
-        self.archetypes = Archetypes.init_database(locator)
 
-    def to_dict(self):
-        return {'assemblies': self.assemblies.to_dict(),
-                'components': self.components.to_dict(),
-                'archetypes': self.archetypes.to_dict()}
+    def to_dict(self) -> dict:
+        data = {
+            'archetypes': self.archetypes.to_dict(),
+            'assemblies': self.assemblies.to_dict(),
+            'components': self.components.to_dict(),
+        }
+
+        return _replace_nan_with_none(data)
 
 
 if __name__ == '__main__':
@@ -61,4 +65,3 @@ if __name__ == '__main__':
 
     _dict = CEADatabase(locator).to_dict()
     print(_dict.keys())
-
