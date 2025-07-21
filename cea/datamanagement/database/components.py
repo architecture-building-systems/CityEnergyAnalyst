@@ -66,33 +66,32 @@ class Conversion:
 @dataclass
 class Distribution:
     thermal_grid: pd.DataFrame
-    _library: dict[str, pd.DataFrame]
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid())     
-
-        _library = dict()
-        for file in Path(locator.get_db4_components_feedstocks_library_folder()).glob('*.csv'):
-            _library[file.stem] = pd.read_csv(file)
-
-        return cls(thermal_grid, _library)
+        thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid())
+        return cls(thermal_grid)
 
     def to_dict(self):
-        return {'thermal_grid': self.thermal_grid.to_dict(), '_library': {k: v.to_dict() for k, v in self._library.items()}}
+        return {'thermal_grid': self.thermal_grid.to_dict()}
 
 
 @dataclass
 class Feedstocks:
     energy_carriers: pd.DataFrame
+    _library: dict[str, pd.DataFrame]
 
     @classmethod
     def init_database(cls, locator: InputLocator):
         energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
-        return cls(energy_carriers)
+        _library = dict()
+        for file in Path(locator.get_db4_components_feedstocks_library_folder()).glob('*.csv'):
+            _library[file.stem] = pd.read_csv(file)
+
+        return cls(energy_carriers, _library)
 
     def to_dict(self):
-        return {'energy_carriers': self.energy_carriers.to_dict()}
+        return {'energy_carriers': self.energy_carriers.to_dict(), '_library': {k: v.to_dict() for k, v in self._library.items()}}
 
 
 @dataclass
