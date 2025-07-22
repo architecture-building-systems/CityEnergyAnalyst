@@ -1,8 +1,8 @@
 from __future__ import annotations
-from pathlib import Path
-from typing import TYPE_CHECKING
 
 from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -12,15 +12,16 @@ if TYPE_CHECKING:
 
 @dataclass
 class Construction:
+    _index = 'const_type'
     construction_types: pd.DataFrame
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        construction_types = pd.read_csv(locator.get_database_archetypes_construction_type())
+        construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()).set_index(cls._index)
         return cls(construction_types)
 
     def to_dict(self):
-        return {'construction_types': self.construction_types.to_dict()}
+        return {'construction_types': self.construction_types.to_dict(orient='index')}
 
 
 @dataclass
@@ -38,7 +39,8 @@ class Schedules:
         return cls(monthly_multipliers, _library)
 
     def to_dict(self):
-        return {'monthly_multipliers': self.monthly_multipliers.to_dict(), '_library': {k: v.to_dict() for k, v in self._library.items()}}
+        return {'monthly_multipliers': self.monthly_multipliers.to_dict(),
+                '_library': {k: v.to_dict(orient='records') for k, v in self._library.items()}}
 
 
 @dataclass
@@ -60,13 +62,12 @@ class Use:
 class Archetypes:
     construction: Construction
     use: Use
-    
+
     @classmethod
     def init_database(cls, locator: InputLocator):
         construction = Construction.init_database(locator)
         use = Use.init_database(locator)
         return cls(construction, use)
-    
+
     def to_dict(self):
         return {'construction': self.construction.to_dict(), 'use': self.use.to_dict()}
-
