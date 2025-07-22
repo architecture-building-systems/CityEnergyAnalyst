@@ -111,11 +111,13 @@ class Conversion:
 
 @dataclass
 class Distribution:
+    _index = "code"
+
     thermal_grid: pd.DataFrame
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid())
+        thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
         return cls(thermal_grid)
 
     def to_dict(self):
