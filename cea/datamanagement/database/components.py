@@ -17,8 +17,13 @@ def dataclass_to_dict(dataclass_instance, orient: Literal['records', 'index'] = 
         value = getattr(dataclass_instance, field.name)
 
         if isinstance(value, dict):
+            _orient = orient
+            # Handle special case for '_library' field
+            if field.name == '_library':
+                _orient = 'records'
+
             # Handle dict of DataFrames
-            result[field.name] = {k: v.to_dict(orient=orient) for k, v in value.items()}
+            result[field.name] = {k: v.to_dict(orient=_orient) for k, v in value.items()}
         elif hasattr(value, 'to_dict'):
             # Handle single DataFrame
             if isinstance(value, pd.DataFrame):
@@ -126,6 +131,9 @@ class Distribution:
 
 @dataclass
 class Feedstocks:
+    # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
+    _index = "code"
+
     energy_carriers: pd.DataFrame
     _library: dict[str, pd.DataFrame]
 
@@ -139,7 +147,12 @@ class Feedstocks:
         return cls(energy_carriers, _library)
 
     def to_dict(self):
-        return dataclass_to_dict(self)
+        # Temporarily add dummy index to DataFrame for serialization
+        new_df = self.energy_carriers.copy()
+        new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
+        new_obj = Feedstocks(new_df.set_index('index'), self._library)
+
+        return dataclass_to_dict(new_obj)
 
 
 @dataclass
