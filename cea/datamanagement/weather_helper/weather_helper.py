@@ -10,6 +10,7 @@ from zipfile import ZipFile
 
 import geopandas as gpd
 import requests
+import pyepwmorph
 
 import cea.config
 import cea.inputlocator
