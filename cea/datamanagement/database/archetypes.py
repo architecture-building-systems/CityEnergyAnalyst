@@ -26,12 +26,14 @@ class Construction:
 
 @dataclass
 class Schedules:
+    _index = 'use_type'
+
     monthly_multipliers: pd.DataFrame
     _library: dict[str, pd.DataFrame]
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        monthly_multipliers = pd.read_csv(locator.get_database_archetypes_schedules_monthly_multiplier())
+        monthly_multipliers = pd.read_csv(locator.get_database_archetypes_schedules_monthly_multiplier()).set_index(cls._index)
         _library = dict()
         for file in Path(locator.get_db4_archetypes_schedules_library_folder()).glob('*.csv'):
             _library[file.stem] = pd.read_csv(file)
@@ -39,23 +41,25 @@ class Schedules:
         return cls(monthly_multipliers, _library)
 
     def to_dict(self):
-        return {'monthly_multipliers': self.monthly_multipliers.to_dict(),
+        return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index'),
                 '_library': {k: v.to_dict(orient='records') for k, v in self._library.items()}}
 
 
 @dataclass
 class Use:
+    _index = 'use_type'
+
     use_types: pd.DataFrame
     schedules: Schedules
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        use_types = pd.read_csv(locator.get_database_archetypes_use_type())
+        use_types = pd.read_csv(locator.get_database_archetypes_use_type()).set_index(cls._index)
         schedules = Schedules.init_database(locator)
         return cls(use_types, schedules)
 
     def to_dict(self):
-        return {'use_types': self.use_types.to_dict(), 'schedules': self.schedules.to_dict()}
+        return {'use_types': self.use_types.to_dict(orient='index'), 'schedules': self.schedules.to_dict()}
 
 
 @dataclass
