@@ -78,10 +78,10 @@ def calc_steiner_spanning_tree(crs_projected,
         G.add_edge(x, y, weight=data[weight_field])
 
     # get the building nodes and coordinates
-    iterator_nodes = building_nodes_graph.nodes(data=True)
+    iterator_nodes = building_nodes_graph.nodes
     terminal_nodes_coordinates = []
     terminal_nodes_names = []
-    for coordinates, data in iterator_nodes._nodes.items():
+    for coordinates, data in iterator_nodes.data():
         building_name = data['name']
         if building_name in disconnected_building_names:
             print("Building {} is considered to be disconnected and it is not included".format(building_name))
