@@ -29,6 +29,13 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# WNTR reports head loss "per unit pipe length" while EPANET reports "per 1000 ft or m"
+# EPANET (2.2) [after WNTR 0.5] normalizes head loss per 1000 units of length so we don't need to scale it
+if wntr.__version__.startswith('0.2'):
+    scaling_factor = 1000  # EPANET 2.0 normalization
+else:
+    scaling_factor = 1     # EPANET 2.2 direct reporting
+
 
 def add_date_to_dataframe(locator, df):
     # create date range for the calculation year
@@ -298,14 +305,14 @@ def thermal_network_simplified(locator, config, network_name=''):
                         length=length_m * (1 + fraction_equivalent_length),
                         roughness=coefficient_friction_hazen_williams,
                         minor_loss=0.0,
-                        status='OPEN')
+                        initial_status='OPEN')
 
         # add options
         wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
         wn.options.time.hydraulic_timestep = 60 * 60
         wn.options.time.pattern_timestep = 60 * 60
-        wn.options.solver.accuracy = 0.01
-        wn.options.solver.trials = 100
+        wn.options.hydraulic.accuracy = 0.01
+        wn.options.hydraulic.trials = 100
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
         sim = wntr.sim.EpanetSimulator(wn)
@@ -335,7 +342,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
         # get accumulated head loss per hour
         unitary_head_ftperkft = results.link['headloss'].abs()
-        unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * 1000)
+        unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
         head_loss_m = unitary_head_mperm.copy()
         for column in head_loss_m.columns.values:
             length_m = edge_df.loc[column]['length_m']
@@ -357,7 +364,7 @@ def thermal_network_simplified(locator, config, network_name=''):
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
     unitary_head_loss_supply_network_ftperkft = results.link['headloss'].abs()
-    linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * 1000)
+    linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * scaling_factor)
     head_loss_supply_network_Pa = linear_pressure_loss_Paperm.copy()
     for column in head_loss_supply_network_Pa.columns.values:
         length_m = edge_df.loc[column]['length_m']

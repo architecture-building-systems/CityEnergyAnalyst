@@ -828,8 +828,8 @@ class Network(object):
             wn.options.time.duration = (nbr_time_steps - 1) * 3600  # this indicates epanet to do one year simulation
             wn.options.time.hydraulic_timestep = 60 * 60
             wn.options.time.pattern_timestep = 60 * 60
-            wn.options.solver.accuracy = 0.01
-            wn.options.solver.trials = 100
+            wn.options.hydraulic.accuracy = 0.01
+            wn.options.hydraulic.trials = 100
 
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
