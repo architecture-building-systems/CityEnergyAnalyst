@@ -89,7 +89,8 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes_coordinates))
+        steiner_result = steiner_tree(G, terminal_nodes_coordinates)
+        mst_non_directed = nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
