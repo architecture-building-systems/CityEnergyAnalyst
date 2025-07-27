@@ -1,4 +1,5 @@
 import math
+import platform
 import time
 
 import geopandas as gpd
@@ -33,6 +34,17 @@ if wntr.__version__.startswith('0.2'):
     scaling_factor = 1000  # EPANET 2.0 normalization
 else:
     scaling_factor = 1     # EPANET 2.2 direct reporting
+
+
+if sys.platform == "darwin" and platform.processor() == "arm":
+    from wntr.epanet.toolkit import libepanet
+    from pkg_resources import resource_filename
+    import subprocess
+
+    # Temp solution for EPANET toolkit on Apple Silicon: sign the library manually for WNTR v1.3.2
+    # See https://github.com/USEPA/WNTR/issues/494
+    epanet_location = resource_filename("wntr.epanet.toolkit", libepanet)
+    subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
 
 
 def add_date_to_dataframe(locator, df):
