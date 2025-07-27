@@ -1,10 +1,6 @@
 """
 This script calculates the minimum spanning tree of a shapefile network
 """
-
-
-
-
 import math
 import os
 
@@ -17,6 +13,7 @@ from shapely.geometry import LineString
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE
+from cea.technologies.network_layout.utility import read_shp, write_shp
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -66,8 +63,8 @@ def calc_steiner_spanning_tree(crs_projected,
     :return: ``(mst_edges, mst_nodes)``
     """
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
-    potential_network_graph = nx.read_shp(temp_path_potential_network_shp)
-    building_nodes_graph = nx.read_shp(temp_path_building_centroids_shp)
+    potential_network_graph = read_shp(temp_path_potential_network_shp)
+    building_nodes_graph = read_shp(temp_path_building_centroids_shp)
 
     # transform to an undirected potential_network_graph
     iterator_edges = potential_network_graph.edges(data=True)
