@@ -821,7 +821,7 @@ class Network(object):
                             length=length_m * (1 + self.configuration_defaults['equivalent_length_factor']),
                             roughness=self.configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
-                            status='OPEN')
+                            initial_status='OPEN')
 
             # add options
             nbr_time_steps = len(self._domain_buildings_flow_rate_m3pers)
