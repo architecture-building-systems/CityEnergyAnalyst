@@ -93,17 +93,18 @@ def calc_steiner_spanning_tree(crs_projected,
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
         mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes_coordinates))
-        # Ensure output folder exists before writing
-        os.makedirs(output_network_folder, exist_ok=True)
-        nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
-        mst_nodes = gdf.from_file(path_output_nodes_shp)
-        mst_edges = gdf.from_file(path_output_edges_shp)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs. '
                          'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
                          'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.') from e
+
+    # Ensure output folder exists before writing
+    os.makedirs(output_network_folder, exist_ok=True)
+    write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
+    mst_nodes = gdf.from_file(path_output_nodes_shp)
+    mst_edges = gdf.from_file(path_output_edges_shp)
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
