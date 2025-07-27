@@ -44,7 +44,9 @@ if sys.platform == "darwin" and platform.processor() == "arm":
     # Temp solution for EPANET toolkit on Apple Silicon: sign the library manually for WNTR v1.3.2
     # See https://github.com/USEPA/WNTR/issues/494
     epanet_location = resource_filename("wntr.epanet.toolkit", libepanet)
-    subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
+    result = subprocess.run(["codesign", "--verify", "--verbose", epanet_location], capture_output=True, text=True)
+    if result.returncode != 0:
+        subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
 
 
 def add_date_to_dataframe(locator, df):
