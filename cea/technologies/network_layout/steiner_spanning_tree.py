@@ -98,6 +98,8 @@ def calc_steiner_spanning_tree(crs_projected,
     :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
     :return: ``(mst_edges, mst_nodes)``
     """
+    steiner_algorithm = SteinerAlgorithm(method)
+
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
     potential_network_graph = read_shp(temp_path_potential_network_shp)
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
@@ -125,7 +127,7 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=str(SteinerAlgorithm(method)))
+        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=str(steiner_algorithm))
         mst_non_directed = nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
