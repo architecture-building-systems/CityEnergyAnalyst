@@ -227,22 +227,8 @@ def verify_hvac_system_combination(result, locator):
             f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
             f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}'))
     if len(list_exceptions) > 0:
-        raise_multiple(list_exceptions)
-    return
+        raise ValueError(
+            'Invalid combination of cooling and ventilation systems selected. Please check the following buildings:\n'
+            + '\n'.join([str(e) for e in list_exceptions])
+        )
 
-
-def raise_multiple(exceptions):
-    '''
-    This function raises multiple exceptions recursively. Exceptions in a list are raised one by one until the list
-    is empty.
-    '''
-
-    if not exceptions:
-        # if list of exceptions is empty, recursion ends
-        return
-    try:
-        # raise one exception, then remove it from list
-        raise exceptions.pop()
-    finally:
-        # repeat the process until list is empty
-        raise_multiple(exceptions)
