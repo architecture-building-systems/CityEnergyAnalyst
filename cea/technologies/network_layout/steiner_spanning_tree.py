@@ -3,6 +3,7 @@ This script calculates the minimum spanning tree of a shapefile network
 """
 import math
 import os
+from enum import Enum
 
 import networkx as nx
 import pandas as pd
@@ -25,6 +26,39 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+class SteinerAlgorithm(Enum):
+    """
+    Enum for the different algorithms that can be used to calculate the Steiner tree.
+
+    This is based on the available algorithms for NetworkX Steiner tree function.
+    Reference:
+    https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.steinertree.steiner_tree.html
+    """
+
+    Kou = 'kou'
+    """
+    Kou algorithm: Higher quality Steiner tree approximation with better weight optimization.
+    - Runtime: O(|S| |V|²) - slower for large networks
+    - Memory: High consumption, can be excessive for large graphs
+    - Quality: More optimal network layouts, better weight minimization
+    - Use when: Network optimization quality is critical and computational resources are sufficient
+    - Algorithm: Computes minimum spanning tree of the metric closure subgraph induced by terminal nodes
+    """
+    
+    Mehlhorn = 'mehlhorn'
+    """
+    Mehlhorn algorithm: Fast Steiner tree approximation optimized for speed and memory efficiency.
+    - Runtime: O(|E| + |V|log|V|) - very fast, scales well with network size
+    - Memory: Minimal usage, suitable for large networks
+    - Quality: Good approximation but sometimes noticeably suboptimal compared to Kou
+    - Use when: Speed is prioritized over perfect optimization, or working with very large networks
+    - Algorithm: Modified Kou approach that finds closest terminal node for each non-terminal first
+    """
+
+    def __str__(self):
+        return self.value
+
+
 def calc_steiner_spanning_tree(crs_projected,
                                temp_path_potential_network_shp,
                                output_network_folder,
@@ -39,7 +73,8 @@ def calc_steiner_spanning_tree(crs_projected,
                                allow_looped_networks,
                                optimization_flag,
                                plant_building_names,
-                               disconnected_building_names):
+                               disconnected_building_names,
+                               method: str = str(SteinerAlgorithm.Kou)):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -60,6 +95,7 @@ def calc_steiner_spanning_tree(crs_projected,
     :param bool optimization_flag:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
+    :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
     :return: ``(mst_edges, mst_nodes)``
     """
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
@@ -89,7 +125,7 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        steiner_result = steiner_tree(G, terminal_nodes_coordinates)
+        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=str(SteinerAlgorithm(method)))
         mst_non_directed = nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
