@@ -366,8 +366,6 @@ def from_numpy_matrix(A, parallel_edges=False, create_using=None):
         return nx.from_numpy_array(A, parallel_edges=parallel_edges, create_using=create_using)
     except AttributeError:
         # Fall back to older NetworkX versions that might still have from_numpy_matrix
-        import numpy as np
-
         G = nx.empty_graph(0, create_using)
         n, m = A.shape
 
