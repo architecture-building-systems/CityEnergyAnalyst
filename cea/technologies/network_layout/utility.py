@@ -334,7 +334,6 @@ def from_numpy_matrix(A, parallel_edges=False, create_using=None):
     --------
     Simple integer weights on edges:
 
-    >>> import numpy as np
     >>> A = np.array([[1, 1], [2, 1]])
     >>> G = from_numpy_matrix(A)
 
