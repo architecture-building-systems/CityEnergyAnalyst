@@ -2,7 +2,7 @@ name: Pull Request Tests
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, ready_for_review]
     branches: [master, release-**]
 
 jobs:
@@ -42,7 +42,8 @@ jobs:
             })
             core.setFailed('conda-lock.yml needs to be updated')
 
-  build:
+  tests:
+    if: github.event.pull_request.draft == false
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: check_environment_yml
