@@ -21,22 +21,22 @@ demand_x_to_plot_building = ['building', 'building_faceted_by_months', 'building
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, config_config, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data):
+    def __init__(self, plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
-        self.buildings = config_config.buildings
-        self.y_metric_to_plot = config_config.y_metric_to_plot
-        self.y_metric_unit = config_config.y_metric_unit
-        self.y_normalised_by = config_config.y_normalised_by
+        self.buildings = plot_config_general.buildings
+        self.y_metric_to_plot = plot_config.y_metric_to_plot
+        self.y_metric_unit = plot_config.y_metric_unit
+        self.y_normalised_by = plot_config.y_normalised_by
         self.x_to_plot = plot_instance.x
         self.x_facet = plot_instance.x_facet
-        self.x_sorted_by = config_config.x_sorted_by
-        self.x_sorted_reversed = config_config.x_sorted_reversed
-        self.integer_year_start = config_config.filter_buildings_by_year_start
-        self.integer_year_end = config_config.filter_buildings_by_year_end
-        self.list_construction_type = config_config.filter_buildings_by_construction_type
-        self.list_use_type = config_config.filter_buildings_by_use_type
-        self.min_ratio_as_main_use = config_config.min_ratio_as_main_use
+        self.x_sorted_by = plot_config_general.x_sorted_by
+        self.x_sorted_reversed = plot_config_general.x_sorted_reversed
+        self.integer_year_start = plot_config_general.filter_buildings_by_year_start
+        self.integer_year_end = plot_config_general.filter_buildings_by_year_end
+        self.list_construction_type = plot_config_general.filter_buildings_by_construction_type
+        self.list_use_type = plot_config_general.filter_buildings_by_use_type
+        self.min_ratio_as_main_use = plot_config_general.min_ratio_as_main_use
         self.appendix = plot_cea_feature if plot_cea_feature == "demand" else "default"
 
     def process_architecture_data(self):
@@ -322,8 +322,8 @@ def calc_x_facet(df_to_plotly, facet_by):
 
 
 # Main function
-def calc_x_y_metric(config_config, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data):
-    plot_instance_b = data_processor(config_config, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data)
+def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data):
+    plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data)
 
     if plot_cea_feature == "demand":
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data)

@@ -48,28 +48,30 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
 def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature: str, hour_start=0, hour_end=8759):
     # Find the plot config section for the cea feature
     try:
+        plot_config_general = config.plots_general
         plot_config = config.sections[f"plots-{plot_cea_feature}"]
     except KeyError:
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, scenario, plot_cea_feature,
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature,
                                                                                 hour_start, hour_end)
 
     # Activate b_data_processor
-    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_instance, plot_cea_feature, df_summary_data,
+    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data)
 
     # Activate c_plotter
-    fig = generate_fig(plot_config, df_to_plotly, list_y_columns)
+    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns)
     return fig
 
 
 def main(config):
     scenario = config.scenario
 
-    plot_cea_feature = get_plot_cea_feature(config)
-    fig = plot_all(config, scenario, plot_cea_feature)
+    # plot_cea_feature = get_plot_cea_feature(config)
+    # fig = plot_all(config, scenario, plot_cea_feature)
+    fig = plot_all(config, scenario, 'demand')
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
     if sys.stdout.isatty():

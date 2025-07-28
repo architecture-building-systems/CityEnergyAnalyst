@@ -24,30 +24,30 @@ __status__ = "Production"
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, config_config, dataframe, list_y_columns):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
 
         # Get the settings for the format
-        self.plot_title = config_config.plot_title
-        self.y_metric_to_plot = config_config.y_metric_to_plot
+        self.plot_title = plot_config_general.plot_title
+        self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_columns = list_y_columns
-        self.y_metric_unit = config_config.y_metric_unit
-        self.y_normalised_by = config_config.y_normalised_by
-        self.y_min = config_config.y_min
-        self.y_max = config_config.y_max
-        self.y_step = config_config.y_step
-        self.y_label = config_config.y_label
-        self.x_to_plot = config_config.x_to_plot
-        self.facet_by_numbers_wrapped = config_config.facet_by_numbers_wrapped
-        self.facet_by_rows = config_config.facet_by_rows
-        self.x_sorted_by = config_config.x_sorted_by
-        self.x_sorted_reversed = config_config.x_sorted_reversed
-        self.x_label = config_config.x_label
+        self.y_metric_unit = plot_config.y_metric_unit
+        self.y_normalised_by = plot_config.y_normalised_by
+        self.y_min = plot_config_general.y_min
+        self.y_max = plot_config_general.y_max
+        self.y_step = plot_config_general.y_step
+        self.y_label = plot_config_general.y_label
+        self.x_to_plot = plot_config_general.x_to_plot
+        self.facet_by_numbers_wrapped = plot_config_general.facet_by_numbers_wrapped
+        self.facet_by_rows = plot_config_general.facet_by_rows
+        self.x_sorted_by = plot_config_general.x_sorted_by
+        self.x_sorted_reversed = plot_config_general.x_sorted_reversed
+        self.x_label = plot_config_general.x_label
 
         # Parse plot_type and plot_mode
-        self.plot_type, self.y_barmode = parse_plot_type(config_config.plot_type)
+        self.plot_type, self.y_barmode = parse_plot_type(plot_config_general.plot_type)
 
         # Update y_columns based on if normalisation is selected
         if self.y_normalised_by == 'no_normalisation':
@@ -456,11 +456,11 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(config_config, df_to_plotly, list_y_columns):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns):
 
-     if config_config.plot_type.startswith("bar_plot"):
+     if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
-        plot_instance_c = bar_plot(config_config, df_to_plotly, list_y_columns)
+        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()
@@ -471,7 +471,7 @@ def generate_fig(config_config, df_to_plotly, list_y_columns):
         return fig
 
      else:
-        raise ValueError(f"Invalid plot type: {config_config.plot_type}")
+        raise ValueError(f"Invalid plot type: {plot_config_general.plot_type}")
 
 
 
