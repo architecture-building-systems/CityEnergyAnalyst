@@ -283,6 +283,7 @@ class RCModelProperties:
     Htr_op: Annotated[float, "Transmission heat transfer coefficient (opaque) [W/K]"]
     Htr_w: Annotated[float, "Transmission heat transfer coefficient (windows) [W/K]"]
 
+    # FIXME: Decide if these fields should be in envelope or rc_model
     # --- U-values (Duplicated Envelope properties) ---
     U_wall: Annotated[float, "U-value of wall [W/m2K]"]
     U_roof: Annotated[float, "U-value of roof [W/m2K]"]
