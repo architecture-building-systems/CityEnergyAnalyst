@@ -26,10 +26,10 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
         :param building_names: list of buildings to read properties for
         """
         prop_supply_systems_building = pd.read_csv(locator.get_building_supply()).set_index('name').loc[building_names]
-        self._prop_supply_systems = self.get_properties_supply_sytems(locator, prop_supply_systems_building)
+        self._prop_supply_systems = self.get_properties_supply_systems(locator, prop_supply_systems_building)
 
     @staticmethod
-    def get_properties_supply_sytems(locator: InputLocator, properties_supply: pd.DataFrame):
+    def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
         # Supply system mappings: (locator_method, join_column, column_renames, fields_to_extract)
         supply_mappings = {
             'supply heating': (
