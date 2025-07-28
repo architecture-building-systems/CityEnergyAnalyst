@@ -6,6 +6,7 @@ EN-13970
 from __future__ import annotations
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
+from cea.demand.time_series_data import empty_array
 from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
 from typing import TYPE_CHECKING
 
@@ -192,15 +193,15 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
     #
     if not control_heating_cooling_systems.has_heating_system(bpr.hvac["class_hs"]):
         # if no heating system
-
-        tsd.heating_system_temperatures.Ths_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        # FIXME: Disable property instead of setting to empty array?
+        tsd.heating_system_temperatures.Ths_sys_sup_ahu = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_ahu = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_ahu = np.zeros(HOURS_IN_YEAR)
-        tsd.heating_system_temperatures.Ths_sys_sup_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_aru = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_aru = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_aru = np.zeros(HOURS_IN_YEAR)
-        tsd.heating_system_temperatures.Ths_sys_sup_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_shu = np.zeros(HOURS_IN_YEAR) * np.nan # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_shu = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_shu = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_shu = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
@@ -208,11 +209,11 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         Ta_heating_0 = np.nanmax(tsd.rc_model_temperatures.ta_hs_set)
         Qhs_sys_0 = np.nanmax(tsd.heating_loads.Qhs_sys)  # in W
 
-        tsd.heating_system_temperatures.Ths_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_ahu = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_ahu = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_ahu = np.zeros(HOURS_IN_YEAR)
-        tsd.heating_system_temperatures.Ths_sys_sup_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_aru = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_aru = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_aru = np.zeros(HOURS_IN_YEAR)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd.heating_loads.Qhs_sys, tsd.rc_model_temperatures.T_int, Qhs_sys_0, Ta_heating_0,
@@ -269,8 +270,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         tsd.heating_system_mass_flows.mcphs_sys_aru = mcphs
 
         # SHU
-        tsd.heating_system_temperatures.Ths_sys_sup_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_shu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_shu = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_shu = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_shu = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
@@ -278,11 +279,11 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         Ta_heating_0 = np.nanmax(tsd.rc_model_temperatures.ta_hs_set)
         Qhs_sys_0 = np.nanmax(tsd.heating_loads.Qhs_sys)  # in W
 
-        tsd.heating_system_temperatures.Ths_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_ahu = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_ahu = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_ahu = np.zeros(HOURS_IN_YEAR)
-        tsd.heating_system_temperatures.Ths_sys_sup_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.heating_system_temperatures.Ths_sys_re_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.heating_system_temperatures.Ths_sys_sup_aru = empty_array()
+        tsd.heating_system_temperatures.Ths_sys_re_aru = empty_array()
         tsd.heating_system_mass_flows.mcphs_sys_aru = np.zeros(HOURS_IN_YEAR)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd.heating_loads.Qhs_sys, tsd.rc_model_temperatures.T_int, Qhs_sys_0, Ta_heating_0,
@@ -302,14 +303,14 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
     if not control_heating_cooling_systems.has_cooling_system(bpr.hvac["class_cs"]):
         # if no cooling system
 
-        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_ahu = np.zeros(HOURS_IN_YEAR)
-        tsd.cooling_system_temperatures.Tcs_sys_sup_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_aru = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_aru = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_aru = np.zeros(HOURS_IN_YEAR)
-        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_scu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_scu = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
@@ -357,15 +358,15 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         tsd.cooling_system_mass_flows.mcpcs_sys_aru = mcpcs
 
         # SCU
-        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_scu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_scu = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
         # AHU
-        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_ahu = np.zeros(HOURS_IN_YEAR)
 
         # ARU
@@ -392,8 +393,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         tsd.cooling_system_mass_flows.mcpcs_sys_aru = mcpcs
 
         # SCU
-        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_scu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_scu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_scu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_scu = np.zeros(HOURS_IN_YEAR)
 
     elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
@@ -482,13 +483,13 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
         tsd.cooling_system_mass_flows.mcpcs_sys_scu = mcpcs
 
         # AHU
-        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_ahu = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_ahu = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_ahu = np.zeros(HOURS_IN_YEAR)
 
         # ARU
-        tsd.cooling_system_temperatures.Tcs_sys_sup_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd.cooling_system_temperatures.Tcs_sys_re_aru = np.zeros(HOURS_IN_YEAR) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd.cooling_system_temperatures.Tcs_sys_sup_aru = empty_array()
+        tsd.cooling_system_temperatures.Tcs_sys_re_aru = empty_array()
         tsd.cooling_system_mass_flows.mcpcs_sys_aru = np.zeros(HOURS_IN_YEAR)
 
     else:

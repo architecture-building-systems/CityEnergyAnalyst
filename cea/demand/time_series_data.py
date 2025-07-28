@@ -44,7 +44,7 @@ def empty_array():
     """
     Creates an empty numpy array of size HOURS_IN_YEAR, filled with NaNs.
     """
-    return np.zeros(HOURS_IN_YEAR) * np.nan
+    return np.full(HOURS_IN_YEAR, np.nan)
 
 
 def empty_char_array():
