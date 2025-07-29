@@ -24,7 +24,7 @@ __status__ = "Production"
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
@@ -45,6 +45,16 @@ class bar_plot:
         self.x_sorted_by = plot_config_general.x_sorted_by
         self.x_sorted_reversed = plot_config_general.x_sorted_reversed
         self.x_label = plot_config_general.x_label
+
+        if plot_cea_feature in ('pv', 'sc'):
+            self.appendix = f"{solar_panel_types_list[0]}"
+        elif plot_cea_feature == 'pvt':
+            if len(solar_panel_types_list) == 2:
+                self.appendix = f"{solar_panel_types_list[0]}_{solar_panel_types_list[1]}"
+            else:
+                raise ValueError("PVT requires two solar panel types.")
+        else:
+            self.appendix = plot_cea_feature
 
         # Parse plot_type and plot_mode
         self.plot_type, self.y_barmode = parse_plot_type(plot_config_general.plot_type)
@@ -75,12 +85,19 @@ class bar_plot:
 
         return fig
 
-    def fig_format(self, fig):
+    def fig_format(self, fig, plot_cea_feature):
         # Set the title
         if self.plot_title:
             title = self.plot_title
         else:
-            title = "CEA-4 Building Energy Demand"
+            if plot_cea_feature == 'demand':
+                title = "CEA-4 Building Energy Demand"
+            elif plot_cea_feature == 'pv':
+                title = "CEA-4 Photovoltaic (PV) Panels: {panel_type}".format(panel_type=self.appendix)
+            elif plot_cea_feature == 'pvt':
+                title = "CEA-4 Photovoltaic-Thermal (PVT) Panels: {panel_type}".format(panel_type=self.appendix)
+            elif plot_cea_feature == 'sc':
+                title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
 
         # Set the y-axis label
         if self.y_label:
@@ -88,20 +105,87 @@ class bar_plot:
         elif self.y_barmode == 'stack_percentage':
             y_label = "Percentage (%)"
         else:
-            if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
-                y_label = "Energy Demand (MWh/yr)"
-            elif self.y_metric_unit == 'MWh' and self.y_normalised_by != 'no_normalisation':
-                y_label = "Energy Use Intensity (MWh/yr/m2)"
-            elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
-                y_label = "Energy Demand (kWh/yr)"
-            elif self.y_metric_unit == 'kWh' and self.y_normalised_by != 'no_normalisation':
-                y_label = "Energy Use Intensity (kWh/yr/m2)"
-            elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
-                y_label = "Energy Demand (Wh/yr)"
-            elif self.y_metric_unit == 'Wh' and self.y_normalised_by != 'no_normalisation':
-                y_label = "Energy Use Intensity (Wh/yr/m2)"
-            else:
-                raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            if plot_cea_feature == 'demand':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Energy Demand (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Energy Use Intensity (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Energy Demand (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Energy Use Intensity (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Energy Demand (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Energy Use Intensity (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+
+            elif plot_cea_feature == 'pv':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PV Electricity Yield (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity Yield per Gross Floor Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity Yield per Installed Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PV Electricity Yield (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity Yield per Gross Floor Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity Yield per Installed Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PV Electricity Yield (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity Yield per Gross Floor Area (Wh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity Yield per Installed Area (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+
+            elif plot_cea_feature == 'pvt':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PVT Electricity & Heat Yield (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity & Heat Yield per Gross Floor Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity & Heat Yield per Installed Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PV Electricity & Heat Yield (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity & Heat Yield per Gross Floor Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity & Heat Yield per Installed Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "PV Electricity & Heat Yield (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "PV Electricity & Heat Yield per Gross Floor Area (Wh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "PV Electricity & Heat Yield per Installed Area (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+
+            elif plot_cea_feature == 'sc':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "SC Heat Yield (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "SC Heat Yield per Gross Floor Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "SC Heat Yield per Installed Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "SC Heat Yield (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "SC Heat Yield per Gross Floor Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "SC Heat Yield per Installed Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "SC Heat Yield (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "SC Heat Yield per Gross Floor Area (Wh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                    y_label = "SC Heat Yield per Installed Area (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
 
         # Set the x-axis label
         if self.x_label:
@@ -456,11 +540,11 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list):
 
      if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
-        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns)
+        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()

@@ -48,6 +48,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
 def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_list: list, hour_start=0, hour_end=8759):
     # Get the cea feature name
     plot_cea_feature = plot_cea_feature_list[0]
+    plot_cea_feature_umbrella = plot_cea_feature
 
     if len(plot_cea_feature_list) > 1 and plot_cea_feature in ('pv', 'pvt', 'sc'):
         solar_panel_types_list = plot_cea_feature_list[2:]
@@ -56,16 +57,16 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
                 f"Missing plot_cea_feature_solar_panel_types: {plot_cea_feature}. "
                 f"Ensure that it is selected"
             )
-        plot_cea_feature = 'solar'
+        plot_cea_feature_umbrella = 'solar'
     else:
         solar_panel_types_list = []
 
     # Find the plot config section for the cea feature
     try:
         plot_config_general = config.plots_general
-        plot_config = config.sections[f"plots-{plot_cea_feature}"]
+        plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
     except KeyError:
-        raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature}. Ensure that it exists in default.config.")
+        raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature,
@@ -77,7 +78,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
                                                    solar_panel_types_list)
 
     # Activate c_plotter
-    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns)
+    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list)
     return fig
 
 
