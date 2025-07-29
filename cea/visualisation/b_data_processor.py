@@ -389,6 +389,16 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     
     list_y_columns = updated_list_y_columns
 
+    # Step 7: For PVT, reorder columns to group electricity and heat for better legend layout
+    if plot_cea_feature == 'pvt':
+        electricity_columns = [col for col in list_y_columns if '_E_' in col]
+        heat_columns = [col for col in list_y_columns if '_Q_' in col]
+        # Reorder: all electricity first, then all heat
+        list_y_columns = electricity_columns + heat_columns
+        # Reorder dataframe columns to match
+        other_columns = [col for col in df_to_plotly.columns if col in ['X', 'X_facet']]
+        df_to_plotly = df_to_plotly[other_columns + list_y_columns]
+
     # (Optional future step) Sort or format X axis if needed
     return df_to_plotly, list_y_columns
 

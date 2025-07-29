@@ -26,7 +26,7 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     Map a processed column name back to its user-friendly display name.
     
     For solar features, columns like 'PV_roofs_top_E_kWh/m2' should map to 'roof',
-    'PV_walls_north_E_kWh/m2' should map to 'wall_north', etc.
+    'PVT_ET_roofs_top_E_kWh/m2' should map to 'roof (electricity)', etc.
     
     Parameters:
     - column_name (str): The processed column name (e.g., 'PV_roofs_top_E_kWh/m2')
@@ -55,6 +55,16 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     # Check each surface mapping
     for col_pattern, user_name in surface_mappings.items():
         if col_pattern in column_name and user_name in y_metric_to_plot:
+            # For PVT columns, distinguish between electricity (E) and heat (Q)
+            if 'PVT' in column_name:
+                if '_E_' in column_name:
+                    return f"{user_name} (electricity)"
+                elif '_Q_' in column_name:
+                    return f"{user_name} (heat)"
+            # For SC (solar collector) columns, only heat
+            elif 'SC' in column_name and '_Q_' in column_name:
+                return f"{user_name} (heat)"
+            # For PV columns, only electricity (default behavior)
             return user_name
     
     # Fallback to column name if no mapping found
@@ -68,6 +78,7 @@ class bar_plot:
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
+        self.plot_cea_feature = plot_cea_feature
 
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
@@ -119,7 +130,7 @@ class bar_plot:
                                 y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode)
 
         # Position legend below
-        fig = position_legend_between_title_and_graph(fig)
+        fig = position_legend_between_title_and_graph(fig, self.plot_cea_feature)
 
         return fig
 
@@ -323,15 +334,16 @@ class bar_plot:
         return fig
 
 
-def position_legend_between_title_and_graph(fig):
+def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
     """
     Position legend between the title and plot, and push the graph downward.
 
     Parameters:
     - fig: plotly.graph_objects.Figure
+    - plot_cea_feature: str, the CEA feature being plotted (unused, kept for compatibility)
     """
 
-    # Shrink top margin and push down plot
+    # Standard horizontal legend for all plot types
     fig.update_layout(
         legend=dict(
             orientation='h',
