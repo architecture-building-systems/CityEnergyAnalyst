@@ -359,10 +359,35 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     # Step 5: Unit conversion
     if plot_instance.y_normalised_by == 'no_normalisation':
         df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
-    elif plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area']:
+    elif plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area', 'solar_technology_area_installed_for_respective_surface']:
         df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
     else:
         raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
+
+    # Step 6: Update list_y_columns to match the actual column names in df_to_plotly
+    # Filter to only include columns that exist in the final dataframe and exclude X/X_facet
+    final_columns = [col for col in df_to_plotly.columns if col not in ['X', 'X_facet']]
+    
+    # Create mapping from original list_y_columns to final column names
+    updated_list_y_columns = []
+    for orig_col in list_y_columns:
+        # Skip m2 columns - they should not be plotted
+        if orig_col.endswith('_m2'):
+            continue
+            
+        # Check for exact match first
+        if orig_col in final_columns:
+            updated_list_y_columns.append(orig_col)
+        else:
+            # Look for unit-converted version (e.g., PV_roofs_top_E_kWh -> PV_roofs_top_E_kWh/m2)
+            unit_converted = orig_col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
+            if plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area']:
+                unit_converted += '/m2'
+            
+            if unit_converted in final_columns:
+                updated_list_y_columns.append(unit_converted)
+    
+    list_y_columns = updated_list_y_columns
 
     # (Optional future step) Sort or format X axis if needed
     return df_to_plotly, list_y_columns
@@ -499,7 +524,7 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
     plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
-    if plot_cea_feature == "demand":
+    if plot_cea_feature in ["demand", "pv", "pvt", "sc"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:

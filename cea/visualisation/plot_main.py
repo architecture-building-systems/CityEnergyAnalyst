@@ -51,7 +51,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
     plot_cea_feature_umbrella = plot_cea_feature
 
     if len(plot_cea_feature_list) > 1 and plot_cea_feature in ('pv', 'pvt', 'sc'):
-        solar_panel_types_list = plot_cea_feature_list[2:]
+        solar_panel_types_list = plot_cea_feature_list[1:]
         if len(solar_panel_types_list) == 0:
             raise CEAException(
                 f"Missing plot_cea_feature_solar_panel_types: {plot_cea_feature}. "
@@ -85,8 +85,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
 def main(config):
     scenario = config.scenario
 
-    # plot_cea_feature = get_plot_cea_feature(config)
-    plot_cea_feature = ['demand']   #todo: from front-end
+    plot_cea_feature = ['pvt', 'ET','PV3']        #todo: from front-end
     hour_start = 0      #todo: from front-end
     hour_end = 8759     #todo: from front-end
     fig = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)

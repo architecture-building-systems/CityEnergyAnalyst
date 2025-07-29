@@ -21,6 +21,46 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def get_display_name_for_column(column_name, y_metric_to_plot):
+    """
+    Map a processed column name back to its user-friendly display name.
+    
+    For solar features, columns like 'PV_roofs_top_E_kWh/m2' should map to 'roof',
+    'PV_walls_north_E_kWh/m2' should map to 'wall_north', etc.
+    
+    Parameters:
+    - column_name (str): The processed column name (e.g., 'PV_roofs_top_E_kWh/m2')
+    - y_metric_to_plot (list): List of user-friendly names (e.g., ['roof', 'wall_north'])
+    
+    Returns:
+    - str: The user-friendly display name or the column name if no mapping found
+    """
+    if not isinstance(y_metric_to_plot, list):
+        return column_name
+    
+    # Area columns should not appear in plots, but if they do, make them distinct
+    if column_name.endswith('_m2'):
+        return f"{column_name} (Area)"
+    
+    # Solar surface mapping
+    surface_mappings = {
+        'roofs_top': 'roof',
+        'walls_north': 'wall_north', 
+        'walls_east': 'wall_east',
+        'walls_south': 'wall_south',
+        'walls_west': 'wall_west',
+        'total': 'total'
+    }
+    
+    # Check each surface mapping
+    for col_pattern, user_name in surface_mappings.items():
+        if col_pattern in column_name and user_name in y_metric_to_plot:
+            return user_name
+    
+    # Fallback to column name if no mapping found
+    return column_name
+
+
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
@@ -60,10 +100,8 @@ class bar_plot:
         self.plot_type, self.y_barmode = parse_plot_type(plot_config_general.plot_type)
 
         # Update y_columns based on if normalisation is selected
-        if self.y_normalised_by == 'no_normalisation':
-            self.y_columns_normalised = list_y_columns
-        else:
-            self.y_columns_normalised = [item + "/m2" for item in self.y_columns]
+        # Note: Column names are already updated during unit conversion in data processor
+        self.y_columns_normalised = list_y_columns
 
     def generate_fig(self):
         """Creates a Plotly figure."""
@@ -408,7 +446,9 @@ def plot_faceted_bars(
                 facet_df = facet_df.sort_values(by=x_col)
 
             for j, val_col in enumerate(value_columns):
-                heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
+                # Create mapping from column name to user-friendly surface name
+                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    
                 color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -474,7 +514,9 @@ def plot_faceted_bars(
         # No faceting
         fig = go.Figure()
         for j, val_col in enumerate(value_columns):
-            heading = y_metric_to_plot[j] if isinstance(y_metric_to_plot, list) else val_col
+            # Create mapping from column name to user-friendly surface name
+            heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                
             color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
             bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 

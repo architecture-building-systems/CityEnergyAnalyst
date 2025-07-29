@@ -106,8 +106,8 @@ class csv_pointer:
 
     def execute_summary(self):
         """Executes the summary feature to generate the required CSV output."""
-        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
-        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
+        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.plot_cea_feature, [])
+        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.plot_cea_feature, [])
         if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = False
         elif all(item in list_metrics_analytics for item in self.y_metric_to_plot):
@@ -133,8 +133,8 @@ class csv_pointer:
     def get_summary_results_csv_path(self):
         """Returns the correct path for the summary results CSV file based on user inputs."""
         summary_folder = self.locator.get_export_plots_folder()
-        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.appendix, [])
-        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.appendix, [])
+        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.plot_cea_feature, [])
+        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.plot_cea_feature, [])
 
         if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
             return self._get_non_analytics_summary_path(summary_folder)
