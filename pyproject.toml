@@ -12,8 +12,37 @@ maintainers = [
 ]
 dynamic = ["version"]
 
-# All dependencies are determined in environment.yml
-dependencies = []
+dependencies = [
+    # Backend dependencies
+    "aiofiles",
+    "aiocache[redis]",
+    "fastapi",
+    "pydantic-settings",
+    "uvicorn",
+    "jinja2",
+    "python-socketio",
+    "python-multipart",
+    "sqlalchemy[asyncio]",
+    "sqlmodel",
+    "asyncpg",
+    "aiosqlite",
+    "pyjwt[crypto]",
+
+    # Other python dependencies
+    "deap",
+    "ephem",
+    "numpy-financial",
+    "python-louvain",
+    "pytz",
+    "salib",
+    "timezonefinder",
+    "openpyxl",
+    "plotly",
+    "utm",
+    "xlrd",
+    "xlwt",
+    "wntr"
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
@@ -45,3 +74,36 @@ version = { attr = "cea.__version__" }
 
 [tool.ruff]
 exclude = ["*.ipynb"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[tool.pixi.tasks]
+dashboard = "cea dashboard"
+test = "cea test --type integration"
+
+[tool.pixi.dependencies]
+cvxopt = "*"
+fiona = "*"
+gdal = "*"
+geopandas = "*"
+libpysal = "*"
+numba = "*"
+numpy = "*"
+osmnx = "*"
+networkx = "*"
+psutil = "*"
+pvlib = "*"
+pythonocc-core = "*"
+pyyaml = "*"
+scikit-learn = "*"
+scipy = "*"
+shapely = "*"
+matplotlib = "*"
+notebook = "*"
+pyarrow = "*"
+
+[tool.pixi.pypi-dependencies]
+# install cea as editable package for development
+cityenergyanalyst = { path = ".", editable = true }
