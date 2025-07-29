@@ -105,6 +105,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
 
+        shapefile["void_deck"] = 0 # assume no void decks by default
+
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
             shapefile["height_ag"] = shapefile["height"].fillna(
@@ -317,7 +319,7 @@ def fix_overlapping_geoms(buildings, zone):
     return buildings
 
 
-def zone_helper(locator, config):
+def zone_helper(locator: cea.inputlocator.InputLocator, config):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
     :param locator:
@@ -492,8 +494,13 @@ def calculate_age(zone_df, year_construction):
     return zone_df
 
 
-def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_height, buildings_height_below_ground,
-                    fix_overlapping, include_building_parts, poly):
+def polygon_to_zone(buildings_floors: int, 
+                    buildings_floors_below_ground: int, 
+                    buildings_height: float, 
+                    buildings_height_below_ground: float,
+                    fix_overlapping: bool, 
+                    include_building_parts: bool, 
+                    poly: Gdf) -> Gdf:
 
     # get all footprints in the district tagged as 'building' or 'building:part' in OSM
     shapefile = osmnx.features_from_polygon(polygon=poly['geometry'].values[0], tags={"building": True})
