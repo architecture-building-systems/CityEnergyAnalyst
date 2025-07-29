@@ -13,10 +13,10 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: ebd87f213d0767536bba9fbe1ce0f57081dbf3e86aad446831ac7dfcb62885b0
-    osx-arm64: 6ac8976c103ebf36c90ddd094bb309a91a5d6c0873bbfa9ba3fd883c6b6c5f6e
-    osx-64: 83cb4fa42f4e0c696b866aefc2d78bc931d8e0a6793d18b6e0e35fbd6cd507ac
-    win-64: 2074ba68bc1ac6e6a69e0a6cd06e2fd4f67548cfeecfedd60a8f1d58b125b0ff
+    linux-64: e6af1c1047740c548db8620c12f7ddabc2ac3617a8ee8a0fcd16b2495b883567
+    osx-arm64: 00e22de6bf0a3800af1795544dccc38bc1dd0b718631ee2613874b3b7fffd02e
+    osx-64: 0ae8af9835fe30da246fcab91ee1b7c57a00904544f67513001e36ae45da1f80
+    win-64: 3ebf55e0ae521ab16a8699333d22195c0be32e34c3d683e3592fd7d4ed590128
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -7015,7 +7015,7 @@ package:
   category: main
   optional: false
 - name: ipykernel
-  version: 6.29.5
+  version: 6.30.0
   manager: conda
   platform: linux-64
   dependencies:
@@ -7023,20 +7023,20 @@ package:
     comm: '>=0.1.1'
     debugpy: '>=1.6.5'
     ipython: '>=7.23.1'
-    jupyter_client: '>=6.1.12'
+    jupyter_client: '>=8.0.0'
     jupyter_core: '>=4.12,!=5.0.*'
     matplotlib-inline: '>=0.1'
-    nest-asyncio: ''
-    packaging: ''
-    psutil: ''
-    python: '>=3.8'
-    pyzmq: '>=24'
-    tornado: '>=6.1'
+    nest-asyncio: '>=1.4'
+    packaging: '>=22'
+    psutil: '>=5.7'
+    python: '>=3.9'
+    pyzmq: '>=25'
+    tornado: '>=6.2'
     traitlets: '>=5.4.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/ipykernel-6.29.5-pyh3099207_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/ipykernel-6.30.0-pyh82676e8_0.conda
   hash:
-    md5: b40131ab6a36ac2c09b7c57d4d3fbf99
-    sha256: 33cfd339bb4efac56edf93474b37ddc049e08b1b4930cf036c893cc1f5a1f32a
+    md5: 4aeff93cd0cc9b39f82cc5df70c58a43
+    sha256: c49650d0af6dab125dfb8ca1593c24172ae640fa3298530704fe4151499d24b2
   category: main
   optional: false
 - name: ipykernel
@@ -7092,7 +7092,7 @@ package:
   category: main
   optional: false
 - name: ipykernel
-  version: 6.29.5
+  version: 6.30.0
   manager: conda
   platform: win-64
   dependencies:
@@ -7100,20 +7100,20 @@ package:
     comm: '>=0.1.1'
     debugpy: '>=1.6.5'
     ipython: '>=7.23.1'
-    jupyter_client: '>=6.1.12'
+    jupyter_client: '>=8.0.0'
     jupyter_core: '>=4.12,!=5.0.*'
     matplotlib-inline: '>=0.1'
-    nest-asyncio: ''
-    packaging: ''
-    psutil: ''
-    python: '>=3.8'
-    pyzmq: '>=24'
-    tornado: '>=6.1'
+    nest-asyncio: '>=1.4'
+    packaging: '>=22'
+    psutil: '>=5.7'
+    python: '>=3.9'
+    pyzmq: '>=25'
+    tornado: '>=6.2'
     traitlets: '>=5.4.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/ipykernel-6.29.5-pyh4bbf305_0.conda
+  url: https://conda.anaconda.org/conda-forge/noarch/ipykernel-6.30.0-pyh3521513_0.conda
   hash:
-    md5: 18df5fc4944a679e085e0e8f31775fc8
-    sha256: dc569094125127c0078aa536f78733f383dd7e09507277ef8bcd1789786e7086
+    md5: d22c697b8e00832675afbfdc335f2358
+    sha256: 8aba90dd3322a1d8a7f77eebedde434b7bcafb101a0b047e4f76bffbc858d613
   category: main
   optional: false
 - name: ipython
@@ -14340,71 +14340,71 @@ package:
   category: main
   optional: false
 - name: mapclassify
-  version: 2.5.0
+  version: 2.8.1
   manager: conda
   platform: linux-64
   dependencies:
-    networkx: ''
-    numpy: '>=1.3'
-    pandas: '>=1.0'
-    python: '>=3.6'
-    scikit-learn: ''
-    scipy: '>=1.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.5.0-pyhd8ed1ab_1.conda
+    networkx: '>=2.7'
+    numpy: '>=1.23'
+    pandas: '>=1.4,!=1.5.0'
+    python: '>=3.9'
+    scikit-learn: '>=1.0'
+    scipy: '>=1.8'
+  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.8.1-pyhd8ed1ab_1.conda
   hash:
-    md5: db1aeaff6e248db425e049feffded7a9
-    sha256: 78aadbd9953976678b6e3298ac26a63cf9390a8794db3ff71f3fe5b6d13a35ca
+    md5: c48bbb2bcc3f9f46741a7915d67e6839
+    sha256: c498a016b233be5a7defee443733a82d5fe41b83016ca8a136876a64fd15564b
   category: main
   optional: false
 - name: mapclassify
-  version: 2.5.0
+  version: 2.8.1
   manager: conda
   platform: osx-64
   dependencies:
-    networkx: ''
-    numpy: '>=1.3'
-    pandas: '>=1.0'
-    python: '>=3.6'
-    scikit-learn: ''
-    scipy: '>=1.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.5.0-pyhd8ed1ab_1.conda
+    networkx: '>=2.7'
+    numpy: '>=1.23'
+    pandas: '>=1.4,!=1.5.0'
+    python: '>=3.9'
+    scikit-learn: '>=1.0'
+    scipy: '>=1.8'
+  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.8.1-pyhd8ed1ab_1.conda
   hash:
-    md5: db1aeaff6e248db425e049feffded7a9
-    sha256: 78aadbd9953976678b6e3298ac26a63cf9390a8794db3ff71f3fe5b6d13a35ca
+    md5: c48bbb2bcc3f9f46741a7915d67e6839
+    sha256: c498a016b233be5a7defee443733a82d5fe41b83016ca8a136876a64fd15564b
   category: main
   optional: false
 - name: mapclassify
-  version: 2.5.0
+  version: 2.8.1
   manager: conda
   platform: osx-arm64
   dependencies:
-    networkx: ''
-    numpy: '>=1.3'
-    pandas: '>=1.0'
-    python: '>=3.6'
-    scikit-learn: ''
-    scipy: '>=1.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.5.0-pyhd8ed1ab_1.conda
+    networkx: '>=2.7'
+    numpy: '>=1.23'
+    pandas: '>=1.4,!=1.5.0'
+    python: '>=3.9'
+    scikit-learn: '>=1.0'
+    scipy: '>=1.8'
+  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.8.1-pyhd8ed1ab_1.conda
   hash:
-    md5: db1aeaff6e248db425e049feffded7a9
-    sha256: 78aadbd9953976678b6e3298ac26a63cf9390a8794db3ff71f3fe5b6d13a35ca
+    md5: c48bbb2bcc3f9f46741a7915d67e6839
+    sha256: c498a016b233be5a7defee443733a82d5fe41b83016ca8a136876a64fd15564b
   category: main
   optional: false
 - name: mapclassify
-  version: 2.5.0
+  version: 2.8.1
   manager: conda
   platform: win-64
   dependencies:
-    networkx: ''
-    numpy: '>=1.3'
-    pandas: '>=1.0'
-    python: '>=3.6'
-    scikit-learn: ''
-    scipy: '>=1.0'
-  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.5.0-pyhd8ed1ab_1.conda
+    networkx: '>=2.7'
+    numpy: '>=1.23'
+    pandas: '>=1.4,!=1.5.0'
+    python: '>=3.9'
+    scikit-learn: '>=1.0'
+    scipy: '>=1.8'
+  url: https://conda.anaconda.org/conda-forge/noarch/mapclassify-2.8.1-pyhd8ed1ab_1.conda
   hash:
-    md5: db1aeaff6e248db425e049feffded7a9
-    sha256: 78aadbd9953976678b6e3298ac26a63cf9390a8794db3ff71f3fe5b6d13a35ca
+    md5: c48bbb2bcc3f9f46741a7915d67e6839
+    sha256: c498a016b233be5a7defee443733a82d5fe41b83016ca8a136876a64fd15564b
   category: main
   optional: false
 - name: markupsafe
@@ -15520,59 +15520,51 @@ package:
   category: main
   optional: false
 - name: networkx
-  version: '2.5'
+  version: 3.4.2
   manager: conda
   platform: linux-64
   dependencies:
-    decorator: '>=4.3.0'
-    python: '>=3.6'
-    setuptools: ''
-  url: https://conda.anaconda.org/conda-forge/noarch/networkx-2.5-py_0.tar.bz2
+    python: ''
+  url: https://conda.anaconda.org/conda-forge/noarch/networkx-3.4.2-pyh267e887_2.conda
   hash:
-    md5: d836ad8453c22192357707026ca21653
-    sha256: 6ae468058e17bd36fceae0c6dde6ae504af201eea7afe11ddd4bf1c209a33e5d
+    md5: fd40bf7f7f4bc4b647dc8512053d9873
+    sha256: 39625cd0c9747fa5c46a9a90683b8997d8b9649881b3dc88336b13b7bdd60117
   category: main
   optional: false
 - name: networkx
-  version: '2.5'
+  version: 3.4.2
   manager: conda
   platform: osx-64
   dependencies:
-    decorator: '>=4.3.0'
-    python: '>=3.6'
-    setuptools: ''
-  url: https://conda.anaconda.org/conda-forge/noarch/networkx-2.5-py_0.tar.bz2
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/networkx-3.4.2-pyh267e887_2.conda
   hash:
-    md5: d836ad8453c22192357707026ca21653
-    sha256: 6ae468058e17bd36fceae0c6dde6ae504af201eea7afe11ddd4bf1c209a33e5d
+    md5: fd40bf7f7f4bc4b647dc8512053d9873
+    sha256: 39625cd0c9747fa5c46a9a90683b8997d8b9649881b3dc88336b13b7bdd60117
   category: main
   optional: false
 - name: networkx
-  version: '2.5'
+  version: 3.4.2
   manager: conda
   platform: osx-arm64
   dependencies:
-    decorator: '>=4.3.0'
-    python: '>=3.6'
-    setuptools: ''
-  url: https://conda.anaconda.org/conda-forge/noarch/networkx-2.5-py_0.tar.bz2
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/networkx-3.4.2-pyh267e887_2.conda
   hash:
-    md5: d836ad8453c22192357707026ca21653
-    sha256: 6ae468058e17bd36fceae0c6dde6ae504af201eea7afe11ddd4bf1c209a33e5d
+    md5: fd40bf7f7f4bc4b647dc8512053d9873
+    sha256: 39625cd0c9747fa5c46a9a90683b8997d8b9649881b3dc88336b13b7bdd60117
   category: main
   optional: false
 - name: networkx
-  version: '2.5'
+  version: 3.4.2
   manager: conda
   platform: win-64
   dependencies:
-    decorator: '>=4.3.0'
-    python: '>=3.6'
-    setuptools: ''
-  url: https://conda.anaconda.org/conda-forge/noarch/networkx-2.5-py_0.tar.bz2
+    python: '>=3.10'
+  url: https://conda.anaconda.org/conda-forge/noarch/networkx-3.4.2-pyh267e887_2.conda
   hash:
-    md5: d836ad8453c22192357707026ca21653
-    sha256: 6ae468058e17bd36fceae0c6dde6ae504af201eea7afe11ddd4bf1c209a33e5d
+    md5: fd40bf7f7f4bc4b647dc8512053d9873
+    sha256: 39625cd0c9747fa5c46a9a90683b8997d8b9649881b3dc88336b13b7bdd60117
   category: main
   optional: false
 - name: nlohmann_json
@@ -22191,11 +22183,11 @@ package:
   manager: conda
   platform: win-64
   dependencies:
-    vc14_runtime: '>=14.42.34433'
-  url: https://conda.anaconda.org/conda-forge/win-64/vc-14.3-h2b53caa_30.conda
+    vc14_runtime: '>=14.44.35208'
+  url: https://conda.anaconda.org/conda-forge/win-64/vc-14.3-h41ae7f8_31.conda
   hash:
-    md5: 76b6febe6dea7991df4c86f826f396c5
-    sha256: 8e16a8c3270d88735234a8097d45efea02b49751800c83b6fd5f2167a3828f52
+    md5: 28f4ca1e0337d0f27afb8602663c5723
+    sha256: cb357591d069a1e6cb74199a8a43a7e3611f72a6caed9faa49dbb3d7a0a98e0b
   category: main
   optional: false
 - name: vc14_runtime
@@ -22204,10 +22196,23 @@ package:
   platform: win-64
   dependencies:
     ucrt: '>=10.0.20348.0'
-  url: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.44.35208-h818238b_30.conda
+    vcomp14: 14.44.35208
+  url: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.44.35208-h818238b_31.conda
   hash:
-    md5: fa6802b52e903c42f882ecd67731e10a
-    sha256: 2958ef637509d69ea496b091dc579f1bf38687575b65744e73d157cfe56c9eca
+    md5: 603e41da40a765fd47995faa021da946
+    sha256: af4b4b354b87a9a8d05b8064ff1ea0b47083274f7c30b4eb96bc2312c9b5f08f
+  category: main
+  optional: false
+- name: vcomp14
+  version: 14.44.35208
+  manager: conda
+  platform: win-64
+  dependencies:
+    ucrt: '>=10.0.20348.0'
+  url: https://conda.anaconda.org/conda-forge/win-64/vcomp14-14.44.35208-h818238b_31.conda
+  hash:
+    md5: a6b1d5c1fc3cb89f88f7179ee6a9afe3
+    sha256: 67b317b64f47635415776718d25170a9a6f9a1218c0f5a6202bfd687e07b6ea4
   category: main
   optional: false
 - name: vs2015_runtime
@@ -22216,10 +22221,10 @@ package:
   platform: win-64
   dependencies:
     vc14_runtime: '>=14.44.35208'
-  url: https://conda.anaconda.org/conda-forge/win-64/vs2015_runtime-14.44.35208-h38c0c73_30.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/vs2015_runtime-14.44.35208-h38c0c73_31.conda
   hash:
-    md5: 1a877c8c882c297656e4bea2c0d55adc
-    sha256: 99785cef95465045eb10b4e72ae9c2c4e25626a676b859c51af01ab3b92e7ef0
+    md5: d75abcfbc522ccd98082a8c603fce34c
+    sha256: 8b20152d00e1153ccb1ed377a160110482f286a6d85a82b57ffcd60517d523a7
   category: main
   optional: false
 - name: vtk

@@ -9,7 +9,7 @@ dependencies:
 - numba
 - numpy
 - osmnx
-- networkx==2.5 # Ensure wntr results consistency first, steiner tree alogorithm was changed/fixed in 3.4
+- networkx
 - pip
 - psutil
 - pvlib
