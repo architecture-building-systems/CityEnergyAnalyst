@@ -412,19 +412,19 @@ def plot_faceted_bars(
                 color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
-                fig.add_trace(
-                    go.Bar(
-                        x=facet_df[x_col],
-                        y=facet_df[val_col],
-                        name=heading,
-                        offsetgroup=j,
-                        legendgroup=heading,
-                        showlegend=(i == 0),
-                        marker=dict(color=bar_color)
-                    ),
-                    row=row,
-                    col=col
-                )
+                # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
+                bar_params = {
+                    'x': facet_df[x_col],
+                    'y': facet_df[val_col],
+                    'name': heading,
+                    'legendgroup': heading,
+                    'showlegend': (i == 0),
+                    'marker': dict(color=bar_color)
+                }
+                if barmode == 'group':
+                    bar_params['offsetgroup'] = j
+                
+                fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
         # Set subplot vertical domains
         available_height = 0.80
@@ -478,16 +478,18 @@ def plot_faceted_bars(
             color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
             bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
-            fig.add_trace(
-                go.Bar(
-                    x=df[x_col],
-                    y=df[val_col],
-                    name=heading,
-                    offsetgroup=j,
-                    legendgroup=heading,
-                    marker=dict(color=bar_color)
-                )
-            )
+            # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
+            bar_params = {
+                'x': df[x_col],
+                'y': df[val_col],
+                'name': heading,
+                'legendgroup': heading,
+                'marker': dict(color=bar_color)
+            }
+            if barmode == 'group':
+                bar_params['offsetgroup'] = j
+            
+            fig.add_trace(go.Bar(**bar_params))
 
         fig.update_layout(yaxis=dict(domain=[0.02, 0.82]))
 
@@ -509,6 +511,7 @@ def plot_faceted_bars(
 
     if y_step is not None:
         fig.update_yaxes(dtick=y_step)
+
 
     return fig
 
@@ -538,7 +541,6 @@ def parse_plot_type(plot_type_str):
     return None, None  # Not recognized
 
 
-
 # Main function
 def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list):
 
@@ -550,7 +552,7 @@ def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns,
         fig = plot_instance_c.generate_fig()
 
         # Format the Plotly figure
-        fig = plot_instance_c.fig_format(fig)
+        fig = plot_instance_c.fig_format(fig, plot_cea_feature)
 
         return fig
 
