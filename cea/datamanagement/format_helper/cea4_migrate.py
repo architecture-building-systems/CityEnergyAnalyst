@@ -35,7 +35,7 @@ COLUMNS_AIR_CONDITIONING_3 = ['Name',
                               'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent',
                               'heat_starts', 'heat_ends', 'cool_starts', 'cool_ends']
 COLUMNS_ARCHITECTURE_3 = ['Name',
-                          'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+                          'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                           'type_cons', 'type_leak', 'type_floor', 'type_part', 'type_base', 'type_roof', 'type_wall',
                           'type_win', 'type_shade']
 COLUMNS_INDOOR_COMFORT_3 = ['Name',
@@ -60,7 +60,6 @@ columns_mapping_dict_envelope = {'Hs_ag': 'Hs',
                                  'Hs_bg': 'occupied_bg',
                                  'Ns': 'Ns',
                                  'Es': 'Es',
-                                 'void_deck': 'void_deck',
                                  'wwr_north': 'wwr_north',
                                  'wwr_south': 'wwr_south',
                                  'wwr_east': 'wwr_east',
@@ -526,6 +525,7 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                         typology_df.rename(columns=columns_mapping_dict_typology, inplace=True)
                         zone_df_4 = pd.merge(zone_df_3, typology_df, left_on=['name'], right_on=["Name"], how='left')
                         zone_df_4.drop(columns=['Name'], inplace=True)
+                        zone_df_4['void_deck'] = 0
                         zone_df_4 = zone_df_4[COLUMNS_ZONE_4]
                         replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
                         if verbose:
