@@ -4,20 +4,20 @@ channels:
 dependencies:
 - cvxopt # For wntr
 - fiona
-- geopandas=0.13 # Due to python3.8 support
+- geopandas
 - libpysal
-- numba=0.58 # Due to python3.8 support
-- numpy=1.24 # Due to python3.8 support
-- osmnx=1.9.4 # Due to python3.8 support
-- networkx=2.5 # Due to python3.8 support and wntr
+- numba
+- numpy
+- osmnx
+- networkx
 - pip
 - psutil
 - pvlib
-- python=3.8 # Held back by wntr version
+- python=3.10
 - pythonocc-core==7.7.0 # Avoid deprecation warnings
 - pyyaml
 - scikit-learn
-- scipy=1.10 # Due to python3.8 support
+- scipy
 - shapely=2
 - matplotlib
 - notebook
@@ -50,5 +50,5 @@ dependencies:
   - utm
   - xlrd
   - xlwt
-  - wntr==0.2.3
+  - wntr # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
   - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions
