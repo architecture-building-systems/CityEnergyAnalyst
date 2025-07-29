@@ -93,31 +93,97 @@ class data_processor:
 
         return sorting_key
 
-    def process_demand_data(self):
-        y_cea_metric_map = {
-            'grid_electricity_consumption': 'GRID_kWh',
-            'enduse_electricity_demand': 'E_sys_kWh',
-            'enduse_cooling_demand': 'QC_sys_kWh',
-            'enduse_space_cooling_demand': 'Qcs_sys_kWh',
-            'enduse_heating_demand': 'QH_sys_kWh',
-            'enduse_space_heating_demand': 'Qhs_sys_kWh',
-            'enduse_dhw_demand': 'Qww_kWh'
-        }
 
-        # Get the list of columns to plot
-        list_columns = [y_cea_metric_map[key] for key in self.y_metric_to_plot if key in y_cea_metric_map]
+    def process_data(self, plot_cea_feature):
+        if plot_cea_feature == 'demand':
+            y_cea_metric_map = {
+                'grid_electricity_consumption': 'GRID_kWh',
+                'enduse_electricity_demand': 'E_sys_kWh',
+                'enduse_cooling_demand': 'QC_sys_kWh',
+                'enduse_space_cooling_demand': 'Qcs_sys_kWh',
+                'enduse_heating_demand': 'QH_sys_kWh',
+                'enduse_space_heating_demand': 'Qhs_sys_kWh',
+                'enduse_dhw_demand': 'Qww_kWh',
+            }
 
-        # slice the data frame to only keep the useful columns for Y-axis
+        elif plot_cea_feature == 'pv':
+            y_cea_metric_map = {
+                'total': ['E_PV_gen_kWh', 'area_PV_m2'],
+                'roof': ['PV_roofs_top_E_kWh', 'PV_roofs_top_m2'],
+                'wall_north': ['PV_walls_north_E_kWh', 'PV_walls_north_m2'],
+                'wall_east': ['PV_walls_east_E_kWh', 'PV_walls_east_m2'],
+                'wall_south': ['PV_walls_south_E_kWh', 'PV_walls_south_m2'],
+                'wall_west': ['PV_walls_west_E_kWh', 'PV_walls_west_m2'],
+            }
+
+        elif plot_cea_feature == 'pvt':
+            if 'ET' in self.appendix:
+                y_cea_metric_map = {
+                    'total': ['E_PVT_gen_kWh', 'Q_PVT_gen_kWh', 'area_PVT_m2'],
+                    'roof': ['PVT_ET_roofs_top_E_kWh', 'PVT_ET_roofs_top_Q_kWh', 'PVT_ET_roofs_top_m2'],
+                    'wall_north': ['PVT_ET_walls_north_E_kWh', 'PVT_ET_walls_north_Q_kWh', 'PVT_ET_walls_north_m2'],
+                    'wall_east': ['PVT_ET_walls_east_E_kWh', 'PVT_ET_walls_east_Q_kWh', 'PVT_ET_walls_east_m2'],
+                    'wall_south': ['PVT_ET_walls_south_E_kWh', 'PVT_ET_walls_south_Q_kWh', 'PVT_ET_walls_south_m2'],
+                    'wall_west': ['PVT_ET_walls_west_E_kWh', 'PVT_ET_walls_west_Q_kWh', 'PVT_ET_walls_west_m2'],
+                }
+            elif 'FP' in self.appendix:
+                y_cea_metric_map = {
+                    'total': ['E_PVT_gen_kWh', 'Q_PVT_gen_kWh', 'area_PVT_m2'],
+                    'roof': ['PVT_FP_roofs_top_E_kWh', 'PVT_FP_roofs_top_Q_kWh', 'PVT_FP_roofs_top_m2'],
+                    'wall_north': ['PVT_FP_walls_north_E_kWh', 'PVT_FP_walls_north_Q_kWh', 'PVT_FP_walls_north_m2'],
+                    'wall_east': ['PVT_FP_walls_east_E_kWh', 'PVT_FP_walls_east_Q_kWh', 'PVT_FP_walls_east_m2'],
+                    'wall_south': ['PVT_FP_walls_south_E_kWh', 'PVT_FP_walls_south_Q_kWh', 'PVT_FP_walls_south_m2'],
+                    'wall_west': ['PVT_FP_walls_west_E_kWh', 'PVT_FP_walls_west_Q_kWh', 'PVT_FP_walls_west_m2'],
+                }
+            else:
+                raise ValueError(f"Invalid PVT collector type in appendix: {self.appendix}")
+
+        elif plot_cea_feature == 'sc':
+            if 'ET' in self.appendix:
+                y_cea_metric_map = {
+                    'total': ['Q_SC_gen_kWh', 'area_SC_m2'],
+                    'roof': ['SC_ET_roofs_top_Q_kWh', 'SC_ET_roofs_top_m2'],
+                    'wall_north': ['SC_ET_walls_north_Q_kWh', 'SC_ET_walls_north_m2'],
+                    'wall_east': ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_east_m2'],
+                    'wall_south': ['SC_ET_walls_south_Q_kWh', 'SC_ET_walls_south_m2'],
+                    'wall_west': ['SC_ET_walls_west_Q_kWh', 'SC_ET_walls_west_m2'],
+                }
+            elif 'FP' in self.appendix:
+                y_cea_metric_map = {
+                    'total': ['Q_SC_gen_kWh', 'area_SC_m2'],
+                    'roof': ['SC_FP_roofs_top_Q_kWh', 'SC_FP_roofs_top_m2'],
+                    'wall_north': ['SC_FP_walls_north_Q_kWh', 'SC_FP_walls_north_m2'],
+                    'wall_east': ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_east_m2'],
+                    'wall_south': ['SC_FP_walls_south_Q_kWh', 'SC_FP_walls_south_m2'],
+                    'wall_west': ['SC_FP_walls_west_Q_kWh', 'SC_FP_walls_west_m2'],
+                }
+            else:
+                raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
+
+        else:
+            raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
+
+        # Flatten metric list and remove any invalid entries
+        list_columns = []
+        for key in self.y_metric_to_plot:
+            if key not in y_cea_metric_map:
+                print(f"⚠️ Warning: '{key}' not found in metric map for {plot_cea_feature}. Skipped.")
+                continue
+            val = y_cea_metric_map[key]
+            list_columns.extend(val if isinstance(val, list) else [val])
+
+        # Select proper index
         if self.x_to_plot == 'by_building':
             df_y_metrics = self.df_summary_data.set_index('name')[list_columns]
         elif self.x_to_plot == 'by_period':
             df_y_metrics = self.df_summary_data.set_index('period')[list_columns]
         else:
-            raise ValueError(f"Invalid x-to-plot: {self.x_to_plot}")
+            raise ValueError(f"Invalid x_to_plot: {self.x_to_plot}")
+
         return df_y_metrics, list_columns
 
 
-def normalize_dataframe_by_index(dataframe_A, dataframe_B):
+def normalise_dataframe_by_index(dataframe_A, dataframe_B):
     """
     Normalize each column in dataframe_A by the corresponding value in dataframe_B based on index matching.
 
@@ -204,31 +270,54 @@ def convert_energy_units(dataframe, target_unit, normalised=False):
     return df
 
 
-def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architecture_data):
+def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architecture_data, plot_cea_feature):
     """
-    Generate a Plotly-ready DataFrame based on a plot_instance configuration.
+    Generate a Plotly-ready DataFrame based on user-defined configuration.
 
     Parameters:
-        plot_instance: An object containing plotting config and methods.
-        df_summary_data (pd.DataFrame): DataFrame of aggregated demand results.
-        df_architecture_data (pd.DataFrame): DataFrame of architecture/building metadata.
+    ----------
+    plot_instance : object
+        Configuration and logic object containing plotting parameters and methods.
+    df_summary_data : pd.DataFrame
+        Aggregated demand or generation results.
+    df_architecture_data : pd.DataFrame
+        Metadata for buildings (e.g., use type, construction year).
+    plot_cea_feature : str
+        Feature to be plotted: 'demand', 'pv', 'pvt', or 'sc'.
 
     Returns:
-        pd.DataFrame: A normalized, unit-converted dataframe ready for Plotly visualization.
+    -------
+    pd.DataFrame : A processed DataFrame ready for Plotly visualization.
+    list : List of column names used for plotting Y-values.
     """
-    # Process normaliser and demand data
+    # Step 1: Prepare normaliser and raw Y-axis metrics
     normaliser_m2 = plot_instance.process_architecture_data()
-    df_y_metrics, list_y_columns = plot_instance.process_demand_data()
+    df_y_metrics, list_y_columns = plot_instance.process_data(plot_cea_feature)
 
+    # Step 2: Handle "by_building" mode
     if plot_instance.x_to_plot == 'by_building':
-        # Normalize Y
-        df_to_plotly = normalize_dataframe_by_index(df_y_metrics, normaliser_m2)
+        if plot_cea_feature == 'demand':
+            df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
-        # Set X
-        df_to_plotly = df_to_plotly.reset_index(drop=False)
-        df_to_plotly = df_to_plotly.rename(columns={'name': 'X'})
+        elif plot_cea_feature in ('pv', 'pvt', 'sc'):
+            if plot_instance.y_normalised_by == 'no_normalisation':
+                df_to_plotly = remove_m2_columns(df_y_metrics)
 
-        # Set X_facet
+            elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+                df_to_plotly = normalise_dataframe_columns_by_m2_columns(df_y_metrics)
+
+            elif plot_instance.y_normalised_by == 'gross_floor_area':
+                df_to_plotly = remove_m2_columns(df_y_metrics)
+                df_to_plotly = normalise_dataframe_by_index(df_to_plotly, normaliser_m2)
+
+            else:
+                raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
+        else:
+            raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}")
+
+        # Assign X-axis and facet values
+        df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'name': 'X'})
+
         if plot_instance.x_facet in ['months', 'seasons']:
             df_to_plotly['X_facet'] = df_summary_data['period']
         elif plot_instance.x_facet == 'construction_type':
@@ -238,42 +327,45 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         elif plot_instance.x_facet is not None:
             raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
 
+    # Step 3: Handle "by_period" mode
     elif plot_instance.x_to_plot == 'by_period':
-        # Normalize Y
         if plot_instance.y_normalised_by == 'no_normalisation':
-            df_to_plotly = df_y_metrics
+            df_to_plotly = remove_m2_columns(df_y_metrics) if plot_cea_feature in ('pv', 'pvt', 'sc') else df_y_metrics
+
+        elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+            if plot_cea_feature in ('pv', 'pvt', 'sc'):
+                df_to_plotly = normalise_dataframe_columns_by_m2_columns(df_y_metrics)
+            else:
+                raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}")
+
         else:
-            normaliser_m2_sum = normaliser_m2.iloc[:, 0].sum()
-            df_to_plotly = df_y_metrics / normaliser_m2_sum
+            total_district_floor_area = normaliser_m2.iloc[:, 0].sum()
+            df_to_plotly = df_y_metrics / total_district_floor_area
 
-        # Set X
-        df_to_plotly = df_to_plotly.reset_index(drop=False)
-        df_to_plotly = df_to_plotly.rename(columns={'period': 'X'})
+        # Assign X-axis and facet values
+        df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'period': 'X'})
 
-        # Set X_facet
         if plot_instance.x_facet in ['months', 'seasons']:
             df_to_plotly = calc_x_facet(df_to_plotly, plot_instance.x_facet)
         elif plot_instance.x_facet is not None:
             raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
 
     else:
-        raise ValueError(f"Invalid x-to-plot: {plot_instance.x_to_plot}")
+        raise ValueError(f"Invalid x_to_plot: {plot_instance.x_to_plot}")
 
-    # Clean up
+    # Step 4: Final cleanup
     df_to_plotly = df_to_plotly.reset_index(drop=True)
 
-    # Convert energy units
+    # Step 5: Unit conversion
     if plot_instance.y_normalised_by == 'no_normalisation':
         df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
     elif plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area']:
         df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
     else:
-        raise ValueError(f"Invalid y-normalised-by: {plot_instance.y_normalised_by}")
+        raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
 
-    # Sort X-axis
-
+    # (Optional future step) Sort or format X axis if needed
     return df_to_plotly, list_y_columns
-
 
 def sort_df_by_sorting_key(df_1, df_2, descending=False):
     # Copy to avoid mutating original data
@@ -295,6 +387,18 @@ def sort_df_by_sorting_key(df_1, df_2, descending=False):
     df_2_sorted = df_2_sorted.drop(columns=['_sorting_key'])
 
     return df_2_sorted
+
+def remove_m2_columns(df):
+    """
+    Remove all columns that end with '_m2' from the given DataFrame.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+    - pd.DataFrame: A new DataFrame without '_m2' columns.
+    """
+    return df[[col for col in df.columns if not col.endswith('_m2')]]
 
 
 def calc_x_facet(df_to_plotly, facet_by):
@@ -331,12 +435,72 @@ def calc_x_facet(df_to_plotly, facet_by):
     return df_to_plotly
 
 
+def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
+    """
+    Normalize metric columns in the dataframe by their corresponding m2 columns and drop the m2 columns.
+
+    Parameters:
+    - df_y_metrics (pd.DataFrame): Input dataframe with area and metric columns.
+
+    Returns:
+    - pd.DataFrame: Normalized dataframe.
+    """
+    mapping = {
+        'area_PV_m2': 'E_PV_gen_kWh',
+        'PV_roofs_top_m2': 'PV_roofs_top_E_kWh',
+        'PV_walls_north_m2': 'PV_walls_north_E_kWh',
+        'PV_walls_east_m2': 'PV_walls_east_E_kWh',
+        'PV_walls_south_m2': 'PV_walls_south_E_kWh',
+        'PV_walls_west_m2': 'PV_walls_west_E_kWh',
+        'area_PVT_m2': ['E_PVT_gen_kWh', 'Q_PVT_gen_kWh'],
+        'PVT_ET_roofs_top_m2': ['PVT_ET_roofs_top_E_kWh', 'PVT_ET_roofs_top_Q_kWh'],
+        'PVT_ET_walls_north_m2': ['PVT_ET_walls_north_E_kWh', 'PVT_ET_walls_north_Q_kWh'],
+        'PVT_ET_walls_east_m2': ['PVT_ET_walls_east_E_kWh', 'PVT_ET_walls_east_Q_kWh'],
+        'PVT_ET_walls_south_m2': ['PVT_ET_walls_south_E_kWh', 'PVT_ET_walls_south_Q_kWh'],
+        'PVT_ET_walls_west_m2': ['PVT_ET_walls_west_E_kWh', 'PVT_ET_walls_west_Q_kWh'],
+        'PVT_FP_roofs_top_m2': ['PVT_FP_roofs_top_E_kWh', 'PVT_FP_roofs_top_Q_kWh'],
+        'PVT_FP_walls_north_m2': ['PVT_FP_walls_north_E_kWh', 'PVT_FP_walls_north_Q_kWh'],
+        'PVT_FP_walls_east_m2': ['PVT_FP_walls_east_E_kWh', 'PVT_FP_walls_east_Q_kWh'],
+        'PVT_FP_walls_south_m2': ['PVT_FP_walls_south_E_kWh', 'PVT_FP_walls_south_Q_kWh'],
+        'PVT_FP_walls_west_m2': ['PVT_FP_walls_west_E_kWh', 'PVT_FP_walls_west_Q_kWh'],
+        'area_SC_m2': 'Q_SC_gen_kWh',
+        'SC_ET_roofs_top_m2': 'SC_ET_roofs_top_Q_kWh',
+        'SC_ET_walls_north_m2': 'SC_ET_walls_north_Q_kWh',
+        'SC_ET_walls_east_m2': 'SC_ET_walls_east_Q_kWh',
+        'SC_ET_walls_south_m2': 'SC_ET_walls_south_Q_kWh',
+        'SC_ET_walls_west_m2': 'SC_ET_walls_west_Q_kWh',
+        'SC_FP_roofs_top_m2': 'SC_FP_roofs_top_Q_kWh',
+        'SC_FP_walls_north_m2': 'SC_FP_walls_north_Q_kWh',
+        'SC_FP_walls_east_m2': 'SC_FP_walls_east_Q_kWh',
+        'SC_FP_walls_south_m2': 'SC_FP_walls_south_Q_kWh',
+        'SC_FP_walls_west_m2': 'SC_FP_walls_west_Q_kWh',
+    }
+
+    df = df_y_metrics.copy()
+
+    for area_col, metrics in mapping.items():
+        if area_col not in df.columns:
+            continue
+
+        if isinstance(metrics, str):
+            metrics = [metrics]
+
+        for metric in metrics:
+            if metric in df.columns:
+                df[metric] = df[metric] / df[area_col]
+
+    # Drop all *_m2 columns
+    df.drop(columns=[col for col in df.columns if col.endswith('_m2')], inplace=True)
+
+    return df
+
+
 # Main function
 def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
     plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
     if plot_cea_feature == "demand":
-        df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data)
+        df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:
             df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
