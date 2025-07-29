@@ -55,8 +55,8 @@ dict_plot_metrics_cea_feature = {
     'solar_irradiation': 'solar_irradiation',
     'demand': 'demand',
     'pv': 'pv',
-    'pvt_et': 'pvt',
-    'pvt_fp': 'pvt',
+    'pvt_ET': 'pvt',
+    'pvt_FP': 'pvt',
     'sc_et': 'sc',
     'sc_fp': 'sc',
     'other_renewables': 'other_renewables',
@@ -214,7 +214,7 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
-    if cea_feature == 'pvt_et':
+    if cea_feature == 'pvt_ET':
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type, sc_panel_type in itertools.product(list_panel_type, ['ET']):
@@ -225,7 +225,7 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
-    if cea_feature == 'pvt_fp':
+    if cea_feature == 'pvt_FP':
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type, sc_panel_type in itertools.product(list_panel_type, ['FP']):
@@ -313,13 +313,13 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
                'PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
-        "pvt_et": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
+        "pvt_ET": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
                     'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
                     'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
                     'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]',
                     'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]',
                     'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]'],
-        "pvt_fp": ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]',
+        "pvt_FP": ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]',
                     'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]',
                     'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]',
                     'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]',

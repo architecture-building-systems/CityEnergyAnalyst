@@ -45,7 +45,21 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature: str, hour_start=0, hour_end=8759):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_list: list, hour_start=0, hour_end=8759):
+    # Get the cea feature name
+    plot_cea_feature = plot_cea_feature_list[0]
+
+    if len(plot_cea_feature_list) > 1 and plot_cea_feature in ('pv', 'pvt', 'sc'):
+        solar_panel_types_list = plot_cea_feature_list[2:]
+        if len(solar_panel_types_list) == 0:
+            raise CEAException(
+                f"Missing plot_cea_feature_solar_panel_types: {plot_cea_feature}. "
+                f"Ensure that it is selected"
+            )
+        plot_cea_feature = 'solar'
+    else:
+        solar_panel_types_list = []
+
     # Find the plot config section for the cea feature
     try:
         plot_config_general = config.plots_general
@@ -55,11 +69,12 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature: 
 
     # Activate a_data_loader
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature,
-                                                                                hour_start, hour_end)
-
+                                                                                hour_start, hour_end,
+                                                                                solar_panel_types_list)
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data,
-                                                   df_architecture_data)
+                                                   df_architecture_data,
+                                                   solar_panel_types_list)
 
     # Activate c_plotter
     fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns)
@@ -70,12 +85,14 @@ def main(config):
     scenario = config.scenario
 
     # plot_cea_feature = get_plot_cea_feature(config)
-    # fig = plot_all(config, scenario, plot_cea_feature)
-    fig = plot_all(config, scenario, 'demand')
+    plot_cea_feature = ['demand']   #todo: from front-end
+    hour_start = 0      #todo: from front-end
+    hour_end = 8759     #todo: from front-end
+    fig = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    if sys.stdout.isatty():
-        fig.show(renderer="browser")
+    fig.show(renderer="browser")
+
     return plot_html
 
 
