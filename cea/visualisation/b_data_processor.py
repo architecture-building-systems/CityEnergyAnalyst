@@ -16,12 +16,12 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-demand_x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
+x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
 
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data):
+    def __init__(self, plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plot_config_general.buildings
@@ -37,7 +37,16 @@ class data_processor:
         self.list_construction_type = plot_config_general.filter_buildings_by_construction_type
         self.list_use_type = plot_config_general.filter_buildings_by_use_type
         self.min_ratio_as_main_use = plot_config_general.min_ratio_as_main_use
-        self.appendix = plot_cea_feature if plot_cea_feature == "demand" else "default"
+
+        if plot_cea_feature in ('pv', 'sc'):
+            self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}"
+        elif plot_cea_feature == 'pvt':
+            if len(solar_panel_types_list) == 2:
+                self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}_{solar_panel_types_list[1]}"
+            else:
+                raise ValueError("PVT requires two solar panel types.")
+        else:
+            self.appendix = plot_cea_feature
 
     def process_architecture_data(self):
         if self.y_normalised_by == 'gross_floor_area':
@@ -60,6 +69,7 @@ class data_processor:
         normaliser_m2 = normaliser_m2[['normaliser_m2']]
 
         return normaliser_m2
+
     def process_sorting_key(self):
         if self.x_sorted_by == 'default':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
@@ -322,13 +332,13 @@ def calc_x_facet(df_to_plotly, facet_by):
 
 
 # Main function
-def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data):
-    plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data)
+def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
     if plot_cea_feature == "demand":
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data)
 
-        if plot_instance_b.x_to_plot in demand_x_to_plot_building:
+        if plot_instance_b.x_to_plot in x_to_plot_building:
             df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
 
     else:

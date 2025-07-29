@@ -57,8 +57,8 @@ dict_plot_metrics_cea_feature = {
     'pv': 'pv',
     'pvt_ET': 'pvt',
     'pvt_FP': 'pvt',
-    'sc_et': 'sc',
-    'sc_fp': 'sc',
+    'sc_ET': 'sc',
+    'sc_FP': 'sc',
     'other_renewables': 'other_renewables',
     'dh': 'dh',
     'dc': 'dc',
@@ -236,7 +236,7 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(pv_paths)
             list_appendix.append(f"{cea_feature}_{panel_type}")
 
-    if cea_feature == 'sc_et':
+    if cea_feature == 'sc_ET':
         for sc_panel_type in ['ET']:
             sc_paths = []
             for building in list_buildings:
@@ -245,7 +245,7 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(sc_paths)
             list_appendix.append(f"{cea_feature}_{sc_panel_type}")
 
-    if cea_feature == 'sc_fp':
+    if cea_feature == 'sc_FP':
         for sc_panel_type in ['FP']:
             sc_paths = []
             for building in list_buildings:
@@ -325,13 +325,13 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                     'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]',
                     'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]',
                     'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]'],
-        "sc_et": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
+        "sc_ET": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
                   'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
                   'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
                   'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]',
                   'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]',
                   'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]'],
-        "sc_fp": ['SC_FP_installed_area_total[m2]', 'SC_FP_heat_total[kWh]',
+        "sc_FP": ['SC_FP_installed_area_total[m2]', 'SC_FP_heat_total[kWh]',
                   'SC_FP_installed_area_roof[m2]', 'SC_FP_heat_roof[kWh]',
                   'SC_FP_installed_area_north[m2]', 'SC_FP_heat_north[kWh]',
                   'SC_FP_installed_area_south[m2]', 'SC_FP_heat_south[kWh]',

@@ -80,6 +80,8 @@ class csv_pointer:
                 self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}_{solar_panel_types_list[1]}"
             else:
                 raise ValueError("PVT requires two solar panel types.")
+        else:
+            self.appendix = plot_cea_feature
 
         self.bool_aggregate_by_building = self.x == "by_building"
 

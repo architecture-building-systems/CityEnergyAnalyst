@@ -4,7 +4,7 @@ PlotManager – Generates the Plotly graph
 """
 
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
-from cea.visualisation.b_data_processor import demand_x_to_plot_building
+from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
 from math import ceil
 import plotly.graph_objects as go
@@ -146,9 +146,9 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode
-        if self.x_to_plot in demand_x_to_plot_building and not self.x_sorted_reversed:
+        if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
             title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
-        elif self.x_to_plot in demand_x_to_plot_building and self.x_sorted_reversed:
+        elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
             title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
         else:
             title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
