@@ -4,6 +4,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 """
 
 import pandas as pd
+import numpy as np
 from cea.import_export.result_summary import month_names, month_hours, season_mapping
 
 
