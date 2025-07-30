@@ -8,6 +8,7 @@ import osmnx
 import networkx.exception
 import numpy as np
 import pandas as pd
+from packaging import version
 
 import cea.config
 import cea.inputlocator
@@ -133,7 +134,7 @@ def geometry_extractor_osm(locator, config):
     # Get and clean the streets
     try:
         # Ensure backward compatibility with OSMnx versions
-        if osmnx.__version__.startswith('2'):
+        if version.parse(osmnx.__version__) >= version.parse("2.0.0"):
             # OSMnx expects bbox as (left, bottom, right, top)
             # So we need: (min_lon, min_lat, max_lon, max_lat)
             bbox = (min_lon, min_lat, max_lon, max_lat)
