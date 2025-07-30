@@ -45,7 +45,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False):
     # Extract parameters from dictionary
     plot_cea_feature = plot_dict['feature']
     solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
@@ -92,7 +92,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict):
                                                    solar_panel_types_list)
     
     # Activate c_plotter
-    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list)
+    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
     
     # Use 16:9 landscape aspect ratio for professional presentation
     plot_width = 1600
@@ -114,7 +114,7 @@ def main(config):
         'hour_end': 8759
     }
     
-    fig = plot_all(config, scenario, plot_dict)
+    fig = plot_all(config, scenario, plot_dict, hide_title=False)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
     fig.show(renderer="browser")

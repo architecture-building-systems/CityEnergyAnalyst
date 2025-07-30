@@ -74,11 +74,12 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
         self.plot_cea_feature = plot_cea_feature
+        self.hide_title = hide_title
 
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
@@ -278,24 +279,28 @@ class bar_plot:
         else:
             barmode = self.y_barmode
 
-        # About title and bar mode
-        if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
-            title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
-        elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
-            title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
+        # About title and bar mode - hide title if requested
+        if not self.hide_title:
+            if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
+                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
+            elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
+                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
+            else:
+                title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
+            fig.update_layout(
+                title=dict(
+                    text=title,
+                    x=0,
+                    y=0.98,
+                    xanchor='left',
+                    yanchor='top',
+                    font=dict(size=20)  # Optional: adjust size, color, etc.
+                ),
+                barmode=barmode
+            )
         else:
-            title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
-        fig.update_layout(
-            title=dict(
-                text=title,
-                x=0,
-                y=0.98,
-                xanchor='left',
-                yanchor='top',
-                font=dict(size=20)  # Optional: adjust size, color, etc.
-            ),
-            barmode=barmode
-        )
+            # Hide title but keep barmode
+            fig.update_layout(barmode=barmode)
 
         # About background color
         fig.update_layout(
@@ -356,7 +361,7 @@ def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=1.02,  # Slightly below the top of the whole layout
+            y=0.92,  # Position legend closer to the plot with small gap
             xanchor="left",
             x=0
         )
@@ -615,11 +620,11 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
 
      if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
-        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list)
+        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()
