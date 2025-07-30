@@ -44,7 +44,7 @@ dependencies = [
     "wntr>=1.3.2,<2", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
 
     # modified p4design to remove deprecated functions
-    "py4design @ git+https://github.com/reyery/py4design.git@08326122ee496afbf762527365d88415f4b570f5?rev_type=rev",
+    "py4design @ git+https://github.com/reyery/py4design.git@08326122ee496afbf762527365d88415f4b570f5",
 ]
 
 [project.optional-dependencies]
@@ -88,7 +88,7 @@ server = "cea dashboard"
 test = "cea test --type integration"
 
 [tool.pixi.dependencies]
-cvxopt = "*"
+cvxopt = "*" # For wntr
 fiona = "*"
 gdal = "*"
 geopandas = "*"
@@ -96,7 +96,7 @@ libpysal = "*"
 numba = "*"
 numpy = "<2" # held back by wntr
 osmnx = "*"
-networkx = ">=3.4"
+networkx = ">=3.4" # 3.4 contains a fix for steiner tree algorithm
 psutil = "*"
 pvlib = "*"
 pythonocc-core = "*"
