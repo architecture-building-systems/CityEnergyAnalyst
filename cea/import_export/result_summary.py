@@ -1704,9 +1704,15 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             return None
 
         # Merge df_pv and df_demand
-        if bool_use_acronym:
-            df_demand['grid_electricity_consumption[kWh]'] = df_demand['GRID_kWh']
-        df = pd.concat([df_pv, df_demand['grid_electricity_consumption[kWh]']], axis=1)   # Concatenate the DataFrames horizontally
+        # Check what columns are actually available and adapt accordingly
+        if 'GRID_kWh' in df_demand.columns:
+            demand_column = 'GRID_kWh'
+        elif 'grid_electricity_consumption[kWh]' in df_demand.columns:
+            demand_column = 'grid_electricity_consumption[kWh]'
+        else:
+            raise ValueError(f"Neither 'GRID_kWh' nor 'grid_electricity_consumption[kWh]' found in df_demand columns: {list(df_demand.columns)}")
+        
+        df = pd.concat([df_pv, df_demand[demand_column]], axis=1)   # Concatenate the DataFrames horizontally
         df = df.loc[:, ~df.columns.duplicated()]    # Remove duplicate columns, keeping the first occurrence
 
         # Remove 'PV_' in the strings of PV analytics
@@ -1744,21 +1750,21 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
         # Process columns based on their naming
         for col in df.columns:
-            if col in [date_column, 'grid_electricity_consumption[kWh]', 'period', 'period_hour']:
+            if col in [date_column, demand_column, 'period', 'period_hour']:
                 continue
             else:
                 for pv_analytic in list_analytics:
                     col_new = replace_kwh_with_pv_analytic(col, pv_analytic)
                     if pv_analytic == 'solar_energy_penetration[-]':
-                        pv_analytic_df = calc_solar_energy_penetration_by_period(df, col)
+                        pv_analytic_df = calc_solar_energy_penetration_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
                     elif pv_analytic == 'self_consumption[-]':
-                        pv_analytic_df = calc_self_consumption_by_period(df, col)
+                        pv_analytic_df = calc_self_consumption_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
                     elif pv_analytic == 'self_sufficiency[-]':
-                        pv_analytic_df = calc_self_sufficiency_by_period(df, col)
+                        pv_analytic_df = calc_self_sufficiency_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
 
@@ -1871,7 +1877,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                 df_pv_cleaned = df_pv.drop(columns=[col for col in columns_to_drop if col in df_pv.columns], errors='ignore')
 
                 if 'monthly' in list_selected_time_period:
-                    df_monthly = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'monthly', list_pv_analytics, not bool_use_acronym, date_column='date')
+                    df_monthly = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'monthly', list_pv_analytics, bool_use_acronym, date_column='date')
                     if df_monthly is not None and not df_monthly.empty:
                         df_monthly = df_monthly[~(df_monthly['hour_start'].isnull() & df_monthly['hour_end'].isnull())]
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
@@ -1879,7 +1885,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                     monthly_rows.extend(df_monthly.reset_index(drop=True).to_dict(orient='records'))
 
                 if 'seasonally' in list_selected_time_period:
-                    df_seasonally = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'seasonally', list_pv_analytics, not bool_use_acronym, date_column='date')
+                    df_seasonally = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'seasonally', list_pv_analytics, bool_use_acronym, date_column='date')
                     if df_seasonally is not None and not df_seasonally.empty:
                         df_seasonally = df_seasonally[~(df_seasonally['hour_start'].isnull() & df_seasonally['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
@@ -1887,7 +1893,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
                     seasonally_rows.extend(df_seasonally.reset_index(drop=True).to_dict(orient='records'))
 
                 if 'annually' in list_selected_time_period:
-                    df_annually = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'annually', list_pv_analytics, not bool_use_acronym, date_column='date')
+                    df_annually = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'annually', list_pv_analytics, bool_use_acronym, date_column='date')
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                     df_annually = add_nominal_actual_and_coverage(df_annually)
                     annually_rows.extend(df_annually.reset_index(drop=True).to_dict(orient='records'))
@@ -1930,29 +1936,30 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot)
 
 
-def calc_solar_energy_penetration_by_period(df, col):
+def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
     """
     Calculate solar energy penetration by period.
 
     Parameters:
     - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `grid_electricity_consumption[kWh]` (hourly energy demand),
+                         `demand_col` (hourly energy demand),
                          and `period` (grouping period such as seasons or days).
     - col (str): Column name for hourly PV yield.
+    - demand_col (str): Column name for grid electricity consumption.
 
     Returns:
     - pd.DataFrame: A DataFrame with the penetration calculation for each unique period.
     """
     # Ensure the required columns are present in the DataFrame
-    required_columns = [col, 'grid_electricity_consumption[kWh]', 'period']
+    required_columns = [col, demand_col, 'period']
     missing_columns = [c for c in required_columns if c not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Group by the 'period' column and calculate the penetration ratio
     grouped = df.groupby('period').apply(
-        lambda group: group[col].sum() / group['grid_electricity_consumption[kWh]'].sum()
-        if group['grid_electricity_consumption[kWh]'].sum() != 0 else 0
+        lambda group: group[col].sum() / group[demand_col].sum()
+        if group[demand_col].sum() != 0 else 0
     )
 
     # Format the result into a new DataFrame
@@ -1962,21 +1969,22 @@ def calc_solar_energy_penetration_by_period(df, col):
     return df_new
 
 
-def calc_self_sufficiency_by_period(df, col):
+def calc_self_sufficiency_by_period(df, col, demand_col='GRID_kWh'):
     """
     Calculate self-sufficiency of solar energy by period.
 
     Parameters:
     - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `grid_electricity_consumption[kWh]` (hourly energy demand),
+                         `demand_col` (hourly energy demand),
                          and `period` (grouping period such as seasons or days).
     - col (str): Column name for hourly PV yield.
+    - demand_col (str): Column name for grid electricity consumption.
 
     Returns:
     - pd.DataFrame: A DataFrame with the self-sufficiency calculation for each unique period.
     """
     # Ensure the required columns are present in the DataFrame
-    required_columns = [col, 'grid_electricity_consumption[kWh]', 'period']
+    required_columns = [col, demand_col, 'period']
     missing_columns = [c for c in required_columns if c not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
@@ -1984,9 +1992,9 @@ def calc_self_sufficiency_by_period(df, col):
     # Group by the 'period' column and calculate the self-sufficiency ratio
     grouped = df.groupby('period').apply(
         lambda group: (
-            min(group[col].sum(), group['grid_electricity_consumption[kWh]'].sum()) /
-            group['grid_electricity_consumption[kWh]'].sum()
-            if group['grid_electricity_consumption[kWh]'].sum() != 0 else 0
+            min(group[col].sum(), group[demand_col].sum()) /
+            group[demand_col].sum()
+            if group[demand_col].sum() != 0 else 0
         )
     )
 
@@ -1997,21 +2005,22 @@ def calc_self_sufficiency_by_period(df, col):
     return df_new
 
 
-def calc_self_consumption_by_period(df, col):
+def calc_self_consumption_by_period(df, col, demand_col='GRID_kWh'):
     """
     Calculate self-consumption of solar energy by period.
 
     Parameters:
     - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `grid_electricity_consumption[kWh]` (hourly energy demand),
+                         `demand_col` (hourly energy demand),
                          and `period` (grouping period such as seasons or days).
     - col (str): Column name for hourly PV yield.
+    - demand_col (str): Column name for grid electricity consumption.
 
     Returns:
     - pd.DataFrame: A DataFrame with the self-consumption calculation for each unique period.
     """
     # Ensure the required columns are present in the DataFrame
-    required_columns = [col, 'grid_electricity_consumption[kWh]', 'period']
+    required_columns = [col, demand_col, 'period']
     missing_columns = [c for c in required_columns if c not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
@@ -2019,7 +2028,7 @@ def calc_self_consumption_by_period(df, col):
     # Group by the 'period' column and calculate the self-consumption ratio
     grouped = df.groupby('period').apply(
         lambda group: (
-    min(group[col].sum(), group['grid_electricity_consumption[kWh]'].sum()) /
+    min(group[col].sum(), group[demand_col].sum()) /
     group[col].sum()
     if group[col].sum() != 0 else 0
     ))
