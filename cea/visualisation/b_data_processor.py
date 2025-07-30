@@ -530,8 +530,8 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
                 with np.errstate(divide='ignore', invalid='ignore'):
                     area = df[area_col]
                     mask = area > 0
-                    df[metric] = 0.0  # Default to 0
-                    df.loc[mask, metric] = df.loc[mask, metric] / area[mask]
+                    # Create normalized values: 0 where area <= 0, metric/area where area > 0
+                    df[metric] = np.where(mask, df[metric] / area, 0.0)
 
     # Drop all *_m2 columns
     df.drop(columns=[col for col in df.columns if col.endswith('_m2')], inplace=True)

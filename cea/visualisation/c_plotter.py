@@ -361,7 +361,7 @@ def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=0.92,  # Position legend closer to the plot with small gap
+            y=0.98,  # Position legend closer to the plot with small gap
             xanchor="left",
             x=0
         )
