@@ -23,7 +23,7 @@ See https://en.wikipedia.org/wiki/Shapefile for additional information.
 #    BSD license.
 import networkx as nx
 __author__ = """Ben Reilly (benwreilly@gmail.com)"""
-__all__ = ['read_shp', 'write_shp']
+__all__ = ['read_shp', 'write_shp', 'from_numpy_matrix']
 
 
 def read_shp(path, simplify=True, geom_attrs=True, strict=True):
@@ -294,3 +294,110 @@ def write_shp(G, outdir):
         create_feature(g, edges, attributes)
 
     nodes, edges = None, None
+
+
+def from_numpy_matrix(A, parallel_edges=False, create_using=None):
+    """Returns a graph from a numpy matrix.
+
+    The numpy matrix is interpreted as an adjacency matrix for the graph.
+
+    Parameters
+    ----------
+    A : numpy matrix
+      An adjacency matrix representation of a graph
+
+    parallel_edges : Boolean
+      If True, `create_using` is a multigraph, and `A` is an
+      integer matrix, then entry *(i,j)* in the matrix is interpreted as the
+      number of parallel edges joining vertices *i* and *j* in the graph.
+      If False, then the entries in the adjacency matrix are interpreted as
+      the weight of a single edge joining the vertices.
+
+    create_using : NetworkX graph constructor, optional (default=nx.Graph)
+       Graph type to create. If graph instance, then cleared before populated.
+
+    Notes
+    -----
+    For directed graphs, explicitly mention create_using=nx.Digraph,
+    and entry i,j of A corresponds to an edge from i to j.
+
+    If `create_using` is :class:`networkx.MultiGraph` or
+    :class:`networkx.MultiDiGraph`, `parallel_edges` is True, and the
+    entries of `A` are of type :class:`int`, then this function returns a
+    multigraph (constructed from `create_using`) with parallel edges.
+
+    If `create_using` indicates an undirected multigraph, then only the edges
+    indicated by the upper triangle of the matrix `A` will be added to the
+    graph.
+
+    Examples
+    --------
+    Simple integer weights on edges:
+
+    >>> A = np.array([[1, 1], [2, 1]])
+    >>> G = from_numpy_matrix(A)
+
+    If `create_using` indicates a multigraph and the matrix has only integer
+    entries and `parallel_edges` is False, then the entries will be treated
+    as weights for edges with multiplicity 1:
+
+    >>> A = np.array([[1, 1], [1, 2]])
+    >>> G = from_numpy_matrix(A, create_using=nx.MultiGraph)
+    >>> G[1][0]
+    AtlasView({0: {'weight': 2}})
+
+    If `create_using` indicates a multigraph and the matrix has only integer
+    entries and `parallel_edges` is True, then the entries will be treated
+    as the number of parallel edges between nodes:
+
+    >>> A = np.array([[1, 1], [1, 2]])
+    >>> temp = from_numpy_matrix(A, parallel_edges=True, create_using=nx.MultiGraph)
+    >>> G = nx.MultiGraph(temp)
+    >>> G[1][0]
+    AtlasView({0: {'weight': 1}, 1: {'weight': 1}})
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/Adjacency_matrix
+    """
+    # This function is deprecated in NetworkX 3.0+, so we use from_numpy_array instead
+    try:
+        # Try to use the modern function first
+        return nx.from_numpy_array(A, parallel_edges=parallel_edges, create_using=create_using)
+    except AttributeError:
+        # Fall back to older NetworkX versions that might still have from_numpy_matrix
+        G = nx.empty_graph(0, create_using)
+        n, m = A.shape
+
+        if n != m:
+            raise nx.NetworkXError("Adjacency matrix not square: nx,ny=%s" % (A.shape,))
+
+        # Make sure we get even the isolated nodes of the graph.
+        G.add_nodes_from(range(n))
+
+        # Get a list of all the entries in the matrix with nonzero entries.
+        # These coordinates become edges in the graph.
+        edges = list(zip(*(A.nonzero())))
+        
+        # Handle directed vs undirected graphs
+        if not G.is_directed():
+            edges = [(u, v) for (u, v) in edges if u <= v]
+
+        # Handle different edge types
+        if G.is_multigraph():
+            # Parallel edges
+            if parallel_edges:
+                for (u, v) in edges:
+                    d = A[u, v]
+                    if d.dtype.kind in ('i', 'u'):  # integer type
+                        G.add_edges_from([(u, v)] * int(d))
+                    else:
+                        G.add_edge(u, v, weight=float(d))
+            else:
+                for (u, v) in edges:
+                    G.add_edge(u, v, weight=float(A[u, v]))
+        else:
+            for (u, v) in edges:
+                G.add_edge(u, v, weight=float(A[u, v]))
+
+        return G

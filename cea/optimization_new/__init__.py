@@ -2,10 +2,6 @@ import inspect
 import os.path
 import sys
 
-from cea.lib import apply_wntr_fix
-
-apply_wntr_fix()
-
 
 def get_optimization_module_classes():
     """
