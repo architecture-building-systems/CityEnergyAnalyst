@@ -95,7 +95,7 @@ libpysal = "*"
 numba = "*"
 numpy = "*"
 osmnx = "*"
-networkx = "*"
+networkx = ">=3.4"
 psutil = "*"
 pvlib = "*"
 pythonocc-core = "==7.7.0"  # pinned to 7.7.0 due to compatibility issues with py4design (Avoid deprecation warnings)
