@@ -351,6 +351,9 @@ def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
+        if not os.path.exists(file_location):
+            raise FileNotFoundError(f"File not found: {file_location}")
+
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
         if table_df.empty:
@@ -367,7 +370,7 @@ def df_to_json(file_location):
         out = table_df.to_crs(get_geographic_coordinate_system())
         out = json.loads(out.to_json())
         return out, crs
-    except (IOError, DriverError) as e:
+    except (IOError, DriverError, FileNotFoundError) as e:
         print(e)
         return None, None
     except Exception:
