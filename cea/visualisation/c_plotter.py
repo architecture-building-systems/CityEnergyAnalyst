@@ -331,7 +331,8 @@ class bar_plot:
                 gridwidth=2.5,    # Grid line color
                 tickson='boundaries',
             )
-            # Keep default gaps for building plots (wider bars)
+            # Set appropriate gaps for building plots (wider bars with spacing)
+            fig.update_layout(bargap=0.2, bargroupgap=0.1)
 
         fig.update_yaxes(
             gridcolor="white",
@@ -479,8 +480,12 @@ def plot_faceted_bars(
                     'legendgroup': heading,
                     'showlegend': (i == 0),
                     'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
-                    'width': min(0.4, max(0.1, 200/len(facet_df)))  # Dynamic bar width: max 40%, min 10%
                 }
+                
+                # Only set width for stacked bars, not for grouped bars
+                if barmode != 'group':
+                    bar_params['width'] = min(0.4, max(0.1, 200/len(facet_df)))  # Dynamic bar width for stacked bars
+                
                 if barmode == 'group':
                     bar_params['offsetgroup'] = j
                 
@@ -547,8 +552,12 @@ def plot_faceted_bars(
                 'name': heading,
                 'legendgroup': heading,
                 'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
-                'width': min(0.25, max(0.1, 200/len(df)))  # Dynamic bar width: max 40%, min 10%
             }
+            
+            # Only set width for stacked bars, not for grouped bars
+            if barmode != 'group':
+                bar_params['width'] = min(0.25, max(0.1, 200/len(df)))  # Dynamic bar width for stacked bars
+            
             if barmode == 'group':
                 bar_params['offsetgroup'] = j
             

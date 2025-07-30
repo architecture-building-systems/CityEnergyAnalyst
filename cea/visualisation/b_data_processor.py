@@ -172,6 +172,23 @@ class data_processor:
             val = y_cea_metric_map[key]
             list_columns.extend(val if isinstance(val, list) else [val])
 
+        # Debug: Check what columns are available
+        if not list_columns:
+            print(f"❌ No valid columns found for {plot_cea_feature} with metrics {self.y_metric_to_plot}")
+            print(f"Available columns in data: {list(self.df_summary_data.columns)}")
+            return pd.DataFrame(), []
+        
+        # Check if the required columns exist in the data
+        missing_columns = [col for col in list_columns if col not in self.df_summary_data.columns]
+        if missing_columns:
+            print(f"⚠️ Missing columns in data: {missing_columns}")
+            print(f"Available columns: {list(self.df_summary_data.columns)}")
+            # Filter out missing columns
+            list_columns = [col for col in list_columns if col in self.df_summary_data.columns]
+            if not list_columns:
+                print(f"❌ No valid columns remaining after filtering")
+                return pd.DataFrame(), []
+
         # Select proper index
         if self.x_to_plot == 'by_building':
             df_y_metrics = self.df_summary_data.set_index('name')[list_columns]
@@ -373,8 +390,8 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 7: Reorder columns for 'pvt' (electricity first, then heat)
     if plot_cea_feature == 'pvt':
-        elec_cols = [c for c in list_y_columns if '_E_' in c]
-        heat_cols = [c for c in list_y_columns if '_Q_' in c]
+        elec_cols = [c for c in list_y_columns if 'E_' in c]
+        heat_cols = [c for c in list_y_columns if 'Q_' in c]
         list_y_columns = elec_cols + heat_cols
         essentials = ['X', 'X_facet'] if 'X_facet' in df_to_plotly.columns else ['X']
         df_to_plotly = df_to_plotly[essentials + list_y_columns]
