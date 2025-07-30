@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import pandas as pd
 from typing_extensions import Annotated
 
+
+class PipeTransmittanceValues(NamedTuple):
+    a: float
+    b: float
+    c: float
 
 @dataclass(frozen=True)
 class BuildingPropertiesRow:
@@ -174,8 +180,8 @@ def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd
     return building_systems
 
 
-def _calculate_pipe_transmittance_values(building_year: int) -> list[float]:
-    """linear trasmissivity coefficients of piping W/(m.K)"""
+def _calculate_pipe_transmittance_values(building_year: int) -> PipeTransmittanceValues:
+    """linear transmissivity coefficients of piping W/(m.K)"""
     if building_year >= 1995:
         phi_pipes = [0.2, 0.3, 0.3]
     # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
@@ -183,7 +189,7 @@ def _calculate_pipe_transmittance_values(building_year: int) -> list[float]:
         phi_pipes = [0.3, 0.4, 0.4]
     else:
         phi_pipes = [0.4, 0.4, 0.4]
-    return phi_pipes
+    return PipeTransmittanceValues(*phi_pipes)
 
 
 def _calc_form(geometry: dict):
