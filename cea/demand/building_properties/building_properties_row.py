@@ -143,6 +143,7 @@ def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd
 
     Tww_sup_0 = hvac['Tsww0_C']
     # Identification of equivalent lengths
+    # FIXME: Explain and move magic numbers to constants file e.g. 0.0325, 0.0125, 0.0625, etc.
     fforma = _calc_form(geometry)  # factor form comparison real surface and rectangular
     Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
     if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
