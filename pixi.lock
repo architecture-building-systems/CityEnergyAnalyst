@@ -3922,7 +3922,7 @@ packages:
 - pypi: ./
   name: cityenergyanalyst
   version: 4.0.0b1
-  sha256: c5b1efe3eed441014a40bf75e9bbbecd249b18e02867397fa712a8d707423b34
+  sha256: e700b9ab745268ca306dd1098fb1c35d54621f91096affadae18ffbe3a9e99c4
   requires_dist:
   - aiofiles
   - aiocache[redis]
