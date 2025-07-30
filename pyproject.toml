@@ -97,7 +97,7 @@ osmnx = "*"
 networkx = "*"
 psutil = "*"
 pvlib = "*"
-pythonocc-core = "*"
+pythonocc-core = "==7.7.0"  # pinned to 7.7.0 due to compatibility issues with py4design (Avoid deprecation warnings)
 pyyaml = "*"
 scikit-learn = "*"
 scipy = "*"
