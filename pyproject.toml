@@ -43,7 +43,7 @@ dependencies = [
     "xlwt",
     "wntr>=1.3.2,<2",
 
-    "py4design @ git+https://github.com/reyery/py4design.git@07e68e7?rev_type=rev"
+    "py4design @ git+https://github.com/reyery/py4design.git@08326122ee496afbf762527365d88415f4b570f5?rev_type=rev",
 ]
 
 [project.optional-dependencies]
@@ -93,12 +93,12 @@ gdal = "*"
 geopandas = "*"
 libpysal = "*"
 numba = "*"
-numpy = "*"
+numpy = "<2" # held back by wntr
 osmnx = "*"
 networkx = ">=3.4"
 psutil = "*"
 pvlib = "*"
-pythonocc-core = "==7.7.0"  # pinned to 7.7.0 due to compatibility issues with py4design (Avoid deprecation warnings)
+pythonocc-core = "*"
 pyyaml = "*"
 scikit-learn = "*"
 scipy = "*"
