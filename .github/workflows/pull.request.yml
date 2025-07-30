@@ -46,9 +46,8 @@ jobs:
             })
             core.setFailed('conda-lock.yml needs to be updated')
 
-  tests:
-    if: github.event.pull_request.draft == false
-    name: ${{ matrix.os }}
+  unit_tests:
+    name: Unit Tests - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: check_environment_yml
     strategy:
@@ -69,8 +68,33 @@ jobs:
         shell: bash -l {0}
         run: pip install .
 
-      - name: Run tests
+      - name: Run unit tests
         shell: bash -l {0}
-        run: |
-          cea test --type unittest
-          cea test --type integration
+        run: cea test --type unittest
+
+  integration_tests:
+    if: github.event.pull_request.draft == false
+    name: Integration Tests - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: check_environment_yml
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: conda-lock.yml
+          environment-name: cea
+          cache-environment: true
+
+      - name: Install CEA
+        shell: bash -l {0}
+        run: pip install .
+
+      - name: Run integration tests
+        shell: bash -l {0}
+        run: cea test --type integration
