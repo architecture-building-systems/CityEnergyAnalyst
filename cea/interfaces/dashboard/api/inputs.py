@@ -351,6 +351,7 @@ def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
+        file_location = secure_path(file_location)
         if not os.path.exists(file_location):
             raise FileNotFoundError(f"File not found: {file_location}")
 
