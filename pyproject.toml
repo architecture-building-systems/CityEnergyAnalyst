@@ -41,7 +41,8 @@ dependencies = [
     "utm",
     "xlrd",
     "xlwt",
-    "wntr"
+    "wntr",
+    "py4design @ git+https://github.com/reyery/py4design.git@07e68e7?rev_type=rev"
 ]
 
 [project.optional-dependencies]
