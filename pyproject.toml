@@ -83,7 +83,7 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
 [tool.pixi.tasks]
 cea = "cea"
-dashboard = "cea dashboard"
+server = "cea dashboard"
 test = "cea test --type integration"
 
 [tool.pixi.dependencies]
