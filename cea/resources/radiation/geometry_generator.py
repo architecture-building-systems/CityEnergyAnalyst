@@ -908,6 +908,12 @@ def geometry_main(config: cea.config.Configuration,
     :return: list of tree geometries (if any)
     :rtype: list[list[OCCface]]
     """
+    if 'void_deck' not in zone_df.columns:
+        locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+        zone_path = locator.get_zone_geometry()
+        zone_df['void_deck'] = 0
+        zone_df.to_file(zone_path)
+        
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, trees_df, terrain_raster = standardize_coordinate_systems(
         zone_df, surroundings_df, trees_df, terrain_raster)

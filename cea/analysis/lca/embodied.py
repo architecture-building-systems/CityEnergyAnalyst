@@ -102,6 +102,10 @@ def lca_embodied(year_to_calculate, locator):
     # local variables
     architecture_df = pd.read_csv(locator.get_building_architecture())
     zone_df = Gdf.from_file(locator.get_zone_geometry())
+    # TODO: remove this when void_deck always exist in geometry
+    if 'void_deck' not in zone_df.columns:
+        zone_df['void_deck'] = 0
+        zone_df.to_file(locator.get_zone_geometry())
 
     # reproject to projected coordinate system (in meters) to calculate area
     lat, lon = get_lat_lon_projected_shapefile(zone_df)

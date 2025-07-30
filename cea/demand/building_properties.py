@@ -62,6 +62,10 @@ class BuildingProperties(object):
         self.building_names = building_names
         print("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+        # TODO: remove this when void_deck always exist in envelope.csv
+        if 'void_deck' not in prop_geometry.columns:
+            prop_geometry['void_deck'] = 0
+            prop_geometry.to_file(locator.get_zone_geometry())
 
         # reproject to projected coordinate system (in meters) to calculate area
         lat, lon = get_lat_lon_projected_shapefile(prop_geometry)

@@ -53,6 +53,10 @@ def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.co
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    # TODO: remove this when void_deck always exist in geometry
+    if 'void_deck' not in prop_geometry.columns:
+        prop_geometry['void_deck'] = 0
+        prop_geometry.to_file(locator.get_zone_geometry())
     prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
 
     # reproject to projected coordinate system (in meters) to calculate area
