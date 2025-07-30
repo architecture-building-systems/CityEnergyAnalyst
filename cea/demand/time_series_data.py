@@ -741,13 +741,13 @@ class SystemStatus:
     Data related to system status.
     """
 
-    sys_status_ahu: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
+    sys_status_ahu: np.chararray = field(default_factory=empty_char_array)
     """Status of the AHU (AHUStatus values)"""
 
-    sys_status_aru: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
+    sys_status_aru: np.chararray = field(default_factory=empty_char_array)
     """Status of the ARU (ARUStatus values)"""
 
-    sys_status_sen: npt.NDArray[np.bytes_] = field(default_factory=empty_char_array)
+    sys_status_sen: np.chararray = field(default_factory=empty_char_array)
     """Status of the sensible heat recovery (SENStatus values)"""
 
 
