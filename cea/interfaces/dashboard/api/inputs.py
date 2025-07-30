@@ -247,6 +247,9 @@ def get_building_properties(scenario: str):
         # Get building property data from file
         try:
             if file_type == 'shp':
+                if not os.path.exists(file_path):
+                    raise FileNotFoundError(f"File not found: {file_path}")
+
                 table_df = geopandas.read_file(file_path)
                 table_df = pd.DataFrame(
                     table_df.drop(columns='geometry'))
@@ -261,7 +264,7 @@ def get_building_properties(scenario: str):
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
                 store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
-        except (IOError, DriverError, ValueError) as e:
+        except (IOError, DriverError, ValueError, FileNotFoundError) as e:
             print(f"Error reading {db} from {file_path}: {e}")
             # Continue to try getting column definitions
             store['tables'][db] = None
