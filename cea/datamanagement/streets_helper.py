@@ -132,9 +132,16 @@ def geometry_extractor_osm(locator, config):
 
     # Get and clean the streets
     try:
-        # OSMnx expects bbox as (north, south, east, west)
-        # So we need: (max_lat, min_lat, max_lon, min_lon)
-        bbox = (max_lat, min_lat, max_lon, min_lon)
+        # Ensure backward compatibility with OSMnx versions
+        if osmnx.__version__.startswith('2'):
+            # OSMnx expects bbox as (left, bottom, right, top)
+            # So we need: (min_lon, min_lat, max_lon, max_lat)
+            bbox = (min_lon, min_lat, max_lon, max_lat)
+        else:
+            # OSMnx expects bbox as (north, south, east, west)
+            # So we need: (max_lat, min_lat, max_lon, min_lon)
+            bbox = (max_lat, min_lat, max_lon, min_lon)
+
         G = osmnx.graph_from_bbox(bbox=bbox, network_type=type_streets)
     except (ValueError, networkx.exception.NetworkXPointlessConcept):
         print("Unable to find streets in the area (empty graph returned from Open Street Maps). No streets will be extracted.")
