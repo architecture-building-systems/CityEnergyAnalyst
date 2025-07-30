@@ -327,6 +327,9 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # Check if there are any buildings in surroundings_df before processing
     if not surroundings_df.empty:
         surroundings_buildings_df = surroundings_df.set_index('name')
+        if 'void_deck' not in surroundings_buildings_df.columns:
+            surroundings_buildings_df['void_deck'] = 0
+            
         surroundings_building_names = surroundings_buildings_df.index.values
         surroundings_building_solid_list, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
