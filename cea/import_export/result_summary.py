@@ -5,6 +5,7 @@ Read and summarise CEA results over all scenarios in a project.
 import itertools
 import os
 import pandas as pd
+import numpy as np
 import cea.config
 import time
 from datetime import datetime
@@ -740,11 +741,9 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
                     aggregated_df[col] = (
                         aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
                     ).round().astype(int)
-                elif '_m2' in col:
-                    # Average "_m2" columns
-                    aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
-                    ).round(2)
+                elif '_m2' in col or '[m2]' in col:
+                    # Sum area columns (area columns represent installed area that should be summed across buildings)
+                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
                 else:
                     # Sum for other numeric columns
                     aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
@@ -828,6 +827,82 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute aggregation
 
+def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
+    """
+    Aggregate solar data properly for TEMPORAL aggregation (hourly -> monthly/seasonal/annual):
+    - Sum energy columns (E_kWh, Q_kWh) across time periods
+    - Keep area columns (_m2) as the SAME CONSTANT VALUE across all time periods
+    
+    For district-level summaries, area columns represent total district installed area.
+    This value should be IDENTICAL in annual, monthly, seasonal, daily, and hourly summaries.
+    
+    For example: 'PVT_ET_walls_north_m2' = total PVT area on north walls for ALL buildings combined.
+    This number should appear unchanged in all time aggregations.
+    
+    Parameters:
+    - df (pd.DataFrame): Input dataframe with solar data
+    - groupby_cols (str or list): Column(s) to group by for temporal aggregation
+    
+    Returns:
+    - pd.DataFrame or pd.Series: Properly aggregated data
+    """
+    if groupby_cols is not None:
+        # Group by specified columns (e.g., 'period_month', 'period_season')
+        grouped = df.groupby(groupby_cols)
+        
+        # Separate area columns from energy columns
+        area_cols = [col for col in df.columns if col.endswith('_m2') or col.endswith('[m2]')]
+        energy_cols = [col for col in df.select_dtypes(include=[int, float]).columns 
+                      if not col.endswith('_m2') and not col.endswith('[m2]') and col not in ([groupby_cols] if isinstance(groupby_cols, str) else groupby_cols if isinstance(groupby_cols, list) else [])]
+        
+        result = pd.DataFrame()
+        
+        # Sum energy columns across time periods
+        if energy_cols:
+            energy_sum = grouped[energy_cols].sum()
+            result = pd.concat([result, energy_sum], axis=1)
+        
+        # For area columns: use the same constant value for all time periods
+        # Area represents total district installation and should not change with time aggregation
+        if area_cols:
+            area_constant = grouped[area_cols].first()  # All rows should have same area values anyway
+            result = pd.concat([result, area_constant], axis=1)
+        
+        # Handle remaining non-numeric columns
+        remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols + ([groupby_cols] if isinstance(groupby_cols, str) else groupby_cols if isinstance(groupby_cols, list) else [])]
+        for col in remaining_cols:
+            if df[col].dtype in [int, float]:
+                result[col] = grouped[col].sum()
+            else:
+                result[col] = grouped[col].first()
+        
+        return result
+    else:
+        # Simple aggregation without grouping (annual aggregation)
+        area_cols = [col for col in df.columns if col.endswith('_m2') or col.endswith('[m2]')]
+        energy_cols = [col for col in df.select_dtypes(include=[int, float]).columns if not col.endswith('_m2') and not col.endswith('[m2]')]
+        
+        result = pd.Series(dtype=float)
+        
+        # Sum energy columns across all time
+        for col in energy_cols:
+            result[col] = df[col].sum()
+        
+        # For area columns: use the constant district total value
+        # This should be the same across all hourly data points
+        for col in area_cols:
+            result[col] = df[col].iloc[0] if len(df) > 0 else 0
+        
+        # Handle remaining non-numeric columns  
+        remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols]
+        for col in remaining_cols:
+            if df[col].dtype in [int, float]:
+                result[col] = df[col].sum()
+            else:
+                result[col] = df[col].iloc[0] if len(df) > 0 else None
+        
+        return result
+
 
 def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
     """
@@ -871,7 +946,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
 
             # Handle 'monthly' aggregation
             if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
-                grouped_monthly = df.groupby('period_month').sum(numeric_only=True)
+                grouped_monthly = aggregate_solar_data_properly_temporal(df, 'period_month')
                 grouped_monthly['period'] = grouped_monthly.index  # Add 'period' column with month names
                 grouped_monthly['hour_start'] = df.groupby('period_month')['period_hour'].first().values
                 grouped_monthly['hour_end'] = df.groupby('period_month')['period_hour'].last().values + 1
@@ -880,7 +955,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
 
             # Handle 'seasonally' aggregation
             if 'seasonally' in list_selected_time_period and 'period_season' in df.columns:
-                grouped_seasonally = df.groupby('period_season').sum(numeric_only=True)
+                grouped_seasonally = aggregate_solar_data_properly_temporal(df, 'period_season')
                 grouped_seasonally['period'] = grouped_seasonally.index  # Add 'period' column with season names
                 grouped_seasonally['hour_start'] = df.groupby('period_season')['period_hour'].first().values
                 grouped_seasonally['hour_end'] = df.groupby('period_season')['period_hour'].last().values + 1
@@ -889,7 +964,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
 
             # Handle 'hourly', 'annually', or no specific time period
             if not list_selected_time_period or 'hourly' in list_selected_time_period or 'annually' in list_selected_time_period:
-                row_sum = df.sum(numeric_only=True)  # Exclude non-numeric columns
+                row_sum = aggregate_solar_data_properly_temporal(df)  # Properly aggregate solar data
                 row_sum['period'] = 'selected_hours'  # Add 'period' column for this case
                 row_sum['hour_start'] = df['period_hour'].iloc[0]
                 row_sum['hour_end'] = df['period_hour'].iloc[-1] + 1
@@ -1040,7 +1115,8 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
     def aggregate_by_period(df, period, date_column='date'):
         """
         Aggregates a DataFrame by a given time period with special handling for certain column types:
-        - Columns containing '_m2' or 'people': Use .mean() and round.
+        - Columns containing 'people': Use .mean() and round to integer.
+        - Columns containing '_m2': Use .first() (area should be constant across time periods).
         - Other columns: Use .sum().
         - Adds 'hour_start' and 'hour_end' columns for group start and end hour information.
 
@@ -1094,8 +1170,9 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
             if 'people' in col:
                 aggregated_col = df.groupby('period')[col].mean().round().astype(int)
-            elif '_m2' in col:
-                aggregated_col = df.groupby('period')[col].mean().round(2)
+            elif '_m2' in col or '[m2]' in col:
+                # Area columns should remain constant across time periods (use first value)
+                aggregated_col = df.groupby('period')[col].first()
             else:
                 # Default to sum for other columns
                 aggregated_col = df.groupby('period')[col].sum()
@@ -2247,11 +2324,15 @@ def process_building_summary(config, locator,
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
 
     # Step 5: Save Building Summary to Disk
+    # Round all numeric columns to 2 decimal places
+    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+    
     if not plot:
         buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     else:
         buildings_path = locator.get_export_plots_selected_building_file()
-    df_buildings.to_csv(buildings_path, index=False)
+    df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
     for list_metrics in list_list_metrics_without_date:

@@ -471,11 +471,17 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
     """
     Normalize metric columns in the dataframe by their corresponding m2 columns and drop the m2 columns.
 
-    Parameters:
-    - df_y_metrics (pd.DataFrame): Input dataframe with area and metric columns.
+    If area is zero or missing for any row, the resulting value will be set to 0 (instead of dividing by zero).
 
-    Returns:
-    - pd.DataFrame: Normalized dataframe.
+    Parameters
+    ----------
+    df_y_metrics : pd.DataFrame
+        Input dataframe with area and metric columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        Normalized dataframe with area columns removed.
     """
     mapping = {
         'area_PV_m2': 'E_PV_gen_kWh',
@@ -519,7 +525,12 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 
         for metric in metrics:
             if metric in df.columns:
-                df[metric] = df[metric] / df[area_col]
+                # Avoid division by 0 by masking
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    area = df[area_col]
+                    mask = area > 0
+                    df[metric] = 0.0  # Default to 0
+                    df.loc[mask, metric] = df.loc[mask, metric] / area[mask]
 
     # Drop all *_m2 columns
     df.drop(columns=[col for col in df.columns if col.endswith('_m2')], inplace=True)
