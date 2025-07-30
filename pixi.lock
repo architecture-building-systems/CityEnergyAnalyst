@@ -503,7 +503,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3b/a4/0698f3e5c397442ec9323a537e48cc63b846288b6878d38efd04e91005e3/utm-0.8.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/e2/dc81b1bd1dcfe91735810265e9d26bc8ec5da45b4c0f6237e286819194c3/uvicorn-0.35.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d9/84/4aa25d5d4ad05cd3e9c40554529088f42547f2b6275398c871f419175f72/wntr-1.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/0b/c7/f187f4a3e1e521debfe44a28582bbda6663853ff1524220169800b8a35e8/wntr-1.3.2-cp311-cp311-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/48/def306413b25c3d01753603b1a222a011b8621aed27cd7f89cbc27e6b0f4/xlwt-1.3.0-py2.py3-none-any.whl
@@ -940,7 +940,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3b/a4/0698f3e5c397442ec9323a537e48cc63b846288b6878d38efd04e91005e3/utm-0.8.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/e2/dc81b1bd1dcfe91735810265e9d26bc8ec5da45b4c0f6237e286819194c3/uvicorn-0.35.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/e9/a4/372ddb667b4f419a571f1dde1c7d34dcc25a7a30ac8163d1cf1be7d6625e/wntr-1.1.0-cp311-cp311-macosx_10_15_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/f8/22/a9890b5573cf2babf3675f5cb0557cb616779b906ed26f4f32172403a039/wntr-1.3.2-cp311-cp311-macosx_13_0_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/48/def306413b25c3d01753603b1a222a011b8621aed27cd7f89cbc27e6b0f4/xlwt-1.3.0-py2.py3-none-any.whl
@@ -1377,7 +1377,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3b/a4/0698f3e5c397442ec9323a537e48cc63b846288b6878d38efd04e91005e3/utm-0.8.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/e2/dc81b1bd1dcfe91735810265e9d26bc8ec5da45b4c0f6237e286819194c3/uvicorn-0.35.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/f0/14/fbe4013884a93c540e616fda2f6d9c5b2843d66a6ec4c187693701177a18/wntr-1.1.0.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/92/a6/d8fc04ed144ac886b0b7f353f7743cd25af38e577a170dc65796d1d68e1a/wntr-1.3.2.tar.gz
       - pypi: https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/48/def306413b25c3d01753603b1a222a011b8621aed27cd7f89cbc27e6b0f4/xlwt-1.3.0-py2.py3-none-any.whl
@@ -1785,7 +1785,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3b/a4/0698f3e5c397442ec9323a537e48cc63b846288b6878d38efd04e91005e3/utm-0.8.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/e2/dc81b1bd1dcfe91735810265e9d26bc8ec5da45b4c0f6237e286819194c3/uvicorn-0.35.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/0e/41/a9f3f0e331977b3b4173074edcd63969336c32275a5fa4966f9ff0b2f676/wntr-1.1.0-cp311-cp311-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/83/2d/ac33f8c59671e7606f53ef3ad7c1b8fdef3665c149d016685190fc958cca/wntr-1.3.2-cp311-cp311-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/48/def306413b25c3d01753603b1a222a011b8621aed27cd7f89cbc27e6b0f4/xlwt-1.3.0-py2.py3-none-any.whl
@@ -3672,7 +3672,7 @@ packages:
 - pypi: ./
   name: cityenergyanalyst
   version: 4.0.0b1
-  sha256: 951747804bc56fa5263833807ae265786f38ed7868f8ac526ad8937f138ec1c8
+  sha256: e334f908da24b50cd21da2e47b7735284541294422314fd052f1d2f129081b0e
   requires_dist:
   - aiofiles
   - aiocache[redis]
@@ -3699,7 +3699,7 @@ packages:
   - utm
   - xlrd
   - xlwt
-  - wntr
+  - wntr>=1.3.2,<2
   - py4design @ git+https://github.com/reyery/py4design.git@07e68e7
   - pytest ; extra == 'dev'
   - ruff ; extra == 'dev'
@@ -18240,46 +18240,50 @@ packages:
   license_family: MIT
   purls: []
   size: 1176306
-- pypi: https://files.pythonhosted.org/packages/0e/41/a9f3f0e331977b3b4173074edcd63969336c32275a5fa4966f9ff0b2f676/wntr-1.1.0-cp311-cp311-win_amd64.whl
+- pypi: https://files.pythonhosted.org/packages/0b/c7/f187f4a3e1e521debfe44a28582bbda6663853ff1524220169800b8a35e8/wntr-1.3.2-cp311-cp311-manylinux2014_x86_64.whl
   name: wntr
-  version: 1.1.0
-  sha256: 1ca29d3e41433cd59e0767607837ae3c9077a81be9573256919dc2c2c100e21a
+  version: 1.3.2
+  sha256: 510d79f35fd54a76dda60eba9dd0a19e496a40cc84ba2ad4098cdbebd70d9037
   requires_dist:
-  - numpy>=1.21
+  - numpy>=1.21,<2.0
   - scipy
   - networkx
   - pandas
   - matplotlib
-- pypi: https://files.pythonhosted.org/packages/d9/84/4aa25d5d4ad05cd3e9c40554529088f42547f2b6275398c871f419175f72/wntr-1.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  - setuptools
+- pypi: https://files.pythonhosted.org/packages/83/2d/ac33f8c59671e7606f53ef3ad7c1b8fdef3665c149d016685190fc958cca/wntr-1.3.2-cp311-cp311-win_amd64.whl
   name: wntr
-  version: 1.1.0
-  sha256: 3c5c8494bc1daf1d5304f212098da9d65d31b97c3e861a7eac69a8e32ec4c2ac
+  version: 1.3.2
+  sha256: f934e53a9a75e88a17520674d2f0ac297a4bca2c1803d726e917209dcbf9350d
   requires_dist:
-  - numpy>=1.21
+  - numpy>=1.21,<2.0
   - scipy
   - networkx
   - pandas
   - matplotlib
-- pypi: https://files.pythonhosted.org/packages/e9/a4/372ddb667b4f419a571f1dde1c7d34dcc25a7a30ac8163d1cf1be7d6625e/wntr-1.1.0-cp311-cp311-macosx_10_15_x86_64.whl
+  - setuptools
+- pypi: https://files.pythonhosted.org/packages/92/a6/d8fc04ed144ac886b0b7f353f7743cd25af38e577a170dc65796d1d68e1a/wntr-1.3.2.tar.gz
   name: wntr
-  version: 1.1.0
-  sha256: b81cb79f709768844574e016370cb907e8e682965436ed5e2cf4fb9bffe84e8e
+  version: 1.3.2
+  sha256: 34a8464d33b1446161c44abe0af0eb87e4684b2fea42aad612962dbed91e39c7
   requires_dist:
-  - numpy>=1.21
+  - numpy>=1.21,<2.0
   - scipy
   - networkx
   - pandas
   - matplotlib
-- pypi: https://files.pythonhosted.org/packages/f0/14/fbe4013884a93c540e616fda2f6d9c5b2843d66a6ec4c187693701177a18/wntr-1.1.0.tar.gz
+  - setuptools
+- pypi: https://files.pythonhosted.org/packages/f8/22/a9890b5573cf2babf3675f5cb0557cb616779b906ed26f4f32172403a039/wntr-1.3.2-cp311-cp311-macosx_13_0_x86_64.whl
   name: wntr
-  version: 1.1.0
-  sha256: aed676833b6ca19b095ad26b7f0028107afef5a5c75a8aaed0ff98014405d752
+  version: 1.3.2
+  sha256: 558dd87f7a22f1f4b410f5d3fd591b409f3003ffc833452f25b71f9e31ce72c0
   requires_dist:
-  - numpy>=1.21
+  - numpy>=1.21,<2.0
   - scipy
   - networkx
   - pandas
   - matplotlib
+  - setuptools
 - conda: https://conda.anaconda.org/conda-forge/noarch/wslink-2.3.4-pyhd8ed1ab_0.conda
   sha256: a3d344dbca9b8c94b84f7428d031e4376397f495bfe8a169adacb8ae87440777
   md5: 9748c4ed9bb4784914bedf2efcc0ac1f
