@@ -76,16 +76,33 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
                                                    solar_panel_types_list)
+    
 
     # Activate c_plotter
     fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list)
+    
+    # Set reasonable screen-fitting width and let bar width adjust automatically
+    num_x_points = len(df_to_plotly['X'].unique())
+    num_series = len(list_y_columns)
+    
+    # Use 16:9 landscape aspect ratio for professional presentation
+    plot_width = 1600
+    plot_height = int(plot_width / 16 * 9)  # 16:9 aspect ratio = 900px height
+    
+    fig.update_layout(width=plot_width, height=plot_height)
+    
+    print(f"Plot dimensions: {plot_width}x{plot_height}px (16:9 landscape)")
+    print(f"Number of x-axis points: {num_x_points}")
+    print(f"Number of series: {num_series}")
+    print(f"Bar mode: {fig.layout.barmode if hasattr(fig.layout, 'barmode') else 'default'}")
+    
     return fig
 
 
 def main(config):
     scenario = config.scenario
 
-    plot_cea_feature = ['pvt', 'ET','PV3']        #todo: from front-end
+    plot_cea_feature = ['pv', 'PV1']        #todo: from front-end
     hour_start = 0      #todo: from front-end
     hour_end = 8759     #todo: from front-end
     fig = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)

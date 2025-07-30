@@ -274,7 +274,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     """
     Generate a Plotly-ready DataFrame based on user-defined configuration.
 
-    Parameters:
+    Parameters
     ----------
     plot_instance : object
         Configuration and logic object containing plotting parameters and methods.
@@ -285,13 +285,16 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     plot_cea_feature : str
         Feature to be plotted: 'demand', 'pv', 'pvt', or 'sc'.
 
-    Returns:
+    Returns
     -------
-    pd.DataFrame : A processed DataFrame ready for Plotly visualization.
-    list : List of column names used for plotting Y-values.
+    pd.DataFrame
+        A processed DataFrame ready for Plotly visualization.
+    list
+        List of column names used for plotting Y-values.
     """
     # Step 1: Prepare normaliser and raw Y-axis metrics
-    normaliser_m2 = plot_instance.process_architecture_data()
+    if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
+        normaliser_m2 = plot_instance.process_architecture_data()
     df_y_metrics, list_y_columns = plot_instance.process_data(plot_cea_feature)
 
     # Step 2: Handle "by_building" mode
@@ -300,107 +303,84 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
             df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
         elif plot_cea_feature in ('pv', 'pvt', 'sc'):
-            if plot_instance.y_normalised_by == 'no_normalisation':
+            norm = plot_instance.y_normalised_by
+            if norm == 'no_normalisation':
                 df_to_plotly = remove_m2_columns(df_y_metrics)
-
-            elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+            elif norm == 'solar_technology_area_installed_for_respective_surface':
                 df_to_plotly = normalise_dataframe_columns_by_m2_columns(df_y_metrics)
-
-            elif plot_instance.y_normalised_by == 'gross_floor_area':
-                df_to_plotly = remove_m2_columns(df_y_metrics)
-                df_to_plotly = normalise_dataframe_by_index(df_to_plotly, normaliser_m2)
-
+            elif norm == 'gross_floor_area':
+                df_to_plotly = normalise_dataframe_by_index(remove_m2_columns(df_y_metrics), normaliser_m2)
             else:
-                raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
+                raise ValueError(f"Invalid y_normalised_by: {norm}")
         else:
             raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}")
 
-        # Assign X-axis and facet values
+        # Assign X and X_facet
         df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'name': 'X'})
-
-        if plot_instance.x_facet in ['months', 'seasons']:
+        facet = plot_instance.x_facet
+        if facet in ['months', 'seasons']:
             df_to_plotly['X_facet'] = df_summary_data['period']
-        elif plot_instance.x_facet == 'construction_type':
-            df_to_plotly['X_facet'] = df_architecture_data['construction_type']
-        elif plot_instance.x_facet == 'main_use_type':
-            df_to_plotly['X_facet'] = df_architecture_data['main_use_type']
-        elif plot_instance.x_facet is not None:
-            raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
+        elif facet in ['construction_type', 'main_use_type']:
+            df_to_plotly['X_facet'] = df_architecture_data[facet]
+        elif facet is not None:
+            raise ValueError(f"Invalid x_facet: {facet}")
 
     # Step 3: Handle "by_period" mode
     elif plot_instance.x_to_plot == 'by_period':
-        if plot_instance.y_normalised_by == 'no_normalisation':
+        norm = plot_instance.y_normalised_by
+        if norm == 'no_normalisation':
             df_to_plotly = remove_m2_columns(df_y_metrics) if plot_cea_feature in ('pv', 'pvt', 'sc') else df_y_metrics
-
-        elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+        elif norm == 'solar_technology_area_installed_for_respective_surface':
             if plot_cea_feature in ('pv', 'pvt', 'sc'):
                 df_to_plotly = normalise_dataframe_columns_by_m2_columns(df_y_metrics)
             else:
                 raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}")
-
         else:
-            total_district_floor_area = normaliser_m2.iloc[:, 0].sum()
-            df_to_plotly = df_y_metrics / total_district_floor_area
+            total_area = normaliser_m2.iloc[:, 0].sum()
+            df_to_plotly = df_y_metrics / total_area
 
-        # Assign X-axis and facet values
+        # Assign X and X_facet
         df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'period': 'X'})
-
-        if plot_instance.x_facet in ['months', 'seasons']:
-            df_to_plotly = calc_x_facet(df_to_plotly, plot_instance.x_facet)
-        elif plot_instance.x_facet is not None:
-            raise ValueError(f"Invalid x-facet: {plot_instance.x_facet}")
-
+        facet = plot_instance.x_facet
+        if facet in ['months', 'seasons']:
+            df_to_plotly = calc_x_facet(df_to_plotly, facet)
+        elif facet is not None:
+            raise ValueError(f"Invalid x_facet: {facet}")
     else:
         raise ValueError(f"Invalid x_to_plot: {plot_instance.x_to_plot}")
 
-    # Step 4: Final cleanup
+    # Step 4: Clean index
     df_to_plotly = df_to_plotly.reset_index(drop=True)
 
-    # Step 5: Unit conversion
-    if plot_instance.y_normalised_by == 'no_normalisation':
-        df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=False)
-    elif plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area', 'solar_technology_area_installed_for_respective_surface']:
-        df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=True)
-    else:
-        raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
+    # Step 5: Convert energy units
+    is_normalised = plot_instance.y_normalised_by != 'no_normalisation'
+    df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=is_normalised)
 
-    # Step 6: Update list_y_columns to match the actual column names in df_to_plotly
-    # Filter to only include columns that exist in the final dataframe and exclude X/X_facet
-    final_columns = [col for col in df_to_plotly.columns if col not in ['X', 'X_facet']]
-    
-    # Create mapping from original list_y_columns to final column names
+    # Step 6: Refine list_y_columns
+    valid_cols = df_to_plotly.columns.difference(['X', 'X_facet']).tolist()
     updated_list_y_columns = []
-    for orig_col in list_y_columns:
-        # Skip m2 columns - they should not be plotted
-        if orig_col.endswith('_m2'):
+    for col in list_y_columns:
+        if col.endswith('_m2'):
             continue
-            
-        # Check for exact match first
-        if orig_col in final_columns:
-            updated_list_y_columns.append(orig_col)
+        if col in valid_cols:
+            updated_list_y_columns.append(col)
         else:
-            # Look for unit-converted version (e.g., PV_roofs_top_E_kWh -> PV_roofs_top_E_kWh/m2)
-            unit_converted = orig_col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
-            if plot_instance.y_normalised_by in ['gross_floor_area', 'conditioned_floor_area']:
-                unit_converted += '/m2'
-            
-            if unit_converted in final_columns:
-                updated_list_y_columns.append(unit_converted)
-    
+            base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
+            maybe_col = f"{base}/m2" if is_normalised else base
+            if maybe_col in valid_cols:
+                updated_list_y_columns.append(maybe_col)
     list_y_columns = updated_list_y_columns
 
-    # Step 7: For PVT, reorder columns to group electricity and heat for better legend layout
+    # Step 7: Reorder columns for 'pvt' (electricity first, then heat)
     if plot_cea_feature == 'pvt':
-        electricity_columns = [col for col in list_y_columns if '_E_' in col]
-        heat_columns = [col for col in list_y_columns if '_Q_' in col]
-        # Reorder: all electricity first, then all heat
-        list_y_columns = electricity_columns + heat_columns
-        # Reorder dataframe columns to match
-        other_columns = [col for col in df_to_plotly.columns if col in ['X', 'X_facet']]
-        df_to_plotly = df_to_plotly[other_columns + list_y_columns]
+        elec_cols = [c for c in list_y_columns if '_E_' in c]
+        heat_cols = [c for c in list_y_columns if '_Q_' in c]
+        list_y_columns = elec_cols + heat_cols
+        essentials = ['X', 'X_facet'] if 'X_facet' in df_to_plotly.columns else ['X']
+        df_to_plotly = df_to_plotly[essentials + list_y_columns]
 
-    # (Optional future step) Sort or format X axis if needed
     return df_to_plotly, list_y_columns
+
 
 def sort_df_by_sorting_key(df_1, df_2, descending=False):
     # Copy to avoid mutating original data

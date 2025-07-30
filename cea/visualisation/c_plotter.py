@@ -303,28 +303,35 @@ class bar_plot:
             paper_bgcolor="white",      # Entire figure background (including margins)
         )
 
-        # About the grid color
+        # About the grid color and bar gaps
         if "hourly" in self.x_to_plot:
             fig.update_xaxes(
                 showgrid=False,
             )
-            fig.update_layout(
-                bargap=0,         # No gap between bar groups (e.g. Jan, Feb, Mar...)
-                bargroupgap=0     # No gap between bars within each group (if grouped bars)
+            fig.update_xaxes(
+                type="category",
+                # Reduce the number of tick labels for better readability
+                tickmode='linear',
+                dtick=168,  # Show every 7 days (168 hours) for weekly ticks
+                tickangle=45
             )
-            fig.update_xaxes(type="category")
+            # Remove gaps completely for hourly plots (narrow bars)
+            fig.update_layout(bargap=0.0, bargroupgap=0.0)
         elif "daily" in self.x_to_plot:
             fig.update_xaxes(
                 gridcolor="white",
                 gridwidth=1.5,    # Grid line color
                 tickson='boundaries',
             )
+            # Remove gaps completely for daily plots (narrow bars)
+            fig.update_layout(bargap=0.0, bargroupgap=0.0)
         else:
             fig.update_xaxes(
                 gridcolor="white",
                 gridwidth=2.5,    # Grid line color
                 tickson='boundaries',
             )
+            # Keep default gaps for building plots (wider bars)
 
         fig.update_yaxes(
             gridcolor="white",
@@ -471,7 +478,8 @@ def plot_faceted_bars(
                     'name': heading,
                     'legendgroup': heading,
                     'showlegend': (i == 0),
-                    'marker': dict(color=bar_color)
+                    'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
+                    'width': min(0.4, max(0.1, 200/len(facet_df)))  # Dynamic bar width: max 40%, min 10%
                 }
                 if barmode == 'group':
                     bar_params['offsetgroup'] = j
@@ -538,7 +546,8 @@ def plot_faceted_bars(
                 'y': df[val_col],
                 'name': heading,
                 'legendgroup': heading,
-                'marker': dict(color=bar_color)
+                'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
+                'width': min(0.25, max(0.1, 200/len(df)))  # Dynamic bar width: max 40%, min 10%
             }
             if barmode == 'group':
                 bar_params['offsetgroup'] = j
@@ -566,6 +575,7 @@ def plot_faceted_bars(
     if y_step is not None:
         fig.update_yaxes(dtick=y_step)
 
+    # Gap settings are handled in fig_format method
 
     return fig
 
