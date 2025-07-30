@@ -112,8 +112,8 @@ def main(config):
 
     # Define plot parameters using dictionary structure
     plot_dict = {
-        'feature': 'pvt',  # 'demand', 'pv', 'pvt', 'sc'
-        'solar_panel_types': {'sc': 'ET', 'pv': 'PV3'},  # Required for solar features
+        'feature': 'pv',  # 'demand', 'pv', 'pvt', 'sc'
+        'solar_panel_types': {'sc': '', 'pv': 'PV1'},  # Required for solar features
         'hour_start': 0,
         'hour_end': 8759
     }
@@ -124,7 +124,7 @@ def main(config):
     fig.show(renderer="browser")
     # fig.show()
 
-    return plot_html
+    return plot_html, fig
 
 
 if __name__ == '__main__':
