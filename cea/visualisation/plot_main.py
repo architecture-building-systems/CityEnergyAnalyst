@@ -45,20 +45,34 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_list: list, hour_start=0, hour_end=8759):
-    # Get the cea feature name
-    plot_cea_feature = plot_cea_feature_list[0]
-    plot_cea_feature_umbrella = plot_cea_feature
-
-    if len(plot_cea_feature_list) > 1 and plot_cea_feature in ('pv', 'pvt', 'sc'):
-        solar_panel_types_list = plot_cea_feature_list[1:]
-        if len(solar_panel_types_list) == 0:
-            raise CEAException(
-                f"Missing plot_cea_feature_solar_panel_types: {plot_cea_feature}. "
-                f"Ensure that it is selected"
-            )
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict):
+    # Extract parameters from dictionary
+    plot_cea_feature = plot_dict['feature']
+    solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
+    hour_start = plot_dict.get('hour_start', 0)  
+    hour_end = plot_dict.get('hour_end', 8759)
+    
+    # Convert solar panel types to list format expected by existing code
+    if plot_cea_feature in ('pv', 'pvt', 'sc'):
         plot_cea_feature_umbrella = 'solar'
+        if plot_cea_feature == 'pvt':
+            # PVT requires both SC and PV panel types
+            if 'sc' not in solar_panel_types_dict or 'pv' not in solar_panel_types_dict:
+                raise CEAException(
+                    f"PVT requires both 'sc' and 'pv' panel types in solar_panel_types. "
+                    f"Got: {solar_panel_types_dict}"
+                )
+            solar_panel_types_list = [solar_panel_types_dict['sc'], solar_panel_types_dict['pv']]
+        else:
+            # PV or SC requires only one panel type
+            if plot_cea_feature not in solar_panel_types_dict:
+                raise CEAException(
+                    f"Missing '{plot_cea_feature}' panel type in solar_panel_types. "
+                    f"Got: {solar_panel_types_dict}"
+                )
+            solar_panel_types_list = [solar_panel_types_dict[plot_cea_feature]]
     else:
+        plot_cea_feature_umbrella = plot_cea_feature
         solar_panel_types_list = []
 
     # Find the plot config section for the cea feature
@@ -102,13 +116,19 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_cea_feature_l
 def main(config):
     scenario = config.scenario
 
-    plot_cea_feature = ['pv', 'PV1']        #todo: from front-end
-    hour_start = 0      #todo: from front-end
-    hour_end = 8759     #todo: from front-end
-    fig = plot_all(config, scenario, plot_cea_feature, hour_start, hour_end)
+    # Define plot parameters using dictionary structure
+    plot_dict = {
+        'feature': 'pvt',  # 'demand', 'pv', 'pvt', 'sc'
+        'solar_panel_types': {'sc': 'ET', 'pv': 'PV3'},  # Required for solar features
+        'hour_start': 0,
+        'hour_end': 8759
+    }
+    
+    fig = plot_all(config, scenario, plot_dict)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    fig.show(renderer="browser")
+    # fig.show(renderer="browser")
+    fig.show()
 
     return plot_html
 
