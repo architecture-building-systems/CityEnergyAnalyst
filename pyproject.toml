@@ -103,6 +103,7 @@ shapely = "*"
 matplotlib = "*"
 notebook = "*"
 pyarrow = "*"
+pixi-pycharm = ">=0.0.8,<0.0.9"
 
 [tool.pixi.pypi-dependencies]
 # install cea as editable package for development
