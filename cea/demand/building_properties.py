@@ -307,6 +307,7 @@ class BuildingProperties(object):
 
         # check if buildings are completely above ground
         is_floating = (df["void_deck"] > 0).astype(int)
+        print("void_deck in calc_prop_rc_model:", df["void_deck"].values)
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared

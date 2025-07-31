@@ -61,6 +61,7 @@ def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.co
     prop_geometry = prop_geometry.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['GFA_ag_m2'] = prop_geometry['footprint'] * (prop_geometry['floors_ag'] - prop_geometry['void_deck'])
+    print("void_deck in occupancy_helper_main:", prop_geometry['void_deck'])
     prop_geometry['GFA_bg_m2'] = prop_geometry['footprint'] * prop_geometry['floors_bg']
     prop_geometry['GFA_m2'] = prop_geometry['GFA_ag_m2'] + prop_geometry['GFA_bg_m2']
     
