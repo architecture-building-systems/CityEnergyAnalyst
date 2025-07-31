@@ -30,7 +30,8 @@ dependencies = [
     "libpysal",
     "osmnx",
     "pvlib",
-    "pythonocc-core",
+    # Does not exist in pypi
+    # "pythonocc-core",
 
     # Backend dependencies
     "aiofiles",
