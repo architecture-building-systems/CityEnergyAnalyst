@@ -674,7 +674,6 @@ class EnvelopeProperties(object):
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
-        self.void_deck = envelope['void_deck']
 
 
 class SolarProperties(object):
@@ -946,7 +945,7 @@ def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFra
 
     check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
-    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
+    fields_construction = ['name', 'Cm_Af', 'Hs', 'Ns', 'Es', 'occupied_bg']
     fields_leakage = ['name', 'n50']
     fields_basement = ['name', 'U_base']
     fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
