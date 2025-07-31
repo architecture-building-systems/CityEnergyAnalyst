@@ -48,9 +48,9 @@ class TestSchemas(unittest.TestCase):
             error_msg = "Missing locator methods in schemas:\n"
             for schema in missing_schema:
                 error_msg += f"\t{schema}\n"
-            # FIXME: Print for now, but should be an error in the future
             # self.fail(error_msg)
-            print(error_msg)
+            # TODO: Re-enable after Pixi migration schema updates are complete
+            self.skipTest(f"Schema validation temporarily disabled:\n {error_msg}")
 
     def test_all_locator_methods_have_a_file_path(self):
         schemas = cea.schemas.schemas(plugins=[])
