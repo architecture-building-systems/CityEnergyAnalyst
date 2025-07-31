@@ -67,13 +67,13 @@ class Weather:
     """
 
     T_ext: npt.NDArray[np.float64]
-    """Ambient temperature [C]"""
+    """Dry bulb temperature (ambient temperature) [C]"""
 
     T_ext_wetbulb: npt.NDArray[np.float64]
-    """Ambient wetbulb temperature [C]"""
+    """Wet bulb temperature [C]"""
 
     rh_ext: npt.NDArray[np.float64]
-    """Ambient relative humidity [%]"""
+    """Relative humidity [%]"""
 
     T_sky: npt.NDArray[np.float64]
     """Sky temperature [C]"""
@@ -92,7 +92,7 @@ class Occupancy:
     """Number of people"""
 
     ve_lps: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Ventilation per person [lps]"""
+    """Ventilation rate [l/s]"""
 
     Qs: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Sensible heat gain from people [W]"""
@@ -108,103 +108,104 @@ class ElectricalLoads:
     """
 
     Eaux: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption [Wh]"""
+    """End-use auxiliary electricity consumption [Wh]"""
 
     Eaux_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for heating systems [Wh]"""
+    """End-use auxiliary electricity consumption for heating systems [Wh]"""
 
     Eaux_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for cooling systems [Wh]"""
+    """End-use auxiliary electricity consumption for cooling systems [Wh]"""
 
     Eaux_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for hot water systems [Wh]"""
+    """End-use auxiliary electricity consumption for domestic hot water systems [Wh]"""
 
     Eaux_fw: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for freshwater systems [Wh]"""
+    """End-use auxiliary electricity consumption for fresh water systems [Wh]"""
 
     Ehs_lat_aux: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for latent heating [Wh]"""
+    """End-use auxiliary electricity consumption for latent heating in heating systems [Wh]"""
 
     Eve: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Auxiliary electricity consumption for ventilation [Wh]"""
-
-    GRID: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid [Wh]"""
-
-    GRID_a: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for appliances [Wh]"""
-
-    GRID_l: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for lighting [Wh]"""
-
-    GRID_v: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for electric vehicles [Wh]"""
-
-    GRID_ve: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for ventilation [Wh]"""
-
-    GRID_data: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for data centers [Wh]"""
-
-    GRID_pro: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for process [Wh]"""
-
-    GRID_aux: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for auxiliary [Wh]"""
-
-    GRID_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for hot water [Wh]"""
-
-    GRID_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for heating [Wh]"""
-
-    GRID_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for cooling [Wh]"""
-
-    GRID_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for data center cooling [Wh]"""
-
-    GRID_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand from the grid for refrigeration [Wh]"""
-
-    PV: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Photovoltaic electricity production [Wh]"""
+    """End-use auxiliary electricity consumption for ventilation systems [Wh]"""
 
     Eal: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for lighting [Wh]"""
+    """End-use electricity consumption of appliances and lighting [Wh]"""
 
     Edata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for data centers [Wh]"""
+    """End-use electricity consumption of data centers [Wh]"""
 
     Epro: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for process [Wh]"""
+    """End-use electricity consumption of industrial processes [Wh]"""
 
     E_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total electricity demand [Wh]"""
+    """End-use total electricity consumption [Wh]"""
 
     E_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for hot water [Wh]"""
+    """End-use electricity consumption of domestic hot water [Wh]"""
 
     E_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for heating [Wh]"""
+    """End-use electricity consumption of space heating [Wh]"""
 
     E_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for cooling [Wh]"""
+    """End-use electricity consumption of space cooling [Wh]"""
 
     E_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for refrigeration [Wh]"""
+    """End-use electricity consumption of refrigeration [Wh]"""
 
     E_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for data center cooling [Wh]"""
+    """End-use electricity consumption of data center cooling [Wh]"""
 
     Ea: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for appliances [Wh]"""
+    """End-use electricity consumption of appliances [Wh]"""
 
     El: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for lighting [Wh]"""
+    """End-use electricity consumption of lighting [Wh]"""
 
     Ev: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Electricity demand for ventilation [Wh]"""
+    """End-use electricity consumption of electric vehicles [Wh]"""
+
+    GRID: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption [Wh]"""
+
+    GRID_a: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for appliances [Wh]"""
+
+    GRID_l: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for lighting [Wh]"""
+
+    GRID_v: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for electric vehicles [Wh]"""
+
+    GRID_ve: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for ventilation systems [Wh]"""
+
+    GRID_data: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for data centers [Wh]"""
+
+    GRID_pro: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for industrial processes [Wh]"""
+
+    GRID_aux: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for auxiliary loads [Wh]"""
+
+    GRID_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for domestic hot water [Wh]"""
+
+    GRID_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for space heating [Wh]"""
+
+    GRID_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for space cooling [Wh]"""
+
+    GRID_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for data center cooling [Wh]"""
+
+    GRID_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Grid electricity consumption for refrigeration [Wh]"""
+
+    PV: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Photovoltaic electricity consumption [Wh]"""
+
 
 
 @dataclass
@@ -214,67 +215,67 @@ class HeatingLoads:
     """
 
     Qhs_sen_rc: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible heating load from RC model [Wh]"""
+    """RC sensible heating demand [Wh]"""
 
     Qhs_sen_shu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible heating load from SHU [Wh]"""
+    """Sensible heating unit (SHU) sensible heating demand [Wh]"""
 
     Qhs_sen_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible heating load from AHU [Wh]"""
-
-    Qhs_lat_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent heating load from AHU [Wh]"""
+    """Air handling unit (AHU) sensible heating demand [Wh]"""
 
     Qhs_sen_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible heating load from ARU [Wh]"""
-
-    Qhs_lat_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent heating load from ARU [Wh]"""
+    """Air recirculation unit (ARU) sensible heating demand [Wh]"""
 
     Qhs_sen_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total sensible heating load [Wh]"""
+    """Total sensible heating demand [Wh]"""
+
+    Qhs_lat_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Air handling unit (AHU) latent heating demand [Wh]"""
+
+    Qhs_lat_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Air recirculation unit (ARU) latent heating demand [Wh]"""
 
     Qhs_lat_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Total latent heating load [Wh]"""
 
-    Qhs_em_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Emission losses from heating systems [Wh]"""
-
-    Qhs_dis_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Distribution losses from heating systems [Wh]"""
-
     Qhs_sys_shu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Heating load from SHU [Wh]"""
+    """Sensible heating unit (SHU) system heating demand (sensible + latent) [Wh]"""
 
     Qhs_sys_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Heating load from AHU [Wh]"""
+    """Air handling unit (AHU) system heating demand (sensible + latent) [Wh]"""
 
     Qhs_sys_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Heating load from ARU [Wh]"""
+    """Air recirculation unit (ARU) system heating demand (sensible + latent) [Wh]"""
 
-    DH_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District heating demand for heating [Wh]"""
+    Qhs_em_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Space heating system emission losses [Wh]"""
+
+    Qhs_dis_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Space heating system distribution losses [Wh]"""
 
     Qhs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total heating demand [Wh]"""
+    """End-use space heating demand [Wh]"""
 
     Qhs_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total heating system demand [Wh]"""
-
-    QH_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total heating system demand including hot water [Wh]"""
-
-    DH_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District heating demand for hot water [Wh]"""
+    """Total space heating demand (including emission and distribution losses) [Wh]"""
 
     Qww_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Hot water system demand [Wh]"""
+    """Total heating demand for domestic hot water (including emission and distribution losses) [Wh]"""
 
     Qww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Hot water demand [Wh]"""
+    """Domestic hot water heating demand [Wh]"""
 
     Qhpro_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Process heating demand [Wh]"""
+
+    QH_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Total heating demand (including space heating, domestic hot water and process heating) [Wh]"""
+
+    DH_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """District heating demand for space heating [Wh]"""
+
+    DH_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """District heating demand for domestic hot water [Wh]"""
 
 
 @dataclass
@@ -284,76 +285,76 @@ class CoolingLoads:
     """
 
     Qcs_sen_rc: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible cooling load from RC model [Wh]"""
+    """RC model sensible cooling demand[Wh]"""
 
     Qcs_sen_scu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible cooling load from SCU [Wh]"""
+    """Sensible cooling unit (SCU) sensible cooling demand[Wh]"""
 
     Qcs_sen_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible cooling load from AHU [Wh]"""
-
-    Qcs_lat_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent cooling load from AHU [Wh]"""
+    """Air handling unit (AHU) sensible cooling demand [Wh]"""
 
     Qcs_sen_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Sensible cooling load from ARU [Wh]"""
+    """Air recirculation unit (ARU) sensible cooling demand [Wh]"""
+
+    Qcs_lat_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Air handling unit (AHU) latent cooling demand [Wh]"""
 
     Qcs_lat_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent cooling load from ARU [Wh]"""
+    """Air recirculation unit (ARU) latent cooling demand [Wh]"""
 
     Qcs_sen_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total sensible cooling load [Wh]"""
+    """Total sensible cooling demand for all systems [Wh]"""
 
     Qcs_lat_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total latent cooling load [Wh]"""
+    """Total latent cooling demand for all systems [Wh]"""
 
     Qcs_em_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Emission losses from cooling systems [Wh]"""
+    """Cooling system emission losses [Wh]"""
 
     Qcs_dis_ls: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Distribution losses from cooling systems [Wh]"""
+    """Cooling system distribution losses [Wh]"""
 
     Qcs_sys_scu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Cooling load from SCU [Wh]"""
+    """Sensible cooling unit (SCU) system total cooling demand (sensible + latent) [Wh]"""
 
     Qcs_sys_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Cooling load from AHU [Wh]"""
+    """Air handling unit (AHU) system total cooling demand (sensible + latent) [Wh]"""
 
     Qcs_sys_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Cooling load from ARU [Wh]"""
-
-    DC_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District cooling demand for cooling [Wh]"""
+    """Air recirculation unit (ARU) system total cooling demand (sensible + latent) [Wh]"""
 
     Qcs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total cooling demand [Wh]"""
+    """Total space cooling demand [Wh]"""
 
     Qcs_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total cooling system demand [Wh]"""
+    """Total end-use space cooling demand (including distribution and emission losses) [Wh]"""
 
     QC_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total cooling system demand including refrigeration and data centers [Wh]"""
+    """Total cooling demand (including refrigeration and data centers) [Wh]"""
+
+    Qcre_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """End-use refrigeration demand [Wh]"""
+
+    Qcre: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Cooling demand for refrigeration [Wh]"""
+
+    DC_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """District cooling demand for space cooling [Wh]"""
 
     DC_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """District cooling demand for refrigeration [Wh]"""
-
-    Qcre_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Refrigeration system demand [Wh]"""
-
-    Qcre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Refrigeration demand [Wh]"""
 
     DC_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """District cooling demand for data centers [Wh]"""
 
     Qcdata_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Data center system demand [Wh]"""
+    """End-use data center cooling demand [Wh]"""
 
     Qcdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Data center demand [Wh]"""
+    """Data center cooling demand [Wh]"""
 
     Qcpro_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Process cooling demand [Wh]"""
+    """End-use process cooling demand [Wh]"""
 
 
 @dataclass
@@ -363,49 +364,49 @@ class HeatingSystemTemperatures:
     """
 
     ta_re_hs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return air temperature from AHU [C]"""
+    """Return air temperature from air handling unit (AHU) [C]"""
 
     ta_sup_hs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air temperature from AHU [C]"""
+    """Supply air temperature from air handling unit (AHU) [C]"""
 
     ta_re_hs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return air temperature from ARU [C]"""
+    """Return air temperature from air recirculation units (ARU) [C]"""
 
     ta_sup_hs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air temperature from ARU [C]"""
+    """Supply air temperature from air recirculation units (ARU) [C]"""
 
     Ths_sys_re_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from AHU [C]"""
+    """Return water temperature from air handling unit (AHU) [C]"""
 
     Ths_sys_re_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from ARU [C]"""
+    """Return water temperature from air recirculation units (ARU) [C]"""
 
     Ths_sys_re_shu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from SHU [C]"""
+    """Return water temperature from sensible heating units (SHU) [C]"""
 
     Ths_sys_sup_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to AHU [C]"""
+    """Supply water temperature to air handling unit (AHU) [C]"""
 
     Ths_sys_sup_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to ARU [C]"""
+    """Supply water temperature to air recirculation units (ARU) [C]"""
 
     Ths_sys_sup_shu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to SHU [C]"""
+    """Supply water temperature to sensible heating units (SHU) [C]"""
 
     Ths_sys_sup: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to heating system [C]"""
+    """Supply water temperature from heating system [C]"""
 
     Ths_sys_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from heating system [C]"""
+    """Return water temperature to heating system [C]"""
 
     Tww_sys_sup: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to hot water system [C]"""
+    """Supply water temperature from domestic hot water system [C]"""
 
     Tww_sys_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from hot water system [C]"""
+    """Return water temperature to domestic hot water system [C]"""
 
     Tww_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from hot water system [C]"""
+    """Return water temperature to domestic hot water system [C]"""
 
 
 @dataclass
@@ -415,31 +416,31 @@ class HeatingSystemMassFlows:
     """
 
     ma_sup_hs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air mass flow from AHU [kg/s]"""
+    """Supply air mass flow from air handling unit (AHU) [kg/s]"""
 
     ma_sup_hs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air mass flow from ARU [kg/s]"""
+    """Supply air mass flow from air recirculation units (ARU) [kg/s]"""
 
     mcphs_sys_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in AHU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the hot water delivered to air handling unit (AHU) [kW/C]"""
 
     mcphs_sys_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in ARU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the hot water delivered to air recirculation units (ARU) [kW/C]"""
 
     mcphs_sys_shu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in SHU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the hot water delivered to sensible heating units (SHU) [kW/C]"""
 
     mcphs_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in heating system [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the hot water delivered to space heating systems [kW/C]"""
 
     mcpww_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in hot water system [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the domestic hot water delivered [kW/C]"""
 
     mcptw: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Tap water mass flow rate [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of fresh water [kW/C]"""
 
     mww_kgs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Hot water mass flow rate [kg/s]"""
+    """Mass flow rate of domestic hot water [kg/s]"""
 
 
 @dataclass
@@ -449,52 +450,52 @@ class CoolingSystemTemperatures:
     """
 
     ta_re_cs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return air temperature from AHU [C]"""
+    """Return air temperature to air handling units (AHU) [C]"""
 
     ta_sup_cs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air temperature from AHU [C]"""
+    """Supply air temperature from air handling units (AHU) [C]"""
 
     ta_re_cs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return air temperature from ARU [C]"""
+    """Return air temperature to air recirculation units (ARU) [C]"""
 
     ta_sup_cs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air temperature from ARU [C]"""
+    """Supply air temperature from air recirculation units (ARU) [C]"""
 
     Tcs_sys_re_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from AHU [C]"""
+    """Return water temperature to air handling units (AHU) [C]"""
 
     Tcs_sys_re_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from ARU [C]"""
+    """Return water temperature from air recirculation units (ARU) [C]"""
 
     Tcs_sys_re_scu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from SCU [C]"""
+    """Return water temperature to sensible cooling units (SCU) [C]"""
 
     Tcs_sys_sup_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to AHU [C]"""
+    """Supply water temperature from air handling units (AHU) [C]"""
 
     Tcs_sys_sup_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to ARU [C]"""
+    """Supply water temperature from air recirculation units (ARU) [C]"""
 
     Tcs_sys_sup_scu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to SCU [C]"""
+    """Supply water temperature from sensible cooling units (SCU) [C]"""
 
     Tcs_sys_sup: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to cooling system [C]"""
+    """Supply water temperature from cooling system [C]"""
 
     Tcs_sys_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from cooling system [C]"""
+    """Return water temperature to cooling system [C]"""
 
     Tcdata_sys_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from data center cooling system [C]"""
+    """Return water temperature to data center cooling system [C]"""
 
     Tcdata_sys_sup: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to data center cooling system [C]"""
+    """Supply water temperature from data center cooling system [C]"""
 
     Tcre_sys_re: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Return water temperature from refrigeration cooling system [C]"""
+    """Return water temperature to refrigeration cooling system [C]"""
 
     Tcre_sys_sup: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply water temperature to refrigeration cooling system [C]"""
+    """Supply water temperature from refrigeration cooling system [C]"""
 
 
 @dataclass
@@ -504,28 +505,28 @@ class CoolingSystemMassFlows:
     """
 
     ma_sup_cs_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air mass flow from AHU [kg/s]"""
+    """Supply air mass flow from air handling units (AHU) [kg/s]"""
 
     ma_sup_cs_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Supply air mass flow from ARU [kg/s]"""
+    """Supply air mass flow from air recirculation units (ARU) [kg/s]"""
 
     mcpcs_sys_ahu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in AHU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the chilled water delivered to air handling units (AHU) [kW/C]"""
 
     mcpcs_sys_aru: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in ARU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the chilled water delivered to air recirculation units (ARU) [kW/C]"""
 
     mcpcs_sys_scu: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in SCU [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat capacity) of the chilled water delivered to sensible cooling units (SCU) [kW/C]"""
 
     mcpcs_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in cooling system [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat Capacity) of the chilled water delivered to space cooling systems [kW/C]."""
 
     mcpcre_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in refrigeration system [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat Capacity) of the chilled water delivered to refrigeration systems [kW/C]."""
 
     mcpcdata_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Water mass flow rate in data center cooling system [kg/s]"""
+    """Capacity flow rate (mass flow * specific heat Capacity) of the chilled water delivered to data center cooling systems [kW/C]."""
 
 
 @dataclass
@@ -538,22 +539,22 @@ class RCModelTemperatures:
     """Internal air temperature [C]"""
 
     theta_m: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Temperature of the thermal mass [C]"""
+    """Temperature of the thermal mass node (RC model) [C]"""
 
     theta_c: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Temperature of the building envelope [C]"""
+    """Temperature of the surface node (RC model) [C]"""
 
     theta_o: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Temperature of the opaque surfaces [C]"""
+    """Operative temperature in building (RC model) [C]"""
 
     theta_ve_mech: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Temperature of the mechanical ventilation [C]"""
 
     ta_hs_set: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Heating setpoint temperature [C]"""
+    """Heating system setpoint air temperature [C]"""
 
     ta_cs_set: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Cooling setpoint temperature [C]"""
+    """Cooling system setpoint air temperature [C]"""
 
 
 @dataclass
@@ -563,13 +564,13 @@ class Moisture:
     """
 
     x_int: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Internal air moisture content [kg/kg_dry_air]"""
+    """Moisture content in internal air [kg/kg_dry_air]"""
 
     x_ve_inf: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Infiltration air moisture content [kg/kg_dry_air]"""
+    """Moisture content in air from infiltration [kg/kg_dry_air]"""
 
     x_ve_mech: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Mechanical ventilation air moisture content [kg/kg_dry_air]"""
+    """Moisture content in air from mechanical ventilation [kg/kg_dry_air]"""
 
     g_hu_ld: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Humidification load [kg/s]"""
@@ -578,10 +579,10 @@ class Moisture:
     """Dehumidification load [kg/s]"""
 
     qh_lat_central: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent heat load from central humidification [Wh]"""
+    """Latent heating load from central humidification [Wh]"""
 
     qc_lat_central: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Latent heat load from central dehumidification [Wh]"""
+    """Latent cooling load from central dehumidification [Wh]"""
 
 
 @dataclass
@@ -656,13 +657,13 @@ class Solar:
     """
 
     I_sol: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Solar radiation on the building envelope [Wh/m2]"""
+    """Incident solar radiation on the building envelope [Wh/m2]"""
 
     I_rad: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Infrared radiation on the building envelope [Wh/m2]"""
+    """Vector solar radiation re-irradiated to the sky [Wh/m2]"""
 
     I_sol_and_I_rad: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Total radiation on the building envelope [Wh/m2]"""
+    """Net radiative heat gain on the building envelope [Wh/m2]"""
 
 
 @dataclass
@@ -672,13 +673,13 @@ class ThermalResistance:
     """
 
     RSE_wall: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Thermal resistance of the wall [m2K/W]"""
+    """Thermal resistance of the walls [m2K/W]"""
 
     RSE_roof: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Thermal resistance of the roof [m2K/W]"""
 
     RSE_win: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Thermal resistance of the window [m2K/W]"""
+    """Thermal resistance of the windows [m2K/W]"""
 
     RSE_underside: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Thermal resistance of the underside [m2K/W]"""
@@ -691,34 +692,34 @@ class FuelSource:
     """
 
     SOLAR_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Solar energy for hot water [Wh]"""
+    """Solar thermal energy use for domestic hot water [Wh]"""
 
     SOLAR_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Solar energy for heating [Wh]"""
+    """Solar thermal energy use for space heating [Wh]"""
 
     NG_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Natural gas for heating [Wh]"""
+    """Natural gas use for space heating [Wh]"""
 
     COAL_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Coal for heating [Wh]"""
+    """Coal use for space heating [Wh]"""
 
     OIL_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Oil for heating [Wh]"""
+    """Oil use for space heating [Wh]"""
 
     WOOD_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Wood for heating [Wh]"""
+    """Wood use for space heating [Wh]"""
 
     NG_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Natural gas for hot water [Wh]"""
+    """Natural gas use for domestic hot water [Wh]"""
 
     COAL_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Coal for hot water [Wh]"""
+    """Coal use for domestic hot water [Wh]"""
 
     OIL_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Oil for hot water [Wh]"""
+    """Oil use for domestic hot water [Wh]"""
 
     WOOD_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Wood for hot water [Wh]"""
+    """Wood use for domestic hot water [Wh]"""
 
 
 @dataclass
