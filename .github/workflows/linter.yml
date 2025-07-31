@@ -13,5 +13,4 @@ jobs:
       - name: Run Ruff Linter
         uses: astral-sh/ruff-action@v2
         with:
-          args: check --ignore E741,F841
           src: ./cea
