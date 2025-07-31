@@ -37,13 +37,28 @@ else:
 
 
 if sys.platform == "darwin" and platform.processor() == "arm":
-    from wntr.epanet.toolkit import libepanet
-    from pkg_resources import resource_filename
-    import subprocess
-
-    # Temp solution for EPANET toolkit on Apple Silicon: sign the library manually for WNTR v1.3.2
+     # Temp solution for EPANET toolkit on Apple Silicon: sign the library manually for WNTR v1.3.2
     # See https://github.com/USEPA/WNTR/issues/494
-    epanet_location = resource_filename("wntr.epanet.toolkit", libepanet)
+
+    from wntr.epanet.toolkit import libepanet
+    import subprocess
+    import importlib.util
+    
+    # Get the EPANET library location using modern importlib.resources
+    try:
+        # Python 3.9+: Use importlib.resources
+        from importlib.resources import files
+        epanet_location = str(files(libepanet))
+    except ImportError:
+        # Fallback for Python < 3.9: construct path manually using importlib
+        spec = importlib.util.find_spec("wntr.epanet.toolkit")
+        if spec is not None and spec.origin is not None:
+            import os
+            toolkit_dir = os.path.dirname(spec.origin)
+            epanet_location = os.path.join(toolkit_dir, libepanet)
+        else:
+            raise ImportError("Could not locate wntr.epanet.toolkit module")
+
     result = subprocess.run(["codesign", "--verify", "--verbose", epanet_location], capture_output=True, text=True)
     if result.returncode != 0:
         subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)

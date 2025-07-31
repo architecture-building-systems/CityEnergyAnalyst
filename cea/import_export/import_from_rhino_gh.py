@@ -53,7 +53,7 @@ def exec_import_csv_from_rhino(locator):
     building_geometry_path = locator.get_building_geometry_folder()
     networks_path = locator.get_networks_folder()
     trees_path = locator.get_tree_geometry_folder()
-    thermal_network_path = locator.get_thermal_network_folder()
+    # thermal_network_path = locator.get_thermal_network_folder()
     os.makedirs(input_path, exist_ok=True)
 
     # Remove all files in folder
