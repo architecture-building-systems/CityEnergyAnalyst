@@ -106,7 +106,22 @@ def check_na_values(df, columns=None):
     na_columns = df.columns[df.isna().any()].tolist()
     if na_columns:
         raise ValueError(f'There are NA values detected in the following required columns: {", ".join(na_columns)}')
+    
+def check_void_deck_values(df):
+    """
+    void_deck should exist in the zone geometry file. If not, create a new column with void_deck = 0 and print a warning.
+    If void_deck exists, check if it's >= 0 and is a integer.
+    """
 
+    if not pd.api.types.is_integer_dtype(df['void_deck']):
+        raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
+    
+    if (df['void_deck'] < 0).any():
+        raise ValueError('The void_deck column should not contain negative values. Please check your zone geometry file.')
+    
+    if (df['void_deck'] > df['floors_ag']).any():
+        raise ValueError('The void_deck column should not contain values greater than the number of floors above ground. '
+                         'Please check your zone geometry file.')
 
 def verify_input_geometry_zone(zone_df):
     # Verification 1. verify if all the column names are correct
