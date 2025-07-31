@@ -13,6 +13,7 @@ permissions:
   contents: read
 
 jobs:
+  # TODO: Remove once migrated to pixi
   check_environment_yml:
     runs-on: ubuntu-latest
     permissions:
@@ -54,7 +55,6 @@ jobs:
   tests:
     name: Tests - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: check_environment_yml
     strategy:
       fail-fast: false
       matrix:
