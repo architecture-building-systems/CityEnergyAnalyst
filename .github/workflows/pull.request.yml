@@ -1,9 +1,16 @@
-name: Pull Request Tests
+name: CI
+# Runs unit and integration tests
+# Only triggered on source code and dependency updates
 
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
     branches: [master, release-**]
+    paths: ['cea/**', 'pyproject.toml', 'pixi.lock']
+  
+  push:
+    branches: [master]
+    paths: ['cea/**', 'pyproject.toml', 'pixi.lock']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
@@ -13,45 +20,6 @@ permissions:
   contents: read
 
 jobs:
-  # TODO: Remove once migrated to pixi
-  check_environment_yml:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup master branch locally without switching current branch
-        run: git fetch origin master:master
-
-      - name: Check environment.yml diff
-        id: environment_yml_diff
-        run: |
-          set +e
-          git diff --quiet ..master -- environment.yml
-          echo "env_diff=$?" >> "$GITHUB_OUTPUT"
-
-      - name: Check conda-lock.yml diff
-        id: conda_lock_yml_diff
-        run: |
-          set +e
-          git diff --quiet ..master -- conda-lock.yml
-          echo "lock_diff=$?" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/github-script@v7
-        if: ${{ steps.environment_yml_diff.outputs.env_diff != 0 && steps.conda_lock_yml_diff.outputs.lock_diff == 0 }}
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Changes detected in `environment.yml` but `conda-lock.yml` is not updated.'
-            })
-            core.setFailed('conda-lock.yml needs to be updated')
-
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
