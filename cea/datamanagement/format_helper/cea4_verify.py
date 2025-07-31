@@ -23,7 +23,7 @@ __status__ = "Production"
 
 
 SHAPEFILES = ['zone', 'surroundings']
-COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag',
+COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
 CSV_BUILDING_PROPERTIES_4 = ['hvac', 'envelope', 'indoor_comfort', 'internal_loads', 'supply']
