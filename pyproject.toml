@@ -77,6 +77,9 @@ version = { attr = "cea.__version__" }
 
 [tool.ruff]
 exclude = ["*.ipynb"]
+lint.ignore = [
+    "E741", # ambiguous variable name (l, O, I)
+]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
