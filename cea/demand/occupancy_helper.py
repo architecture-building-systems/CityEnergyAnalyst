@@ -33,6 +33,7 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 
 def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
     # local variables
+    # just change something to create a pull request
     buildings: List[str] = config.occupancy_helper.buildings
     occupancy_model: str = config.occupancy_helper.occupancy_model
 
