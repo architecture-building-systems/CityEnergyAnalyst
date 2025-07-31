@@ -23,7 +23,6 @@ def migrate_void_deck_data(locator: cea.inputlocator.InputLocator) -> None:
                 envelope_df[["name", "void_deck"]], on="name", how="left"
             )
             zone_gdf["void_deck"] = zone_gdf["void_deck"].fillna(0)
-            zone_gdf.to_file(locator.get_zone_geometry(), driver="ESRI Shapefile")
             print("Migrated void_deck data from envelope.csv to zone.shp.")
             envelope_df.drop(columns=["void_deck"], inplace=True)
             envelope_df.to_csv(locator.get_building_architecture(), index=False)
