@@ -13,7 +13,8 @@ on:
     paths: ['cea/**', 'pyproject.toml', 'pixi.lock']
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  # Use head_ref for PRs, fall back to ref for pushes
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 permissions:
