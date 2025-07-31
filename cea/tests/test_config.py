@@ -19,30 +19,30 @@ class TestConfiguration(unittest.TestCase):
     def test_changing_scenario(self):
         config = cea.config.Configuration()
         config.scenario = os.path.dirname(__file__)
-        self.assertEquals(config.scenario, config.general.scenario)
+        self.assertEqual(config.scenario, config.general.scenario)
 
     def test_pickling_parameters(self):
         config = cea.config.Configuration()
         config.scenario = os.path.dirname(__file__)
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.scenario, config.general.scenario)
-        self.assertEquals(config.scenario, os.path.dirname(__file__))
+        self.assertEqual(config.scenario, config.general.scenario)
+        self.assertEqual(config.scenario, os.path.dirname(__file__))
 
     def test_update_parameter_value(self):
         config = cea.config.Configuration()
         config.general.parameters['multiprocessing'].set(False)
-        self.assertEquals(config.multiprocessing, False)
+        self.assertEqual(config.multiprocessing, False)
         config.general.parameters['multiprocessing'].set(True)
-        self.assertEquals(config.multiprocessing, True)
+        self.assertEqual(config.multiprocessing, True)
 
     def test_update_parameter_values_after_pickling(self):
         config = cea.config.Configuration()
         config.general.parameters['multiprocessing'].set(False)
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.multiprocessing, False)
+        self.assertEqual(config.multiprocessing, False)
         config.general.parameters['multiprocessing'].set(True)
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.multiprocessing, True)
+        self.assertEqual(config.multiprocessing, True)
 
     def test_applying_parameters(self):
         config = cea.config.Configuration()
@@ -50,10 +50,10 @@ class TestConfiguration(unittest.TestCase):
         if not os.path.exists(scenario):
             os.mkdir(scenario)
         config.apply_command_line_args(['--scenario', scenario], ['general'])
-        self.assertEquals(config.scenario, scenario)
-        self.assertEquals(config.scenario, config.general.scenario)
+        self.assertEqual(config.scenario, scenario)
+        self.assertEqual(config.scenario, config.general.scenario)
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.scenario, config.general.scenario)
+        self.assertEqual(config.scenario, config.general.scenario)
 
     def test_decode_fileparameter(self):
         config = cea.config.Configuration()
