@@ -15,7 +15,8 @@ on:
 concurrency:
   # Use head_ref for PRs, fall back to ref for pushes
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  # Only cancel in-progress jobs for PRs, not for pushes to master
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
