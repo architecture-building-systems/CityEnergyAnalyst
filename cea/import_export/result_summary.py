@@ -848,7 +848,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
     """
     if groupby_cols is not None:
         # Group by specified columns (e.g., 'period_month', 'period_season')
-        grouped = df.groupby(groupby_cols)
+        grouped = df.groupby(groupby_cols, observed=True)
         
         # Separate area columns from energy columns
         area_cols = [col for col in df.columns if col.endswith('_m2') or col.endswith('[m2]')]
@@ -948,8 +948,8 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
                 grouped_monthly = aggregate_solar_data_properly_temporal(df, 'period_month')
                 grouped_monthly['period'] = grouped_monthly.index  # Add 'period' column with month names
-                grouped_monthly['hour_start'] = df.groupby('period_month')['period_hour'].first().values
-                grouped_monthly['hour_end'] = df.groupby('period_month')['period_hour'].last().values + 1
+                grouped_monthly['hour_start'] = df.groupby('period_month', observed=True)['period_hour'].first().values
+                grouped_monthly['hour_end'] = df.groupby('period_month', observed=True)['period_hour'].last().values + 1
                 grouped_monthly.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
                 monthly_rows.extend(grouped_monthly.reset_index(drop=True).to_dict(orient='records'))
 
@@ -957,8 +957,8 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if 'seasonally' in list_selected_time_period and 'period_season' in df.columns:
                 grouped_seasonally = aggregate_solar_data_properly_temporal(df, 'period_season')
                 grouped_seasonally['period'] = grouped_seasonally.index  # Add 'period' column with season names
-                grouped_seasonally['hour_start'] = df.groupby('period_season')['period_hour'].first().values
-                grouped_seasonally['hour_end'] = df.groupby('period_season')['period_hour'].last().values + 1
+                grouped_seasonally['hour_start'] = df.groupby('period_season', observed=True)['period_hour'].first().values
+                grouped_seasonally['hour_end'] = df.groupby('period_season', observed=True)['period_hour'].last().values + 1
                 grouped_seasonally.drop(columns=['period_month', 'period_season'], errors='ignore', inplace=True)
                 seasonally_rows.extend(grouped_seasonally.reset_index(drop=True).to_dict(orient='records'))
 
@@ -1169,13 +1169,13 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
                 continue
 
             if 'people' in col:
-                aggregated_col = df.groupby('period')[col].mean().round().astype(int)
+                aggregated_col = df.groupby('period', observed=True)[col].mean().round().astype(int)
             elif '_m2' in col or '[m2]' in col:
                 # Area columns should remain constant across time periods (use first value)
-                aggregated_col = df.groupby('period')[col].first()
+                aggregated_col = df.groupby('period', observed=True)[col].first()
             else:
                 # Default to sum for other columns
-                aggregated_col = df.groupby('period')[col].sum()
+                aggregated_col = df.groupby('period', observed=True)[col].sum()
 
             aggregated_df[col] = aggregated_col
 
@@ -1183,7 +1183,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
         df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
 
         # Add hour_start and hour_end columns
-        period_groups = df.groupby('period')
+        period_groups = df.groupby('period', observed=True)
         aggregated_df['hour_start'] = period_groups['period_hour'].first().values
         aggregated_df['hour_end'] = period_groups['period_hour'].last().values
 
@@ -1772,7 +1772,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
 
         # Add hour_start and hour_end columns
-        period_groups = df.groupby('period')
+        period_groups = df.groupby('period', observed=True)
         pv_analytics_df['hour_start'] = period_groups['period_hour'].first().values
         pv_analytics_df['hour_end'] = period_groups['period_hour'].last().values
 
@@ -1957,9 +1957,10 @@ def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Group by the 'period' column and calculate the penetration ratio
-    grouped = df.groupby('period').apply(
+    grouped = df.groupby('period', observed=True).apply(
         lambda group: group[col].sum() / group[demand_col].sum()
-        if group[demand_col].sum() != 0 else 0
+        if group[demand_col].sum() != 0 else 0,
+        include_groups=False
     )
 
     # Format the result into a new DataFrame
@@ -1990,12 +1991,13 @@ def calc_self_sufficiency_by_period(df, col, demand_col='GRID_kWh'):
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Group by the 'period' column and calculate the self-sufficiency ratio
-    grouped = df.groupby('period').apply(
+    grouped = df.groupby('period', observed=True).apply(
         lambda group: (
             min(group[col].sum(), group[demand_col].sum()) /
             group[demand_col].sum()
             if group[demand_col].sum() != 0 else 0
-        )
+        ),
+        include_groups=False
     )
 
     # Format the result into a new DataFrame
@@ -2026,12 +2028,12 @@ def calc_self_consumption_by_period(df, col, demand_col='GRID_kWh'):
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Group by the 'period' column and calculate the self-consumption ratio
-    grouped = df.groupby('period').apply(
+    grouped = df.groupby('period', observed=True).apply(
         lambda group: (
     min(group[col].sum(), group[demand_col].sum()) /
     group[col].sum()
     if group[col].sum() != 0 else 0
-    ))
+    ), include_groups=False)
     # Format the result into a new DataFrame
     df_new = grouped.reset_index(name=col)
     df_new[col] = df_new[col].round(2)  # Round to two decimal places
