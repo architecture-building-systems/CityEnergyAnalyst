@@ -15,7 +15,7 @@ COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
                          'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 NAME_COLUMN = 'name'
-COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference', 'geometry',
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag', 'reference', 'geometry',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
