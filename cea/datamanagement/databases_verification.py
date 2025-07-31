@@ -124,6 +124,14 @@ def check_void_deck_values(df):
                          'Please check your zone geometry file.')
 
 def verify_input_geometry_zone(zone_df):
+    # TODO: remove this when void_deck always exist in geometry
+    not_exist_before = False
+    if 'void_deck' not in zone_df.columns:
+        # add void_deck to pass the verification first
+        Warning('The void_deck column should always exist in the zone geometry file. ')
+        zone_df['void_deck'] = 0
+        not_exist_before = True
+        
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
@@ -137,6 +145,11 @@ def verify_input_geometry_zone(zone_df):
 
     check_duplicated_names(zone_df)
 
+    check_void_deck_values(zone_df)
+
+    if not_exist_before:
+        # delete the void_deck column if it was not exist before
+        zone_df.drop(columns=['void_deck'], inplace=True)
 
 def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct
