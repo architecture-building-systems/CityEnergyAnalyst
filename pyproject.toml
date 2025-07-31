@@ -12,6 +12,7 @@ maintainers = [
 ]
 dynamic = ["version"]
 
+# Read docs/developer/dependency-management.rst for dependency management guidelines
 dependencies = [
     # Scientific/geospatial packages (optimized conda builds available in conda-forge)
     # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
@@ -113,7 +114,7 @@ server = "cea dashboard"
 test = "cea test --type integration"
 
 [tool.pixi.dependencies]
-# Scientific/geospatial packages (also in main dependencies - conda builds preferred)
+# Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
 # Duplicate of above in [project.dependencies] - update both when needed
 numpy = "<2" # held back by wntr
 scipy = "*"
@@ -126,10 +127,12 @@ numba = "*"
 pyyaml = "*"
 psutil = "*"
 pyarrow = "*"
+pythonocc-core = "*" # C++ bindings to OpenCASCADE
+pvlib = "*" # has optional C extensions for solar calculations
+
+# Pure Python packages (conda-forge for unified dependency resolution)
 libpysal = "*"
 osmnx = "*"
-pvlib = "*"
-pythonocc-core = "*"
 
 # System dependencies with native libraries (fetch from conda-forge)
 cvxopt = "*" # For wntr
