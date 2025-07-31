@@ -73,47 +73,47 @@ def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd
 
         Pipe Lengths:
 
-            - Lcww_dis: length of hot water piping in the distribution circuit (????) [m]
-            - Lsww_dis: length of hot water piping in the distribution circuit (????) [m]
-            - Lvww_dis: length of hot water piping in the distribution circuit (?????) [m]
-            - Lvww_c: length of piping in the heating system circulation circuit (ventilated/recirc?) [m]
-            - Lv: length vertical lines [m]
+            - Lcww_dis: length of hot water piping in the distribution circuit [m]
+            - Lsww_dis: length of hot water piping in the circulation circuit [m]
+            - Lvww_dis: length of hot water piping in the distribution circuit in the basement (?) [m]
+            - Lvww_c: length of piping in the heating system circulation circuit in the basement (?) [m]
+            - Lv: length vertical lines (heating and cooling distribution) [m]
 
         Heating Supply Temperatures:
 
-            - Ths_sup_ahu_0: heating supply temperature for AHU (C)
-            - Ths_sup_aru_0: heating supply temperature for ARU (C)
-            - Ths_sup_shu_0: heating supply temperature for SHU (C)
+            - Ths_sup_ahu_0: heating supply temperature from AHU (C)
+            - Ths_sup_aru_0: heating supply temperature from ARU (C)
+            - Ths_sup_shu_0: heating supply temperature from SHU (C)
 
         Heating Return Temperatures:
 
-            - Ths_re_ahu_0: heating return temperature for AHU (C)
-            - Ths_re_aru_0: heating return temperature for ARU (C)
-            - Ths_re_shu_0: heating return temperature for SHU (C)
+            - Ths_re_ahu_0: heating return temperature to AHU (C)
+            - Ths_re_aru_0: heating return temperature to ARU (C)
+            - Ths_re_shu_0: heating return temperature to SHU (C)
 
         Cooling Supply Temperatures:
 
-            - Tcs_sup_ahu_0: cooling supply temperature for AHU (C)
-            - Tcs_sup_aru_0: cooling supply temperature for ARU (C)
-            - Tcs_sup_scu_0: cooling supply temperature for SCU (C)
+            - Tcs_sup_ahu_0: cooling supply temperature from AHU (C)
+            - Tcs_sup_aru_0: cooling supply temperature from ARU (C)
+            - Tcs_sup_scu_0: cooling supply temperature from SCU (C)
 
         Cooling Return Temperatures:
 
-            - Tcs_re_ahu_0: cooling return temperature for AHU (C)
-            - Tcs_re_aru_0: cooling return temperature for ARU (C)
-            - Tcs_re_scu_0: cooling return temperature for SCU (C)
+            - Tcs_re_ahu_0: cooling return temperature to AHU (C)
+            - Tcs_re_aru_0: cooling return temperature to ARU (C)
+            - Tcs_re_scu_0: cooling return temperature to SCU (C)
 
-        Water supply temperature??:
+        Domestic hot water supply temperature??:
 
-            - Tww_sup_0: ?????
+            - Tww_sup_0: domestic hot water supply temperature (C)
 
         Thermal losses in pipes:
 
-            - Y: Linear trasmissivity coefficients of piping depending on year of construction [W/m.K]
+            - Y: Linear trasmissivity coefficient of piping depending on year of construction [W/m.K]
 
         Form Factor Adjustment:
 
-            - fforma: form factor comparison between real surface and rectangular ???
+            - fforma: form factor (comparison between real and rectangular surface)
 
     :rtype: dict
 
@@ -264,31 +264,31 @@ class SolarProperties:
 @dataclass(frozen=True)
 class RCModelProperties:
     # --- Area properties ---
-    Atot: Annotated[float, "Total area [m2]"]
-    Af: Annotated[float, "Floor area [m2]"]
+    Atot: Annotated[float, "Area of all surfaces facing the building zone [m2]"]
+    Af: Annotated[float, "Conditioned floor area (areas that are heated or cooled) [m2]"]
     GFA_m2: Annotated[float, "Gross floor area [m2]"]
     footprint: Annotated[float, "Building footprint area [m2]"]
     Aroof: Annotated[float, "Roof area [m2]"]
     Aunderside: Annotated[float, "Underside area [m2]"]
     Awall_ag: Annotated[float, "Above ground wall area [m2]"]
     Awin_ag: Annotated[float, "Above ground window area [m2]"]
-    Am: Annotated[float, "Mass area [m2]"]
-    Aef: Annotated[float, "Effective area [m2]"]
-    Aocc: Annotated[float, "Occupied area [m2]"]
-    Aop_bg: Annotated[float, "Opaque area below ground [m2]"]
-    Hs_ag: Annotated[float, "Above ground surface area [m2]"]
+    Am: Annotated[float, "Effective mass area [m2]"]
+    Aef: Annotated[float, "Electrified area (share of gross floor area that is electrified) [m2]"]
+    Aocc: Annotated[float, "Occupied floor area [m2]"]
+    Aop_bg: Annotated[float, "Area of opaque surfaces below ground [m2]"]
+    Hs_ag: Annotated[float, "Share of above-ground gross floor area that is conditioned [m2/m2]"]
 
     # --- Thermal properties ---
-    Cm: Annotated[float, "Thermal capacity [J/K]"]
-    Hg: Annotated[float, "Solar heat gain [W]"]
-    HD: Annotated[float, "Direct solar gain [W]"]
+    Cm: Annotated[float, "Internal heat capacity [J/K]"]
+    Hg: Annotated[float, "Steady-state thermal transmission coefficient to the ground [W/K]"]
+    HD: Annotated[float, "Direct thermal transmission coefficient to the external environment [W/K]"]
 
     # --- Heat transfer coefficients ---
-    Htr_is: Annotated[float, "Transmission heat transfer coefficient (internal surfaces) [W/K]"]
-    Htr_em: Annotated[float, "Transmission heat transfer coefficient (external mass) [W/K]"]
-    Htr_ms: Annotated[float, "Transmission heat transfer coefficient (mass to surface) [W/K]"]
-    Htr_op: Annotated[float, "Transmission heat transfer coefficient (opaque) [W/K]"]
-    Htr_w: Annotated[float, "Transmission heat transfer coefficient (windows) [W/K]"]
+    Htr_is: Annotated[float, "Thermal transmission coefficient between air and surface nodes in RC-model [W/K]"]
+    Htr_em: Annotated[float, "Thermal transmission coefficient between exterior and thermal mass nodes in RC-model [W/K]"]
+    Htr_ms: Annotated[float, "Thermal transmission coefficient between surface and thermal mass nodes in RC-model [W/K]"]
+    Htr_op: Annotated[float, "Thermal transmission coefficient for opaque surfaces in RC-model [W/K]"]
+    Htr_w: Annotated[float, "Thermal transmission coefficient for windows in RC-model [W/K]"]
 
     # FIXME: Decide if these fields should be in envelope or rc_model
     # --- U-values (Duplicated Envelope properties) ---

@@ -83,7 +83,8 @@ def calc_Qww_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesD
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
-    Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
+    Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank,
+    and heat loss in the distribution network.
     :param bpr: Building Properties
     :type bpr: BuildingPropertiesRow
     :param tsd: Time series data of building
