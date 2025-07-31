@@ -77,8 +77,6 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
 
     # Find the plot config section for the cea feature
     try:
-        # Debug: print available sections
-        print(f"Available config sections: {list(config.sections.keys())}")
         plot_config_general = config.sections["plots-general"]
         plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
     except KeyError as e:
