@@ -68,8 +68,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
-docs = ["setuptools"]
+[dependency-groups]
+lint = ["ruff"]
+test = ["pytest"]
+docs = ["setuptools", "sphinx"]
+dev = [{include-group = "test"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [project.urls]
 "Homepage" = "https://cityenergyanalyst.com"
