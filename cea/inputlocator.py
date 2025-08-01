@@ -176,13 +176,13 @@ class InputLocator(object):
 
     def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}"""
-        if cea_feature == 'sc_et':
+        if cea_feature == 'sc_ET':
             return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'sc_fp':
+        elif cea_feature == 'sc_FP':
             return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'pvt_et':
+        elif cea_feature == 'pvt_ET':
             return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'pvt_fp':
+        elif cea_feature == 'pvt_FP':
             return os.path.join(summary_folder, 'pvt')
         elif cea_feature == 'embodied_emissions':
             return os.path.join(summary_folder, 'emissions')
