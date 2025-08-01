@@ -223,7 +223,6 @@ class BuildingProperties(object):
 
             - n50: Air tightness at 50 Pa [h^-1].
             - type_shade: shading system type.
-            - void_deck: Number of floors (from the ground up) with an open envelope.
             - win_wall: window to wall ratio.
             - U_base: U value of the floor construction [W/m2K]
             - U_roof: U value of roof construction [W/m2K]
@@ -318,7 +317,6 @@ class BuildingProperties(object):
         # Aop_bg: opaque surface area below ground level;
         # U_base: basement U value, defined in envelope.csv
         # Hs_bg: Fraction of underground floor area air-conditioned.
-        # 1 - is_above_ground: 1 if building touches ground, 0 if building is floating (void_deck > 0)
         df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties
@@ -394,7 +392,6 @@ class BuildingProperties(object):
             envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
         df = envelope.merge(geometry, left_index=True, right_index=True)
-
 
         # adjust envelope areas with Void_deck
         df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
@@ -674,7 +671,6 @@ class EnvelopeProperties(object):
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
-        self.void_deck = envelope['void_deck']
 
 
 class SolarProperties(object):
@@ -888,7 +884,7 @@ def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFra
       window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
     - prop_win: name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
     - prop_shading: name, shading factor (rf_sh).
-    - prop_construction: name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
+    - prop_construction: name, internal heat capacity (Cm_af).
     - prop_leakage: name, exfiltration (n50).
 
     Creates a merged df containing aforementioned envelope properties called envelope_prop.
@@ -946,7 +942,7 @@ def get_envelope_properties(locator: InputLocator, prop_architecture: pd.DataFra
 
     check_successful_merge(df_construction, df_leakage, df_roof, df_wall, df_win, df_shading, df_floor)
 
-    fields_construction = ['name', 'Cm_Af', 'void_deck', 'Hs', 'Ns', 'Es', 'occupied_bg']
+    fields_construction = ['name', 'Cm_Af', 'Hs', 'Ns', 'Es', 'occupied_bg']
     fields_leakage = ['name', 'n50']
     fields_basement = ['name', 'U_base']
     fields_roof = ['name', 'e_roof', 'a_roof', 'U_roof']
