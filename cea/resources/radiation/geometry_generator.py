@@ -207,6 +207,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
     if 'void_deck' not in buildings_df.columns:
         buildings_df['void_deck'] = 0
     void_decks = buildings_df['void_deck'].astype(int)
+    print("Void decks in geometry_generator:", void_decks.values)
     # range_floors = nfloors.map(lambda floors: range(floors + 1))
     # check if each building's void deck is smaller or equal to the number of floors.
     if not all(void_decks <= nfloors):
@@ -214,6 +215,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
     
     range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
+    print("Range of floors in geometry_generator:", range_floors)
     floor_to_floor_height = height / nfloors
 
     n = len(geometries)
