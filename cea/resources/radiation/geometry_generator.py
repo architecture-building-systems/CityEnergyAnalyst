@@ -204,9 +204,8 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
 
     height = buildings_df['height_ag'].astype(float)
     nfloors = buildings_df['floors_ag'].astype(int)
-    if 'void_deck' not in buildings_df.columns:
-        buildings_df['void_deck'] = 0
     void_decks = buildings_df['void_deck'].astype(int)
+    print("Void decks in geometry_generator:", void_decks.values)
     # range_floors = nfloors.map(lambda floors: range(floors + 1))
     # check if each building's void deck is smaller or equal to the number of floors.
     if not all(void_decks <= nfloors):
@@ -214,6 +213,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
     
     range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
+    print("Range of floors in geometry_generator:", range_floors)
     floor_to_floor_height = height / nfloors
 
     n = len(geometries)
@@ -318,8 +318,6 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use void_deck when creating the building solid.
-    void_deck_s = architecture_wwr_df['void_deck']
-    zone_buildings_df['void_deck'] = void_deck_s
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
@@ -327,6 +325,9 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # Check if there are any buildings in surroundings_df before processing
     if not surroundings_df.empty:
         surroundings_buildings_df = surroundings_df.set_index('name')
+        if 'void_deck' not in surroundings_buildings_df.columns:
+            surroundings_buildings_df['void_deck'] = 0
+            
         surroundings_building_names = surroundings_buildings_df.index.values
         surroundings_building_solid_list, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
@@ -623,12 +624,6 @@ def calc_solid(face_footprint: TopoDS_Face,
     # make sure all the normals are correct (they are pointing out)
     bldg_solid = construct.make_solid(building_shell_list[0])
     bldg_solid = modify.fix_close_solid(bldg_solid)
-    #
-    # if config.general.debug:
-    #     # visualize building progress while debugging
-    #     face_list = fetch.topo_explorer(bldg_solid, "face")
-    #     edges = calculate.face_normal_as_edges(face_list,5)
-    #     utility.visualise([face_list,edges],["WHITE","BLACK"])
     return bldg_solid
 
 

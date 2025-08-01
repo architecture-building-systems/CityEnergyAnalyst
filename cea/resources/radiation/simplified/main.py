@@ -10,6 +10,7 @@ from osgeo import gdal
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 from cea.resources.radiation import daysim, geometry_generator
 from cea.resources.radiation.daysim import calc_sensors_zone, GridSize, write_aggregated_results, write_sensor_results
 from cea.resources.radiation.main import read_surface_properties, run_daysim_simulation
@@ -75,6 +76,7 @@ def main(config):
     config.radiation.buildings = sample_buildings
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    migrate_void_deck_data(locator)
     daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
                                                                          config.radiation.use_latest_daysim_binaries)
 
