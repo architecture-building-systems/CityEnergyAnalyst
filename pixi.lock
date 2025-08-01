@@ -4904,8 +4904,22 @@ packages:
 - pypi: ./
   name: cityenergyanalyst
   version: 4.0.0b1
-  sha256: 212e8b9ac1aa6a17418aa235167d4665bce570cf3d932fd47c58ce9164724c96
+  sha256: a61e5dcf2d3fe868f4f7353c32f1890f03bbf0357cee6516ede2d98f6ab4ae16
   requires_dist:
+  - numpy<2
+  - scipy
+  - matplotlib
+  - geopandas
+  - shapely
+  - networkx>=3.4
+  - scikit-learn
+  - numba
+  - pyyaml
+  - psutil
+  - pyarrow
+  - libpysal
+  - osmnx
+  - pvlib
   - aiofiles
   - aiocache[redis]
   - fastapi
@@ -4933,9 +4947,6 @@ packages:
   - xlwt
   - wntr>=1.3.2,<2
   - py4design @ git+https://github.com/reyery/py4design.git@08326122ee496afbf762527365d88415f4b570f5
-  - pytest ; extra == 'dev'
-  - ruff ; extra == 'dev'
-  - setuptools ; extra == 'docs'
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.2.1-pyh707e725_0.conda
