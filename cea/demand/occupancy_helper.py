@@ -51,9 +51,14 @@ def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.co
     internal_loads = pd.read_csv(locator.get_building_internal()).set_index('name')
     indoor_comfort = pd.read_csv(locator.get_building_comfort()).set_index('name')
     architecture = pd.read_csv(locator.get_building_architecture()).set_index('name')
+    print("void_deck in architecture:", architecture['void_deck'])
 
     # get building properties
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    try:
+        print("void_deck in prop_geometry:", prop_geometry['void_deck'])
+    except KeyError:
+        print("void_deck not found in prop_geometry")
     prop_geometry = prop_geometry.merge(architecture, on='name').set_index('name')
 
     # reproject to projected coordinate system (in meters) to calculate area
