@@ -80,9 +80,13 @@ def archetypes_mapper(locator,
             occupant_densities[use] = 0.0
 
     # Get properties about the construction and architecture
+    df_envelope = pd.read_csv(locator.get_building_architecture())
+    print("void_deck in architecture before archetypes_mapper:", df_envelope['void_deck'])
     if update_architecture_dbf:
         architecture_mapper(locator, building_typology_df)
 
+    df_envelope = pd.read_csv(locator.get_building_architecture())
+    print("void_deck in architecture after archetypes_mapper:", df_envelope['void_deck'])
     # Get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
         aircon_mapper(locator, building_typology_df)
