@@ -4,6 +4,9 @@ doc/_build
 # PyCharm files
 .idea/
 
+# VSCode files
+.vscode/
+
 # VIM files
 *.swp
 
