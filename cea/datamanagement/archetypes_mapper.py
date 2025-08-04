@@ -187,7 +187,6 @@ def architecture_mapper(locator, typology_df):
               'Ns',
               'Es',
               'occupied_bg',
-              'void_deck',
               'wwr_north',
               'wwr_west',
               'wwr_east',
