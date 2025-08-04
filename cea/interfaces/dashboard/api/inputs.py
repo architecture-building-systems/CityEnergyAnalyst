@@ -15,11 +15,12 @@ from pydantic import BaseModel, Field
 from fastapi.concurrency import run_in_threadpool
 
 import cea.config
+from cea.databases import CEADatabase
 import cea.inputlocator
 import cea.schemas
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
+from cea.interfaces.dashboard.api.databases import DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -399,7 +400,7 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: read_all_databases(locator.get_databases_folder()))
+        return await run_in_threadpool(lambda: CEADatabase(locator).to_dict())
     except IOError as e:
         print(e)
         raise HTTPException(
