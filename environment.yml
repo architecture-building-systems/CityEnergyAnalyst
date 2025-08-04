@@ -2,53 +2,26 @@ name: cea
 channels:
 - conda-forge
 dependencies:
+# Python version and pip
+- python=3.12
+- pip
+#Dependencies for CEA
 - cvxopt # For wntr
 - fiona
-- geopandas=0.13 # Due to python3.8 support
+- gdal
+- geopandas
 - libpysal
-- numba=0.58 # Due to python3.8 support
-- numpy=1.24 # Due to python3.8 support
-- osmnx=1.9.4 # Due to python3.8 support
-- networkx=2.5 # Due to python3.8 support and wntr
-- pip
+- numba
+- numpy<2 # held back by wntr
+- osmnx
+- networkx>=3.4 # 3.4 contains a fix for steiner tree algorithm
 - psutil
 - pvlib
-- python=3.8 # Held back by wntr version
-- pythonocc-core==7.7.0 # Avoid deprecation warnings
+- pythonocc-core==7.8.1 # Due to #3867
 - pyyaml
 - scikit-learn
-- scipy=1.10 # Due to python3.8 support
-- shapely=2
+- scipy
+- shapely
 - matplotlib
 - notebook
 - pyarrow
-- git
-- pip:
-  # Web
-  - aiofiles
-  - aiocache[redis]
-  - fastapi
-  - pydantic-settings
-  - uvicorn
-  - jinja2
-  - python-socketio
-  - python-multipart # Required by fastapi for file uploads
-  - sqlmodel # Required by fastapi for database models
-  - asyncpg # Required by sqlmodel for postgres
-  - aiosqlite # Required for async sqlite adapter
-  - pyjwt[crypto] # Required by fastapi for JWT authentication
-  # Python packages
-  - deap
-  - ephem
-  - numpy-financial
-  - python-louvain
-  - pytz # Not required from 3.9
-  - salib
-  - timezonefinder
-  - openpyxl
-  - plotly
-  - utm
-  - xlrd
-  - xlwt
-  - wntr==0.2.3
-  - git+https://github.com/reyery/py4design.git@ignore-display # modified p4design to remove deprecated functions

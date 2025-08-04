@@ -1,0 +1,47 @@
+name: CI
+# Runs unit and integration tests
+# Only triggered on source code and dependency updates
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches: [master, release-**]
+    paths: ['cea/**', 'pyproject.toml', 'pixi.lock']
+  
+  push:
+    branches: [master]
+    paths: ['cea/**', 'pyproject.toml', 'pixi.lock']
+
+concurrency:
+  # Use head_ref for PRs, fall back to ref for pushes
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  # Only cancel in-progress jobs for PRs, not for pushes to master
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.14
+        with:
+          cache: true
+
+      - name: Install CEA
+        run: pixi run pip install .
+
+      - name: Run unit tests
+        run: pixi run cea test --type unittest
+
+      - name: Run integration tests
+        if: github.event.pull_request.draft == false
+        run: pixi run cea test --type integration

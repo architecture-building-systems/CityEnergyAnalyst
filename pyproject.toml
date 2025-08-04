@@ -2,7 +2,7 @@
 name = "cityenergyanalyst"
 description = "City Energy Analyst"
 readme = "README.rst"
-requires-python = "==3.8.*"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
     { name = "Architecture and Building Systems", email = "cea@arch.ethz.ch" }
@@ -12,12 +12,67 @@ maintainers = [
 ]
 dynamic = ["version"]
 
-# All dependencies are determined in environment.yml
-dependencies = []
+# Read docs/developer/dependency-management.rst for dependency management guidelines
+dependencies = [
+    # Scientific/geospatial packages (optimized conda builds available in conda-forge)
+    # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
+    "numpy<2", # held back by wntr
+    "scipy",
+    "matplotlib",
+    "geopandas",
+    "shapely",
+    "networkx>=3.4", # 3.4 contains a fix for steiner tree algorithm
+    "scikit-learn",
+    "numba",
+    "pyyaml",
+    "psutil",
+    "pyarrow",
+    "libpysal",
+    "osmnx",
+    "pvlib",
+    # Does not exist in pypi
+    # "pythonocc-core",
+
+    # Backend dependencies
+    "aiofiles",
+    "aiocache[redis]",
+    "fastapi",
+    "pydantic-settings",
+    "uvicorn",
+    "jinja2",
+    "python-socketio",
+    "python-multipart", # Required by fastapi for file uploads
+    "sqlalchemy[asyncio]",
+    "sqlmodel", # Required by fastapi for database models
+    "asyncpg", # Required by sqlmodel for postgres
+    "aiosqlite", # Required for async sqlite adapter
+    "pyjwt[crypto]", # Required by fastapi for JWT authentication
+
+    # Other python dependencies
+    "deap",
+    "ephem",
+    "numpy-financial",
+    "python-louvain",
+    "pytz", # Not required from 3.9
+    "salib",
+    "timezonefinder",
+    "openpyxl",
+    "plotly",
+    "utm",
+    "xlrd",
+    "xlwt",
+    "wntr>=1.3.2,<2", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
+
+    # modified p4design to remove deprecated functions
+    "py4design @ git+https://github.com/reyery/py4design.git@08326122ee496afbf762527365d88415f4b570f5",
+]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
-docs = ["setuptools"]
+[dependency-groups]
+lint = ["ruff"]
+test = ["pytest"]
+docs = ["setuptools", "sphinx"]
+dev = [{include-group = "test"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [project.urls]
 "Homepage" = "https://cityenergyanalyst.com"
@@ -45,3 +100,53 @@ version = { attr = "cea.__version__" }
 
 [tool.ruff]
 exclude = ["*.ipynb"]
+lint.ignore = [
+    "E741", # ambiguous variable name (l, O, I)
+]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = [
+    "linux-64", "linux-aarch64",
+    "osx-64", "osx-arm64",
+    "win-64"
+]
+
+[tool.pixi.tasks]
+cea = "cea"
+server = "cea dashboard"
+test = "cea test --type integration"
+
+[tool.pixi.dependencies]
+# Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
+# Duplicate of above in [project.dependencies] - update both when needed
+numpy = "<2" # held back by wntr
+scipy = "*"
+matplotlib = "*"
+geopandas = "*"
+shapely = "*"
+networkx = ">=3.4" # 3.4 contains a fix for steiner tree algorithm
+scikit-learn = "*"
+numba = "*"
+pyyaml = "*"
+psutil = "*"
+pyarrow = "*"
+pythonocc-core = "==7.8.1" # Due to #3867
+pvlib = "*" # has optional C extensions for solar calculations
+
+# Pure Python packages (conda-forge for unified dependency resolution)
+libpysal = "*"
+osmnx = "*"
+
+# System dependencies with native libraries (fetch from conda-forge)
+cvxopt = "*" # For wntr
+fiona = "*"
+gdal = "*"
+
+# Development tools (pixi-only)
+notebook = "*"
+pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
+
+[tool.pixi.pypi-dependencies]
+# install cea as editable package for development
+cityenergyanalyst = { path = ".", editable = true }

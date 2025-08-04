@@ -148,11 +148,9 @@ def verify_file_against_schema_4(scenario, item, building_name=None):
     try:
         if file_path.endswith('.csv'):
             df = pd.read_csv(file_path)
-            col_attr = 'Column'
         elif file_path.endswith('.shp'):
             gdf = gpd.read_file(file_path)
             df = pd.DataFrame(gdf.drop(columns=['geometry'], errors='ignore'))  # Drop geometry safely
-            col_attr = 'Attribute'
         else:
             raise ValueError(f"Unsupported file type: {file_path}. Only .csv and .shp files are supported.")
     except Exception as e:
