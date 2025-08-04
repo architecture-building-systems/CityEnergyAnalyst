@@ -14,10 +14,8 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
-from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.utilities import epwreader
 
 REFERENCE_TIME = 3456
 
