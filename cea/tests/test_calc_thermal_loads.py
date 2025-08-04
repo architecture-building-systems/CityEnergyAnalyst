@@ -38,17 +38,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.test_config = configparser.ConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
-        # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.database_helper import main as database_helper
-        cls.config.database_helper.databases_path = "CH"
-        cls.config.database_helper.databases = ["archetypes", "assemblies", "components"]
-        database_helper(cls.config)
-
-        # run properties script
-        import cea.datamanagement.archetypes_mapper
-        cea.datamanagement.archetypes_mapper.archetypes_mapper(cls.locator, True, True, True, True, True, True,
-                                                         cls.locator.get_zone_building_names())
-
         cls.building_properties = BuildingProperties(cls.locator, epwreader.epw_reader(cls.locator.get_weather_file()))
 
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
