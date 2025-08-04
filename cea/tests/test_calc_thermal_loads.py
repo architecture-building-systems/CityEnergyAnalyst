@@ -1,6 +1,3 @@
-
-
-
 import configparser
 import json
 import os
@@ -8,9 +5,11 @@ import unittest
 
 import pandas as pd
 
+from cea.config import DEFAULT_CONFIG, Configuration
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.thermal_loads import calc_thermal_loads
+from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities import epwreader
 
@@ -26,9 +25,8 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import cea.examples
-        cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
-        cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        cls.locator = ReferenceCaseOpenLocator()
+        cls.config = Configuration(DEFAULT_CONFIG)
         cls.config.scenario = cls.locator.scenario
         weather_path = cls.locator.get_weather('Zug_inducity_2009')
         cls.weather_data = epwreader.epw_reader(weather_path)[
