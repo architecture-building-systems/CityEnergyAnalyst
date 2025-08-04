@@ -62,7 +62,6 @@ class BuildingRCModel:
 
             - n50: Air tightness at 50 Pa [h^-1].
             - type_shade: shading system type.
-            - void_deck: Number of floors (from the ground up) with an open envelope.
             - win_wall: window to wall ratio.
             - U_base: U value of the floor construction [W/m2K]
             - U_roof: U value of roof construction [W/m2K]
@@ -148,7 +147,6 @@ class BuildingRCModel:
         # Aop_bg: opaque surface area below ground level;
         # U_base: basement U value, defined in envelope.csv
         # Hs_bg: Fraction of underground floor area air-conditioned.
-        # 1 - is_above_ground: 1 if building touches ground, 0 if building is floating (void_deck > 0)
         df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
 
         # calculate RC model properties

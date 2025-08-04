@@ -237,7 +237,6 @@ class EnvelopeProperties:
     # FIXME: These fields does not neccessarily describe the building envelope
     Es: Annotated[float, "Heated/cooled share [-]"]
     occupied_bg: Annotated[float, "Basement occupation factor [-]"]
-    void_deck: Annotated[float, "Void deck factor [-]"]
 
     @classmethod
     def from_dict(cls, envelope: dict):

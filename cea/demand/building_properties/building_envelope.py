@@ -40,7 +40,7 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
           window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
         - prop_win: name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
         - prop_shading: name, shading factor (rf_sh).
-        - prop_construction: name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
+        - prop_construction: name, internal heat capacity (Cm_af).
         - prop_leakage: name, exfiltration (n50).
 
         Creates a merged df containing aforementioned envelope properties called envelope_prop.
