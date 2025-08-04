@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 import cea.inputlocator
-from cea.databases import get_regions, get_database_tree, databases_folder_path
+from cea.databases import get_regions
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.utils import secure_path
 from cea.utilities.schedule_reader import schedule_to_dataframe
@@ -45,71 +45,9 @@ def schedule_to_dict(schedule_path):
     return out
 
 
-def read_all_databases(database_path):
-    out = dict()
-    db_info = get_database_tree(database_path)
-    for category in db_info['categories'].keys():
-        out[category] = dict()
-        for db_name in db_info['categories'][category]['databases']:
-            db_files = db_info['databases'][db_name]['files']
-            if db_name == 'USE_TYPES':
-                out[category][db_name] = dict()
-                out[category][db_name]['SCHEDULES'] = dict()
-                for db_file in db_files:
-                    # Use type property file
-                    if db_file['name'] == 'USE_TYPE_PROPERTIES':
-                        out[category][db_name]['USE_TYPE_PROPERTIES'] = database_to_dict(db_file['path'])
-                    # Schedule files
-                    elif db_file['extension'] == '.csv':
-                        out[category][db_name]['SCHEDULES'][db_file['name']] = schedule_to_dict(db_file['path'])
-            else:
-                for db_file in db_files:
-                    out[category][db_name] = database_to_dict(db_file['path'])
-    return out
-
-
 @router.get("/region")
 async def get_database_regions():
     return {'regions': get_regions()}
-
-
-@router.get("/region/{region}")
-async def get_database_region(region: str):
-    regions = get_regions()
-    if region not in regions:
-        _regions = ", ".join(regions)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not find '{region}' region. Try instead {_regions}",
-        )
-    return {"categories": get_database_tree(os.path.join(databases_folder_path, region))['categories']}
-
-
-@router.get("/region/{region}/databases")
-async def get_database_region_data(region: str):
-    regions = get_regions()
-    if region not in regions:
-        _regions = ", ".join(regions)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not find '{region}' region. Try instead {_regions}",
-        )
-
-    db_path = os.path.normpath(os.path.join(databases_folder_path, region))
-    if not db_path.startswith(databases_folder_path):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid database region.",
-        )
-
-    try:
-        return read_all_databases(db_path)
-    except IOError as e:
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
 
 
 def convert_path_to_name(schema_dict):
