@@ -17,7 +17,7 @@ dependencies:
 - networkx>=3.4 # 3.4 contains a fix for steiner tree algorithm
 - psutil
 - pvlib
-- pythonocc-core
+- pythonocc-core==7.8.1 # Due to #3867
 - pyyaml
 - scikit-learn
 - scipy
