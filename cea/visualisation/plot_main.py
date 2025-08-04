@@ -3,6 +3,7 @@ CEAFrontEnd – Combines everything
 
 """
 
+import sys
 import cea.config
 from cea import CEAException
 from cea.visualisation.c_plotter import generate_fig
@@ -71,7 +72,8 @@ def main(config):
     fig = plot_all(config, scenario, plot_cea_feature)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    fig.show()
+    if sys.stdout.isatty():
+        fig.show(renderer="browser")
     return plot_html
 
 

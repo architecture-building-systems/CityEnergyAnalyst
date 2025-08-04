@@ -27,9 +27,9 @@ class ToolProperties(ToolDescription):
 
 
 @router.get('/')
-async def get_tool_list() -> Dict[str, List[ToolDescription]]:
+async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
     # TODO: Add plugin support
-    tools = cea.scripts.for_interface('dashboard', plugins=[])
+    tools = cea.scripts.for_interface('dashboard', plugins=config.plugins)
     result = dict()
     for category, group in groupby(tools, lambda t: t.category):
         result[category] = [
@@ -41,7 +41,7 @@ async def get_tool_list() -> Dict[str, List[ToolDescription]]:
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
     # TODO: Add plugin support
-    script = cea.scripts.by_name(tool_name, plugins=[])
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
     parameters = []
     categories = defaultdict(list)
@@ -119,7 +119,7 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
             parameter.set(value)
 
     # TODO: Add plugin support
-    script = cea.scripts.by_name(tool_name, plugins=[])
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
     schema_data = schemas(config.plugins)
 
     script_suggestions = set()

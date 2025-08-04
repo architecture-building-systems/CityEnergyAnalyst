@@ -13,6 +13,7 @@ import cea.inputlocator
 import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
+from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
@@ -32,6 +33,7 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 
 
 def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
+    migrate_void_deck_data(locator)
     # local variables
     buildings: List[str] = config.occupancy_helper.buildings
     occupancy_model: str = config.occupancy_helper.occupancy_model

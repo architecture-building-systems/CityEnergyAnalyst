@@ -15,6 +15,7 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
+from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -47,7 +48,7 @@ def demand_calculation(locator, config):
         Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
         Applied Energy 142 (2015): 247–265.
     """
-
+    migrate_void_deck_data(locator)
     # INITIALIZE TIMER
     t0 = time.perf_counter()
 

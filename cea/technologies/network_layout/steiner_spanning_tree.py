@@ -1,12 +1,9 @@
 """
 This script calculates the minimum spanning tree of a shapefile network
 """
-
-
-
-
 import math
 import os
+from enum import Enum
 
 import networkx as nx
 import pandas as pd
@@ -17,6 +14,7 @@ from shapely.geometry import LineString
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE
+from cea.technologies.network_layout.utility import read_shp, write_shp
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -26,6 +24,39 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class SteinerAlgorithm(Enum):
+    """
+    Enum for the different algorithms that can be used to calculate the Steiner tree.
+
+    This is based on the available algorithms for NetworkX Steiner tree function.
+    Reference:
+    https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.steinertree.steiner_tree.html
+    """
+
+    Kou = 'kou'
+    """
+    Kou algorithm: Higher quality Steiner tree approximation with better weight optimization.
+    - Runtime: O(|S| |V|²) - slower for large networks
+    - Memory: High consumption, can be excessive for large graphs
+    - Quality: More optimal network layouts, better weight minimization
+    - Use when: Network optimization quality is critical and computational resources are sufficient
+    - Algorithm: Computes minimum spanning tree of the metric closure subgraph induced by terminal nodes
+    """
+    
+    Mehlhorn = 'mehlhorn'
+    """
+    Mehlhorn algorithm: Fast Steiner tree approximation optimized for speed and memory efficiency.
+    - Runtime: O(|E| + |V|log|V|) - very fast, scales well with network size
+    - Memory: Minimal usage, suitable for large networks
+    - Quality: Good approximation but sometimes noticeably suboptimal compared to Kou
+    - Use when: Speed is prioritized over perfect optimization, or working with very large networks
+    - Algorithm: Modified Kou approach that finds closest terminal node for each non-terminal first
+    """
+
+    def __str__(self):
+        return self.value
 
 
 def calc_steiner_spanning_tree(crs_projected,
@@ -42,7 +73,8 @@ def calc_steiner_spanning_tree(crs_projected,
                                allow_looped_networks,
                                optimization_flag,
                                plant_building_names,
-                               disconnected_building_names):
+                               disconnected_building_names,
+                               method: str = str(SteinerAlgorithm.Kou)):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -63,11 +95,14 @@ def calc_steiner_spanning_tree(crs_projected,
     :param bool optimization_flag:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
+    :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
     :return: ``(mst_edges, mst_nodes)``
     """
+    steiner_algorithm = SteinerAlgorithm(method)
+
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
-    potential_network_graph = nx.read_shp(temp_path_potential_network_shp)
-    building_nodes_graph = nx.read_shp(temp_path_building_centroids_shp)
+    potential_network_graph = read_shp(temp_path_potential_network_shp)
+    building_nodes_graph = read_shp(temp_path_building_centroids_shp)
 
     # transform to an undirected potential_network_graph
     iterator_edges = potential_network_graph.edges(data=True)
@@ -78,10 +113,10 @@ def calc_steiner_spanning_tree(crs_projected,
         G.add_edge(x, y, weight=data[weight_field])
 
     # get the building nodes and coordinates
-    iterator_nodes = building_nodes_graph.nodes(data=True)
+    iterator_nodes = building_nodes_graph.nodes
     terminal_nodes_coordinates = []
     terminal_nodes_names = []
-    for coordinates, data in iterator_nodes._nodes.items():
+    for coordinates, data in iterator_nodes.data():
         building_name = data['name']
         if building_name in disconnected_building_names:
             print("Building {} is considered to be disconnected and it is not included".format(building_name))
@@ -92,16 +127,20 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes_coordinates))
-        nx.write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
-        mst_nodes = gdf.from_file(path_output_nodes_shp)
-        mst_edges = gdf.from_file(path_output_edges_shp)
-    except Exception:
+        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=str(steiner_algorithm))
+        mst_non_directed = nx.minimum_spanning_tree(steiner_result)
+    except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
                          'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
                          'the Steiner tree does not support disconnected graphs. '
                          'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
-                         'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
+                         'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.') from e
+
+    # Ensure output folder exists before writing
+    os.makedirs(output_network_folder, exist_ok=True)
+    write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
+    mst_nodes = gdf.from_file(path_output_nodes_shp)
+    mst_edges = gdf.from_file(path_output_edges_shp)
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))

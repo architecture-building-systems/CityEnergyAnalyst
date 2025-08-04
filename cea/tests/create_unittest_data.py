@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 
+# FIXME: Duplicated code with cea/tests/test_calc_thermal_loads.py
 def main(output_file):
     config = Configuration(DEFAULT_CONFIG)
     locator = ReferenceCaseOpenLocator()
@@ -38,17 +39,6 @@ def main(output_file):
     weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
-
-    # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.database_helper import main as database_helper
-    config.database_helper.databases_path = "CH"
-    config.database_helper.databases = ["archetypes", "assemblies", "components"]
-    database_helper(config)
-
-    # run properties script
-    import cea.datamanagement.archetypes_mapper
-    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True,
-                                                           locator.get_zone_building_names())
 
     year = weather_data['year'][0]
     date_range = get_date_range_hours_from_year(year)
