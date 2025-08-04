@@ -17,8 +17,6 @@ from fastapi.concurrency import run_in_threadpool
 import cea.config
 import cea.inputlocator
 import cea.schemas
-import cea.scripts
-import cea.utilities.dbf
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
@@ -218,8 +216,8 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
                 schedule_dict = schedules[building]
                 schedule_path = locator.get_building_weekly_schedules(building)
                 schedule_data = schedule_dict['SCHEDULES']
-                schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
-                                               'METADATA': schedule_dict['METADATA']}
+                # schedule_complementary_data = {'MONTHLY_MULTIPLIER': schedule_dict['MONTHLY_MULTIPLIER'],
+                #                                'METADATA': schedule_dict['METADATA']}
                 data = pd.DataFrame()
                 for day in ['WEEKDAY', 'SATURDAY', 'SUNDAY']:
                     df = pd.DataFrame({'HOUR': range(1, 25), 'DAY': [day] * 24})
@@ -247,6 +245,9 @@ def get_building_properties(scenario: str):
         # Get building property data from file
         try:
             if file_type == 'shp':
+                if not os.path.exists(file_path):
+                    raise FileNotFoundError(f"File not found: {file_path}")
+
                 table_df = geopandas.read_file(file_path)
                 table_df = pd.DataFrame(
                     table_df.drop(columns='geometry'))
@@ -261,7 +262,7 @@ def get_building_properties(scenario: str):
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
                 store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
-        except (IOError, DriverError, ValueError) as e:
+        except (IOError, DriverError, ValueError, FileNotFoundError) as e:
             print(f"Error reading {db} from {file_path}: {e}")
             # Continue to try getting column definitions
             store['tables'][db] = None
@@ -348,6 +349,10 @@ def df_to_json(file_location):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
+        file_location = secure_path(file_location)
+        if not os.path.exists(file_location):
+            raise FileNotFoundError(f"File not found: {file_location}")
+
         table_df = geopandas.GeoDataFrame.from_file(file_location)
         # Save coordinate system
         if table_df.empty:
@@ -364,7 +369,7 @@ def df_to_json(file_location):
         out = table_df.to_crs(get_geographic_coordinate_system())
         out = json.loads(out.to_json())
         return out, crs
-    except (IOError, DriverError) as e:
+    except (IOError, DriverError, FileNotFoundError) as e:
         print(e)
         return None, None
     except Exception:
@@ -465,7 +470,6 @@ async def check_input_database(project_info: CEAProjectInfo):
 
 @router.get("/databases/validate")
 async def validate_input_database(project_info: CEAProjectInfo):
-    import cea.scripts
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     # TODO: Add plugin support
     schemas = cea.schemas.schemas(plugins=[])

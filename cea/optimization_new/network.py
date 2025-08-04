@@ -34,6 +34,7 @@ import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.technologies.network_layout.utility import from_numpy_matrix
 from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
@@ -197,7 +198,7 @@ class Network(object):
                     shortest_path_matrix[i, j] = shortest_paths[start_node][end_node]
 
             # Generate a graph object from the shortest path matrix, this network only includes the relevant building nodes
-            condensed_graph = nx.from_numpy_matrix(shortest_path_matrix)
+            condensed_graph = from_numpy_matrix(shortest_path_matrix)
             nx.relabel_nodes(condensed_graph, node_labels, copy=False)
         else:
             raise ValueError("method for condensing the network structure must be either 'remove_connector_nodes' or "
@@ -821,15 +822,15 @@ class Network(object):
                             length=length_m * (1 + self.configuration_defaults['equivalent_length_factor']),
                             roughness=self.configuration_defaults['hazen_williams_friction_coefficient'],
                             minor_loss=0.0,
-                            status='OPEN')
+                            initial_status='OPEN')
 
             # add options
             nbr_time_steps = len(self._domain_buildings_flow_rate_m3pers)
             wn.options.time.duration = (nbr_time_steps - 1) * 3600  # this indicates epanet to do one year simulation
             wn.options.time.hydraulic_timestep = 60 * 60
             wn.options.time.pattern_timestep = 60 * 60
-            wn.options.solver.accuracy = 0.01
-            wn.options.solver.trials = 100
+            wn.options.hydraulic.accuracy = 0.01
+            wn.options.hydraulic.trials = 100
 
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
