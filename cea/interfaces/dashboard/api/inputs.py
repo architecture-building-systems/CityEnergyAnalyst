@@ -143,6 +143,7 @@ async def get_all_inputs(project_info: CEAProjectInfo):
         store['schedules'] = {}
 
         return store
+
     return await run_in_threadpool(fn)
 
 
@@ -396,6 +397,7 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
             detail=str(e),
         )
 
+
 @router.get('/databases')
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
@@ -450,20 +452,21 @@ async def copy_input_database(project_info: CEAProjectInfo, database_path: Datab
     shutil.copytree(locator.get_databases_folder(), copy_path)
     return {'message': 'Database copied to {}'.format(copy_path)}
 
+
 # Move to database route
 @router.get('/databases/check')
 async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
     dict_missing_db = cea4_verify_db(scenario, verbose=True)
-    
+
     if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail= json.dumps(dict_missing_db),
+            detail=json.dumps(dict_missing_db),
         )
-    
-    return {'message': True }
+
+    return {'message': True}
 
 
 @router.get("/databases/validate")
@@ -526,7 +529,8 @@ def database_dict_to_file(db_dict, csv_path):
                 merged_df = df
             else:
                 merge_column = "code" if "code" in df.columns and "code" in merged_df.columns else None
-                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat([merged_df, df], axis=1)
+                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat(
+                    [merged_df, df], axis=1)
 
         if merged_df is not None and not merged_df.empty:
             # Ensure output directory exists
