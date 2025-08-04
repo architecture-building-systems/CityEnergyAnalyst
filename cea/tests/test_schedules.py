@@ -54,11 +54,6 @@ class TestScheduleCreation(unittest.TestCase):
         config.database_helper.databases = ["archetypes", "assemblies", "components"]
         database_helper(config)
 
-        building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
-        bpr = building_properties['B1011']
-        bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
-        bpr.comfort['mainuse'] = 'OFFICE'
-
         # calculate schedules
         occupancy_helper_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('date')
@@ -134,12 +129,6 @@ def create_data():
     config.database_helper.databases_path = "CH"
     config.database_helper.databases = ["archetypes", "assemblies", "components"]
     database_helper(config)
-
-    # calculate schedules
-    building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
-    bpr = building_properties['B1011']
-    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERROOM']
-    bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
 
     # read weather file
     # weather_path = locator.get_weather_file()
