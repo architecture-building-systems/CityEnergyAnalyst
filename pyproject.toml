@@ -131,7 +131,7 @@ numba = "*"
 pyyaml = "*"
 psutil = "*"
 pyarrow = "*"
-pythonocc-core = "*" # C++ bindings to OpenCASCADE
+pythonocc-core = "==7.8.1" # Due to #3867
 pvlib = "*" # has optional C extensions for solar calculations
 
 # Pure Python packages (conda-forge for unified dependency resolution)
