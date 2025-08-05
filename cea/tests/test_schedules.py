@@ -14,10 +14,8 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
-from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.utilities import epwreader
 
 REFERENCE_TIME = 3456
 
@@ -53,11 +51,6 @@ class TestScheduleCreation(unittest.TestCase):
         config.database_helper.databases_path = "CH"
         config.database_helper.databases = ["archetypes", "assemblies", "components"]
         database_helper(config)
-
-        building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
-        bpr = building_properties['B1011']
-        bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
-        bpr.comfort['mainuse'] = 'OFFICE'
 
         # calculate schedules
         occupancy_helper_main(locator, config)
@@ -134,12 +127,6 @@ def create_data():
     config.database_helper.databases_path = "CH"
     config.database_helper.databases = ["archetypes", "assemblies", "components"]
     database_helper(config)
-
-    # calculate schedules
-    building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
-    bpr = building_properties['B1011']
-    # list_uses = ['OFFICE', 'LAB', 'INDUSTRIAL', 'SERVERROOM']
-    bpr.occupancy = {'OFFICE': 0.5, 'SERVERROOM': 0.5}
 
     # read weather file
     # weather_path = locator.get_weather_file()

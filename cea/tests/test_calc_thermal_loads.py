@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import configparser
 import json
 import os
@@ -13,6 +16,9 @@ from cea.demand.thermal_loads import calc_thermal_loads
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 
 class TestCalcThermalLoads(unittest.TestCase):
@@ -109,7 +115,7 @@ class TestCalcThermalLoads(unittest.TestCase):
                                    places=3)
 
 
-def run_for_single_building(building, bpr, weather_data, date, locator,
+def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
                             massflows_output, temperatures_output, config, debug):
     config.general.multiprocessing = False

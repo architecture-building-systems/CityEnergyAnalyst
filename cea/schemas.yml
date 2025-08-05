@@ -1622,13 +1622,6 @@ get_building_architecture:
         type: string
         unit: '[-]'
         values: alphanumeric
-      void_deck:
-        description: Number of floors (from the ground up) with an open envelope (default
-          = 0, should be lower than floors_ag.)
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
-        min: 0
       Es:
         description: Fraction of gross floor area with electrical demands.
         type: float
@@ -6978,13 +6971,6 @@ get_database_archetypes_construction_type:
         type: string
         unit: 'NA'
         values: alphanumeric
-      void_deck:
-        description: Number of floors (from the ground up) with an open envelope
-          (default = 0)
-        min: 0
-        type: int
-        unit: '[-]'
-        values: '{0...n}'
       wwr_east:
         description: Window to wall ratio in in facades facing east
         max: 1.0
@@ -7767,13 +7753,6 @@ get_database_construction_standards:
           type: string
           unit: 'NA'
           values: alphanumeric
-        void_deck:
-          description: Number of floors (from the ground up) with an open envelope
-            (default = 0)
-          min: 0
-          type: int
-          unit: '[-]'
-          values: '{0...n}'
         wwr_east:
           description: Window to wall ratio in in facades facing east
           max: 1.0
@@ -21084,6 +21063,13 @@ get_zone_geometry:
         values: '{1...n}'
       floors_bg:
         description: Number of floors below ground (basement)
+        type: int
+        unit: '[-]'
+        values: '{0...n}'
+        min: 0
+      void_deck:
+        description: Number of floors (from the ground up) with an open envelope (default
+          = 0, should be lower than floors_ag.)
         type: int
         unit: '[-]'
         values: '{0...n}'

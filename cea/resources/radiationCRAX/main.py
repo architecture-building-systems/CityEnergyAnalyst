@@ -21,6 +21,7 @@ from typing import Dict, Optional
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
 from cea.resources.radiation.geometry_generator import BuildingGeometry
@@ -453,6 +454,7 @@ def main(config):
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    migrate_void_deck_data(locator)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 

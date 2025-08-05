@@ -214,11 +214,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
 
     height = buildings_df['height_ag'].astype(float)
     nfloors = buildings_df['floors_ag'].astype(int)
-    if 'void_deck' not in buildings_df.columns:
-        buildings_df['void_deck'] = 0
     void_decks = buildings_df['void_deck'].astype(int)
-    # range_floors = nfloors.map(lambda floors: range(floors + 1))
-    # check if each building's void deck is smaller or equal to the number of floors.
     if not all(void_decks <= nfloors):
         raise ValueError(f"Void deck values must be less than or equal to the number of floors for each building. "
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
@@ -328,8 +324,6 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use void_deck when creating the building solid.
-    void_deck_s = architecture_wwr_df['void_deck']
-    zone_buildings_df['void_deck'] = void_deck_s
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
@@ -337,6 +331,9 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # Check if there are any buildings in surroundings_df before processing
     if not surroundings_df.empty:
         surroundings_buildings_df = surroundings_df.set_index('name')
+        if 'void_deck' not in surroundings_buildings_df.columns:
+            surroundings_buildings_df['void_deck'] = 0
+            
         surroundings_building_names = surroundings_buildings_df.index.values
         surroundings_building_solid_list, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
