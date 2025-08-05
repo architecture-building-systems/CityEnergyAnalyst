@@ -21,12 +21,11 @@ import py4design.py3dmodel.fetch as fetch
 import py4design.py3dmodel.modify as modify
 import py4design.py3dmodel.utility as utility
 from compas.datastructures import Mesh
-from compas.geometry import Point, Vector, Polyline, Polygon, Translation, Brep, BrepEdge
-from compas.geometry import intersection_ray_mesh, delaunay_triangulation, centroid_polygon
-from compas_occ.brep import OCCBrep, OCCBrepEdge
+from compas.geometry import Point, Vector, Polyline, Polygon, Translation, Brep
+from compas_occ.brep import OCCBrep
 from compas_occ.geometry import OCCCurve
-from OCC.Core.IntCurvesFace import IntCurvesFace_ShapeIntersector
-from OCC.Core.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
+from compas.geometry import delaunay_triangulation, centroid_polygon
+from compas_libigl.intersections import intersection_ray_mesh
 from osgeo import osr, gdal
 from py4design import urbangeom
 from typing import TYPE_CHECKING, List, Tuple, Literal, Optional
@@ -107,12 +106,23 @@ def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
 
-def calc_intersection(surface: Mesh, edges_coords: Point, edges_dir: Vector) -> Tuple[Optional[int], Optional[Point]]:
-    """
-    This script calculates the intersection of the building edges to the terrain,
+def calc_intersection(
+    surface: Mesh, edges_coords: Point, edges_dir: Vector
+) -> Tuple[int | None, Point | None]:
+    """This script calculates the intersection of a ray from a particular point to the terrain.
+
+    :param surface: the terrain mesh to be intersected.
+    :type surface: Mesh
+    :param edges_coords: the coordinates of the point from which the ray is cast.
+    :type edges_coords: Point
+    :param edges_dir: the direction of the ray, which is usually a vector pointing upwards.
+    :type edges_dir: Vector
+    :return: a tuple containing the index of the face that was hit and the intersection point.
+        if no intersection was found, it returns (None, None).
+    :rtype: Tuple[int | None, Point | None]
     """
     ray = (edges_coords, edges_dir)
-    hits: List[Tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
+    hits: list[tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
     idx_face, u, v, t = hits[0] if hits else (None, None, None, None)
     # u, v are the barycentric coordinates of the intersection point on the face.
     if idx_face is not None:
@@ -126,9 +136,6 @@ def calc_intersection(surface: Mesh, edges_coords: Point, edges_dir: Vector) -> 
             p0.y * w + p1.y * v + p2.y * u,
             p0.z * w + p1.z * v + p2.z * u
         )
-        from compas.geometry import barycentric_coordinates
-        pt_list = barycentric_coordinates(inter_pt, face_points)
-        
         return idx_face, inter_pt
     else:
         # No intersection found
@@ -547,7 +554,7 @@ def burn_buildings(geometry: shapely.Polygon,
     :param tolerance: The minimal surface area of each triangulated face. Any faces smaller than the tolerance will be deleted.
     :type tolerance: float
     :return: the bottom surface of the building.
-    :rtype: OCCface
+    :rtype: Polygon
     :return: the elevation of the terrain at the footprint of the building.
     :rtype: float
     """
@@ -570,41 +577,93 @@ def burn_buildings(geometry: shapely.Polygon,
 def calc_solid(face_footprint: Polygon, 
                range_floors: range, 
                floor_to_floor_height: float,
-               ) -> TopoDS_Solid:
+               ) -> list[Brep]:
     """
     extrudes the footprint surface into a 3D solid.
 
     :param face_footprint: footprint of the building. 
-    :type face_footprint: OCCface
+    :type face_footprint: Polygon
     :param range_floors: 
         range of floors for the building. 
         For example, a building of 3 floors will have `range(4) = [0, 1, 2, 3]`, 
-        because it has 4 floors (1 ground + 2 middle + 1 roof).
+        because it has 4 floors (1 ground floor + 2 internal ceilings + 1 roof).
     :type range_floors: range
     :param floor_to_floor_height: the height of each level of the building.
         For example, if the building has 3 floors and a height of 9m, then `floor_to_floor_height = 9 / 3 = 3`.
     :type floor_to_floor_height: float
     :return: a solid representing the building, made from footprint + vertical external walls + roof.
-    :rtype: OCCsolid
+    :rtype: list[Brep]
     """
+    # from compas_viewer import Viewer
+    # viewer = Viewer()
+    building_breps = []
+    footprint_brep = Brep.from_polygons([face_footprint])
+    building_breps.append(footprint_brep)  # add the footprint as the first face
+    viewer.scene.add(footprint_brep, name="Footprint")
 
-    floors = []
-    for ifloor in range_floors:
-        dist_to_move = ifloor * floor_to_floor_height
-        floor: Polygon = face_footprint.transformed(Translation.from_vector([0, 0, dist_to_move]))
-        floors.append(floor)
+    # iterate until to range_floors - 1, because the last floor is the roof
+    for i_floor in range_floors[:-1]:
+        # move the footprint polygon upwards by the height of each floor
+        move_vector = Vector(0, 0, (i_floor + 1) * floor_to_floor_height)
+        polygon_floor: Polygon = face_footprint.transformed(Translation.from_vector(move_vector))
+        walls = from_floor_extrude_walls(polygon_floor, floor_to_floor_height)
+        walls_brep = Brep.from_polygons(walls)
+        building_breps.append(walls_brep)
+        viewer.scene.add(walls_brep, name=f"Floor {i_floor + 1} Walls")
 
-    floor_edges = [Polyline(floor.points + [floor.points[0]]) for floor in floors]
-    # facade_breps = [OCCBrep.from_extrusion(OCCBrepEdge.from_curve(OCCCurve(floor_edge.points)), Vector(0, 0, floor_to_floor_height)) for floor_edge in floor_edges[:-1]] # no facade for roof
-    facade_breps = []
-    for floor_edge in floor_edges[:-1]:
-        # create vertical walls for each floor
-        curve = OCCCurve(floor_edge.points)
-        brep_edge = OCCBrepEdge(BrepEdge.from_curve(curve))
-        brep_extrusion = OCCBrep.from_extrusion(brep_edge, Vector(0, 0, floor_to_floor_height))
-        facade_breps.append(brep_extrusion)
-    return facade_breps
+    # add the roof as the last face
+    move_vector = Vector(0, 0, range_floors[-1] * floor_to_floor_height)
+    polygon_roof: Polygon = face_footprint.transformed(Translation.from_vector(move_vector))
+    building_breps.append(Brep.from_polygons([polygon_roof]))
+    building_brep = OCCBrep.from_breps(building_breps)
+    return building_breps
 
+def to_polyline(polygon: Polygon) -> Polyline:
+    """
+    Converts a Polygon to a Polyline.
+
+    :param polygon: The Polygon to convert.
+    :type polygon: Polygon
+    :return: A Polyline representation of the Polygon.
+    :rtype: Polyline
+    """
+    return Polyline(polygon.points + [polygon.points[0]])
+
+def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
+    """reads the floor polygon and create vertical walls from each of its edges.
+
+
+    :param floor: a polygon on XY plane representing the bottom surface of the building floor.
+    :type floor: Polygon
+    :param height: the height of the building floor, which is the height of the extruded vertical walls.
+    :type height: float
+    :return: a list of vertically extruded polygons representing the walls of the building floor.
+    :rtype: list[Polygon]
+    """
+    if not isinstance(floor, Polygon):
+        raise TypeError(f"Expected floor to be a Polygon, got {type(floor)} instead.")
+    if height <= 0:
+        raise ValueError(f"Height must be a positive number, got {height} instead.")
+    
+    # check if floor is on the XY plane, by subtracting the Z coordinate from point 0 to all points
+    if not all(p.z == floor.points[0].z for p in floor.points):
+        raise ValueError("The floor polygon must be on the XY plane, all points must have the same Z coordinate.")
+
+    def to_wall(p1: Point, p2: Point, height: float) -> Polygon:
+        return Polygon([
+            p1,
+            p2,
+            Point(p2.x, p2.y, p2.z + height),
+            Point(p1.x, p1.y, p1.z + height)
+        ])
+    
+    walls = []
+    for i in range(len(floor.points) - 1):
+        walls.append(to_wall(floor.points[i], floor.points[i + 1], height))
+
+    # close the last wall
+    walls.append(to_wall(floor.points[-1], floor.points[0], height))
+    return walls
 
 class Points(object):
     def __init__(self, point_to_evaluate):
@@ -784,7 +843,6 @@ class ElevationMap(object):
 
         # tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
         tri_vertices, tri_faces = delaunay_triangulation(raster_points_list)
-        import math
         decimals = int(round(-math.log10(tolerance)))
         tin_mesh = Mesh.from_vertices_and_faces(tri_vertices, tri_faces)
         tin_mesh.weld(precision=decimals)  # Ensure the mesh is welded to remove duplicate vertices
