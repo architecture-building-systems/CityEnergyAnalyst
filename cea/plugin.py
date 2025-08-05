@@ -2,19 +2,17 @@
 A base class for creating CEA plugins. Subclass this class in your own namespace to become a CEA plugin.
 """
 
-
-
-
-import importlib
-import os
 import configparser
-import yaml
+import importlib
 import inspect
-import cea.schemas
-import cea.plots.categories
-import cea.inputlocator
+import os
 import warnings
 
+import yaml
+
+import cea.inputlocator
+import cea.plots.categories
+import cea.schemas
 from cea.plots.base import PlotBase
 from cea.utilities import identifier
 
@@ -28,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class CeaPlugin(object):
+class CeaPlugin:
     """
     A CEA Plugin defines a list of scripts and a list of plots - the CEA uses this to populate the GUI
     and other interfaces. In addition, any input- and output files need to be defined.
@@ -55,7 +53,8 @@ class CeaPlugin(object):
             return {}
         with open(plots_yml, "r") as plots_yml_fp:
             categories = yaml.load(plots_yml_fp, Loader=yaml.CLoader)
-        return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in categories.keys()]
+        return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in
+                categories.keys()]
 
     @property
     def schemas(self):
@@ -145,6 +144,7 @@ class PluginPlotBase(PlotBase):
     """
     A simplified version of cea.plots.PlotBase that is configured with the ``plots.yml`` entries.
     """
+
     def __init__(self, project, parameters, cache, plugin, plot_config):
         super(PluginPlotBase, self).__init__(project, parameters, cache)
         self.plugin = plugin
@@ -226,24 +226,6 @@ class PluginPlotBase(PlotBase):
         return self.locator.get_timeseries_plots_file(file_name, self.category_path)
 
 
-if __name__ == "__main__":
-    # try to plot the first plugin found
-    # FIXME: remove this before commit
-    import cea.config
-    import cea.plots.cache
-    config = cea.config.Configuration()
-    cache = cea.plots.cache.NullPlotCache()
-    plugin = config.plugins[0]
-    category = list(plugin.plot_categories)[0]
-    plot_class = list(category.plots)[0]
-
-    print(plot_class.expected_parameters)
-    print(plot_class.name)
-    print(plot_class.category_path)
-
-    plot = plot_class(config.project, {"scenario-name": config.scenario_name}, cache)
-    print(plot.category_path)
-    print(plot.plot(auto_open=True))
 
 
 def instantiate_plugin(plugin_fqname):
