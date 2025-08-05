@@ -42,9 +42,13 @@ def _replace_nan_with_none(obj):
 
 class CEADatabase:
     def __init__(self, locator: InputLocator):
-        self.archetypes = Archetypes.init_database(locator)
-        self.assemblies = Assemblies.init_database(locator)
-        self.components = Components.init_database(locator)
+        try:
+            self.archetypes = Archetypes.init_database(locator)
+            self.assemblies = Assemblies.init_database(locator)
+            self.components = Components.init_database(locator)
+        except Exception as e:
+            # TODO: Use CEAException or a custom exception class
+            raise RuntimeError(f"Failed to initialize CEA database: {e}")
 
     def to_dict(self) -> dict:
         data = {
