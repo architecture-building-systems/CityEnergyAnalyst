@@ -12,6 +12,7 @@ class DatabaseSettings(BaseSettings):
     path: Optional[str] = None
     # TODO: Parse url using sqlalchemy
     url: Optional[str] = None
+    init_tables: bool = True
 
     user_table_name: str = "user"
     user_table_schema: str = "public"
