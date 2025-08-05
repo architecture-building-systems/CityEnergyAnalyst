@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import pathlib
@@ -5,21 +6,23 @@ import shutil
 import traceback
 import warnings
 from collections import defaultdict
+from contextlib import redirect_stdout
 from typing import Dict, Any
 
 import geopandas
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
-from fastapi.concurrency import run_in_threadpool
 
 import cea.config
 import cea.inputlocator
 import cea.schemas
+from cea.databases import CEADatabase
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.api.databases import read_all_databases, DATABASES_SCHEMA_KEYS
+from cea.interfaces.dashboard.api.databases import DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -142,6 +145,7 @@ async def get_all_inputs(project_info: CEAProjectInfo):
         store['schedules'] = {}
 
         return store
+
     return await run_in_threadpool(fn)
 
 
@@ -400,7 +404,7 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: read_all_databases(locator.get_databases_folder()))
+        return await run_in_threadpool(lambda: CEADatabase(locator).to_dict())
     except IOError as e:
         print(e)
         raise HTTPException(
@@ -451,21 +455,28 @@ async def copy_input_database(project_info: CEAProjectInfo, database_path: Datab
     return {'message': 'Database copied to {}'.format(copy_path)}
 
 
+# Move to database route
 @router.get('/databases/check')
 async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
-    dict_missing_db = cea4_verify_db(scenario, verbose=True)
 
-    if dict_missing_db:
-        missing_dbs = list(dict_missing_db.keys())
-        missing_dbs.sort()
+    # Redirect stdout to variable to capture output
+    buf = io.StringIO()
+    try:
+        with redirect_stdout(buf):
+            dict_missing_db = cea4_verify_db(scenario, verbose=True)
+        output = buf.getvalue()
+    finally:
+        buf.close()
+
+    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail= json.dumps(dict_missing_db),
+            detail=output,
         )
 
-    return {'message': 'Database in path seems to be valid.'}
+    return {'message': True}
 
 
 @router.get("/databases/validate")
@@ -528,7 +539,8 @@ def database_dict_to_file(db_dict, csv_path):
                 merged_df = df
             else:
                 merge_column = "code" if "code" in df.columns and "code" in merged_df.columns else None
-                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat([merged_df, df], axis=1)
+                merged_df = pd.merge(merged_df, df, on=merge_column, how="outer") if merge_column else pd.concat(
+                    [merged_df, df], axis=1)
 
         if merged_df is not None and not merged_df.empty:
             # Ensure output directory exists
