@@ -1,18 +1,24 @@
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import configparser
 import json
 import os
+import shutil
 import unittest
 
 import pandas as pd
 
-from cea.demand.occupancy_helper import occupancy_helper_main
+from cea.config import DEFAULT_CONFIG, Configuration
 from cea.demand.building_properties import BuildingProperties
+from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
-from cea.utilities.date import get_date_range_hours_from_year
+from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
+from cea.utilities.date import get_date_range_hours_from_year
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 
 class TestCalcThermalLoads(unittest.TestCase):
@@ -26,37 +32,33 @@ class TestCalcThermalLoads(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import cea.examples
-        cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
-        cls.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        cls.config.scenario = cls.locator.scenario
-        weather_path = cls.locator.get_weather('Zug_inducity_2009')
-        cls.weather_data = epwreader.epw_reader(weather_path)[
-            ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
-        year = cls.weather_data['year'][0]
-        cls.date_range = get_date_range_hours_from_year(year)
+        # Load test results from config file
         cls.test_config = configparser.ConfigParser()
         cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
-        # reinit database to ensure updated databases are loaded
-        from cea.datamanagement.database_helper import main as database_helper
-        cls.config.database_helper.databases_path = "CH"
-        cls.config.database_helper.databases = ["archetypes", "assemblies", "components"]
-        database_helper(cls.config)
+        # Extract reference case
+        cls.locator = ReferenceCaseOpenLocator()
 
-        # run properties script
-        import cea.datamanagement.archetypes_mapper
-        cea.datamanagement.archetypes_mapper.archetypes_mapper(cls.locator, True, True, True, True, True, True,
-                                                         cls.locator.get_zone_building_names())
+        cls.config = Configuration(DEFAULT_CONFIG)
+        cls.config.scenario = cls.locator.scenario
+        cls.weather_data = epwreader.epw_reader(cls.locator.get_weather('Zug_inducity_2009'))[
+            ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        year = cls.weather_data['year'][0]
+        cls.date_range = get_date_range_hours_from_year(year)
 
         cls.building_properties = BuildingProperties(cls.locator, epwreader.epw_reader(cls.locator.get_weather_file()))
-
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
         cls.resolution_output = cls.config.demand.resolution_output
         cls.loads_output = cls.config.demand.loads_output
         cls.massflows_output = cls.config.demand.massflows_output
         cls.temperatures_output = cls.config.demand.temperatures_output
         cls.debug = cls.config.debug
+
+    def setUp(self):
+        # Remove results folder before each test
+        results_folder = self.locator.get_demand_results_folder()
+        if os.path.exists(results_folder):
+            shutil.rmtree(results_folder)
 
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B1011']
@@ -113,10 +115,9 @@ class TestCalcThermalLoads(unittest.TestCase):
                                    places=3)
 
 
-def run_for_single_building(building, bpr, weather_data, date, locator,
+def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_output, loads_output,
                             massflows_output, temperatures_output, config, debug):
-
     config.general.multiprocessing = False
     occupancy_helper_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date, locator,

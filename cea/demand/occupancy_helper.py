@@ -13,6 +13,7 @@ import cea.inputlocator
 import cea.utilities.parallel
 from cea.constants import HOURS_IN_YEAR, MONTHS_IN_YEAR
 from cea.datamanagement.schedule_helper import read_cea_schedule
+from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 from cea.demand.building_properties import calc_useful_areas
 from cea.demand.constants import VARIABLE_CEA_SCHEDULE_RELATION
 from cea.utilities import epwreader
@@ -32,6 +33,7 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 
 
 def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
+    migrate_void_deck_data(locator)
     # local variables
     buildings: List[str] = config.occupancy_helper.buildings
     occupancy_model: str = config.occupancy_helper.occupancy_model
@@ -157,7 +159,7 @@ def calc_schedules(locator,
         final_schedule[variable] = final_schedule['Occ_m2p'] * internal_loads_building[variable]
 
     # VENTILATION SCHEDULE
-    final_schedule['Ve_lsp'] = final_schedule['Occ_m2p'] * indoor_comfort_building['Ve_lsp']
+    final_schedule['Ve_lps'] = final_schedule['Occ_m2p'] * indoor_comfort_building['Ve_lsp']
 
     # SCHEDULE FOR WATER CONSUMPTION
     for variable in ['Vww_ldp', 'Vw_ldp']:
@@ -224,7 +226,7 @@ def calc_schedules(locator,
     yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
     final_schedule[variable] = yearly_array * internal_loads_building[variable] * prop_geometry_building['Aef']
 
-    # ELECTROMOVILITYSCHEDULE
+    # ELECTRIC MOBILITY SCHEDULE
     variable = 'Ev_kWveh'
     array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
     # base load is independent of monthly variations
@@ -234,7 +236,7 @@ def calc_schedules(locator,
     yearly_array = get_yearly_vectors(date_range, days_in_schedule, occupant_load, monthly_multiplier) + base_load
     final_schedule[variable] = yearly_array * internal_loads_building[variable] * 1000  # convert to Wh
 
-    # DATACENTRE AND PROCESS ENERGY DEMAND SCHEDULES
+    # DATA CENTRE AND PROCESS ENERGY DEMAND SCHEDULES
     for variable in ['Ed_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2']:
         # these schedules are assumed to be independent of occupant presence and have no monthly variations
         array = daily_schedule_building[VARIABLE_CEA_SCHEDULE_RELATION[variable]]
@@ -259,7 +261,7 @@ def calc_schedules(locator,
         'Ths_set_C': final_schedule['Ths_set_C'],
         'Tcs_set_C': final_schedule['Tcs_set_C'],
         'people_p': final_schedule['Occ_m2p'],
-        'Ve_lps': final_schedule['Ve_lsp'],
+        'Ve_lps': final_schedule['Ve_lps'],
         'Qs_W': final_schedule['Qs_Wp'],
         'X_gh': final_schedule['X_ghp'],
         'Vww_lph': final_schedule['Vww_ldp'],

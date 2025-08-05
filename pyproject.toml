@@ -12,7 +12,27 @@ maintainers = [
 ]
 dynamic = ["version"]
 
+# Read docs/developer/dependency-management.rst for dependency management guidelines
 dependencies = [
+    # Scientific/geospatial packages (optimized conda builds available in conda-forge)
+    # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
+    "numpy<2", # held back by wntr
+    "scipy",
+    "matplotlib",
+    "geopandas",
+    "shapely",
+    "networkx>=3.4", # 3.4 contains a fix for steiner tree algorithm
+    "scikit-learn",
+    "numba",
+    "pyyaml",
+    "psutil",
+    "pyarrow",
+    "libpysal",
+    "osmnx",
+    "pvlib",
+    # Does not exist in pypi
+    # "pythonocc-core",
+
     # Backend dependencies
     "aiofiles",
     "aiocache[redis]",
@@ -48,8 +68,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
-docs = ["setuptools"]
+[dependency-groups]
+lint = ["ruff"]
+test = ["pytest"]
+docs = ["setuptools", "sphinx"]
+dev = [{include-group = "test"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [project.urls]
 "Homepage" = "https://cityenergyanalyst.com"
@@ -95,25 +118,33 @@ server = "cea dashboard"
 test = "cea test --type integration"
 
 [tool.pixi.dependencies]
+# Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
+# Duplicate of above in [project.dependencies] - update both when needed
+numpy = "<2" # held back by wntr
+scipy = "*"
+matplotlib = "*"
+geopandas = "*"
+shapely = "*"
+networkx = ">=3.4" # 3.4 contains a fix for steiner tree algorithm
+scikit-learn = "*"
+numba = "*"
+pyyaml = "*"
+psutil = "*"
+pyarrow = "*"
+pythonocc-core = "==7.8.1" # Due to #3867
+pvlib = "*" # has optional C extensions for solar calculations
+
+# Pure Python packages (conda-forge for unified dependency resolution)
+libpysal = "*"
+osmnx = "*"
+
+# System dependencies with native libraries (fetch from conda-forge)
 cvxopt = "*" # For wntr
 fiona = "*"
 gdal = "*"
-geopandas = "*"
-libpysal = "*"
-numba = "*"
-numpy = "<2" # held back by wntr
-osmnx = "*"
-networkx = ">=3.4" # 3.4 contains a fix for steiner tree algorithm
-psutil = "*"
-pvlib = "*"
-pythonocc-core = "*"
-pyyaml = "*"
-scikit-learn = "*"
-scipy = "*"
-shapely = "*"
-matplotlib = "*"
+
+# Development tools (pixi-only)
 notebook = "*"
-pyarrow = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 
 [tool.pixi.pypi-dependencies]
