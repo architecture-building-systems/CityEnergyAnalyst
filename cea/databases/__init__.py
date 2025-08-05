@@ -55,13 +55,3 @@ class CEADatabase:
 
         return _replace_nan_with_none(data)
 
-
-if __name__ == '__main__':
-    import cea.config
-    import cea.inputlocator
-
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
-
-    _dict = CEADatabase(locator).to_dict()
-    print(_dict.keys())
