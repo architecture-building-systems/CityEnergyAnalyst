@@ -11,7 +11,6 @@ import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
                                                            database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
-from cea.interfaces.dashboard.settings import get_settings
 
 
 def determine_db_type():
