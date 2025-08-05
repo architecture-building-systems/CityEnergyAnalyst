@@ -463,10 +463,12 @@ async def check_input_database(project_info: CEAProjectInfo):
 
     # Redirect stdout to variable to capture output
     buf = io.StringIO()
-    with redirect_stdout(buf):
-        dict_missing_db = cea4_verify_db(scenario, verbose=True)
-    output = buf.getvalue()
-    buf.close()
+    try:
+        with redirect_stdout(buf):
+            dict_missing_db = cea4_verify_db(scenario, verbose=True)
+        output = buf.getvalue()
+    finally:
+        buf.close()
 
     if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
