@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import pathlib
@@ -5,19 +6,20 @@ import shutil
 import traceback
 import warnings
 from collections import defaultdict
+from contextlib import redirect_stdout
 from typing import Dict, Any
 
 import geopandas
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
-from fastapi.concurrency import run_in_threadpool
 
 import cea.config
-from cea.databases import CEADatabase
 import cea.inputlocator
 import cea.schemas
+from cea.databases import CEADatabase
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import DATABASES_SCHEMA_KEYS
@@ -458,12 +460,18 @@ async def copy_input_database(project_info: CEAProjectInfo, database_path: Datab
 async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
-    dict_missing_db = cea4_verify_db(scenario, verbose=True)
+
+    # Redirect stdout to variable to capture output
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        dict_missing_db = cea4_verify_db(scenario, verbose=True)
+    output = buf.getvalue()
+    buf.close()
 
     if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=json.dumps(dict_missing_db),
+            detail=output,
         )
 
     return {'message': True}
