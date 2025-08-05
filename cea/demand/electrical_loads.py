@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Electrical loads
 """
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -12,6 +10,10 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
 from cea.demand import control_heating_cooling_systems, constants
 from cea.utilities import physics
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -33,50 +35,50 @@ HOURS_OP = constants.HOURS_OP
 GR = constants.GR
 
 
-def calc_Eal_Epro(tsd, schedules):
+def calc_Eal_Epro(tsd: TimeSeriesData, schedules) -> TimeSeriesData:
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: List[numpy.ndarray]
 
     :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf']`
-    :rtype: Dict[str, numpy.ndarray]
+    :rtype: cea.demand.time_series_data.TimeSeriesData
     """
 
     # calculate final electrical consumption due to appliances and lights in W
-    tsd['Ea'] = schedules['Ea_W']
-    tsd['El'] = schedules['El_W']
-    tsd['Ev'] = schedules['Ev_W']
-    tsd['Eal'] = schedules['El_W'] + schedules['Ea_W']
-    tsd['Epro'] = schedules['Epro_W']
+    tsd.electrical_loads.Ea = schedules['Ea_W']
+    tsd.electrical_loads.El = schedules['El_W']
+    tsd.electrical_loads.Ev = schedules['Ev_W']
+    tsd.electrical_loads.Eal = schedules['El_W'] + schedules['Ea_W']
+    tsd.electrical_loads.Epro = schedules['Epro_W']
 
     return tsd
 
 
-def calc_E_sys(tsd):
+def calc_E_sys(tsd: TimeSeriesData) -> TimeSeriesData:
     """
     Calculate the compound of end use electrical loads
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     """
-    tsd['E_sys'] = np.nansum([tsd['Eve'], tsd['Ea'], tsd['El'], tsd['Edata'], tsd['Epro'],tsd['Eaux'],tsd['Ev']],0)
+    tsd.electrical_loads.E_sys = np.nansum([tsd.electrical_loads.Eve, tsd.electrical_loads.Ea, tsd.electrical_loads.El, tsd.electrical_loads.Edata, tsd.electrical_loads.Epro, tsd.electrical_loads.Eaux, tsd.electrical_loads.Ev], 0)
     # assuming a small loss
     return tsd
 
 
-def calc_Ef(bpr, tsd):
+def calc_Ef(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
     """
     Calculate the compound of final electricity loads
     with contain the end-use demand,
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     :param bpr: building properties
     :type bpr: cea.demand.building_properties.BuildingProperties
@@ -85,71 +87,71 @@ def calc_Ef(bpr, tsd):
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_el']
     scale_technology = bpr.supply['scale_el']
-    total_el_demand = np.nansum([tsd['Eve'],tsd['Ea'],tsd['El'],tsd['Edata'],tsd['Epro'],tsd['Eaux'],tsd['Ev'],
-                                    tsd['E_ww'], tsd['E_cs'],tsd['E_hs'], tsd['E_cdata'], tsd['E_cre']],0)
+    total_el_demand = np.nansum([tsd.electrical_loads.Eve, tsd.electrical_loads.Ea, tsd.electrical_loads.El, tsd.electrical_loads.Edata, tsd.electrical_loads.Epro, tsd.electrical_loads.Eaux, tsd.electrical_loads.Ev,
+                                    tsd.electrical_loads.E_ww, tsd.electrical_loads.E_cs, tsd.electrical_loads.E_hs, tsd.electrical_loads.E_cdata, tsd.electrical_loads.E_cre], 0)
 
     if scale_technology == "CITY":
         if energy_source == "GRID":
-            tsd['GRID'] = total_el_demand
-            tsd['GRID_a'] = tsd['Ea']
-            tsd['GRID_l'] = tsd['El']
-            tsd['GRID_v'] = tsd['Ev']
-            tsd['GRID_ve'] = tsd['Eve']
-            tsd['GRID_data'] = tsd['Edata']
-            tsd['GRID_pro'] = tsd['Epro']
-            tsd['GRID_aux'] = tsd['Eaux']
-            tsd['GRID_ww'] = tsd['E_ww']
-            tsd['GRID_cs'] = tsd['E_cs']
-            tsd['GRID_hs'] = tsd['E_hs']
-            tsd['GRID_cdata'] = tsd['E_cdata']
-            tsd['GRID_cre'] = tsd['E_cre']
+            tsd.electrical_loads.GRID = total_el_demand
+            tsd.electrical_loads.GRID_a = tsd.electrical_loads.Ea
+            tsd.electrical_loads.GRID_l = tsd.electrical_loads.El
+            tsd.electrical_loads.GRID_v = tsd.electrical_loads.Ev
+            tsd.electrical_loads.GRID_ve = tsd.electrical_loads.Eve
+            tsd.electrical_loads.GRID_data = tsd.electrical_loads.Edata
+            tsd.electrical_loads.GRID_pro = tsd.electrical_loads.Epro
+            tsd.electrical_loads.GRID_aux = tsd.electrical_loads.Eaux
+            tsd.electrical_loads.GRID_ww = tsd.electrical_loads.E_ww
+            tsd.electrical_loads.GRID_cs = tsd.electrical_loads.E_cs
+            tsd.electrical_loads.GRID_hs = tsd.electrical_loads.E_hs
+            tsd.electrical_loads.GRID_cdata = tsd.electrical_loads.E_cdata
+            tsd.electrical_loads.GRID_cre = tsd.electrical_loads.E_cre
         else:
             raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
     elif scale_technology == "NONE":
-        tsd['GRID'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_a'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_l'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_v'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_ve'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_data'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_pro'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_aux'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_ww'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_hs'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cdata'] = np.zeros(HOURS_IN_YEAR)
-        tsd['GRID_cre'] = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_a = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_l = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_v = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_ve = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_data = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_pro = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_aux = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_ww = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_cs = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_hs = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_cdata = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.GRID_cre = np.zeros(HOURS_IN_YEAR)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
 
     return tsd
 
 
-def calc_Eaux(tsd):
+def calc_Eaux(tsd: TimeSeriesData) -> TimeSeriesData:
     """
     Calculate the compound of total auxiliary electricity loads
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     """
-    tsd['Eaux'] = np.nansum([tsd['Eaux_fw'], tsd['Eaux_ww'], tsd['Eaux_cs'], tsd['Eaux_hs'], tsd['Ehs_lat_aux']],0)
+    tsd.electrical_loads.Eaux = np.nansum([tsd.electrical_loads.Eaux_fw, tsd.electrical_loads.Eaux_ww, tsd.electrical_loads.Eaux_cs, tsd.electrical_loads.Eaux_hs, tsd.electrical_loads.Ehs_lat_aux], 0)
 
     return tsd
 
 
-def calc_Eaux_fw(tsd, bpr, schedules):
+def calc_Eaux_fw(tsd: TimeSeriesData, bpr: BuildingPropertiesRow, schedules) -> TimeSeriesData:
     """
     Calculate auxiliary electricity consumption (Eaux_fw) to distribute fresh water (fw) in the building.
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     :param bpr: building properties
     :type bpr: cea.demand.building_properties.BuildingProperties
     """
 
-    tsd['vfw_m3perh'] = schedules['Vw_lph'] / 1000  # m3/h
+    tsd.water.vfw_m3perh = schedules['Vw_lph'] / 1000  # m3/h
 
     height_ag = bpr.geometry['height_ag']
     if height_ag > MIN_HEIGHT_THAT_REQUIRES_PUMPING:  # pumping required for buildings above 15m (or 5 floors)
@@ -157,27 +159,27 @@ def calc_Eaux_fw(tsd, bpr, schedules):
         effective_height = (height_ag - MIN_HEIGHT_THAT_REQUIRES_PUMPING)
         deltaP_kPa = DELTA_P_1 * effective_height
         b = 1  # assuming a good pumping system
-        tsd['Eaux_fw'] = np.vectorize(calc_Eauxf_fw)(tsd['vfw_m3perh'], deltaP_kPa, b)
+        tsd.electrical_loads.Eaux_fw = np.vectorize(calc_Eauxf_fw)(tsd.water.vfw_m3perh, deltaP_kPa, b)
     else:
-        tsd['Eaux_fw'] = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.Eaux_fw = np.zeros(HOURS_IN_YEAR)
     return tsd
 
 
-def calc_Eaux_ww(tsd, bpr):
+def calc_Eaux_ww(tsd: TimeSeriesData, bpr: BuildingPropertiesRow) -> TimeSeriesData:
     """
     Calculate auxiliary electricity consumption (Eaux_ww) to distribute hot water (ww) in the building.
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     :param bpr: building properties
     :type bpr: cea.demand.building_properties.BuildingProperties
     """
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
-    Mww = tsd['mww_kgs']
-    Qww = tsd['Qww']
-    Year = bpr.age['year']
+    Mww = tsd.heating_system_mass_flows.mww_kgs
+    Qww = tsd.heating_loads.Qww
+    Year = bpr.year
     nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
@@ -190,19 +192,19 @@ def calc_Eaux_ww(tsd, bpr):
     else:
         b = 2
 
-    tsd['Eaux_ww'] = np.vectorize(calc_Eauxf_ww)(Qww, deltaP_kPa, b, Mww)
+    tsd.electrical_loads.Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, deltaP_kPa, b, Mww)
 
     return tsd
 
 
-def calc_Eaux_Qhs_Qcs(tsd, bpr):
+def calc_Eaux_Qhs_Qcs(tsd: TimeSeriesData, bpr: BuildingPropertiesRow) -> TimeSeriesData:
     """
     Auxiliary electric loads
     from Legacy
     Following EN 15316-3-2:2007 Annex F
 
     :param tsd: Time series data of building
-    :type tsd: Dict[str, numpy.ndarray]
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
 
     :param bpr: building properties
     :type bpr: cea.demand.building_properties.BuildingProperties
@@ -213,41 +215,41 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
     fforma = bpr.building_systems['fforma']
-    Qcs_sys = tsd['Qcs_sys']
-    Qhs_sys = tsd['Qhs_sys']
-    Tcs_re_ahu = tsd['Tcs_sys_re_ahu']
-    Tcs_sup_ahu = tsd['Tcs_sys_sup_ahu']
-    Tcs_re_aru = tsd['Tcs_sys_re_aru']
-    Tcs_sup_aru = tsd['Tcs_sys_sup_aru']
-    Tcs_re_scu = tsd['Tcs_sys_re_scu']
-    Tcs_sup_scu = tsd['Tcs_sys_sup_scu']
-    Ths_re_ahu = tsd['Ths_sys_re_ahu']
-    Ths_sup_ahu = tsd['Ths_sys_sup_ahu']
-    Ths_re_aru = tsd['Ths_sys_re_aru']
-    Ths_sup_aru = tsd['Ths_sys_sup_aru']
-    Ths_re_shu = tsd['Ths_sys_re_shu']
-    Ths_sup_shu = tsd['Ths_sys_sup_shu']
+    Qcs_sys = tsd.cooling_loads.Qcs_sys
+    Qhs_sys = tsd.heating_loads.Qhs_sys
+    Tcs_re_ahu = tsd.cooling_system_temperatures.Tcs_sys_re_ahu
+    Tcs_sup_ahu = tsd.cooling_system_temperatures.Tcs_sys_sup_ahu
+    Tcs_re_aru = tsd.cooling_system_temperatures.Tcs_sys_re_aru
+    Tcs_sup_aru = tsd.cooling_system_temperatures.Tcs_sys_sup_aru
+    Tcs_re_scu = tsd.cooling_system_temperatures.Tcs_sys_re_scu
+    Tcs_sup_scu = tsd.cooling_system_temperatures.Tcs_sys_sup_scu
+    Ths_re_ahu = tsd.heating_system_temperatures.Ths_sys_re_ahu
+    Ths_sup_ahu = tsd.heating_system_temperatures.Ths_sys_sup_ahu
+    Ths_re_aru = tsd.heating_system_temperatures.Ths_sys_re_aru
+    Ths_sup_aru = tsd.heating_system_temperatures.Ths_sys_sup_aru
+    Ths_re_shu = tsd.heating_system_temperatures.Ths_sys_re_shu
+    Ths_sup_shu = tsd.heating_system_temperatures.Ths_sys_sup_shu
 
-    Year = bpr.age['year']
+    Year = bpr.year
     nf_ag = bpr.geometry['floors_ag']
 
     # split up the final demands according to the fraction of energy
-    frac_heat_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+    frac_heat_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd.heating_loads.Qhs_sen_ahu, tsd.heating_loads.Qhs_sen_sys)]
     Qhs_sys_ahu = Qhs_sys * frac_heat_ahu
     Qhs_sys_0_ahu = np.nanmax(Qhs_sys_ahu)
-    frac_heat_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+    frac_heat_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd.heating_loads.Qhs_sen_aru, tsd.heating_loads.Qhs_sen_sys)]
     Qhs_sys_aru = Qhs_sys * frac_heat_aru
     Qhs_sys_0_aru = np.nanmax(Qhs_sys_aru)
-    frac_heat_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
+    frac_heat_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd.heating_loads.Qhs_sen_shu, tsd.heating_loads.Qhs_sen_sys)]
     Qhs_sys_shu = Qhs_sys * frac_heat_shu
     Qhs_sys_0_shu = np.nanmax(Qhs_sys_shu)
-    frac_cool_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
+    frac_cool_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd.cooling_loads.Qcs_sen_ahu, tsd.cooling_loads.Qcs_sen_sys)]
     Qcs_sys_ahu = Qcs_sys * frac_cool_ahu
     Qcs_sys_0_ahu = np.nanmin(Qcs_sys_ahu)
-    frac_cool_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+    frac_cool_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd.cooling_loads.Qcs_sen_aru, tsd.cooling_loads.Qcs_sen_sys)]
     Qcs_sys_aru = Qcs_sys * frac_cool_aru
     Qcs_sys_0_aru = np.nanmin(Qcs_sys_aru)
-    frac_cool_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
+    frac_cool_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd.cooling_loads.Qcs_sen_scu, tsd.cooling_loads.Qcs_sen_sys)]
     Qcs_sys_scu = Qcs_sys * frac_cool_scu
     Qcs_sys_0_scu = np.nanmin(Qcs_sys_scu)
 
@@ -269,9 +271,9 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
                                                       Ths_re_aru)
         Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhs_sys_shu, Qhs_sys_0_shu, deltaP_kPa, b, Ths_sup_shu,
                                                       Ths_re_shu)
-        tsd['Eaux_hs'] = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
+        tsd.electrical_loads.Eaux_hs = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
     else:
-        tsd['Eaux_hs'] = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.Eaux_hs = np.zeros(HOURS_IN_YEAR)
 
     if control_heating_cooling_systems.has_cooling_system(bpr.hvac["class_cs"]):
 
@@ -282,9 +284,9 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
                                                       Tcs_re_aru)
         Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcs_sys_scu, Qcs_sys_0_scu, deltaP_kPa, b, Tcs_sup_scu,
                                                       Tcs_re_scu)
-        tsd['Eaux_cs'] = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
+        tsd.electrical_loads.Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
     else:
-        tsd['Eaux_cs'] = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.Eaux_cs = np.zeros(HOURS_IN_YEAR)
 
     return tsd
 
@@ -322,12 +324,12 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
     return Eaux_cs  # in #W
 
 
-def calc_Eve(tsd):
+def calc_Eve(tsd: TimeSeriesData) -> TimeSeriesData:
     """
     calculation of electricity consumption of mechanical ventilation and AC fans
     
     :param tsd: Time series data of building
-    :type tsd: dict
+    :type tsd: cea.demand.time_series_data.TimeSeriesData
     :return: electrical energy for fans of mechanical ventilation in [Wh/h]
     :rtype: float
     """
@@ -341,13 +343,13 @@ def calc_Eve(tsd):
     fan_power = P_FAN  # specific fan consumption in W/m3/h, s
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
-    tsd['m_ve_rec'] = np.nan_to_num(tsd['m_ve_rec'])    # TODO:DOCUMENTATION, in heating case, m_ve_rec is nan
-    q_ve_mech = tsd['m_ve_mech'] / physics.calc_rho_air(tsd['theta_ve_mech']) \
-                + tsd['m_ve_rec'] / physics.calc_rho_air(tsd['T_int'])
+    tsd.ventilation_mass_flows.m_ve_rec = np.nan_to_num(tsd.ventilation_mass_flows.m_ve_rec)    # TODO:DOCUMENTATION, in heating case, m_ve_rec is nan
+    q_ve_mech = tsd.ventilation_mass_flows.m_ve_mech / physics.calc_rho_air(tsd.rc_model_temperatures.theta_ve_mech) \
+                + tsd.ventilation_mass_flows.m_ve_rec / physics.calc_rho_air(tsd.rc_model_temperatures.T_int)
 
     Eve = fan_power * q_ve_mech * 3600
 
-    tsd['Eve'] = np.nan_to_num(Eve)
+    tsd.electrical_loads.Eve = np.nan_to_num(Eve)
 
     return tsd
 
