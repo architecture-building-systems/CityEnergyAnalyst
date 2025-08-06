@@ -2365,10 +2365,23 @@ def process_building_summary(config, locator,
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
-        if config.result_summary.metrics_building_energy_demand:
-            calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, bool_use_conditioned_floor_area_for_normalisation, plot=plot)
-        if config.result_summary.metrics_photovoltaic_panels:
-            calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+        if plot:
+            if any(item in list_cea_feature_to_plot for item in ['demand']):
+                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+            if any(item in list_cea_feature_to_plot for item in ['pv']):
+                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
+                                  list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+        else:
+            if config.result_summary.metrics_building_energy_demand:
+                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+
+            if config.result_summary.metrics_photovoltaic_panels:
+                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
+                                  bool_aggregate_by_building, bool_use_acronym, plot=plot)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
