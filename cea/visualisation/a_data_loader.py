@@ -104,16 +104,12 @@ class csv_pointer:
         }
         self.time_period = time_period_map.get(self.x_to_plot)
 
-    def execute_summary(self):
+    def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
-        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.plot_cea_feature, [])
         list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.plot_cea_feature, [])
-        if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
-            bool_include_advanced_analytics = False
-        elif all(item in list_metrics_analytics for item in self.y_metric_to_plot):
+        if any(item in list_metrics_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = True
-        else:
-            raise ValueError(f"Invalid y-metric-to-plot: {self.y_metric_to_plot}. Current combination is not supported.")
+
         bool_use_acronym = True
 
         bool_use_conditioned_floor_area_for_normalisation = self.y_normalised_by == "conditioned_floor_area"
@@ -220,7 +216,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list):
+def plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, bool_include_advanced_analytics=False):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -245,7 +241,7 @@ def plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_fe
         os.remove(summary_results_csv_path)
 
     # Execute the summary process
-    plot_instance_a.execute_summary()
+    plot_instance_a.execute_summary(bool_include_advanced_analytics)
 
     # Load the summary results data
     try:

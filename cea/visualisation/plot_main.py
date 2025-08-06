@@ -44,7 +44,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False):
     # Extract parameters from dictionary
     plot_cea_feature = plot_dict['feature']
     solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
@@ -86,7 +86,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     # Activate a_data_loader
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature,
                                                                                 hour_start, hour_end,
-                                                                                solar_panel_types_list)
+                                                                                solar_panel_types_list, bool_include_advanced_analytics)
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
