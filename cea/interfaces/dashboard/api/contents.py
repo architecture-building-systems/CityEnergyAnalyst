@@ -60,7 +60,7 @@ class ContentInfo:
     @staticmethod
     def _dict_factory(data):
         return {
-            field: value.value if isinstance(value, Enum) else value
+            field: value.value if isinstance(value, StrEnum) else value
             for field, value in data
         }
 
