@@ -16,11 +16,11 @@ dynamic = ["version"]
 dependencies = [
     # Scientific/geospatial packages (optimized conda builds available in conda-forge)
     # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
-    "numpy<2", # held back by wntr
+    "numpy>=1.24.0,<2", # held back by wntr
     "scipy",
     "matplotlib",
-    "geopandas",
-    "shapely",
+    "geopandas>=1.0.0",
+    "shapely>=2.0.0",
     "networkx>=3.4", # 3.4 contains a fix for steiner tree algorithm
     "scikit-learn",
     "numba",
@@ -28,7 +28,7 @@ dependencies = [
     "psutil",
     "pyarrow",
     "libpysal",
-    "osmnx",
+    "osmnx>=2.0.0",
     "pvlib",
     # Does not exist in pypi
     # "pythonocc-core",
@@ -42,7 +42,7 @@ dependencies = [
     "jinja2",
     "python-socketio",
     "python-multipart", # Required by fastapi for file uploads
-    "sqlalchemy[asyncio]",
+    "sqlalchemy[asyncio]>=2.0.0",
     "sqlmodel", # Required by fastapi for database models
     "asyncpg", # Required by sqlmodel for postgres
     "aiosqlite", # Required for async sqlite adapter
@@ -118,11 +118,11 @@ test = "cea test --type integration"
 [tool.pixi.dependencies]
 # Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
 # Duplicate of above in [project.dependencies] - update both when needed
-numpy = "<2" # held back by wntr
+numpy = ">=1.24.0,<2" # held back by wntr
 scipy = "*"
 matplotlib = "*"
-geopandas = "*"
-shapely = "*"
+geopandas = ">=1.0.0"
+shapely = ">=2.0.0"
 networkx = ">=3.4" # 3.4 contains a fix for steiner tree algorithm
 scikit-learn = "*"
 numba = "*"
@@ -134,7 +134,7 @@ pvlib = "*" # has optional C extensions for solar calculations
 
 # Pure Python packages (conda-forge for unified dependency resolution)
 libpysal = "*"
-osmnx = "*"
+osmnx = ">=2.0.0"
 
 # System dependencies with native libraries (fetch from conda-forge)
 cvxopt = "*" # For wntr
