@@ -93,6 +93,32 @@ build-backend = "setuptools.build_meta"
 include = ["cea*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+cea = [
+    # Configuration files
+    "default.config",
+    "schemas.yml",
+    "scripts.yml",
+    "workflows/*.yml",
+
+    # Data files
+    "examples/*.zip",
+    # TODO: Move generate weather data script to scripts directory, should not be in package
+    "datamanagement/weather_helper/weather.geojson",
+    "databases/**/*.csv",
+    "databases/weather/**/*.epw",
+
+    # Compiled binaries
+    "resources/radiation/bin/**/*",
+    "resources/radiationCRAX/bin/**/*",
+
+    # Web assets
+    "interfaces/dashboard/plots/templates/*.html",
+    "plots/*.html",
+
+    "plots/naming.csv",
+]
+
 [tool.setuptools.dynamic]
 version = { attr = "cea.__version__" }
 

@@ -4910,7 +4910,7 @@ packages:
 - pypi: ./
   name: cityenergyanalyst
   version: 4.0.0b1
-  sha256: 4288808e4531d4b0d8a3d7a24bb925168cc6f49ba0e56ef7a78c0cf7b9421371
+  sha256: 6db54ce1a3d66daed4968c5fdcc5d720a0a75f40c0c49cf364effcc5fed6d415
   requires_dist:
   - numpy>=1.24.0,<2
   - scipy
