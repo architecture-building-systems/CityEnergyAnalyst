@@ -187,7 +187,7 @@ class data_processor:
             # Filter out missing columns
             list_columns = [col for col in list_columns if col in self.df_summary_data.columns]
             if not list_columns:
-                print(f"❌ No valid columns remaining after filtering")
+                print("❌ No valid columns remaining after filtering")
                 return pd.DataFrame(), []
 
         # Select proper index

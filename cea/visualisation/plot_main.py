@@ -3,7 +3,6 @@ CEAFrontEnd – Combines everything
 
 """
 
-import sys
 import cea.config
 from cea import CEAException
 from cea.visualisation.c_plotter import generate_fig
