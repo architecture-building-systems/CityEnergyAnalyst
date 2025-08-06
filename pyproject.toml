@@ -163,7 +163,6 @@ libpysal = "*"
 osmnx = ">=2.0.0"
 
 # System dependencies with native libraries (fetch from conda-forge)
-cvxopt = "*" # For wntr
 fiona = "*"
 gdal = "*"
 
