@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import zipfile
 from dataclasses import dataclass, asdict
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Optional, List
 
@@ -35,7 +35,7 @@ logger = getCEAServerLogger("cea-server-contents")
 router = APIRouter()
 
 
-class ContentType(Enum):
+class ContentType(StrEnum):
     directory = 'directory'
     file = 'file'
 
@@ -149,7 +149,7 @@ VALID_EXTENSIONS = {".shp", ".dbf", ".prj", ".cpg", ".shx",
 
 class UploadScenarioResult(BaseModel):
     class Info(BaseModel):
-        class Status(str, Enum):
+        class Status(StrEnum):
             PENDING = "pending"
             WARNING = "warning"
             SUCCESS = "success"
