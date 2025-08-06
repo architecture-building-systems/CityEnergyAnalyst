@@ -118,8 +118,8 @@ def main(config):
     fig = plot_all(config, scenario, plot_dict, hide_title=False)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    fig.show(renderer="browser")
-    # fig.show()
+    # fig.show(renderer="browser")
+    fig.show()
 
     return plot_html, fig
 
