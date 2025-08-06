@@ -1,6 +1,7 @@
 name: Ruff
 on:
   pull_request:
+    paths: ['cea/**']
   push:
     branches: [ master ]
     paths: ['cea/**']
