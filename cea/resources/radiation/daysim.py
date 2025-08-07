@@ -39,26 +39,6 @@ class GridSize(NamedTuple):
     walls: int
 
 
-def create_temp_daysim_directory(directory):
-    daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
-
-    os.makedirs(directory, exist_ok=True)
-    temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
-
-    if sys.platform == "win32":
-        daysim_dir = os.path.join(daysim_dir, "bin64")
-
-    for file in os.listdir(daysim_dir):
-        binary_file = os.path.join(daysim_dir, file)
-        output_file = os.path.join(temp_dir.name, file)
-        if not os.path.exists(output_file):
-            shutil.copyfile(binary_file, output_file)
-
-    atexit.register(temp_dir.cleanup)
-
-    return temp_dir.name
-
-
 def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
