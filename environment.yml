@@ -6,14 +6,13 @@ dependencies:
 - python=3.12
 - pip
 #Dependencies for CEA
-- cvxopt # For wntr
 - fiona
 - gdal
-- geopandas
+- geopandas>=1.0.0
 - libpysal
 - numba
-- numpy<2 # held back by wntr
-- osmnx
+- numpy>=1.24.0,<2 # held back by wntr
+- osmnx>=2.0.0
 - networkx>=3.4 # 3.4 contains a fix for steiner tree algorithm
 - psutil
 - pvlib
@@ -21,7 +20,7 @@ dependencies:
 - pyyaml
 - scikit-learn
 - scipy
-- shapely
+- shapely>=2.0.0
 - matplotlib
 - notebook
 - pyarrow

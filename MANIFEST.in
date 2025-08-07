@@ -1,16 +1,1 @@
-include cea/default.config
-include cea/examples/*.zip
-include cea/plots/naming.csv
-include cea/schemas.yml
-include cea/scripts.yml
-include cea/workflows/*.yml
-include cea/datamanagement/weather_helper/weather.geojson
-
-recursive-include cea/databases *.xlsx *.xls *.txt *.csv *.epw
-recursive-include cea/interfaces/dashboard/plots/templates *.html
-recursive-include cea/lib *.so *.dylib
-recursive-include cea/plots *.html
 recursive-include cea/tests *.config *.yml
-
-graft cea/resources/radiation/bin
-graft cea/resources/radiationCRAX/bin
