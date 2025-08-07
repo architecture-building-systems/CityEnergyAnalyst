@@ -59,7 +59,7 @@ def create_temp_daysim_directory(directory):
     return temp_dir.name
 
 
-def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
+def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
 
@@ -73,7 +73,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     If the binaries can't be found anywhere, raise an exception.
 
     :param str path_hint: The path to check first, according to the `cea.config` file.
-    :param bool latest_binaries: Use latest Daysim binaries
     :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
     """
 
@@ -108,10 +107,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
 
     # Additional paths
     if sys.platform == "win32":
-        # Check latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(shipped_daysim, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
-
+        folders_to_check.append(os.path.join(shipped_daysim, "bin64"))
         # User might have a default DAYSIM installation
         folders_to_check.append(r"C:\Daysim\bin")
 

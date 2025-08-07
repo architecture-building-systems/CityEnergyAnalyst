@@ -136,8 +136,7 @@ def main(config):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
-    daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory,
-                                                                         config.radiation.use_latest_daysim_binaries)
+    daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory)
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
     print(f'Using Daysim data from path: {daysim_lib_path}')
 
