@@ -234,10 +234,15 @@ class DaySimProject(object):
         geometry_header = CEADaySim.generate_geometry_header(daysim_material_path, daysim_geometry_path)
         site_info_header = CEADaySim.generate_site_info_header(self.site_info, wea_weather_path)
 
+        # The -u- flag disables uncorrelated sampling and uses a fixed seed (0) in rtrace
+        # This makes the results reproducible / deterministic
+        additional_rtrace_parameter = "additional_rtrace_parameter -u-"
+
         with open(self.hea_path, "w") as hea_file:
             header = f"{project_header}\n" \
                      f"{site_info_header}\n" \
-                     f"{geometry_header}\n"
+                     f"{geometry_header}\n" \
+                     f"{additional_rtrace_parameter}\n" \
 
             hea_file.write(header)
 
