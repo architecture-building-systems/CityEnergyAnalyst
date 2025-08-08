@@ -62,10 +62,12 @@ dependencies = [
     "xlrd",
     "xlwt",
     "wntr>=1.3.2,<2", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
-    "py4design-cea"
+    "py4design-cea",
+
+    # For building
+    "scikit-build-core>=0.11.0",
 ]
 
-[project.optional-dependencies]
 [dependency-groups]
 lint = ["ruff"]
 test = ["pytest"]
@@ -86,41 +88,32 @@ cea-worker = "cea.worker:main"
 cea-plot = "cea.plots.plot_cli:main"
 
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.11.0"]
+build-backend = "scikit_build_core.build"
 
-[tool.setuptools.packages.find]
-include = ["cea*"]
-namespaces = false
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "cea/__init__.py"
 
-[tool.setuptools.package-data]
-cea = [
-    # Configuration files
-    "default.config",
-    "schemas.yml",
-    "scripts.yml",
-    "workflows/*.yml",
+# Scikit-build-core configuration
+[tool.scikit-build]
+# Only install the cea_targets component (manually defined in our CMakeLists.txt)
+install.components = ["cea_targets"]
+wheel.packages = ["cea"]
 
-    # Data files
-    "examples/*.zip",
-    # TODO: Move generate weather data script to scripts directory, should not be in package
-    "datamanagement/weather_helper/weather.geojson",
-    "databases/**/*.csv",
-    "databases/weather/**/*.epw",
+[tool.scikit-build.build]
+# Only build the cea_targets target, not all targets (avoids unwanted programs)
+targets = ["cea_targets"]
+# Use 4 cores for parallel building
+tool-args = ["-j4"]
+# Verbose output for debugging
+verbose = true
 
-    # Compiled binaries
-    "resources/radiation/bin/**/*",
-    "resources/radiationCRAX/bin/**/*",
-
-    # Web assets
-    "interfaces/dashboard/plots/templates/*.html",
-    "plots/*.html",
-
-    "plots/naming.csv",
-]
-
-[tool.setuptools.dynamic]
-version = { attr = "cea.__version__" }
+[tool.scikit-build.cmake]
+# Use external/ directory for CMake source
+source-dir = "external"
+# Build in Release mode for performance
+build-type = "Release"
 
 [tool.ruff]
 exclude = ["*.ipynb"]
@@ -140,6 +133,11 @@ platforms = [
 cea = "cea"
 server = "cea dashboard"
 test = "cea test --type integration"
+
+# Development tasks
+lint = {cmd = "ruff check --fix ."}
+setup-dev = {cmd = "uv pip install -e . --group dev --no-build-isolation"}
+build-wheel = {cmd = "uv build"}
 
 [tool.pixi.dependencies]
 # Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
@@ -169,7 +167,3 @@ gdal = "*"
 # Development tools (pixi-only)
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
-
-[tool.pixi.pypi-dependencies]
-# install cea as editable package for development
-cityenergyanalyst = { path = ".", editable = true }
