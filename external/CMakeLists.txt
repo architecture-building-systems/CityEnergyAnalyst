@@ -57,35 +57,35 @@ else()
     # No need to call add_subdirectory again - FetchContent_MakeAvailable handles it
 endif()
     
-    # Verify cea_targets target exists (this is what we want to build)
-    if(TARGET cea_targets)
-        message(STATUS "✓ Found cea_targets custom target")
+# Verify cea_targets target exists (this is what we want to build)
+if(TARGET cea_targets)
+    message(STATUS "✓ Found cea_targets custom target")
 
-        # Get the dependencies of cea_targets to see what executables it builds
-        get_target_property(CEA_TARGET_DEPS cea_targets MANUALLY_ADDED_DEPENDENCIES)
-        if(CEA_TARGET_DEPS)
-            message(STATUS "  - cea_targets depends on: ${CEA_TARGET_DEPS}")
-        endif()
-        
-        # PROBLEM: DAYSIM doesn't use the cea_targets COMPONENT in its install() commands
-        # We need to install the CEA-specific targets manually
-        # FIXME: Update DAYSIM CMakeLists.txt to use COMPONENT for CEA targets
-
-        # Install the specific executables that cea_targets depends on
-        set(CEA_EXECUTABLES ds_illum epw2wea gen_dc oconv radfiles2daysim rtrace_dc)
-        foreach(target ${CEA_EXECUTABLES})
-            if(TARGET ${target})
-                message(STATUS "  - Installing ${target}")
-                install(TARGETS ${target}
-                        RUNTIME DESTINATION "cea/resources/radiation/bin/${CEA_PLATFORM_DIR}"
-                        COMPONENT cea_targets)
-            else()
-                message(WARNING "  - Target ${target} not found")
-            endif()
-        endforeach()
-    else()
-        message(FATAL_ERROR "cea_targets target not found in DAYSIM build! Cannot proceed.")
+    # Get the dependencies of cea_targets to see what executables it builds
+    get_target_property(CEA_TARGET_DEPS cea_targets MANUALLY_ADDED_DEPENDENCIES)
+    if(CEA_TARGET_DEPS)
+        message(STATUS "  - cea_targets depends on: ${CEA_TARGET_DEPS}")
     endif()
+    
+    # PROBLEM: DAYSIM doesn't use the cea_targets COMPONENT in its install() commands
+    # We need to install the CEA-specific targets manually
+    # FIXME: Update DAYSIM CMakeLists.txt to use COMPONENT for CEA targets
+
+    # Install the specific executables that cea_targets depends on
+    set(CEA_EXECUTABLES ds_illum epw2wea gen_dc oconv radfiles2daysim rtrace_dc)
+    foreach(target ${CEA_EXECUTABLES})
+        if(TARGET ${target})
+            message(STATUS "  - Installing ${target}")
+            install(TARGETS ${target}
+                    RUNTIME DESTINATION "cea/resources/radiation/bin/${CEA_PLATFORM_DIR}"
+                    COMPONENT cea_targets)
+        else()
+            message(WARNING "  - Target ${target} not found")
+        endif()
+    endforeach()
+else()
+    message(FATAL_ERROR "cea_targets target not found in DAYSIM build! Cannot proceed.")
+endif()
 
 # Print build information
 message(STATUS "CEA External Tools Configuration:")
