@@ -1,10 +1,8 @@
 from __future__ import annotations
-import atexit
+
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
 
 import numpy as np
@@ -198,16 +196,16 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
-            sensor_cord, \
-            sensor_type, \
-            sensor_area, \
-            sensor_orientation, \
-            sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
-                                                           srf_type,
-                                                           orientation,
-                                                           normal,
-                                                           intersection)
+                sensor_cord, \
+                sensor_type, \
+                sensor_area, \
+                sensor_orientation, \
+                sensor_intersection = generate_sensor_surfaces(face,
+                                                               grid_size.roof if srf_type == "roofs" else grid_size.walls,
+                                                               srf_type,
+                                                               orientation,
+                                                               normal,
+                                                               intersection)
             sensor_intersection_list.extend(sensor_intersection)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
@@ -229,11 +227,11 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
-        sensors_coords_building, \
-        sensors_type_building, \
-        sensors_area_building, \
-        sensor_orientation_building, \
-        sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
+            sensors_coords_building, \
+            sensors_type_building, \
+            sensors_area_building, \
+            sensor_orientation_building, \
+            sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -281,11 +279,11 @@ def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, ra
     # calculate sensors
     print("Calculating and sending sensor points")
     sensors_coords_zone, \
-    sensors_dir_zone, \
-    sensors_number_zone, \
-    names_zone, \
-    sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
+        sensors_dir_zone, \
+        sensors_number_zone, \
+        names_zone, \
+        sensors_code_zone, \
+        sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
 
     daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone)
 
@@ -321,7 +319,7 @@ def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, ra
             in zip(names_zone, sensors_number_zone, sensors_code_zone, sensor_intersection_zone):
 
         # select sensors data
-        sensor_data = solar_res[index:index+sensors_number]
+        sensor_data = solar_res[index:index + sensors_number]
         # set sensors that intersect with buildings to 0
         sensor_data[np.array(sensor_intersection) == 1] = 0
         items_sensor_name_and_result = pd.DataFrame(sensor_data, index=sensor_code)
