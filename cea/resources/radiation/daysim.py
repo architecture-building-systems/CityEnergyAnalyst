@@ -39,6 +39,20 @@ class GridSize(NamedTuple):
     walls: int
 
 
+def get_site_package_daysim() -> str | None:
+    """
+    Get the path to the Daysim binaries in the site-packages directory.
+
+    :return: The path to the Daysim binaries, or None if not found.
+    """
+    import site
+    for site_packages_dir in site.getsitepackages():
+        daysim_path = os.path.join(site_packages_dir, "cea", "resources", "radiation", "bin", sys.platform)
+        if os.path.exists(daysim_path):
+            return daysim_path
+
+    return None
+
 def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
@@ -81,7 +95,12 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Op
     if path_hint is not None:
         folders_to_check.append(path_hint)
 
-    # Path of shipped binaries
+    # Check site-packages location first (where binaries are actually installed)
+    site_package_daysim = get_site_package_daysim()
+    if site_package_daysim:
+        folders_to_check.append(site_package_daysim)
+
+    # Fallback: Path relative to this script (for development or custom setups)
     shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
     folders_to_check.append(shipped_daysim)
 
