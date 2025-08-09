@@ -98,12 +98,12 @@ input = "cea/__init__.py"
 # Scikit-build-core configuration
 [tool.scikit-build]
 # Only install the cea_targets component (manually defined in our CMakeLists.txt)
-install.components = ["cea_targets"]
+install.components = ["cea_targets", "crax_targets"]
 wheel.packages = ["cea"]
 
 [tool.scikit-build.build]
 # Only build the cea_targets target, not all targets (avoids unwanted programs)
-targets = ["cea_targets"]
+#targets = ["cea_targets"]
 # Use 4 cores for parallel building
 tool-args = ["-j4"]
 # Verbose output for debugging
