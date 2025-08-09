@@ -14,6 +14,8 @@ __maintainer__ = [""]
 __email__ = ["cea@arch.ethz.ch", "wanglittlerain@163.com"]
 __status__ = "Production"
 
+from cea.resources.utils import get_site_package_radiation_bin_path
+
 # Define the list of required CRAX executables (without extension)
 REQUIRED_CRAX_BINARIES = [
     "radiation", "mesh-generation"
@@ -170,6 +172,11 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
     folders_to_check = []
     if path_hint:
         folders_to_check.append(path_hint)
+
+    # Check site-packages location first (where binaries are actually installed)
+    site_package_daysim = get_site_package_radiation_bin_path()
+    if site_package_daysim:
+        folders_to_check.append(site_package_daysim)
 
     # Add predefined binary directories
     base_path = os.path.join(os.path.dirname(__file__), "bin")

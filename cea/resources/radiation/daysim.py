@@ -22,6 +22,7 @@ from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+from cea.resources.utils import get_site_package_radiation_bin_path
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -36,20 +37,6 @@ class GridSize(NamedTuple):
     roof: int
     walls: int
 
-
-def get_site_package_daysim() -> str | None:
-    """
-    Get the path to the Daysim binaries in the site-packages directory.
-
-    :return: The path to the Daysim binaries, or None if not found.
-    """
-    import site
-    for site_packages_dir in site.getsitepackages():
-        daysim_path = os.path.join(site_packages_dir, "cea", "resources", "radiation", "bin", sys.platform)
-        if os.path.exists(daysim_path):
-            return daysim_path
-
-    return None
 
 def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
@@ -94,7 +81,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Op
         folders_to_check.append(path_hint)
 
     # Check site-packages location first (where binaries are actually installed)
-    site_package_daysim = get_site_package_daysim()
+    site_package_daysim = get_site_package_radiation_bin_path()
     if site_package_daysim:
         folders_to_check.append(site_package_daysim)
 
