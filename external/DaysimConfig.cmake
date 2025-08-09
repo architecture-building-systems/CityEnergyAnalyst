@@ -51,7 +51,7 @@ function(build_daysim DAYSIM_FINAL_SOURCE_DIR)
     endif()
 endfunction()
 
-function(install_daysim CEA_PLATFORM_DIR)
+function(install_daysim)
     message(STATUS "=== Installing DAYSIM ===")
     
     # Verify cea_targets target exists (this is what we want to build)
@@ -74,7 +74,7 @@ function(install_daysim CEA_PLATFORM_DIR)
             if(TARGET ${target})
                 message(STATUS "  - Installing ${target}")
                 install(TARGETS ${target}
-                        RUNTIME DESTINATION "cea/resources/radiation/bin/${CEA_PLATFORM_DIR}"
+                        RUNTIME DESTINATION "cea/radiation/bin"
                         COMPONENT cea_targets)
             else()
                 message(WARNING "  - Target ${target} not found")

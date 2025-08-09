@@ -26,15 +26,6 @@ if(NOT ENABLE_VERBOSE_WARNINGS)
     endif()
 endif()
 
-# Platform-specific output directory for CEA's expected structure
-if(WIN32)
-    set(CEA_PLATFORM_DIR "win32")
-elseif(APPLE)
-    set(CEA_PLATFORM_DIR "darwin")
-else()
-    set(CEA_PLATFORM_DIR "linux")
-endif()
-
 # Include the separate configuration modules
 include(${CMAKE_CURRENT_SOURCE_DIR}/DaysimConfig.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/CraxConfig.cmake)
@@ -47,14 +38,14 @@ option(BUILD_CRAX "Build CRAX component" ON)
 if(BUILD_DAYSIM)
     configure_daysim()
     build_daysim(${DAYSIM_FINAL_SOURCE_DIR})
-    install_daysim(${CEA_PLATFORM_DIR})
+    install_daysim()
 endif()
 
 # Configure and build CRAX
 if(BUILD_CRAX)
     configure_crax()
     build_crax(${CRAX_FINAL_SOURCE_DIR})
-    install_crax(${CEA_PLATFORM_DIR})
+    install_crax()
 endif()
 
 # ============================================================================

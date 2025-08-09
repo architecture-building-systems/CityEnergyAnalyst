@@ -75,14 +75,14 @@ function(build_crax CRAX_FINAL_SOURCE_DIR)
     endif()
 endfunction()
 
-function(install_crax CEA_PLATFORM_DIR)
+function(install_crax)
     message(STATUS "=== Installing CRAX ===")
     
     # Install CRAX executables
     if(TARGET radiation)
         message(STATUS "✓ Found radiation target")
         install(TARGETS radiation
-                RUNTIME DESTINATION "cea/resources/radiationCRAX/bin/${CEA_PLATFORM_DIR}"
+                RUNTIME DESTINATION "cea/radiation/bin"
                 COMPONENT crax_targets)
     else()
         message(WARNING "radiation target not found")
@@ -91,7 +91,7 @@ function(install_crax CEA_PLATFORM_DIR)
     if(TARGET mesh-generation)
         message(STATUS "✓ Found mesh-generation target") 
         install(TARGETS mesh-generation
-                RUNTIME DESTINATION "cea/resources/radiationCRAX/bin/${CEA_PLATFORM_DIR}"
+                RUNTIME DESTINATION "cea/radiation/bin"
                 COMPONENT crax_targets)
     else()
         message(WARNING "mesh-generation target not found")
