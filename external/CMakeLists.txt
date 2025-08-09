@@ -36,15 +36,25 @@ option(BUILD_CRAX "Build CRAX component" ON)
 
 # Configure and build DAYSIM
 if(BUILD_DAYSIM)
+    message(STATUS "")
     configure_daysim()
+
+    message(STATUS "")
     build_daysim(${DAYSIM_FINAL_SOURCE_DIR})
+
+    message(STATUS "")
     install_daysim()
 endif()
 
 # Configure and build CRAX
 if(BUILD_CRAX)
+    message(STATUS "")
     configure_crax()
+
+    message(STATUS "")
     build_crax(${CRAX_FINAL_SOURCE_DIR})
+
+    message(STATUS "")
     install_crax()
 endif()
 
@@ -88,10 +98,12 @@ endfunction()
 
 # Call the function after all subdirectories have been processed
 if(BUILD_DAYSIM OR BUILD_CRAX)
+    message(STATUS "")
     setup_custom_target_dependencies()
 endif()
 
 # Print build information
+message(STATUS "")
 message(STATUS "=== CEA External Tools Configuration Summary ===")
 message(STATUS "  Platform: ${CEA_PLATFORM_DIR}")
 message(STATUS "  Build DAYSIM: ${BUILD_DAYSIM}")
