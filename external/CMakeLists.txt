@@ -36,6 +36,47 @@ if(BUILD_CRAX)
     install_crax(${CEA_PLATFORM_DIR})
 endif()
 
+# ============================================================================
+# Custom Build Targets for CEA
+# ============================================================================
+
+# Create custom target that builds all CEA-required components
+add_custom_target(cea_all)
+
+# A function to add dependencies after targets are defined
+function(setup_custom_target_dependencies)
+    # DAYSIM targets
+    if(BUILD_DAYSIM)
+        set(CEA_DAYSIM_TARGETS ds_illum epw2wea gen_dc oconv radfiles2daysim rtrace_dc)
+        foreach(target ${CEA_DAYSIM_TARGETS})
+            if(TARGET ${target})
+                add_dependencies(cea_all ${target})
+                message(STATUS "  ✓ Added DAYSIM target ${target} to cea_all")
+            else()
+                message(STATUS "  ⚠ DAYSIM target ${target} not found")
+            endif()
+        endforeach()
+    endif()
+    
+    # CRAX targets
+    if(BUILD_CRAX)
+        set(CEA_CRAX_TARGETS radiation mesh-generation)
+        foreach(target ${CEA_CRAX_TARGETS})
+            if(TARGET ${target})
+                add_dependencies(cea_all ${target})
+                message(STATUS "  ✓ Added CRAX target ${target} to cea_all")
+            else()
+                message(STATUS "  ⚠ CRAX target ${target} not found")
+            endif()
+        endforeach()
+    endif()
+endfunction()
+
+# Call the function after all subdirectories have been processed
+if(BUILD_DAYSIM OR BUILD_CRAX)
+    setup_custom_target_dependencies()
+endif()
+
 # Print build information
 message(STATUS "=== CEA External Tools Configuration Summary ===")
 message(STATUS "  Platform: ${CEA_PLATFORM_DIR}")
@@ -48,4 +89,6 @@ if(BUILD_CRAX)
     message(STATUS "  CRAX source: ${CRAX_SOURCE_DIR}")
 endif()
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "")
+message(STATUS "Usage: cmake --build build --target cea_all")
 message(STATUS "===============================================")
