@@ -36,7 +36,7 @@ function(configure_daysim)
 endfunction()
 
 function(build_daysim DAYSIM_FINAL_SOURCE_DIR)
-    message(STATUS "=== Building DAYSIM ===")
+    message(STATUS "=== Setting DAYSIM build files ===")
     message(STATUS "Building DAYSIM from: ${DAYSIM_FINAL_SOURCE_DIR}")
 
     # Add DAYSIM to the build
@@ -52,7 +52,7 @@ function(build_daysim DAYSIM_FINAL_SOURCE_DIR)
 endfunction()
 
 function(install_daysim)
-    message(STATUS "=== Installing DAYSIM ===")
+    message(STATUS "=== Setting DAYSIM targets ===")
     
     # Verify cea_targets target exists (this is what we want to build)
     if(TARGET cea_targets)

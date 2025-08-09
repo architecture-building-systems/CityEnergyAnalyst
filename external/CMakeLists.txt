@@ -57,6 +57,8 @@ add_custom_target(cea_all)
 
 # A function to add dependencies after targets are defined
 function(setup_custom_target_dependencies)
+    message(STATUS "=== CEA External Tools Target Summary ===")
+
     # DAYSIM targets
     if(BUILD_DAYSIM)
         set(CEA_DAYSIM_TARGETS ds_illum epw2wea gen_dc oconv radfiles2daysim rtrace_dc)

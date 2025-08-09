@@ -12,6 +12,16 @@ set(CRAX_GIT_TAG "mac-build" CACHE STRING "CRAX Git tag/branch to use")
 
 function(configure_crax)
     message(STATUS "=== Configuring CRAX ===")
+
+    # Configure CRAX build options before adding to build
+    message(STATUS "Configuring CRAX with CEA-specific options:")
+    message(STATUS "  Dynamic Arrow: ${CRAX_USE_DYNAMIC_ARROW}")
+    message(STATUS "  Automated Dependencies: ${CRAX_USE_AUTOMATED_DEPENDENCIES}")
+
+    # Set CRAX CMake variables to pass our configuration
+    set(USE_DYNAMIC_ARROW ${CRAX_USE_DYNAMIC_ARROW} CACHE BOOL "Use dynamic Arrow linking" FORCE)
+    set(USE_AUTOMATED_DEPENDENCIES ${CRAX_USE_AUTOMATED_DEPENDENCIES} CACHE BOOL "Use automated dependencies" FORCE)
+    set(PREFER_PYARROW ON CACHE BOOL "Prefer pyarrow over system Arrow" FORCE)
     
     # Check if CRAX source exists locally
     if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
@@ -26,32 +36,17 @@ function(configure_crax)
         include(FetchContent)
         
         FetchContent_Declare(
-            crx_external
+            crax_external
             GIT_REPOSITORY ${CRAX_GIT_REPOSITORY}
             GIT_TAG ${CRAX_GIT_TAG}
             GIT_SHALLOW TRUE
         )
 
         # Try to fetch and build CRAX
-        FetchContent_MakeAvailable(crx_external)
-        set(CRAX_FINAL_SOURCE_DIR "${crx_external_SOURCE_DIR}" PARENT_SCOPE)
-        message(STATUS "CRAX fetched to: ${crx_external_SOURCE_DIR}")
+        FetchContent_MakeAvailable(crax_external)
+        set(CRAX_FINAL_SOURCE_DIR "${crax_external_SOURCE_DIR}" PARENT_SCOPE)
+        message(STATUS "CRAX fetched to: ${crax_external_SOURCE_DIR}")
     endif()
-endfunction()
-
-function(build_crax CRAX_FINAL_SOURCE_DIR)
-    message(STATUS "=== Building CRAX ===")
-    message(STATUS "Building CRAX from: ${CRAX_FINAL_SOURCE_DIR}")
-
-    # Configure CRAX build options before adding to build
-    message(STATUS "Configuring CRAX with CEA-specific options:")
-    message(STATUS "  Dynamic Arrow: ${CRAX_USE_DYNAMIC_ARROW}")
-    message(STATUS "  Automated Dependencies: ${CRAX_USE_AUTOMATED_DEPENDENCIES}")
-
-    # Set CRAX CMake variables to pass our configuration
-    set(USE_DYNAMIC_ARROW ${CRAX_USE_DYNAMIC_ARROW} CACHE BOOL "Use dynamic Arrow linking" FORCE)
-    set(USE_AUTOMATED_DEPENDENCIES ${CRAX_USE_AUTOMATED_DEPENDENCIES} CACHE BOOL "Use automated dependencies" FORCE)
-    set(PREFER_PYARROW ON CACHE BOOL "Prefer pyarrow over system Arrow" FORCE)
 
     # For Python wheel builds, set the Python executable to match the build environment
     if(CRAX_USE_DYNAMIC_ARROW)
@@ -62,7 +57,11 @@ function(build_crax CRAX_FINAL_SOURCE_DIR)
             message(STATUS "  Setting PYARROW_PYTHON_EXECUTABLE to: ${Python3_EXECUTABLE}")
         endif()
     endif()
+endfunction()
 
+function(build_crax CRAX_FINAL_SOURCE_DIR)
+    message(STATUS "=== Setting CRAX build files ===")
+    message(STATUS "Building CRAX from: ${CRAX_FINAL_SOURCE_DIR}")
     # Add CRAX to the build
     if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
         # For local CRAX, we need to manually add it to the build
@@ -76,7 +75,7 @@ function(build_crax CRAX_FINAL_SOURCE_DIR)
 endfunction()
 
 function(install_crax)
-    message(STATUS "=== Installing CRAX ===")
+    message(STATUS "=== Setting CRAX targets ===")
     
     # Install CRAX executables
     if(TARGET radiation)
@@ -85,7 +84,7 @@ function(install_crax)
                 RUNTIME DESTINATION "cea/radiation/bin"
                 COMPONENT crax_targets)
     else()
-        message(WARNING "radiation target not found")
+        message(FATAL_ERROR "radiation target not found")
     endif()
 
     if(TARGET mesh-generation)
@@ -94,6 +93,6 @@ function(install_crax)
                 RUNTIME DESTINATION "cea/radiation/bin"
                 COMPONENT crax_targets)
     else()
-        message(WARNING "mesh-generation target not found")
+        message(FATAL_ERROR "mesh-generation target not found")
     endif()
 endfunction()
