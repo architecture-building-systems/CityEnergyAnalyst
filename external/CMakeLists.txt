@@ -5,6 +5,27 @@ project(cea_external_tools)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Suppress common warnings for cleaner build output
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(
+        -Wno-missing-prototypes
+        -Wno-unused-variable
+        -Wno-unused-parameter
+        -Wno-sign-compare
+        -Wno-deprecated-declarations
+    )
+endif()
+
+# Option to enable verbose warnings for debugging
+option(ENABLE_VERBOSE_WARNINGS "Enable verbose compiler warnings" OFF)
+if(NOT ENABLE_VERBOSE_WARNINGS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        add_compile_options(-w)  # Suppress all warnings
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        add_compile_options(/w)  # Suppress all warnings on MSVC
+    endif()
+endif()
+
 # Platform-specific output directory for CEA's expected structure
 if(WIN32)
     set(CEA_PLATFORM_DIR "win32")
