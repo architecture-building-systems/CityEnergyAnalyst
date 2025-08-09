@@ -104,8 +104,6 @@ wheel.packages = ["cea"]
 [tool.scikit-build.build]
 # Only build the cea_targets target, not all targets (avoids unwanted programs)
 targets = ["cea_all"]
-# Use 4 cores for parallel building
-tool-args = ["-j", "4"]
 # Verbose output for debugging
 verbose = true
 
@@ -136,7 +134,7 @@ test = "cea test --type integration"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
-setup-dev = {cmd = "uv pip install -e . --group dev --no-build-isolation"}
+setup-dev = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv pip install -ve . --group dev --no-build-isolation"}
 build-wheel = {cmd = "uv build"}
 
 [tool.pixi.dependencies]
