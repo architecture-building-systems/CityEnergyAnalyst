@@ -91,7 +91,7 @@ function(install_crax CEA_PLATFORM_DIR)
     if(TARGET mesh-generation)
         message(STATUS "✓ Found mesh-generation target") 
         install(TARGETS mesh-generation
-                RUNTIME DESTINATION "cea/resources/radiation/bin/${CEA_PLATFORM_DIR}"
+                RUNTIME DESTINATION "cea/resources/radiationCRAX/bin/${CEA_PLATFORM_DIR}"
                 COMPONENT crax_targets)
     else()
         message(WARNING "mesh-generation target not found")
