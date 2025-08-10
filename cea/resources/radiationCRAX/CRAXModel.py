@@ -113,18 +113,19 @@ class CRAX:
         exe_name = "radiation.exe" if self.is_windows else "radiation"
         exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
+        # TODO: Remove this when we remove binaries
         env = os.environ.copy()
-        if "CONDA_PREFIX" in env:
-            if self.is_windows:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'bin')
-                env["PATH"] = f"{lib_path};{env['PATH']}"
-            elif self.is_mac:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
-                env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
-            else:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
-                env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
-
+        python_prefix = sys.prefix
+        if self.is_windows:
+            lib_path = os.path.join(python_prefix, 'Library', 'bin')
+            env["PATH"] = f"{lib_path};{env['PATH']}"
+        elif self.is_mac:
+            lib_path = os.path.join(python_prefix, 'lib')
+            env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
+        else:
+            lib_path = os.path.join(python_prefix, 'lib')
+            env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
+        
         # Command to run the exe
         cmd = [os.path.join(exe_dir, exe_name), json_file]
 
