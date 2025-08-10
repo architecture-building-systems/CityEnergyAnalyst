@@ -112,6 +112,8 @@ verbose = true
 source-dir = "external"
 # Build in Release mode for performance
 build-type = "Release"
+# Use env vars for source directories
+define = {DAYSIM_SOURCE_DIR = {env="DAYSIM_SOURCE_DIR"}, CRAX_SOURCE_DIR = {env="CRAX_SOURCE_DIR"}}
 
 [tool.ruff]
 exclude = ["*.ipynb"]
