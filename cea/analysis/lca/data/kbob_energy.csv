@@ -1,0 +1,81 @@
+﻿name,NameGerman,IdKbob,Size,Unit,UBP,PeTotal,PeRenewable,PeNonRenewable,PeRenewableAtLocation,GHG
+Heating oil EL, Heizoel EL,41.001,Endenergie,kWh,234,1.24,0.01,1.23,0,0.3
+Natural gas, Erdgas,41.002,Endenergie,kWh,137,1.07,0.004,1.06,0,0.228
+Propane / Butane, Propan/Buta,41.003,Endenergie,kWh,200,1.16,0.008,1.15,0,0.273
+Coal coke, Kohle Koks,41.004,Endenergie,kWh,477,1.47,0.013,1.45,0,0.439
+Coal briquette, Kohle Brikett,41.005,Endenergie,kWh,456,1.2,0.008,1.2,0,0.399
+Firewood, Stueckholz,41.006,Endenergie,kWh,93.1,1.11,0.994,0.116,0,0.027
+Firewood with particle filter, Stueckholz mit Partikelfilter,41.01,Endenergie,kWh,88.2,1.11,0.994,0.119,0,0.028
+Wood chips, Holzschnitzel,41.007,Endenergie,kWh,80.8,1.11,1.05,0.063,0,0.011
+Wood chips with particle filter, Holzschnitzel mit Partikelfilter,41.011,Endenergie,kWh,73.7,1.12,1.05,0.065,0,0.011
+Pellets, Pellets,41.008,Endenergie,kWh,81.1,1.2,1.04,0.157,0,0.027
+Pellets with particle filter, Pellets mit Partikelfilter,41.012,Endenergie,kWh,76.8,1.2,1.04,0.16,0,0.027
+Biogas, Biogas,41.009,Endenergie,kWh,109,0.332,0.032,0.299,0,0.13
+Heating plant oil, Heizzentrale Oel,42.001,Endenergie,kWh,341,1.7,0.016,1.68,0,0.408
+Heating plant gas, Heizzentrale Gas,42.002,Endenergie,kWh,194,1.52,0.015,1.51,0,0.314
+Heating plant wood, Heizzentrale Holz,42.003,Endenergie,kWh,120,1.72,1.58,0.143,0,0.05
+Combined heat and power plant wood, Heizkraftwerk Holz,42.004,Endenergie,kWh,102,1.46,1.33,0.128,0,0.042
+Heating plant electric heat pump air/water (COP 2.8), Heizzentrale EWP Luft/Wasser (JAZ 2.8),42.005,Endenergie,kWh,186,2.13,0.991,1.14,0,0.078
+Heating plant electric heat pump wastewater (COP 3.4), Heizzentrale EWP Abwasser (JAZ 3.4),42.006,Endenergie,kWh,124,1.07,0.172,0.894,0,0.041
+Heating plant electric heat pump groundwater (COP 3.4), Heizzentrale EWP Grundwasser (JAZ 3.4),42.007,Endenergie,kWh,155,1.99,1.03,0.963,0,0.062
+Heating plant electric heat pump borehole (COP 3.9), Heizzentrale EWP Erdsonde (JAZ 3.9),42.008,Endenergie,kWh,139,1.9,1.05,0.849,0,0.057
+Heating plant geothermal, Heizzentrale Geothermie,42.009,Endenergie,kWh,67.3,1.52,1.36,0.162,0,0.021
+Combined heat and power plant geothermal, Heizkraftwerk Geothermie,42.01,Endenergie,kWh,47.6,0.59,0.465,0.125,0,0.015
+Waste incineration, Kehrichtverbrennung,42.011,Endenergie,kWh,7.31,0.06,0.009,0.05,0,0.003
+CHP diesel, Blockheizkraftwerk Diesel,42.012,Endenergie,kWh,120,0.628,0.012,0.617,0,0.145
+CHP gas, Blockheizkraftwerk Gas,42.013,Endenergie,kWh,84,0.607,0.011,0.596,0,0.127
+CHP biogas, Blockheizkraftwerk Biogas,42.014,Endenergie,kWh,72.9,0.232,0.026,0.207,0,0.079
+"CHP biogas, agriculture"," Blockheizkraftwerk Biogas,Landwirtschaft",42.015,Endenergie,kWh,28.2,0.08,0.014,0.067,0,0.021
+District heating average networks CH, Fernwaerme Durchschnitt Netze CH,42.016,Endenergie,kWh,92.9,0.875,0.326,0.549,0,0.108
+"District heating with waste heat use, average networks CH"," Fernwaerme mit Nutzung Kehrichtwaerme,Durchschnitt Netze CH",42.017,Endenergie,kWh,75.5,0.717,0.264,0.452,0,0.089
+Boiler heating oil EL, Heizkessel Heizoel EL,43.001,Nutzwaerme2,kWh,251,1.31,0.007,1.3,0,0.322
+Boiler natural gas, Heizkessel Erdgas,43.002,Nutzwaerme2,kWh,151,1.17,0.005,1.16,0,0.249
+Boiler propane / butane, Heizkessel Propan / Buta,43.003,Nutzwaerme2,kWh,219,1.26,0.01,1.26,0,0.296
+Boiler coal coke, Heizkessel Kohle Koks,43.004,Nutzwaerme2,kWh,708,2.05,0.02,2.03,0,0.649
+Boiler coal briquette, Heizkessel Kohle Brikett,43.005,Nutzwaerme2,kWh,676,1.53,0.013,1.52,0,0.59
+Boiler firewood, Heizkessel Stueckholz,43.006,Nutzwaerme2,kWh,152,1.77,1.58,0.194,0,0.045
+Boiler firewood with particle filter, Heizkessel Stueckholz mit Partikelfilter,43.01,Nutzwaerme2,kWh,144,1.78,1.58,0.198,0,0.046
+Boiler wood chips, Heizkessel Holzschnitzel,43.007,Nutzwaerme2,kWh,116,1.52,1.42,0.097,0,0.02
+Boiler wood chips with particle filter, Heizkessel Holzschnitzel mit Partikelfilter,43.011,Nutzwaerme2,kWh,106,1.52,1.42,0.1,0,0.02
+Boiler pellets, Heizkessel Pellets,43.008,Nutzwaerme2,kWh,108,1.53,1.32,0.21,0,0.038
+Boiler pellets with particle filter, Heizkessel Pellets mit Partikelfilter,43.012,Nutzwaerme2,kWh,103,1.54,1.32,0.213,0,0.038
+Boiler biogas, Heizkessel Biogas,43.009,Nutzwaerme2,kWh,121,0.365,0.035,0.33,0,0.142
+Electric heat pump air / water (COP 2.8), Elektrowaermepumpe Luft / Wasser (JAZ 2.8),44.001,Nutzwaerme2,kWh,149,1.73,0.818,0.908,0.643,0.063
+Electric heat pump borehole (COP 3.9), Elektrowaermepumpe Erdsonden (JAZ 3.9),44.002,Nutzwaerme2,kWh,110,1.53,0.87,0.665,0.744,0.046
+Electric heat pump groundwater (COP 3.4), Elektrowaermepumpe Grundwasser (JAZ 3.4),44.003,Nutzwaerme2,kWh,123,1.61,0.85,0.76,0.706,0.049
+Flat collector for hot water single-family house, Flachkollektor fuer Warmwasser EFH,44.004,Nutzwaerme2,kWh,102,1.6,1.33,0.275,1.28,0.037
+Flat collector for space heating and hot water single-family house, Flachkollektor fuer Raumheizung und Warmwasser EFH,44.005,Nutzwaerme2,kWh,90,1.83,1.61,0.221,1.57,0.034
+Flat collector for hot water multi-family house, Flachkollektor fuer Warmwasser MFH,44.006,Nutzwaerme2,kWh,40.7,1.23,1.14,0.086,1.13,0.014
+"Small CHP, natural gas"," Kleinblockheizkraftwerk,Erdgas",44.008,Nutzwaerme2,kWh,70.5,0.504,0.002,0.502,0,0.111
+Nuclear power plant, Atomkraftwerk,45.001,Endenergie,kWh,453,4.21,0.005,4.21,0,0.023
+Tube collector for space heating and hot water single-family house, Roehrenkollektor fuer Raumheizung und Warmwasser EFH,44.007,Nutzwaerme2,kWh,76.5,1.73,1.54,0.193,1.51,0.031
+Natural gas combined cycle power plant, Erdgaskombikraftwerk GuD,45.002,Endenergie,kWh,308,2.22,0.006,2.22,0,0.466
+Lignite power plant, Braunkohlekraftwerk,45.023,Endenergie,kWh,793,3.95,0.012,3.94,0,1.36
+Hard coal power plant, Steinkohlekraftwerk,45.003,Endenergie,kWh,768,3.94,0.033,3.91,0,1.24
+Heavy oil power plant, Kraftwerk Schweroel,45.004,Endenergie,kWh,1090,3.83,0.013,3.82,0,1.01
+Waste incineration, Kehrichtverbrennung,45.005,Endenergie,kWh,32,0.018,0.002,0.016,0,0.007
+Combined heat and power plant wood, Heizkraftwerk Holz,45.006,Endenergie,kWh,295,3.88,3.64,0.24,0,0.118
+CHP diesel, Blockheizkraftwerk Diesel,45.007,Endenergie,kWh,677,3.28,0.014,3.27,0,0.823
+CHP gas, Blockheizkraftwerk Gas,45.008,Endenergie,kWh,440,2.94,0.008,2.94,0,0.669
+CHP biogas, Blockheizkraftwerk Biogas,45.009,Endenergie,kWh,374,0.915,0.088,0.827,0,0.403
+"CHP biogas, agriculture"," Blockheizkraftwerk Biogas,Landwirtschaft",45.01,Endenergie,kWh,230,0.194,0.042,0.152,0,0.177
+Photovoltaics, Photovoltaik,45.011,Endenergie,kWh,174,1.56,1.22,0.334,0,0.096
+Photovoltaics pitched roof, Photovoltaik Schraegdach,45.012,Endenergie,kWh,169,1.54,1.22,0.318,0,0.091
+Photovoltaics flat roof, Photovoltaik Flachdach,45.013,Endenergie,kWh,156,1.55,1.22,0.324,0,0.096
+Photovoltaics facade, Photovoltaik Fassade,45.014,Endenergie,kWh,225,1.7,1.24,0.461,0,0.135
+Wind power, Windkraft,45.015,Endenergie,kWh,74,1.29,1.2,0.094,0,0.026
+Hydropower, Wasserkraft,45.016,Endenergie,kWh,43.8,1.2,1.17,0.029,0,0.012
+Pumped storage, Pumpspeicherung,45.017,Endenergie,kWh,451,3.9,0.631,3.26,0,0.139
+Combined heat and power plant geothermal, Heizkraftwerk Geothermie,45.018,Endenergie,kWh,103,3.36,3.17,0.191,0,0.031
+CH production mix, CH-Produktionsmix,45.019,Endenergie,kWh,229,2.5,0.657,1.85,0,0.027
+Electricity mix from renewable energy, Mix Stromprodukte aus erneuerbaren Energie,45.022,Endenergie,kWh,47.8,1.21,1.17,0.036,0,0.015
+CH consumer mix 3, CH-Verbrauchermix3,45.02,Endenergie,kWh,347,3,0.488,2.52,0,0.102
+ENTSO-E mix (formerly UCTE mix), ENTSO-E-Mix (ehemals UCTE-Mix),45.021,Endenergie,kWh,548,3.18,0.299,2.89,0,0.524
+Photovoltaics, Photovoltaik,46.001,Endenergie,kWh,129,1.4,1.11,0.289,1.07,0.081
+Photovoltaics pitched roof, Photovoltaik Schraegdach,46.002,Endenergie,kWh,124,1.38,1.11,0.275,1.07,0.077
+Photovoltaics flat roof, Photovoltaik Flachdach,46.003,Endenergie,kWh,112,1.39,1.11,0.28,1.07,0.081
+Photovoltaics facade, Photovoltaik Fassade,46.004,Endenergie,kWh,175,1.52,1.12,0.402,1.07,0.115
+Wind power, Windkraft,46.005,Endenergie,kWh,38.1,1.16,1.09,0.071,1.08,0.017
+Biogas, Biogas,46.006,Endenergie,kWh,309,0.811,0.077,0.733,0,0.358
+"Biogas, agriculture"," Biogas, Landwirtschaft",46.007,Endenergie,kWh,179,0.16,0.036,0.124,0,0.155
+"Small CHP, natural gas"," Kleinblockheizkraftwerk, Erdgas",46.008,Endenergie,kWh,447,3.4,0.007,3.39,0,0.749
