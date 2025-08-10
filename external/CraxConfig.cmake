@@ -8,7 +8,7 @@ option(CRAX_USE_AUTOMATED_DEPENDENCIES "Use automated dependency fetching for CR
 # Configurable CRAX source directory and repository
 set(CRAX_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/crax" CACHE PATH "Path to CRAX source directory")
 set(CRAX_GIT_REPOSITORY "https://github.com/wanglittlerain/CityRadiation-Accelerator-CRAX-V1.0.git" CACHE STRING "CRAX Git repository URL")
-set(CRAX_GIT_TAG "mac-build" CACHE STRING "CRAX Git tag/branch to use")
+set(CRAX_GIT_TAG "fix-windows-dynamic-arrow" CACHE STRING "CRAX Git tag/branch to use")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # Disable warning C4127 that causes build to fail in Windows
