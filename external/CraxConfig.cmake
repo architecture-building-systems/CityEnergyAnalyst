@@ -2,12 +2,7 @@
 # This module handles fetching, building, and installing CRAX
 
 # CRAX configuration options for Python wheel builds
-# Disable dynamic Arrow on Windows due to linking issues with static Arrow libraries
-if(WIN32)
-    option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" OFF)
-else()
-    option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" ON)
-endif()
+option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" ON)
 option(CRAX_USE_AUTOMATED_DEPENDENCIES "Use automated dependency fetching for CRAX" ON)
 
 # Configurable CRAX source directory and repository
@@ -33,7 +28,6 @@ function(configure_crax)
     # Set CRAX CMake variables to pass our configuration
     set(USE_DYNAMIC_ARROW ${CRAX_USE_DYNAMIC_ARROW} CACHE BOOL "Use dynamic Arrow linking" FORCE)
     set(USE_AUTOMATED_DEPENDENCIES ${CRAX_USE_AUTOMATED_DEPENDENCIES} CACHE BOOL "Use automated dependencies" FORCE)
-    set(PREFER_PYARROW ON CACHE BOOL "Prefer pyarrow over system Arrow" FORCE)
     
     # Check if CRAX source exists locally
     if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
@@ -61,14 +55,14 @@ function(configure_crax)
     endif()
 
     # For Python wheel builds, set the Python executable to match the build environment
-    if(CRAX_USE_DYNAMIC_ARROW)
-        # Try to find the current Python executable being used for the build
-        find_package(Python3 COMPONENTS Interpreter QUIET)
-        if(Python3_FOUND)
-            set(PYARROW_PYTHON_EXECUTABLE ${Python3_EXECUTABLE} CACHE STRING "Python executable for pyarrow detection" FORCE)
-            message(STATUS "  Setting PYARROW_PYTHON_EXECUTABLE to: ${Python3_EXECUTABLE}")
-        endif()
-    endif()
+    # if(CRAX_USE_DYNAMIC_ARROW)
+    #     # Try to find the current Python executable being used for the build
+    #     find_package(Python3 COMPONENTS Interpreter QUIET)
+    #     if(Python3_FOUND)
+    #         set(PYARROW_PYTHON_EXECUTABLE ${Python3_EXECUTABLE} CACHE STRING "Python executable for pyarrow detection" FORCE)
+    #         message(STATUS "  Setting PYARROW_PYTHON_EXECUTABLE to: ${Python3_EXECUTABLE}")
+    #     endif()
+    # endif()
 endfunction()
 
 function(build_crax CRAX_FINAL_SOURCE_DIR)
