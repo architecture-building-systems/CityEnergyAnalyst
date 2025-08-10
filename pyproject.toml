@@ -62,12 +62,7 @@ dependencies = [
     "xlrd",
     "xlwt",
     "wntr>=1.3.2,<2", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
-    "py4design-cea",
-
-    # TODO: Maybe move to dependency groups
-    # For building
-    "scikit-build-core>=0.11.0",
-    "cmake>=3.15"
+    "py4design-cea"
 ]
 
 [dependency-groups]
@@ -169,3 +164,6 @@ gdal = "*"
 # Development tools (pixi-only)
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
+scikit-build-core = ">=0.11.0"
+cmake = ">=3.15" # Minimum required version for builds
+uv = "*"
