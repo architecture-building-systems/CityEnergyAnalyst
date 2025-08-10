@@ -16,16 +16,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-# Option to enable verbose warnings for debugging
-option(ENABLE_VERBOSE_WARNINGS "Enable verbose compiler warnings" OFF)
-if(NOT ENABLE_VERBOSE_WARNINGS)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        add_compile_options(-w)  # Suppress all warnings
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        add_compile_options(/w)  # Suppress all warnings on MSVC
-    endif()
-endif()
-
 # Include the separate configuration modules
 include(${CMAKE_CURRENT_SOURCE_DIR}/DaysimConfig.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/CraxConfig.cmake)
