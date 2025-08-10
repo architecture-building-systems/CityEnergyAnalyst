@@ -2,7 +2,12 @@
 # This module handles fetching, building, and installing CRAX
 
 # CRAX configuration options for Python wheel builds
-option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" ON)
+# Disable dynamic Arrow on Windows due to linking issues with static Arrow libraries
+if(WIN32)
+    option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" OFF)
+else()
+    option(CRAX_USE_DYNAMIC_ARROW "Enable dynamic Arrow linking for CRAX (saves space in wheels)" ON)
+endif()
 option(CRAX_USE_AUTOMATED_DEPENDENCIES "Use automated dependency fetching for CRAX" ON)
 
 # Configurable CRAX source directory and repository
