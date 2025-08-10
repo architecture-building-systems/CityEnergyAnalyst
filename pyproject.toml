@@ -107,7 +107,7 @@ wheel.packages = ["cea"]
 # Only build the cea_targets target, not all targets (avoids unwanted programs)
 targets = ["cea_all"]
 # Verbose output for debugging
-verbose = true
+verbose = false
 
 [tool.scikit-build.cmake]
 # Use external/ directory for CMake source
