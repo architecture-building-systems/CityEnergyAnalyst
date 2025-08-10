@@ -15,6 +15,13 @@ set(CRAX_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/crax" CACHE PATH "Path to CRAX 
 set(CRAX_GIT_REPOSITORY "https://github.com/wanglittlerain/CityRadiation-Accelerator-CRAX-V1.0.git" CACHE STRING "CRAX Git repository URL")
 set(CRAX_GIT_TAG "mac-build" CACHE STRING "CRAX Git tag/branch to use")
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # Disable warning C4127 that causes build to fail in Windows
+    add_compile_options(
+        /wd4127
+    )
+endif()
+
 function(configure_crax)
     message(STATUS "=== Configuring CRAX ===")
 
