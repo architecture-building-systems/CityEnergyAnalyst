@@ -70,6 +70,7 @@ jobs:
 
       - name: Create wheel of CEA
         run: |
+          uv venv
           uv pip install pyarrow
           uv build
           WHEEL_FILE=$(basename $(ls dist/cityenergyanalyst-*.whl))
