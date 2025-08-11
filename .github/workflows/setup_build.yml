@@ -10,21 +10,29 @@ on:
         default: 'master'
 
 jobs:
+  get_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get CEA version
+        id: version
+        run: echo "version=$(grep __version__ cea/__init__.py | cut -d'\"' -f2)" >> "$GITHUB_OUTPUT"
+      
+      - name: Print CEA version
+        run: 'echo "CEA Version: ${{ steps.version.outputs.version }}"'
+
   build_win_setup:
     runs-on: "windows-latest"
+    needs: get_version
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install CEA to python environment
-        run: pip install . --no-deps
-
-      - name: Get CEA version
+      - name: Set CEA version
         shell: bash
-        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
+        run: echo "CEA_VERSION=${{ needs.get_version.outputs.version }}" >> "$GITHUB_ENV"
 
       - name: Create wheel of CEA
         shell: bash
@@ -120,21 +128,15 @@ jobs:
 
   build_mac_dmg:
     runs-on: "macos-latest"
+    needs: get_version
     steps:
       - uses: actions/checkout@v4
         with:
           path: cea
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install CEA to python environment
-        run: pip install ${{ github.workspace }}/cea --no-deps
-
-      - name: Get CEA version
+      - name: Set CEA version
         shell: bash
-        run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
+        run: echo "CEA_VERSION=${{ needs.get_version.outputs.version }}" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
         with:
