@@ -63,19 +63,18 @@ jobs:
         shell: bash -el {0}
         run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
       
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - name: Create build environment
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: 3.12
+          environment-name: build
+          create-args: >-
+            python=3.12
+            uv
+            pyarrow=21.0.0
 
       - name: Create wheel of CEA
-        shell: bash
+        shell: bash -el {0}
         run: |
-          uv venv
-          uv pip install pyarrow
-          source .venv/bin/activate
-          PYARROW_PATH=$(python -c "import pyarrow; print(pyarrow.get_library_dirs()[0])")
-          export CMAKE_PREFIX_PATH="$PYARROW_PATH:$CMAKE_PREFIX_PATH"
           uv build
           WHEEL_FILE=$(basename $(ls dist/cityenergyanalyst-*.whl))
           echo "WHEEL_FILE=$WHEEL_FILE" >> "$GITHUB_ENV"
