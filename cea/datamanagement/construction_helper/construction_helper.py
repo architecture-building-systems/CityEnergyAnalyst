@@ -20,23 +20,7 @@ default_construction_params = {
 def construction_helper_switzerland(config: Configuration, locator: InputLocator):
 
     def find_db_swiss(locator: InputLocator, structure_type: str):
-        matching_dict = {
-            "masonry": "Brick",
-            "concrete": "Building construction concrete (without reinforcement)",
-            "wood": "Solid wood beech / oak, chamber dried, planed",
-            "steel": "Reinforced steel",
-            "EPS": "Polystyrene expands (EPS)(18 kg/m3)",
-            "XPS": "Polystyrene extruded (XPS)(35 kg/m3)",
-            "PUR": "Polyurethane (PUR / PIR)",
-            "rock wool": "Rock wool(60 kg/m3)",
-            "glass wool":"Glass wool(60 kg/m3)",
-            "hemp":
-            "plaster":
-            "aluminium":
-            "steel":
-            "glass":
-            "stone":
-        }
+        pass
 
     # 1. get structure type and name
     section = config.sections["construction_helper"].parameters
