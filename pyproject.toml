@@ -135,6 +135,8 @@ test = "cea test --type integration"
 lint = {cmd = "ruff check --fix ."}
 setup-dev = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv pip install -ve . --group dev --no-build-isolation"}
 build-wheel = {cmd = "uv build"}
+export-spec = {cmd = "pixi workspace export conda-explicit-spec --ignore-pypi-errors conda-spec"}
+export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}
 
 [tool.pixi.dependencies]
 # Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
