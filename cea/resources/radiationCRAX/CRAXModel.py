@@ -113,7 +113,7 @@ class CRAX:
         exe_name = "radiation.exe" if self.is_windows else "radiation"
         exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
-        # TODO: Remove this when we remove binaries
+        # Setting dynamic library paths is required for CRAX to find its dependencies in python env e.g. arrow
         env = os.environ.copy()
         python_prefix = sys.prefix
         if self.is_windows:
