@@ -97,7 +97,7 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
-    File "cityenergyanalyst.whl"
+    File "${WHEEL_FILE}"
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
@@ -112,13 +112,13 @@ Function BaseInstallationSection
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\cityenergyanalyst.whl"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
-    Delete "$INSTDIR\cityenergyanalyst.whl"
+    Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'

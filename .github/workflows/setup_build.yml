@@ -55,7 +55,9 @@ jobs:
         shell: bash -el {0}
         run: |
           uv build
-          mv dist/cityenergyanalyst-*.whl setup/cityenergyanalyst.whl
+          WHEEL_FILE=$(basename $(ls dist/cityenergyanalyst-*.whl))
+          echo "WHEEL_FILE=$WHEEL_FILE" >> "$GITHUB_ENV"
+          mv dist/cityenergyanalyst-*.whl setup/
 
       - uses: actions/checkout@v4
         with:
@@ -94,7 +96,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p $GITHUB_WORKSPACE/setup/Output
-          makensis $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
+          makensis -DWHEEL_FILE="${WHEEL_FILE}" $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
 
       - name: Upload setup
         uses: actions/upload-artifact@v4
