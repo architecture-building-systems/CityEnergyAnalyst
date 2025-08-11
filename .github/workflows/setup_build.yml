@@ -73,6 +73,9 @@ jobs:
         run: |
           uv venv
           uv pip install pyarrow
+          source .venv/bin/activate
+          PYARROW_PATH=$(python -c "import pyarrow; print(pyarrow.get_library_dirs()[0])")
+          export CMAKE_PREFIX_PATH="$PYARROW_PATH:$CMAKE_PREFIX_PATH"
           uv build
           WHEEL_FILE=$(basename $(ls dist/cityenergyanalyst-*.whl))
           echo "WHEEL_FILE=$WHEEL_FILE" >> "$GITHUB_ENV"
