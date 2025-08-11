@@ -63,8 +63,14 @@ jobs:
         shell: bash -el {0}
         run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
       
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: 3.12
+
       - name: Create wheel of CEA
         run: |
+          uv pip install pyarrow
           uv build
           WHEEL_FILE=$(basename $(ls dist/cityenergyanalyst-*.whl))
           echo "WHEEL_FILE=$WHEEL_FILE" >> "$GITHUB_ENV"
