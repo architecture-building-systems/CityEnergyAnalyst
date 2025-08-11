@@ -68,7 +68,7 @@ class TestConstructionHelper(unittest.TestCase):
     def test_append_basic_construction(self):
         # first run
         self.config.sections["construction-helper"].parameters["construction-prefix"].set("TST1")
-        construction_helper(self.config, self.locator)
+        construction_helper_copilot(self.config, self.locator)
 
         roof_df, wall_df, floor_df = self._read_rows()
         self.assertTrue((wall_df["code"].str.startswith("TST1_WALL")).any())
@@ -82,8 +82,8 @@ class TestConstructionHelper(unittest.TestCase):
 
     def test_uniqueness_on_multiple_runs(self):
         self.config.sections["construction-helper"].parameters["construction-prefix"].set("TST2")
-        construction_helper(self.config, self.locator)
-        construction_helper(self.config, self.locator)
+        construction_helper_copilot(self.config, self.locator)
+        construction_helper_copilot(self.config, self.locator)
 
         roof_df, wall_df, floor_df = self._read_rows()
         # Expect at least 2 entries with distinct codes for each type
@@ -107,7 +107,7 @@ class TestConstructionHelper(unittest.TestCase):
             ch["insulation-type"].set(ins)
             ch["insulation-thickness"].set(ins_t)
             ch["cladding-type"].set(cladding)
-            construction_helper(self.config, self.locator)
+            construction_helper_copilot(self.config, self.locator)
 
         roof_df, wall_df, floor_df = self._read_rows()
         for prefix, *_ in combos:

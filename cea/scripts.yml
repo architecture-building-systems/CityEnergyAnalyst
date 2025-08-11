@@ -401,7 +401,7 @@ Data Management:
       After running this feature, one new type of construction for window, wall, roof and floor will be created in the scenario's Database.
       The emission values of the new construction types will be calculated based on the regional material databases. 
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.construction_helper
+    module: cea.datamanagement.construction_helper.construction_helper
     parameters: ['general:scenario', construction-helper]
     input-files:
       - [get_zone_geometry]
