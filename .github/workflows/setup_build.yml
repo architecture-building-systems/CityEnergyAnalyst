@@ -33,25 +33,8 @@ jobs:
       - name: Set CEA version
         shell: bash
         run: echo "CEA_VERSION=${{ needs.get_version.outputs.version }}" >> "$GITHUB_ENV"
-
-      - name: Create wheel of CEA
-        shell: bash
-        run: |
-          python -m pip install build
-          python -m build
-          mv dist/cityenergyanalyst-*.whl setup/cityenergyanalyst.whl
-
-      - name: Cache CEA env
-        id: cache-env
-        uses: actions/cache@v4
-        with:
-          path: |
-            setup/dependencies/cea-env.7z
-            setup/dependencies/micromamba.exe
-          key: ${{ runner.os }}-${{ hashFiles('conda-lock.yml') }}-env
       
       - uses: mamba-org/setup-micromamba@v2
-        if: steps.cache-env.outputs.cache-hit != 'true'
         with:
           micromamba-version: '2.0.7-0'
           environment-file: conda-lock.yml
@@ -61,14 +44,18 @@ jobs:
           create-args: --no-pyc
 
       - name: Clean conda environment
-        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: micromamba clean -afy
 
       - name: Compress conda environment
-        if: steps.cache-env.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: 7z a setup/dependencies/cea-env.7z $MAMBA_ROOT_PREFIX
+      
+      - name: Create wheel of CEA
+        shell: bash -el {0}
+        run: |
+          uv build
+          mv dist/cityenergyanalyst-*.whl setup/cityenergyanalyst.whl
 
       - uses: actions/checkout@v4
         with:
