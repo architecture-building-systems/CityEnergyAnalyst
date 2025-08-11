@@ -26,12 +26,12 @@ jobs:
         shell: bash
         run: echo "CEA_VERSION=$(python -c "import cea; print(cea.__version__)")" >> "$GITHUB_ENV"
 
-      - name: Create sdist of CEA
+      - name: Create wheel of CEA
         shell: bash
         run: |
           python -m pip install build
           python -m build
-          mv dist/cityenergyanalyst-*.tar.gz setup/cityenergyanalyst.tar.gz
+          mv dist/cityenergyanalyst-*.whl setup/cityenergyanalyst.whl
 
       - name: Cache CEA env
         id: cache-env

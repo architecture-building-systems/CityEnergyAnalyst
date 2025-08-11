@@ -97,7 +97,7 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
-    File "cityenergyanalyst.tar.gz"
+    File "cityenergyanalyst.whl"
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
@@ -110,15 +110,15 @@ Function BaseInstallationSection
     # fix pip due to change in python path
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
 
-    # install CEA from tarball
+    # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\cityenergyanalyst.whl"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
-    Delete "$INSTDIR\cityenergyanalyst.tar.gz"
+    Delete "$INSTDIR\cityenergyanalyst.whl"
     
     # Run cea --version to check if installation was successful
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'
