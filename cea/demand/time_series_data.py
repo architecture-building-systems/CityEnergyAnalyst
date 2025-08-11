@@ -3,13 +3,13 @@ This module defines the `TimeSeriesData` dataclass, which is used to store the t
 calculations.
 """
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 import numpy as np
 import numpy.typing as npt
 from cea.constants import HOURS_IN_YEAR
 
 
-class AHUStatus(str, Enum):
+class AHUStatus(StrEnum):
     """Enum for AHU (Air Handling Unit) system status values."""
     UNKNOWN = "unknown"
     NO_SYSTEM = "no system"
@@ -19,7 +19,7 @@ class AHUStatus(str, Enum):
     SYSTEM_OFF = "system off"
 
 
-class ARUStatus(str, Enum):
+class ARUStatus(StrEnum):
     """Enum for ARU (Air Recirculation Unit) system status values."""
     UNKNOWN = "unknown"
     NO_SYSTEM = "no system"
@@ -31,7 +31,7 @@ class ARUStatus(str, Enum):
     SYSTEM_OFF = "system off"
 
 
-class SENStatus(str, Enum):
+class SENStatus(StrEnum):
     """Enum for SEN (Sensible heat recovery) system status values."""
     UNKNOWN = "unknown"
     ON = "On"

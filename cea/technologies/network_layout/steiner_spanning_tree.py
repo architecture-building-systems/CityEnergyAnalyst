@@ -3,7 +3,7 @@ This script calculates the minimum spanning tree of a shapefile network
 """
 import math
 import os
-from enum import Enum
+from enum import StrEnum
 
 import networkx as nx
 import pandas as pd
@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-class SteinerAlgorithm(Enum):
+class SteinerAlgorithm(StrEnum):
     """
     Enum for the different algorithms that can be used to calculate the Steiner tree.
 
@@ -74,7 +74,7 @@ def calc_steiner_spanning_tree(crs_projected,
                                optimization_flag,
                                plant_building_names,
                                disconnected_building_names,
-                               method: str = str(SteinerAlgorithm.Kou)):
+                               method: str = SteinerAlgorithm.Kou):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -127,7 +127,7 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
-        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=str(steiner_algorithm))
+        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
         mst_non_directed = nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree. '
