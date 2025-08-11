@@ -97,6 +97,8 @@ input = "cea/__init__.py"
 # Only install the cea_targets component (manually defined in our CMakeLists.txt)
 install.components = ["cea_targets", "crax_targets"]
 wheel.packages = ["cea"]
+# Set persistent build directory for caching
+build-dir = "build"
 
 [tool.scikit-build.build]
 # Only build the cea_targets target, not all targets (avoids unwanted programs)
