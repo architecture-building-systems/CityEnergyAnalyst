@@ -36,12 +36,15 @@ jobs:
         with:
           cache: true
 
-      # - name: Install CEA
-      #   run: pixi run pip install -v .
+      - name: Install CEA
+        run: pixi run pip install -v .
 
       # - name: Run unit tests
       #   run: pixi run cea test --type unittest
 
-      - name: Run integration tests
-        if: github.event.pull_request.draft == false
+      # - name: Run integration tests
+      #   if: github.event.pull_request.draft == false
+      #   run: pixi run cea test --type integration
+
+      - name: Run radiation tests
         run: pixi run cea workflow --workflow radiation-test
