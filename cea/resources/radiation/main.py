@@ -216,6 +216,19 @@ def main(config):
     # Remove staging location after everything is successful
     shutil.rmtree(daysim_staging_location)
 
+    # Return hash of output files
+    import hashlib
+    def file_hash(p): 
+        h=hashlib.sha256()
+        with open(p,'rb') as f:
+            for b in iter(lambda: f.read(65536), b''):
+                h.update(b)
+        return h.hexdigest()
+
+    for building in zone_building_names:
+        building_result = locator.get_radiation_building(building)
+        print(f"Output files hash for {building}: {file_hash(building_result)}")
+
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
 
