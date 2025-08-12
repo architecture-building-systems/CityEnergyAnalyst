@@ -40,7 +40,7 @@ function(build_daysim DAYSIM_FINAL_SOURCE_DIR)
     message(STATUS "Building DAYSIM from: ${DAYSIM_FINAL_SOURCE_DIR}")
 
     # Add DAYSIM to the build
-    if(EXISTS "${DAYSIM_FINAL_SOURCE_DIR}/CMakeLists.txt")
+    if(EXISTS "${DAYSIM_SOURCE_DIR}/CMakeLists.txt")
         # For local DAYSIM, we need to manually add it to the build
         message(STATUS "Adding local DAYSIM to build...")
         add_subdirectory(${DAYSIM_FINAL_SOURCE_DIR} daysim_build)
