@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(cea_external_tools)
 
-# Set C++ standard if needed
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Suppress common warnings for cleaner build output
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(
