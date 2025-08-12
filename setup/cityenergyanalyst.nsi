@@ -108,6 +108,9 @@ Function BaseInstallationSection
     ${If} "$0" != "0"
         Abort "Installation failed - see Details"
     ${EndIf}
+    ${IfNot} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        Abort "Installation failed: Something went wrong with CEA Desktop setup. Install directory not found."
+    ${EndIf}
     Delete "$INSTDIR\gui_setup.exe"
 
     File "${WHEEL_FILE}"
