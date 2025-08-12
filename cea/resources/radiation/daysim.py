@@ -104,7 +104,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Op
 
     # Expand paths
     folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-    lib_path = None
+    lib_path = os.path.join(os.path.dirname(__file__), "lib")
 
     for possible_path in folders_to_check:
         if not contains_binaries(possible_path):
@@ -115,15 +115,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Op
         #     warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
         #                   "Consider moving the binaries to another path to use them.")
         #     continue
-
-        if sys.platform == "win32":
-            # Use path lib folder if it exists
-            _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-            if contains_libs(_lib_path):
-                lib_path = _lib_path
-            # Check if lib files in binaries path, for backward capability
-            elif contains_libs(possible_path):
-                lib_path = possible_path
 
         elif sys.platform == "darwin":
             # Remove unidentified developer warning when running binaries on mac
