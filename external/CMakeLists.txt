@@ -35,9 +35,6 @@ if(BUILD_DAYSIM)
     configure_daysim()
 
     message(STATUS "")
-    build_daysim(${DAYSIM_FINAL_SOURCE_DIR})
-
-    message(STATUS "")
     install_daysim()
 endif()
 
@@ -45,9 +42,6 @@ endif()
 if(BUILD_CRAX)
     message(STATUS "")
     configure_crax()
-
-    message(STATUS "")
-    build_crax(${CRAX_FINAL_SOURCE_DIR})
 
     message(STATUS "")
     install_crax()
