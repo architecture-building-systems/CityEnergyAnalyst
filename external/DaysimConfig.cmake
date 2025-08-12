@@ -4,7 +4,7 @@
 # Configurable DAYSIM source directory and repository
 set(DAYSIM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/daysim" CACHE PATH "Path to DAYSIM source directory")
 set(DAYSIM_GIT_REPOSITORY "https://github.com/reyery/Daysim.git" CACHE STRING "DAYSIM Git repository URL")
-set(DAYSIM_GIT_TAG "eb3ae70fcf9e36fcf40b96cf0c05acf569bd8489" CACHE STRING "DAYSIM Git tag/branch to use")
+set(DAYSIM_GIT_TAG "3993ac9a0ba19e9e707b47f4faa73b86096e3d93" CACHE STRING "DAYSIM Git tag/branch to use")
 
 function(configure_daysim)
     message(STATUS "=== Configuring DAYSIM ===")
