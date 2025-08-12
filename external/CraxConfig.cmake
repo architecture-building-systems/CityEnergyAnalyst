@@ -32,6 +32,7 @@ function(configure_crax)
     # Check if CRAX source exists locally
     if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
         message(STATUS "Found local CRAX source at: ${CRAX_SOURCE_DIR}")
+        add_subdirectory(${CRAX_SOURCE_DIR} crax_build)
         set(CRAX_FINAL_SOURCE_DIR "${CRAX_SOURCE_DIR}" PARENT_SCOPE)
     else()
         # Fetch CRAX from GitHub using FetchContent
@@ -63,21 +64,6 @@ function(configure_crax)
     #         message(STATUS "  Setting PYARROW_PYTHON_EXECUTABLE to: ${Python3_EXECUTABLE}")
     #     endif()
     # endif()
-endfunction()
-
-function(build_crax CRAX_FINAL_SOURCE_DIR)
-    message(STATUS "=== Setting CRAX build files ===")
-    message(STATUS "Building CRAX from: ${CRAX_FINAL_SOURCE_DIR}")
-    # Add CRAX to the build
-    if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
-        # For local CRAX, we need to manually add it to the build
-        message(STATUS "Adding local CRAX to build...")
-        add_subdirectory(${CRAX_FINAL_SOURCE_DIR} crax_build)
-    else()
-        # For FetchContent CRAX, it's already added by FetchContent_MakeAvailable
-        message(STATUS "CRAX was fetched and added via FetchContent")
-        # No need to call add_subdirectory again - FetchContent_MakeAvailable handles it
-    endif()
 endfunction()
 
 function(install_crax)

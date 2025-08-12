@@ -12,6 +12,7 @@ function(configure_daysim)
     # Check if DAYSIM source exists locally
     if(EXISTS "${DAYSIM_SOURCE_DIR}/CMakeLists.txt")
         message(STATUS "Found local DAYSIM source at: ${DAYSIM_SOURCE_DIR}")
+        add_subdirectory(${DAYSIM_SOURCE_DIR} daysim_build)
         set(DAYSIM_FINAL_SOURCE_DIR "${DAYSIM_SOURCE_DIR}" PARENT_SCOPE)
     else()
         # Fetch DAYSIM from GitHub using FetchContent
@@ -32,22 +33,6 @@ function(configure_daysim)
         FetchContent_MakeAvailable(daysim_external)
         set(DAYSIM_FINAL_SOURCE_DIR "${daysim_external_SOURCE_DIR}" PARENT_SCOPE)
         message(STATUS "DAYSIM fetched to: ${daysim_external_SOURCE_DIR}")
-    endif()
-endfunction()
-
-function(build_daysim DAYSIM_FINAL_SOURCE_DIR)
-    message(STATUS "=== Setting DAYSIM build files ===")
-    message(STATUS "Building DAYSIM from: ${DAYSIM_FINAL_SOURCE_DIR}")
-
-    # Add DAYSIM to the build
-    if(EXISTS "${DAYSIM_SOURCE_DIR}/CMakeLists.txt")
-        # For local DAYSIM, we need to manually add it to the build
-        message(STATUS "Adding local DAYSIM to build...")
-        add_subdirectory(${DAYSIM_FINAL_SOURCE_DIR} daysim_build)
-    else()
-        # For FetchContent DAYSIM, it's already added by FetchContent_MakeAvailable
-        message(STATUS "DAYSIM was fetched and added via FetchContent")
-        # No need to call add_subdirectory again - FetchContent_MakeAvailable handles it
     endif()
 endfunction()
 
