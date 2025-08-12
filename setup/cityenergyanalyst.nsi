@@ -97,6 +97,20 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
+    # Install GUI first so that rollback would not be as painful in case of failure
+    # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
+    File "gui_setup.exe"
+
+    # Run GUI Setup
+    DetailPrint "Installing CEA Desktop"
+    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"'
+    Pop $0
+    DetailPrint "CEA Desktop installer returned: $0"
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
+    Delete "$INSTDIR\gui_setup.exe"
+
     File "${WHEEL_FILE}"
     File /r "dependencies"
 
@@ -130,19 +144,6 @@ Function BaseInstallationSection
 
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
-
-    # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
-    File "gui_setup.exe"
-
-    # Run GUI Setup
-    DetailPrint "Installing CEA Desktop"
-    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"'
-    Pop $0
-    DetailPrint "CEA Desktop installer returned: $0"
-    ${If} "$0" != "0"
-        Abort "Installation failed - see Details"
-    ${EndIf}
-    Delete "$INSTDIR\gui_setup.exe"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
