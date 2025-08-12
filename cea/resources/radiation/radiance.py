@@ -420,6 +420,9 @@ class DaySimProject(object):
         -dif    calculates diffuse daylight coefficients only
         -paste  pastes direct and diffuse daylight coefficient output files into a single complete file
         """
+        # Check if rtrace_dc is available
+        CEADaySim.run_cmd("rtrace_dc --version", self.daysim_bin_directory, self.daysim_lib_directory)
+
         # write the shading header
         self.write_shading_parameters()
 
