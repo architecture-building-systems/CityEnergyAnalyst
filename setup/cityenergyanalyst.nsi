@@ -103,8 +103,7 @@ Function BaseInstallationSection
 
     # Run GUI Setup
     DetailPrint "Installing CEA Desktop"
-    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"'
-    Pop $0
+    ExecWait '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"' $0
     DetailPrint "CEA Desktop installer returned: $0"
     ${If} "$0" != "0"
         Abort "Installation failed - see Details"
