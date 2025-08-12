@@ -11,14 +11,24 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-# Include the separate configuration modules
-include(${CMAKE_CURRENT_SOURCE_DIR}/DaysimConfig.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/CraxConfig.cmake)
-
 # Build options
 option(BUILD_DAYSIM "Build DAYSIM component" ON)
 option(BUILD_CRAX "Build CRAX component" ON)
 
+# Include the separate configuration modules (only when needed)
+if(BUILD_DAYSIM)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/DaysimConfig.cmake OPTIONAL RESULT_VARIABLE _daysim_cfg)
+    if(NOT _daysim_cfg)
+        message(FATAL_ERROR "DaysimConfig.cmake not found but BUILD_DAYSIM=ON")
+    endif()
+endif()
+
+if(BUILD_CRAX)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/CraxConfig.cmake OPTIONAL RESULT_VARIABLE _crax_cfg)
+    if(NOT _crax_cfg)
+        message(FATAL_ERROR "CraxConfig.cmake not found but BUILD_CRAX=ON")
+    endif()
+endif()
 # Configure and build DAYSIM
 if(BUILD_DAYSIM)
     message(STATUS "")
