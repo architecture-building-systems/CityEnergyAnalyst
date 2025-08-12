@@ -69,7 +69,7 @@ function(build_crax CRAX_FINAL_SOURCE_DIR)
     message(STATUS "=== Setting CRAX build files ===")
     message(STATUS "Building CRAX from: ${CRAX_FINAL_SOURCE_DIR}")
     # Add CRAX to the build
-    if(EXISTS "${CRAX_SOURCE_DIR}/CMakeLists.txt")
+    if(EXISTS "${CRAX_FINAL_SOURCE_DIR}/CMakeLists.txt")
         # For local CRAX, we need to manually add it to the build
         message(STATUS "Adding local CRAX to build...")
         add_subdirectory(${CRAX_FINAL_SOURCE_DIR} crax_build)
