@@ -107,6 +107,7 @@ jobs:
           path: wheels/
 
       - name: Test wheel
+        shell: bash
         run: |
           python -m pip install wheels/*.whl
           python -c "import cea_external_tools; print(f'✓ Package version: {cea_external_tools.__version__}')"
