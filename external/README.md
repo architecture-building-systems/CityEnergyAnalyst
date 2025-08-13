@@ -1,4 +1,36 @@
-# CEA External Tools Build Configuration
+# CEA External Tools
+
+**A standalone Python package containing compiled C++ tools for the City Energy Analyst (CEA).**
+
+This package provides pre-compiled binary executables for radiation calculations and urban energy modeling, including DAYSIM (daylighting simulation) and CRAX (City Radiation Accelerator). 
+
+By separating these computationally intensive C++ components into their own package, we enable faster CEA installations and reduce build complexity.
+
+## Installation
+
+```bash
+pip install cea-external-tools
+```
+
+## Usage
+
+```python
+import cea_external_tools
+
+# Get path to binary tools
+bin_path = cea_external_tools.get_bin_path()
+print(f"External tools located at: {bin_path}")
+```
+
+## Package Contents
+
+This package includes compiled binaries for:
+- **DAYSIM** - Advanced daylighting simulation tools
+- **CRAX** - Fast urban radiation calculation engine
+
+---
+
+## Development & Build Configuration
 
 This directory contains the CMake configuration for building external tools required by the City Energy Analyst (CEA).
 
@@ -69,9 +101,7 @@ Both tools support local source directories or automatic fetching from GitHub:
 ## Installation
 
 The built executables are installed to the CEA resources directory:
-
-- DAYSIM tools: `cea/resources/radiation/bin`
-- CRAX tools: `cea/resources/radiation/bin`
+- CRAX tools: `cea_external_tools/bin`
 
 ## Build Targets
 
