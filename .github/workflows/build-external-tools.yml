@@ -54,9 +54,9 @@ jobs:
           export LD_LIBRARY_PATH="$ENV_ROOT/lib:$LD_LIBRARY_PATH"
 
           pixi add auditwheel
-          auditwheel show dist/*.whl
+          pixi run auditwheel show dist/*.whl
           pixi run auditwheel repair dist/*.whl --wheel-dir dist/
-          auditwheel show dist/*manylinux*.whl
+          pixi run auditwheel show dist/*manylinux*.whl
           rm dist/*-linux_*.whl  # Remove original linux wheel, keep manylinux wheel
 
       - name: Upload wheel artifacts
