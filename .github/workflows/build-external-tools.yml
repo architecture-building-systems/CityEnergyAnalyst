@@ -1,0 +1,148 @@
+name: Build and Publish CEA External Tools
+
+on:
+  push:
+    tags:
+      - 'external-v*'  # Trigger on external tool version tags
+    paths:
+      - 'external/**'
+  pull_request:
+    paths:
+      - 'external/**'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]  # macos-13 for x86_64, macos-latest for arm64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Build wheel
+      working-directory: external
+      run: python -m build --wheel
+      env:
+        # Set parallel build jobs
+        CMAKE_BUILD_PARALLEL_LEVEL: 4
+        # Enable verbose output for debugging if needed
+        VERBOSE: 1
+
+    - name: Test wheel installation
+      working-directory: external
+      run: |
+        python -m pip install dist/*.whl
+        # Basic test to ensure package can be imported
+        python -c "import cea_external_tools; print('✓ Package imported successfully')"
+
+    - name: Upload wheel artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-${{ matrix.os }}
+        path: external/dist/*.whl
+        retention-days: 7
+
+  build-source:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build
+
+    - name: Build source distribution
+      working-directory: external
+      run: python -m build --sdist
+
+    - name: Upload source distribution
+      uses: actions/upload-artifact@v4
+      with:
+        name: source-dist
+        path: external/dist/*.tar.gz
+        retention-days: 7
+
+  test-wheels:
+    name: Test wheels
+    needs: [build-wheels]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        # python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.12'] # Test only 3.12 for now
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Download wheel artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: wheels-${{ matrix.os }}
+        path: wheels/
+
+    - name: Test wheel
+      run: |
+        python -m pip install wheels/*.whl
+        python -c "import cea_external_tools; print(f'✓ Package version: {cea_external_tools.__version__}')"
+
+  # publish-test-pypi:
+  #   name: Publish to Test PyPI
+  #   needs: [build-wheels, build-source, test-wheels]
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #   environment:
+  #     name: test-pypi
+  #     url: https://test.pypi.org/p/cea-external-tools
+
+  #   steps:
+  #   - name: Download all artifacts
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       path: dist
+  #       merge-multiple: true
+
+  #   - name: Publish to Test PyPI
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       repository-url: https://test.pypi.org/legacy/
+  #       packages-dir: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    # needs: [publish-test-pypi]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cea-external-tools
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: dist/
