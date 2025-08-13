@@ -11,6 +11,20 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
+# Force single architecture builds on macOS (no universal binaries)
+if(APPLE)
+    # Auto-detect current architecture if not specified
+    if(NOT CMAKE_OSX_ARCHITECTURES)
+        execute_process(
+            COMMAND uname -m
+            OUTPUT_VARIABLE NATIVE_ARCH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        set(CMAKE_OSX_ARCHITECTURES "${NATIVE_ARCH}" CACHE STRING "Target architecture" FORCE)
+        message(STATUS "Setting macOS architecture to: ${CMAKE_OSX_ARCHITECTURES}")
+    endif()
+endif()
+
 # Build options
 option(BUILD_DAYSIM "Build DAYSIM component" ON)
 option(BUILD_CRAX "Build CRAX component" ON)
