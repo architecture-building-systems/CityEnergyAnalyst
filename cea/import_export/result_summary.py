@@ -509,40 +509,67 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
 
 def map_analytics_and_cea_columns(input_list, direction="analytics_to_columns"):
     """
-    Maps between metrics and CEA column names based on the direction.
+    Maps between analytics metrics and CEA column names.
 
-    Parameters:
-    - input_list (list): A list of metrics or CEA column names to map.
-    - direction (str): Direction of mapping:
-        - "metrics_to_columns": Maps metrics to CEA column names.
-        - "columns_to_metrics": Maps CEA column names to metrics.
+    Parameters
+    ----------
+    input_list : list
+        A list of metrics or CEA column names to map.
+    direction : str, optional
+        Direction of mapping:
+        - "analytics_to_columns": Maps metrics to CEA column names.
+        - "columns_to_analytics": Maps CEA column names to metrics.
 
-    Returns:
-    - list: A list of mapped values (CEA column names or metrics).
+    Returns
+    -------
+    list
+        A list of mapped values (CEA column names or metrics), with unique items in order.
     """
     mapping_dict = {
-        'PV_solar_energy_penetration[-]': ['E_PV_gen_kWh', 'PV_roofs_top_E_kWh', 'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh', 'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'],
-        'PV_self_consumption[-]': ['E_PV_gen_kWh', 'PV_roofs_top_E_kWh', 'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh', 'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'],
-        'PV_self_sufficiency[-]': ['E_PV_gen_kWh', 'PV_roofs_top_E_kWh', 'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh', 'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'],
+        'PV_solar_energy_penetration[-]': [
+            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
+            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
+            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
+        ],
+        'PV_self_consumption[-]': [
+            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
+            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
+            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
+        ],
+        'PV_self_sufficiency[-]': [
+            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
+            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
+            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
+        ],
     }
 
-    # Reverse the mapping if direction is "columns_to_metrics"
+    # Reverse mapping for columns_to_analytics
     if direction == "columns_to_analytics":
-        mapping_dict = {cea_col: metric for metric, cea_cols in mapping_dict.items() for cea_col in cea_cols}
+        mapping_dict = {
+            cea_col: metric
+            for metric, cea_cols in mapping_dict.items()
+            for cea_col in cea_cols
+        }
 
-    # Perform the mapping
     output_list = []
+    seen = set()
+
     for item in input_list:
         if item in mapping_dict:
-            # Map the item
-            mapped_value = mapping_dict[item]
-            if isinstance(mapped_value, list):
-                output_list.extend(mapped_value)
+            mapped = mapping_dict[item]
+            if isinstance(mapped, list):
+                for m in mapped:
+                    if m not in seen:
+                        seen.add(m)
+                        output_list.append(m)
             else:
-                output_list.append(mapped_value)
+                if mapped not in seen:
+                    seen.add(mapped)
+                    output_list.append(mapped)
         else:
-            # If no mapping found, keep the original item
-            output_list.append(item)
+            if item not in seen:
+                seen.add(item)
+                output_list.append(item)
 
     return output_list
 
@@ -675,7 +702,8 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
     - If DataFrames have different column names, combine them horizontally based on the 'date' column.
 
     Parameters:
-    - dataframes (list of pd.DataFrame): List of DataFrames to process.
+    - bool_use_acronym (bool): Whether to use acronym format for column names.
+    - list_dataframes_uncleaned (list of pd.DataFrame): List of DataFrames to process.
 
     Returns:
     - pd.DataFrame: Aggregated or combined DataFrame.
@@ -685,6 +713,10 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
     # Ensure there are DataFrames to process
     if not list_dataframes_uncleaned:
         return None
+        
+    # Validate input
+    if not all(isinstance(df, pd.DataFrame) for df in list_dataframes_uncleaned if df is not None):
+        raise ValueError("All items in list_dataframes_uncleaned must be pandas DataFrames")
 
     list_dataframes = []
     columns_to_remove = ['period_month', 'period_season']
@@ -731,22 +763,40 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
 
     if all_columns_match:
         # Aggregate DataFrames with the same columns
+        if not list_dataframes:
+            return None
+            
+        # Additional validation for consistent structure
+        if len(set(len(df) for df in list_dataframes)) > 1:
+            print("Warning: DataFrames have different numbers of rows, which may affect aggregation accuracy")
+            
         aggregated_df = list_dataframes[0].copy()
-        for df in list_dataframes[1:]:
+        
+        # Initialize aggregated_df with zeros (except date column)
+        for col in aggregated_df.columns:
+            if col != 'date':
+                aggregated_df[col] = 0
+        
+        # Sum all values first
+        for df in list_dataframes:
             for col in aggregated_df.columns:
                 if col == 'date':
                     continue
-                if 'people' in col:
-                    # Average "people" columns and round to integer
-                    aggregated_df[col] = (
-                        aggregated_df[col].add(df[col], fill_value=0) / len(list_dataframes)
-                    ).round().astype(int)
-                elif '_m2' in col or '[m2]' in col:
-                    # Sum area columns (area columns represent installed area that should be summed across buildings)
-                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
-                else:
-                    # Sum for other numeric columns
-                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+                aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+        
+        # Then apply appropriate operations
+        for col in aggregated_df.columns:
+            if col == 'date':
+                continue
+            if 'people' in col:
+                # Average "people" columns and round to integer
+                aggregated_df[col] = (aggregated_df[col] / len(list_dataframes)).round().astype(int)
+            elif '_m2' in col or '[m2]' in col:
+                # Area columns are already summed, keep as is
+                pass
+            else:
+                # Other numeric columns are already summed, keep as is
+                pass
 
         aggregated_df = aggregated_df.round(2)
 
