@@ -22,14 +22,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+    - name: Setup pixi
+      uses: prefix-dev/setup-pixi@v0.8.14
 
     - name: Build wheel
       working-directory: external
-      run: python -m build --wheel
+      run: pixi run build-wheel
       env:
         # Set parallel build jobs
         CMAKE_BUILD_PARALLEL_LEVEL: 4
