@@ -1,5 +1,8 @@
 name: Build and Publish CEA External Tools
 
+permissions:
+  contents: read # Read repository contents
+
 on:
   push:
     tags:
@@ -15,6 +18,8 @@ jobs:
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      actions: write # Upload artifacts
     strategy:
       matrix:
         # FIXME: macos-13 unable to compile crax
@@ -28,7 +33,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.14
         with:
           run-install: false
-          
+
       - name: Build wheel
         working-directory: external
         run: pixi run build-wheel
@@ -48,6 +53,8 @@ jobs:
   build-source:
     name: Build source distribution
     runs-on: ubuntu-latest
+    permissions:
+      actions: write # Upload artifacts
     steps:
       - uses: actions/checkout@v4
 
@@ -76,6 +83,8 @@ jobs:
     name: Test wheels
     needs: [build-wheels]
     runs-on: ${{ matrix.os }}
+    permissions:
+      actions: read # Download artifacts
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -128,6 +137,9 @@ jobs:
     needs: [build-wheels, build-source, test-wheels]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    permissions:
+      actions: read # Download artifacts
+      id-token: write # Required for PyPI trusted publishing (OIDC)
     environment:
       name: pypi
       url: https://pypi.org/p/cea-external-tools
