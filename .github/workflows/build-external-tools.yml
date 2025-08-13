@@ -25,15 +25,6 @@ jobs:
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.8.14
 
-      # CRAX requires at least c++ 23 standard features
-      - name: Install g++-13 (macOS Intel)
-        if: matrix.os == 'macos-13'
-        run: |
-          brew install gcc@13
-          # Set environment variables to use g++-13
-          echo "CC=gcc-13" >> $GITHUB_ENV
-          echo "CXX=g++-13" >> $GITHUB_ENV
-
       - name: Build wheel
         working-directory: external
         run: pixi run build-wheel
@@ -104,6 +95,7 @@ jobs:
           python -m pip install wheels/*.whl
           python -c "import cea_external_tools; print(f'✓ Package version: {cea_external_tools.__version__}')"
 
+  # TODO: Re-enable Test PyPI once account is created
   # publish-test-pypi:
   #   name: Publish to Test PyPI
   #   needs: [build-wheels, build-source, test-wheels]
@@ -129,6 +121,7 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     # needs: [publish-test-pypi]
+    needs: [build-wheels, build-source, test-wheels]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     environment:
