@@ -19,7 +19,7 @@ build-backend = "scikit_build_core.build"
 [tool.scikit-build]
 # Only install the cea_targets component (manually defined in our CMakeLists.txt)
 install.components = ["cea_targets", "crax_targets"]
-wheel.packages = ["cea-external-tools"]
+wheel.packages = ["cea_external_tools"]
 # Set persistent build directory for caching
 build-dir = "build"
 
