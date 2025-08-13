@@ -14,6 +14,8 @@ __maintainer__ = [""]
 __email__ = ["cea@arch.ethz.ch", "wanglittlerain@163.com"]
 __status__ = "Production"
 
+from cea.resources.utils import get_site_package_radiation_bin_path
+
 # Define the list of required CRAX executables (without extension)
 REQUIRED_CRAX_BINARIES = [
     "radiation", "mesh-generation"
@@ -111,18 +113,19 @@ class CRAX:
         exe_name = "radiation.exe" if self.is_windows else "radiation"
         exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
+        # Setting dynamic library paths is required for CRAX to find its dependencies in python env e.g. arrow
         env = os.environ.copy()
-        if "CONDA_PREFIX" in env:
-            if self.is_windows:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'bin')
-                env["PATH"] = f"{lib_path};{env['PATH']}"
-            elif self.is_mac:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
-                env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
-            else:
-                lib_path = os.path.join(os.environ['CONDA_PREFIX'], 'lib')
-                env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
-
+        python_prefix = sys.prefix
+        if self.is_windows:
+            lib_path = os.path.join(python_prefix, 'Library', 'bin')
+            env["PATH"] = f"{lib_path};{env['PATH']}"
+        elif self.is_mac:
+            lib_path = os.path.join(python_prefix, 'lib')
+            env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
+        else:
+            lib_path = os.path.join(python_prefix, 'lib')
+            env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
+        
         # Command to run the exe
         cmd = [os.path.join(exe_dir, exe_name), json_file]
 
@@ -170,6 +173,11 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
     folders_to_check = []
     if path_hint:
         folders_to_check.append(path_hint)
+
+    # Check site-packages location first (where binaries are actually installed)
+    site_package_daysim = get_site_package_radiation_bin_path()
+    if site_package_daysim:
+        folders_to_check.append(site_package_daysim)
 
     # Add predefined binary directories
     base_path = os.path.join(os.path.dirname(__file__), "bin")

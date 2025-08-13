@@ -27,6 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # wntr does not support linux ARM (no EPANET ARM binaries)
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
           cache: true
 
       - name: Install CEA
-        run: pixi run pip install .
+        run: pixi run pip install -v .
 
       - name: Run unit tests
         run: pixi run cea test --type unittest

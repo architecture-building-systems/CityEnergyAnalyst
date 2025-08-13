@@ -2,25 +2,26 @@ name: cea
 channels:
 - conda-forge
 dependencies:
-# Python version and pip
-- python=3.12
-- pip
-#Dependencies for CEA
-- fiona
-- gdal
-- geopandas>=1.0.0
-- libpysal
-- numba
-- numpy>=1.24.0,<2 # held back by wntr
-- osmnx>=2.0.0
-- networkx>=3.4 # 3.4 contains a fix for steiner tree algorithm
-- psutil
-- pvlib
-- pythonocc-core==7.8.1 # Due to #3867
-- pyyaml
-- scikit-learn
-- scipy
-- shapely>=2.0.0
-- matplotlib
-- notebook
-- pyarrow
+- numpy >=1.24.0,<2
+- scipy *
+- matplotlib *
+- geopandas >=1.0.0
+- shapely >=2.0.0
+- networkx >=3.4
+- scikit-learn *
+- numba *
+- pyyaml *
+- psutil *
+- pyarrow *
+- pythonocc-core ==7.8.1
+- pvlib *
+- libpysal *
+- osmnx >=2.0.0
+- fiona *
+- gdal *
+- notebook *
+- pixi-pycharm >=0.0.8,<0.0.9
+- scikit-build-core >=0.11.0
+- cmake >=3.15
+- uv *
+- python >=3.10
