@@ -110,7 +110,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install wheels/*.whl
-          python -c "import cea_external_tools; print(f'✓ Package version: {cea_external_tools.__version__}')"
+          python -c "import cea_external_tools; print(f'Package version: {cea_external_tools.__version__}')"
 
   # TODO: Re-enable Test PyPI once account is created
   # publish-test-pypi:
