@@ -32,8 +32,8 @@ verbose = false
 [tool.scikit-build.cmake]
 # Build in Release mode for performance
 build-type = "Release"
-# Use env vars for source directories
-#define = {DAYSIM_SOURCE_DIR = {env="DAYSIM_SOURCE_DIR"}, CRAX_SOURCE_DIR = {env="CRAX_SOURCE_DIR"}}
+# Define CMake variables that control installation paths
+define = {INSTALL_BIN_DIR = "cea_external_tools/bin"}
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]

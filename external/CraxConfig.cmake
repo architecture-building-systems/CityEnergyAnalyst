@@ -73,7 +73,7 @@ function(install_crax)
     if(TARGET radiation)
         message(STATUS "✓ Found radiation target")
         install(TARGETS radiation
-                RUNTIME DESTINATION "cea/radiation/bin"
+                RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
                 COMPONENT crax_targets)
     else()
         message(FATAL_ERROR "radiation target not found")
@@ -82,7 +82,7 @@ function(install_crax)
     if(TARGET mesh-generation)
         message(STATUS "✓ Found mesh-generation target") 
         install(TARGETS mesh-generation
-                RUNTIME DESTINATION "cea/radiation/bin"
+                RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
                 COMPONENT crax_targets)
     else()
         message(FATAL_ERROR "mesh-generation target not found")

@@ -59,7 +59,7 @@ function(install_daysim)
             if(TARGET ${target})
                 message(STATUS "  - Installing ${target}")
                 install(TARGETS ${target}
-                        RUNTIME DESTINATION "cea/radiation/bin"
+                        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
                         COMPONENT cea_targets)
             else()
                 message(WARNING "  - Target ${target} not found")
