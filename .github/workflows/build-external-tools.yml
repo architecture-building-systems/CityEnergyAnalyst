@@ -26,7 +26,9 @@ jobs:
 
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.8.14
-
+        with:
+          run-install: false
+          
       - name: Build wheel
         working-directory: external
         run: pixi run build-wheel
