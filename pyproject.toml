@@ -142,7 +142,7 @@ test = "cea test --type integration"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
-setup-dev = {cmd = "pip install -ve . --group dev"}
+setup-dev = {cmd = "uv pip install -ve . --group dev"}
 build-wheel = {cmd = "uv build"}
 export-spec = {cmd = "pixi workspace export conda-explicit-spec --ignore-pypi-errors conda-spec"}
 export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}
