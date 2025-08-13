@@ -46,6 +46,14 @@ jobs:
           # Enable verbose output for debugging if needed
           VERBOSE: 1
 
+      - name: Repair wheel with auditwheel (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: external
+        run: |
+          pixi install auditwheel
+          pixi run auditwheel repair dist/*.whl --wheel-dir dist/
+          rm dist/*-linux_*.whl  # Remove original linux wheel, keep manylinux wheel
+
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
         with:
