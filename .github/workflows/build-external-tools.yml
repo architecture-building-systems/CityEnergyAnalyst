@@ -17,7 +17,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13] # macos-13 for x86_64, macos-latest for arm64
+        # FIXME: macos-13 unable to compile crax
+        # Ignore macos-13 for now
+        os: [ubuntu-latest, windows-latest, macos-latest] # macos-13 for x86_64, macos-latest for arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +76,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         # python-version: ['3.10', '3.11', '3.12']
         python-version: ["3.12"] # Test only 3.12 for now
 
