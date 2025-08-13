@@ -85,37 +85,44 @@ cea-worker = "cea.worker:main"
 cea-plot = "cea.plots.plot_cli:main"
 
 [build-system]
-requires = ["scikit-build-core>=0.11.0"]
-build-backend = "scikit_build_core.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.scikit-build.metadata.version]
-provider = "scikit_build_core.metadata.regex"
-input = "cea/__init__.py"
+[tool.setuptools.packages.find]
+include = ["cea*"]
+namespaces = false
 
-# Scikit-build-core configuration
-[tool.scikit-build]
-# Only install the cea_targets component (manually defined in our CMakeLists.txt)
-install.components = ["cea_targets", "crax_targets"]
-wheel.packages = ["cea"]
-# Set persistent build directory for caching
-build-dir = "build"
+[tool.setuptools.package-data]
+cea = [
+    # Configuration files
+    "default.config",
+    "schemas.yml",
+    "scripts.yml",
+    "workflows/*.yml",
 
-[tool.scikit-build.build]
-# Only build the cea_targets target, not all targets (avoids unwanted programs)
-targets = ["cea_all"]
-# Verbose output for debugging
-verbose = false
+    # Data files
+    "examples/*.zip",
+    # TODO: Move generate weather data script to scripts directory, should not be in package
+    "datamanagement/weather_helper/weather.geojson",
+    "databases/**/*.csv",
+    "databases/weather/**/*.epw",
 
-[tool.scikit-build.cmake]
-# Use external/ directory for CMake source
-source-dir = "external"
-# Build in Release mode for performance
-build-type = "Release"
-# Use env vars for source directories
-define = {DAYSIM_SOURCE_DIR = {env="DAYSIM_SOURCE_DIR"}, CRAX_SOURCE_DIR = {env="CRAX_SOURCE_DIR"}}
+    # Compiled binaries
+    "resources/radiation/bin/**/*",
+    "resources/radiationCRAX/bin/**/*",
+
+    # Web assets
+    "interfaces/dashboard/plots/templates/*.html",
+    "plots/*.html",
+
+    "plots/naming.csv",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "cea.__version__" }
 
 [tool.ruff]
-exclude = ["*.ipynb"]
+exclude = ["*.ipynb", "external/"]
 lint.ignore = [
     "E741", # ambiguous variable name (l, O, I)
 ]
@@ -135,7 +142,7 @@ test = "cea test --type integration"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
-setup-dev = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv pip install -ve . --group dev --no-build-isolation"}
+setup-dev = {cmd = "uv pip install -ve . --group dev"}
 build-wheel = {cmd = "uv build"}
 export-spec = {cmd = "pixi workspace export conda-explicit-spec --ignore-pypi-errors conda-spec"}
 export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}
@@ -168,6 +175,4 @@ gdal = "*"
 # Development tools (pixi-only)
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
-scikit-build-core = ">=0.11.0"
-cmake = ">=3.15" # Minimum required version for builds
 uv = "*"
