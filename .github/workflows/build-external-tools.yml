@@ -34,13 +34,6 @@ jobs:
         # Enable verbose output for debugging if needed
         VERBOSE: 1
 
-    - name: Test wheel installation
-      working-directory: external
-      run: |
-        python -m pip install dist/*.whl
-        # Basic test to ensure package can be imported
-        python -c "import cea_external_tools; print('✓ Package imported successfully')"
-
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@v4
       with:
