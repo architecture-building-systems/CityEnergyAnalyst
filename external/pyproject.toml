@@ -46,7 +46,7 @@ platforms = [
 
 [tool.pixi.tasks]
 setup-dev = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv pip install -ve . --group dev --no-build-isolation"}
-build-wheel = {cmd = "uv build"}
+build-wheel = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv build"}
 
 [tool.pixi.dependencies]
 # For arrow headers files
