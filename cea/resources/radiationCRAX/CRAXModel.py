@@ -191,7 +191,6 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
     folders_to_check = [os.path.abspath(os.path.normpath(p)) for p in folders_to_check]
     lib_path = None
 
-    print("Folders to check:", folders_to_check)
     for possible_path in folders_to_check:
         if not os.path.isdir(possible_path):
             print(f"{possible_path} is not a directory.")
