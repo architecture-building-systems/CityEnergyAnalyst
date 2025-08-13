@@ -65,7 +65,7 @@ dependencies = [
     "py4design-cea",
 
     # CEA external tools
-    "cea-external-tools"
+    "cea-external-tools>=0.2.0"
 ]
 
 [dependency-groups]
