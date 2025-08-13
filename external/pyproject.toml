@@ -2,7 +2,7 @@
 name = "cea-external-tools"
 description = "External tools for City Energy Analyst, mainly containing C++ components e.g. DAYSIM and CRAX"
 readme = "README.md"
-requires-python = "<=3.12,>=3.8"
+requires-python = "<3.13,>=3.8"
 authors = [
     { name = "Reynold Mok", email = "reynold.mok@arch.ethz.ch" }
 ]
