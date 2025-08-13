@@ -51,10 +51,14 @@ jobs:
         working-directory: external
         run: |
           pixi add auditwheel
-          # Find Arrow library path in pixi environment
-          ARROW_LIB_DIR=$(pixi run python -c "import pyarrow; print(pyarrow.get_library_dirs()[0])")
-          echo "Arrow library directory: $ARROW_LIB_DIR"
-          pixi run auditwheel repair dist/*.whl --wheel-dir dist/ --lib-dir "$ARROW_LIB_DIR"
+          # Set LD_LIBRARY_PATH to include pixi lib
+          ARROW_LIB=$(pixi run python -c "import pyarrow; print(pyarrow.get_library_dirs()[0])")
+          export LD_LIBRARY_PATH="$ARROW_LIB:$LD_LIBRARY_PATH"
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+          # Show what libraries the wheel needs
+          pixi run auditwheel show dist/*.whl
+          # Repair the wheel
+          pixi run auditwheel repair dist/*.whl --wheel-dir dist/
           rm dist/*-linux_*.whl  # Remove original linux wheel, keep manylinux wheel
 
       - name: Upload wheel artifacts
