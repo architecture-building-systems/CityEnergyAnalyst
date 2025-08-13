@@ -50,7 +50,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         working-directory: external
         run: |
-          pixi run pip install auditwheel
+          pixi add auditwheel
           pixi run auditwheel repair dist/*.whl --wheel-dir dist/
           rm dist/*-linux_*.whl  # Remove original linux wheel, keep manylinux wheel
 
