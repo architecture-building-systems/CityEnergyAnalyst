@@ -1,0 +1,57 @@
+[project]
+name = "cea-external-tools"
+description = "External tools for City Energy Analyst, mainly containing C++ components e.g. DAYSIM and CRAX"
+readme = "README.md"
+authors = [
+    { name = "Reynold Mok", email = "reynold.mok@arch.ethz.ch" }
+]
+version = "0.1.0"
+
+[project.urls]
+"Homepage" = "https://cityenergyanalyst.com"
+"Bug Reports" = "https://github.com/architecture-building-systems/CityEnergyAnalyst/issues"
+"Source" = "https://github.com/architecture-building-systems/CityEnergyAnalyst"
+
+[build-system]
+requires = ["scikit-build-core>=0.11.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+# Only install the cea_targets component (manually defined in our CMakeLists.txt)
+install.components = ["cea_targets", "crax_targets"]
+wheel.packages = ["cea-external-tools"]
+# Set persistent build directory for caching
+build-dir = "build"
+
+[tool.scikit-build.build]
+# Only build the cea_targets target, not all targets (avoids unwanted programs)
+targets = ["cea_all"]
+# Verbose output for debugging
+verbose = false
+
+[tool.scikit-build.cmake]
+# Build in Release mode for performance
+build-type = "Release"
+# Use env vars for source directories
+#define = {DAYSIM_SOURCE_DIR = {env="DAYSIM_SOURCE_DIR"}, CRAX_SOURCE_DIR = {env="CRAX_SOURCE_DIR"}}
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = [
+    "linux-64", "linux-aarch64",
+    "osx-64", "osx-arm64",
+    "win-64"
+]
+
+[tool.pixi.tasks]
+setup-dev = {cmd = "CMAKE_BUILD_PARALLEL_LEVEL=4 uv pip install -ve . --group dev --no-build-isolation"}
+build-wheel = {cmd = "uv build"}
+
+[tool.pixi.dependencies]
+# For arrow headers files
+pyarrow = "==21.0.0"
+
+# Development tools
+scikit-build-core = ">=0.11.0"
+cmake = ">=3.15" # Minimum required version for builds
+uv = "*"
