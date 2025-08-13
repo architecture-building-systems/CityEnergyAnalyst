@@ -312,8 +312,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
                'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
                'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
-               'PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-               'PV_yield_carbon_intensity[tonCO2-eq/kWh]'],
+               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
+               'PV_electricity_carbon_intensity[tonCO2-eq/kWh]'],
         "pvt_ET": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
                     'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
                     'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
@@ -526,7 +526,7 @@ def map_analytics_and_cea_columns(input_list, direction="analytics_to_columns"):
         A list of mapped values (CEA column names or metrics), with unique items in order.
     """
     mapping_dict = {
-        'PV_solar_energy_penetration[-]': [
+        'PV_generation_to_load[-]': [
             'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
             'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
             'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
@@ -1128,11 +1128,11 @@ def add_nominal_actual_and_coverage(df):
             return month_hours[period]
         elif period in season_hours:
             return season_hours[period]
-        elif period.startswith("D_"):
+        elif period.startswith("D"):
             return 24
-        elif period.startswith("H_"):
+        elif period.startswith("H"):
             return 1
-        elif period.startswith("Y_"):
+        elif period.startswith("Y") or period.startswith("y"):
             return 8760
         elif period == 'selected_hours':
             return 8760
@@ -1714,8 +1714,8 @@ def filter_by_building_names(df_typology, list_buildings):
 # Execute advanced UBEM analytics
 
 def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
-    list_pv_analytics = ['PV_solar_energy_penetration[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-                         'PV_yield_carbon_intensity[tonCO2-eq/kWh]']
+    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
+                         'PV_electricity_carbon_intensity[tonCO2-eq/kWh]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
     list_list_useful_cea_results_pv, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings, bool_analytics=True)
     list_list_useful_cea_results_demand, _ = exec_read_and_slice(hour_start, hour_end, locator, list_demand_metrics, list_buildings)
@@ -1731,7 +1731,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         - str: The modified string.
         """
         if string.startswith('E_PV_gen_kWh'):
-            return 'PV_total_' + pv_analytic
+            return pv_analytic
         if string.endswith('_E_kWh'):
             return string[:-5] + pv_analytic
         return string  # Return the string unchanged if condition not met
@@ -1765,8 +1765,9 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
         df = pd.concat([df_pv, df_demand[demand_column]], axis=1)   # Concatenate the DataFrames horizontally
         df = df.loc[:, ~df.columns.duplicated()]    # Remove duplicate columns, keeping the first occurrence
 
-        # Remove 'PV_' in the strings of PV analytics
-        list_analytics = [item[3:] if item.startswith('PV_') else item for item in list_pv_analytics]
+        # # Remove 'PV_' in the strings of PV analytics
+        # list_analytics = [item[3:] if item.startswith('PV_') else item for item in list_pv_analytics]
+        list_analytics = list_pv_analytics
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
@@ -1805,15 +1806,15 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             else:
                 for pv_analytic in list_analytics:
                     col_new = replace_kwh_with_pv_analytic(col, pv_analytic)
-                    if pv_analytic == 'solar_energy_penetration[-]':
+                    if pv_analytic == 'PV_generation_to_load[-]':
                         pv_analytic_df = calc_solar_energy_penetration_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
-                    elif pv_analytic == 'self_consumption[-]':
+                    elif pv_analytic == 'PV_self_consumption[-]':
                         pv_analytic_df = calc_self_consumption_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
-                    elif pv_analytic == 'self_sufficiency[-]':
+                    elif pv_analytic == 'PV_self_sufficiency[-]':
                         pv_analytic_df = calc_self_sufficiency_by_period(df, col, demand_column)
                         pv_analytics_df[col_new] = pv_analytic_df[col]
                         pv_analytics_df['period'] = pv_analytic_df['period']
