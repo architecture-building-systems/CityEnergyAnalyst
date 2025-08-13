@@ -110,10 +110,6 @@ cea = [
     "databases/**/*.csv",
     "databases/weather/**/*.epw",
 
-    # Compiled binaries
-    "resources/radiation/bin/**/*",
-    "resources/radiationCRAX/bin/**/*",
-
     # Web assets
     "interfaces/dashboard/plots/templates/*.html",
     "plots/*.html",
