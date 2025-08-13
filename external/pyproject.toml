@@ -6,7 +6,7 @@ requires-python = "<3.13,>=3.8"
 authors = [
     { name = "Reynold Mok", email = "reynold.mok@arch.ethz.ch" }
 ]
-version = "0.1.0"
+dynamic = [ "version" ]
 
 [project.urls]
 "Homepage" = "https://cityenergyanalyst.com"
@@ -23,6 +23,10 @@ install.components = ["cea_targets", "crax_targets"]
 wheel.packages = ["cea_external_tools"]
 # Set persistent build directory for caching
 build-dir = "build"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "cea_external_tools/__init__.py"
 
 [tool.scikit-build.build]
 # Only build the cea_targets target, not all targets (avoids unwanted programs)
