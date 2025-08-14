@@ -212,7 +212,7 @@ def calc_delta_theta_int_inc_heating(bpr: BuildingPropertiesRow):
 
     Correction factor for the heating and cooling setpoints. Extracted from EN 15316-2
 
-    (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
+    (see cea/databases/CH/Systems/emission_systems.xls for valid values for the heating and cooling system values)
 
     T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
     In short, when the input system is T0, the output set point correction should be 0.0.
@@ -247,7 +247,7 @@ def calc_delta_theta_int_inc_cooling(bpr: BuildingPropertiesRow):
 
     Correction factor for the heating and cooling setpoints. Extracted from EN 15316-2
 
-    (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
+    (see cea/databases/CH/Systems/emission_systems.xls for valid values for the heating and cooling system values)
 
     T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
     In short, when the input system is T0, the output set point correction should be 0.0.
