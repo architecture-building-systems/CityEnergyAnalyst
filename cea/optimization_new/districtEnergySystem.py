@@ -33,13 +33,16 @@ import multiprocessing
 from copy import copy
 from deap import algorithms, base, tools
 
+from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
 from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
 from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
+from cea.optimization_new.helperclasses.optimization.connectivity import ConnectivityVector
 from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
@@ -50,7 +53,7 @@ class DistrictEnergySystem(object):
     _civ_memory = CapacityIndicatorVectorMemory()
     optimisation_algorithm = GeneticAlgorithm()
 
-    def __init__(self, connectivity, buildings, energy_potentials):
+    def __init__(self, connectivity: ConnectivityVector, buildings: list[Building], energy_potentials: list[EnergyPotential]):
         self._identifier = 'xxx'
         self.connectivity = connectivity
 
