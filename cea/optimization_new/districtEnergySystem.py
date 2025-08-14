@@ -62,7 +62,7 @@ class DistrictEnergySystem(object):
         self.distributed_potentials = {}
 
         self.subsystem_demands = {}
-        self.supply_systems = {}
+        self.supply_systems: dict[str, list[SupplySystem]] = {}
         self.best_supsys_combinations = []
 
     @property

@@ -324,7 +324,7 @@ class Domain(object):
 
         return
 
-    def _write_network_layouts_to_geojson(self, district_energy_system, system_name=None):
+    def _write_network_layouts_to_geojson(self, district_energy_system: DistrictEnergySystem, system_name=None):
         """
         Writes the network layout of a given district energy system into a geojson file.
 
@@ -346,7 +346,7 @@ class Domain(object):
 
         return
 
-    def _write_supply_systems_to_csv(self, district_energy_system, system_name=None):
+    def _write_supply_systems_to_csv(self, district_energy_system: DistrictEnergySystem, system_name=None):
         """
         Writes information on supply systems of subsystems of a given district energy system into csv files. Information
         on each of the supply systems is written in a separate file.
@@ -405,7 +405,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_system_structure(results_file, supply_system):
+    def _write_system_structure(results_file: str, supply_system: list[SupplySystem]):
         """Summarise supply system structure and write it to the indicated results file"""
         supply_system_info = [{'Component_category': component_category,
                                'Component_type': component.technology,
@@ -437,7 +437,7 @@ class Domain(object):
 
         return supply_system_fitness_summary
 
-    def _write_detailed_results_to_csv(self, district_energy_system):
+    def _write_detailed_results_to_csv(self, district_energy_system: DistrictEnergySystem):
         """
         Writes csv-files with full time series of the key objective functions for each supply system.
         """
@@ -559,7 +559,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_detailed_network_performance(district_energy_system, results_file):
+    def _write_detailed_network_performance(district_energy_system: DistrictEnergySystem, results_file: str):
         """
         Write network performance parameters, i.e. length of network, cost & average hourly and annual heat losses,
         to a file.
