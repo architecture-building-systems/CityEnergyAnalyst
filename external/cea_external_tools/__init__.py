@@ -1,5 +1,3 @@
-# TODO: Add functions to help fetch external tools
-
 __version__ = "0.2.0"
 
 
