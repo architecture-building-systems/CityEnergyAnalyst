@@ -4,8 +4,7 @@ FROM ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 COPY external /tmp/external
 WORKDIR /tmp/external
 
-# Add suppression flag
-RUN pixi add git cxx-compiler && CXXFLAGS="-Wno-error=maybe-uninitialized ${CXXFLAGS}" pixi run build-wheel && pixi clean
+RUN pixi run docker-build-wheel
 
 FROM mambaorg/micromamba:bookworm-slim AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
