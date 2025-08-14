@@ -45,6 +45,8 @@ jobs:
           CMAKE_BUILD_PARALLEL_LEVEL: 4
           # Enable verbose output for debugging if needed
           VERBOSE: 1
+          # Set minimum macOS version (CRAX requires 13.3+)
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.os == 'macos-latest' && '13.0' || (matrix.os == 'macos-15' && '13.0' || '') }}
 
       - name: Repair wheel with auditwheel (Linux only)
         if: matrix.os == 'ubuntu-latest'
