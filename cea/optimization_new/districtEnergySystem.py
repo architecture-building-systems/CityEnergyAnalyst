@@ -59,7 +59,7 @@ class DistrictEnergySystem(object):
 
         self.consumers = buildings
         self.stand_alone_buildings = []
-        self.networks = []
+        self.networks: list[Network] = []
 
         self.energy_potentials = energy_potentials
         self.distributed_potentials = {}
@@ -103,7 +103,7 @@ class DistrictEnergySystem(object):
 
     @staticmethod
     def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None,
-                               process_memory=None):
+                               process_memory: MemoryPreserver | None = None):
         """
         Identify optimal district energy systems. The selected district energy systems represent an optimal combination
         of the most favourable supply systems for each of the networks in the district (i.e. the best combinations of
@@ -124,7 +124,7 @@ class DistrictEnergySystem(object):
         :type process_memory: <cea.optimization_new.helperclasses.multiprocessing.memoryPreserver>-MemoryPreserver class
                               object
         """
-        if process_memory.multiprocessing:
+        if process_memory and process_memory.multiprocessing:
             process_memory.recall_class_variables()
 
         if optimization_tracker:
@@ -142,7 +142,8 @@ class DistrictEnergySystem(object):
         non_dominated_systems, optimization_tracker \
             = new_district_cooling_system.evaluate(optimization_tracker)
 
-        process_memory.update(['DistrictEnergySystem'])
+        if process_memory:
+            process_memory.update(['DistrictEnergySystem'])
 
         return non_dominated_systems, process_memory, optimization_tracker
 
@@ -337,7 +338,7 @@ class DistrictEnergySystem(object):
                                                     system_structure.capacity_indicators,
                                                     self.subsystem_demands[network.identifier])
             designated_supply_system.evaluate()
-            self.supply_systems[network.identifier] = designated_supply_system
+            self.supply_systems[network.identifier] = [designated_supply_system]
 
         self.combine_supply_systems_and_networks()
 

@@ -52,7 +52,7 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 
 class Domain(object):
-    def __init__(self, config, locator: InputLocator):
+    def __init__(self, config: cea.config.Configuration, locator: InputLocator):
         self.config = config
         self.locator = locator
         self.weather = self._load_weather(locator)
@@ -306,6 +306,9 @@ class Domain(object):
         of .xlsx-files to summarise the most important information about the near-pareto-optimal district energy systems
         and their corresponding supply systems.
         """
+        if self.initial_energy_system is None:
+            raise ValueError("No initial energy system was loaded. Either optimisation was not run or failed.")
+
         # save the current energy system's network layouts and supply systems
         self._write_network_layouts_to_geojson(self.initial_energy_system, 'current_DES')
         self._write_supply_systems_to_csv(self.initial_energy_system, 'current_DES')
@@ -406,7 +409,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_system_structure(results_file: str, supply_system: list[SupplySystem]):
+    def _write_system_structure(results_file: str, supply_system: SupplySystem):
         """Summarise supply system structure and write it to the indicated results file"""
         supply_system_info = [{'Component_category': component_category,
                                'Component_type': component.technology,
@@ -477,7 +480,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _get_building_from_consumers(consumers, building_codes):
+    def _get_building_from_consumers(consumers, building_codes: list[str]) -> list[Building]:
         """ Get full building object based of list of consumers in domain and building code """
         buildings = []
         for consumer in consumers:
