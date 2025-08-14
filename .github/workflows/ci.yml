@@ -38,7 +38,7 @@ jobs:
           cache: true
 
       - name: Install CEA
-        run: pixi run pip install -v .
+        run: pixi run pip install .
 
       - name: Run unit tests
         run: pixi run cea test --type unittest
