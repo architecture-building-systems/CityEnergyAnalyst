@@ -11,7 +11,7 @@ import warnings
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely.geometry import Point, LineString, MultiPoint, box
+from shapely import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
 
 import cea.config

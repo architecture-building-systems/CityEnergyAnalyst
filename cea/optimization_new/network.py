@@ -26,7 +26,7 @@ import numpy as np
 from geopandas import GeoDataFrame as Gdf
 import networkx as nx
 from networkx.algorithms.approximation.steinertree import steiner_tree
-from shapely.geometry import LineString, Point
+from shapely import LineString, Point
 import wntr
 import random
 
