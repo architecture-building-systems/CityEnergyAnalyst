@@ -386,6 +386,7 @@ class Domain(object):
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
             network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
+            self.locator.ensure_parent_folder_exists(network_file)
             Domain._write_system_structure(network_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
