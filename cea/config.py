@@ -1288,6 +1288,18 @@ class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
 
 
+class PlotContextParameter(Parameter):
+    """A parameter that accepts a dict containing plot context information."""
+    
+    def encode(self, value) -> str:
+        if not isinstance(value, dict):
+            raise ValueError(f"Expected a dict for plot context, got {type(value)}")
+        return str(value)
+    
+    def decode(self, value) -> dict[str, Any]:
+        return json.loads(value) if value else {}
+
+
 def validate_coord_tuple(coord_tuple):
     """Validates a (lat, long) tuple, throws exception if not valid"""
 

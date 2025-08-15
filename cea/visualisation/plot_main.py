@@ -3,6 +3,7 @@ CEAFrontEnd – Combines everything
 
 """
 
+from typing import Any
 import cea.config
 from cea import CEAException
 from cea.visualisation.c_plotter import generate_fig
@@ -106,15 +107,20 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
 
 def main(config):
     scenario = config.scenario
+    context: dict[str, Any] = config.plots_general.context
 
-    # Define plot parameters using dictionary structure
+    # Example plot_dict
+    # plot_dict = {
+    #     'feature': 'pv',  # 'demand', 'pv', 'pvt', 'sc'
+    #     'solar_panel_types': {'sc': '', 'pv': 'PV1'},  # Required for solar features
+    #     'hour_start': 0,
+    #     'hour_end': 8759
+    # }
+
     plot_dict = {
-        'feature': 'pv',  # 'demand', 'pv', 'pvt', 'sc'
-        'solar_panel_types': {'sc': '', 'pv': 'PV1'},  # Required for solar features
-        'hour_start': 0,
-        'hour_end': 8759
+        'feature': context.get('feature', 'pv')
     }
-    
+
     fig = plot_all(config, scenario, plot_dict, hide_title=False)
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
