@@ -34,7 +34,8 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     """
     if config.restricted_to is None:
         raise CEAException("Unable to determine feature to plot. "
-                           "This currently only works on the cli interface by calling the relevant plot script directly.")
+                           "If you are running the script using the main function, please specify the feature in the config using the context parameter. "
+                           "e.g. {feature: 'demand'}")
 
     sections = {p.split(":")[0] for p in config.restricted_to if p.startswith("plots-")}
     if len(sections) != 1:
@@ -47,13 +48,17 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
 
 def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False):
     # Extract parameters from dictionary
-    plot_cea_feature = plot_dict['feature']
-    solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
+    plot_cea_feature: str | None = plot_dict.get('feature')
+    # If feature is not found, figure out based on config
+    if plot_cea_feature is None:
+        plot_cea_feature = get_plot_cea_feature(config)
+    
     hour_start = plot_dict.get('hour_start', 0)  
     hour_end = plot_dict.get('hour_end', 8759)
     
-    # Convert solar panel types to list format expected by existing code
     if plot_cea_feature in ('pv', 'pvt', 'sc'):
+        solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
+
         plot_cea_feature_umbrella = 'solar'
         if plot_cea_feature == 'pvt':
             # PVT requires both SC and PV panel types
@@ -117,8 +122,9 @@ def main(config):
     #     'hour_end': 8759
     # }
 
+    # Change value of context if you want to test using the main function
     plot_dict = {
-        'feature': context.get('feature', 'pv')
+        'feature': context.get('feature')
     }
 
     fig = plot_all(config, scenario, plot_dict, hide_title=False)
