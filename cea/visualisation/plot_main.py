@@ -3,6 +3,7 @@ CEAFrontEnd – Combines everything
 
 """
 
+import sys
 from typing import Any
 import cea.config
 from cea import CEAException
@@ -130,12 +131,11 @@ def main(config):
     }
 
     fig = plot_all(config, scenario, plot_dict, hide_title=False)
-
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    # fig.show(renderer="browser")
-    fig.show()
 
-    return plot_html, fig
+    if sys.stdout.isatty():
+        fig.show(renderer="browser")
+    return plot_html
 
 
 if __name__ == '__main__':
