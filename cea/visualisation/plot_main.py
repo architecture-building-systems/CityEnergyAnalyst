@@ -35,7 +35,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     if config.restricted_to is None:
         raise CEAException("Unable to determine feature to plot. "
                            "If you are running the script using the main function, please specify the feature in the config using the context parameter. "
-                           "e.g. {feature: 'demand'}")
+                           "e.g. {\"feature\": \"demand\"}")
 
     sections = {p.split(":")[0] for p in config.restricted_to if p.startswith("plots-")}
     if len(sections) != 1:
