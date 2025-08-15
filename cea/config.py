@@ -1294,8 +1294,8 @@ class PlotContextParameter(Parameter):
     def encode(self, value) -> str:
         if not isinstance(value, dict):
             raise ValueError(f"Expected a dict for plot context, got {type(value)}")
-        return str(value)
-    
+        return json.dumps(value)
+
     def decode(self, value) -> dict[str, Any]:
         try:
             return json.loads(value) if value else {}
