@@ -357,7 +357,7 @@ def calc_table(dict_graph):
     draws table of monthly energy balance
 
     :param dict_graph: dict containing the lists of summer, winter, occupied and unoccupied operative temperatures and
-     \moisture ratios, i.e. the results of comfort_chart.calc_data
+     moisture ratios, i.e. the results of comfort_chart.calc_data
     :type dict_graph: dict
     :return: plotly table trace
     :rtype: plotly.graph_objs.Table

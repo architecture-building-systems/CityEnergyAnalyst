@@ -60,3 +60,15 @@ pyarrow = "==21.0.0"
 scikit-build-core = ">=0.11.0"
 cmake = ">=3.15" # Minimum required version for builds
 uv = "*"
+
+[tool.pixi.environments]
+docker-build-wheel = ["docker-build-wheel"]
+
+[tool.pixi.feature.docker-build-wheel.dependencies]
+# Dependencies for building wheels in Docker
+git = "*"
+cxx-compiler = "*"
+
+[tool.pixi.feature.docker-build-wheel.tasks]
+# Add suppression flag for warnings treated as error during build
+docker-build-wheel = "CXXFLAGS='-Wno-error=maybe-uninitialized ${CXXFLAGS}' pixi run build-wheel && pixi clean"

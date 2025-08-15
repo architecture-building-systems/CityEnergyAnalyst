@@ -180,7 +180,7 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
         raise HTTPException(status_code=404, detail="Job not found")
     
     # Use validated parameters in command
-    command = [sys.executable, "-m", "cea.worker", job_id, str(server_url)]
+    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
     logger.debug(f"command: {command}")
     process = subprocess.Popen(command)
 

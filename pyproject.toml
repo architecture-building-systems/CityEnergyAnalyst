@@ -70,7 +70,7 @@ dependencies = [
 
 [dependency-groups]
 lint = ["ruff"]
-test = ["pytest"]
+test = ["pytest", "pytest-cov"]
 docs = ["setuptools", "sphinx"]
 dev = [{include-group = "test"}, {include-group = "lint"}, {include-group = "docs"}]
 
@@ -138,6 +138,7 @@ platforms = [
 cea = "cea"
 server = "cea dashboard"
 test = "cea test --type integration"
+coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
