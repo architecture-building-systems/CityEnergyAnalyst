@@ -183,7 +183,7 @@ class SolarPotentialsLayer(MapLayer):
             period_min = period_value
             period_max = period_value
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+            data = {"position": [centroid.x, centroid.y], "value": float(period_value)}
 
             return total_min, total_max, period_min, period_max, data
 
