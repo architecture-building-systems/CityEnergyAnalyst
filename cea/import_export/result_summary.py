@@ -244,7 +244,7 @@ def get_results_path(locator, cea_feature, list_buildings):
                 path = locator.SC_results(building, sc_panel_type)
                 sc_paths.append(path)
             list_paths.append(sc_paths)
-            list_appendix.append(f"{cea_feature}_{sc_panel_type}")
+            list_appendix.append(f"{cea_feature}")
 
     if cea_feature == 'sc_FP':
         for sc_panel_type in ['FP']:
@@ -253,7 +253,7 @@ def get_results_path(locator, cea_feature, list_buildings):
                 path = locator.SC_results(building, sc_panel_type)
                 sc_paths.append(path)
             list_paths.append(sc_paths)
-            list_appendix.append(f"{cea_feature}_{sc_panel_type}")
+            list_appendix.append(f"{cea_feature}")
 
     if cea_feature == 'other_renewables':
         path_geothermal = locator.get_geothermal_potential()
