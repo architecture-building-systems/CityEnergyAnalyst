@@ -118,22 +118,13 @@ def run_job(job: JobInfo, suppress_warnings: bool = False):
     script = read_script(job)
     
     if suppress_warnings:
-        # Store original showwarning function
-        original_showwarning = warnings.showwarning
-        
-        def cea_showwarning(message, category, filename, lineno, file=None, line=None):
-            # Only show warnings from CEA modules
-            if 'cea' in filename.lower() or '/cea/' in filename:
-                original_showwarning(message, category, filename, lineno, file, line)
-            # Otherwise, suppress the warning (do nothing)
-        
-        # Replace showwarning temporarily
-        warnings.showwarning = cea_showwarning
-        try:
+        with warnings.catch_warnings():
+            # Suppress FutureWarning and DeprecationWarning from all modules
+            # End user does not need to see these warnings
+            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
+
             output = script(**parameters)
-        finally:
-            # Restore original showwarning
-            warnings.showwarning = original_showwarning
     else:
         output = script(**parameters)
     return output
