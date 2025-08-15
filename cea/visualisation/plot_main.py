@@ -55,9 +55,12 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     # If feature is not found, figure out based on config
     if plot_cea_feature is None:
         plot_cea_feature = get_plot_cea_feature(config)
+        plot_dict['feature'] = plot_cea_feature
     
     hour_start = plot_dict.get('hour_start', 0)  
     hour_end = plot_dict.get('hour_end', 8759)
+
+    print(f"Using context: {plot_dict}")
     
     if plot_cea_feature in ('pv', 'pvt', 'sc'):
         solar_panel_types_dict = plot_dict.get('solar_panel_types', {})
