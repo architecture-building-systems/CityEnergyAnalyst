@@ -54,8 +54,8 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     plot_cea_feature: str | None = plot_dict.get('feature')
     # If feature is not found, figure out based on config
     if plot_cea_feature is None:
-        plot_cea_feature = get_plot_cea_feature(config)
-        plot_dict['feature'] = plot_cea_feature
+        raise CEAException("Unable to determine feature to plot. Please specify the feature in the config using the context parameter. "
+                           "e.g. {\"feature\": \"demand\"}")
     
     hour_start = plot_dict.get('hour_start', 0)  
     hour_end = plot_dict.get('hour_end', 8759)
