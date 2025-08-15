@@ -44,11 +44,11 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     
     # Solar surface mapping
     surface_mappings = {
-        'roofs_top': 'roof',
-        'walls_north': 'wall_north', 
-        'walls_east': 'wall_east',
-        'walls_south': 'wall_south',
-        'walls_west': 'wall_west',
+        'roofs_top': 'roofs_top',
+        'walls_north': 'walls_north',
+        'walls_east': 'walls_east',
+        'walls_south': 'walls_south',
+        'walls_west': 'walls_west',
         'total': 'total'
     }
     

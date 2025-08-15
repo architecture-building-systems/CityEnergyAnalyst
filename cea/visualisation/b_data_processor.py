@@ -110,31 +110,31 @@ class data_processor:
         elif plot_cea_feature == 'pv':
             y_cea_metric_map = {
                 'total': ['E_PV_gen_kWh', 'area_PV_m2'],
-                'roof': ['PV_roofs_top_E_kWh', 'PV_roofs_top_m2'],
-                'wall_north': ['PV_walls_north_E_kWh', 'PV_walls_north_m2'],
-                'wall_east': ['PV_walls_east_E_kWh', 'PV_walls_east_m2'],
-                'wall_south': ['PV_walls_south_E_kWh', 'PV_walls_south_m2'],
-                'wall_west': ['PV_walls_west_E_kWh', 'PV_walls_west_m2'],
+                'roofs_top': ['PV_roofs_top_E_kWh', 'PV_roofs_top_m2'],
+                'walls_north': ['PV_walls_north_E_kWh', 'PV_walls_north_m2'],
+                'walls_east': ['PV_walls_east_E_kWh', 'PV_walls_east_m2'],
+                'walls_south': ['PV_walls_south_E_kWh', 'PV_walls_south_m2'],
+                'walls_west': ['PV_walls_west_E_kWh', 'PV_walls_west_m2'],
             }
 
         elif plot_cea_feature == 'pvt':
             if 'ET' in self.appendix:
                 y_cea_metric_map = {
                     'total': ['E_PVT_gen_kWh', 'Q_PVT_gen_kWh', 'area_PVT_m2'],
-                    'roof': ['PVT_ET_roofs_top_E_kWh', 'PVT_ET_roofs_top_Q_kWh', 'PVT_ET_roofs_top_m2'],
-                    'wall_north': ['PVT_ET_walls_north_E_kWh', 'PVT_ET_walls_north_Q_kWh', 'PVT_ET_walls_north_m2'],
-                    'wall_east': ['PVT_ET_walls_east_E_kWh', 'PVT_ET_walls_east_Q_kWh', 'PVT_ET_walls_east_m2'],
-                    'wall_south': ['PVT_ET_walls_south_E_kWh', 'PVT_ET_walls_south_Q_kWh', 'PVT_ET_walls_south_m2'],
-                    'wall_west': ['PVT_ET_walls_west_E_kWh', 'PVT_ET_walls_west_Q_kWh', 'PVT_ET_walls_west_m2'],
+                    'roofs_top': ['PVT_ET_roofs_top_E_kWh', 'PVT_ET_roofs_top_Q_kWh', 'PVT_ET_roofs_top_m2'],
+                    'walls_north': ['PVT_ET_walls_north_E_kWh', 'PVT_ET_walls_north_Q_kWh', 'PVT_ET_walls_north_m2'],
+                    'walls_east': ['PVT_ET_walls_east_E_kWh', 'PVT_ET_walls_east_Q_kWh', 'PVT_ET_walls_east_m2'],
+                    'walls_south': ['PVT_ET_walls_south_E_kWh', 'PVT_ET_walls_south_Q_kWh', 'PVT_ET_walls_south_m2'],
+                    'walls_west': ['PVT_ET_walls_west_E_kWh', 'PVT_ET_walls_west_Q_kWh', 'PVT_ET_walls_west_m2'],
                 }
             elif 'FP' in self.appendix:
                 y_cea_metric_map = {
                     'total': ['E_PVT_gen_kWh', 'Q_PVT_gen_kWh', 'area_PVT_m2'],
-                    'roof': ['PVT_FP_roofs_top_E_kWh', 'PVT_FP_roofs_top_Q_kWh', 'PVT_FP_roofs_top_m2'],
-                    'wall_north': ['PVT_FP_walls_north_E_kWh', 'PVT_FP_walls_north_Q_kWh', 'PVT_FP_walls_north_m2'],
-                    'wall_east': ['PVT_FP_walls_east_E_kWh', 'PVT_FP_walls_east_Q_kWh', 'PVT_FP_walls_east_m2'],
-                    'wall_south': ['PVT_FP_walls_south_E_kWh', 'PVT_FP_walls_south_Q_kWh', 'PVT_FP_walls_south_m2'],
-                    'wall_west': ['PVT_FP_walls_west_E_kWh', 'PVT_FP_walls_west_Q_kWh', 'PVT_FP_walls_west_m2'],
+                    'roofs_top': ['PVT_FP_roofs_top_E_kWh', 'PVT_FP_roofs_top_Q_kWh', 'PVT_FP_roofs_top_m2'],
+                    'walls_north': ['PVT_FP_walls_north_E_kWh', 'PVT_FP_walls_north_Q_kWh', 'PVT_FP_walls_north_m2'],
+                    'walls_east': ['PVT_FP_walls_east_E_kWh', 'PVT_FP_walls_east_Q_kWh', 'PVT_FP_walls_east_m2'],
+                    'walls_south': ['PVT_FP_walls_south_E_kWh', 'PVT_FP_walls_south_Q_kWh', 'PVT_FP_walls_south_m2'],
+                    'walls_west': ['PVT_FP_walls_west_E_kWh', 'PVT_FP_walls_west_Q_kWh', 'PVT_FP_walls_west_m2'],
                 }
             else:
                 raise ValueError(f"Invalid PVT collector type in appendix: {self.appendix}")
@@ -143,20 +143,20 @@ class data_processor:
             if 'ET' in self.appendix:
                 y_cea_metric_map = {
                     'total': ['Q_SC_gen_kWh', 'area_SC_m2'],
-                    'roof': ['SC_ET_roofs_top_Q_kWh', 'SC_ET_roofs_top_m2'],
-                    'wall_north': ['SC_ET_walls_north_Q_kWh', 'SC_ET_walls_north_m2'],
-                    'wall_east': ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_east_m2'],
-                    'wall_south': ['SC_ET_walls_south_Q_kWh', 'SC_ET_walls_south_m2'],
-                    'wall_west': ['SC_ET_walls_west_Q_kWh', 'SC_ET_walls_west_m2'],
+                    'roofs_top': ['SC_ET_roofs_top_Q_kWh', 'SC_ET_roofs_top_m2'],
+                    'walls_north': ['SC_ET_walls_north_Q_kWh', 'SC_ET_walls_north_m2'],
+                    'walls_east': ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_east_m2'],
+                    'walls_south': ['SC_ET_walls_south_Q_kWh', 'SC_ET_walls_south_m2'],
+                    'walls_west': ['SC_ET_walls_west_Q_kWh', 'SC_ET_walls_west_m2'],
                 }
             elif 'FP' in self.appendix:
                 y_cea_metric_map = {
                     'total': ['Q_SC_gen_kWh', 'area_SC_m2'],
-                    'roof': ['SC_FP_roofs_top_Q_kWh', 'SC_FP_roofs_top_m2'],
-                    'wall_north': ['SC_FP_walls_north_Q_kWh', 'SC_FP_walls_north_m2'],
-                    'wall_east': ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_east_m2'],
-                    'wall_south': ['SC_FP_walls_south_Q_kWh', 'SC_FP_walls_south_m2'],
-                    'wall_west': ['SC_FP_walls_west_Q_kWh', 'SC_FP_walls_west_m2'],
+                    'roofs_top': ['SC_FP_roofs_top_Q_kWh', 'SC_FP_roofs_top_m2'],
+                    'walls_north': ['SC_FP_walls_north_Q_kWh', 'SC_FP_walls_north_m2'],
+                    'walls_east': ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_east_m2'],
+                    'walls_south': ['SC_FP_walls_south_Q_kWh', 'SC_FP_walls_south_m2'],
+                    'walls_west': ['SC_FP_walls_west_Q_kWh', 'SC_FP_walls_west_m2'],
                 }
             else:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
