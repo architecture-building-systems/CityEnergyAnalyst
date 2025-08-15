@@ -118,7 +118,8 @@ def run_job(job: JobInfo, suppress_warnings: bool = False):
     script = read_script(job)
     if suppress_warnings:
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            # Suppress warnings from external libraries but keep CEA warnings
+            warnings.filterwarnings("ignore", module=r"^(?!cea).*")
             output = script(**parameters)
     else:
         output = script(**parameters)
