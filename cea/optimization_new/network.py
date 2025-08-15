@@ -18,7 +18,6 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 
-import os.path
 import tempfile
 
 import pandas as pd
@@ -30,6 +29,7 @@ from shapely.geometry import LineString, Point
 import wntr
 import random
 
+import cea.utilities
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
@@ -754,16 +754,10 @@ class Network(object):
         # BUILD WATER NETWORK
         # thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            _file_location = os.path.join(tmpdir, f"{connectivity_string_for_files}_{self.identifier}")
-
-            # Create empty .inp file for WaterNetworkModel
-            inp_file = f"{_file_location}.inp"
-            with open(inp_file, "w"):
-                pass
-
+        # Change working directory to temporary directory for wntr simulation
+        with tempfile.TemporaryDirectory() as tmpdir, cea.utilities.pushd(tmpdir):
             # Create a water network model instance
-            wn = wntr.network.WaterNetworkModel(inp_file)
+            wn = wntr.network.WaterNetworkModel()
 
             # add loads
             building_base_demand_m3s = {}
@@ -835,7 +829,7 @@ class Network(object):
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
@@ -857,7 +851,7 @@ class Network(object):
                 pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
 
             # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
             # get accumulated head loss per hour
@@ -880,7 +874,7 @@ class Network(object):
             reservoir.head_timeseries.base_value = int(base_head)
             reservoir.head_timeseries._pattern = 'reservoir'
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
 
         return wnm_results, wnm_pipe_diameters
 
