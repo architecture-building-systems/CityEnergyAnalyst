@@ -2,7 +2,7 @@ import unittest
 
 import geopandas as gpd
 from geopandas.testing import assert_geodataframe_equal
-from shapely.geometry import Point, Polygon
+from shapely import Point, Polygon
 
 from cea.datamanagement import zone_helper
 
