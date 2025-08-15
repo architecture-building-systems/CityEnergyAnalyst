@@ -112,10 +112,16 @@ def fetch_job(jobid: str, server) -> JobInfo:
     return JobInfo(**job)
 
 
-def run_job(job: JobInfo):
+def run_job(job: JobInfo, suppress_warnings: bool = False):
+    import warnings
     parameters = read_parameters(job)
     script = read_script(job)
-    output = script(**parameters)
+    if suppress_warnings:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            output = script(**parameters)
+    else:
+        output = script(**parameters)
     return output
 
 
@@ -151,7 +157,7 @@ def post_error(message: str, stacktrace: str, jobid: str, server: str):
     requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
-def worker(jobid: str, server: str):
+def worker(jobid: str, server: str, suppress_warnings: bool = False):
     """This is the main logic of the cea-worker."""
     print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
@@ -159,7 +165,7 @@ def worker(jobid: str, server: str):
 
         configure_streams(jobid, server)
         post_started(jobid, server)
-        output = run_job(job)
+        output = run_job(job, suppress_warnings)
         post_success(jobid, server, output)
     except (SystemExit, Exception) as e:
         message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
@@ -173,7 +179,7 @@ def worker(jobid: str, server: str):
 
 def main():
     args = parse_arguments()
-    worker(args.jobid, args.url)
+    worker(args.jobid, args.url, args.suppress_warnings)
 
 
 def parse_arguments():
@@ -181,6 +187,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job")
     parser.add_argument("url", type=str, help="URL of the CEA server api")
+    parser.add_argument("--suppress-warnings", action="store_true", help="Suppress warnings during job execution")
     args = parser.parse_args()
     return args
 
