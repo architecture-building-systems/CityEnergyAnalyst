@@ -120,20 +120,7 @@ def main(config):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
 
-    # Example plot_dict
-    # plot_dict = {
-    #     'feature': 'pv',  # 'demand', 'pv', 'pvt', 'sc'
-    #     'solar_panel_types': {'sc': '', 'pv': 'PV1'},  # Required for solar features
-    #     'hour_start': 0,
-    #     'hour_end': 8759
-    # }
-
-    # Change value of context if you want to test using the main function
-    plot_dict = {
-        'feature': context.get('feature')
-    }
-
-    fig = plot_all(config, scenario, plot_dict, hide_title=False)
+    fig = plot_all(config, scenario, context, hide_title=False)
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 
     if sys.stdout.isatty():
