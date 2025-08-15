@@ -38,6 +38,8 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
                            "e.g. {\"feature\": \"demand\"}")
 
     sections = {p.split(":")[0] for p in config.restricted_to if p.startswith("plots-")}
+    # Ignore the plots-general section
+    sections.discard("plots-general")
     if len(sections) != 1:
         raise CEAException("Unable to determine feature to plot. "
                            "Ensure that only one type of plot config is provided in scripts.yml in the correct format. "
