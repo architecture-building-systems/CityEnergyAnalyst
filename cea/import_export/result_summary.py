@@ -830,10 +830,10 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
     # Perform slicing based on hour_start and hour_end
     if hour_start <= hour_end:
         # Normal case: Slice rows from hour_start to hour_end
-        sliced_df = df.iloc[hour_start:hour_end].copy()
+        sliced_df = df.iloc[hour_start:hour_end + 1].copy()
     else:
         # Wrapping case: Combine two slices (0 to hour_end and hour_start to 8760)
-        top_slice = df.iloc[0:hour_end]
+        top_slice = df.iloc[0:hour_end + 1]
         bottom_slice = df.iloc[hour_start:8760]
         sliced_df = pd.concat([bottom_slice, top_slice]).copy()
 
