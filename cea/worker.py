@@ -116,11 +116,24 @@ def run_job(job: JobInfo, suppress_warnings: bool = False):
     import warnings
     parameters = read_parameters(job)
     script = read_script(job)
+    
     if suppress_warnings:
-        with warnings.catch_warnings():
-            # Suppress warnings from external libraries but keep CEA warnings
-            warnings.filterwarnings("ignore", module=r"^(?!cea).*")
+        # Store original showwarning function
+        original_showwarning = warnings.showwarning
+        
+        def cea_showwarning(message, category, filename, lineno, file=None, line=None):
+            # Only show warnings from CEA modules
+            if 'cea' in filename.lower() or '/cea/' in filename:
+                original_showwarning(message, category, filename, lineno, file, line)
+            # Otherwise, suppress the warning (do nothing)
+        
+        # Replace showwarning temporarily
+        warnings.showwarning = cea_showwarning
+        try:
             output = script(**parameters)
+        finally:
+            # Restore original showwarning
+            warnings.showwarning = original_showwarning
     else:
         output = script(**parameters)
     return output
@@ -188,7 +201,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job")
     parser.add_argument("url", type=str, help="URL of the CEA server api")
-    parser.add_argument("--suppress-warnings", action="store_true", help="Suppress warnings during job execution")
+    parser.add_argument("--suppress-warnings", action="store_true", help="Suppress warnings from external libraries, keep CEA warnings")
     args = parser.parse_args()
     return args
 
