@@ -1297,7 +1297,11 @@ class PlotContextParameter(Parameter):
         return str(value)
     
     def decode(self, value) -> dict[str, Any]:
-        return json.loads(value) if value else {}
+        try:
+            return json.loads(value) if value else {}
+        except json.JSONDecodeError as e:
+            raise ValueError("Could not decode plot context dict. Ensure it is a valid JSON string,"
+                             "using double quotes for keys and string values.") from e
 
 
 def validate_coord_tuple(coord_tuple):
