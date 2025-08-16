@@ -28,7 +28,7 @@ class Building(object):
     _base_supply_systems = pd.DataFrame()
     _supply_system_database = pd.DataFrame()
 
-    def __init__(self, identifier, demands_file_path):
+    def __init__(self, identifier: str, demands_file_path):
         self.identifier = identifier
         self.demands_file_path = demands_file_path
         self.stand_alone_supply_system = SupplySystem()

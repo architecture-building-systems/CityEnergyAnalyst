@@ -59,7 +59,7 @@ class Network(object):
                               'peak_load_percentage': 0.0,
                               'network_lifetime_yrs': 20}
 
-    def __init__(self,  connected_buildings, network_id):
+    def __init__(self,  connected_buildings: list[str | Building], network_id: str):
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.plant_terminal = None
@@ -71,11 +71,11 @@ class Network(object):
         self.annual_piping_cost = 0.0
 
     @property
-    def connected_buildings(self):
+    def connected_buildings(self) -> list[str | Building]:
         return self._connected_buildings
 
     @connected_buildings.setter
-    def connected_buildings(self, new_connected_buildings:list):
+    def connected_buildings(self, new_connected_buildings: list[str | Building]):
         """
         Sets the connected buildings for the network.
 
