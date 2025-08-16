@@ -89,7 +89,7 @@ class Network(object):
             raise ValueError("connected_buildings must be a list of building names or Building-objects")
 
     @staticmethod
-    def build_network(network_id, building_ids, connectivity, return_graph=False, generate_dataframes=False):
+    def build_network(network_id, building_ids, connectivity, generate_dataframes=False):
         """
         Build a network for a given network_id and connectivity of the domain. This means creating a graph that connects
         all buildings in a designated network in the most efficient possible manner (i.e. Steiner tree).
@@ -100,8 +100,6 @@ class Network(object):
         :type building_ids: list of str
         :connectivity: connectivity vector holding information about the network connections of the buildings
         :type connectivity: <ConnectivityVector>-object or list of <Connection>-objects
-        :return_graph: boolean indicator for whether the network graph should be returned
-        :type return_graph: bool
         :generate_dataframes: boolean indicator for whether dataframes with explicit information about graph nodes and
                               edges should be created
         :type generate_dataframes: bool
@@ -121,9 +119,9 @@ class Network(object):
 
         # create the network object
         network = Network(connected_buildings, full_network_identifier)
-        network.run_steiner_tree_optimisation(return_graph=return_graph, generate_graph_dataframes=generate_dataframes)
+        network.run_steiner_tree_optimisation(generate_graph_dataframes=generate_dataframes)
 
-        return network.network_graph if return_graph else network
+        return network
 
     def generate_condensed_graph(self, method:str='remove_connector_nodes'):
         """
@@ -146,7 +144,7 @@ class Network(object):
         """
         # Generate the shortest network connecting the specified buildings, this network includes all relevant nodes of
         # the potential network graph (i.e. typically crossings in the roads network of the domain)
-        detailed_network = self.run_steiner_tree_optimisation(generate_graph_dataframes=False, return_graph=True)
+        detailed_network = self.run_steiner_tree_optimisation(generate_graph_dataframes=False)
 
         if method == 'remove_connector_nodes':
 
@@ -215,14 +213,13 @@ class Network(object):
         return condensed_graph
 
 
-    def run_steiner_tree_optimisation(self, generate_graph_dataframes=True, return_graph=False):
+    def run_steiner_tree_optimisation(self, generate_graph_dataframes=True):
         """
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
 
         :param generate_graph_dataframes: indicator for whether the network graph dataframes should be generated
         :type generate_graph_dataframes: bool
-        :param return_graph: indicator for whether the complete network graph object should be returned
         :type return_graph: bool
         """
         is_connected = self._domain_potential_network_terminals_df['building'].isin(self.connected_buildings).to_list()
@@ -248,9 +245,7 @@ class Network(object):
         if generate_graph_dataframes:
             self.complete_graph_dataframes(connected_terminals)
 
-        # return unprocessed network graph, if requested
-        if return_graph:
-            return self.network_graph
+        return self.network_graph
 
     def complete_graph_dataframes(self,  connected_terminals, allow_looped_networks=False):
         """
