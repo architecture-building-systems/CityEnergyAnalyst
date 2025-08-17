@@ -7,7 +7,6 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 import os
 from typing import List, Optional, Dict
 
-import pandas as pd
 import yaml
 import warnings
 import functools
@@ -262,6 +261,8 @@ class CsvSchemaIo(SchemaIo):
         :param kwargs:
         :rtype: pd.DataFrame
         """
+        import pandas as pd
+
         df = pd.read_csv(self(*args, **kwargs))
         self.validate(df)
         return df
@@ -281,6 +282,8 @@ class CsvSchemaIo(SchemaIo):
         df.to_csv(path_to_csv, index=False, **csv_args)
 
     def new(self):
+        import pandas as pd
+
         return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
 
 
