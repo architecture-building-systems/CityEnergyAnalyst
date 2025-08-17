@@ -17,7 +17,7 @@ import warnings
 
 import cea.inputlocator
 import cea.plugin
-from cea.utilities import unique
+from cea.utilities import unique, parse_string_to_list
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -1190,15 +1190,6 @@ def get_systems_list(scenario_path):
 
 class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
     pass
-
-
-def parse_string_to_list(line):
-    """Parse a line in the csv format into a list of strings"""
-    if line is None:
-        return []
-    line = line.replace('\n', ' ')
-    line = line.replace('\r', ' ')
-    return [str(field.strip()) for field in line.split(',') if field.strip()]
 
 
 def parse_string_coordinate_list(string_tuples):
