@@ -6,7 +6,7 @@ parameter allows reading in schemas from ``schemas.yml`` files defined in plugin
 
 import abc
 import os
-from typing import List, Optional, Dict
+from typing import Any, List, Optional, Dict
 
 import yaml
 import warnings
@@ -207,8 +207,7 @@ class SchemaIo(abc.ABC):
         raise AttributeError("{lm}: don't know how to write file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
-    @abc.abstractmethod
-    def new(self):
+    def new(self) -> Any:
         raise AttributeError("{lm}: don't know how to create a new Dataframe for file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
