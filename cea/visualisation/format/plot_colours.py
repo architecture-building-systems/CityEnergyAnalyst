@@ -43,7 +43,7 @@ COLOURS_TO_RGB = {
     "grey_light": "rgb(162,161,166)",
     "grey_lighter": "rgb(201,200,203)",
 
-    "black": "rgb(69,77,84)",
+    "black": "rgb(0,0,0)",
     "white": "rgb(255,255,255)",
 
     "orange": "rgb(245,131,69)",
