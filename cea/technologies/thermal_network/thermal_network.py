@@ -31,6 +31,7 @@ from cea.resources import geothermal
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
+from cea.technologies.thermal_network.topology_operations import fix_flow_directions_bfs_topology
 from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
@@ -193,12 +194,16 @@ class ThermalNetwork(object):
         """
 
         t0 = time.perf_counter()
+        print(f'PERFORMANCE: Starting network loading from shapefiles...')
 
         # import shapefiles containing the network's edges and nodes
+        timer_shapefile_start = time.perf_counter()
         network_edges_df = gpd.read_file(
             self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name))
         network_nodes_df = gpd.read_file(
             self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name))
+        print(f'PERFORMANCE: CRITICAL - Shapefile loading took {time.perf_counter() - timer_shapefile_start:.2f} seconds')
+        print(f'PERFORMANCE: Loaded {len(network_edges_df)} edges and {len(network_nodes_df)} nodes')
 
         # check duplicated NODE/PIPE IDs
         duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
@@ -209,10 +214,11 @@ class ThermalNetwork(object):
             raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
 
         # get node and pipe information
+        timer_extract_start = time.perf_counter()
         node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
+        print(f'PERFORMANCE: Network extraction took {time.perf_counter() - timer_extract_start:.2f} seconds')
 
         # create node catalogue indicating which nodes are plants and which consumers
-
         node_df.coordinates = pd.Series(node_df.coordinates)
         all_nodes_df = node_df[['type', 'building', 'coordinates']]
         all_nodes_df.to_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
@@ -220,9 +226,11 @@ class ThermalNetwork(object):
         building_names = all_nodes_df.building[all_nodes_df.type == 'CONSUMER'].reset_index(drop=True)
 
         # create first edge-node matrix
+        timer_matrix_start = time.perf_counter()
         list_pipes = edge_df.index.values
         list_nodes = node_df.index.values
         edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
+        print(f'PERFORMANCE: Building edge-node matrix ({len(list_nodes)} nodes × {len(list_pipes)} edges)...')
         for j in range(len(list_pipes)):  # TODO: find ways to accelerate
             for i in range(len(list_nodes)):
                 if edge_df['end node'][j] == list_nodes[i]:
@@ -231,6 +239,7 @@ class ThermalNetwork(object):
                     edge_node_matrix[i][j] = -1
         edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes,
                                     columns=list_pipes)  # first edge-node matrix
+        print(f'PERFORMANCE: CRITICAL - Edge-node matrix construction took {time.perf_counter() - timer_matrix_start:.2f} seconds')
 
         ## An edge node matrix is generated as a first guess and then virtual substation mass flows are imposed to
         ## calculate mass flows in each edge (mass_flow_guess).
@@ -246,27 +255,10 @@ class ThermalNetwork(object):
             if row['type'] == 'PLANT':
                 node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
 
-        # The direction of flow is then corrected
-        # keep track if there was a change for the iterative process
-        pd.options.mode.chained_assignment = None  # avoid warnings of copies
-        changed = [True] * node_mass_flows_df.shape[1]
-        while any(changed):
-            for i in range(node_mass_flows_df.shape[1]):
-                # we have a plant with incoming mass flows, or we don't have a plant but only exiting mass flows
-                if ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() < 0) and (
-                        edge_node_df.iloc[i].max() > 0)) or \
-                        ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() >= 0) and (
-                                edge_node_df.iloc[i].max() <= 0)):
-                    j = np.nonzero(edge_node_df.iloc[i].values)[0]
-                    if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
-                        j = random.choice(j)
-                    edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
-                    new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
-                    edge_df['start node'][j] = new_nodes[0]
-                    edge_df['end node'][j] = new_nodes[1]
-                    changed[i] = True
-                else:
-                    changed[i] = False
+        # Initialize flow directions using topology-based BFS approach
+        # NOTE: This is NOT physics-based - it's a fast topological approximation 
+        # that provides reasonable initial flow directions for the hydraulic solver
+        edge_node_df, edge_df = fix_flow_directions_bfs_topology(edge_node_df, all_nodes_df, edge_df)
 
         # make sure there are no NONE-node at dead ends before proceeding
         plant_counter = 0
@@ -279,18 +271,21 @@ class ThermalNetwork(object):
             raise ValueError('Please erase ', (plant_counter - number_of_plants),
                              ' end node(s) that are neither buildings nor plants.')
 
-        print(time.perf_counter() - t0, "seconds process time for Network Summary\n")
+        print(f'PERFORMANCE: TOTAL network shapefile processing took {time.perf_counter() - t0:.2f} seconds')
 
+        timer_save_load_start = time.perf_counter()
         if self.load_max_edge_flowrate_from_previous_run:
             self.edge_node_df = pd.read_csv(
                 self.locator.get_thermal_network_edge_node_matrix_file(self.network_type,
                                                                        self.network_name),
                 index_col="NODE")
+            print(f'PERFORMANCE: Loading edge_node_df from CSV took {time.perf_counter() - timer_save_load_start:.2f} seconds')
         else:
             edge_node_df.to_csv(
                 self.locator.get_thermal_network_edge_node_matrix_file(self.network_type, self.network_name),
                 index=True, index_label="NODE")
             self.edge_node_df = edge_node_df.copy()
+            print(f'PERFORMANCE: Saving edge_node_df to CSV took {time.perf_counter() - timer_save_load_start:.2f} seconds')
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -407,10 +402,17 @@ def thermal_network_main(locator, thermal_network, processes=1):
     """
 
     # # prepare data for calculation
+    
+    print(f'PERFORMANCE: Starting thermal network calculation for {len(thermal_network.building_names)} buildings')
+    timer_total_start = time.perf_counter()
 
     # calculate ground temperature
+    timer_start = time.perf_counter()
     thermal_network.T_ground_K = calculate_ground_temperature(locator)
+    print(f'PERFORMANCE: Ground temperature calculation took {time.perf_counter() - timer_start:.2f} seconds')
+    
     print('Running substation design')
+    timer_start = time.perf_counter()
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
         thermal_network.building_names, locator, thermal_network.substation_systems)
@@ -425,6 +427,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
                                                                        'T_sup_target_' + thermal_network.network_type)
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
+    print(f'PERFORMANCE: Substation design took {time.perf_counter() - timer_start:.2f} seconds')
 
     # check if the plant supply temperature is feasible
     if thermal_network.temperature_control == 'CT':
@@ -449,12 +452,15 @@ def thermal_network_main(locator, thermal_network, processes=1):
         prepare_inputs_of_representative_weeks(thermal_network)
 
     print('Calculating edge mass flows for pipe sizing')
+    timer_start = time.perf_counter()
     if thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
+        print(f'PERFORMANCE: Loading edge mass flows from previous run took {time.perf_counter() - timer_start:.2f} seconds')
     else:
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, processes=processes)
+        print(f'PERFORMANCE: CRITICAL - calc_max_edge_flowrate took {time.perf_counter() - timer_start:.2f} seconds')
 
         # save results to file
         if thermal_network.use_representative_week_per_month:
@@ -508,12 +514,15 @@ def thermal_network_main(locator, thermal_network, processes=1):
     thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
     print('Solving hydraulic and thermal network')
+    timer_start = time.perf_counter()
     ## Start solving hydraulic and thermal equations at each time-step
     nhours = (thermal_network.stop_t - thermal_network.start_t)
+    print(f'PERFORMANCE: Processing {nhours} timesteps for thermal calculations')
 
     hourly_thermal_results = cea.utilities.parallel.vectorize(hourly_thermal_calculation, processes)(
         range(thermal_network.start_t, thermal_network.stop_t),
         repeat(thermal_network, nhours))
+    print(f'PERFORMANCE: CRITICAL - hourly_thermal_calculation took {time.perf_counter() - timer_start:.2f} seconds')
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -544,6 +553,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
                                                                         thermal_network.network_name), index=False)
 
     print("Completed thermal-hydraulic calculation.\n")
+    print(f'PERFORMANCE: TOTAL thermal network calculation took {time.perf_counter() - timer_total_start:.2f} seconds')
 
     if thermal_network.no_convergence_flag:  # no convergence of network diameters
         print('Results are to be treated with caution since network diameters did not converge. \n')
@@ -945,8 +955,10 @@ def hourly_thermal_calculation(t, thermal_network):
     """
     :param t: time step
     """
-    print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
-          thermal_network.network_name, '...  time step', t)
+    # Removed frequent print statement for performance - only print every 100 timesteps
+    if t % 100 == 0:
+        print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
+              thermal_network.network_name, '...  time step', t)
 
     ## solve network temperatures
     T_supply_nodes_K, \
@@ -1038,6 +1050,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
        Applied Thermal Engineering, 2016.
     """
     edge_node_df = edge_node_df.copy()
+    timer_hardy_cross_start = time.perf_counter()
     loops, graph = find_loops(edge_node_df)  # identifies all linear independent loops
     if loops:
         # print('Fundamental loops in the network:', loops)  # returns nodes that define loop, useful for visiual
@@ -1059,6 +1072,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
 
         # begin iterations
         iterations = 0
+        hardy_cross_iter_start = time.perf_counter()
         while (abs(mass_flow_edge - m_old) > tolerance).any():  # while difference of mass flow on any  edge > tolerance
             m_old = np.array(mass_flow_edge)  # iterate over massflow
 
@@ -1126,6 +1140,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                                                                                'difference of',
                       max(abs(mass_flow_edge - m_old)), '.')
                 break
+        print(f'PERFORMANCE: Hardy Cross iterations took {time.perf_counter() - hardy_cross_iter_start:.2f} seconds ({iterations} iterations)')
 
     else:  # no loops
         # remove one equation (at plant node) to build a well-determined matrix, A.
@@ -1150,6 +1165,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                   ' from 0 pressure in loop. Most likely due to low edge flows within the loop.')
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
+    print(f'PERFORMANCE: calc_mass_flow_edges total took {time.perf_counter() - timer_hardy_cross_start:.2f} seconds')
     return mass_flow_edge
 
 
@@ -1691,7 +1707,10 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
             data=np.zeros((HOURS_IN_YEAR, len(thermal_network.building_names))),
             columns=thermal_network.building_names.values)  # stores values for 8760 timesteps
 
+    timer_loops_start = time.perf_counter()
     loops, graph = thermal_network.find_loops()
+    print(f'PERFORMANCE: Loop detection took {time.perf_counter() - timer_loops_start:.2f} seconds')
+    print(f'PERFORMANCE: Found {len(loops) if loops else 0} loops in network')
 
     if loops:
         print('Fundamental loops in network: ', loops)
@@ -1704,21 +1723,25 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
 
     print('start calculating mass flows in edges...')
     iterations = 0
-    # t0 = time.perf_counter()
+    timer_iterations_start = time.perf_counter()
     converged = False
     # Iterate over diameter of pipes since m = f(delta_p), delta_p = f(diameter) and diameter = f(m)
     while not converged:
+        timer_iteration_start = time.perf_counter()
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
         # hourly_mass_flow_calculation
         time_step_slice = range(thermal_network.start_t, thermal_network.stop_t)
         nhours = thermal_network.stop_t - thermal_network.start_t
+        print(f'PERFORMANCE: Starting iteration {iterations} with {nhours} timesteps')
 
+        timer_hourly_start = time.perf_counter()
         mass_flows = cea.utilities.parallel.vectorize(hourly_mass_flow_calculation, processes)(
             time_step_slice,
             repeat(diameter_guess, nhours),
             repeat(thermal_network, nhours))
+        print(f'PERFORMANCE: Hourly mass flow calculation iteration {iterations} took {time.perf_counter() - timer_hourly_start:.2f} seconds')
 
         # write mass flows to the dataframes
         thermal_network.edge_mass_flow_df.iloc[time_step_slice] = [mfe[0] for mfe in mass_flows]
@@ -1761,6 +1784,9 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
             thermal_network.no_convergence_flag = False
 
         iterations += 1
+        print(f'PERFORMANCE: Diameter iteration {iterations-1} took {time.perf_counter() - timer_iteration_start:.2f} seconds')
+    
+    print(f'PERFORMANCE: All diameter iterations completed in {time.perf_counter() - timer_iterations_start:.2f} seconds ({iterations} iterations)')
 
     # output csv files with node mass flows
     if thermal_network.use_representative_week_per_month:
@@ -1835,7 +1861,9 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     :param diameter_guess: Pipe diameter values
     """
 
-    print('calculating mass flows in edges... time step', t)
+    # Reduced print frequency for performance - only print every 100 timesteps
+    if t % 100 == 0:
+        print('calculating mass flows in edges... time step', t)
 
     if thermal_network.network_type == 'DH':
         # set to the highest value in the network and assume no loss within the network
