@@ -33,7 +33,6 @@ import multiprocessing
 from copy import copy
 from deap import algorithms, base, tools
 
-from cea.import_export.result_summary import slice_hourly_results_for_custom_time_period
 from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
 from cea.optimization_new.supplySystem import SupplySystem
