@@ -472,11 +472,14 @@ async def check_input_database(project_info: CEAProjectInfo):
 
     if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=output,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                'status': "warning",
+                'message': output
+            },
         )
 
-    return {'message': True}
+    return {'status': 'success', 'message': True}
 
 
 @router.get("/databases/validate")
