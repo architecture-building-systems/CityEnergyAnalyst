@@ -555,9 +555,11 @@ class DistrictEnergySystem(object):
             
             # Add network piping cost to supply system fitness if 'cost' key exists
             if 'cost' in supply_system.overall_fitness.keys():
-                network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id][0]
-                supply_system.overall_fitness['cost'] += network_cost
-            
+                network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id]
+
+                if len(network_cost) > 0:
+                    supply_system.overall_fitness['cost'] += network_cost[0]
+
             for i, value in enumerate(supply_system.overall_fitness.values()):
                 total_fitness[i] += value
         
