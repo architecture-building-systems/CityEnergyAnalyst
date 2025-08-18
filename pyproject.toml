@@ -135,8 +135,6 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-cea = "cea"
-server = "cea dashboard"
 test = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 
