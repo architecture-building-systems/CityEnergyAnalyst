@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Construction:
+class ConstructionType:
     _index = 'const_type'
     construction_types: pd.DataFrame
 
@@ -46,7 +46,7 @@ class Schedules:
 
 
 @dataclass
-class Use:
+class UseType:
     _index = 'use_type'
 
     use_types: pd.DataFrame
@@ -64,13 +64,13 @@ class Use:
 
 @dataclass
 class Archetypes:
-    construction: Construction
-    use: Use
+    construction: ConstructionType
+    use: UseType
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        construction = Construction.init_database(locator)
-        use = Use.init_database(locator)
+        construction = ConstructionType.init_database(locator)
+        use = UseType.init_database(locator)
         return cls(construction, use)
 
     def to_dict(self):
