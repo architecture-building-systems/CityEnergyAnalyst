@@ -1,20 +1,20 @@
-﻿type,thickness_wall,lambda,density,specific_heat,Switzerland,notes
-masonry,0.37,0.96,2000,840,Tonziegel,assuming 1.5 length of a brick
-concrete,0.2,2,2400,950,Hochbaubeton (ohne Bewehrung),typical MFH external wall construction
-wood,0.025,0.07,520,1600,Brettschichtholz,equivalence thickness of 45×200 mm studs @ 600 mm
-steel,0.005,50,7850,470,"Stahlprofil, blank",equivalence thickness of w100*h200 d600 wood stud construction
-EPS,,0.04,30,1500,Polystyrol expandiert (EPS),insulation with no fixed thickness value
-XPS,,0.04,35,1450,Polystyrol extrudiert (XPS),insulation with no fixed thickness value
-PUR,,0.029,30,1400,Polyurethan (PUR/PIR),insulation with no fixed thickness value
-rock wool,,0.04,60,830,Steinwolle,insulation with no fixed thickness value
-glass wool,,0.04,20,830,Glaswolle,insulation with no fixed thickness value
-cellulose,,0.04,50,2544,Zellulosefasern,insulation with no fixed thickness value
-lime plaster,0.005,1,1800,1000,Lehmputz,
-alumnium,0.005,160,2800,880,"Aluminiumblech, blank",
-stainless steel,0.005,50,7850,470,Chromnickelstahlblech 18/8 blank,
-glass,0.005,0.76,2500,840,Flachglas beschichtet,
-stone,0.05,2.3,2600,710,Hartsandsteinplatte,
-wooden,0.03,0.13,520,1600,Brettschichtholz,
-brick,0.12,0.96,2000,840,Tonziegel,
-ceramic,0.01,1.2,2000,840,Keramik-/Steinzeugplatte,
-bitumen,0.005,0.17,1050,1000,Dichtungsbahn bituminös,
+﻿type,thickness,lambda,density,specific_heat,Switzerland,notes
+masonry,0.37,0.96,2000,840,03.015,assuming 1.5 length of a brick
+concrete,0.2,2,2400,950,01.002,typical MFH external wall construction
+wood,0.025,0.07,520,1600,07.002,equivalence thickness of 45×200 mm studs @ 600 mm
+steel,0.005,50,7850,470,06.012,equivalence thickness of w100*h200 d600 wood stud construction
+EPS,,0.04,30,1500,10.004,insulation with no fixed thickness value
+XPS,,0.04,35,1450,10.005,insulation with no fixed thickness value
+PUR,,0.029,30,1400,10.006,insulation with no fixed thickness value
+rock wool,,0.04,60,830,10.008,insulation with no fixed thickness value
+glass wool,,0.04,20,830,10.001,insulation with no fixed thickness value
+cellulose,,0.04,50,2544,10.010,insulation with no fixed thickness value
+lime plaster,0.005,1,1800,1000,04.004,
+alumnium,0.005,160,2800,880,06.001,
+stainless steel,0.005,50,7850,470,06.004,
+glass,0.005,0.76,2500,840,03.005,
+stone,0.05,2.3,2600,710,03.009,
+wooden,0.03,0.13,520,1600,07.002,
+brick,0.12,0.96,2000,840,03.015,
+ceramic,0.01,1.2,2000,840,03.010,
+bitumen,0.005,0.17,1050,1000,09.003,
