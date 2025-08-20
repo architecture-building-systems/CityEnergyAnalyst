@@ -1,17 +1,20 @@
-﻿type,Switzerland
-masonry,Tonziegel
-concrete,Hochbaubeton (ohne Bewehrung)
-wood,Brettschichtholz
-steel,"Stahlprofil, blank"
-EPS,Polystyrol expandiert (EPS)
-XPS,Polystyrol extrudiert (XPS)
-PUR,Polyurethan (PUR/PIR)
-rock wool,Steinwolle
-glass wool,Glaswolle
-hemp,Zellulosefasern
-plaster,Lehmputz
-alumnium,"Aluminiumblech, blank"
-stainless steel,Chromnickelstahlblech 18/8 blank
-glass,Flachglas beschichtet
-stone,Hartsandsteinplatte
-ceramic,Keramik-/Steinzeugplatte
+﻿type,thickness_wall,lambda,density,specific_heat,Switzerland,notes
+masonry,0.37,0.96,2000,840,Tonziegel,assuming 1.5 length of a brick
+concrete,0.2,2,2400,950,Hochbaubeton (ohne Bewehrung),typical MFH external wall construction
+wood,0.025,0.07,520,1600,Brettschichtholz,equivalence thickness of 45×200 mm studs @ 600 mm
+steel,0.005,50,7850,470,"Stahlprofil, blank",equivalence thickness of w100*h200 d600 wood stud construction
+EPS,,0.04,30,1500,Polystyrol expandiert (EPS),insulation with no fixed thickness value
+XPS,,0.04,35,1450,Polystyrol extrudiert (XPS),insulation with no fixed thickness value
+PUR,,0.029,30,1400,Polyurethan (PUR/PIR),insulation with no fixed thickness value
+rock wool,,0.04,60,830,Steinwolle,insulation with no fixed thickness value
+glass wool,,0.04,20,830,Glaswolle,insulation with no fixed thickness value
+cellulose,,0.04,50,2544,Zellulosefasern,insulation with no fixed thickness value
+lime plaster,0.005,1,1800,1000,Lehmputz,
+alumnium,0.005,160,2800,880,"Aluminiumblech, blank",
+stainless steel,0.005,50,7850,470,Chromnickelstahlblech 18/8 blank,
+glass,0.005,0.76,2500,840,Flachglas beschichtet,
+stone,0.05,2.3,2600,710,Hartsandsteinplatte,
+wooden,0.03,0.13,520,1600,Brettschichtholz,
+brick,0.12,0.96,2000,840,Tonziegel,
+ceramic,0.01,1.2,2000,840,Keramik-/Steinzeugplatte,
+bitumen,0.005,0.17,1050,1000,Dichtungsbahn bituminös,
