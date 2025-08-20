@@ -438,13 +438,14 @@ def calulate_cea_sensor_data(locator, config):
 #
 #         radiation_file.set_index("date").to_csv(radiation_file_path)
 
-
+# TODO: Check if this is still the case, since we are now able to compile and build the wheels
 def check_os():
     """
     Raise error if the operating system is not supported.
 
     Currently Intel Macs are not supported.
     """
+    return
     if sys.platform == "darwin" and platform.machine() == "x86_64":
         raise ValueError("Intel Macs are not supported.")
 

@@ -265,7 +265,7 @@ class ConnectivityVector(object):
             # build network graphs
             for network_id in network_ids:
                 network_graphs[network_id] = Network.build_network(network_id, ordered_building_ids,
-                                                                   connection_list, return_graph=True)
+                                                                   connection_list).network_graph
 
             # identify overlaps and modify network graphs to remove them
             overlapping_networks = Network.identify_overlapping_networks(network_graphs)
