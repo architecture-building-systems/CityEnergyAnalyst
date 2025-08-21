@@ -71,8 +71,8 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         trace_layout = go.Scatter(
             x=[23, 26.5],
             y=[2, 3],
-            text=['Winter comfort zone',
-                  'Summer comfort zone'],
+            text=['Comfort zone: heating season',
+                  'Comfort zone: cooling season'],
             mode='text',
             showlegend=False
         )
@@ -235,18 +235,18 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         <table class="academic-table">
             <thead>
                 <tr>
-                    <th>Condition</th>
-                    <th>Comfort Hours</th>
-                    <th>Discomfort Hours</th>
+                    <th></th>
+                    <th>Comfort [h]</th>
+                    <th>Discomfort [h]</th>
                 </tr>
             </thead>
             <tbody>
         """
         
         # Add data rows
-        conditions = table_data['condition'].tolist()
-        comfort_hours = table_data['comfort [h]'].tolist()
-        uncomfort_hours = table_data['uncomfort [h]'].tolist()
+        conditions = table_data['Occupied hours'].tolist()
+        comfort_hours = table_data['Comfort [h]'].tolist()
+        uncomfort_hours = table_data['Uncomfort [h]'].tolist()
         
         for i in range(len(conditions)):
             table_html += f"""
@@ -291,8 +291,9 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_uncomfort, perc_summer_uncomfort)
 
         # draw table
-        column_names = ['condition', 'comfort [h]', 'uncomfort [h]']
-        column_data = [['summer occupied', 'winter occupied'], [cell_summer_comfort, cell_winter_comfort],
+        column_names = ['Occupied hours', 'Comfort [h]', 'Uncomfort [h]']
+        column_data = [['Cooling season - occupied', 'Heating season - occupied'],
+                       [cell_summer_comfort, cell_winter_comfort],
                       [cell_summer_uncomfort, cell_winter_uncomfort]]
         table_df = pd.DataFrame({cn: cd for cn, cd in zip(column_names, column_data)}, columns=column_names)
         return table_df
@@ -420,19 +421,19 @@ def calc_graph(dict_graph):
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', 
+                       name='Heating season - occupied hours', mode='markers',
                        marker=dict(color=COLOURS_TO_RGB['red'], size=6, opacity=0.7))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', 
+                       name='Heating season - unoccupied hours', mode='markers',
                        marker=dict(color=COLOURS_TO_RGB['blue'], size=4, opacity=0.7))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', 
+                       name='Cooling season - occupied hours', mode='markers',
                        marker=dict(color=COLOURS_TO_RGB['purple'], size=6, opacity=0.7))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', 
+                       name='Cooling season - unoccupied hours', mode='markers',
                        marker=dict(color=COLOURS_TO_RGB['orange'], size=4, opacity=0.7))
     traces.append(trace)
 
@@ -578,8 +579,8 @@ def calc_table(dict_graph):
 
     # draw table
     table = go.Table(domain=dict(x=[0.0, 1], y=[YAXIS_DOMAIN_GRAPH[1], 1.0]),
-                     header=dict(values=['condition', 'comfort [h]', 'uncomfort [h]']),
-                     cells=dict(values=[['summer occupied', 'winter occupied'],
+                     header=dict(values=['Occupied hours', 'Comfort [h]', 'Uncomfort [h]']),
+                     cells=dict(values=[['Cooling season', 'Heating season'],
                                         [cell_summer_comfort, cell_winter_comfort],
                                         [cell_summer_uncomfort, cell_winter_uncomfort]]),
                      visible=True)
