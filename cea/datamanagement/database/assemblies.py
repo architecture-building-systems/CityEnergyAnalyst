@@ -11,10 +11,19 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
-@dataclass
-class Envelope(BaseDatabase):
-    _index = 'code'
+class BaseAssemblyDatabase(BaseDatabase):
+    _index: str = 'code'
+    
+    @classmethod
+    def init_database(cls, locator: InputLocator):
+        raise NotImplementedError
 
+    def to_dict(self):
+        return self.dataclass_to_dict()
+
+
+@dataclass
+class Envelope(BaseAssemblyDatabase):
     floor: pd.DataFrame
     mass: pd.DataFrame
     roof: pd.DataFrame
@@ -34,13 +43,8 @@ class Envelope(BaseDatabase):
         window = pd.read_csv(locator.get_database_assemblies_envelope_window()).set_index(cls._index)
         return cls(floor, mass, roof, shading, tightness, wall, window)
 
-    def to_dict(self):
-        return self.dataclass_to_dict(orient='index')
-
 @dataclass
-class HVAC(BaseDatabase):
-    _index = 'code'
-
+class HVAC(BaseAssemblyDatabase):
     controller: pd.DataFrame
     cooling: pd.DataFrame
     heating: pd.DataFrame
@@ -56,13 +60,8 @@ class HVAC(BaseDatabase):
         ventilation = pd.read_csv(locator.get_database_assemblies_hvac_ventilation()).set_index(cls._index)
         return cls(controller, cooling, heating, hot_water, ventilation)
 
-    def to_dict(self):
-        return self.dataclass_to_dict(orient='index')
-
 @dataclass
-class Supply(BaseDatabase):
-    _index = 'code'
-
+class Supply(BaseAssemblyDatabase):
     cooling: pd.DataFrame
     heating: pd.DataFrame
     hot_water: pd.DataFrame
@@ -75,9 +74,6 @@ class Supply(BaseDatabase):
         hot_water = pd.read_csv(locator.get_database_assemblies_supply_hot_water()).set_index(cls._index)
         electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity()).set_index(cls._index)
         return cls(cooling, heating, hot_water, electricity)
-
-    def to_dict(self):
-        return self.dataclass_to_dict(orient='index')
 
 @dataclass
 class Assemblies(BaseDatabase):
