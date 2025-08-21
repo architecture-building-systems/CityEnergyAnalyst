@@ -45,7 +45,7 @@ dict_plot_analytics_cea_feature = {
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plot_config_general, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -67,11 +67,11 @@ class csv_pointer:
         self.x_to_plot = plot_config_general.x_to_plot
         self.x = x
         self.x_facet = x_facet
-        self.integer_year_start = plot_config_general.filter_buildings_by_year_start
-        self.integer_year_end = plot_config_general.filter_buildings_by_year_end
-        self.list_construction_type = plot_config_general.filter_buildings_by_construction_type
-        self.list_use_type = plot_config_general.filter_buildings_by_use_type
-        self.min_ratio_as_main_use = plot_config_general.min_ratio_as_main_use
+        self.integer_year_start = plots_building_filter.filter_buildings_by_year_start
+        self.integer_year_end = plots_building_filter.filter_buildings_by_year_end
+        self.list_construction_type = plots_building_filter.filter_buildings_by_construction_type
+        self.list_use_type = plots_building_filter.filter_buildings_by_use_type
+        self.min_ratio_as_main_use = plots_building_filter.min_ratio_as_main_use
 
         if plot_cea_feature in ('pv', 'sc'):
             self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}"
@@ -216,7 +216,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, bool_include_advanced_analytics=False):
+def plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, bool_include_advanced_analytics=False):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -231,7 +231,7 @@ def plot_input_processor(plot_config, plot_config_general, scenario, plot_cea_fe
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plot_config_general, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list)
+    plot_instance_a = csv_pointer(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
