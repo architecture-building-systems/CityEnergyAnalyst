@@ -11,7 +11,6 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
-from cea.import_export.result_summary import filter_buildings
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
 
@@ -133,6 +132,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <title>{self.title}</title>
             <style>
                 body {{
@@ -160,11 +160,11 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
                     color: #333;
                     font-size: 20px;
                     margin-bottom: 0px;
-                    margin-left: 5px
+                    margin-left: 0px
                 }}
                 h2 {{
                     color: #333;
-                    margin-bottom: 15px;
+                    margin-bottom: 0px;
                     display: none;
                 }}
             </style>
@@ -201,7 +201,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         table_html = """
         <style>
             .academic-table {
-                width: 460px;
+                width: 470px;
                 margin-left: 0px;
                 border-collapse: collapse;
                 font-family: 'Arial', sans-serif;
@@ -594,11 +594,11 @@ def check_comfort(temperature, moisture, vertices_comfort_area):
     checks if a point of operative temperature and moisture ratio is inside the polygon of comfort defined by its
      vertices, the function only works if the polygon has constant moisture ratio edges
 
-    :param temperature: operative temperature [Â°C]
+    :param temperature: operative temperature [°C]
     :type temperature: list
     :param moisture: moisture ratio [g/kg dry air]
     :type moisture: list
-    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([Â°C],[g/kg dry air])
+    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([°C],[g/kg dry air])
     :type vertices_comfort_area: list of tuples
     :return: hours of comfort, hours of uncomfort
     :rtype: double, double
@@ -722,7 +722,7 @@ def calc_constant_rh_curve(t_array, rh, p):
     """
     Calculates curves of humidity ratio at different temperatures for a constant relative humidity and pressure
 
-    :param t_array: array pf temperatures [Â°C]
+    :param t_array: array pf temperatures [°C]
     :type t_array: numpy.array
     :param rh: relative humidity [-]
     :type rh: double
@@ -737,6 +737,160 @@ def calc_constant_rh_curve(t_array, rh, p):
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
+
+def create_multi_building_plot(building_plots, project_path):
+    """
+    Create a single HTML file with multiple comfort charts arranged horizontally
+    
+    :param building_plots: List of ComfortChartPlot objects
+    :param project_path: Path to the project
+    """
+    import cea.inputlocator
+    
+    # Generate individual chart data for each building
+    charts_data = []
+    for plot_obj in building_plots:
+        print(f"Processing building: {plot_obj.building}")
+        # Get traces and layout for this building
+        traces = plot_obj.calc_graph()
+        layout = create_layout("")
+        
+        # Create figure
+        fig = go.Figure(data=traces, layout=layout)
+        
+        # Apply styling
+        fig['layout'].update(dict(
+            hovermode='closest',
+            width=500,
+            height=500,
+            plot_bgcolor='#F7F7F7',
+            paper_bgcolor='rgba(0,0,0,0)',
+            title=None
+        ))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
+        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+        
+        # Make legend background transparent
+        fig['layout']['legend'].update(dict(
+            bgcolor='rgba(0,0,0,0)',
+            bordercolor='rgba(0,0,0,0)'
+        ))
+        
+        # Generate chart HTML and table
+        import plotly.offline as pyo
+        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs='inline')
+        table_html = plot_obj.create_academic_table()
+        
+        charts_data.append({
+            'building': plot_obj.building,
+            'chart_html': chart_html,
+            'table_html': table_html
+        })
+        print(f"Successfully processed building: {plot_obj.building}")
+    
+    # Create combined HTML layout - use the correct scenario path from the first plot object
+    output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "Multi_Building_comfort-chart.html")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+    # Generate charts HTML with horizontal layout
+    print(f"Total charts to generate: {len(charts_data)}")
+    charts_html = ""
+    for i, chart_data in enumerate(charts_data):
+        print(f"Generating HTML for chart {i+1}: {chart_data['building']}")
+        margin_left = "100px" if i > 0 else "0px"
+        charts_html += f"""
+        <div style="display: inline-block; vertical-align: top; margin-left: {margin_left};">
+            <h2 style="text-align: left; color: #333; font-size: 18px; margin-bottom: 1px; margin-left: 5px;">
+                Building {chart_data['building']}
+            </h2>
+            <div style="background-color: transparent; padding: 0; margin-bottom: 20px; width: 300px;">
+                {chart_data['chart_html']}
+            </div>
+            <div style="background-color: transparent; padding: 0; width: 300px;">
+                {chart_data['table_html']}
+            </div>
+        </div>
+        """
+    
+    
+    # Complete HTML document with improved layout
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Comfort Chart(s)</title>
+        <style>
+            body {{
+                font-family: 'Arial', sans-serif;
+                margin: 14px;
+                background-color: white;
+                min-width: fit-content;
+            }}
+            .container {{
+                width: 100vw;
+                overflow-x: auto;
+                min-width: 1200px;
+            }}
+            .charts-wrapper {{
+                display: flex;
+                flex-direction: row;
+                gap: 100px;
+                width: max-content;
+            }}
+            .chart-item {{
+                display: flex;
+                flex-direction: column;
+                width: 500px;
+                flex-shrink: 0;
+            }}
+            h1 {{
+                text-align: left;
+                color: #333;
+                font-size: 20px;
+                margin-bottom: 5px;
+                margin-left: 0px;
+            }}
+            h2 {{
+                color: #333;
+                font-size: 18px;
+                margin-bottom: 2px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Comfort Chart - Multiple Buildings ({len(charts_data)} buildings)</h1>
+            <div class="charts-wrapper">
+    """
+    
+    for chart_data in charts_data:
+        full_html += f"""
+                <div class="chart-item">
+                    <h2>- Building {chart_data['building']}</h2>
+                    <div style="background-color: transparent; padding: 0; margin-bottom: 20px;">
+                        {chart_data['chart_html']}
+                    </div>
+                    <div style="background-color: transparent; padding: 0;">
+                        {chart_data['table_html']}
+                    </div>
+                </div>
+        """
+    
+    full_html += """
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    with open(output_path, 'w') as f:
+        f.write(full_html)
+    
+    print(f"Plotted multi-building comfort chart to {output_path}")
+    import webbrowser
+    webbrowser.open(output_path)
 
 
 def main():
@@ -758,9 +912,19 @@ def main():
                              integer_year_start, integer_year_end, list_standard,
                              list_main_use_type, ratio_main_use_type)
 
-    ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
-                                      'scenario-name': config.scenario_name},
-                     cache).plot(auto_open=True)
+    print(f"Filtered buildings list: {list_buildings}")
+    print(f"Number of buildings: {len(list_buildings)}")
+
+    # Generate comfort charts for all buildings
+    building_plots = []
+    for building in list_buildings:
+        plot_obj = ComfortChartPlot(config.project, {'building': building,
+                                                    'scenario-name': config.scenario_name},
+                                   cache)
+        building_plots.append(plot_obj)
+    
+    # Create multi-building plot
+    create_multi_building_plot(building_plots, config.project)
 
 
 if __name__ == '__main__':
