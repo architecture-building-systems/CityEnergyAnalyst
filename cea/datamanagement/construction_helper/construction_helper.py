@@ -1,5 +1,4 @@
 import os
-import re
 import pandas as pd
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
