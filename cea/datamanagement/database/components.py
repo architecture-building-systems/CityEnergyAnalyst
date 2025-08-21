@@ -94,11 +94,14 @@ class Conversion(BaseDatabase):
 class Distribution(BaseDatabase):
     _index = "code"
 
-    thermal_grid: pd.DataFrame
+    thermal_grid: pd.DataFrame | None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
+        try:
+            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
+        except FileNotFoundError:
+            thermal_grid = None
         return cls(thermal_grid)
 
     def to_dict(self):
@@ -110,12 +113,16 @@ class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
 
-    energy_carriers: pd.DataFrame
+    energy_carriers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
+        try:
+            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
+        except FileNotFoundError:
+            energy_carriers = None
+
         _library = dict()
         for file in Path(locator.get_db4_components_feedstocks_library_folder()).glob('*.csv'):
             _library[file.stem] = pd.read_csv(file)
