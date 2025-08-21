@@ -13,27 +13,35 @@ if TYPE_CHECKING:
 @dataclass
 class ConstructionType:
     _index = 'const_type'
-    construction_types: pd.DataFrame
+    construction_types: pd.DataFrame | None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()).set_index(cls._index)
+        try:
+            construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()).set_index(cls._index)
+        except FileNotFoundError:
+            construction_types = None
+        
         return cls(construction_types)
 
     def to_dict(self):
-        return {'construction_types': self.construction_types.to_dict(orient='index')}
+        return {'construction_types': self.construction_types.to_dict(orient='index') if self.construction_types is not None else None}
 
 
 @dataclass
 class Schedules:
     _index = 'use_type'
 
-    monthly_multipliers: pd.DataFrame
+    monthly_multipliers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        monthly_multipliers = pd.read_csv(locator.get_database_archetypes_schedules_monthly_multiplier()).set_index(cls._index)
+        try:
+            monthly_multipliers = pd.read_csv(locator.get_database_archetypes_schedules_monthly_multiplier()).set_index(cls._index)
+        except FileNotFoundError:
+            monthly_multipliers = None
+        
         _library = dict()
         for file in Path(locator.get_db4_archetypes_schedules_library_folder()).glob('*.csv'):
             _library[file.stem] = pd.read_csv(file)
@@ -41,7 +49,7 @@ class Schedules:
         return cls(monthly_multipliers, _library)
 
     def to_dict(self):
-        return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index'),
+        return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index') if self.monthly_multipliers is not None,
                 '_library': {k: v.to_dict(orient='records') for k, v in self._library.items()}}
 
 
@@ -49,17 +57,21 @@ class Schedules:
 class UseType:
     _index = 'use_type'
 
-    use_types: pd.DataFrame
+    use_types: pd.DataFrame | None
     schedules: Schedules
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        use_types = pd.read_csv(locator.get_database_archetypes_use_type()).set_index(cls._index)
+        try:
+            use_types = pd.read_csv(locator.get_database_archetypes_use_type()).set_index(cls._index)
+        except FileNotFoundError:
+            use_types = None
+        
         schedules = Schedules.init_database(locator)
         return cls(use_types, schedules)
 
     def to_dict(self):
-        return {'use_types': self.use_types.to_dict(orient='index'), 'schedules': self.schedules.to_dict()}
+        return {'use_types': self.use_types.to_dict(orient='index') if self.use_types is not None else None, 'schedules': self.schedules.to_dict()}
 
 
 @dataclass
