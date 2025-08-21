@@ -2313,6 +2313,17 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
 
     return list_list_metrics_building
 
+def filter_buildings(locator, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type):
+    df_buildings = get_building_year_standard_main_use_type(locator)
+    df_buildings = filter_by_building_names(df_buildings, list_buildings)
+    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
+    df_buildings = filter_by_standard(df_buildings, list_standard)
+    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
+    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
+    list_buildings = df_buildings['name'].to_list()
+    return df_buildings, list_buildings
 
 def process_building_summary(config, locator,
                              hour_start, hour_end, list_buildings,
@@ -2372,13 +2383,9 @@ def process_building_summary(config, locator,
     os.makedirs(summary_folder, exist_ok=True)
 
     # Step 3: Get & Filter Buildings
-    df_buildings = get_building_year_standard_main_use_type(locator)
-    df_buildings = filter_by_building_names(df_buildings, list_buildings)
-    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
-    df_buildings = filter_by_standard(df_buildings, list_standard)
-    df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
-    df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
-    list_buildings = df_buildings['name'].to_list()
+    df_buildings, list_buildings = filter_buildings(locator, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type)
 
     # Step 4: Get Building GFA & Merge with df_buildings
     list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)

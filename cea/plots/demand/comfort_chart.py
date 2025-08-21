@@ -11,8 +11,9 @@ import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
+from cea.import_export.result_summary import filter_buildings
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
-
+from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -737,6 +738,7 @@ def calc_constant_rh_curve(t_array, rh, p):
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
 
+
 def main():
     import cea.config
     import cea.inputlocator
@@ -745,6 +747,16 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
+
+    list_buildings = config.plots_comfort_chart.buildings
+    integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
+    integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
+    list_standard = config.plots_building_filter.filter_buildings_by_construction_type
+    list_main_use_type = config.plots_building_filter.filter_buildings_by_use_type
+    ratio_main_use_type = config.plots_building_filter.min_ratio_as_main_use
+    _, list_buildings = filter_buildings(locator, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type)
 
     ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
                                       'scenario-name': config.scenario_name},
