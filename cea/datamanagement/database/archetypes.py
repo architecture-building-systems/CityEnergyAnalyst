@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database import BaseDatabase
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
 @dataclass
-class ConstructionType:
+class ConstructionType(BaseDatabase):
     _index = 'const_type'
     construction_types: pd.DataFrame | None
 
@@ -25,11 +27,11 @@ class ConstructionType:
         return cls(construction_types)
 
     def to_dict(self):
-        return {'construction_types': self.construction_types.to_dict(orient='index') if self.construction_types is not None else None}
+        return self.dataclass_to_dict()
 
 
 @dataclass
-class Schedules:
+class Schedules(BaseDatabase):
     _index = 'use_type'
 
     monthly_multipliers: pd.DataFrame | None
@@ -49,12 +51,12 @@ class Schedules:
         return cls(monthly_multipliers, _library)
 
     def to_dict(self):
-        return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index') if self.monthly_multipliers is not None,
+        return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index') if self.monthly_multipliers is not None else None,
                 '_library': {k: v.to_dict(orient='records') for k, v in self._library.items()}}
 
 
 @dataclass
-class UseType:
+class UseType(BaseDatabase):
     _index = 'use_type'
 
     use_types: pd.DataFrame | None
@@ -75,7 +77,7 @@ class UseType:
 
 
 @dataclass
-class Archetypes:
+class Archetypes(BaseDatabase):
     construction: ConstructionType
     use: UseType
 
