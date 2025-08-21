@@ -750,7 +750,16 @@ def create_multi_building_plot(building_plots, project_path):
     # Generate individual chart data for each building
     charts_data = []
     for plot_obj in building_plots:
-        print(f"Processing building: {plot_obj.building}")
+        print(f"\n=== Building {plot_obj.building} ===")
+        # Check if dict_graph is unique per building
+        dict_graph = plot_obj.dict_graph
+        print(f"Winter occupied points: {len(dict_graph['t_op_occupied_winter'])}")
+        print(f"Summer occupied points: {len(dict_graph['t_op_occupied_summer'])}")
+        if len(dict_graph['t_op_occupied_winter']) > 0:
+            print(f"Winter temp range: {min(dict_graph['t_op_occupied_winter']):.2f} - {max(dict_graph['t_op_occupied_winter']):.2f}")
+        if len(dict_graph['t_op_occupied_summer']) > 0:
+            print(f"Summer temp range: {min(dict_graph['t_op_occupied_summer']):.2f} - {max(dict_graph['t_op_occupied_summer']):.2f}")
+        
         # Get traces and layout for this building
         traces = plot_obj.calc_graph()
         layout = create_layout("")
@@ -787,17 +796,14 @@ def create_multi_building_plot(building_plots, project_path):
             'chart_html': chart_html,
             'table_html': table_html
         })
-        print(f"Successfully processed building: {plot_obj.building}")
     
     # Create combined HTML layout - use the correct scenario path from the first plot object
     output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "Multi_Building_comfort-chart.html")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Generate charts HTML with horizontal layout
-    print(f"Total charts to generate: {len(charts_data)}")
     charts_html = ""
     for i, chart_data in enumerate(charts_data):
-        print(f"Generating HTML for chart {i+1}: {chart_data['building']}")
         margin_left = "100px" if i > 0 else "0px"
         charts_html += f"""
         <div style="display: inline-block; vertical-align: top; margin-left: {margin_left};">
