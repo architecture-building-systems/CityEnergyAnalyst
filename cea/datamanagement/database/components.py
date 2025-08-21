@@ -131,9 +131,13 @@ class Feedstocks(BaseDatabase):
 
     def to_dict(self):
         # Temporarily add dummy index to DataFrame for serialization
-        new_df = self.energy_carriers.copy()
-        new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
-        new_obj = Feedstocks(new_df.set_index('index'), self._library)
+        new_df = None
+        if self.energy_carriers is not None:
+            new_df = self.energy_carriers.copy()
+            new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
+            new_df.set_index('index', inplace=True)
+        
+        new_obj = Feedstocks(new_df, self._library)
 
         return new_obj.dataclass_to_dict()
 
