@@ -211,13 +211,13 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
             .academic-table th {
                 background-color: white;
                 font-weight: bold;
-                padding: 0px;
+                padding: 1px 0px;
                 text-align: left;
                 border-top: 2px solid #333;
                 border-bottom: 1px solid #333;
             }
             .academic-table td {
-                padding: 0px;
+                padding: 1px 0px;
                 text-align: left;
                 border: none;
             }
