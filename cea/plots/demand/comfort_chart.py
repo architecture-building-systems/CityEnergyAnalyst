@@ -4,13 +4,14 @@
 
 
 import math
+import os
 import pandas as pd
 import numpy as np
 import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.demand
-from cea.plots.colors import COLORS_TO_RGB
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 
 
 __author__ = "Gabriel Happle"
@@ -59,17 +60,17 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     def calc_graph(self):
         # calculate points of comfort in different conditions
 
-        # create scatter of comfort
-        traces_graph = calc_graph(self.dict_graph)
-
-        # create lines of constant relative humidity
-        traces_relative_humidity = create_relative_humidity_lines()
-        traces_graph.extend(traces_relative_humidity)
+        # create lines of constant relative humidity first (as background)
+        traces_graph = create_relative_humidity_lines()
+        
+        # create scatter of comfort on top
+        traces_comfort = calc_graph(self.dict_graph)
+        traces_graph.extend(traces_comfort)
 
         # add text for winter / summer comfort zones
-        trace_layout = go.Scattergl(
+        trace_layout = go.Scatter(
             x=[23, 26.5],
-            y=[3, 3],
+            y=[2, 3],
             text=['Winter comfort zone',
                   'Summer comfort zone'],
             mode='text',
@@ -77,6 +78,191 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         )
         traces_graph.append(trace_layout)
         return traces_graph
+
+    def _plot_data_producer(self):
+        """Override to bypass caching and ensure traces are returned correctly"""
+        traces = self.calc_graph()
+        # DON'T add the table here - let's see if that's what's breaking it
+        return traces
+        
+    def plot(self, auto_open=False):
+        """Use direct Plotly to ensure curves work, with table and proper styling"""
+        os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
+        
+        # Get all the traces directly (this works and shows curves)
+        traces = self.calc_graph()
+        
+        # Create the layout with styling (no title in chart)
+        layout = create_layout("")
+        
+        # Create figure with direct Plotly (this ensures curves show)
+        import plotly.graph_objs as go
+        from plotly.offline import plot
+        
+        fig = go.Figure(data=traces, layout=layout)
+        
+        # Apply CEA styling manually with narrower width
+        fig['layout'].update(dict(
+            hovermode='closest',
+            width=500,
+            height=500,
+            plot_bgcolor='#F7F7F7',  # Set chart background to light gray
+            paper_bgcolor='rgba(0,0,0,0)',  # Make outer background transparent
+            title=None  # Remove plotly chart title
+        ))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
+        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+        
+        # Make legend background transparent
+        fig['layout']['legend'].update(dict(
+            bgcolor='rgba(0,0,0,0)',  # Transparent background
+            bordercolor='rgba(0,0,0,0)'  # Transparent border
+        ))
+        
+        # Generate the chart HTML
+        import plotly.offline as pyo
+        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+        
+        # Generate the academic-style table HTML
+        table_html = self.create_academic_table()
+        
+        # Combine chart and table in a clean layout
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{self.title}</title>
+            <style>
+                body {{
+                    font-family: 'Arial', sans-serif;
+                    margin: 14px;
+                    background-color: white;
+                }}
+                .container {{
+                    max-width: 800px;
+                    margin: 0;
+                }}
+                .chart-container {{
+                    background-color: transparent;
+                    padding: 0;
+                    margin-bottom: 20px;
+                    width: 500px;
+                }}
+                .table-container {{
+                    background-color: transparent;
+                    padding: 0;
+                    width: 500px;
+                }}
+                h1 {{
+                    text-align: left;
+                    color: #333;
+                    font-size: 20px;
+                    margin-bottom: 0px;
+                    margin-left: 5px
+                }}
+                h2 {{
+                    color: #333;
+                    margin-bottom: 15px;
+                    display: none;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>{self.title}</h1>
+                <div class="chart-container">
+                    {chart_html}
+                </div>
+                <div class="table-container">
+                    {table_html}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        with open(self.output_path, 'w') as f:
+            f.write(full_html)
+        
+        print("Plotted '%s' to %s" % (self.name, self.output_path))
+        if auto_open:
+            import webbrowser
+            webbrowser.open(self.output_path)
+
+    def create_academic_table(self):
+        """Create academic-style HTML table with proper formatting"""
+        
+        # Get table data
+        table_data = self.calc_table()
+        
+        # Create academic-style HTML table
+        table_html = """
+        <style>
+            .academic-table {
+                width: 460px;
+                margin-left: 0px;
+                border-collapse: collapse;
+                font-family: 'Arial', sans-serif;
+                font-size: 12px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .academic-table th {
+                background-color: white;
+                font-weight: bold;
+                padding: 0px;
+                text-align: left;
+                border-top: 2px solid #333;
+                border-bottom: 1px solid #333;
+            }
+            .academic-table td {
+                padding: 0px;
+                text-align: left;
+                border: none;
+            }
+            .academic-table td:nth-child(2),
+            .academic-table td:nth-child(3) {
+                text-align: right;
+            }
+            .academic-table tr:last-child td {
+                border-bottom: 2px solid #333;
+            }
+            .academic-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+        </style>
+        <table class="academic-table">
+            <thead>
+                <tr>
+                    <th>Condition</th>
+                    <th>Comfort Hours</th>
+                    <th>Discomfort Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        # Add data rows
+        conditions = table_data['condition'].tolist()
+        comfort_hours = table_data['comfort [h]'].tolist()
+        uncomfort_hours = table_data['uncomfort [h]'].tolist()
+        
+        for i in range(len(conditions)):
+            table_html += f"""
+                <tr>
+                    <td>{conditions[i].title()}</td>
+                    <td>{comfort_hours[i]}</td>
+                    <td>{uncomfort_hours[i]}</td>
+                </tr>
+            """
+        
+        table_html += """
+            </tbody>
+        </table>
+        """
+        
+        return table_html
 
     def calc_table(self):
         """
@@ -161,6 +347,7 @@ def create_layout(title):
     """
 
     layout = {
+        'title': title,
         'xaxis': {
             'title': 'Operative Temperature [°C]',
             'range': [5, 35],
@@ -169,7 +356,7 @@ def create_layout(title):
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
             'side': 'right',
-            'range': [0, 25],
+            'range': [0, 40],
             'domain': YAXIS_DOMAIN_GRAPH,
             'showgrid': True,
         },
@@ -189,10 +376,10 @@ def create_layout(title):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLORS_TO_RGB['green'],
-                'opacity': 0.4,
+                'fillcolor': COLOURS_TO_RGB['blue'],
+                'opacity': 0.2,
                 'line': {
-                    'color': COLORS_TO_RGB['green'],
+                    'color': COLOURS_TO_RGB['blue'],
                 },
             },
             # Summer comfort zone
@@ -206,10 +393,10 @@ def create_layout(title):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLORS_TO_RGB['yellow'],
-                'opacity': 0.4,
+                'fillcolor': COLOURS_TO_RGB['red'],
+                'opacity': 0.2,
                 'line': {
-                    'color': COLORS_TO_RGB['yellow'],
+                    'color': COLOURS_TO_RGB['red'],
                 },
             },
 
@@ -232,17 +419,21 @@ def calc_graph(dict_graph):
     traces = []
 
     # draw scatter of comfort conditions in building
-    trace = go.Scattergl(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
+    trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
+                       name='occupied hours winter', mode='markers', 
+                       marker=dict(color=COLOURS_TO_RGB['red'], size=6, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
+                       name='unoccupied hours winter', mode='markers', 
+                       marker=dict(color=COLOURS_TO_RGB['blue'], size=4, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
+    trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
+                       name='occupied hours summer', mode='markers', 
+                       marker=dict(color=COLOURS_TO_RGB['purple'], size=6, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
+                       name='unoccupied hours summer', mode='markers', 
+                       marker=dict(color=COLOURS_TO_RGB['orange'], size=4, opacity=0.7))
     traces.append(trace)
 
     return traces
@@ -260,14 +451,15 @@ def create_relative_humidity_lines():
 
     # draw lines of constant relative humidity for psychrometric chart
     rh_lines = np.linspace(0.1, 1, 10)  # lines from 10% to 100%
-    t_axis = np.linspace(-5, 45, 50)
+    t_axis = np.linspace(5, 35, 50)  # match x-axis range
     P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
 
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scattergl(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
-                           line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
+        trace = go.Scatter(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
+                           line=dict(color='rgba(150,150,150,0.5)', width=1), showlegend=False,
+                           xaxis='x', yaxis='y', hoverinfo='skip')
         traces.append(trace)
 
     return traces
@@ -294,7 +486,7 @@ def calc_data(data_frame, locator):
     from cea.demand.building_properties.building_hvac import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    building_name = data_frame.name[0]
+    building_name = data_frame.name.iloc[0]
     air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
     has_winter = verify_has_season(building_name,
                                    air_con_data.loc[building_name, 'hvac_heat_starts'],
