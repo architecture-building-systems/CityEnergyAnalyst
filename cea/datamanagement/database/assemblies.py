@@ -5,12 +5,14 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database import BaseDatabase
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
 @dataclass
-class Envelope:
+class Envelope(BaseDatabase):
     _index = 'code'
 
     floor: pd.DataFrame
@@ -33,17 +35,10 @@ class Envelope:
         return cls(floor, mass, roof, shading, tightness, wall, window)
 
     def to_dict(self):
-        return {'floor': self.floor.to_dict(orient='index'),
-                'mass': self.mass.to_dict(orient='index'),
-                'roof': self.roof.to_dict(orient='index'),
-                'shading': self.shading.to_dict(orient='index'),
-                'tightness': self.tightness.to_dict(orient='index'),
-                'wall': self.wall.to_dict(orient='index'),
-                'window': self.window.to_dict(orient='index')}
-
+        return self.dataclass_to_dict(orient='index')
 
 @dataclass
-class HVAC:
+class HVAC(BaseDatabase):
     _index = 'code'
 
     controller: pd.DataFrame
@@ -62,15 +57,10 @@ class HVAC:
         return cls(controller, cooling, heating, hot_water, ventilation)
 
     def to_dict(self):
-        return {'controller': self.controller.to_dict(orient='index'),
-                'cooling': self.cooling.to_dict(orient='index'),
-                'heating': self.heating.to_dict(orient='index'),
-                'hot_water': self.hot_water.to_dict(orient='index'),
-                'ventilation': self.ventilation.to_dict(orient='index')}
-
+        return self.dataclass_to_dict(orient='index')
 
 @dataclass
-class Supply:
+class Supply(BaseDatabase):
     _index = 'code'
 
     cooling: pd.DataFrame
@@ -87,14 +77,10 @@ class Supply:
         return cls(cooling, heating, hot_water, electricity)
 
     def to_dict(self):
-        return {'cooling': self.cooling.to_dict(orient='index'),
-                'heating': self.heating.to_dict(orient='index'),
-                'hot_water': self.hot_water.to_dict(orient='index'),
-                'electricity': self.electricity.to_dict(orient='index')}
-
+        return self.dataclass_to_dict(orient='index')
 
 @dataclass
-class Assemblies:
+class Assemblies(BaseDatabase):
     envelope: Envelope
     hvac: HVAC
     supply: Supply
@@ -108,4 +94,4 @@ class Assemblies:
         )
 
     def to_dict(self):
-        return {'envelope': self.envelope.to_dict(), 'hvac': self.hvac.to_dict(), 'supply': self.supply.to_dict()}
+        return self.dataclass_to_dict()
