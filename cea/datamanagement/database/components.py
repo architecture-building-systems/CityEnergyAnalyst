@@ -1,43 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import pandas as pd
+
+from cea.datamanagement.database import BaseDatabase
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
-def dataclass_to_dict(dataclass_instance, orient: Literal['records', 'index'] = 'index'):
-    """Convert a dataclass instance to a dictionary, handling nested DataFrames and other types."""
-    result = {}
-    for field in fields(dataclass_instance):
-        value = getattr(dataclass_instance, field.name)
-
-        if isinstance(value, dict):
-            _orient = orient
-            # Handle special case for '_library' field
-            if field.name == '_library':
-                _orient = 'records'
-
-            # Handle dict of DataFrames
-            result[field.name] = {k: v.to_dict(orient=_orient) for k, v in value.items()}
-        elif hasattr(value, 'to_dict'):
-            # Handle single DataFrame
-            if isinstance(value, pd.DataFrame):
-                result[field.name] = value.to_dict(orient=orient)
-            else:
-                result[field.name] = value.to_dict()
-        else:
-            # Handle other types
-            result[field.name] = value
-    return result
-
-
 @dataclass
-class Conversion:
+class Conversion(BaseDatabase):
     _index = "code"
 
     absorption_chillers: dict[str, pd.DataFrame]
@@ -111,11 +87,11 @@ class Conversion:
         )
 
     def to_dict(self):
-        return dataclass_to_dict(self, "records")
+        return self.dataclass_to_dict("records")
 
 
 @dataclass
-class Distribution:
+class Distribution(BaseDatabase):
     _index = "code"
 
     thermal_grid: pd.DataFrame
@@ -126,11 +102,11 @@ class Distribution:
         return cls(thermal_grid)
 
     def to_dict(self):
-        return dataclass_to_dict(self)
+        return self.dataclass_to_dict()
 
 
 @dataclass
-class Feedstocks:
+class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
 
@@ -152,11 +128,11 @@ class Feedstocks:
         new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
         new_obj = Feedstocks(new_df.set_index('index'), self._library)
 
-        return dataclass_to_dict(new_obj)
+        return new_obj.dataclass_to_dict()
 
 
 @dataclass
-class Components:
+class Components(BaseDatabase):
     conversion: Conversion
     distribution: Distribution
     feedstocks: Feedstocks
@@ -169,4 +145,4 @@ class Components:
         return cls(conversion, distribution, feedstocks)
 
     def to_dict(self):
-        return dataclass_to_dict(self)
+        return self.dataclass_to_dict()
