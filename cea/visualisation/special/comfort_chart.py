@@ -354,7 +354,8 @@ def create_layout(title):
         'xaxis': {
             'title': 'Operative Temperature [°C]',
             'range': [5, 49],
-            'domain': XAXIS_DOMAIN_GRAPH
+            'domain': XAXIS_DOMAIN_GRAPH,
+            'dtick': 5  # Set tick interval to 5°C
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
