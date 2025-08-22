@@ -10,6 +10,8 @@ import numpy as np
 import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
+
+import cea.config
 import cea.plots.demand
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
@@ -892,11 +894,9 @@ def create_multi_building_plot(building_plots):
     webbrowser.open(output_path)
 
 
-def main():
-    import cea.config
+def main(config):
     import cea.inputlocator
 
-    config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
@@ -927,4 +927,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
