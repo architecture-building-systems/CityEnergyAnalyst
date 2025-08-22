@@ -737,16 +737,9 @@ def calc_constant_rh_curve(t_array, rh, p):
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
 
-def create_multi_building_plot(building_plots, project_path):
-    """
-    Create a single HTML file with multiple comfort charts arranged horizontally
-    
-    :param building_plots: List of ComfortChartPlot objects
-    :param project_path: Path to the project
-    """
-    
     # Generate individual chart data for each building
     charts_data = []
+    include_js = True
     for plot_obj in building_plots:
         print(f"\n=== Building {plot_obj.building} ===")
         # Check if dict_graph is unique per building
@@ -786,7 +779,9 @@ def create_multi_building_plot(building_plots, project_path):
         
         # Generate chart HTML and table
         import plotly.offline as pyo
-        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs='inline')
+        js_opt = 'cdn' if include_js else False
+        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs=js_opt)
+        include_js = False
         table_html = plot_obj.create_academic_table()
         
         charts_data.append({
