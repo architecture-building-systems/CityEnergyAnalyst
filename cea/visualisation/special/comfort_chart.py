@@ -736,7 +736,7 @@ def calc_constant_rh_curve(t_array, rh, p):
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
-
+def create_multi_building_plot(building_plots):
     # Generate individual chart data for each building
     charts_data = []
     include_js = True
@@ -923,7 +923,7 @@ def main():
         building_plots.append(plot_obj)
     
     # Create multi-building plot
-    create_multi_building_plot(building_plots, config.project)
+    create_multi_building_plot(building_plots)
 
 
 if __name__ == '__main__':
