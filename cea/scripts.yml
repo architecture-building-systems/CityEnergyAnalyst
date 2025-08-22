@@ -692,7 +692,7 @@ Visualisation:
     short_description: Plot comfort and discomfort hours for buildings
     description: This Feature plots comfort and discomfort hours for buildings
     interfaces: [cli, dashboard]
-    module: cea.visualisation.plot_comfort_chart
+    module: cea.visualisation.special.comfort_chart
     parameters: ['general:scenario', plots-comfort-chart, plots-building-filter]
     input-files:
       - [get_total_demand]
