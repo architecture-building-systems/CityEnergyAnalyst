@@ -353,13 +353,13 @@ def create_layout(title):
         'title': title,
         'xaxis': {
             'title': 'Operative Temperature [°C]',
-            'range': [5, 35],
+            'range': [5, 49],
             'domain': XAXIS_DOMAIN_GRAPH
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
             'side': 'right',
-            'range': [0, 40],
+            'range': [0, 44],
             'domain': YAXIS_DOMAIN_GRAPH,
             'showgrid': True,
         },
@@ -454,7 +454,7 @@ def create_relative_humidity_lines():
 
     # draw lines of constant relative humidity for psychrometric chart
     rh_lines = np.linspace(0.1, 1, 10)  # lines from 10% to 100%
-    t_axis = np.linspace(5, 35, 50)  # match x-axis range
+    t_axis = np.linspace(5, 49, 50)  # match x-axis range
     P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
 
     for rh_line in rh_lines:
@@ -793,7 +793,7 @@ def create_multi_building_plot(building_plots):
         })
     
     # Create combined HTML layout - use the correct scenario path from the first plot object
-    output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "Multi_Building_comfort-chart.html")
+    output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "comfort-chart.html")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Generate charts HTML with horizontal layout
