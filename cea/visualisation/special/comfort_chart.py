@@ -97,7 +97,6 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         
         # Create figure with direct Plotly (this ensures curves show)
         import plotly.graph_objs as go
-        from plotly.offline import plot
         
         fig = go.Figure(data=traces, layout=layout)
         
@@ -745,7 +744,6 @@ def create_multi_building_plot(building_plots, project_path):
     :param building_plots: List of ComfortChartPlot objects
     :param project_path: Path to the project
     """
-    import cea.inputlocator
     
     # Generate individual chart data for each building
     charts_data = []
