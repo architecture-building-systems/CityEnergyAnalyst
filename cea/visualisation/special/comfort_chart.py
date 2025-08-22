@@ -885,13 +885,15 @@ def create_multi_building_plot(building_plots):
     </body>
     </html>
     """
-    
+
     with open(output_path, 'w') as f:
         f.write(full_html)
     
     print(f"Plotted multi-building comfort chart to {output_path}")
     import webbrowser
     webbrowser.open(output_path)
+    
+    return full_html
 
 
 def main(config):
@@ -923,7 +925,9 @@ def main(config):
         building_plots.append(plot_obj)
     
     # Create multi-building plot
-    create_multi_building_plot(building_plots)
+    plot_html = create_multi_building_plot(building_plots)
+
+    return plot_html
 
 
 if __name__ == '__main__':
