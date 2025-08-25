@@ -36,8 +36,12 @@ class Conversion(BaseDatabase):
     @staticmethod
     def _load_and_group_csv(csv_path: str, index_column: str) -> dict[str, pd.DataFrame]:
         """Load CSV and group by index column, returning dict of DataFrames."""
-        df = pd.read_csv(csv_path)
-        return {str(code): group for code, group in df.groupby(index_column)}
+        try:
+            df = pd.read_csv(csv_path)
+            return {str(code): group for code, group in df.groupby(index_column)}
+        except FileNotFoundError as e:
+            print(f"Error loading {csv_path}: {e}")
+            return {}
 
     @classmethod
     def init_database(cls, locator: InputLocator):
