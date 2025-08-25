@@ -5,96 +5,106 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database import BaseDatabase
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
-@dataclass
-class Envelope:
-    _index = 'code'
+class BaseAssemblyDatabase(BaseDatabase):
+    _index: str = 'code'
+    
+    @classmethod
+    def init_database(cls, locator: InputLocator):
+        raise NotImplementedError
 
-    floor: pd.DataFrame
-    mass: pd.DataFrame
-    roof: pd.DataFrame
-    shading: pd.DataFrame
-    tightness: pd.DataFrame
-    wall: pd.DataFrame
-    window: pd.DataFrame
+    def to_dict(self):
+        return self.dataclass_to_dict()
+    
+    @classmethod
+    def _read_mapping(cls, locator: InputLocator, mapping: dict[str, str]) -> dict[str, pd.DataFrame | None]:
+        """
+        Helper to read multiple CSVs using a mapping {attr_name: locator_method_name}.
+        Returns a dict of {attr_name: DataFrame} ready to be passed to the dataclass constructor.
+        """
+        frames = {}
+        for attr, locator_method in mapping.items():
+            if isinstance(locator_method, str):
+                try:
+                    path = getattr(locator, locator_method)()
+                except AttributeError:
+                    raise ValueError(f"Locator method for {attr} not found: {locator_method}")
+            else:
+                raise ValueError(f"Locator method for {attr} must be a string label, got {type(locator_method)}")
+
+            try:
+                frames[attr] = pd.read_csv(path).set_index(cls._index)
+            except FileNotFoundError:
+                frames[attr] = None
+        return frames
+
+
+@dataclass
+class Envelope(BaseAssemblyDatabase):
+    floor: pd.DataFrame | None
+    mass: pd.DataFrame | None
+    roof: pd.DataFrame | None
+    shading: pd.DataFrame | None
+    tightness: pd.DataFrame | None
+    wall: pd.DataFrame | None
+    window: pd.DataFrame | None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        floor = pd.read_csv(locator.get_database_assemblies_envelope_floor()).set_index(cls._index)
-        mass = pd.read_csv(locator.get_database_assemblies_envelope_mass()).set_index(cls._index)
-        roof = pd.read_csv(locator.get_database_assemblies_envelope_roof()).set_index(cls._index)
-        shading = pd.read_csv(locator.get_database_assemblies_envelope_shading()).set_index(cls._index)
-        tightness = pd.read_csv(locator.get_database_assemblies_envelope_tightness()).set_index(cls._index)
-        wall = pd.read_csv(locator.get_database_assemblies_envelope_wall()).set_index(cls._index)
-        window = pd.read_csv(locator.get_database_assemblies_envelope_window()).set_index(cls._index)
-        return cls(floor, mass, roof, shading, tightness, wall, window)
-
-    def to_dict(self):
-        return {'floor': self.floor.to_dict(orient='index'),
-                'mass': self.mass.to_dict(orient='index'),
-                'roof': self.roof.to_dict(orient='index'),
-                'shading': self.shading.to_dict(orient='index'),
-                'tightness': self.tightness.to_dict(orient='index'),
-                'wall': self.wall.to_dict(orient='index'),
-                'window': self.window.to_dict(orient='index')}
-
+        mapping = {
+            "floor": "get_database_assemblies_envelope_floor",
+            "mass": "get_database_assemblies_envelope_mass",
+            "roof": "get_database_assemblies_envelope_roof",
+            "shading": "get_database_assemblies_envelope_shading",
+            "tightness": "get_database_assemblies_envelope_tightness",
+            "wall": "get_database_assemblies_envelope_wall",
+            "window": "get_database_assemblies_envelope_window",
+        }
+        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
-class HVAC:
-    _index = 'code'
-
-    controller: pd.DataFrame
-    cooling: pd.DataFrame
-    heating: pd.DataFrame
-    hot_water: pd.DataFrame
-    ventilation: pd.DataFrame
+class HVAC(BaseAssemblyDatabase):
+    controller: pd.DataFrame | None
+    cooling: pd.DataFrame | None
+    heating: pd.DataFrame | None
+    hot_water: pd.DataFrame | None
+    ventilation: pd.DataFrame | None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        controller = pd.read_csv(locator.get_database_assemblies_hvac_controller()).set_index(cls._index)
-        cooling = pd.read_csv(locator.get_database_assemblies_hvac_cooling()).set_index(cls._index)
-        heating = pd.read_csv(locator.get_database_assemblies_hvac_heating()).set_index(cls._index)
-        hot_water = pd.read_csv(locator.get_database_assemblies_hvac_hot_water()).set_index(cls._index)
-        ventilation = pd.read_csv(locator.get_database_assemblies_hvac_ventilation()).set_index(cls._index)
-        return cls(controller, cooling, heating, hot_water, ventilation)
-
-    def to_dict(self):
-        return {'controller': self.controller.to_dict(orient='index'),
-                'cooling': self.cooling.to_dict(orient='index'),
-                'heating': self.heating.to_dict(orient='index'),
-                'hot_water': self.hot_water.to_dict(orient='index'),
-                'ventilation': self.ventilation.to_dict(orient='index')}
-
+        mapping = {
+            "controller": "get_database_assemblies_hvac_controller",
+            "cooling": "get_database_assemblies_hvac_cooling",
+            "heating": "get_database_assemblies_hvac_heating",
+            "hot_water": "get_database_assemblies_hvac_hot_water",
+            "ventilation": "get_database_assemblies_hvac_ventilation",
+        }
+        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
-class Supply:
-    _index = 'code'
-
-    cooling: pd.DataFrame
-    heating: pd.DataFrame
-    hot_water: pd.DataFrame
-    electricity: pd.DataFrame
+class Supply(BaseAssemblyDatabase):
+    cooling: pd.DataFrame | None
+    heating: pd.DataFrame | None
+    hot_water: pd.DataFrame | None
+    electricity: pd.DataFrame | None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
-        cooling = pd.read_csv(locator.get_database_assemblies_supply_cooling()).set_index(cls._index)
-        heating = pd.read_csv(locator.get_database_assemblies_supply_heating()).set_index(cls._index)
-        hot_water = pd.read_csv(locator.get_database_assemblies_supply_hot_water()).set_index(cls._index)
-        electricity = pd.read_csv(locator.get_database_assemblies_supply_electricity()).set_index(cls._index)
-        return cls(cooling, heating, hot_water, electricity)
-
-    def to_dict(self):
-        return {'cooling': self.cooling.to_dict(orient='index'),
-                'heating': self.heating.to_dict(orient='index'),
-                'hot_water': self.hot_water.to_dict(orient='index'),
-                'electricity': self.electricity.to_dict(orient='index')}
-
+        mapping = {
+            "cooling": "get_database_assemblies_supply_cooling",
+            "heating": "get_database_assemblies_supply_heating",
+            "hot_water": "get_database_assemblies_supply_hot_water",
+            "electricity": "get_database_assemblies_supply_electricity",
+        }
+        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
-class Assemblies:
+class Assemblies(BaseDatabase):
     envelope: Envelope
     hvac: HVAC
     supply: Supply
@@ -108,4 +118,4 @@ class Assemblies:
         )
 
     def to_dict(self):
-        return {'envelope': self.envelope.to_dict(), 'hvac': self.hvac.to_dict(), 'supply': self.supply.to_dict()}
+        return self.dataclass_to_dict()

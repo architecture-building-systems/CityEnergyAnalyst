@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from cea import CEAException
 from cea.datamanagement.database.archetypes import Archetypes
 from cea.datamanagement.database.assemblies import Assemblies
 from cea.datamanagement.database.components import Components
@@ -39,6 +40,8 @@ def _replace_nan_with_none(obj):
     else:
         return obj
 
+class CEADatabaseException(CEAException):
+    """Custom exception for CEA database errors."""
 
 class CEADatabase:
     def __init__(self, locator: InputLocator):
@@ -47,8 +50,7 @@ class CEADatabase:
             self.assemblies = Assemblies.init_database(locator)
             self.components = Components.init_database(locator)
         except Exception as e:
-            # TODO: Use CEAException or a custom exception class
-            raise RuntimeError(f"Failed to initialize CEA database: {e}")
+            raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
 
     def to_dict(self) -> dict:
         data = {
