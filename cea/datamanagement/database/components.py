@@ -71,24 +71,7 @@ class Conversion(BaseDatabase):
             component_data[component.lower()] = cls._load_and_group_csv(
                 locator.get_db4_components_conversion_conversion_technology_csv(component), cls._index)
 
-        return cls(
-            absorption_chillers=component_data["absorption_chillers"],
-            boilers=component_data["boilers"],
-            bore_holes=component_data["bore_holes"],
-            cogeneration_plants=component_data["cogeneration_plants"],
-            cooling_towers=component_data["cooling_towers"],
-            fuel_cells=component_data["fuel_cells"],
-            heat_exchangers=component_data["heat_exchangers"],
-            heat_pumps=component_data["heat_pumps"],
-            hydraulic_pumps=component_data["hydraulic_pumps"],
-            photovoltaic_panels=component_data["photovoltaic_panels"],
-            photovoltaic_thermal_panels=component_data["photovoltaic_thermal_panels"],
-            power_transformers=component_data["power_transformers"],
-            solar_collectors=component_data["solar_collectors"],
-            thermal_energy_storages=component_data["thermal_energy_storages"],
-            unitary_air_conditioners=component_data["unitary_air_conditioners"],
-            vapor_compression_chillers=component_data["vapor_compression_chillers"]
-        )
+        return cls(**component_data)
 
     def to_dict(self):
         return self.dataclass_to_dict("records")
