@@ -16,32 +16,32 @@ if TYPE_CHECKING:
 class Conversion(BaseDatabase):
     _index = "code"
 
-    absorption_chillers: dict[str, pd.DataFrame]
-    boilers: dict[str, pd.DataFrame]
-    bore_holes: dict[str, pd.DataFrame]
-    cogeneration_plants: dict[str, pd.DataFrame]
-    cooling_towers: dict[str, pd.DataFrame]
-    fuel_cells: dict[str, pd.DataFrame]
-    heat_exchangers: dict[str, pd.DataFrame]
-    heat_pumps: dict[str, pd.DataFrame]
-    hydraulic_pumps: dict[str, pd.DataFrame]
-    photovoltaic_panels: dict[str, pd.DataFrame]
-    photovoltaic_thermal_panels: dict[str, pd.DataFrame]
-    power_transformers: dict[str, pd.DataFrame]
-    solar_collectors: dict[str, pd.DataFrame]
-    thermal_energy_storages: dict[str, pd.DataFrame]
-    unitary_air_conditioners: dict[str, pd.DataFrame]
-    vapor_compression_chillers: dict[str, pd.DataFrame]
+    absorption_chillers: dict[str, pd.DataFrame] | None
+    boilers: dict[str, pd.DataFrame] | None
+    bore_holes: dict[str, pd.DataFrame] | None
+    cogeneration_plants: dict[str, pd.DataFrame] | None
+    cooling_towers: dict[str, pd.DataFrame] | None
+    fuel_cells: dict[str, pd.DataFrame] | None
+    heat_exchangers: dict[str, pd.DataFrame] | None
+    heat_pumps: dict[str, pd.DataFrame] | None
+    hydraulic_pumps: dict[str, pd.DataFrame] | None
+    photovoltaic_panels: dict[str, pd.DataFrame] | None
+    photovoltaic_thermal_panels: dict[str, pd.DataFrame] | None
+    power_transformers: dict[str, pd.DataFrame] | None
+    solar_collectors: dict[str, pd.DataFrame] | None
+    thermal_energy_storages: dict[str, pd.DataFrame] | None
+    unitary_air_conditioners: dict[str, pd.DataFrame] | None
+    vapor_compression_chillers: dict[str, pd.DataFrame] | None
 
     @staticmethod
-    def _load_and_group_csv(csv_path: str, index_column: str) -> dict[str, pd.DataFrame]:
+    def _load_and_group_csv(csv_path: str, index_column: str) -> dict[str, pd.DataFrame] | None:
         """Load CSV and group by index column, returning dict of DataFrames."""
         try:
             df = pd.read_csv(csv_path)
             return {str(code): group for code, group in df.groupby(index_column)}
         except FileNotFoundError as e:
             print(f"Error loading {csv_path}: {e}")
-            return {}
+            return None
 
     @classmethod
     def init_database(cls, locator: InputLocator):
