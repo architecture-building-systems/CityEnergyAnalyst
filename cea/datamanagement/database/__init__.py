@@ -12,9 +12,9 @@ if TYPE_CHECKING:
 @dataclass
 class BaseDatabase(ABC):
 
-    @property
+    @classmethod
     @abstractmethod
-    def _locator_mapping(self) -> dict[str, str]:
+    def _locator_mapping(cls) -> dict[str, str]:
         """A mapping of locator names to their corresponding database fields."""
 
     @classmethod
