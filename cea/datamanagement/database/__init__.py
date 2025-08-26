@@ -8,6 +8,11 @@ import pandas as pd
 @dataclass
 class BaseDatabase(ABC):
 
+    @property
+    @abstractmethod
+    def _locator_mapping(self) -> dict[str, str]:
+        """A mapping of locator names to their corresponding database fields."""
+
     @classmethod
     @abstractmethod
     def init_database(cls, locator) -> Self:
