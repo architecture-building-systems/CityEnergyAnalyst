@@ -9,13 +9,10 @@ import pandas as pd
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
-@dataclass
-class BaseDatabase(ABC):
 
-    @classmethod
-    @abstractmethod
-    def _locator_mapping(cls) -> dict[str, str]:
-        """A mapping of locator names to their corresponding database fields."""
+@dataclass
+class Base(ABC):
+    """Base class for database objects."""
 
     @classmethod
     @abstractmethod
@@ -52,9 +49,14 @@ class BaseDatabase(ABC):
         return result
 
 @dataclass
-class BaseDatabaseCollection(BaseDatabase):
+class BaseDatabase(Base):
+    """Base class for single database objects."""
 
     @classmethod
+    @abstractmethod
     def _locator_mapping(cls) -> dict[str, str]:
-        # Database collections do not have a specific locator mapping
-        return {}
+        """A mapping of locator names to their corresponding database fields."""
+
+@dataclass
+class BaseDatabaseCollection(Base):
+    """Base class for database object collections."""
