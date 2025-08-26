@@ -54,7 +54,7 @@ class BaseDatabase(ABC):
 @dataclass
 class BaseDatabaseCollection(BaseDatabase):
 
-    @property
-    def _locator_mapping(self) -> dict[str, str]:
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
         # Database collections do not have a specific locator mapping
         return {}
