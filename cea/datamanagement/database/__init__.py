@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any, Literal, Self, TYPE_CHECKING
