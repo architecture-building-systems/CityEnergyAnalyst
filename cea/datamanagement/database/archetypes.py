@@ -18,6 +18,12 @@ class ConstructionType(BaseDatabase):
     construction_types: pd.DataFrame | None
 
     @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "construction_types": "get_database_archetypes_construction_type"
+        }
+
+    @classmethod
     def init_database(cls, locator: InputLocator):
         try:
             construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()).set_index(cls._index)
@@ -36,6 +42,13 @@ class Schedules(BaseDatabase):
 
     monthly_multipliers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "monthly_multipliers": "get_database_archetypes_schedules_monthly_multiplier",
+            "_library": "get_db4_archetypes_schedules_library_folder"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
@@ -61,6 +74,12 @@ class UseType(BaseDatabase):
 
     use_types: pd.DataFrame | None
     schedules: Schedules
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "use_types": "get_database_archetypes_use_type"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):

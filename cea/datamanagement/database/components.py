@@ -42,6 +42,11 @@ class Conversion(BaseDatabase):
         except FileNotFoundError as e:
             print(f"Error loading {csv_path}: {e}")
             return None
+    
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        # Return empty since the mapping logic is not very straightforward
+        return {}
 
     @classmethod
     def init_database(cls, locator: InputLocator):
@@ -84,6 +89,12 @@ class Distribution(BaseDatabase):
     thermal_grid: pd.DataFrame | None
 
     @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "thermal_grid": "get_database_components_distribution_thermal_grid"
+        }
+
+    @classmethod
     def init_database(cls, locator: InputLocator):
         try:
             thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
@@ -102,6 +113,13 @@ class Feedstocks(BaseDatabase):
 
     energy_carriers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "energy_carriers": "get_database_components_feedstocks_energy_carriers",
+            "_library": "get_db4_components_feedstocks_library_folder"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
