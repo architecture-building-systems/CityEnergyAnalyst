@@ -50,3 +50,11 @@ class BaseDatabase(ABC):
                 # Handle other types
                 result[field.name] = value
         return result
+
+@dataclass
+class BaseDatabaseCollection(BaseDatabase):
+
+    @property
+    def _locator_mapping(self) -> dict[str, str]:
+        # Database collections do not have a specific locator mapping
+        return {}

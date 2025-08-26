@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -130,7 +130,7 @@ class Feedstocks(BaseDatabase):
 
 
 @dataclass
-class Components(BaseDatabase):
+class Components(BaseDatabaseCollection):
     conversion: Conversion
     distribution: Distribution
     feedstocks: Feedstocks

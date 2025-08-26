@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -77,7 +77,7 @@ class UseType(BaseDatabase):
 
 
 @dataclass
-class Archetypes(BaseDatabase):
+class Archetypes(BaseDatabaseCollection):
     construction: ConstructionType
     use: UseType
 

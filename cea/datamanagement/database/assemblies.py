@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -104,7 +104,7 @@ class Supply(BaseAssemblyDatabase):
         return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
-class Assemblies(BaseDatabase):
+class Assemblies(BaseDatabaseCollection):
     envelope: Envelope
     hvac: HVAC
     supply: Supply
