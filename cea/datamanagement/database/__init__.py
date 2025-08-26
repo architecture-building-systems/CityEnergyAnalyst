@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, TYPE_CHECKING
 
 import pandas as pd
 
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
 
 @dataclass
 class BaseDatabase(ABC):
@@ -15,7 +17,7 @@ class BaseDatabase(ABC):
 
     @classmethod
     @abstractmethod
-    def init_database(cls, locator) -> Self:
+    def init_database(cls, locator: InputLocator) -> Self:
         pass
 
     @abstractmethod
