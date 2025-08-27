@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
-from typing import Any, Literal, Self, TYPE_CHECKING
+from typing import Any, Literal, Self, TYPE_CHECKING, get_type_hints
 
 import pandas as pd
+
+from cea.schemas import schemas
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -57,6 +59,33 @@ class BaseDatabase(Base):
     def _locator_mapping(cls) -> dict[str, str]:
         """A mapping of locator names to their corresponding database fields."""
 
+    @classmethod
+    def schema(cls) -> dict[str, Any]:
+        """Return the database schema for the object."""
+        schema = schemas()
+        
+        out = dict()
+        for field in fields(cls):
+            locator_method = cls._locator_mapping().get(field.name)
+            if locator_method:
+                out[field.name] = schema.get(locator_method, None)
+            else:
+                print(f"Warning: No locator mapping found for field `{field.name}` in class `{cls.__name__}`")
+        return out
+
 @dataclass
 class BaseDatabaseCollection(Base):
     """Base class for database object collections."""
+
+    @classmethod
+    def schema(cls) -> dict[str, Any]:
+        """Return the database schema for the collection."""
+        out = dict()
+        for name, field_class in get_type_hints(cls).items():
+            try:
+                schema = field_class.schema()
+                out[name] = schema
+            except Exception as e:
+                raise ValueError(f"Error getting schema for field `{name}`: {e}") 
+        return out
+        

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -61,3 +61,11 @@ class CEADatabase:
 
         return _replace_nan_with_none(data)
 
+    @classmethod
+    def schema(cls) -> dict[str, dict[str, Any]]:
+        schema = {
+            'archetypes': Archetypes.schema(),
+            'assemblies': Assemblies.schema(),
+            'components': Components.schema(),
+        }
+        return schema
