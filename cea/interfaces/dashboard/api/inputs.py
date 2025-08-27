@@ -20,15 +20,13 @@ import cea.config
 import cea.inputlocator
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
-from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
-from cea.utilities.schedule_reader import schedule_to_file, get_all_schedule_names, schedule_to_dataframe, \
-    read_cea_schedule, save_cea_schedules
+from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 router = APIRouter()
