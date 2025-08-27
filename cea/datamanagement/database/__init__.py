@@ -69,6 +69,8 @@ class BaseDatabase(Base):
             locator_method = cls._locator_mapping().get(field.name)
             if locator_method:
                 out[field.name] = schema.get(locator_method, None)
+                if out[field.name] is None:
+                    print(f"Warning: No schema found for locator `{locator_method}` in class `{cls.__name__}`")
             else:
                 print(f"Warning: No locator mapping found for field `{field.name}` in class `{cls.__name__}`")
         return out
