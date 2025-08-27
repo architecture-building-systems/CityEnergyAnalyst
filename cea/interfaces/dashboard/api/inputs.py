@@ -22,7 +22,6 @@ import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.api.databases import DATABASES_SCHEMA_KEYS
 from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -417,21 +416,6 @@ async def get_input_database_data(project_info: CEAProjectInfo):
 async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
-    for db_type in payload:
-        for db_name in payload[db_type]:
-            if db_name == 'USE_TYPES':
-                database_dict_to_file(payload[db_type]['USE_TYPES']['USE_TYPE_PROPERTIES'],
-                                      locator.get_database_archetypes_schedules())
-                for archetype, schedule_dict in payload[db_type]['USE_TYPES']['SCHEDULES'].items():
-                    schedule_dict_to_file(
-                        schedule_dict,
-                        locator.get_database_archetypes_schedules(archetype)
-                    )
-            else:
-                locator_method = DATABASES_SCHEMA_KEYS[db_name][0]
-                db_path = locator.__getattribute__(locator_method)()
-                database_dict_to_file(payload[db_type][db_name], db_path)
-
     return payload
 
 
@@ -480,39 +464,6 @@ async def check_input_database(project_info: CEAProjectInfo):
         )
 
     return {'status': 'success', 'message': True}
-
-
-@router.get("/databases/validate")
-async def validate_input_database(project_info: CEAProjectInfo):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
-    # TODO: Add plugin support
-    schemas = cea.schemas.schemas(plugins=[])
-    validator = InputFileValidator(locator, plugins=[])
-    out = dict()
-
-    for db_name, schema_keys in DATABASES_SCHEMA_KEYS.items():
-        for schema_key in schema_keys:
-            schema = schemas[schema_key]
-            if schema_key != 'get_database_standard_schedules_use':
-                db_path = locator.__getattribute__(schema_key)()
-                try:
-                    df = pd.read_excel(db_path, sheet_name=None)
-                    errors = validator.validate(df, schema)
-                    if errors:
-                        out[db_name] = errors
-                except IOError:
-                    out[db_name] = [{}, 'Could not find or read file: {}'.format(db_path)]
-            else:
-                for use_type in get_all_schedule_names(locator.get_database_use_types_folder()):
-                    db_path = locator.__getattribute__(schema_key)(use_type)
-                    try:
-                        df = schedule_to_dataframe(db_path)
-                        errors = validator.validate(df, schema)
-                        if errors:
-                            out[use_type] = errors
-                    except IOError:
-                        out[use_type] = [{}, 'Could not find or read file: {}'.format(db_path)]
-    return out
 
 
 def database_dict_to_file(db_dict, csv_path):
