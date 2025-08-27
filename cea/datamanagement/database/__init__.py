@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
+import inspect
 from typing import Any, Literal, Self, TYPE_CHECKING, get_type_hints
 
 import pandas as pd
@@ -65,7 +66,16 @@ class BaseDatabase(Base):
         schema = schemas()
         
         out = dict()
+        type_hints = get_type_hints(cls)
         for field in fields(cls):
+            # Check for nested BaseDatabase classes
+            field_type = type_hints.get(field.name)
+            if field_type is not None and inspect.isclass(field_type):
+                # Now safe to use issubclass
+                if issubclass(field_type, BaseDatabase):
+                    out[field.name] = field_type.schema()
+                    continue
+            
             locator_method = cls._locator_mapping().get(field.name)
             if locator_method:
                 out[field.name] = schema.get(locator_method, None)
