@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 import cea.config
 import cea.inputlocator
 import cea.schemas
-from cea.databases import CEADatabase
+from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.databases_verification import InputFileValidator
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.databases import DATABASES_SCHEMA_KEYS
@@ -405,7 +405,7 @@ async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
         return await run_in_threadpool(lambda: CEADatabase(locator).to_dict())
-    except IOError as e:
+    except CEADatabaseException as e:
         print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

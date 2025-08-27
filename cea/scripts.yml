@@ -684,7 +684,7 @@ Visualisation:
     description: This Feature plots bar chart of the results of building energy demand forecasting
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-demand]
+    parameters: ['general:scenario', plots-general, plots-demand, plots-building-filter]
     input-files:
       - [get_total_demand]
       - [get_building_architecture]
@@ -696,7 +696,19 @@ Visualisation:
     description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-solar]
+    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
     input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-comfort-chart
+    label: Plot - Building Comfort Chart
+    short_description: Plot comfort and discomfort hours for buildings
+    description: This Feature plots comfort and discomfort hours for buildings
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.comfort_chart
+    parameters: ['general:scenario', plots-comfort-chart, plots-building-filter]
+    input-files:
+      - [get_total_demand]
       - [get_building_architecture]
       - [get_zone_geometry]

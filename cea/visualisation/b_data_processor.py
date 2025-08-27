@@ -22,7 +22,7 @@ x_to_plot_building = ['building', 'building_faceted_by_months', 'building_facete
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, plot_config, plot_config_general, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter,plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plot_config_general.buildings
@@ -33,11 +33,11 @@ class data_processor:
         self.x_facet = plot_instance.x_facet
         self.x_sorted_by = plot_config_general.x_sorted_by
         self.x_sorted_reversed = plot_config_general.x_sorted_reversed
-        self.integer_year_start = plot_config_general.filter_buildings_by_year_start
-        self.integer_year_end = plot_config_general.filter_buildings_by_year_end
-        self.list_construction_type = plot_config_general.filter_buildings_by_construction_type
-        self.list_use_type = plot_config_general.filter_buildings_by_use_type
-        self.min_ratio_as_main_use = plot_config_general.min_ratio_as_main_use
+        self.integer_year_start = plots_building_filter.filter_buildings_by_year_start
+        self.integer_year_end = plots_building_filter.filter_buildings_by_year_end
+        self.list_construction_type = plots_building_filter.filter_buildings_by_construction_type
+        self.list_use_type = plots_building_filter.filter_buildings_by_use_type
+        self.min_ratio_as_main_use = plots_building_filter.min_ratio_as_main_use
 
         if plot_cea_feature in ('pv', 'sc'):
             self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}"
@@ -540,8 +540,8 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 
 
 # Main function
-def calc_x_y_metric(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
-    plot_instance_b = data_processor(plot_config, plot_config_general, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
+def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter,plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
     if plot_cea_feature in ["demand", "pv", "pvt", "sc"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
