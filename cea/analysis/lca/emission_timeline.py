@@ -19,14 +19,14 @@ class BuildingEmissionTimeline:
     ):
         self.name = building_name
         self.locator = locator
-        self.building_properties = building_properties
+        # self.building_properties = building_properties
         self.envelope_db = envelope_db
-        self.geometry = self.building_properties.geometry[self.name]
-        self.envelope = self.building_properties.envelope[self.name]
+        self.geometry = building_properties.geometry[self.name]
+        self.envelope = building_properties.envelope[self.name]
+        self.get_component_quantity(building_properties)
 
     def generate_timeline(self, end_year: int) -> None:
         self.initialize_timeline(end_year)
-        self.get_component_quantity()
         self.fill_embodied_emissions()
         self.fill_operational_emissions()
 
@@ -142,7 +142,7 @@ class BuildingEmissionTimeline:
     ) -> None:
         self.timeline.loc[year, col] += emission
 
-    def get_component_quantity(self) -> None:
+    def get_component_quantity(self, building_properties: BuildingProperties) -> None:
         # fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
         #           'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
         #           'Awall_ag', 'footprint', 'Hs_ag']
@@ -154,7 +154,7 @@ class BuildingEmissionTimeline:
         #               In case where building touches the ground, this value is zero.
         # Awall_ag:     total area of walls
         # footprint:    the area of the building footprint
-        rc_model_props = self.building_properties.rc_model[self.name]
+        rc_model_props = building_properties.rc_model[self.name]
 
         self.surface_area = {}
         self.surface_area["Awall_ag"] = rc_model_props["Awall_ag"]
