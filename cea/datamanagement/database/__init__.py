@@ -43,7 +43,14 @@ class Base(ABC):
             elif hasattr(value, 'to_dict'):
                 # Handle single DataFrame
                 if isinstance(value, pd.DataFrame):
-                    result[field.name] = value.to_dict(orient=orient)
+                    try:
+                        result[field.name] = value.to_dict(orient=orient)
+                    except ValueError:
+                        # Deal with duplicates in index e.g. "Rsun"
+                        if any(value.index.duplicated()):
+                            print(f"Warning: Duplicated index found in DataFrame for field `{field.name}`")
+                            value = value[~value.index.duplicated(keep='first')]
+                            result[field.name] = value.to_dict(orient=orient)
                 else:
                     result[field.name] = value.to_dict()
             else:
