@@ -6919,6 +6919,17 @@ get_database_archetypes_construction_type:
         type: string
         unit: '[-]'
         values: alphanumeric
+      type_base:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_floor
+            sheet: FLOOR
+        description: Basement floor construction assembly (relates to "code" in
+          ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
       type_leak:
         choice:
           lookup:
