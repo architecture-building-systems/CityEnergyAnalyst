@@ -46,7 +46,24 @@ class Conversion(BaseDatabase):
     @classmethod
     def _locator_mapping(cls) -> dict[str, str]:
         # Return empty since the mapping logic is not very straightforward
-        return {}
+        return {
+            "absorption_chillers": "get_database_components_conversion_absorption_chillers",
+            "boilers": "get_database_components_conversion_boilers",
+            "bore_holes": "get_database_components_conversion_bore_holes",
+            "cogeneration_plants": "get_database_components_conversion_cogeneration_plants",
+            "cooling_towers": "get_database_components_conversion_cooling_towers",
+            "fuel_cells": "get_database_components_conversion_fuel_cells",
+            "heat_exchangers": "get_database_components_conversion_heat_exchangers",
+            "heat_pumps": "get_database_components_conversion_heat_pumps",
+            "hydraulic_pumps": "get_database_components_conversion_hydraulic_pumps",
+            "photovoltaic_panels": "get_database_components_conversion_photovoltaic_panels",
+            "photovoltaic_thermal_panels": "get_database_components_conversion_photovoltaic_thermal_panels",
+            "power_transformers": "get_database_components_conversion_power_transformers",
+            "solar_collectors": "get_database_components_conversion_solar_collectors",
+            "thermal_energy_storages": "get_database_components_conversion_thermal_energy_storages",
+            "unitary_air_conditioners": "get_database_components_conversion_unitary_air_conditioners",
+            "vapor_compression_chillers": "get_database_components_conversion_vapor_compression_chillers"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
