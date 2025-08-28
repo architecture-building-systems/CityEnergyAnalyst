@@ -114,7 +114,7 @@ class Distribution(BaseDatabase):
     @classmethod
     def init_database(cls, locator: InputLocator):
         try:
-            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
+            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
             thermal_grid = None
         return cls(thermal_grid)
