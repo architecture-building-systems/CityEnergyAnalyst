@@ -52,7 +52,7 @@ def convert_path_to_name(schema_dict):
 
 @router.get("/schema")
 async def get_database_schema():
-    return CEADatabase.schema()
+    return CEADatabase.schema(replace_locator_refs=True)
 
 class ValidateDatabase(BaseModel):
     type: Literal['path', 'file']
