@@ -14167,6 +14167,13 @@ get_lca_operation:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
+get_lca_timeline_building:
+  created_by:
+  - emission-timeline
+  file_path: outputs/data/emissions/timeline/{building}_timeline.csv
+  file_type: csv
+  schema: 
+  used_by: []
 get_multi_criteria_analysis:
   created_by:
   - multi_criteria_analysis
