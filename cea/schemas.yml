@@ -6860,7 +6860,7 @@ get_database_archetypes_construction_type:
   file_type: csv
   schema:
     columns:
-      code:
+      const_type:
         description: Unique ID of construction type
         primary: true
         type: string
