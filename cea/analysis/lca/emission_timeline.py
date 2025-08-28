@@ -41,7 +41,7 @@ class BuildingEmissionTimeline:
         mapping_dict = {
             "wall_ag": "wall",
             "wall_bg": "base",
-            "wall_int": "part",
+            "wall_part": "part",
             "win_ag": "win",
             "roof": "roof",
             "upperside": "roof",
@@ -76,7 +76,7 @@ class BuildingEmissionTimeline:
         # timeline should have the following columns:
         # year,
         # embodied_(
-        #           wall_ag, wall_bg, wall_int, win_ag,
+        #           wall_ag, wall_bg, wall_part, win_ag,
         #           roof, upperside, underside, floor, base,
         #           others,
         #           ),
@@ -93,7 +93,7 @@ class BuildingEmissionTimeline:
                 "year": range(start_year, end_year + 1),
                 "embodied_wall_ag": 0.0,
                 "embodied_wall_bg": 0.0,
-                "embodied_wall_int": 0.0,
+                "embodied_wall_part": 0.0,
                 "embodied_win_ag": 0.0,
                 "embodied_roof": 0.0,
                 "embodied_upperside": 0.0,
@@ -104,7 +104,7 @@ class BuildingEmissionTimeline:
                 "embodied_others": 0.0,
                 "biogenic_wall_ag": 0.0,
                 "biogenic_wall_bg": 0.0,
-                "biogenic_wall_int": 0.0,
+                "biogenic_wall_part": 0.0,
                 "biogenic_win_ag": 0.0,
                 "biogenic_roof": 0.0,
                 "biogenic_upperside": 0.0,
@@ -161,12 +161,12 @@ class BuildingEmissionTimeline:
         self.surface_area["Awall_bg"] = (
             self.geometry["perimeter"] * self.geometry["height_bg"]
         )
-        self.surface_area["Awall_int"] = 0.0  # not implemented
+        self.surface_area["Awall_part"] = 0.0  # not implemented
         self.surface_area["Awin_ag"] = rc_model_props["Awin_ag"]
 
         # calculate the area of each component
         # horizontal: roof, floor, underside, upperside (not implemented), base
-        # vertical: wall_ag, wall_bg, wall_int (not implemented), win_ag
+        # vertical: wall_ag, wall_bg, wall_part (not implemented), win_ag
         self.surface_area["Aroof"] = rc_model_props["Aroof"]
         self.surface_area["Aupperside"] = 0.0  # not implemented
         self.surface_area["Aunderside"] = rc_model_props["Aunderside"]
