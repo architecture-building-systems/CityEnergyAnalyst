@@ -40,6 +40,16 @@ def _replace_nan_with_none(obj):
     else:
         return obj
 
+def invert_nested_dict(d, path=[]):
+      result = {}
+      for key, value in d.items():
+          current_path = path + [key]
+          if isinstance(value, dict):
+              result.update(invert_nested_dict(value, current_path))
+          else:
+              result[value] = current_path
+      return result
+
 class CEADatabaseException(CEAException):
     """Custom exception for CEA database errors."""
 
@@ -72,10 +82,24 @@ class CEADatabase:
         return mappings
 
     @classmethod
-    def schema(cls) -> dict[str, dict[str, Any]]:
-        schema = {
+    def schema(cls, replace_locator_refs: bool = False) -> dict[str, dict[str, Any]]:
+        schema: dict[str, dict[str, Any]] = {
             'archetypes': Archetypes.schema(),
             'assemblies': Assemblies.schema(),
             'components': Components.schema(),
         }
+
+        if replace_locator_refs:
+            flat_mapping = invert_nested_dict(cls._locator_mappings())
+
+            def replace_paths_using_mapping(d, mapping: dict[str, list[str]]):
+                if isinstance(d, dict):
+                    for key, value in d.items():
+                        if key == 'path' and isinstance(value, str) and value in mapping:
+                            d[key] = mapping[value]
+                        else:
+                            replace_paths_using_mapping(value, mapping)
+
+            replace_paths_using_mapping(schema, flat_mapping)
+
         return schema
