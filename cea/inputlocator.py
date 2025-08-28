@@ -143,10 +143,13 @@ class InputLocator(object):
         """scenario/export/plots"""
         return os.path.join(self.get_export_folder(), "plots")
 
-    def get_export_plots_cea_feature_folder(self, plot_cea_feature):
+    def get_export_plots_cea_feature_folder(self, plot_cea_feature, threshold=None):
         """Returns the folder storing the plots in the export folder of a scenario"""
         """scenario/export/plots/{plot_cea_feature}"""
-        return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
+        if plot_cea_feature == 'pv' and threshold is not None:
+            return os.path.join(self.get_export_plots_folder(), plot_cea_feature, threshold)
+        else:
+            return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
 
     def get_export_plots_selected_building_file(self):
         """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
