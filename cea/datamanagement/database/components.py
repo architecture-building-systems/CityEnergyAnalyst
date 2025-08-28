@@ -141,7 +141,7 @@ class Feedstocks(BaseDatabase):
     @classmethod
     def init_database(cls, locator: InputLocator):
         try:
-            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
+            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers()).set_index(cls._index)
         except FileNotFoundError:
             energy_carriers = None
 
@@ -152,16 +152,7 @@ class Feedstocks(BaseDatabase):
         return cls(energy_carriers, _library)
 
     def to_dict(self):
-        # Temporarily add dummy index to DataFrame for serialization
-        new_df = None
-        if self.energy_carriers is not None:
-            new_df = self.energy_carriers.copy()
-            new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
-            new_df.set_index('index', inplace=True)
-        
-        new_obj = Feedstocks(new_df, self._library)
-
-        return new_obj.dataclass_to_dict()
+        return self.dataclass_to_dict()
 
 
 @dataclass
