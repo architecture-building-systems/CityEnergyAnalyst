@@ -60,6 +60,16 @@ class CEADatabase:
         }
 
         return _replace_nan_with_none(data)
+    
+    @classmethod
+    def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
+        mappings = {
+            'archetypes': Archetypes._locator_mappings(),
+            'assemblies': Assemblies._locator_mappings(),
+            'components': Components._locator_mappings(),
+        }
+
+        return mappings
 
     @classmethod
     def schema(cls) -> dict[str, dict[str, Any]]:

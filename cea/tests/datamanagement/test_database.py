@@ -39,3 +39,12 @@ class TestDatabase(unittest.TestCase):
     def test_schema(self):
         schema = CEADatabase.schema()
         self.assertIsInstance(schema, dict)
+
+    def test_locator_mapping(self):
+        locator_mapping = CEADatabase._locator_mappings()
+
+        self.assertIsInstance(locator_mapping, dict)
+        self.assertIn('archetypes', locator_mapping)
+        self.assertIn('assemblies', locator_mapping)
+        self.assertIn('components', locator_mapping)
+

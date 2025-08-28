@@ -90,6 +90,14 @@ class BaseDatabaseCollection(Base):
     """Base class for database object collections."""
 
     @classmethod
+    def _locator_mappings(cls) -> dict[str, str]:
+        """Return the locator mappings for the collection."""
+        out = dict()
+        for name, field in get_type_hints(cls).items():
+            out[name] = field._locator_mapping()
+        return out
+
+    @classmethod
     def schema(cls) -> dict[str, Any]:
         """Return the database schema for the collection."""
         out = dict()
