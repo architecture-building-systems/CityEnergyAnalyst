@@ -48,3 +48,11 @@ class TestDatabase(unittest.TestCase):
         self.assertIn('assemblies', locator_mapping)
         self.assertIn('components', locator_mapping)
 
+    def test_schema_replacement(self):
+        schema = CEADatabase.schema(replace_locator_refs=True)
+        self.assertIsInstance(schema, dict)
+        self.assertIn('archetypes', schema)
+        self.assertIn('assemblies', schema)
+        self.assertIn('components', schema)
+
+        print(schema)
