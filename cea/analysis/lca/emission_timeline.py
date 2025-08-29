@@ -56,6 +56,19 @@ class BuildingEmissionTimeline:
     Finally, the yearly operational emission `operational` is also tracked 
     in the timeline.
     """
+
+    _MAPPING_DICT = {
+        "wall_ag": "wall",
+        "wall_bg": "base",
+        "wall_part": "part",
+        "win_ag": "win",
+        "roof": "roof",
+        "upperside": "roof",
+        "underside": "base",
+        "floor": "floor",
+        "base": "base",
+    }
+
     def __init__(
         self,
         building_properties: BuildingProperties,
@@ -110,18 +123,7 @@ class BuildingEmissionTimeline:
         the beginning construction year into the timeline,
         and whenever any component needs to be renovated.
         """
-        mapping_dict = {
-            "wall_ag": "wall",
-            "wall_bg": "base",
-            "wall_part": "part",
-            "win_ag": "win",
-            "roof": "roof",
-            "upperside": "roof",
-            "underside": "base",
-            "floor": "floor",
-            "base": "base",
-        }
-        for key, value in mapping_dict.items():
+        for key, value in self._MAPPING_DICT.items():
             type_str = f"type_{value}"
             lifetime: int = self.envelope_db.get_item_value(
                 code=self.envelope[type_str], field="Service_Life"
@@ -134,7 +136,7 @@ class BuildingEmissionTimeline:
             )
             area: float = self.surface_area[f"A{key}"]
             self.log_emission_with_lifetime(
-                emission=ghg * area, lifetime=lifetime, col=f"embodied_{key}"
+                emission=ghg * area, lifetime=lifetime, col=f"production_{key}"
             )
             self.log_emission_with_lifetime(
                 emission=-biogenic * area, lifetime=lifetime, col=f"biogenic_{key}"
@@ -155,31 +157,17 @@ class BuildingEmissionTimeline:
         start_year = self.geometry["year"]
         if start_year >= end_year:
             raise ValueError("The starting year must be less than the ending year.")
-        # initialize the dataframe with years
+        component_types = self._MAPPING_DICT.keys()
+        emission_types = ["production", "biogenic", "demolition"]
+
         self.timeline = pd.DataFrame(
             {
                 "year": range(start_year, end_year + 1),
-                "embodied_wall_ag": 0.0,
-                "embodied_wall_bg": 0.0,
-                "embodied_wall_part": 0.0,
-                "embodied_win_ag": 0.0,
-                "embodied_roof": 0.0,
-                "embodied_upperside": 0.0,
-                "embodied_underside": 0.0,
-                "embodied_floor": 0.0,
-                "embodied_base": 0.0,
-                "embodied_deconstruction": 0.0,
-                "embodied_others": 0.0,
-                "biogenic_wall_ag": 0.0,
-                "biogenic_wall_bg": 0.0,
-                "biogenic_wall_part": 0.0,
-                "biogenic_win_ag": 0.0,
-                "biogenic_roof": 0.0,
-                "biogenic_upperside": 0.0,
-                "biogenic_underside": 0.0,
-                "biogenic_floor": 0.0,
-                "biogenic_base": 0.0,
-                "biogenic_deconstruction": 0.0,
+                **{
+                    f"{emission}_{component}": 0.0
+                    for emission in emission_types
+                    for component in component_types
+                },
                 "operational": 0.0,
             }
         )
