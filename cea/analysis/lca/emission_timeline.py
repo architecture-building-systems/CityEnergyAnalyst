@@ -10,6 +10,52 @@ if TYPE_CHECKING:
 
 
 class BuildingEmissionTimeline:
+    """
+    A class to manage the emission timeline for a building.
+    The core attribute of this class is the timeline DataFrame indexed by year, 
+    which stores the emissions data over years.
+    It logs emission for building components separately, so that the impact 
+    of each component can be tracked over time.
+
+    Each building component has two main types of emissions associated with it:
+    - `embodied`: the emissions associated with the materials and 
+    construction processes used to create the building component.
+    - `biogenic`: the emissions that are stored within the material that 
+    would have otherwise been released during other processes or 
+    because of decay or wasting.
+
+    The components include:
+    - vertical surfaces (excluding windows)
+        - `wall_ag`: external wall that is above ground level and insulates 
+        the building from outside air.
+        - `wall_bg`: external wall that is below ground level and typically 
+        insulates the building from ground temperature.
+        - `wall_part`: partitional wall within the footprint of the building, 
+        typically not insulated.
+    - windows on external vertical walls
+        - `win_ag`: external window that is above ground level and typically 
+        has a lower U-value than the walls.
+    - horizontal surfaces
+        - `roof`: the top covering of the building, typically insulated.
+        - `upperside`: the horizontal surface between interior space (below) 
+        and void deck (above), typically insulated, currently not implemented.
+        - `underside`: the horizontal surface between the void deck (below) 
+        and the interior space (above), typically insulated.
+        - `floor`: the interior horizontal surface of the building 
+        between two floors, typically uninsulated.
+        - `base`: the part of the building that is in contact with the ground, 
+            typically insulated.
+    - `others`: other components that are not part of the building envelope,
+        such as HVAC systems, elevators, etc. Currently not implemented.
+    - `deconstruction`: the emissions associated with the deconstruction 
+        and disposal of building materials at the end of their service life.
+
+    Therefore, the column name is `{type}_{component}`, e.g., `embodied_wall_ag`, 
+    `biogenic_roof`.
+
+    Finally, the yearly operational emission `operational` is also tracked 
+    in the timeline.
+    """
     def __init__(
         self,
         building_properties: BuildingProperties,
@@ -17,6 +63,18 @@ class BuildingEmissionTimeline:
         building_name: str,
         locator: InputLocator,
     ):
+        """Initialize the BuildingEmissionTimeline object.
+
+        :param building_properties: the BuildingProperties object containing the geometric, 
+            envelope and database data for all buildings in the district.
+        :type building_properties: BuildingProperties
+        :param envelope_db: the EnvelopeDBReader object to access the envelope database.
+        :type envelope_db: EnvelopeDBReader
+        :param building_name: the name of the building.
+        :type building_name: str
+        :param locator: the InputLocator object to locate input files.
+        :type locator: InputLocator
+        """
         self.name = building_name
         self.locator = locator
         # self.building_properties = building_properties
@@ -26,11 +84,20 @@ class BuildingEmissionTimeline:
         self.get_component_quantity(building_properties)
 
     def generate_timeline(self, end_year: int) -> None:
+        """Initialize the timeline as a dataframe of `0.0`s, indexed by year.
+        Then it fills up the timeline with emissions data, both embodied and operational.
+
+        :param end_year: The last year that should exist in the building timeline.
+        :type end_year: int
+        """
         self.initialize_timeline(end_year)
         self.fill_embodied_emissions()
         self.fill_operational_emissions()
 
     def save_timeline(self):
+        """Save the timeline DataFrame to a CSV file. 
+        If the folder does not exist, it will be created.
+        """
         # first, check if timeline folder exist, if not create it
         if not os.path.exists(self.locator.get_lca_timeline_folder()):
             os.makedirs(self.locator.get_lca_timeline_folder())
@@ -38,6 +105,11 @@ class BuildingEmissionTimeline:
         self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name))
 
     def fill_embodied_emissions(self) -> None:
+        """
+        Log the embodied emissions for the building components for 
+        the beginning construction year into the timeline,
+        and whenever any component needs to be renovated.
+        """
         mapping_dict = {
             "wall_ag": "wall",
             "wall_bg": "base",
@@ -72,18 +144,14 @@ class BuildingEmissionTimeline:
         pass
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
-        # Placeholder for the actual implementation
-        # timeline should have the following columns:
-        # year,
-        # embodied_(
-        #           wall_ag, wall_bg, wall_part, win_ag,
-        #           roof, upperside, underside, floor, base,
-        #           others,
-        #           ),
-        # operational
+        """Initialize the timeline DataFrame for the building emissions.
 
-        # 0. read the year-of-built of building
-        # 1. initialize the dataframe
+        :param end_year: The year to end the timeline.
+        :type end_year: int
+        :raises ValueError: If the start year is not less than the end year.
+        :return: The initialized timeline DataFrame.
+        :rtype: pd.DataFrame
+        """
         start_year = self.geometry["year"]
         if start_year >= end_year:
             raise ValueError("The starting year must be less than the ending year.")
@@ -143,17 +211,41 @@ class BuildingEmissionTimeline:
         self.timeline.loc[year, col] += emission
 
     def get_component_quantity(self, building_properties: BuildingProperties) -> None:
-        # fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-        #           'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
-        #           'Awall_ag', 'footprint', 'Hs_ag']
-        # useful fields for LCA calculation:
-        # GFA_m2:       total floor area of building
-        # Awin_ag:      total area of windows
-        # Aroof:        total area of roof
-        # Aunderside:   total area of bottom surface, if the bottom surface is above ground level.
-        #               In case where building touches the ground, this value is zero.
-        # Awall_ag:     total area of walls
-        # footprint:    the area of the building footprint
+        """
+        Get the area for each building component.
+        During Daysim simulation, the types of surfaces are categorized in detail, 
+        so we need the radiation results 
+        to extract surface area information, as done in demand calculation as well.
+        The radiation results are stored in `building_properties.rc_model._rc_model_props`. 
+        A lot of fields exist, but the useful ones are:
+        - `GFA_m2`: total floor area of building
+        - `Awall_ag`: total area of external walls above ground
+        - `Awin_ag`: total area of windows
+        - `Aroof`: total area of roof
+        - `Aunderside`: total area of bottom surface, if the bottom surface is above ground level.
+            In case where building touches the ground, this value is zero.
+        - `footprint`: the area of the building footprint, equivalent to `Abase`.
+
+        Calculated area:
+        - `Awall_bg`: total area of below-ground walls
+        - `Awall_part`: total area of partition walls. Currently dummy value 0.0
+        - `Aupperside`: total area of upper side. Currently not available in Daysim 
+            radiation results, so this value is set to `0.0`.
+        - `Afloor`: total area of internal floors. 
+            If the floor area is neither touching the ground nor the outside air, 
+            it should be internal. Therefore, the calculation formula thus is:
+            `Afloor = GFA_m2 - Aunderside - footprint`
+
+        :param building_properties: The building properties object containing results 
+            for all buildings in the district. Two attributes are relevant 
+            for the surface area calculation: the `rc_model` and `geometry` attributes.
+
+            The `geometry` attribute simply returns what's inside the `zone.shp` file, 
+            along with the footprint and perimeter;
+            The `rc_model` attribute contains the areas along with other parameters.
+            Whole list of parameters (details see `BuildingRCModel.calc_prop_rc_model`)
+        :type building_properties: BuildingProperties
+        """
         rc_model_props = building_properties.rc_model[self.name]
 
         self.surface_area = {}
@@ -174,7 +266,6 @@ class BuildingEmissionTimeline:
         self.surface_area["Afloor"] = (
             rc_model_props["GFA_m2"]  # GFA = footprint * (floor_ag + floor_bg - void_deck)
             - self.surface_area["Aunderside"]
-            - self.surface_area["Aupperside"]
             - rc_model_props["footprint"]
         )
         self.surface_area["Abase"] = rc_model_props["footprint"]
