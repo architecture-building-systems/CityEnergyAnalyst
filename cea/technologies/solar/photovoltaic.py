@@ -33,6 +33,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.visualisation.plot_main import plot_all
+
+
 def projected_lifetime_output(
     production_values,
     lifetime_years,
@@ -854,6 +857,10 @@ def main(config):
                                                                building_names)
         # aggregate results from all buildings
         write_aggregate_results(locator, type_PVpanel,building_names)
+
+        # write results to export-plot-thresholds folder for upv design helper
+        context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
+        plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=False, plot=False)
 
 
 if __name__ == '__main__':
