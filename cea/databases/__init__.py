@@ -40,7 +40,8 @@ def _replace_nan_with_none(obj):
     else:
         return obj
 
-def invert_nested_dict(d, path=[]):
+def invert_nested_dict(d: dict[str, Any], path: list[str] | None = None):
+      path = list(path) if path is not None else []
       result = {}
       for key, value in d.items():
           current_path = path + [key]
