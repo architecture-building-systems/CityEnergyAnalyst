@@ -237,9 +237,9 @@ def plot_input_processor(plot_config, plot_config_general, plots_building_filter
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
 
-    # Delete the existing file if it exists
-    if os.path.exists(summary_results_csv_path):
-        os.remove(summary_results_csv_path)
+    # # Delete the existing file if it exists
+    # if os.path.exists(summary_results_csv_path):
+    #     os.remove(summary_results_csv_path)
 
     # Execute the summary process
     plot_instance_a.execute_summary(bool_include_advanced_analytics)
