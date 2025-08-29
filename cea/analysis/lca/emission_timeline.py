@@ -124,13 +124,13 @@ class BuildingEmissionTimeline:
         for key, value in mapping_dict.items():
             type_str = f"type_{value}"
             lifetime: int = self.envelope_db.get_item_value(
-                code=self.envelope[type_str], col="Service_Life"
+                code=self.envelope[type_str], field="Service_Life"
             )
             ghg: float = self.envelope_db.get_item_value(
-                code=self.envelope[type_str], col="GHG_kgCO2m2"
+                code=self.envelope[type_str], field="GHG_kgCO2m2"
             )
             biogenic: float = self.envelope_db.get_item_value(
-                code=self.envelope[type_str], col="GHG_biogenic_kgCO2m2"
+                code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
             )
             area: float = self.surface_area[f"A{key}"]
             self.log_emission_with_lifetime(
