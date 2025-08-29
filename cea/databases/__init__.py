@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -40,6 +40,17 @@ def _replace_nan_with_none(obj):
     else:
         return obj
 
+def invert_nested_dict(d: dict[str, Any], path: list[str] | None = None):
+      path = list(path) if path is not None else []
+      result = {}
+      for key, value in d.items():
+          current_path = path + [key]
+          if isinstance(value, dict):
+              result.update(invert_nested_dict(value, current_path))
+          else:
+              result[value] = current_path
+      return result
+
 class CEADatabaseException(CEAException):
     """Custom exception for CEA database errors."""
 
@@ -60,4 +71,36 @@ class CEADatabase:
         }
 
         return _replace_nan_with_none(data)
+    
+    @classmethod
+    def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
+        mappings = {
+            'archetypes': Archetypes._locator_mappings(),
+            'assemblies': Assemblies._locator_mappings(),
+            'components': Components._locator_mappings(),
+        }
 
+        return mappings
+
+    @classmethod
+    def schema(cls, replace_locator_refs: bool = False) -> dict[str, dict[str, Any]]:
+        schema: dict[str, dict[str, Any]] = {
+            'archetypes': Archetypes.schema(),
+            'assemblies': Assemblies.schema(),
+            'components': Components.schema(),
+        }
+
+        if replace_locator_refs:
+            flat_mapping = invert_nested_dict(cls._locator_mappings())
+
+            def replace_paths_using_mapping(d, mapping: dict[str, list[str]]):
+                if isinstance(d, dict):
+                    for key, value in d.items():
+                        if key == 'path' and isinstance(value, str) and value in mapping:
+                            d[key] = mapping[value]
+                        else:
+                            replace_paths_using_mapping(value, mapping)
+
+            replace_paths_using_mapping(schema, flat_mapping)
+
+        return schema
