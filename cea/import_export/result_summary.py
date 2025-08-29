@@ -954,7 +954,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         return result
 
 
-def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False, threshold=None):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -1094,7 +1094,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         list_time_resolution = ['annually', 'monthly', 'seasonally']
 
         # Write to disk
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot, threshold=threshold)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1329,7 +1329,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics, plot=False):
+def results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics, plot=False, threshold=None):
     """
     Writes aggregated results for different time periods to CSV files.
 
@@ -1347,7 +1347,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
 
     # Create the target path of directory
     if plot_cea_feature is not None:
-        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature, threshold)
     else:
         target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
@@ -1419,16 +1419,16 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                 elif time_period == 'hourly':
                     if bool_analytics:
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, threshold)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, threshold)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False, threshold=None):
     """
     Writes aggregated results for each building to CSV files.
 
@@ -1451,7 +1451,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 
     # Join the paths
     if plot_cea_feature is not None:
-        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
+        target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature, threshold)
     else:
         target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
 
@@ -1484,12 +1484,12 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end, threshold)
                     os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                 else:
                     os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end, threshold)
 
         # Write to .csv files
         for df in list_df:
@@ -1713,7 +1713,7 @@ def filter_by_building_names(df_typology, list_buildings):
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
+def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False, threshold=None):
     list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
                          'PV_electricity_carbon_intensity[tonCO2-eq/kWh]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
@@ -1736,7 +1736,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             return string[:-5] + pv_analytic
         return string  # Return the string unchanged if condition not met
 
-    def calc_pv_analytics_by_period(df_pv, df_demand, period, list_pv_analytics, bool_use_acronym, date_column='date'):
+    def calc_pv_analytics_by_period(df_pv, df_demand, period, list_pv_analytics, bool_use_acronym, date_column='date', threshold=None):
         """
         Calculates the three pv analytics for a given time period and
         adds 'hour_start' and 'hour_end' columns for group start and end hour information.
@@ -1984,7 +1984,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_time_period = ['annually', 'monthly', 'seasonally']
 
             # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, threshold=threshold)
 
 
 def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
@@ -2341,7 +2341,7 @@ def process_building_summary(config, locator,
                              bool_use_acronym, bool_aggregate_by_building,
                              bool_include_advanced_analytics, list_selected_time_period,
                              bool_use_conditioned_floor_area_for_normalisation,
-                             plot=False, list_cea_feature_to_plot=None):
+                             plot=False, list_cea_feature_to_plot=None, threshold=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -2422,13 +2422,13 @@ def process_building_summary(config, locator,
     for list_metrics in list_list_metrics_with_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
         list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot, threshold=threshold)
 
     # Step 8: Aggregate by Building (if Enabled)
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot, threshold=threshold)
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
@@ -2439,7 +2439,7 @@ def process_building_summary(config, locator,
                                                bool_use_conditioned_floor_area_for_normalisation, plot=plot)
             if any(item in list_cea_feature_to_plot for item in ['pv']):
                 calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
-                                  list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                                  list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot, threshold=threshold)
         else:
             if config.result_summary.metrics_building_energy_demand:
                 calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
@@ -2448,7 +2448,7 @@ def process_building_summary(config, locator,
 
             if config.result_summary.metrics_photovoltaic_panels:
                 calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
-                                  bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                                  bool_aggregate_by_building, bool_use_acronym, plot=plot, threshold=threshold)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

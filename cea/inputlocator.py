@@ -147,7 +147,7 @@ class InputLocator(object):
         """Returns the folder storing the plots in the export folder of a scenario"""
         """scenario/export/plots/{plot_cea_feature}"""
         if plot_cea_feature == 'pv' and threshold is not None:
-            return os.path.join(self.get_export_plots_folder(), plot_cea_feature, threshold)
+            return os.path.join(self.get_export_plots_folder(), plot_cea_feature, str(threshold))
         else:
             return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
 
@@ -177,7 +177,7 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/selected_buildings.csv"""
         return os.path.join(summary_folder, '_selected_buildings.csv')
 
-    def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
+    def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str, threshold=None):
         """scenario/export/results/{folder_name}/{cea_feature}"""
         if cea_feature == 'sc_ET':
             return os.path.join(summary_folder, 'sc')
@@ -192,17 +192,20 @@ class InputLocator(object):
         elif cea_feature == 'operation_emissions':
             return os.path.join(summary_folder, 'emissions')
         else:
-            return os.path.join(summary_folder, cea_feature)
+            if threshold is not None and cea_feature == 'pv':
+                return os.path.join(summary_folder, cea_feature, str(threshold))
+            else:
+                return os.path.join(summary_folder, cea_feature)
 
 
     def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature, appendix,
-                                                                time_period, hour_start, hour_end):
+                                                                time_period, hour_start, hour_end, threshold=None):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature, threshold),
                                 f'{appendix}_selected_hours.csv')
         else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature, threshold),
                                 f'{appendix}_{time_period}.csv')
 
     def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
@@ -243,7 +246,7 @@ class InputLocator(object):
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
-                                                                              hour_end):
+                                                                              hour_end, threshold=None):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_analytics_{time_period}.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(

@@ -49,8 +49,12 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False, plot: bool = True):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False, plot: bool = True,  threshold: int | None = None):
     # Extract parameters from dictionary
+    if threshold is None:
+        pass
+    else:
+        threshold = int(threshold)      # for integer
     plot_cea_feature: str | None = plot_dict.get('feature')
     # If feature is not found, figure out based on config
     if plot_cea_feature is None:
@@ -97,15 +101,18 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter,scenario, plot_cea_feature,
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature,
                                                                                 hour_start, hour_end,
-                                                                                solar_panel_types_list, bool_include_advanced_analytics)
-    # Activate b_data_processor
-    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
-                                                   df_architecture_data,
-                                                   solar_panel_types_list)
+                                                                                solar_panel_types_list, bool_include_advanced_analytics, threshold)
+
 
     if plot:
+        # Activate b_data_processor
+        df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter,
+                                                       plot_instance, plot_cea_feature, df_summary_data,
+                                                       df_architecture_data,
+                                                       solar_panel_types_list)
+
         # Activate c_plotter
         fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
     

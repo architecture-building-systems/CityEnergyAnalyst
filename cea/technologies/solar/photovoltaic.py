@@ -860,7 +860,7 @@ def main(config):
 
         # write results to export-plot-thresholds folder for upv design helper
         context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
-        plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=False, plot=False)
+        plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=config.solar.annual_radiation_threshold)
 
 
 if __name__ == '__main__':
