@@ -151,6 +151,10 @@ class InputLocator(object):
         else:
             return os.path.join(self.get_export_plots_folder(), plot_cea_feature)
 
+    def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature, threshold=None):
+        """scenario/export/plots/{plot_cea_feature}/analytics"""
+        return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature, threshold), 'analytics')
+
     def get_export_plots_selected_building_file(self):
         """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
         return os.path.join(self.get_export_plots_folder(), 'selected_buildings.csv')
@@ -239,9 +243,13 @@ class InputLocator(object):
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature, threshold),
                                 f"{appendix}_{time_period}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
+    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature, threshold=None):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+        if cea_feature == 'pv' and threshold is not None:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature, threshold),
+                                'analytics')
+        else:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                             'analytics')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
@@ -250,11 +258,11 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_analytics_{time_period}.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(
-                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
+                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature, threshold),
                 f'{appendix}_analytics_selected_hours.csv')
         else:
             return os.path.join(
-                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
+                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature, threshold),
                 f'{appendix}_analytics_{time_period}.csv')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(self, summary_folder,
@@ -285,7 +293,7 @@ class InputLocator(object):
                 f"{appendix}_analytics_selected_hours_buildings.csv")
         else:
             return os.path.join(
-                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature, time_period),
+                self.get_export_plots_cea_feature_analytics_folder(plot_cea_feature, threshold),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
     def get_export_to_rhino_from_cea_folder(self):
