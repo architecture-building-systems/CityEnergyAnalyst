@@ -6884,12 +6884,6 @@ get_database_archetypes_construction_type:
   file_type: csv
   schema:
     columns:
-      const_type:
-        description: Unique ID of construction type
-        primary: true
-        type: string
-        unit: '[-]'
-        values: alphanumeric
       Es:
         description: Fraction of gross floor area with electrical demands.
         max: 1.0
