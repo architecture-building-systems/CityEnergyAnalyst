@@ -12,48 +12,48 @@ if TYPE_CHECKING:
 class BuildingEmissionTimeline:
     """
     A class to manage the emission timeline for a building.
-    The core attribute of this class is the timeline DataFrame indexed by year, 
+    The core attribute of this class is the timeline DataFrame indexed by year,
     which stores the emissions data over years.
-    It logs emission for building components separately, so that the impact 
+    It logs emission for building components separately, so that the impact
     of each component can be tracked over time.
 
     Each building component has two main types of emissions associated with it:
-    - `embodied`: the emissions associated with the materials and 
+    - `embodied`: the emissions associated with the materials and
     construction processes used to create the building component.
-    - `biogenic`: the emissions that are stored within the material that 
-    would have otherwise been released during other processes or 
+    - `biogenic`: the emissions that are stored within the material that
+    would have otherwise been released during other processes or
     because of decay or wasting.
 
     The components include:
     - vertical surfaces (excluding windows)
-        - `wall_ag`: external wall that is above ground level and insulates 
+        - `wall_ag`: external wall that is above ground level and insulates
         the building from outside air.
-        - `wall_bg`: external wall that is below ground level and typically 
+        - `wall_bg`: external wall that is below ground level and typically
         insulates the building from ground temperature.
-        - `wall_part`: partitional wall within the footprint of the building, 
+        - `wall_part`: partitional wall within the footprint of the building,
         typically not insulated.
     - windows on external vertical walls
-        - `win_ag`: external window that is above ground level and typically 
+        - `win_ag`: external window that is above ground level and typically
         has a lower U-value than the walls.
     - horizontal surfaces
         - `roof`: the top covering of the building, typically insulated.
-        - `upperside`: the horizontal surface between interior space (below) 
+        - `upperside`: the horizontal surface between interior space (below)
         and void deck (above), typically insulated, currently not implemented.
-        - `underside`: the horizontal surface between the void deck (below) 
+        - `underside`: the horizontal surface between the void deck (below)
         and the interior space (above), typically insulated.
-        - `floor`: the interior horizontal surface of the building 
+        - `floor`: the interior horizontal surface of the building
         between two floors, typically uninsulated.
-        - `base`: the part of the building that is in contact with the ground, 
+        - `base`: the part of the building that is in contact with the ground,
             typically insulated.
     - `others`: other components that are not part of the building envelope,
         such as HVAC systems, elevators, etc. Currently not implemented.
-    - `deconstruction`: the emissions associated with the deconstruction 
+    - `deconstruction`: the emissions associated with the deconstruction
         and disposal of building materials at the end of their service life.
 
-    Therefore, the column name is `{type}_{component}`, e.g., `embodied_wall_ag`, 
+    Therefore, the column name is `{type}_{component}`, e.g., `embodied_wall_ag`,
     `biogenic_roof`.
 
-    Finally, the yearly operational emission `operational` is also tracked 
+    Finally, the yearly operational emission `operational` is also tracked
     in the timeline.
     """
 
@@ -78,7 +78,7 @@ class BuildingEmissionTimeline:
     ):
         """Initialize the BuildingEmissionTimeline object.
 
-        :param building_properties: the BuildingProperties object containing the geometric, 
+        :param building_properties: the BuildingProperties object containing the geometric,
             envelope and database data for all buildings in the district.
         :type building_properties: BuildingProperties
         :param envelope_db: the EnvelopeDBReader object to access the envelope database.
@@ -108,7 +108,7 @@ class BuildingEmissionTimeline:
         self.fill_operational_emissions()
 
     def save_timeline(self):
-        """Save the timeline DataFrame to a CSV file. 
+        """Save the timeline DataFrame to a CSV file.
         If the folder does not exist, it will be created.
         """
         # first, check if timeline folder exist, if not create it
@@ -119,7 +119,7 @@ class BuildingEmissionTimeline:
 
     def fill_embodied_emissions(self) -> None:
         """
-        Log the embodied emissions for the building components for 
+        Log the embodied emissions for the building components for
         the beginning construction year into the timeline,
         and whenever any component needs to be renovated.
         """
@@ -201,10 +201,10 @@ class BuildingEmissionTimeline:
     def get_component_quantity(self, building_properties: BuildingProperties) -> None:
         """
         Get the area for each building component.
-        During Daysim simulation, the types of surfaces are categorized in detail, 
-        so we need the radiation results 
+        During Daysim simulation, the types of surfaces are categorized in detail,
+        so we need the radiation results
         to extract surface area information, as done in demand calculation as well.
-        The radiation results are stored in `building_properties.rc_model._rc_model_props`. 
+        The radiation results are stored in `building_properties.rc_model._rc_model_props`.
         A lot of fields exist, but the useful ones are:
         - `GFA_m2`: total floor area of building
         - `Awall_ag`: total area of external walls above ground
@@ -217,18 +217,18 @@ class BuildingEmissionTimeline:
         Calculated area:
         - `Awall_bg`: total area of below-ground walls
         - `Awall_part`: total area of partition walls. Currently dummy value 0.0
-        - `Aupperside`: total area of upper side. Currently not available in Daysim 
+        - `Aupperside`: total area of upper side. Currently not available in Daysim
             radiation results, so this value is set to `0.0`.
-        - `Afloor`: total area of internal floors. 
-            If the floor area is neither touching the ground nor the outside air, 
+        - `Afloor`: total area of internal floors.
+            If the floor area is neither touching the ground nor the outside air,
             it should be internal. Therefore, the calculation formula thus is:
             `Afloor = GFA_m2 - Aunderside - footprint`
 
-        :param building_properties: The building properties object containing results 
-            for all buildings in the district. Two attributes are relevant 
+        :param building_properties: The building properties object containing results
+            for all buildings in the district. Two attributes are relevant
             for the surface area calculation: the `rc_model` and `geometry` attributes.
 
-            The `geometry` attribute simply returns what's inside the `zone.shp` file, 
+            The `geometry` attribute simply returns what's inside the `zone.shp` file,
             along with the footprint and perimeter;
             The `rc_model` attribute contains the areas along with other parameters.
             Whole list of parameters (details see `BuildingRCModel.calc_prop_rc_model`)
