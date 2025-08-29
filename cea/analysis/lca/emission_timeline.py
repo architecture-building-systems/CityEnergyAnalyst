@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
-    from cea.utilities.assemblies_db_reader import EnvelopeDBReader
+    from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
     from cea.demand.building_properties import BuildingProperties
 
 
@@ -72,7 +72,7 @@ class BuildingEmissionTimeline:
     def __init__(
         self,
         building_properties: BuildingProperties,
-        envelope_db: EnvelopeDBReader,
+        envelope_lookup: EnvelopeLookup,
         building_name: str,
         locator: InputLocator,
     ):
@@ -81,8 +81,8 @@ class BuildingEmissionTimeline:
         :param building_properties: the BuildingProperties object containing the geometric,
             envelope and database data for all buildings in the district.
         :type building_properties: BuildingProperties
-        :param envelope_db: the EnvelopeDBReader object to access the envelope database.
-        :type envelope_db: EnvelopeDBReader
+        :param envelope_lookup: the EnvelopeLookup object to access the envelope database.
+        :type envelope_lookup: EnvelopeLookup
         :param building_name: the name of the building.
         :type building_name: str
         :param locator: the InputLocator object to locate input files.
@@ -91,7 +91,7 @@ class BuildingEmissionTimeline:
         self.name = building_name
         self.locator = locator
         # self.building_properties = building_properties
-        self.envelope_db = envelope_db
+        self.envelope_lookup = envelope_lookup
         self.geometry = building_properties.geometry[self.name]
         self.envelope = building_properties.envelope[self.name]
         self.get_component_quantity(building_properties)
@@ -125,13 +125,13 @@ class BuildingEmissionTimeline:
         """
         for key, value in self._MAPPING_DICT.items():
             type_str = f"type_{value}"
-            lifetime: int = self.envelope_db.get_item_value(
+            lifetime: int = self.envelope_lookup.get_item_value(
                 code=self.envelope[type_str], field="Service_Life"
             )
-            ghg: float = self.envelope_db.get_item_value(
+            ghg: float = self.envelope_lookup.get_item_value(
                 code=self.envelope[type_str], field="GHG_kgCO2m2"
             )
-            biogenic: float = self.envelope_db.get_item_value(
+            biogenic: float = self.envelope_lookup.get_item_value(
                 code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
             )
             area: float = self.surface_area[f"A{key}"]
