@@ -273,6 +273,40 @@ Life Cycle Analysis:
       - [get_zone_geometry]
       - [get_building_supply]
 
+  - name: emission-timeline
+    label: Emission Timeline
+    short_description: Generate a timeline of embodied and operational emissions per building.
+    description: This Feature accounts for all possible emissions since the building's initial construction, 
+      including construction, renovation, deconstruction, biogenic carbon storage and operational emissions. 
+      The timeline records all activities every year, assuming all components are renovated or replaced 
+      according to its lifetime. For operational emissions, the current demand is used.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.timeline_generator
+    parameters: ['general:scenario', emission-timeline]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_building_supply]
+      - [get_weather_file]
+      # - [get_database_assemblies_envelope_mass]
+      # - [get_database_assemblies_envelope_tightness]
+      - [get_database_assemblies_envelope_floor]
+      - [get_database_assemblies_envelope_wall]
+      - [get_database_assemblies_envelope_window]
+      # - [get_database_assemblies_envelope_shading]
+      - [get_database_assemblies_envelope_roof]
+      # - [get_database_assemblies_hvac_controller]
+      # - [get_database_assemblies_hvac_cooling]
+      # - [get_database_assemblies_hvac_heating]
+      # - [get_database_assemblies_hvac_hot_water]
+      # - [get_building_internal]
+      # - [get_building_air_conditioning]
+      # - [get_building_weekly_schedules, building_name]
+      - [get_radiation_metadata, building_name]
+      - [get_radiation_building, building_name]
+      # - [get_occupancy_model_file, building_name]
+
   - name: system-costs
     label: Energy Supply System Costs
     short_description: Calculate costs for energy supply systems
