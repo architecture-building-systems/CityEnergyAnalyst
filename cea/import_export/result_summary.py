@@ -1720,6 +1720,36 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
     list_list_useful_cea_results_pv, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings, bool_analytics=True)
     list_list_useful_cea_results_demand, _ = exec_read_and_slice(hour_start, hour_end, locator, list_demand_metrics, list_buildings)
 
+    def _check_pv_building_files_exist(locator, list_appendix, list_time_period, hour_start, hour_end, plot, threshold):
+        """Check if PV building files already exist and are recent enough to avoid regeneration."""
+        if not bool_aggregate_by_building:
+            return False
+            
+        for appendix in list_appendix:
+            for time_period in list_time_period:
+                if plot:
+                    file_path = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(
+                        'pv', appendix, time_period, hour_start, hour_end, threshold
+                    )
+                else:
+                    file_path = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(
+                        summary_folder, 'pv', appendix, time_period, hour_start, hour_end
+                    )
+                
+                if not os.path.exists(file_path):
+                    return False
+                    
+                # Check if file is recent (within last 5 minutes to avoid race conditions)
+                import time
+                file_age = time.time() - os.path.getmtime(file_path)
+                if file_age > 300:  # 5 minutes
+                    return False
+                    
+        return True
+    
+    # Skip building file generation if files already exist and are recent
+    skip_building_files = _check_pv_building_files_exist(locator, list_appendix, list_selected_time_period, hour_start, hour_end, plot, threshold)
+
     def replace_kwh_with_pv_analytic(string, pv_analytic):
         """
         Replaces the end of a string with 'a' if it ends with '_kWh'.
@@ -1983,8 +2013,11 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_list_df = [annually_results, monthly_results, seasonally_results]
             list_time_period = ['annually', 'monthly', 'seasonally']
 
-            # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, threshold=threshold)
+            # Write to disk - only if building files don't already exist or are outdated
+            if not skip_building_files:
+                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, threshold=threshold)
+            else:
+                print(f"Skipping building file generation for {appendix} - files already exist and are recent")
 
 
 def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
