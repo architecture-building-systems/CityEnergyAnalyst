@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -16,7 +16,7 @@ class BaseAssemblyDatabase(BaseDatabase):
     
     @classmethod
     def init_database(cls, locator: InputLocator):
-        raise NotImplementedError
+        return cls(**cls._read_mapping(locator, cls._locator_mapping()))
 
     def to_dict(self):
         return self.dataclass_to_dict()
@@ -55,8 +55,8 @@ class Envelope(BaseAssemblyDatabase):
     window: pd.DataFrame | None
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        mapping = {
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
             "floor": "get_database_assemblies_envelope_floor",
             "mass": "get_database_assemblies_envelope_mass",
             "roof": "get_database_assemblies_envelope_roof",
@@ -65,7 +65,6 @@ class Envelope(BaseAssemblyDatabase):
             "wall": "get_database_assemblies_envelope_wall",
             "window": "get_database_assemblies_envelope_window",
         }
-        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
 class HVAC(BaseAssemblyDatabase):
@@ -76,15 +75,14 @@ class HVAC(BaseAssemblyDatabase):
     ventilation: pd.DataFrame | None
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        mapping = {
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
             "controller": "get_database_assemblies_hvac_controller",
             "cooling": "get_database_assemblies_hvac_cooling",
             "heating": "get_database_assemblies_hvac_heating",
             "hot_water": "get_database_assemblies_hvac_hot_water",
             "ventilation": "get_database_assemblies_hvac_ventilation",
         }
-        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
 class Supply(BaseAssemblyDatabase):
@@ -94,17 +92,16 @@ class Supply(BaseAssemblyDatabase):
     electricity: pd.DataFrame | None
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        mapping = {
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
             "cooling": "get_database_assemblies_supply_cooling",
             "heating": "get_database_assemblies_supply_heating",
             "hot_water": "get_database_assemblies_supply_hot_water",
             "electricity": "get_database_assemblies_supply_electricity",
         }
-        return cls(**cls._read_mapping(locator, mapping))
 
 @dataclass
-class Assemblies(BaseDatabase):
+class Assemblies(BaseDatabaseCollection):
     envelope: Envelope
     hvac: HVAC
     supply: Supply

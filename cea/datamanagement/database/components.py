@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -42,6 +42,28 @@ class Conversion(BaseDatabase):
         except FileNotFoundError as e:
             print(f"Error loading {csv_path}: {e}")
             return None
+    
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        # Return empty since the mapping logic is not very straightforward
+        return {
+            "absorption_chillers": "get_database_components_conversion_absorption_chillers",
+            "boilers": "get_database_components_conversion_boilers",
+            "bore_holes": "get_database_components_conversion_bore_holes",
+            "cogeneration_plants": "get_database_components_conversion_cogeneration_plants",
+            "cooling_towers": "get_database_components_conversion_cooling_towers",
+            "fuel_cells": "get_database_components_conversion_fuel_cells",
+            "heat_exchangers": "get_database_components_conversion_heat_exchangers",
+            "heat_pumps": "get_database_components_conversion_heat_pumps",
+            "hydraulic_pumps": "get_database_components_conversion_hydraulic_pumps",
+            "photovoltaic_panels": "get_database_components_conversion_photovoltaic_panels",
+            "photovoltaic_thermal_panels": "get_database_components_conversion_photovoltaic_thermal_panels",
+            "power_transformers": "get_database_components_conversion_power_transformers",
+            "solar_collectors": "get_database_components_conversion_solar_collectors",
+            "thermal_energy_storages": "get_database_components_conversion_thermal_energy_storages",
+            "unitary_air_conditioners": "get_database_components_conversion_unitary_air_conditioners",
+            "vapor_compression_chillers": "get_database_components_conversion_vapor_compression_chillers"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
@@ -84,9 +106,15 @@ class Distribution(BaseDatabase):
     thermal_grid: pd.DataFrame | None
 
     @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "thermal_grid": "get_database_components_distribution_thermal_grid"
+        }
+
+    @classmethod
     def init_database(cls, locator: InputLocator):
         try:
-            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
+            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
             thermal_grid = None
         return cls(thermal_grid)
@@ -104,9 +132,16 @@ class Feedstocks(BaseDatabase):
     _library: dict[str, pd.DataFrame]
 
     @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "energy_carriers": "get_database_components_feedstocks_energy_carriers",
+            "_library": "get_db4_components_feedstocks_library_folder"
+        }
+
+    @classmethod
     def init_database(cls, locator: InputLocator):
         try:
-            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
+            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers()).set_index(cls._index)
         except FileNotFoundError:
             energy_carriers = None
 
@@ -117,20 +152,11 @@ class Feedstocks(BaseDatabase):
         return cls(energy_carriers, _library)
 
     def to_dict(self):
-        # Temporarily add dummy index to DataFrame for serialization
-        new_df = None
-        if self.energy_carriers is not None:
-            new_df = self.energy_carriers.copy()
-            new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
-            new_df.set_index('index', inplace=True)
-        
-        new_obj = Feedstocks(new_df, self._library)
-
-        return new_obj.dataclass_to_dict()
+        return self.dataclass_to_dict()
 
 
 @dataclass
-class Components(BaseDatabase):
+class Components(BaseDatabaseCollection):
     conversion: Conversion
     distribution: Distribution
     feedstocks: Feedstocks
