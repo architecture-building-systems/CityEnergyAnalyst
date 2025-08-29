@@ -49,7 +49,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False, plot: bool = True):
     # Extract parameters from dictionary
     plot_cea_feature: str | None = plot_dict.get('feature')
     # If feature is not found, figure out based on config
@@ -104,15 +104,18 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
                                                    solar_panel_types_list)
+
+    if plot:
+        # Activate c_plotter
+        fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
     
-    # Activate c_plotter
-    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
+        # Use 16:9 landscape aspect ratio for professional presentation
+        plot_width = 1600
+        plot_height = int(plot_width / 16 * 9)  # 16:9 aspect ratio = 900px height
     
-    # Use 16:9 landscape aspect ratio for professional presentation
-    plot_width = 1600
-    plot_height = int(plot_width / 16 * 9)  # 16:9 aspect ratio = 900px height
-    
-    fig.update_layout(width=plot_width, height=plot_height)
+        fig.update_layout(width=plot_width, height=plot_height)
+    else:
+        fig = None
     
     return fig
 
