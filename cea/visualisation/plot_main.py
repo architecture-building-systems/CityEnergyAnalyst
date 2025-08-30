@@ -100,11 +100,15 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         print(f"Looking for: plots-general and plots-{plot_cea_feature_umbrella}")
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
+    # Overwrite config for specific summary files for upv designer
+    if not plot:
+        plot_config_general.x_to_plot = 'building'
+
+
     # Activate a_data_loader
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature,
                                                                                 hour_start, hour_end,
                                                                                 solar_panel_types_list, bool_include_advanced_analytics, threshold)
-
 
     if plot:
         # Activate b_data_processor
