@@ -136,14 +136,17 @@ class BuildingEmissionTimeline:
             )
             area: float = self.surface_area[f"A{key}"]
             self.log_emission_with_lifetime(
-                emission=ghg * area, lifetime=lifetime, col=f"production_{key}"
+                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2"
             )
             self.log_emission_with_lifetime(
-                emission=-biogenic * area, lifetime=lifetime, col=f"biogenic_{key}"
+                emission=-biogenic * area, lifetime=lifetime, col=f"biogenic_{key}_kgCO2"
             )
 
     def fill_operational_emissions(self) -> None:
-        pass
+        operational_emissions = pd.read_csv(self.locator.get_lca_timeline_operational_building(self.name), index_col="hour")
+        if len(operational_emissions) != 8760:
+            raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
+        self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
         """Initialize the timeline DataFrame for the building emissions.
@@ -164,11 +167,14 @@ class BuildingEmissionTimeline:
             {
                 "year": range(start_year, end_year + 1),
                 **{
-                    f"{emission}_{component}": 0.0
+                    f"{emission}_{component}_kgCO2": 0.0
                     for emission in emission_types
                     for component in component_types
                 },
-                "operational": 0.0,
+                "heating_kgCO2": 0.0,
+                "cooling_kgCO2": 0.0,
+                "hot_water_kgCO2": 0.0,
+                "electricity_kgCO2": 0.0,
             }
         )
         self.timeline.set_index("year", inplace=True)

@@ -61,6 +61,7 @@ class OperationalHourlyTimeline:
             ],
         )
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
+        timeline.index.name = "hour"
 
         return timeline
 

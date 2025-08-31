@@ -300,6 +300,7 @@ Life Cycle Analysis:
     parameters: ['general:scenario', emission-timeline]
     input-files:
       - [get_total_demand]
+      - [get_lca_timeline_operational_building, building_name]
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_building_supply]
