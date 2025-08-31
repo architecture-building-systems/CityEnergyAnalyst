@@ -113,7 +113,7 @@ class CEADatabase:
         except Exception as e:
             raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
 
-        return cls(archetypes, assemblies, components)
+        return cls(archetypes=archetypes, assemblies=assemblies, components=components)
 
     @classmethod
     def from_dict(cls, data: dict) -> CEADatabase:
@@ -125,7 +125,6 @@ class CEADatabase:
             assemblies = Assemblies.from_dict(data['assemblies'])
             components = Components.from_dict(data['components'])
 
-            return cls(archetypes, assemblies, components)
+            return cls(archetypes=archetypes, assemblies=assemblies, components=components)
         except Exception as e:
             raise CEADatabaseException(f"Failed to create CEA database from dict: {e}")
-
