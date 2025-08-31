@@ -66,7 +66,7 @@ class Conversion(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         # Define component names (must match the CSV file names)
         components = [
             "ABSORPTION_CHILLERS",
@@ -112,7 +112,7 @@ class Distribution(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
@@ -139,7 +139,7 @@ class Feedstocks(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers()).set_index(cls._index)
         except FileNotFoundError:
@@ -162,10 +162,10 @@ class Components(BaseDatabaseCollection):
     feedstocks: Feedstocks
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        conversion = Conversion.init_database(locator)
-        distribution = Distribution.init_database(locator)
-        feedstocks = Feedstocks.init_database(locator)
+    def from_locator(cls, locator: InputLocator):
+        conversion = Conversion.from_locator(locator)
+        distribution = Distribution.from_locator(locator)
+        feedstocks = Feedstocks.from_locator(locator)
         return cls(conversion, distribution, feedstocks)
 
     def to_dict(self):

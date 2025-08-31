@@ -15,7 +15,7 @@ class BaseAssemblyDatabase(BaseDatabase):
     _index: str = 'code'
     
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         return cls(**cls._read_mapping(locator, cls._locator_mapping()))
 
     def to_dict(self):
@@ -107,11 +107,11 @@ class Assemblies(BaseDatabaseCollection):
     supply: Supply
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         return cls(
-            envelope=Envelope.init_database(locator),
-            hvac=HVAC.init_database(locator),
-            supply=Supply.init_database(locator)
+            envelope=Envelope.from_locator(locator),
+            hvac=HVAC.from_locator(locator),
+            supply=Supply.from_locator(locator)
         )
 
     def to_dict(self):

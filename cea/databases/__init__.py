@@ -107,9 +107,9 @@ class CEADatabase:
     @classmethod
     def from_locator(cls, locator: InputLocator) -> CEADatabase:
         try:
-            archetypes = Archetypes.init_database(locator)
-            assemblies = Assemblies.init_database(locator)
-            components = Components.init_database(locator)
+            archetypes = Archetypes.from_locator(locator)
+            assemblies = Assemblies.from_locator(locator)
+            components = Components.from_locator(locator)
         except Exception as e:
             raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
 

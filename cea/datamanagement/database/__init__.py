@@ -19,8 +19,8 @@ class Base(ABC):
 
     @classmethod
     @abstractmethod
-    def init_database(cls, locator: InputLocator) -> Self:
-        pass
+    def from_locator(cls, locator: InputLocator) -> Self:
+        """Initialize the database object using the provided locator."""
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:

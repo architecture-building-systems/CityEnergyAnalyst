@@ -24,7 +24,7 @@ class ConstructionType(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()).set_index(cls._index)
         except FileNotFoundError:
@@ -51,7 +51,7 @@ class Schedules(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             monthly_multipliers = pd.read_csv(locator.get_database_archetypes_schedules_monthly_multiplier()).set_index(cls._index)
         except FileNotFoundError:
@@ -82,13 +82,13 @@ class UseType(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             use_types = pd.read_csv(locator.get_database_archetypes_use_type()).set_index(cls._index)
         except FileNotFoundError:
             use_types = None
         
-        schedules = Schedules.init_database(locator)
+        schedules = Schedules.from_locator(locator)
         return cls(use_types, schedules)
 
     def to_dict(self):
@@ -101,9 +101,9 @@ class Archetypes(BaseDatabaseCollection):
     use: UseType
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        construction = ConstructionType.init_database(locator)
-        use = UseType.init_database(locator)
+    def from_locator(cls, locator: InputLocator):
+        construction = ConstructionType.from_locator(locator)
+        use = UseType.from_locator(locator)
         return cls(construction, use)
 
     def to_dict(self):
