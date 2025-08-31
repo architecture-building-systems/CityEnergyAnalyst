@@ -32,6 +32,11 @@ class ConstructionType(BaseDatabase):
         
         return cls(construction_types)
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        construction_types = pd.DataFrame.from_dict(d.get('construction_types', None), orient='index')
+        return cls(construction_types)
+
     def to_dict(self):
         return self.dataclass_to_dict()
 
@@ -63,6 +68,12 @@ class Schedules(BaseDatabase):
 
         return cls(monthly_multipliers, _library)
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        monthly_multipliers = pd.DataFrame.from_dict(d.get('monthly_multipliers', None), orient='index')
+        _library = {k: pd.DataFrame(v) for k, v in d.get('_library', {}).items()}
+        return cls(monthly_multipliers, _library)
+
     def to_dict(self):
         return {'monthly_multipliers': self.monthly_multipliers.to_dict(orient='index') if self.monthly_multipliers is not None else None,
                 '_library': {k: v.to_dict(orient='records') for k, v in self._library.items()}}
@@ -89,6 +100,12 @@ class UseType(BaseDatabase):
             use_types = None
         
         schedules = Schedules.from_locator(locator)
+        return cls(use_types, schedules)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        use_types = pd.DataFrame.from_dict(d.get('use_types', None), orient='index')
+        schedules = Schedules.from_dict(d.get('schedules', {}))
         return cls(use_types, schedules)
 
     def to_dict(self):
