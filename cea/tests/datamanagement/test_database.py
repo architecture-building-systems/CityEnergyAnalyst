@@ -35,6 +35,16 @@ class TestDatabase(unittest.TestCase):
         # Check if the to_dict method returns a dictionary
         db_dict = db.to_dict()
         self.assertIsInstance(db_dict, dict)
+        return db_dict
+
+    def test_from_dict(self):
+        db_dict = self.test_from_locator()
+
+        db = CEADatabase.from_dict(db_dict)
+        self.assertIsNotNone(db.archetypes)
+        self.assertIsNotNone(db.assemblies)
+        self.assertIsNotNone(db.components)
+
 
     def test_schema(self):
         schema = CEADatabase.schema()
