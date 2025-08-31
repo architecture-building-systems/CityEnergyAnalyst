@@ -93,7 +93,7 @@ class BaseDatabase(Base):
         return out
 
 @dataclass
-class BaseDatabaseCollection(Base):
+class BaseDatabaseCollection(Base, ABC):
     """Base class for database object collections."""
 
     @classmethod
