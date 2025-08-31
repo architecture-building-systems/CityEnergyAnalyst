@@ -273,6 +273,21 @@ Life Cycle Analysis:
       - [get_zone_geometry]
       - [get_building_supply]
 
+  - name: hourly-operational-emission
+    label: Hourly Operational Emission
+    short_description: Generate a detailed hourly operational emission timeline of a typical year.
+    description: This Feature generates operational emission for heating, cooling, hot water 
+      and electricity consumption for each building on an hourly basis.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.hourly_operational_generator
+    parameters: ['general:scenario', hourly-operational-emission]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_building_supply]
+      - [get_weather_file]
+      
   - name: emission-timeline
     label: Emission Timeline
     short_description: Generate a timeline of embodied and operational emissions per building.

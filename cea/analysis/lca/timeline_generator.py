@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
 from cea.demand.building_properties import BuildingProperties
