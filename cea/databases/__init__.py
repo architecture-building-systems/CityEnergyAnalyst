@@ -115,3 +115,17 @@ class CEADatabase:
 
         return cls(archetypes, assemblies, components)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> CEADatabase:
+        if 'archetypes' not in data or 'assemblies' not in data or 'components' not in data:
+            raise CEADatabaseException("Missing required database sections in input dictionary.")
+
+        try:
+            archetypes = Archetypes.from_dict(data['archetypes'])
+            assemblies = Assemblies.from_dict(data['assemblies'])
+            components = Components.from_dict(data['components'])
+
+            return cls(archetypes, assemblies, components)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to create CEA database from dict: {e}")
+

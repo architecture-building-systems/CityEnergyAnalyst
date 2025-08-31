@@ -22,6 +22,11 @@ class Base(ABC):
     def from_locator(cls, locator: InputLocator) -> Self:
         """Initialize the database object using the provided locator."""
 
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, data: dict) -> Self:
+        """Create an instance of the class from a dictionary."""
+
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
         pass
@@ -115,4 +120,21 @@ class BaseDatabaseCollection(Base, ABC):
             except Exception as e:
                 raise ValueError(f"Error getting schema for field `{name}`: {e}") 
         return out
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        """Create an instance of the collection from a dictionary."""
+        init_args = {}
+        type_hints = get_type_hints(cls)
+        for field in fields(cls):
+            field_data = data.get(field.name)
+            field_type = type_hints.get(field.name)
+            if field_data is not None and field_type is not None and inspect.isclass(field_type):
+                if issubclass(field_type, BaseDatabase):
+                    init_args[field.name] = field_type.from_dict(field_data)
+                else:
+                    raise ValueError(f"Field `{field.name}` is of type `{field_type}`, which is not a subclass of BaseDatabase.")
+            else:
+                init_args[field.name] = field_data
+        return cls(**init_args)
         
