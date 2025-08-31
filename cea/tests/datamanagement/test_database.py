@@ -25,7 +25,7 @@ class TestDatabase(unittest.TestCase):
     def test_initialization(self):
 
         # Initialize the database
-        db = CEADatabase(self.locator)
+        db = CEADatabase.from_locator(locator=self.locator)
 
         # Check if the database components are initialized correctly
         self.assertIsNotNone(db.archetypes)
