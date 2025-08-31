@@ -22,7 +22,7 @@ class TestDatabase(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_initialization(self):
+    def test_from_locator(self):
 
         # Initialize the database
         db = CEADatabase.from_locator(locator=self.locator)
