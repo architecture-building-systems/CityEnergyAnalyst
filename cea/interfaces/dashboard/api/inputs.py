@@ -401,7 +401,7 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: CEADatabase(locator).to_dict())
+        return await run_in_threadpool(lambda: CEADatabase.from_locator(locator).to_dict())
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
