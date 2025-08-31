@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os.path
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 import inspect
@@ -29,7 +30,11 @@ class Base(ABC):
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
-        pass
+        """Convert the instance to a dictionary."""
+
+    @abstractmethod
+    def save(self, locator: InputLocator) -> None:
+        """Save the database object using the provided locator."""
 
     def dataclass_to_dict(self, orient: Literal['records', 'index'] = 'index') -> dict[str, Any]:
         """Convert a dataclass instance to a dictionary, handling nested DataFrames and other types."""
@@ -97,9 +102,46 @@ class BaseDatabase(Base):
                 print(f"Warning: No locator mapping found for field `{field.name}` in class `{cls.__name__}`")
         return out
 
+    def save(self, locator: InputLocator) -> None:
+        """Save the database object using the provided locator."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, pd.DataFrame):
+                locator_method = self._locator_mapping().get(field.name)
+                if locator_method is None:
+                    raise ValueError(
+                        f"No locator mapping found for field `{field.name}` in class `{self.__class__.__name__}`")
+
+                try:
+                    path = getattr(locator, locator_method)()
+                except AttributeError:
+                    raise ValueError(f"Locator method for {field.name} not found: {locator_method}")
+                value.to_csv(path)
+            elif isinstance(value, dict):
+                # the key is the name of the file, locator method gives the folder
+                for k, df in value.items():
+                    if not isinstance(df, pd.DataFrame):
+                        raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
+                    folder_path = getattr(locator, self._locator_mapping().get(field.name))()
+                    file_path = os.path.join(folder_path, f"{k}.csv")
+                    df.to_csv(file_path, index=False)
+            elif isinstance(value, BaseDatabase):
+                value.save(locator)
+            else:
+                raise ValueError(f"Field `{field.name}` is of type `{type(value)}`, which is not a DataFrame or subclass of BaseDatabase.")
+
 @dataclass
 class BaseDatabaseCollection(Base, ABC):
     """Base class for database object collections."""
+
+    def save(self, locator: InputLocator) -> None:
+        """Save the database collection using the provided locator."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, BaseDatabase):
+                value.save(locator)
+            else:
+                raise ValueError(f"Field `{field.name}` is of type `{type(value)}`, which is not a subclass of Base.")
 
     @classmethod
     def _locator_mappings(cls) -> dict[str, str]:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -70,6 +70,12 @@ class CEADatabase:
         }
 
         return _replace_nan_with_none(data)
+
+    def save(self, locator: InputLocator):
+        """Save the database components to CSV files using the provided locator."""
+        self.archetypes.save(locator)
+        self.assemblies.save(locator)
+        self.components.save(locator)
 
     @classmethod
     def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
