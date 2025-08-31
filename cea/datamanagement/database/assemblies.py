@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -17,6 +17,14 @@ class BaseAssemblyDatabase(BaseDatabase):
     @classmethod
     def from_locator(cls, locator: InputLocator):
         return cls(**cls._read_mapping(locator, cls._locator_mapping()))
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        init_args = dict()
+        for field in fields(cls):
+            value = d.get(field.name, None)
+            init_args[field.name] = pd.DataFrame.from_dict(value, orient='index')
+        return cls(**init_args)
 
     def to_dict(self):
         return self.dataclass_to_dict()
