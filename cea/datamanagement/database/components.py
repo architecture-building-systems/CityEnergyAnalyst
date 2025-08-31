@@ -95,6 +95,20 @@ class Conversion(BaseDatabase):
 
         return cls(**component_data)
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        component_data = {}
+        for key in d:
+            data = []
+            for k, v in d[key].items():
+                if isinstance(v, list):
+                    # Readd group name as index column
+                    v = pd.DataFrame(v)
+                    v[cls._index] = k
+                    data.append(v)
+            component_data[key] = pd.concat(data)
+        return cls(**component_data)
+
     def to_dict(self):
         return self.dataclass_to_dict("records")
 
@@ -117,6 +131,11 @@ class Distribution(BaseDatabase):
             thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
             thermal_grid = None
+        return cls(thermal_grid)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        thermal_grid = pd.DataFrame.from_dict(d.get('thermal_grid', None), orient='index')
         return cls(thermal_grid)
 
     def to_dict(self):
@@ -149,6 +168,12 @@ class Feedstocks(BaseDatabase):
         for file in Path(locator.get_db4_components_feedstocks_library_folder()).glob('*.csv'):
             _library[file.stem] = pd.read_csv(file)
 
+        return cls(energy_carriers, _library)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        energy_carriers = pd.DataFrame.from_dict(d.get('energy_carriers', None), orient='index')
+        _library = {k: pd.DataFrame(v) for k, v in d.get('_library', {}).items()}
         return cls(energy_carriers, _library)
 
     def to_dict(self):
