@@ -412,7 +412,17 @@ async def get_input_database_data(project_info: CEAProjectInfo):
 
 @router.put('/databases')
 async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
-    return
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
+    try:
+        db = CEADatabase.from_dict(payload)
+        db.save(locator)
+        return {'message': 'Database updated'}
+    except CEADatabaseException as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
 
 
 class DatabasePath(BaseModel):
