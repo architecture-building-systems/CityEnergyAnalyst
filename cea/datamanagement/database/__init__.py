@@ -131,7 +131,8 @@ class BaseDatabase(Base):
                         folder_path = getattr(locator, self._locator_mapping().get(field.name))()
                         file_path = os.path.join(folder_path, f"{k}.csv")
 
-                        df.to_csv(file_path, index=self._library_index)
+                        df.set_index(self._library_index, inplace=True)
+                        df.to_csv(file_path)
                 # Have to handle properties of Conversion separately due to dict format
                 elif self.__class__.__name__ == 'Conversion':
                     file_path = getattr(locator, self._locator_mapping().get(field.name))()
