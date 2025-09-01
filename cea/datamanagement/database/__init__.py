@@ -142,8 +142,8 @@ class BaseDatabase(Base):
                         file_path = os.path.join(folder_path, f"{k}.csv")
 
                         df.set_index(self._library_index, inplace=True)
-                        os.makedirs(os.path.dirname(path), exist_ok=True)
                         df.to_csv(file_path)
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 # Have to handle properties of Conversion separately due to dict format
                 elif self.__class__.__name__ == 'Conversion':
                     file_path = getattr(locator, self._locator_mapping().get(field.name))()
@@ -156,7 +156,7 @@ class BaseDatabase(Base):
                         df[self._index] = k
                         data.append(df.set_index(self._index))
                     combined_df = pd.concat(data)
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     combined_df.to_csv(file_path)
                 else:
                     raise ValueError(f"Field `{field.name}` is a dict but unable to decode format.")
