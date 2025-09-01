@@ -124,6 +124,7 @@ class BaseDatabase(Base):
                     path = getattr(locator, locator_method)()
                 except AttributeError:
                     raise ValueError(f"Locator method for {field.name} not found: {locator_method}")
+                os.makedirs(os.path.dirname(path), exist_ok=True)
                 value.to_csv(path)
             elif isinstance(value, dict):
                 # Assume is _library with special index handling
@@ -141,6 +142,7 @@ class BaseDatabase(Base):
                         file_path = os.path.join(folder_path, f"{k}.csv")
 
                         df.set_index(self._library_index, inplace=True)
+                        os.makedirs(os.path.dirname(path), exist_ok=True)
                         df.to_csv(file_path)
                 # Have to handle properties of Conversion separately due to dict format
                 elif self.__class__.__name__ == 'Conversion':
@@ -154,7 +156,7 @@ class BaseDatabase(Base):
                         df[self._index] = k
                         data.append(df.set_index(self._index))
                     combined_df = pd.concat(data)
-
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
                     combined_df.to_csv(file_path)
                 else:
                     raise ValueError(f"Field `{field.name}` is a dict but unable to decode format.")
