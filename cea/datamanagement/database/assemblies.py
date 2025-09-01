@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -15,8 +15,21 @@ class BaseAssemblyDatabase(BaseDatabase):
     _index: str = 'code'
     
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         return cls(**cls._read_mapping(locator, cls._locator_mapping()))
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        init_args = dict()
+        for field in fields(cls):
+            value = d.get(field.name, None)
+            if value is None:
+                init_args[field.name] = None
+                continue
+            df = pd.DataFrame.from_dict(value, orient='index')
+            df.index.name = cls._index
+            init_args[field.name] = df
+        return cls(**init_args)
 
     def to_dict(self):
         return self.dataclass_to_dict()
@@ -107,11 +120,11 @@ class Assemblies(BaseDatabaseCollection):
     supply: Supply
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         return cls(
-            envelope=Envelope.init_database(locator),
-            hvac=HVAC.init_database(locator),
-            supply=Supply.init_database(locator)
+            envelope=Envelope.from_locator(locator),
+            hvac=HVAC.from_locator(locator),
+            supply=Supply.from_locator(locator)
         )
 
     def to_dict(self):
