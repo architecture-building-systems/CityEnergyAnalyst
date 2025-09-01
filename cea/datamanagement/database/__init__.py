@@ -111,36 +111,44 @@ class BaseDatabase(Base):
                 if locator_method is None:
                     raise ValueError(
                         f"No locator mapping found for field `{field.name}` in class `{self.__class__.__name__}`")
-
                 try:
                     path = getattr(locator, locator_method)()
                 except AttributeError:
                     raise ValueError(f"Locator method for {field.name} not found: {locator_method}")
                 value.to_csv(path)
             elif isinstance(value, dict):
-                # Handle dict of DataFrames
-                index = self._index
-
                 # Assume is _library with special index handling
-                # e.g., in Schedules and Feedstocks classes
+                # e.g., Schedules and Feedstocks classes
                 # the key is the name of the file, locator method gives the folder
                 if field.name == '_library':
                     if not hasattr(self, '_library_index'):
                         raise AttributeError(
                             f"Unable to determine index for library DataFrame in field `{field.name}`.Ensure `_library_index` is defined.")
-                    index = self._library_index
 
-                for k, df in value.items():
-                    if not isinstance(df, pd.DataFrame):
-                        raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
-                    folder_path = getattr(locator, self._locator_mapping().get(field.name))()
-                    file_path = os.path.join(folder_path, f"{k}.csv")
+                    for k, df in value.items():
+                        if not isinstance(df, pd.DataFrame):
+                            raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
+                        folder_path = getattr(locator, self._locator_mapping().get(field.name))()
+                        file_path = os.path.join(folder_path, f"{k}.csv")
 
-                    # Fix for databases e.g. _library where index is not saved correctly
-                    if index in df.columns:
-                        df.set_index(index, inplace=True)
+                        df.to_csv(file_path, index=self._library_index)
+                # Have to handle properties of Conversion separately due to dict format
+                elif self.__class__.__name__ == 'Conversion':
+                    file_path = getattr(locator, self._locator_mapping().get(field.name))()
 
-                    df.to_csv(file_path)
+                    data = []
+                    for k, df in value.items():
+                        if not isinstance(df, pd.DataFrame):
+                            raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
+                        # Readd group name as index column
+                        df[self._index] = k
+                        data.append(df.set_index(self._index))
+                    combined_df = pd.concat(data)
+
+                    combined_df.to_csv(file_path)
+                else:
+                    raise ValueError(f"Field `{field.name}` is a dict but unable to decode format.")
+
             elif isinstance(value, BaseDatabase):
                 value.save(locator)
             else:
