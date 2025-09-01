@@ -414,9 +414,11 @@ async def get_input_database_data(project_info: CEAProjectInfo):
 async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        db = CEADatabase.from_dict(payload)
-        db.save(locator)
-        return {'message': 'Database updated'}
+        def fn():
+            db = CEADatabase.from_dict(payload)
+            db.save(locator)
+            return {'message': 'Database updated'}
+        return await run_in_threadpool(fn)
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
