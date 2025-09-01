@@ -175,6 +175,7 @@ class BaseDatabaseCollection(Base, ABC):
         """Save the database collection using the provided locator."""
         for field in fields(self):
             value = getattr(self, field.name)
+            # properties of BaseDatabaseCollection must be BaseDatabase subclasses
             if isinstance(value, BaseDatabase):
                 value.save(locator)
             else:
