@@ -99,14 +99,7 @@ class Conversion(BaseDatabase):
     def from_dict(cls, d: dict):
         component_data = {}
         for key in d:
-            data = []
-            for k, v in d[key].items():
-                if isinstance(v, list):
-                    # Readd group name as index column
-                    v = pd.DataFrame(v)
-                    v[cls._index] = k
-                    data.append(v)
-            component_data[key] = pd.concat(data)
+            component_data[key] = {k: pd.DataFrame(v) for k, v in d[key].items()} if d[key] is not None else None
         return cls(**component_data)
 
     def to_dict(self):
