@@ -410,7 +410,7 @@ async def get_input_database_data(project_info: CEAProjectInfo):
         )
 
 
-@router.put('/databases')
+@router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
 async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
