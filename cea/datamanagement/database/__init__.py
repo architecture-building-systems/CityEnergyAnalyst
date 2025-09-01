@@ -4,7 +4,12 @@ import os.path
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 import inspect
-from typing import Any, Literal, Self, TYPE_CHECKING, get_type_hints
+from typing import Any, Literal, TYPE_CHECKING, get_type_hints
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 import pandas as pd
 
