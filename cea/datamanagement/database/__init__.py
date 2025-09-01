@@ -153,8 +153,9 @@ class BaseDatabase(Base):
                         if not isinstance(df, pd.DataFrame):
                             raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
                         # Readd group name as index column
-                        df[self._index] = k
-                        data.append(df.set_index(self._index))
+                        out = df.copy()
+                        out[self._index] = k
+                        data.append(out.set_index(self._index))
                     combined_df = pd.concat(data)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     combined_df.to_csv(file_path)
