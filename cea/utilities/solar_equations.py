@@ -206,7 +206,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
+def filter_low_potential(radiation_sensor_path, metadata_csv_path, config, threshold=None):
     """
     To filter the sensor points/hours with low radiation potential.
 
@@ -266,7 +266,10 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     # set min yearly radiation threshold for sensor selection
     # keep sensors above min production in sensors_rad
     max_annual_radiation = sensors_rad_sum.max().values[0]
-    annual_radiation_threshold_Whperm2 = float(config.solar.annual_radiation_threshold)*1000
+    if threshold is not None:
+        annual_radiation_threshold_Whperm2 = float(threshold)*1000
+    else:
+        annual_radiation_threshold_Whperm2 = float(config.solar.annual_radiation_threshold)*1000
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 

@@ -65,7 +65,7 @@ def projected_lifetime_output(
     lifetime_production = production_values * derate_factors
     return lifetime_production
 
-def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, datetime_local, building_name):
+def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, datetime_local, building_name, threshold=None):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -97,7 +97,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config)
+        solar_equations.filter_low_potential(radiation_path, metadata_csv_path, config, threshold)
 
     # set the maximum roof coverage
     max_roof_coverage = config.solar.max_roof_coverage
@@ -817,7 +817,7 @@ def write_aggregate_results(locator, type_PVpanel, building_names):
                                         float_format='%.2f', na_rep='nan')
 
 
-def main(config):
+def main(config, threshold=None, report=False):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     list_types_PVpanel = config.solar.type_PVpanel
@@ -854,14 +854,15 @@ def main(config):
                                                                repeat(longitude, n),
                                                                repeat(weather_data, n),
                                                                repeat(date_local, n),
-                                                               building_names)
+                                                               building_names,
+                                                               repeat(threshold, n))
         # aggregate results from all buildings
         write_aggregate_results(locator, type_PVpanel,building_names)
 
-        # write results to export-plot-thresholds folder for upv design helper
-        context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
-        plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=config.solar.annual_radiation_threshold)
-
+        if report:
+            # write results to export-plot-thresholds folder for upv design helper
+            context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
+            plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=threshold)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
