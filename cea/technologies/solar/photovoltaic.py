@@ -820,10 +820,12 @@ def write_aggregate_results(locator, type_PVpanel, building_names):
 def main(config, dict_pv_data=None):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
     if dict_pv_data is None:
         list_types_PVpanel = config.solar.type_PVpanel
     else:
         list_types_PVpanel = list(dict_pv_data.keys())
+        list_types_PVpanel_thresholds = list(dict_pv_data.values())
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
     print('Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
@@ -858,7 +860,7 @@ def main(config, dict_pv_data=None):
                                                                repeat(weather_data, n),
                                                                repeat(date_local, n),
                                                                building_names,
-                                                               dict_pv_data.get(type_PVpanel) if dict_pv_data is not None else repeat(None, n))
+                                                               list_types_PVpanel_thresholds if dict_pv_data is not None else repeat(None, n))
 
         # aggregate results from all buildings
         write_aggregate_results(locator, type_PVpanel,building_names)
@@ -866,7 +868,7 @@ def main(config, dict_pv_data=None):
         if dict_pv_data is not None:
             # write results to export-plot-thresholds folder for upv design helper
             context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
-            plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=threshold)
+            plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=dict_pv_data[type_PVpanel])
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
