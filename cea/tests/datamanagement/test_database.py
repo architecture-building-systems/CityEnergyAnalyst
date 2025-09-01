@@ -35,3 +35,24 @@ class TestDatabase(unittest.TestCase):
         # Check if the to_dict method returns a dictionary
         db_dict = db.to_dict()
         self.assertIsInstance(db_dict, dict)
+
+    def test_schema(self):
+        schema = CEADatabase.schema()
+        self.assertIsInstance(schema, dict)
+
+    def test_locator_mapping(self):
+        locator_mapping = CEADatabase._locator_mappings()
+
+        self.assertIsInstance(locator_mapping, dict)
+        self.assertIn('archetypes', locator_mapping)
+        self.assertIn('assemblies', locator_mapping)
+        self.assertIn('components', locator_mapping)
+
+    def test_schema_replacement(self):
+        schema = CEADatabase.schema(replace_locator_refs=True)
+        self.assertIsInstance(schema, dict)
+        self.assertIn('archetypes', schema)
+        self.assertIn('assemblies', schema)
+        self.assertIn('components', schema)
+
+        print(schema)

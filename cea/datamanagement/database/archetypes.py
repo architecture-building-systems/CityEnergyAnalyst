@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -16,6 +16,12 @@ if TYPE_CHECKING:
 class ConstructionType(BaseDatabase):
     _index = 'const_type'
     construction_types: pd.DataFrame | None
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "construction_types": "get_database_archetypes_construction_type"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
@@ -36,6 +42,13 @@ class Schedules(BaseDatabase):
 
     monthly_multipliers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "monthly_multipliers": "get_database_archetypes_schedules_monthly_multiplier",
+            "_library": "get_db4_archetypes_schedules_library_folder"
+        }
 
     @classmethod
     def init_database(cls, locator: InputLocator):
@@ -63,6 +76,12 @@ class UseType(BaseDatabase):
     schedules: Schedules
 
     @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "use_types": "get_database_archetypes_use_type"
+        }
+
+    @classmethod
     def init_database(cls, locator: InputLocator):
         try:
             use_types = pd.read_csv(locator.get_database_archetypes_use_type()).set_index(cls._index)
@@ -77,7 +96,7 @@ class UseType(BaseDatabase):
 
 
 @dataclass
-class Archetypes(BaseDatabase):
+class Archetypes(BaseDatabaseCollection):
     construction: ConstructionType
     use: UseType
 
