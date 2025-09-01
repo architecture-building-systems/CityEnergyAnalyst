@@ -111,6 +111,10 @@ class BaseDatabase(Base):
         """Save the database object using the provided locator."""
         for field in fields(self):
             value = getattr(self, field.name)
+            if value is None:
+                print(f"Warning: Field `{field.name}` in `{self.__class__.__name__}` is None, skipping save.")
+                continue
+
             if isinstance(value, pd.DataFrame):
                 locator_method = self._locator_mapping().get(field.name)
                 if locator_method is None:
