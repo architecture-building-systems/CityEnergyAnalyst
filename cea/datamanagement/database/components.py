@@ -128,8 +128,12 @@ class Distribution(BaseDatabase):
 
     @classmethod
     def from_dict(cls, d: dict):
-        thermal_grid = pd.DataFrame.from_dict(d.get('thermal_grid', None), orient='index')
-        thermal_grid.index.name = cls._index
+        data = d.get('thermal_grid', None)
+        if data is None:
+            thermal_grid = None
+        else:
+            thermal_grid = pd.DataFrame.from_dict(data, orient='index')
+            thermal_grid.index.name = cls._index
         return cls(thermal_grid)
 
     def to_dict(self):
@@ -167,8 +171,12 @@ class Feedstocks(BaseDatabase):
 
     @classmethod
     def from_dict(cls, d: dict):
-        energy_carriers = pd.DataFrame.from_dict(d.get('energy_carriers', None), orient='index')
-        energy_carriers.index.name = cls._index
+        data = d.get('energy_carriers', None)
+        if data is None:
+            energy_carriers = None
+        else:
+            energy_carriers = pd.DataFrame.from_dict(data, orient='index')
+            energy_carriers.index.name = cls._index
         _library = {k: pd.DataFrame(v) for k, v in d.get('_library', {}).items()}
         return cls(energy_carriers, _library)
 

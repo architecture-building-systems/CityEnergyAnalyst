@@ -23,6 +23,9 @@ class BaseAssemblyDatabase(BaseDatabase):
         init_args = dict()
         for field in fields(cls):
             value = d.get(field.name, None)
+            if value is None:
+                init_args[field.name] = None
+                continue
             df = pd.DataFrame.from_dict(value, orient='index')
             df.index.name = cls._index
             init_args[field.name] = df
