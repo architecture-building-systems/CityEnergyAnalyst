@@ -432,7 +432,7 @@ class DatabasePath(BaseModel):
     name: str
 
 
-@router.put('/databases/copy')
+@router.put('/databases/copy', dependencies=[CEASeverDemoAuthCheck])
 async def copy_input_database(project_info: CEAProjectInfo, database_path: DatabasePath):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
