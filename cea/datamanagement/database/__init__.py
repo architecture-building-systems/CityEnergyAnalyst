@@ -156,6 +156,11 @@ class BaseDatabase(Base):
                         out = df.copy()
                         out[self._index] = k
                         data.append(out.set_index(self._index))
+
+                    if not data:
+                        print(f"Warning: No data to save for field `{field.name}` in `{self.__class__.__name__}`.")
+                        continue
+                        
                     combined_df = pd.concat(data)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     combined_df.to_csv(file_path)
