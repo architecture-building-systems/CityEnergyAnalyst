@@ -147,6 +147,7 @@ class Distribution(BaseDatabase):
 class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
+    _library_index = "hour"
 
     energy_carriers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]

@@ -45,6 +45,7 @@ class ConstructionType(BaseDatabase):
 @dataclass
 class Schedules(BaseDatabase):
     _index = 'use_type'
+    _library_index = 'hour'
 
     monthly_multipliers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
