@@ -114,7 +114,7 @@ class OperationalHourlyTimeline:
 
             self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
-                * eff
+                / eff
                 * self.emission_intensity_timeline[feedstock]  # kgCO2/kWh
             )
 
