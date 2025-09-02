@@ -827,8 +827,6 @@ def main(config, dict_pv_data=None):
     if not os.path.exists(locator.solar_potential_folder_PV()):
         shutil.rmtree(locator.solar_potential_folder_PV())
 
-    dict_pv_data = {'PV1': 530, 'PV2': 420}
-
     if dict_pv_data is None:
         list_types_PVpanel = config.solar.type_PVpanel
     else:

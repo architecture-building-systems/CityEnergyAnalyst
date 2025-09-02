@@ -77,7 +77,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                     f"PVT requires both 'sc' and 'pv' panel types in solar_panel_types. "
                     f"Got: {solar_panel_types_dict}"
                 )
-            solar_panel_types_list = [solar_panel_types_dict['sc'], solar_panel_types_dict['pv']]
+            list_panel_type = [solar_panel_types_dict['sc'], solar_panel_types_dict['pv']]
         else:
             # PV or SC requires only one panel type
             if plot_cea_feature not in solar_panel_types_dict:
@@ -85,10 +85,10 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                     f"Missing '{plot_cea_feature}' panel type in solar_panel_types. "
                     f"Got: {solar_panel_types_dict}"
                 )
-            solar_panel_types_list = [solar_panel_types_dict[plot_cea_feature]]
+            list_panel_type = [solar_panel_types_dict[plot_cea_feature]]
     else:
         plot_cea_feature_umbrella = plot_cea_feature
-        solar_panel_types_list = []
+        list_panel_type = []
 
     # Find the plot config section for the cea feature
     try:
@@ -108,17 +108,17 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     # Activate a_data_loader
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature,
                                                                                 hour_start, hour_end,
-                                                                                solar_panel_types_list, bool_include_advanced_analytics, threshold)
+                                                                                list_panel_type, bool_include_advanced_analytics, threshold)
 
     if plot:
         # Activate b_data_processor
         df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter,
                                                        plot_instance, plot_cea_feature, df_summary_data,
                                                        df_architecture_data,
-                                                       solar_panel_types_list)
+                                                       list_panel_type)
 
         # Activate c_plotter
-        fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
+        fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, list_panel_type, hide_title)
     
         # Use 16:9 landscape aspect ratio for professional presentation
         plot_width = 1600

@@ -45,7 +45,7 @@ dict_plot_analytics_cea_feature = {
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, threshold=None):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, list_panel_type, threshold=None):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -73,12 +73,13 @@ class csv_pointer:
         self.list_use_type = plots_building_filter.filter_buildings_by_use_type
         self.min_ratio_as_main_use = plots_building_filter.min_ratio_as_main_use
         self.threshold = threshold
+        self.list_panel_type = list_panel_type
 
         if plot_cea_feature in ('pv', 'sc'):
-            self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}"
+            self.appendix = f"{plot_cea_feature}_{list_panel_type[0]}"
         elif plot_cea_feature == 'pvt':
-            if len(solar_panel_types_list) == 2:
-                self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}_{solar_panel_types_list[1]}"
+            if len(list_panel_type) == 2:
+                self.appendix = f"{plot_cea_feature}_{list_panel_type[0]}_{list_panel_type[1]}"
             else:
                 raise ValueError("PVT requires two solar panel types.")
         else:
@@ -124,7 +125,7 @@ class csv_pointer:
             bool_use_acronym, self.bool_aggregate_by_building,
             bool_include_advanced_analytics, [self.time_period],
             bool_use_conditioned_floor_area_for_normalisation,
-            plot=True, list_cea_feature_to_plot=[self.plot_cea_feature], threshold=self.threshold
+            plot=True, list_cea_feature_to_plot=[self.plot_cea_feature], threshold=self.threshold, list_panel_type=self.list_panel_type
         )
 
     def get_summary_results_csv_path(self):
@@ -217,7 +218,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, bool_include_advanced_analytics=False, threshold=None):
+def plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, list_panel_type, bool_include_advanced_analytics=False, threshold=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -232,7 +233,7 @@ def plot_input_processor(plot_config, plot_config_general, plots_building_filter
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, solar_panel_types_list, threshold)
+    plot_instance_a = csv_pointer(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, hour_start, hour_end, list_panel_type, threshold)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
