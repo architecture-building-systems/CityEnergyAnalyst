@@ -40,5 +40,4 @@ async def get_settings(user: CEAUser):
         limits.num_scenarios = 5
         limits.num_buildings = limits.num_buildings * 3 if limits.num_buildings else None
 
-    print(limits)
     return {'limits': limits}
