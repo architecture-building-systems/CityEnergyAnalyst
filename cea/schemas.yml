@@ -2419,6 +2419,12 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: 'NA'
         values: 'NA'
+      Service_Life_floor:
+        description: Service life of the floor assembly
+        type: float
+        unit: '[yr]'
+        values: '{0.0...n}'
+        min: 0.0
       GHG_floor_kgCO2m2:
         description: Embodied emissions per m2 of floor.(entire building life cycle)
         type: float
@@ -2488,6 +2494,12 @@ get_database_assemblies_envelope_roof:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
+      Service_Life_roof:
+        description: Service life of the roof assembly
+        type: float
+        unit: '[yr]'
+        values: '{0.0...n}'
+        min: 0.0
       code:
         description: Type of roof
         primary: true
@@ -2636,6 +2648,12 @@ get_database_assemblies_envelope_wall:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
+      Service_Life_wall:
+        description: Service life of the wall assembly
+        type: float
+        unit: '[yr]'
+        values: '{0.0...n}'
+        min: 0.0
   used_by:
   - demand
   - radiation
@@ -2702,6 +2720,12 @@ get_database_assemblies_envelope_window:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
+      Service_Life_win:
+        description: Service life of the window assembly
+        type: float
+        unit: '[yr]'
+        values: '{0.0...n}'
+        min: 0.0
   used_by:
   - demand
   - radiation
@@ -3803,8 +3827,7 @@ get_database_components_conversion_boilers:
       fuel_code:
         choice:
           lookup:
-            path: get_database_feedstocks
-            sheet: ENERGY_CARRIERS
+            path: get_database_components_feedstocks_energy_carriers
             column: code
         description: code of the combustible energy carrier used by the boiler (matching code in EnergyCarriers
           database)
@@ -4056,8 +4079,7 @@ get_database_components_conversion_cogeneration_plants:
       fuel_code:
         choice:
           lookup:
-            path: get_database_feedstocks
-            sheet: ENERGY_CARRIERS
+            path: get_database_components_feedstocks_energy_carriers
             column: code
         description: code of the combustible energy carrier used by the cogeneration plant (matching code in
           EnergyCarriers database)
@@ -5817,7 +5839,7 @@ get_database_components_conversion_unitary_air_conditioners:
 get_database_components_conversion_vapor_compression_chillers:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR COMPRESSION CHILLERS.csv
+  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR_COMPRESSION_CHILLERS.csv
   file_type: csv
   schema:
     columns:
@@ -6911,6 +6933,17 @@ get_database_archetypes_construction_type:
             path: get_database_assemblies_envelope_floor
             sheet: FLOOR
         description: Internal floor construction assembly (relates to "code" in
+          ENVELOPE assemblies)
+        type: string
+        unit: '[-]'
+        values: alphanumeric
+      type_base:
+        choice:
+          lookup:
+            column: code
+            path: get_database_assemblies_envelope_floor
+            sheet: FLOOR
+        description: Basement floor construction assembly (relates to "code" in
           ENVELOPE assemblies)
         type: string
         unit: '[-]'
@@ -8372,8 +8405,7 @@ get_database_conversion_systems:
         fuel_code:
           choice:
             lookup:
-              path: get_database_feedstocks
-              sheet: ENERGY_CARRIERS
+              path: get_database_components_feedstocks_energy_carriers
               column: code
           description: code of the combustible energy carrier used by the boiler (matching code in EnergyCarriers
             database)
@@ -8616,8 +8648,7 @@ get_database_conversion_systems:
         fuel_code:
           choice:
             lookup:
-              path: get_database_feedstocks
-              sheet: ENERGY_CARRIERS
+              path: get_database_components_feedstocks_energy_carriers
               column: code
           description: code of the combustible energy carrier used by the cogeneration plant (matching code in
             EnergyCarriers database)

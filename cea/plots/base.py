@@ -35,7 +35,7 @@ class PlotBase(object):
 
     @classmethod
     def id(cls):
-        name = re.sub('\s+\(.*\)', '', cls.name)  # remove parenthesis
+        name = re.sub(r'\s+\(.*\)', '', cls.name or '')  # remove parenthesis
         return name.lower().replace(' ', '-').replace('/', '-')  # use for js/html etc.
 
     def __init__(self, project, parameters, cache):

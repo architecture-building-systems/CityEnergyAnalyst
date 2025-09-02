@@ -1,10 +1,8 @@
 from __future__ import annotations
-import atexit
+
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
 
 import numpy as np
@@ -24,6 +22,7 @@ from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+from cea.resources.utils import get_radiation_bin_path
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -39,27 +38,7 @@ class GridSize(NamedTuple):
     walls: int
 
 
-def create_temp_daysim_directory(directory):
-    daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
-
-    os.makedirs(directory, exist_ok=True)
-    temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
-
-    if sys.platform == "win32":
-        daysim_dir = os.path.join(daysim_dir, "bin64")
-
-    for file in os.listdir(daysim_dir):
-        binary_file = os.path.join(daysim_dir, file)
-        output_file = os.path.join(temp_dir.name, file)
-        if not os.path.exists(output_file):
-            shutil.copyfile(binary_file, output_file)
-
-    atexit.register(temp_dir.cleanup)
-
-    return temp_dir.name
-
-
-def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
+def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
 
@@ -73,7 +52,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     If the binaries can't be found anywhere, raise an exception.
 
     :param str path_hint: The path to check first, according to the `cea.config` file.
-    :param bool latest_binaries: Use latest Daysim binaries
     :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
     """
 
@@ -102,16 +80,18 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     if path_hint is not None:
         folders_to_check.append(path_hint)
 
-    # Path of shipped binaries
+    # Check site-packages location first (where binaries are actually installed)
+    site_package_daysim = get_radiation_bin_path()
+    if site_package_daysim:
+        folders_to_check.append(site_package_daysim)
+
+    # Fallback: Path relative to this script (for development or custom setups)
     shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
     folders_to_check.append(shipped_daysim)
 
     # Additional paths
     if sys.platform == "win32":
-        # Check latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(shipped_daysim, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
-
+        folders_to_check.append(os.path.join(shipped_daysim, "bin64"))
         # User might have a default DAYSIM installation
         folders_to_check.append(r"C:\Daysim\bin")
 
@@ -124,7 +104,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
 
     # Expand paths
     folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-    lib_path = None
+    lib_path = os.path.join(os.path.dirname(__file__), "lib")
 
     for possible_path in folders_to_check:
         if not contains_binaries(possible_path):
@@ -135,15 +115,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
         #     warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
         #                   "Consider moving the binaries to another path to use them.")
         #     continue
-
-        if sys.platform == "win32":
-            # Use path lib folder if it exists
-            _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-            if contains_libs(_lib_path):
-                lib_path = _lib_path
-            # Check if lib files in binaries path, for backward capability
-            elif contains_libs(possible_path):
-                lib_path = possible_path
 
         elif sys.platform == "darwin":
             # Remove unidentified developer warning when running binaries on mac
@@ -203,16 +174,16 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
-            sensor_cord, \
-            sensor_type, \
-            sensor_area, \
-            sensor_orientation, \
-            sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
-                                                           srf_type,
-                                                           orientation,
-                                                           normal,
-                                                           intersection)
+                sensor_cord, \
+                sensor_type, \
+                sensor_area, \
+                sensor_orientation, \
+                sensor_intersection = generate_sensor_surfaces(face,
+                                                               grid_size.roof if srf_type == "roofs" else grid_size.walls,
+                                                               srf_type,
+                                                               orientation,
+                                                               normal,
+                                                               intersection)
             sensor_intersection_list.extend(sensor_intersection)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
@@ -234,11 +205,11 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
-        sensors_coords_building, \
-        sensors_type_building, \
-        sensors_area_building, \
-        sensor_orientation_building, \
-        sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
+            sensors_coords_building, \
+            sensors_type_building, \
+            sensors_area_building, \
+            sensor_orientation_building, \
+            sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -286,11 +257,11 @@ def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, ra
     # calculate sensors
     print("Calculating and sending sensor points")
     sensors_coords_zone, \
-    sensors_dir_zone, \
-    sensors_number_zone, \
-    names_zone, \
-    sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
+        sensors_dir_zone, \
+        sensors_number_zone, \
+        names_zone, \
+        sensors_code_zone, \
+        sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
 
     daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone)
 
@@ -326,7 +297,7 @@ def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, ra
             in zip(names_zone, sensors_number_zone, sensors_code_zone, sensor_intersection_zone):
 
         # select sensors data
-        sensor_data = solar_res[index:index+sensors_number]
+        sensor_data = solar_res[index:index + sensors_number]
         # set sensors that intersect with buildings to 0
         sensor_data[np.array(sensor_intersection) == 1] = 0
         items_sensor_name_and_result = pd.DataFrame(sensor_data, index=sensor_code)

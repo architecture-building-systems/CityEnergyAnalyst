@@ -55,9 +55,15 @@ async def get_layers() -> LayersList:
 
 
 @router.post('/{layer_category}/{layer_name}/{parameter}/choices')
-async def get_layer_parameter_choices(params: LayerParams, layer_category: str, layer_name: str, parameter: str):
+async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
     layer_class = load_layer(layer_name, layer_category)
 
+    project_path = params.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    # Update params.project if there is project_root
+    params.project = project_path
     try:
         layer = layer_class(project=params.project, scenario_name=params.scenario_name)
         choices = layer.get_parameter_choices(parameter, params.parameters)
@@ -76,8 +82,10 @@ async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, 
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
+    # Update params.project if there is project_root
+    params.project = project_path
     try:
-        layer = layer_class(project=project_path, scenario_name=params.scenario_name)
+        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
@@ -90,8 +98,15 @@ async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, 
 
 
 @router.post('/{layer_category}/{layer_name}/check')
-async def check_map_layer(params: LayerParams, layer_category: str, layer_name: str):
+async def check_map_layer(project_root: CEAProjectRoot,params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
+
+    project_path = params.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    # Update params.project if there is project_root
+    params.project = project_path
 
     try:
         layer = layer_class(project=params.project, scenario_name=params.scenario_name)

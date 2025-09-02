@@ -26,6 +26,3 @@ Oil,Coil,combustible,fossil,chemical composition,-,-,OIL,"KBOB 2009/1:2016, ID 4
 Natural gas,Cgas,combustible,fossil,chemical composition,-,-,NATURALGAS,"PEN and CO2 from ecoinvent 3.4 - market for natural gas, burned in gas motor, for storage_GLO_2017_Allocation, cut-off,cost from Werke am Zurich see"
 Biogas,Cbig,combustible,biofuel,chemical composition,-,-,BIOGAS,"KBOB 2009/1:2016, ID 41.009 Biogas, cost from CEA, cost from Werke am Zurich see"
 Hydrogen,Chyd,combustible,biofuel,chemical composition,-,-,HYDROGEN,https://file.go.gov.sg/studyofhydrogenimportsanddownstreamapplicationsforsingapore.pdf
-Sunlight,Rsun,radiation,-,wavelength,-,-,-,https://en.wikipedia.org/wiki/Sunlight
-Ultraviolet,Rsun,radiation,-,wavelength,nm,200,-,https://en.wikipedia.org/wiki/Sunlight
-Infrared light,Rsun,radiation,-,wavelength,nm,1500,-,https://en.wikipedia.org/wiki/Sunlight

@@ -97,7 +97,23 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
-    File "cityenergyanalyst.tar.gz"
+    # Install GUI first so that rollback would not be as painful in case of failure
+    # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
+    File "gui_setup.exe"
+
+    # Run GUI Setup
+    DetailPrint "Installing CEA Desktop"
+    ExecWait '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"' $0
+    DetailPrint "CEA Desktop installer returned: $0"
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
+    ${IfNot} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        Abort "Installation failed: Something went wrong with CEA Desktop setup. Install directory not found."
+    ${EndIf}
+    Delete "$INSTDIR\gui_setup.exe"
+
+    File "${WHEEL_FILE}"
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
@@ -110,15 +126,15 @@ Function BaseInstallationSection
     # fix pip due to change in python path
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
 
-    # install CEA from tarball
+    # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install --no-deps "$INSTDIR\cityenergyanalyst.tar.gz"'
+    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
         Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
     ${EndIf}
-    Delete "$INSTDIR\cityenergyanalyst.tar.gz"
+    Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'
@@ -130,14 +146,6 @@ Function BaseInstallationSection
 
     # make sure jupyter has access to the ipython kernel
     #nsExec::ExecToLog '"$INSTDIR\cea-env-run.bat" python -m ipykernel install --prefix $INSTDIR\Dependencies\Python'
-
-    # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
-    File "gui_setup.exe"
-
-    # Run GUI Setup
-    DetailPrint "Installing CEA Desktop"
-    nsExec::ExecToLog '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"'
-    Delete "$INSTDIR\gui_setup.exe"
 
     ;Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"

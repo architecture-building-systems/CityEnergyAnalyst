@@ -18,7 +18,6 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 
-import os.path
 import tempfile
 
 import pandas as pd
@@ -30,6 +29,7 @@ from shapely.geometry import LineString, Point
 import wntr
 import random
 
+import cea.utilities
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
@@ -59,7 +59,7 @@ class Network(object):
                               'peak_load_percentage': 0.0,
                               'network_lifetime_yrs': 20}
 
-    def __init__(self,  connected_buildings, network_id):
+    def __init__(self,  connected_buildings: list[str | Building], network_id: str):
         self.identifier = network_id
         self.connected_buildings = connected_buildings
         self.plant_terminal = None
@@ -71,11 +71,11 @@ class Network(object):
         self.annual_piping_cost = 0.0
 
     @property
-    def connected_buildings(self):
+    def connected_buildings(self) -> list[str | Building]:
         return self._connected_buildings
 
     @connected_buildings.setter
-    def connected_buildings(self, new_connected_buildings:list):
+    def connected_buildings(self, new_connected_buildings: list[str | Building]):
         """
         Sets the connected buildings for the network.
 
@@ -89,7 +89,7 @@ class Network(object):
             raise ValueError("connected_buildings must be a list of building names or Building-objects")
 
     @staticmethod
-    def build_network(network_id, building_ids, connectivity, return_graph=False, generate_dataframes=False):
+    def build_network(network_id, building_ids, connectivity, generate_dataframes=False):
         """
         Build a network for a given network_id and connectivity of the domain. This means creating a graph that connects
         all buildings in a designated network in the most efficient possible manner (i.e. Steiner tree).
@@ -100,8 +100,6 @@ class Network(object):
         :type building_ids: list of str
         :connectivity: connectivity vector holding information about the network connections of the buildings
         :type connectivity: <ConnectivityVector>-object or list of <Connection>-objects
-        :return_graph: boolean indicator for whether the network graph should be returned
-        :type return_graph: bool
         :generate_dataframes: boolean indicator for whether dataframes with explicit information about graph nodes and
                               edges should be created
         :type generate_dataframes: bool
@@ -121,9 +119,9 @@ class Network(object):
 
         # create the network object
         network = Network(connected_buildings, full_network_identifier)
-        network.run_steiner_tree_optimisation(return_graph=return_graph, generate_graph_dataframes=generate_dataframes)
+        network.run_steiner_tree_optimisation(generate_graph_dataframes=generate_dataframes)
 
-        return network.network_graph if return_graph else network
+        return network
 
     def generate_condensed_graph(self, method:str='remove_connector_nodes'):
         """
@@ -146,7 +144,7 @@ class Network(object):
         """
         # Generate the shortest network connecting the specified buildings, this network includes all relevant nodes of
         # the potential network graph (i.e. typically crossings in the roads network of the domain)
-        detailed_network = self.run_steiner_tree_optimisation(generate_graph_dataframes=False, return_graph=True)
+        detailed_network = self.run_steiner_tree_optimisation(generate_graph_dataframes=False)
 
         if method == 'remove_connector_nodes':
 
@@ -215,14 +213,13 @@ class Network(object):
         return condensed_graph
 
 
-    def run_steiner_tree_optimisation(self, generate_graph_dataframes=True, return_graph=False):
+    def run_steiner_tree_optimisation(self, generate_graph_dataframes=True):
         """
         Finds the shortest possible network for a given selection of connected buildings using the steiner tree
         optimisation algorithm.
 
         :param generate_graph_dataframes: indicator for whether the network graph dataframes should be generated
         :type generate_graph_dataframes: bool
-        :param return_graph: indicator for whether the complete network graph object should be returned
         :type return_graph: bool
         """
         is_connected = self._domain_potential_network_terminals_df['building'].isin(self.connected_buildings).to_list()
@@ -248,9 +245,7 @@ class Network(object):
         if generate_graph_dataframes:
             self.complete_graph_dataframes(connected_terminals)
 
-        # return unprocessed network graph, if requested
-        if return_graph:
-            return self.network_graph
+        return self.network_graph
 
     def complete_graph_dataframes(self,  connected_terminals, allow_looped_networks=False):
         """
@@ -754,16 +749,10 @@ class Network(object):
         # BUILD WATER NETWORK
         # thermal_network_folder = self._domain_locator.get_thermal_network_folder()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            _file_location = os.path.join(tmpdir, f"{connectivity_string_for_files}_{self.identifier}")
-
-            # Create empty .inp file for WaterNetworkModel
-            inp_file = f"{_file_location}.inp"
-            with open(inp_file, "w"):
-                pass
-
+        # Change working directory to temporary directory for wntr simulation
+        with tempfile.TemporaryDirectory() as tmpdir, cea.utilities.pushd(tmpdir):
             # Create a water network model instance
-            wn = wntr.network.WaterNetworkModel(inp_file)
+            wn = wntr.network.WaterNetworkModel()
 
             # add loads
             building_base_demand_m3s = {}
@@ -835,7 +824,7 @@ class Network(object):
             # RUN WATER NETWORK SIMULATIONS
             # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
             max_volume_flow_rates_m3s = wnm_results.link['flowrate'].abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(*[calc_max_diameter(flow, Network._pipe_catalog,
@@ -857,7 +846,7 @@ class Network(object):
                 pipe = wn.get_link(str(edge_name))
                 pipe.diameter = wnm_pipe_diameters['D_int_m'][edge_name]
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
 
             # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
             # get accumulated head loss per hour
@@ -880,7 +869,7 @@ class Network(object):
             reservoir.head_timeseries.base_value = int(base_head)
             reservoir.head_timeseries._pattern = 'reservoir'
             sim = wntr.sim.EpanetSimulator(wn)
-            wnm_results = sim.run_sim(file_prefix=_file_location)
+            wnm_results = sim.run_sim()
 
         return wnm_results, wnm_pipe_diameters
 
