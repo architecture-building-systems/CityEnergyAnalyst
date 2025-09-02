@@ -14201,9 +14201,9 @@ get_lca_operation:
 get_lca_timeline_operational_building:
   created_by:
   - hourly_operational_emission
-  file_path: outputs/data/emissions/timeline/{building}_operational_timeline.csv
+  file_path: outputs/data/emissions/timeline/{building}_operational_hourly.csv
   file_type: csv
-  schema: 
+  schema:
     columns:
       hour:
         description: hour of the year.

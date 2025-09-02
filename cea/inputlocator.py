@@ -1443,8 +1443,8 @@ class InputLocator(object):
         return os.path.join(self.get_lca_timeline_folder(), f"{building}_timeline.csv")
 
     def get_lca_timeline_operational_building(self, building: str):
-        """scenario/outputs/data/emissions/timeline/{building}_operational_timeline.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_timeline.csv")
+        """scenario/outputs/data/emissions/timeline/{building}_operational_hourly.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_hourly.csv")
 
     # COSTS
     def get_costs_folder(self):
