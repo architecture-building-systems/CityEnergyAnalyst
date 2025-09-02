@@ -148,7 +148,7 @@ class BuildingEmissionTimeline:
             raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
         self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
 
-    def initialize_timeline(self, end_year: int) -> pd.DataFrame:
+    def initialize_timeline(self, end_year: int) -> None:
         """Initialize the timeline DataFrame for the building emissions.
 
         :param end_year: The year to end the timeline.
@@ -257,9 +257,19 @@ class BuildingEmissionTimeline:
         self.surface_area["Aupperside"] = 0.0  # not implemented
         self.surface_area["Aunderside"] = rc_model_props["Aunderside"]
         # internal floors that are not base, not upperside and not underside
-        self.surface_area["Afloor"] = (
-            rc_model_props["GFA_m2"]  # GFA = footprint * (floor_ag + floor_bg - void_deck)
+
+        # check if building ever have base
+        if self.geometry["floors_bg"] == 0 and self.geometry["void_deck"] > 0:
+            # building is completely floating and does not have a base
+            area_base = 0.0
+        else:
+            area_base = float(rc_model_props["footprint"])
+        self.surface_area["Afloor"] = max(
+            0.0,
+            rc_model_props[
+                "GFA_m2"
+            ]  # GFA = footprint * (floor_ag + floor_bg - void_deck)
             - self.surface_area["Aunderside"]
-            - rc_model_props["footprint"]
+            - area_base,
         )
-        self.surface_area["Abase"] = rc_model_props["footprint"]
+        self.surface_area["Abase"] = area_base
