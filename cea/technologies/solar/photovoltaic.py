@@ -824,7 +824,7 @@ def main(config, dict_pv_data=None):
 
 
     # Delete older output files, if exist
-    if not os.path.exists(locator.solar_potential_folder_PV()):
+    if os.path.exists(locator.solar_potential_folder_PV()):
         shutil.rmtree(locator.solar_potential_folder_PV())
 
     if dict_pv_data is None:
