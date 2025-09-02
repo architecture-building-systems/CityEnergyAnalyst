@@ -5839,7 +5839,7 @@ get_database_components_conversion_unitary_air_conditioners:
 get_database_components_conversion_vapor_compression_chillers:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR COMPRESSION CHILLERS.csv
+  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR_COMPRESSION_CHILLERS.csv
   file_type: csv
   schema:
     columns:

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import os.path
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 import inspect
-from typing import Any, Literal, Self, TYPE_CHECKING, get_type_hints
+from typing import Any, Literal, TYPE_CHECKING, get_type_hints
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 import pandas as pd
 
@@ -19,12 +25,21 @@ class Base(ABC):
 
     @classmethod
     @abstractmethod
-    def init_database(cls, locator: InputLocator) -> Self:
-        pass
+    def from_locator(cls, locator: InputLocator) -> Self:
+        """Initialize the database object using the provided locator."""
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, data: dict) -> Self:
+        """Create an instance of the class from a dictionary."""
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
-        pass
+        """Convert the instance to a dictionary."""
+
+    @abstractmethod
+    def save(self, locator: InputLocator) -> None:
+        """Save the database object using the provided locator."""
 
     def dataclass_to_dict(self, orient: Literal['records', 'index'] = 'index') -> dict[str, Any]:
         """Convert a dataclass instance to a dictionary, handling nested DataFrames and other types."""
@@ -92,9 +107,84 @@ class BaseDatabase(Base):
                 print(f"Warning: No locator mapping found for field `{field.name}` in class `{cls.__name__}`")
         return out
 
+    def save(self, locator: InputLocator) -> None:
+        """Save the database object using the provided locator."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if value is None:
+                print(f"Warning: Field `{field.name}` in `{self.__class__.__name__}` is None, skipping save.")
+                continue
+
+            if isinstance(value, pd.DataFrame):
+                locator_method = self._locator_mapping().get(field.name)
+                if locator_method is None:
+                    raise ValueError(
+                        f"No locator mapping found for field `{field.name}` in class `{self.__class__.__name__}`")
+                try:
+                    path = getattr(locator, locator_method)()
+                except AttributeError:
+                    raise ValueError(f"Locator method for {field.name} not found: {locator_method}")
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                value.to_csv(path)
+            elif isinstance(value, dict):
+                # Assume is _library with special index handling
+                # e.g., Schedules and Feedstocks classes
+                # the key is the name of the file, locator method gives the folder
+                if field.name == '_library':
+                    if not hasattr(self, '_library_index'):
+                        raise AttributeError(
+                            f"Unable to determine index for library DataFrame in field `{field.name}`.Ensure `_library_index` is defined.")
+
+                    for k, df in value.items():
+                        if not isinstance(df, pd.DataFrame):
+                            raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
+                        folder_path = getattr(locator, self._locator_mapping().get(field.name))()
+                        file_path = os.path.join(folder_path, f"{k}.csv")
+
+                        out = df.set_index(self._library_index)
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        out.to_csv(file_path)
+                # Have to handle properties of Conversion separately due to dict format
+                elif self.__class__.__name__ == 'Conversion':
+                    file_path = getattr(locator, self._locator_mapping().get(field.name))()
+
+                    data = []
+                    for k, df in value.items():
+                        if not isinstance(df, pd.DataFrame):
+                            raise ValueError(f"Field `{field.name}` contains a non-DataFrame value of type `{type(df)}`.")
+                        # Readd group name as index column
+                        out = df.copy()
+                        out[self._index] = k
+                        data.append(out.set_index(self._index))
+
+                    if not data:
+                        print(f"Warning: No data to save for field `{field.name}` in `{self.__class__.__name__}`.")
+                        continue
+                        
+                    combined_df = pd.concat(data)
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    combined_df.to_csv(file_path)
+                else:
+                    raise ValueError(f"Field `{field.name}` is a dict but unable to decode format.")
+
+            elif isinstance(value, BaseDatabase):
+                value.save(locator)
+            else:
+                raise ValueError(f"Field `{field.name}` is of type `{type(value)}`, which is not a DataFrame or subclass of BaseDatabase.")
+
 @dataclass
-class BaseDatabaseCollection(Base):
+class BaseDatabaseCollection(Base, ABC):
     """Base class for database object collections."""
+
+    def save(self, locator: InputLocator) -> None:
+        """Save the database collection using the provided locator."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+            # properties of BaseDatabaseCollection must be BaseDatabase subclasses
+            if isinstance(value, BaseDatabase):
+                value.save(locator)
+            else:
+                raise ValueError(f"Field `{field.name}` is of type `{type(value)}`, which is not a subclass of Base.")
 
     @classmethod
     def _locator_mappings(cls) -> dict[str, str]:
@@ -115,4 +205,21 @@ class BaseDatabaseCollection(Base):
             except Exception as e:
                 raise ValueError(f"Error getting schema for field `{name}`: {e}") 
         return out
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        """Create an instance of the collection from a dictionary."""
+        init_args = {}
+        type_hints = get_type_hints(cls)
+        for field in fields(cls):
+            field_data = data.get(field.name)
+            field_type = type_hints.get(field.name)
+            if field_data is not None and field_type is not None and inspect.isclass(field_type):
+                if issubclass(field_type, BaseDatabase):
+                    init_args[field.name] = field_type.from_dict(field_data)
+                else:
+                    raise ValueError(f"Field `{field.name}` is of type `{field_type}`, which is not a subclass of BaseDatabase.")
+            else:
+                init_args[field.name] = field_data
+        return cls(**init_args)
         

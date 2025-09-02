@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -54,14 +55,12 @@ def invert_nested_dict(d: dict[str, Any], path: list[str] | None = None):
 class CEADatabaseException(CEAException):
     """Custom exception for CEA database errors."""
 
+
+@dataclass
 class CEADatabase:
-    def __init__(self, locator: InputLocator):
-        try:
-            self.archetypes = Archetypes.init_database(locator)
-            self.assemblies = Assemblies.init_database(locator)
-            self.components = Components.init_database(locator)
-        except Exception as e:
-            raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
+    archetypes: Archetypes
+    assemblies: Assemblies
+    components: Components
 
     def to_dict(self) -> dict:
         data = {
@@ -71,7 +70,13 @@ class CEADatabase:
         }
 
         return _replace_nan_with_none(data)
-    
+
+    def save(self, locator: InputLocator):
+        """Save the database components to CSV files using the provided locator."""
+        self.archetypes.save(locator)
+        self.assemblies.save(locator)
+        self.components.save(locator)
+
     @classmethod
     def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
         mappings = {
@@ -104,3 +109,28 @@ class CEADatabase:
             replace_paths_using_mapping(schema, flat_mapping)
 
         return schema
+
+    @classmethod
+    def from_locator(cls, locator: InputLocator) -> CEADatabase:
+        try:
+            archetypes = Archetypes.from_locator(locator)
+            assemblies = Assemblies.from_locator(locator)
+            components = Components.from_locator(locator)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
+
+        return cls(archetypes=archetypes, assemblies=assemblies, components=components)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> CEADatabase:
+        if 'archetypes' not in data or 'assemblies' not in data or 'components' not in data:
+            raise CEADatabaseException("Missing required database sections in input dictionary.")
+
+        try:
+            archetypes = Archetypes.from_dict(data['archetypes'])
+            assemblies = Assemblies.from_dict(data['assemblies'])
+            components = Components.from_dict(data['components'])
+
+            return cls(archetypes=archetypes, assemblies=assemblies, components=components)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to create CEA database from dict: {e}")
