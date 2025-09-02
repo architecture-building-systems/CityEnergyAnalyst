@@ -8,8 +8,8 @@ from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 
 def main(config: Configuration) -> None:
     locator = InputLocator(scenario=config.scenario)
-    buildings: list[str] = config.emission_timeline.buildings
-    end_year: int = config.emission_timeline.end_year
+    buildings: list[str] = config.emission_time_dependent.buildings
+    end_year: int = config.emission_time_dependent.end_year
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()

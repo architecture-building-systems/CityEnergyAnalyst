@@ -126,7 +126,7 @@ class OperationalHourlyTimeline:
             os.makedirs(self.locator.get_lca_timeline_folder())
 
         self.operational_emission_timeline.to_csv(
-            self.locator.get_lca_timeline_operational_building(self.bpr.name)
+            self.locator.get_lca_operational_hourly_building(self.bpr.name)
         )
 
 

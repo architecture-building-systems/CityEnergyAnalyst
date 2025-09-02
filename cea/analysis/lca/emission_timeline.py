@@ -22,7 +22,9 @@ class BuildingEmissionTimeline:
     construction processes used to create the building component.
     - `biogenic`: the emissions that are stored within the material that
     would have otherwise been released during other processes or
-    because of decay or wasting.
+    because of decay or wasting. In some results it's also called `uptake`.
+    - `demolition`: the emissions associated with the deconstruction and 
+    disposal of building materials at the end of their service life.
 
     The components include:
     - vertical surfaces (excluding windows)
@@ -143,7 +145,7 @@ class BuildingEmissionTimeline:
             )
 
     def fill_operational_emissions(self) -> None:
-        operational_emissions = pd.read_csv(self.locator.get_lca_timeline_operational_building(self.name), index_col="hour")
+        operational_emissions = pd.read_csv(self.locator.get_lca_operational_hourly_building(self.name), index_col="hour")
         if len(operational_emissions) != 8760:
             raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
         self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
