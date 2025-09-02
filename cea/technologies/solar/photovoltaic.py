@@ -23,6 +23,7 @@ from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+import shutil
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -821,6 +822,13 @@ def main(config, dict_pv_data=None):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
+
+    # Delete older output files, if exist
+    if not os.path.exists(locator.solar_potential_folder_PV()):
+        shutil.rmtree(locator.solar_potential_folder_PV())
+
+    dict_pv_data = {'PV1': 530, 'PV2': 420}
+
     if dict_pv_data is None:
         list_types_PVpanel = config.solar.type_PVpanel
     else:
@@ -828,17 +836,6 @@ def main(config, dict_pv_data=None):
         list_types_PVpanel_thresholds = list(dict_pv_data.values())
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
-    print('Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
-    print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
-    print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
-    print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
-    # print('Running photovoltaic with type-PVpanel = {types_PVpanel}'.format(types_PVpanel=', '.join(map(str, list_types_PVpanel))))
-    if config.solar.custom_tilt_angle:
-        print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
-              (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
-    else:
-        print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
-    print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
 
     # building_names = locator.get_zone_building_names()
     building_names = config.solar.buildings
@@ -852,6 +849,23 @@ def main(config, dict_pv_data=None):
 
     for type_PVpanel in list_types_PVpanel:
         print('Running photovoltaic with type-PVpanel = %s' % type_PVpanel)
+        if dict_pv_data is not None:
+            threshold = dict_pv_data[type_PVpanel]
+        else:
+            threshold = config.solar.annual_radiation_threshold
+
+        print(
+            'Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % threshold)
+        print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
+        print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
+        print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
+        if config.solar.custom_tilt_angle:
+            print('Running photovoltaic with custom-tilt-angle = %s and panel-tilt-angle = %s' %
+                  (config.solar.custom_tilt_angle, config.solar.panel_tilt_angle))
+        else:
+            print('Running photovoltaic with custom-tilt-angle = %s' % config.solar.custom_tilt_angle)
+        print('Running photovoltaic with maximum roof-coverage = %s' % config.solar.max_roof_coverage)
+
         cea.utilities.parallel.vectorize(calc_PV, num_process)(repeat(locator, n),
                                                                repeat(config, n),
                                                                repeat(type_PVpanel, n),
@@ -860,15 +874,15 @@ def main(config, dict_pv_data=None):
                                                                repeat(weather_data, n),
                                                                repeat(date_local, n),
                                                                building_names,
-                                                               list_types_PVpanel_thresholds if dict_pv_data is not None else repeat(None, n))
+                                                               repeat(threshold, n) if dict_pv_data is not None else repeat(None, n))
 
         # aggregate results from all buildings
-        write_aggregate_results(locator, type_PVpanel,building_names)
+        write_aggregate_results(locator, type_PVpanel, building_names)
 
         if dict_pv_data is not None:
             # write results to export-plot-thresholds folder for upv design helper
             context = {'feature': 'pv', 'hour_start': 0, 'hour_end': 8760, 'solar_panel_types': {'pv': type_PVpanel}}
-            plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=dict_pv_data[type_PVpanel])
+            plot_all(config=config, scenario=config.scenario, plot_dict=context, hide_title=True, bool_include_advanced_analytics=True, plot=False, threshold=threshold)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

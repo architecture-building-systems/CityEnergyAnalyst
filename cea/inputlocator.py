@@ -268,15 +268,15 @@ class InputLocator(object):
     def get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(self, summary_folder,
                                                                                         cea_feature, appendix,
                                                                                         time_period, hour_start,
-                                                                                        hour_end):
+                                                                                        hour_end, threshold=None):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics/{appendix}_analytics_{time_resolution}_buildings.csv"""
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(
-                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
+                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature, threshold),
                 f"{appendix}_analytics_selected_hours_buildings.csv")
         else:
             return os.path.join(
-                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature),
+                self.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature, threshold),
                 f"{appendix}_analytics_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_analytics_folder(self, plot_cea_feature, threshold=None):
