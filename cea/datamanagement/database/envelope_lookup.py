@@ -60,7 +60,7 @@ class EnvelopeLookup:
 
     @classmethod
     def from_locator(cls, locator: InputLocator) -> "EnvelopeLookup":
-        env = Envelope.init_database(locator)  # uses your BaseAssemblyDatabase loader
+        env = Envelope.from_locator(locator)  # uses your BaseAssemblyDatabase loader
         return cls(env)
 
     def get_item_value(self, code: str, field: str) -> int | float | str | None:

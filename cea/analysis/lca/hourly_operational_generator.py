@@ -15,7 +15,7 @@ def main(config: Configuration) -> None:
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
     ]
     building_properties = BuildingProperties(locator, weather_data, buildings)
-    feedstock_db = Feedstocks.init_database(locator)
+    feedstock_db = Feedstocks.from_locator(locator)
     for building in buildings:
         bpr = building_properties[building]
         timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
