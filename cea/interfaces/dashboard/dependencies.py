@@ -263,7 +263,14 @@ def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
     # Try to get user id from request cookie
     if auth_client is not None:
         try:
-            return auth_client.get_current_user()
+            user = auth_client.get_current_user()
+            if user.get("client_read_only_metadata") is None:
+                user["onboarded"] = False
+                user["pro_user"] = False
+            else:
+                user["onboarded"] = user['client_read_only_metadata'].get("onboarded", False)
+                user["pro_user"] = user['client_read_only_metadata'].get("pro_user", False)
+            return user
         except CEAAuthError as e:
             logger.error(e)
             raise HTTPException(

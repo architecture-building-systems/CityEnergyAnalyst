@@ -26,20 +26,13 @@ async def get_user_info(user: CEAUser):
     if user.get("id") == LOCAL_USER_ID:
         return user
 
-    if user.get("client_read_only_metadata") is None:
-        onboarded = False
-        pro_user = False
-    else:
-        onboarded = user['client_read_only_metadata'].get("onboarded", False)
-        pro_user = user['client_read_only_metadata'].get("pro_user", False)
-
     return UserInfo(
         id=user.get("id"),
         display_name=user.get("display_name"),
         primary_email=user.get("primary_email"),
         profile_image_url=user.get("profile_image_url"),
-        onboarded=onboarded,
-        pro_user=pro_user
+        onboarded=user.get("onboarded"),
+        pro_user=user.get("pro_user"),
     )
 
 
