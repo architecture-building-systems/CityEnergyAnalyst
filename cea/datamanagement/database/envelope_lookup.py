@@ -155,6 +155,6 @@ class EnvelopeLookup:
             return field
 
         raise KeyError(
-            "Unsupported field '{f}'. Allowed: U, GHG_kgCO2m2, GHG_biogenic_kgCO2m2, Service_Life, "
+            f"Unsupported field '{field}'. Allowed: U, GHG_kgCO2m2, GHG_biogenic_kgCO2m2, Service_Life, "
             "description, Reference, G_win, e_win, F_F, n50, rf_sh, Cm_af."
         )
