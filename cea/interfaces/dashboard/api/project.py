@@ -55,6 +55,7 @@ class ScenarioPath(BaseModel):
 class NewProject(BaseModel):
     project_name: str
     project_root: Optional[str] = None
+    example_project: bool = False
 
 
 class CreateScenario(BaseModel):
@@ -283,7 +284,10 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
             detail=str(e),
         )
     try:
-        os.makedirs(project, exist_ok=True)
+        if new_project.example_project:
+            fetch_example_project(project)
+        else:
+            os.makedirs(project, exist_ok=True)
         try:
             # Add project to database
             await create_project(project, user_id, session)
@@ -760,6 +764,48 @@ async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_sc
             detail='Unable to duplicate scenario.',
         )
 
+EXAMPLE_PROJECT_TAG = "v4.0.0-beta.3"
+EXAMPLE_PROJECT_NAME = "reference-case-open"
+def fetch_example_project(project_path, tag=EXAMPLE_PROJECT_TAG, example_project_name=EXAMPLE_PROJECT_NAME):
+    """Fetch example project into the given project folder"""
+    # TODO: Replace this with a more robust method of fetching example projects
+    import zipfile
+    import requests
+    from io import BytesIO
+
+    project_repo = "cea-examples"
+    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/refs/tags/{EXAMPLE_PROJECT_TAG}.zip"
+    # Save to temp directory and return if already exists
+    temp_dir = os.path.join(tempfile.gettempdir(), "cea_example_project")
+    if os.path.exists(temp_dir):
+        logger.info(f"Using cached example project from {temp_dir} to {project_path}")
+        shutil.copytree(temp_dir, project_path)
+        return
+
+    extract_path = os.path.join(tempfile.gettempdir(), "cea_example_project_temp")
+    os.makedirs(extract_path, exist_ok=True)
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status codes
+
+        with zipfile.ZipFile(BytesIO(response.content)) as zf:
+            # Extract only the contents of the example project folder
+            suffix = tag if not tag.startswith('v') else tag[1:]
+            example_path = os.path.join(f"{project_repo}-{suffix}", example_project_name)
+            members = [m for m in zf.namelist() if m.startswith(example_path) and not m.endswith('/')]
+            zf.extractall(path=extract_path, members=members)
+        logger.info(f"Moving example project from {extract_path} to {temp_dir}")
+        shutil.move(os.path.join(extract_path, example_path), temp_dir)
+        shutil.copytree(temp_dir, project_path)
+        shutil.rmtree(extract_path)
+
+    except requests.RequestException as e:
+        logger.error(f"Failed to download example project: {e}")
+    except zipfile.BadZipFile as e:
+        logger.error(f"Downloaded file is not a valid zip file: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the example project: {e}")
 
 class ZoneFileNotFound(ValueError):
     """Raised when a zone file is not found."""
