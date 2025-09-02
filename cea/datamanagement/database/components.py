@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.datamanagement.database import BaseDatabase
+from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -42,9 +42,31 @@ class Conversion(BaseDatabase):
         except FileNotFoundError as e:
             print(f"Error loading {csv_path}: {e}")
             return None
+    
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        # Return empty since the mapping logic is not very straightforward
+        return {
+            "absorption_chillers": "get_database_components_conversion_absorption_chillers",
+            "boilers": "get_database_components_conversion_boilers",
+            "bore_holes": "get_database_components_conversion_bore_holes",
+            "cogeneration_plants": "get_database_components_conversion_cogeneration_plants",
+            "cooling_towers": "get_database_components_conversion_cooling_towers",
+            "fuel_cells": "get_database_components_conversion_fuel_cells",
+            "heat_exchangers": "get_database_components_conversion_heat_exchangers",
+            "heat_pumps": "get_database_components_conversion_heat_pumps",
+            "hydraulic_pumps": "get_database_components_conversion_hydraulic_pumps",
+            "photovoltaic_panels": "get_database_components_conversion_photovoltaic_panels",
+            "photovoltaic_thermal_panels": "get_database_components_conversion_photovoltaic_thermal_panels",
+            "power_transformers": "get_database_components_conversion_power_transformers",
+            "solar_collectors": "get_database_components_conversion_solar_collectors",
+            "thermal_energy_storages": "get_database_components_conversion_thermal_energy_storages",
+            "unitary_air_conditioners": "get_database_components_conversion_unitary_air_conditioners",
+            "vapor_compression_chillers": "get_database_components_conversion_vapor_compression_chillers"
+        }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         # Define component names (must match the CSV file names)
         components = [
             "ABSORPTION_CHILLERS",
@@ -73,6 +95,13 @@ class Conversion(BaseDatabase):
 
         return cls(**component_data)
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        component_data = {}
+        for key in d:
+            component_data[key] = {k: pd.DataFrame(v) for k, v in d[key].items()} if d[key] is not None else None
+        return cls(**component_data)
+
     def to_dict(self):
         return self.dataclass_to_dict("records")
 
@@ -84,11 +113,27 @@ class Distribution(BaseDatabase):
     thermal_grid: pd.DataFrame | None
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "thermal_grid": "get_database_components_distribution_thermal_grid"
+        }
+
+    @classmethod
+    def from_locator(cls, locator: InputLocator):
         try:
-            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index("code")
+            thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
             thermal_grid = None
+        return cls(thermal_grid)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        data = d.get('thermal_grid', None)
+        if data is None:
+            thermal_grid = None
+        else:
+            thermal_grid = pd.DataFrame.from_dict(data, orient='index')
+            thermal_grid.index.name = cls._index
         return cls(thermal_grid)
 
     def to_dict(self):
@@ -99,14 +144,22 @@ class Distribution(BaseDatabase):
 class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
+    _library_index = "hour"
 
     energy_carriers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "energy_carriers": "get_database_components_feedstocks_energy_carriers",
+            "_library": "get_db4_components_feedstocks_library_folder"
+        }
+
+    @classmethod
+    def from_locator(cls, locator: InputLocator):
         try:
-            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers())
+            energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers()).set_index(cls._index)
         except FileNotFoundError:
             energy_carriers = None
 
@@ -116,30 +169,32 @@ class Feedstocks(BaseDatabase):
 
         return cls(energy_carriers, _library)
 
-    def to_dict(self):
-        # Temporarily add dummy index to DataFrame for serialization
-        new_df = None
-        if self.energy_carriers is not None:
-            new_df = self.energy_carriers.copy()
-            new_df['index'] = new_df['code'] + '_' + new_df['mean_qual']
-            new_df.set_index('index', inplace=True)
-        
-        new_obj = Feedstocks(new_df, self._library)
+    @classmethod
+    def from_dict(cls, d: dict):
+        data = d.get('energy_carriers', None)
+        if data is None:
+            energy_carriers = None
+        else:
+            energy_carriers = pd.DataFrame.from_dict(data, orient='index')
+            energy_carriers.index.name = cls._index
+        _library = {k: pd.DataFrame(v) for k, v in d.get('_library', {}).items()}
+        return cls(energy_carriers, _library)
 
-        return new_obj.dataclass_to_dict()
+    def to_dict(self):
+        return self.dataclass_to_dict()
 
 
 @dataclass
-class Components(BaseDatabase):
+class Components(BaseDatabaseCollection):
     conversion: Conversion
     distribution: Distribution
     feedstocks: Feedstocks
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        conversion = Conversion.init_database(locator)
-        distribution = Distribution.init_database(locator)
-        feedstocks = Feedstocks.init_database(locator)
+    def from_locator(cls, locator: InputLocator):
+        conversion = Conversion.from_locator(locator)
+        distribution = Distribution.from_locator(locator)
+        feedstocks = Feedstocks.from_locator(locator)
         return cls(conversion, distribution, feedstocks)
 
     def to_dict(self):

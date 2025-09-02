@@ -22,10 +22,10 @@ class TestDatabase(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_initialization(self):
+    def test_from_locator(self):
 
         # Initialize the database
-        db = CEADatabase(self.locator)
+        db = CEADatabase.from_locator(locator=self.locator)
 
         # Check if the database components are initialized correctly
         self.assertIsNotNone(db.archetypes)
@@ -35,3 +35,34 @@ class TestDatabase(unittest.TestCase):
         # Check if the to_dict method returns a dictionary
         db_dict = db.to_dict()
         self.assertIsInstance(db_dict, dict)
+        return db_dict
+
+    def test_from_dict(self):
+        db_dict = self.test_from_locator()
+
+        db = CEADatabase.from_dict(db_dict)
+        self.assertIsNotNone(db.archetypes)
+        self.assertIsNotNone(db.assemblies)
+        self.assertIsNotNone(db.components)
+
+
+    def test_schema(self):
+        schema = CEADatabase.schema()
+        self.assertIsInstance(schema, dict)
+
+    def test_locator_mapping(self):
+        locator_mapping = CEADatabase._locator_mappings()
+
+        self.assertIsInstance(locator_mapping, dict)
+        self.assertIn('archetypes', locator_mapping)
+        self.assertIn('assemblies', locator_mapping)
+        self.assertIn('components', locator_mapping)
+
+    def test_schema_replacement(self):
+        schema = CEADatabase.schema(replace_locator_refs=True)
+        self.assertIsInstance(schema, dict)
+        self.assertIn('archetypes', schema)
+        self.assertIn('assemblies', schema)
+        self.assertIn('components', schema)
+
+        print(schema)
