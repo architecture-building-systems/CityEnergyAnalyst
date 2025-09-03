@@ -179,7 +179,7 @@ Energy Demand Forecasting:
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
-    module: cea.demand.occupancy_helper
+    module: cea.demand.occupancy
     parameters: ['general:scenario',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',

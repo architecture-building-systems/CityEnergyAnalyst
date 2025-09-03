@@ -1766,7 +1766,7 @@ get_building_architecture:
   - demand
   - emissions
   - radiation
-  - occupancy_helper
+  - occupancy
 get_building_comfort:
   created_by:
   - archetypes_mapper
@@ -1821,7 +1821,7 @@ get_building_comfort:
         min: 5.5 #accodding to this Singaporean Guidelinehttps://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf
   used_by:
   - demand
-  - occupancy_helper
+  - occupancy
 get_building_internal:
   created_by:
   - archetypes_mapper
@@ -1915,7 +1915,7 @@ get_building_internal:
         min: 0.0
   used_by:
   - demand
-  - occupancy_helper
+  - occupancy
 get_building_supply:
   created_by:
   - archetypes_mapper
@@ -2110,7 +2110,7 @@ get_building_weekly_schedules:
         type: float
   used_by:
   - demand
-  - occupancy_helper
+  - occupancy
 
 get_costs_operation_file:
   created_by:
@@ -2405,7 +2405,7 @@ get_database_assemblies_envelope_mass:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_floor:
   created_by:
@@ -2454,7 +2454,7 @@ get_database_assemblies_envelope_floor:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_roof:
   created_by:
@@ -2525,7 +2525,7 @@ get_database_assemblies_envelope_roof:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_shading:
   created_by:
@@ -2556,7 +2556,7 @@ get_database_assemblies_envelope_shading:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_tightness:
   created_by:
@@ -2587,7 +2587,7 @@ get_database_assemblies_envelope_tightness:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_wall:
   created_by:
@@ -2657,7 +2657,7 @@ get_database_assemblies_envelope_wall:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_envelope_window:
   created_by:
@@ -2729,7 +2729,7 @@ get_database_assemblies_envelope_window:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 
 get_database_assemblies_hvac_controller:
   created_by:
@@ -10568,7 +10568,7 @@ get_database_envelope_systems:
   used_by:
   - demand
   - radiation
-  - occupancy_helper
+  - occupancy
 get_database_feedstocks:
   created_by:
   - database_helper
@@ -19161,7 +19161,7 @@ get_radiation_metadata:
   - solar_collector
 get_occupancy_model_file:
   created_by:
-  - occupancy_helper
+  - occupancy
   file_path: outputs/data/occupancy/B001.csv
   file_type: csv
   schema:
@@ -19439,7 +19439,7 @@ get_terrain:
         values: TODO
   used_by:
   - radiation
-  - occupancy_helper
+  - occupancy
 get_thermal_demand_csv_file:
   created_by:
   - thermal_network
@@ -21037,7 +21037,7 @@ get_weather_file:
   - photovoltaic
   - photovoltaic_thermal
   - radiation
-  - occupancy_helper
+  - occupancy
   - shallow_geothermal_potential
   - solar_collector
   - thermal_network
@@ -21171,7 +21171,7 @@ get_zone_geometry:
   - photovoltaic
   - photovoltaic_thermal
   - radiation
-  - occupancy_helper
+  - occupancy
   - sewage_potential
   - shallow_geothermal_potential
   - solar_collector
