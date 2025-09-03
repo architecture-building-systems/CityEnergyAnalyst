@@ -23,8 +23,9 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
-    CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, \
+    create_project, CEAUserID, \
+    CEASeverDemoAuthCheck, CEAServerLimits
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import LimitSettings, get_settings
@@ -254,12 +255,11 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
 
 @router.post('/', dependencies=[CEASeverDemoAuthCheck])
 async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject,
-                             user_id: CEAUserID, session: SessionDep):
+                             user_id: CEAUserID, session: SessionDep, limit_settings: CEAServerLimits):
     """
     Create new project folder
     """
     settings = get_settings()
-    limit_settings = LimitSettings()
     # FIXME: project_choices will not work if project_root is not a directory
     if not settings.local and os.path.exists(project_root):
         num_projects = len(await get_project_choices(project_root))
@@ -352,7 +352,8 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2', dependencies=[CEASeverDemoAuthCheck])
-async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()]):
+async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()],
+                                 limit_settings: CEAServerLimits):
     project_path = scenario_form.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
@@ -366,7 +367,6 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         )
     
     settings = get_settings()
-    limit_settings = LimitSettings()
     if not settings.local:
         num_scenarios = len(cea.config.get_scenarios_list(cea_project))
         if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
