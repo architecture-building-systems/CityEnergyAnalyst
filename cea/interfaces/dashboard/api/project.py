@@ -145,6 +145,9 @@ class CreateScenario(BaseModel):
     def should_generate_zone(self) -> bool:
         return self.user_zone == GENERATE_ZONE_CEA
 
+    def uploaded_zone(self) -> bool:
+        return isinstance(self.user_zone, _UploadFile)
+
     def should_generate_surroundings(self) -> bool:
         return self.user_surroundings == GENERATE_SURROUNDINGS_CEA
 
@@ -461,6 +464,17 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         # Only process typology if zone is not generated from OSM
         if scenario_form.should_generate_zone():
             return
+
+        # Check columns of uploaded zone
+        if scenario_form.uploaded_zone() and zone_df is not None and zone_df.columns:
+            diff = set(COLUMNS_ZONE_TYPOLOGY) - set(zone_df.columns)
+
+            if diff:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f'Column(s) missing in the uploaded building geometries (zone): {", ".join(diff)}. '
+                           f'Ensure the following columns are present: {", ".join(COLUMNS_ZONE_TYPOLOGY)}',
+                )
 
         if scenario_form.typology is not None:
             # Copy typology using path
