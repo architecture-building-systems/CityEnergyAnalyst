@@ -4,6 +4,7 @@ This script creates schedules per building in CEA
 
 import os
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 
@@ -285,8 +286,8 @@ class ScheduleData(object):
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    # get occupancy and age files
-    building_typology_df = pd.read_csv(locator.get_zone_geometry())[COLUMNS_ZONE_TYPOLOGY]
+    # get typology data
+    building_typology_df = gpd.read_file(locator.get_zone_geometry()).drop('geometry', axis=1)[COLUMNS_ZONE_TYPOLOGY]
 
     # validate list of uses in case study
     get_list_of_uses_in_case_study(building_typology_df)
