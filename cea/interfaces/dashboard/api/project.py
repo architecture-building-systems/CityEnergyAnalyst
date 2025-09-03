@@ -466,18 +466,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         if scenario_form.should_generate_zone():
             return
 
-        # Check columns of uploaded zone
-        if scenario_form.uploaded_zone() and zone_df is not None:
-            diff = set(COLUMNS_ZONE_TYPOLOGY) - set(zone_df.columns)
-
-            if diff:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f'Column(s) missing in the uploaded building geometries (zone): {", ".join(diff)}. '
-                           f'Ensure the following columns are present: {", ".join(COLUMNS_ZONE_TYPOLOGY)}',
-                )
-            return
-
+        # Add typology to zone if provided
         if scenario_form.typology is not None:
             # Copy typology using path
             _, extension = os.path.splitext(scenario_form.typology)
@@ -524,11 +513,27 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
 
             # create new file
             merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
-        else:
+
+        # Ensure that typology columns exists in written files
+        # At this point there should be a file with zone and typology information
+        if not os.path.exists(locator.get_zone_geometry()):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail='User to provide Building information: construction year, '
-                                       'construction type, use types and their ratios.',
-                                )
+                                detail= "No building information (typology) found. It was neither generated nor provided.")
+
+        zone_typology_df = geopandas.read_file(locator.get_zone_geometry())
+        # If typology columns are missing but found in the original zone dataframe, we add it back in to written file
+        if set(COLUMNS_ZONE_TYPOLOGY).difference(zone_typology_df.columns) and not set(COLUMNS_ZONE_TYPOLOGY).difference(zone_df.columns):
+            for col in COLUMNS_ZONE_TYPOLOGY:
+                if col in zone_df.columns and col not in zone_typology_df.columns:
+                    zone_typology_df[col] = zone_df[col]
+            zone_typology_df.to_file(locator.get_zone_geometry())
+            return
+
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail='Unable to determine building information (typology). '
+                                   'User to provide Building information: construction year, '
+                                   'construction type, use types and their ratios.',
+                            )
 
     async def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
@@ -612,7 +617,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f'Uncaught exception: {e}',
+                detail=f'Uncaught exception: [{e.__class__.__name__}] {e}',
             ) from e
 
     return {
