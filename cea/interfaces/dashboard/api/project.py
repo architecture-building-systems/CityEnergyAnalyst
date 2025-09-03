@@ -29,7 +29,7 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, 
     CEASeverDemoAuthCheck, CEAServerLimits
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings, get_settings
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM

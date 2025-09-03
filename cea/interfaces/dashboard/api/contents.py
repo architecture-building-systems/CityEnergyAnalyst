@@ -21,7 +21,7 @@ from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot, CEAServerLimits
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings, get_settings
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
