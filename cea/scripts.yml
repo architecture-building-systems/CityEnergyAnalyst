@@ -174,7 +174,7 @@ Renewable Energy Potential Assessment:
       - [get_demand_results_file, building_name]
 
 Energy Demand Forecasting:
-  - name: occupancy-helper
+  - name: occupancy
     label: "Energy Demand Part 1: building occupancy"
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
@@ -184,7 +184,7 @@ Energy Demand Forecasting:
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'general:debug',
-                 occupancy-helper]
+                 occupancy]
     input-files:
       - [get_building_internal]
       - [get_building_comfort]
