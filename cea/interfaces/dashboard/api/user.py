@@ -13,8 +13,8 @@ router = APIRouter()
 
 class UserInfo(BaseModel):
     id: str
-    display_name: str
     primary_email: str
+    display_name: Optional[str] = None
     profile_image_url: Optional[str] = None
     onboarded: bool = False
     pro_user: bool = False
