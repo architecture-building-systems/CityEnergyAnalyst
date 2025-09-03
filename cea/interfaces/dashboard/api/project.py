@@ -131,7 +131,7 @@ class CreateScenario(BaseModel):
         return await self._get_geometry_data(self.user_surroundings, "surroundings.shp")
 
     async def get_street_file(self):
-        return await self._get_geometry_data(self.street, "street.shp")
+        return await self._get_geometry_data(self.street, "streets.shp")
 
     @asynccontextmanager
     async def get_weather_file(self):
