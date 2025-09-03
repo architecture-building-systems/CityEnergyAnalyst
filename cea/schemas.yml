@@ -3620,8 +3620,7 @@ get_database_components_conversion_absorption_chillers:
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -3815,8 +3814,7 @@ get_database_components_conversion_boilers:
               + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
               + d*ln(x) + e*x*ln*(x)  '
@@ -3940,8 +3938,7 @@ get_database_components_conversion_boilers:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -4061,8 +4058,7 @@ get_database_components_conversion_cogeneration_plants:
           + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x)  '
@@ -4231,8 +4227,7 @@ get_database_components_conversion_cooling_towers:
           + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x)  '
@@ -4350,8 +4345,7 @@ get_database_components_conversion_fuel_cells:
           + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x)  '
@@ -4464,8 +4458,7 @@ get_database_components_conversion_heat_exchangers:
           + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K]'
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x), here x is the capacity mass flow rate [W/K]'
@@ -4611,8 +4604,7 @@ get_database_components_conversion_heat_pumps:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4746,8 +4738,7 @@ get_database_components_conversion_bore_holes:
               + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
               + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -4851,8 +4842,7 @@ get_database_components_conversion_hydraulic_pumps:
               + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
               + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -5019,8 +5009,7 @@ get_database_components_conversion_photovoltaic_panels:
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -5146,8 +5135,7 @@ get_database_components_conversion_photovoltaic_thermal_panels:
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -5281,8 +5269,7 @@ get_database_components_conversion_power_transformers:
               + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
               + d*ln(x) + e*x*ln*(x)  '
@@ -5438,8 +5425,7 @@ get_database_components_conversion_solar_collectors:
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       dP1:
         description: pressure drop at zero flow rate
         type: float
@@ -5604,8 +5590,7 @@ get_database_components_conversion_thermal_energy_storages:
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
           + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -5802,8 +5787,7 @@ get_database_components_conversion_unitary_air_conditioners:
                   + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
                   + d*ln(x) + e*x*ln*(x)  '
@@ -5839,7 +5823,7 @@ get_database_components_conversion_unitary_air_conditioners:
 get_database_components_conversion_vapor_compression_chillers:
   created_by:
   - database_helper
-  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR COMPRESSION CHILLERS.csv
+  file_path: inputs/database/COMPONENTS/CONVERSION/VAPOR_COMPRESSION_CHILLERS.csv
   file_type: csv
   schema:
     columns:
@@ -5941,8 +5925,7 @@ get_database_components_conversion_vapor_compression_chillers:
               + d*ln(x) + e*x*ln*(x)  '
         type: float
         unit: '[-]'
-        values: '{0.0...n}'
-        min: 0.0
+        values: '{-n...n}'
       e:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c
               + d*ln(x) + e*x*ln*(x)  '
@@ -8069,8 +8052,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -8207,8 +8189,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -8393,8 +8374,7 @@ get_database_conversion_systems:
                 + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
                 + d*ln(x) + e*x*ln*(x)  '
@@ -8518,8 +8498,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -8630,8 +8609,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -8791,8 +8769,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x)  '
@@ -8931,8 +8908,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         d_p:
           description: 'parameter in the pressure loss function, f(x) = a_p + b_p*x^c_p
             + d_p*ln(x) + e_p*x*ln*(x),  where x is the capacity mass flow rate [W/K] '
@@ -9082,8 +9058,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -9208,8 +9183,7 @@ get_database_conversion_systems:
                 + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
                 + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -9367,8 +9341,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -9484,8 +9457,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -9609,8 +9581,7 @@ get_database_conversion_systems:
                 + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
                 + d*ln(x) + e*x*ln*(x)  '
@@ -9757,8 +9728,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         dP1:
           description: pressure drop at zero flow rate
           type: float
@@ -9913,8 +9883,7 @@ get_database_conversion_systems:
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
             + d*ln(x) + e*x*ln*(x), where x is the capacity '
@@ -10102,8 +10071,7 @@ get_database_conversion_systems:
                     + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
                     + d*ln(x) + e*x*ln*(x)  '
@@ -10239,8 +10207,7 @@ get_database_conversion_systems:
                 + d*ln(x) + e*x*ln*(x)  '
           type: float
           unit: '[-]'
-          values: '{0.0...n}'
-          min: 0.0
+          values: '{-n...n}'
         e:
           description: 'parameter in the investment cost function, f(x) = a + b*x^c
                 + d*ln(x) + e*x*ln*(x)  '

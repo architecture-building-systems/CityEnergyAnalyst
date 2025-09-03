@@ -401,7 +401,7 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: CEADatabase(locator).to_dict())
+        return await run_in_threadpool(lambda: CEADatabase.from_locator(locator).to_dict())
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
@@ -410,9 +410,21 @@ async def get_input_database_data(project_info: CEAProjectInfo):
         )
 
 
-@router.put('/databases')
+@router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
 async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
-    return
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
+    try:
+        def fn():
+            db = CEADatabase.from_dict(payload)
+            db.save(locator)
+            return {'message': 'Database updated'}
+        return await run_in_threadpool(fn)
+    except CEADatabaseException as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
 
 
 class DatabasePath(BaseModel):
@@ -420,7 +432,7 @@ class DatabasePath(BaseModel):
     name: str
 
 
-@router.put('/databases/copy')
+@router.put('/databases/copy', dependencies=[CEASeverDemoAuthCheck])
 async def copy_input_database(project_info: CEAProjectInfo, database_path: DatabasePath):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 

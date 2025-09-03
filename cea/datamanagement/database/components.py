@@ -66,7 +66,7 @@ class Conversion(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         # Define component names (must match the CSV file names)
         components = [
             "ABSORPTION_CHILLERS",
@@ -95,6 +95,13 @@ class Conversion(BaseDatabase):
 
         return cls(**component_data)
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        component_data = {}
+        for key in d:
+            component_data[key] = {k: pd.DataFrame(v) for k, v in d[key].items()} if d[key] is not None else None
+        return cls(**component_data)
+
     def to_dict(self):
         return self.dataclass_to_dict("records")
 
@@ -112,11 +119,21 @@ class Distribution(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             thermal_grid = pd.read_csv(locator.get_database_components_distribution_thermal_grid()).set_index(cls._index)
         except FileNotFoundError:
             thermal_grid = None
+        return cls(thermal_grid)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        data = d.get('thermal_grid', None)
+        if data is None:
+            thermal_grid = None
+        else:
+            thermal_grid = pd.DataFrame.from_dict(data, orient='index')
+            thermal_grid.index.name = cls._index
         return cls(thermal_grid)
 
     def to_dict(self):
@@ -127,6 +144,7 @@ class Distribution(BaseDatabase):
 class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
+    _library_index = "hour"
 
     energy_carriers: pd.DataFrame | None
     _library: dict[str, pd.DataFrame]
@@ -139,7 +157,7 @@ class Feedstocks(BaseDatabase):
         }
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator):
         try:
             energy_carriers = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers()).set_index(cls._index)
         except FileNotFoundError:
@@ -149,6 +167,17 @@ class Feedstocks(BaseDatabase):
         for file in Path(locator.get_db4_components_feedstocks_library_folder()).glob('*.csv'):
             _library[file.stem] = pd.read_csv(file)
 
+        return cls(energy_carriers, _library)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        data = d.get('energy_carriers', None)
+        if data is None:
+            energy_carriers = None
+        else:
+            energy_carriers = pd.DataFrame.from_dict(data, orient='index')
+            energy_carriers.index.name = cls._index
+        _library = {k: pd.DataFrame(v) for k, v in d.get('_library', {}).items()}
         return cls(energy_carriers, _library)
 
     def to_dict(self):
@@ -162,10 +191,10 @@ class Components(BaseDatabaseCollection):
     feedstocks: Feedstocks
 
     @classmethod
-    def init_database(cls, locator: InputLocator):
-        conversion = Conversion.init_database(locator)
-        distribution = Distribution.init_database(locator)
-        feedstocks = Feedstocks.init_database(locator)
+    def from_locator(cls, locator: InputLocator):
+        conversion = Conversion.from_locator(locator)
+        distribution = Distribution.from_locator(locator)
+        feedstocks = Feedstocks.from_locator(locator)
         return cls(conversion, distribution, feedstocks)
 
     def to_dict(self):
