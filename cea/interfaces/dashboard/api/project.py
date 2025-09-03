@@ -476,6 +476,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
                     detail=f'Column(s) missing in the uploaded building geometries (zone): {", ".join(diff)}. '
                            f'Ensure the following columns are present: {", ".join(COLUMNS_ZONE_TYPOLOGY)}',
                 )
+            return
 
         if scenario_form.typology is not None:
             # Copy typology using path
