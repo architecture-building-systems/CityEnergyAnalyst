@@ -467,7 +467,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
             return
 
         # Check columns of uploaded zone
-        if scenario_form.uploaded_zone() and zone_df is not None and zone_df.columns:
+        if scenario_form.uploaded_zone() and zone_df is not None:
             diff = set(COLUMNS_ZONE_TYPOLOGY) - set(zone_df.columns)
 
             if diff:
