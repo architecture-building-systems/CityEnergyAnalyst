@@ -11,6 +11,7 @@ import geopandas
 import pandas as pd
 import sqlalchemy.exc
 from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
+from fastapi.concurrency import run_in_threadpool
 from geopandas import GeoDataFrame
 from osgeo import gdal
 from pydantic import BaseModel
@@ -288,7 +289,7 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         if new_project.example_project:
-            fetch_example_project(project)
+            await run_in_threadpool(lambda: fetch_example_project(project))
         else:
             os.makedirs(project, exist_ok=True)
         try:
