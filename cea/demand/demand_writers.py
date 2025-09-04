@@ -60,10 +60,11 @@ class DemandWriter(ABC):
     - implement the `write_to_csv` method
     """
 
-    def __init__(self, loads, massflows, temperatures):
-        self.load_vars = loads
-        self.mass_flow_vars = massflows
-        self.temperature_vars = temperatures
+    def __init__(self, loads=None, massflows=None, temperatures=None):
+        # If empty lists are provided, generate all available keys
+        self.load_vars = loads if loads else get_all_load_keys()
+        self.mass_flow_vars = massflows if massflows else get_all_massflow_keys()
+        self.temperature_vars = temperatures if temperatures else get_all_temperature_keys()
 
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
@@ -151,7 +152,7 @@ class DemandWriter(ABC):
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
@@ -169,7 +170,7 @@ class HourlyDemandWriter(DemandWriter):
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures)
         self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
                        'october', 'november', 'december']

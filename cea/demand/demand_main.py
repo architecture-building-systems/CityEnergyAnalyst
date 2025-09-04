@@ -84,9 +84,6 @@ def demand_calculation(locator, config):
         repeat(locator, n),
         repeat(use_dynamic_infiltration, n),
         repeat(resolution_output, n),
-        repeat(loads_output, n),
-        repeat(massflows_output, n),
-        repeat(temperatures_output, n),
         repeat(config, n),
         repeat(debug, n))
 
