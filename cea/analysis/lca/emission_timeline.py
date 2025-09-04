@@ -77,6 +77,7 @@ class BuildingEmissionTimeline:
         envelope_lookup: EnvelopeLookup,
         building_name: str,
         locator: InputLocator,
+        end_year: int,
     ):
         """Initialize the BuildingEmissionTimeline object.
 
@@ -89,6 +90,8 @@ class BuildingEmissionTimeline:
         :type building_name: str
         :param locator: the InputLocator object to locate input files.
         :type locator: InputLocator
+        :param end_year: The last year that should exist in the building timeline.
+        :type end_year: int
         """
         self.name = building_name
         self.locator = locator
@@ -96,16 +99,12 @@ class BuildingEmissionTimeline:
         self.envelope_lookup = envelope_lookup
         self.geometry = building_properties.geometry[self.name]
         self.envelope = building_properties.envelope[self.name]
-        self.get_component_quantity(building_properties)
+        self.surface_area = self.get_component_quantity(building_properties)
+        self.timeline = self.initialize_timeline(end_year)
 
-    def generate_timeline(self, end_year: int) -> None:
-        """Initialize the timeline as a dataframe of `0.0`s, indexed by year.
-        Then it fills up the timeline with emissions data, both embodied and operational.
-
-        :param end_year: The last year that should exist in the building timeline.
-        :type end_year: int
+    def fill_timeline(self) -> None:
+        """Fills up the timeline with emissions data, both embodied and operational.
         """
-        self.initialize_timeline(end_year)
         self.fill_embodied_emissions()
         self.fill_operational_emissions()
 
@@ -150,8 +149,9 @@ class BuildingEmissionTimeline:
             raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
         self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
 
-    def initialize_timeline(self, end_year: int) -> None:
-        """Initialize the timeline DataFrame for the building emissions.
+    def initialize_timeline(self, end_year: int) -> pd.DataFrame:
+        """Initialize the timeline as a dataframe of `0.0`s, 
+        indexed by year, for the building emissions.
 
         :param end_year: The year to end the timeline.
         :type end_year: int
@@ -165,7 +165,7 @@ class BuildingEmissionTimeline:
         component_types = self._MAPPING_DICT.keys()
         emission_types = ["production", "biogenic", "demolition"]
 
-        self.timeline = pd.DataFrame(
+        timeline = pd.DataFrame(
             {
                 "year": range(start_year, end_year + 1),
                 **{
@@ -179,7 +179,8 @@ class BuildingEmissionTimeline:
                 "electricity_kgCO2": 0.0,
             }
         )
-        self.timeline.set_index("year", inplace=True)
+        timeline.set_index("year", inplace=True)
+        return timeline
 
     def log_emission_with_lifetime(
         self, emission: float, lifetime: int, col: str
@@ -206,7 +207,7 @@ class BuildingEmissionTimeline:
     ) -> None:
         self.timeline.loc[year, col] += emission
 
-    def get_component_quantity(self, building_properties: BuildingProperties) -> None:
+    def get_component_quantity(self, building_properties: BuildingProperties) -> dict[str, float]:
         """
         Get the area for each building component.
         During Daysim simulation, the types of surfaces are categorized in detail,
@@ -241,23 +242,26 @@ class BuildingEmissionTimeline:
             The `rc_model` attribute contains the areas along with other parameters.
             Whole list of parameters (details see `BuildingRCModel.calc_prop_rc_model`)
         :type building_properties: BuildingProperties
+
+        :return: A dictionary with the area of each building component.
+        :rtype: dict[str, float]
         """
         rc_model_props = building_properties.rc_model[self.name]
 
-        self.surface_area = {}
-        self.surface_area["Awall_ag"] = rc_model_props["Awall_ag"]
-        self.surface_area["Awall_bg"] = (
+        surface_area = {}
+        surface_area["Awall_ag"] = rc_model_props["Awall_ag"]
+        surface_area["Awall_bg"] = (
             self.geometry["perimeter"] * self.geometry["height_bg"]
         )
-        self.surface_area["Awall_part"] = 0.0  # not implemented
-        self.surface_area["Awin_ag"] = rc_model_props["Awin_ag"]
+        surface_area["Awall_part"] = 0.0  # not implemented
+        surface_area["Awin_ag"] = rc_model_props["Awin_ag"]
 
         # calculate the area of each component
         # horizontal: roof, floor, underside, upperside (not implemented), base
         # vertical: wall_ag, wall_bg, wall_part (not implemented), win_ag
-        self.surface_area["Aroof"] = rc_model_props["Aroof"]
-        self.surface_area["Aupperside"] = 0.0  # not implemented
-        self.surface_area["Aunderside"] = rc_model_props["Aunderside"]
+        surface_area["Aroof"] = rc_model_props["Aroof"]
+        surface_area["Aupperside"] = 0.0  # not implemented
+        surface_area["Aunderside"] = rc_model_props["Aunderside"]
         # internal floors that are not base, not upperside and not underside
 
         # check if building ever have base
@@ -266,12 +270,13 @@ class BuildingEmissionTimeline:
             area_base = 0.0
         else:
             area_base = float(rc_model_props["footprint"])
-        self.surface_area["Afloor"] = max(
+        surface_area["Afloor"] = max(
             0.0,
             rc_model_props[
                 "GFA_m2"
             ]  # GFA = footprint * (floor_ag + floor_bg - void_deck)
-            - self.surface_area["Aunderside"]
+            - surface_area["Aunderside"]
             - area_base,
         )
-        self.surface_area["Abase"] = area_base
+        surface_area["Abase"] = area_base
+        return surface_area

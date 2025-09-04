@@ -69,8 +69,9 @@ def embodied(config: Configuration) -> None:
             envelope_lookup=envelope_lookup,
             building_name=building,
             locator=locator,
+            end_year=end_year,
         )
-        timeline.generate_timeline(end_year)
+        timeline.fill_timeline()
         timeline.save_timeline()
         print(
             f"Embodied and operational emissions timeline for {building} calculated and saved in: {locator.get_lca_timeline_building(building)}."
