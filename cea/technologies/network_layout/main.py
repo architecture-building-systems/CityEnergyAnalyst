@@ -33,7 +33,8 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
-    allow_looped_networks = network_layout.allow_looped_networks
+    # allow_looped_networks = network_layout.allow_looped_networks
+    allow_looped_networks = False
     steiner_algorithm = network_layout.algorithm
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
