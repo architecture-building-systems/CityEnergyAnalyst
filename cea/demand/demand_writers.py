@@ -11,7 +11,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from cea.demand.time_series_data import EnergyBalanceDashboard, Solar
+from cea.demand.time_series_data import (EnergyBalanceDashboard, Solar, ElectricalLoads, HeatingLoads, 
+                                       CoolingLoads, FuelLoads, HeatingSystemMassFlows, 
+                                       CoolingSystemMassFlows, HeatingSystemTemperatures, 
+                                       CoolingSystemTemperatures, RCModelTemperatures)
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
@@ -21,6 +24,33 @@ FLOAT_FORMAT = '%.3f'
 
 TSD_KEYS_ENERGY_BALANCE_DASHBOARD = list(EnergyBalanceDashboard.__dataclass_fields__.keys())
 TSD_KEYS_SOLAR = list(Solar.__dataclass_fields__.keys())
+
+
+def get_all_load_keys():
+    """Get all available load keys from time series data classes."""
+    load_keys = []
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelLoads]
+    for cls in load_classes:
+        load_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return load_keys
+
+
+def get_all_massflow_keys():
+    """Get all available mass flow keys from time series data classes."""
+    massflow_keys = []
+    massflow_classes = [HeatingSystemMassFlows, CoolingSystemMassFlows]
+    for cls in massflow_classes:
+        massflow_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return massflow_keys
+
+
+def get_all_temperature_keys():
+    """Get all available temperature keys from time series data classes."""
+    temperature_keys = []
+    temperature_classes = [HeatingSystemTemperatures, CoolingSystemTemperatures, RCModelTemperatures]
+    for cls in temperature_classes:
+        temperature_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return temperature_keys
 
 class DemandWriter(ABC):
     """
