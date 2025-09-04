@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from cea.demand.time_series_data import (EnergyBalanceDashboard, Solar, ElectricalLoads, HeatingLoads, 
-                                       CoolingLoads, FuelLoads, HeatingSystemMassFlows, 
+                                       CoolingLoads, FuelSource, HeatingSystemMassFlows, 
                                        CoolingSystemMassFlows, HeatingSystemTemperatures, 
                                        CoolingSystemTemperatures, RCModelTemperatures)
 
@@ -29,7 +29,7 @@ TSD_KEYS_SOLAR = list(Solar.__dataclass_fields__.keys())
 def get_all_load_keys():
     """Get all available load keys from time series data classes."""
     load_keys = []
-    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelLoads]
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelSource]
     for cls in load_classes:
         load_keys.extend(list(cls.__dataclass_fields__.keys()))
     return load_keys
