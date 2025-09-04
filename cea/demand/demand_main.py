@@ -15,6 +15,9 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, CoolingLoads, FuelLoads, 
+                                        HeatingSystemMassFlows, CoolingSystemMassFlows,
+                                        HeatingSystemTemperatures, CoolingSystemTemperatures, RCModelTemperatures)
 from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
 
 
@@ -26,6 +29,33 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_all_load_keys():
+    """Get all available load keys from time series data classes."""
+    load_keys = []
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelLoads]
+    for cls in load_classes:
+        load_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return load_keys
+
+
+def get_all_massflow_keys():
+    """Get all available mass flow keys from time series data classes."""
+    massflow_keys = []
+    massflow_classes = [HeatingSystemMassFlows, CoolingSystemMassFlows]
+    for cls in massflow_classes:
+        massflow_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return massflow_keys
+
+
+def get_all_temperature_keys():
+    """Get all available temperature keys from time series data classes."""
+    temperature_keys = []
+    temperature_classes = [HeatingSystemTemperatures, CoolingSystemTemperatures, RCModelTemperatures]
+    for cls in temperature_classes:
+        temperature_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return temperature_keys
 
 
 def demand_calculation(locator, config):
@@ -56,9 +86,9 @@ def demand_calculation(locator, config):
     building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
-    loads_output = config.demand.loads_output
-    massflows_output = config.demand.massflows_output
-    temperatures_output = config.demand.temperatures_output
+    loads_output = get_all_load_keys()
+    massflows_output = get_all_massflow_keys()
+    temperatures_output = get_all_temperature_keys()
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
