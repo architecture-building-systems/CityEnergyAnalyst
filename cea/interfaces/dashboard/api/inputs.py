@@ -272,9 +272,6 @@ def get_building_properties(scenario: str):
         columns = defaultdict(dict)
         try:
             for column_name, column in db_columns.items():
-                if column_name == 'reference':
-                    continue
-
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
                     path = getattr(locator, column['choice']['lookup']['path'])()

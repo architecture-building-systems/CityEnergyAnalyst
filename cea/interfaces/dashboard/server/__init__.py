@@ -3,8 +3,7 @@ from fastapi import APIRouter
 import cea
 import cea.interfaces.dashboard.server.jobs as jobs
 import cea.interfaces.dashboard.server.streams as streams
-from cea.interfaces.dashboard.dependencies import get_worker_processes, CEAServerSettings
-from cea.interfaces.dashboard.settings import LimitSettings
+from cea.interfaces.dashboard.dependencies import get_worker_processes, CEAServerLimits
 
 router = APIRouter()
 
@@ -30,7 +29,5 @@ async def get_version():
 
 
 @router.get("/settings")
-async def get_settings(settings: CEAServerSettings):
-    # TODO: Shift limits to user properties
-    limits = LimitSettings()
+async def get_settings(limits: CEAServerLimits):
     return {'limits': limits}
