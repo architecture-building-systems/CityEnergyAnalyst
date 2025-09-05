@@ -107,6 +107,7 @@ class OperationalHourlyTimeline:
         """
         for demand_type, tech_tuple in self._tech_name_mapping.items():
             eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
+            eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
 
             self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
