@@ -16,7 +16,7 @@ from cea.demand.building_properties.building_solar import get_thermal_resistance
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand.time_series_data import TimeSeriesData, Weather
 from cea.utilities import reporting
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from cea.config import Configuration
