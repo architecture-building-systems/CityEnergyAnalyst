@@ -70,8 +70,17 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
             
             try:
                 with open(file_path, "wb") as f:
-                    content = await value.read()
-                    f.write(content)
+                    # Stream the upload in chunks to avoid loading entire file into memory
+                    chunk_size = 64 * 1024  # 64KB chunks
+                    try:
+                        while True:
+                            chunk = await value.read(chunk_size)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                    finally:
+                        # Ensure upload handle is closed even on exceptions
+                        await value.close()
                 
                 # Replace UploadFile with file path in parameters
                 processed_params[key] = file_path
