@@ -15,7 +15,6 @@ import psutil
 import sqlalchemy.exc
 from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
-from sqlalchemy.sql.annotation import Annotated
 from sqlmodel import select
 from starlette.datastructures import UploadFile as _UploadFile
 
