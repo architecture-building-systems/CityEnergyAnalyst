@@ -53,9 +53,11 @@ class OperationalHourlyTimeline:
         """
         timeline = pd.DataFrame(
             index=range(HOURS_IN_YEAR),
-            columns=[
-                f"{key}_kgCO2"
-                for key in OperationalHourlyTimeline._tech_name_mapping.keys()
+            columns=[f"{key}_kgCO2" for key in self._tech_name_mapping.keys()]
+            + [
+                f"{tuple[0]}_{feedstock}_kgCO2"
+                for tuple in OperationalHourlyTimeline._tech_name_mapping.values()
+                for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
             ],
         )
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
@@ -110,10 +112,13 @@ class OperationalHourlyTimeline:
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
 
-            self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
+            self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
                 / eff
                 * self.emission_intensity_timeline[feedstock]  # kgCO2/kWh
+            )
+            self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
+                self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"]
             )
 
     def save_results(self) -> None:

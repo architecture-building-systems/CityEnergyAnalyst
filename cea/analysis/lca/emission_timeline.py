@@ -70,6 +70,12 @@ class BuildingEmissionTimeline:
         "floor": "floor",
         "base": "base",
     }
+    _OPERATIONAL_COLS = [
+        "heating_kgCO2",
+        "cooling_kgCO2",
+        "hot_water_kgCO2",
+        "electricity_kgCO2",
+    ]
 
     def __init__(
         self,
@@ -147,7 +153,8 @@ class BuildingEmissionTimeline:
         operational_emissions = pd.read_csv(self.locator.get_lca_operational_hourly_building(self.name), index_col="hour")
         if len(operational_emissions) != 8760:
             raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
-        self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
+        # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
+        self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[self._OPERATIONAL_COLS].sum(axis=0)
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
         """Initialize the timeline as a dataframe of `0.0`s, 
@@ -173,10 +180,11 @@ class BuildingEmissionTimeline:
                     for emission in emission_types
                     for component in component_types
                 },
-                "heating_kgCO2": 0.0,
-                "cooling_kgCO2": 0.0,
-                "hot_water_kgCO2": 0.0,
-                "electricity_kgCO2": 0.0,
+                # "heating_kgCO2": 0.0,
+                # "cooling_kgCO2": 0.0,
+                # "hot_water_kgCO2": 0.0,
+                # "electricity_kgCO2": 0.0,
+                **{col: 0.0 for col in self._OPERATIONAL_COLS},
             }
         )
         timeline.set_index("year", inplace=True)
