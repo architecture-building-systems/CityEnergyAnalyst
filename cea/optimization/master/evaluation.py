@@ -151,7 +151,7 @@ def evaluation_main(individual,
     district_electricity_fixed_costs, \
     district_electricity_dispatch, \
     district_electricity_demands, \
-    district_electricity_capacity_installed = electricity_main.electricity_calculations_of_all_buildings(
+    district_electricity_capacity_installed = electricity_main.electricity_calculations_of_all_buildings(config,
         locator,
         master_to_slave_vars,
         district_heating_generation_dispatch,

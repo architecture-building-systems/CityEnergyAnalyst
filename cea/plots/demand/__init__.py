@@ -129,7 +129,7 @@ class DemandPlotBase(PlotBase):
 
     def _calculate_hourly_loads(self):
         data_demand = functools.reduce(self.add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
-                                                         for building in self.buildings)).set_index('DATE')
+                                                         for building in self.buildings)).set_index('date')
         return data_demand
 
     def calculate_hourly_loads(self):
@@ -150,7 +150,7 @@ class DemandPlotBase(PlotBase):
     @property
     def data(self):
         if not hasattr(self, '_data'):
-            self._data = self.yearly_loads[self.yearly_loads['Name'].isin(self.buildings)]
+            self._data = self.yearly_loads[self.yearly_loads['name'].isin(self.buildings)]
         return self._data
 
 
@@ -175,7 +175,7 @@ def main():
     # run all the plots in this category
     config = cea.config.Configuration()
     from cea.plots.categories import list_categories
-    from cea.plots.cache import NullPlotCache, PlotCache, MemoryPlotCache
+    from cea.plots.cache import PlotCache, MemoryPlotCache
     import time
 
     def plot_the_whole_category(cache):
@@ -202,7 +202,7 @@ def main():
                     # plot the plot!
                     plot.plot()
 
-    null_plot_cache = NullPlotCache()
+    # null_plot_cache = NullPlotCache()
     plot_cache = PlotCache(config.project)
     memory_plot_cache = MemoryPlotCache(config.project)
     # test plots with cache

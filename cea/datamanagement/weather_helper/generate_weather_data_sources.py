@@ -8,22 +8,16 @@ import fiona
 fiona.drvsupport.supported_drivers['LIBKML'] = 'rw'
 
 URL_LIST = [
-    "https://climate.onebuilding.org/WMO_Region_1_Africa/Region1_Africa_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_2_Asia/Region2_Asia_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_2_Asia/Region2_Region6_Russia_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_3_South_America/Region3_South_America_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_Canada_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_USA_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_NA_CA_Caribbean_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_CaliforniaClimateZones_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_Canada_NRC_Future_TMY_Year_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_Canada_NRC_Future_Extreme_Warm_Year_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_Canada_NRC_Future_Extreme_Cold_Year_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/Region4_Canada_NRC_Future_Avg_Year_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_5_Southwest_Pacific/Region5_Southwest_Pacific_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_6_Europe/Region6_Europe_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_6_Europe/Region2_Region6_Russia_EPW_Processing_locations.kml",
-    "https://climate.onebuilding.org/WMO_Region_7_Antarctica/Region7_Antarctica_EPW_Processing_locations.kml"
+    "https://climate.onebuilding.org/sources/Region1_Africa_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region2_Asia_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region2_Region6_Russia_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region3_South_America_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region4_USA_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region4_Canada_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region4_NA_CA_Caribbean_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region5_Southwest_Pacific_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region6_Europe_TMYx_EPW_Processing_locations.xlsx",
+    "https://climate.onebuilding.org/sources/Region7_Antarctica_TMYx_EPW_Processing_locations.xlsx",
 ]
 
 WEATHER_DATA_LOCATION = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'weather.geojson')
@@ -31,16 +25,31 @@ WEATHER_DATA_LOCATION = os.path.join(os.path.realpath(os.path.dirname(__file__))
 
 def main():
     # Combine for global data
-    kmls = [gpd.read_file(url) for url in URL_LIST]
-    global_gdf = pd.concat(kmls)
+    excels = [pd.read_excel(url) for url in URL_LIST]
+    global_df = pd.concat(excels)
 
-    # Filter NA
-    global_gdf = global_gdf[global_gdf['description'].notna()]
     # Filter for latest TMYx url
-    latest_tmyx = global_gdf[global_gdf["description"].str.contains("TMYx.2007-2021")]
-    latest_tmyx["url"] = latest_tmyx["description"].str.extract(r'https?://climate.onebuilding.org/([^ ]+\.zip)')
+    latest_tmyx = global_df[global_df["URL"].str.contains("TMYx.2009-2023")].set_index("WMO")
 
-    latest_tmyx[["url", "geometry"]].to_file(WEATHER_DATA_LOCATION)
+    # Get second latest TMYx
+    second_latest_tmyx = global_df[global_df["URL"].str.contains("TMYx.2007-2021")].set_index("WMO")
+    diff_tmyx = second_latest_tmyx.loc[second_latest_tmyx.index.difference(latest_tmyx.index)]
+
+    # Combine latest and diff TMYx
+    combined_tmyx = pd.concat([latest_tmyx, diff_tmyx])
+    combined_tmyx["url"] = combined_tmyx["URL"].str.extract(r'https?://climate.onebuilding.org/([^ ]+\.zip)')
+
+    # Rename Turkey to Turkiye
+    tur_rows = combined_tmyx.loc[combined_tmyx["url"].str.contains("TUR_Turkey")]
+    combined_tmyx.loc[tur_rows.index, "url"] = tur_rows["url"].str.replace("TUR_Turkey", "TUR_Turkiye")
+
+    # Write to geojson
+    gdf = gpd.GeoDataFrame(
+        combined_tmyx,
+        geometry=gpd.points_from_xy(combined_tmyx["Longitude (E+/W-)"], combined_tmyx["Latitude (N+/S-)"]),
+        crs="EPSG:4326"
+    )
+    gdf[["url", "geometry"]].to_file(WEATHER_DATA_LOCATION, index=False)
 
 
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ class PlotBase(object):
 
     @classmethod
     def id(cls):
-        name = re.sub('\s+\(.*\)', '', cls.name)  # remove parenthesis
+        name = re.sub(r'\s+\(.*\)', '', cls.name or '')  # remove parenthesis
         return name.lower().replace(' ', '-').replace('/', '-')  # use for js/html etc.
 
     def __init__(self, project, parameters, cache):
@@ -102,8 +102,8 @@ class PlotBase(object):
         data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
         for field in self.analysis_fields:
             y = data[field]
-            total_percent = (y / data['total'] * 100).round(2).values
-            total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
+            # total_percent = (y / data['total'] * 100).round(2).values
+            # total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
             name = NAMING[field]
             trace = plotly.graph_objs.Bar(x=data["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
             traces.append(trace)

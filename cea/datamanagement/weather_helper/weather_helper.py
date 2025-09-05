@@ -35,13 +35,16 @@ def fetch_weather_data(weather_file: str, zone_file: str):
     weather_data = gpd.read_file(WEATHER_DATA_LOCATION)
 
     # Find nearest weather data based on centroid of zone
-    centroid = zone_gdf.dissolve().centroid.to_crs(weather_data.crs)[0]
+    centroid = zone_gdf.make_valid().to_crs(weather_data.crs).unary_union.centroid
     index = weather_data.sindex.nearest(centroid)[1][0]
     url = f"https://climate.onebuilding.org/{weather_data.iloc[index]['url']}"
     data_source_url = "https://climate.onebuilding.org/sources/default.html"
 
     print(f"Downloading weather data: {url}")
     r = requests.get(url)
+    if r.status_code != 200:
+        raise ValueError(f"Failed to download weather data from {url}")
+
     with TemporaryDirectory() as tmpdir, ZipFile(BytesIO(r.content)) as z:
         for file_info in z.infolist():
             if file_info.filename.endswith('.epw'):
@@ -85,7 +88,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather = config.weather_helper.weather
 
-    if config.weather_helper.weather == "":
+    locator.ensure_parent_folder_exists(locator.get_weather_file())
+    if config.weather_helper.weather == 'climate.onebuilding.org':
         print("No weather provided, fetching from online sources.")
         fetch_weather_data(locator.get_weather_file(), locator.get_zone_geometry())
     else:

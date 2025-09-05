@@ -29,6 +29,8 @@ def save_results(locator,
                  buildings_building_scale_heating_capacities,
                  buildings_building_scale_cooling_capacities
                  ):
+    locator.ensure_parent_folder_exists(locator.get_optimization_slave_generation_results_folder(generation_number))
+
     # SAVE INDIVIDUAL DISTRICT HEATING INSTALLED CAPACITIES
     pd.DataFrame(district_heating_capacity_installed_dict, index=[0]).to_csv(
         locator.get_optimization_district_scale_heating_capacity(individual_number,

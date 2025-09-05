@@ -1,125 +1,136 @@
-
-
+from __future__ import annotations
 
 import os
-from collections import OrderedDict
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
-FILE_EXTENSIONS = ['.xlsx', '.xls', '.csv']
+import numpy as np
+
+from cea import CEAException
+from cea.datamanagement.database.archetypes import Archetypes
+from cea.datamanagement.database.assemblies import Assemblies
+from cea.datamanagement.database.components import Components
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
+
+FILE_EXTENSIONS = ['.csv']
 databases_folder_path = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_regions():
     return [folder for folder in os.listdir(databases_folder_path) if folder != "weather"
-            and os.path.isdir(os.path.join(databases_folder_path, folder))]
+            and os.path.isdir(os.path.join(databases_folder_path, folder))
+            and not folder.startswith('.')
+            and not folder.startswith('__')]
 
 
-def get_categories(db_path):
-    return [folder for folder in os.listdir(db_path) if os.path.isdir(os.path.join(db_path, folder))]
+def get_weather_files():
+    weather_folder_path = os.path.join(databases_folder_path, 'weather')
+    return [os.path.splitext(f)[0] for f in os.listdir(weather_folder_path) if f.endswith('.epw')]
 
 
-def get_database_template_tree():
-    """
-    Assumes that folders in `databases_folder_path` are `categories` and items (file/folder) in `categories` are `databases`.
-    Uses first region database as template (i.e. CH)
-    :return: dict containing `categories` and `databases`
-    e.g.
-    {
-        'categories': {
-            '$category_name': {
-                'databases': [
-                    {
-                        'name': '$database_name',
-                        'extension': '$database_extension'
-                    },
-                    ...
-                ]
-            },
-            ...
-        }
-    }
-    """
-    out = {'categories': OrderedDict()}
-    template_path = os.path.join(databases_folder_path, get_regions()[0])
-    for category in get_categories(template_path):
-        category_path = os.path.join(template_path, category)
-        category_databases = []
-        for database in os.listdir(category_path):
-            database_name, ext = os.path.splitext(database)
-            if ext in FILE_EXTENSIONS or os.path.isdir(os.path.join(category_path, database_name)):
-                database_name = database_name.upper()
-                category_databases.append({'name': database_name, 'extension': ext})
-        if category_databases:
-            out['categories'][category] = {'databases': category_databases}
-    return out
-
-
-def get_database_tree(db_path):
-    """
-    Look for database files in `db_path` based on `get_database_template_tree`
-    :param db_path: path of databases
-    :return: dict containing `categories` and `databases` found in `db_path`
-    e.g.
-    {
-        'categories': {
-            '$category_name': {
-                'databases': [...]
-            },
-            ...
-        },
-        'databases': {
-            '$database_name': {
-                'files': [
-                    {
-                        'extension': '$file_extension',
-                        'name': '$file_name',
-                        'path': '$path'
-                    },
-                    ...
-                ]
-            },
-            ...
-        }
-    }
-    """
-    database_categories_tree = get_database_template_tree()['categories']
-    out = {'categories': OrderedDict(), 'databases': OrderedDict()}
-    for category, databases in database_categories_tree.items():
-        out['categories'][category] = {'databases': []}
-        for database in databases['databases']:
-            database_name = database['name']
-            database_path = os.path.join(db_path, category, database_name)
-            out['databases'][database_name] = {'files': path_crawler(database_path + database['extension'])}
-            out['categories'][category]['databases'].append(database_name)
-    return out
-
-
-def path_crawler(parent_path):
-    """
-    Looks for database files in `parent_path`
-    :param parent_path:
-    :return: list of files with its properties (i.e. name, extension, path) contained in `parent_path`
-    """
-    out = list()
-    if os.path.isfile(parent_path):
-        name, ext = os.path.splitext(os.path.basename(parent_path))
-        out.append({'path': parent_path, 'name': name, 'extension': ext})
+def _replace_nan_with_none(obj):
+    """Recursively replace NaN values with None for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: _replace_nan_with_none(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_replace_nan_with_none(item) for item in obj]
+    elif isinstance(obj, float) and np.isnan(obj):
+        return None
     else:
-        for (dir_path, _, filenames) in os.walk(parent_path):
-            for f in filenames:
-                file_path = os.path.join(dir_path, f)
-                name, ext = os.path.splitext(os.path.basename(file_path))
-                out.append({'path': file_path, 'name': name, 'extension': ext})
-    return out
+        return obj
+
+def invert_nested_dict(d: dict[str, Any], path: list[str] | None = None):
+      path = list(path) if path is not None else []
+      result = {}
+      for key, value in d.items():
+          current_path = path + [key]
+          if isinstance(value, dict):
+              result.update(invert_nested_dict(value, current_path))
+          else:
+              result[value] = current_path
+      return result
+
+class CEADatabaseException(CEAException):
+    """Custom exception for CEA database errors."""
 
 
-if __name__ == '__main__':
-    import json
-    import cea.config
-    import cea.inputlocator
+@dataclass
+class CEADatabase:
+    archetypes: Archetypes
+    assemblies: Assemblies
+    components: Components
 
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    def to_dict(self) -> dict:
+        data = {
+            'archetypes': self.archetypes.to_dict(),
+            'assemblies': self.assemblies.to_dict(),
+            'components': self.components.to_dict(),
+        }
 
-    print(json.dumps(get_database_template_tree(), indent=2))
-    print(json.dumps(get_database_tree(locator.get_databases_folder()), indent=2))
+        return _replace_nan_with_none(data)
 
+    def save(self, locator: InputLocator):
+        """Save the database components to CSV files using the provided locator."""
+        self.archetypes.save(locator)
+        self.assemblies.save(locator)
+        self.components.save(locator)
+
+    @classmethod
+    def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
+        mappings = {
+            'archetypes': Archetypes._locator_mappings(),
+            'assemblies': Assemblies._locator_mappings(),
+            'components': Components._locator_mappings(),
+        }
+
+        return mappings
+
+    @classmethod
+    def schema(cls, replace_locator_refs: bool = False) -> dict[str, dict[str, Any]]:
+        schema: dict[str, dict[str, Any]] = {
+            'archetypes': Archetypes.schema(),
+            'assemblies': Assemblies.schema(),
+            'components': Components.schema(),
+        }
+
+        if replace_locator_refs:
+            flat_mapping = invert_nested_dict(cls._locator_mappings())
+
+            def replace_paths_using_mapping(d, mapping: dict[str, list[str]]):
+                if isinstance(d, dict):
+                    for key, value in d.items():
+                        if key == 'path' and isinstance(value, str) and value in mapping:
+                            d[key] = mapping[value]
+                        else:
+                            replace_paths_using_mapping(value, mapping)
+
+            replace_paths_using_mapping(schema, flat_mapping)
+
+        return schema
+
+    @classmethod
+    def from_locator(cls, locator: InputLocator) -> CEADatabase:
+        try:
+            archetypes = Archetypes.from_locator(locator)
+            assemblies = Assemblies.from_locator(locator)
+            components = Components.from_locator(locator)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
+
+        return cls(archetypes=archetypes, assemblies=assemblies, components=components)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> CEADatabase:
+        if 'archetypes' not in data or 'assemblies' not in data or 'components' not in data:
+            raise CEADatabaseException("Missing required database sections in input dictionary.")
+
+        try:
+            archetypes = Archetypes.from_dict(data['archetypes'])
+            assemblies = Assemblies.from_dict(data['assemblies'])
+            components = Components.from_dict(data['components'])
+
+            return cls(archetypes=archetypes, assemblies=assemblies, components=components)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to create CEA database from dict: {e}")

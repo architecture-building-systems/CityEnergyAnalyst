@@ -1,16 +1,14 @@
-
-
-
-from flask import current_app
-
 import cea.config
 import cea.inputlocator
 
 
-def deconstruct_parameters(p: cea.config.Parameter):
+def deconstruct_parameters(p: cea.config.Parameter, config=None):
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': False, 'help': p.help}
     try:
-        params["value"] = p.get()
+        if isinstance(p, cea.config.BuildingsParameter):
+            params['value'] = []
+        else:
+            params["value"] = p.get()
     except cea.ConfigError as e:
         print(e)
         params["value"] = ""
@@ -19,7 +17,6 @@ def deconstruct_parameters(p: cea.config.Parameter):
         params['choices'] = p._choices
 
     if isinstance(p, cea.config.WeatherPathParameter):
-        config = current_app.cea_config
         locator = cea.inputlocator.InputLocator(config.scenario)
         params['choices'] = {wn: locator.get_weather(
             wn) for wn in locator.get_weather_names()}
@@ -32,7 +29,7 @@ def deconstruct_parameters(p: cea.config.Parameter):
 
     try:
         params["nullable"] = p.nullable
-    except AttributeError as e:
+    except AttributeError:
         pass
 
     return params

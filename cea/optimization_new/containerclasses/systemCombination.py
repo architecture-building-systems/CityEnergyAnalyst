@@ -18,7 +18,7 @@ __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
 
-from cea.optimization_new.helpercalsses.optimization.fitness import Fitness
+from cea.optimization_new.helperclasses.optimization.fitness import Fitness
 
 
 class SystemCombination(object):

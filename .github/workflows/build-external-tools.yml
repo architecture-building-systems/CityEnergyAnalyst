@@ -1,0 +1,175 @@
+name: Build and Publish CEA External Tools
+
+permissions:
+  contents: read # Read repository contents
+
+on:
+  push:
+    tags:
+      - "external-v*" # Trigger on external tool version tags
+    paths:
+      - "external/**"
+  pull_request:
+    paths:
+      - "external/**"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      actions: write # Upload artifacts
+    strategy:
+      matrix:
+        # FIXME: macos-13 unable to compile crax
+        # macos-13 for x86_64, macos-latest (macos-14) for arm64
+        # Ignore macos-13 for now
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.14
+        with:
+          run-install: false
+
+      - name: Build wheel
+        working-directory: external
+        run: pixi run build-wheel
+        env:
+          # Set parallel build jobs
+          CMAKE_BUILD_PARALLEL_LEVEL: 4
+          # Enable verbose output for debugging if needed
+          VERBOSE: 1
+          # Set minimum macOS version (CRAX requires 13.3+)
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.os == 'macos-latest' && '13.0' || (matrix.os == 'macos-15' && '13.0' || '') }}
+
+      - name: Repair wheel with auditwheel (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: external
+        run: |
+          ENV_ROOT=$(dirname "$(dirname "$(pixi run python -c 'import sys,os;print(sys.executable)')")")
+          export LD_LIBRARY_PATH="$ENV_ROOT/lib:$LD_LIBRARY_PATH"
+
+          pixi add auditwheel
+          pixi run auditwheel show dist/*.whl
+          pixi run auditwheel repair dist/*.whl --wheel-dir dist/
+          pixi run auditwheel show dist/*manylinux*.whl
+          rm dist/*-linux_*.whl  # Remove original linux wheel, keep manylinux wheel
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: external/dist/*.whl
+          retention-days: 7
+
+  build-source:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # Upload artifacts
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Build source distribution
+        working-directory: external
+        run: python -m build --sdist
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-dist
+          path: external/dist/*.tar.gz
+          retention-days: 7
+
+  test-wheels:
+    name: Test wheels
+    needs: [build-wheels]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      actions: read # Download artifacts
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        # python-version: ['3.10', '3.11', '3.12']
+        python-version: ["3.12"] # Test only 3.12 for now
+
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheels/
+
+      - name: Test wheel
+        shell: bash
+        run: |
+          python -m pip install wheels/*.whl
+          python -c "import cea_external_tools; print(f'Package version: {cea_external_tools.__version__}')"
+
+  # TODO: Re-enable Test PyPI once account is created
+  # publish-test-pypi:
+  #   name: Publish to Test PyPI
+  #   needs: [build-wheels, build-source, test-wheels]
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #   environment:
+  #     name: test-pypi
+  #     url: https://test.pypi.org/p/cea-external-tools
+
+  #   steps:
+  #   - name: Download all artifacts
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       path: dist
+  #       merge-multiple: true
+
+  #   - name: Publish to Test PyPI
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       repository-url: https://test.pypi.org/legacy/
+  #       packages-dir: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    # needs: [publish-test-pypi]
+    needs: [build-wheels, build-source, test-wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    permissions:
+      actions: read # Download artifacts
+      id-token: write # Required for PyPI trusted publishing (OIDC)
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cea-external-tools
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true

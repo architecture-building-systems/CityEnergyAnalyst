@@ -57,7 +57,7 @@ def storage_optimization(locator, master_to_slave_vars):
 
     ## initial storage size
     V_storage_initial_m3 = master_to_slave_vars.STORAGE_SIZE
-    V0 = V_storage_initial_m3
+    # V0 = V_storage_initial_m3
     Optimized_Data0, storage_dispatch = StDesOp.Storage_Design(T_storage_old_K, Q_in_storage_old, locator,
                                                                V_storage_initial_m3, solar_technologies_data,
                                                                master_to_slave_vars, 1e12)
@@ -76,7 +76,7 @@ def storage_optimization(locator, master_to_slave_vars):
     # first Round optimization
     Q_required_in_storage_W = Q_loss0_W + Q_stored_max0_W
     V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_required_in_storage_W, T_ST_MAX, T_ST_MIN)
-    V1 = V_storage_possible_needed
+    # V1 = V_storage_possible_needed
     Q_initial_W = min(Q_stored_max0_W / 2.0, Q_storage_content_final_W[-1])
     T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
@@ -99,7 +99,7 @@ def storage_optimization(locator, master_to_slave_vars):
 
         Q_stored_max_needed_W = np.amax(Q_storage_content_fin_op_W) - np.amin(Q_storage_content_fin_op_W)
         V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_W, T_ST_MAX, T_ST_MIN)
-        V2 = V_storage_possible_needed
+        # V2 = V_storage_possible_needed
         Q_initial_W = min(Q_disc_seasonstart_opt_W[0], Q_storage_content_fin_op_W[-1])
         T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_possible_needed)
         Optimized_Data2, storage_dispatch = StDesOp.Storage_Design(T_initial_K, Q_initial_W, locator,
@@ -119,7 +119,7 @@ def storage_optimization(locator, master_to_slave_vars):
             Q_stored_max_needed_3_W = np.amax(Q_storage_content_fin_op2_W) - np.amin(Q_storage_content_fin_op2_W)
             V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_3_W, T_ST_MAX,
                                                                                   T_ST_MIN)
-            V3 = V_storage_possible_needed
+            # V3 = V_storage_possible_needed
 
             Q_initial_W = min(Q_disc_seasonstart_opt2_W[0], Q_storage_content_fin_op2_W[-1])
             T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
@@ -140,7 +140,7 @@ def storage_optimization(locator, master_to_slave_vars):
                         Q_storage_content_fin_op3_W[-1] - Q_storage_content_fin_op3_W[0])
                 V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_4_W, T_ST_MAX,
                                                                                       T_ST_MIN)
-                V4 = V_storage_possible_needed
+                # V4 = V_storage_possible_needed
                 Q_initial_W = min(Q_disc_seasonstart_opt3_W[0], Q_storage_content_fin_op3_W[-1])
                 T_initial_K = calc_T_initial_from_Q_and_V(Q_initial_W, T_ST_MIN, V_storage_initial_m3)
 
@@ -162,7 +162,7 @@ def storage_optimization(locator, master_to_slave_vars):
                             Q_storage_content_fin_op4_W[-1] - Q_storage_content_fin_op4_W[0])
                     V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_5,
                                                                                           T_ST_MAX, T_ST_MIN)
-                    V5 = V_storage_possible_needed
+                    # V5 = V_storage_possible_needed
                     Q_initial_W = min(Q_disc_seasonstart_opt4_W[0], Q_storage_content_fin_op4_W[-1])
                     if Q_initial_W != 0:
                         Q_initial_min = Q_disc_seasonstart_opt4_W - min(
@@ -200,7 +200,7 @@ def storage_optimization(locator, master_to_slave_vars):
                             Q_stored_max_needed_5 - (Q_storage_content_fin_op5[-1] - Q_storage_content_fin_op5[0]))
                         V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_6,
                                                                                               T_ST_MAX, T_ST_MIN)
-                        V6 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
+                        # V6 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
@@ -222,7 +222,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                 Q_stored_max_needed_6 - (Q_storage_content_fin_op6[-1] - Q_storage_content_fin_op6[0]))
                             V_storage_possible_needed = calc_storage_volume_from_heat_requirement(Q_stored_max_needed_7,
                                                                                                   T_ST_MAX, T_ST_MIN)
-                            V7 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
+                            # V7 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                             # leave initial values as we adjust the final outcome only, give back values from 5th round
 
@@ -246,7 +246,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                             Q_storage_content_fin_op7[-1] - Q_storage_content_fin_op7[0]))
                                 V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
                                     Q_stored_max_needed_8, T_ST_MAX, T_ST_MIN)
-                                V8 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
+                                # V8 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                 # leave initial values as we adjust the final outcome only, give back values from 5th round
 
@@ -270,7 +270,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                                 Q_storage_content_fin_op8[-1] - Q_storage_content_fin_op8[0]))
                                     V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
                                         Q_stored_max_needed_9, T_ST_MAX, T_ST_MIN)
-                                    V9 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
+                                    # V9 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                     # leave initial values as we adjust the final outcome only, give back values from 5th round
 
@@ -294,7 +294,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                                     Q_storage_content_fin_op9[-1] - Q_storage_content_fin_op9[0]))
                                         V_storage_possible_needed = calc_storage_volume_from_heat_requirement(
                                             Q_stored_max_needed_10, T_ST_MAX, T_ST_MIN)
-                                        V10 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
+                                        # V10 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
@@ -405,7 +405,7 @@ def calc_available_generation_PVT(locator, buildings, share_allowed):
         E_PVT_gen_kWh += building_PVT['E_PVT_gen_kWh']
         Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
         E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
-        A_PVT_m2 += building_PVT['Area_PVT_m2'][0]
+        A_PVT_m2 += building_PVT['area_PVT_m2'][0]
         mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C'] + 273)  # to K
         mcp += building_PVT['mcp_PVT_kWperC']
 
@@ -436,7 +436,7 @@ def calc_available_generation_solar(locator, buildings, share_allowed, panel_typ
         data = pd.read_csv(locator.SC_results(building_name, panel_type)).fillna(value=0.0)
         Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
         E_SC_req_kWh += data['Eaux_SC_kWh']
-        A_PVT_m2 += data['Area_SC_m2'][0]
+        A_PVT_m2 += data['area_SC_m2'][0]
         mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C'] + 273)  # to K
         mcp += data['mcp_SC_kWperC']
 

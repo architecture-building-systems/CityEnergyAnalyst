@@ -1,182 +1,110 @@
-Data management:
+Import & Export:
 
-  - name: archetypes-mapper
-    label: Archetypes mapper
-    description: Assign building properties and systems types from the Archetypes DataBase
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.archetypes_mapper
-    parameters: ['general:scenario', archetypes-mapper]
-    input-files:
-      - [get_zone_geometry]
-      - [get_building_typology]
-
-  - name: weather-helper
-    label: Weather helper
+  - name: export-to-rhino-gh
+    label: Export to Rhino/Grasshopper
+    short_description: Export CEA files to Rhino/Grasshopper-ready format
     description: |
-      Sets the weather file to use for simulation for a scenario. 
-      Fetches data from third party sources if no file is provided by the user.
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.weather_helper
-    parameters: ['general:scenario', weather-helper]
+      This Feature exports CEA files into Rhino/Grasshopper-ready format.  
+      The exported package is to be found at path:
+      ```
+      {CEA Project}/{Current Scenario}/export/rhino/from_cea.
+      ```
+      Download cea4gh and examples [here](https://www.cityenergyanalyst.com/cea4gh).
+      Then, use cea4gh to bring the exported package into Rhino/Grasshopper.  
 
-  - name: surroundings-helper
-    label: Surroundings helper
-    description: Query geometry of surrounding buildings from Open Street Maps
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.surroundings_helper
-    parameters: ['general:scenario', surroundings-helper]
+    module: cea.import_export.export_to_rhino_gh
+    parameters: ['general:scenario', to-rhino-gh]
     input-files:
       - [get_zone_geometry]
 
-  - name: terrain-helper
-    label: Terrain helper
-    description: Query topography data from third party sources
+  - name: import-from-rhino-gh
+    label: Import from Rhino/Grasshopper
+    short_description: Import Rhino/Grasshopper-generated files into CEA
+    description: |
+      This Feature imports Rhino/Grasshopper-generated files into CEA.
+      
+      Download cea4gh and examples [here](https://www.cityenergyanalyst.com/cea4gh) to prepare CEA-ready Grasshopper files.
+      Ensure that the current Scenario is the one generated using cea4gh.
+
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.terrain_helper
-    parameters: ['general:scenario', terrain-helper]
+    module: cea.import_export.import_from_rhino_gh
+    parameters: ['general:scenario', from-rhino-gh]
+
+
+  - name: export-results-csv
+    label: Export Results to .csv (Summary & Analytics)
+    short_description: Generate CSV files with CEA results summary and analytics
+    description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
+    interfaces: [cli, dashboard]
+    module: cea.import_export.result_summary
+    parameters: ['general:scenario', result-summary]
     input-files:
       - [get_zone_geometry]
-      - [get_surroundings_geometry]
 
-  - name: streets-helper
-    label: Streets helper
-    description: Query streets geometry from Open Street Maps
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.streets_helper
-    parameters: ['general:scenario', streets-helper]
-    input-files:
-      - [get_surroundings_geometry]
 
-  - name: trees-helper
-    label: Trees helper
-    description: Import tree geometries to scenario. Check CEA Learning Camp Lesson cea-a-02 for details.
-    interfaces: [ cli, dashboard ]
-    module: cea.datamanagement.trees_helper
-    parameters: [ 'general:scenario', trees-helper ]
-    input-files:
-      - [ get_zone_geometry ]
-      - [ get_terrain ]
-
-Demand forecasting:
+Solar Radiation Analysis:
   - name: radiation
-    label: Building solar radiation
-    description: Use Daysim to calculate solar radiation for a scenario
+    label: Building Solar Radiation using DAYSIM
+    short_description: Perform solar radiation analysis using DAYSIM
+    description: This Feature uses DAYSIM to perform solar radiation analysis.
     interfaces: [cli, dashboard]
     module: cea.resources.radiation.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
                  radiation]
     input-files:
-      - [get_database_envelope_systems]
+      - [get_building_architecture]
       - [get_surroundings_geometry]
-      - [get_building_architecture]
       - [get_zone_geometry]
       - [get_terrain]
       - [get_weather_file]
 
-  - name: radiation-simplified
-    label: Building solar radiation (simplified, beta)
+  - name: radiation-crax
+    label: Building Solar Radiation using CRAX [BETA]
+    short_description: Perform solar radiation analysis using CRAX model (BETA)
     description: |
-      This is a faster alternative to the original radiation script. 
-      It uses DAYSIM to calculate solar radiation from a sample of buildings in a scenario. 
-      Please note that the accuracy of the results for facades is reduced.
-    interfaces: [ cli, dashboard ]
-    module: cea.resources.radiation.simplified.main
-    parameters: [ 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
-                  radiation, radiation-simplified ]
+      **This is currently in active development and may not work as expected.**  
+      
+      This feature uses Tongji University's CRAX (CityRadiation Accelerator) model to perform comprehensive analyses of urban solar radiation,
+      encompassing direct, diffuse, and reflected components. 
+      It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion
+      to fast assess building solar exposure in dense urban environments.
+      
+      Reference: https://doi.org/10.1016/j.buildenv.2022.109937
+    interfaces: [cli, dashboard]
+    module: cea.resources.radiationCRAX.main
+    parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
+                 radiation-crax]
     input-files:
-      - [ get_database_envelope_systems ]
-      - [ get_surroundings_geometry ]
-      - [ get_building_architecture ]
-      - [ get_zone_geometry ]
-      - [ get_terrain ]
-      - [ get_weather_file ]
-
-  - name: schedule-maker
-    label: Building occupancy
-    description: Use CEA models and input schedules to estimate the occupancy profile of buildings
-    interfaces: [dashboard, cli]
-    module: cea.demand.schedule_maker.schedule_maker
-    parameters: ['general:scenario',
-                 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free',
-                 'general:debug',
-                 schedule-maker]
-    input-files:
-      - [get_database_envelope_systems]
       - [get_building_architecture]
+      - [get_surroundings_geometry]
       - [get_zone_geometry]
       - [get_terrain]
       - [get_weather_file]
 
-  - name: demand
-    label: Building energy demand
-    description: Calculate the Demand
+Renewable Energy Potential Assessment:
+  - name: photovoltaic
+    label: Photovoltaic (PV) Panels
+    short_description: Calculate PV electricity yields from solar panels
+    description: This Feature calculates PV electricity yields.
     interfaces: [cli, dashboard]
-    module: cea.demand.demand_main
-    parameters: ['general:scenario',
-                 'general:multiprocessing',
+    module: cea.technologies.solar.photovoltaic
+    parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
                  'general:number-of-cpus-to-keep-free',
-                 'general:debug',
-                 demand]
+                 'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+                 'solar:solar-window-solstice', 'solar:max-roof-coverage',
+                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle', 'solar:buildings']
     input-files:
-      - [get_weather_file]
-      - [get_database_envelope_systems]
-      - [get_database_air_conditioning_systems]
-      - [get_building_comfort]
-      - [get_building_internal]
-      - [get_building_architecture]
-      - [get_building_typology]
-      - [get_building_air_conditioning]
-      - [get_building_supply]
-      - [get_building_weekly_schedules, building_name]
-      - [get_zone_geometry]
       - [get_radiation_metadata, building_name]
-      - [get_radiation_building, building_name]
-      - [get_schedule_model_file, building_name]
-
-Life cycle analysis:
-
-  - name: emissions
-    label: Emissions
-    description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
-    interfaces: [cli, dashboard]
-    module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
-    input-files:
-      - [get_total_demand]
-      - [get_building_architecture]
-      - [get_building_typology]
       - [get_zone_geometry]
-      - [get_building_supply]
-
-  - name: system-costs
-    label: System costs
-    description: Calculate costs due to supply systems
-    interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
-    input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-
-Energy potentials:
-  - name: shallow-geothermal-potential
-    label: Shallow geothermal potential
-    description: Calculate the heat extracted from a geothermal probes (up to 50 m length)
-    interfaces: [cli, dashboard]
-    module: cea.resources.geothermal
-    parameters: ['general:scenario', shallow-geothermal]
-
-  - name: water-body-potential
-    label: Water body potential
-    description: Calculate the heat extracted from a lake or a water body
-    interfaces: [cli, dashboard]
-    module: cea.resources.water_body_potential
-    parameters: ['general:scenario', water-body]
+      - [get_radiation_building, building_name]
+      - [get_database_components_conversion_photovoltaic_panels]
+      - [get_weather_file]
 
   - name: photovoltaic-thermal
-    label: Photovoltaic-thermal panels
-    description: Calculate electricity & heat production from photovoltaic / thermal technologies
+    label: Photovoltaic-Thermal (PVT) Panels
+    short_description: Calculate PVT electricity and heat yields from hybrid panels
+    description: This Feature calculates PVT electricity & heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.photovoltaic_thermal
     parameters: ['general:scenario',
@@ -197,39 +125,13 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_photovoltaic_thermal_panels]
       - [get_weather_file]
-
-  - name: photovoltaic
-    label: Photovoltaic panels
-    description: Calculate electricity production from solar photovoltaic technologies
-    interfaces: [cli, dashboard]
-    module: cea.technologies.solar.photovoltaic
-    parameters: ['general:scenario', 'general:multiprocessing', 'solar:type-pvpanel',
-                 'general:number-of-cpus-to-keep-free',
-                 'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
-                 'solar:solar-window-solstice', 'solar:max-roof-coverage',
-                 'solar:custom-tilt-angle', 'solar:panel-tilt-angle']
-    input-files:
-      - [get_radiation_metadata, building_name]
-      - [get_zone_geometry]
-      - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
-      - [get_weather_file]
-
-  - name: sewage-potential
-    label: Sewage heat potential
-    description: Calculate the heat extracted from the sewage heat exchanger.
-    interfaces: [cli, dashboard]
-    module: cea.resources.sewage_heat_exchanger
-    parameters: ['general:scenario', sewage]
-    input-files:
-      - [get_total_demand]
-      - [get_demand_results_file, building_name]
 
   - name: solar-collector
-    label: Solar collectors
-    description: Calculate heat production from solar collector technologies
+    label: Solar Collectors (SC)
+    short_description: Calculate heat yields from solar collectors
+    description: This Feature calculates SC heat yields.
     interfaces: [cli, dashboard]
     module: cea.technologies.solar.solar_collector
     parameters: ['general:scenario', 'general:multiprocessing',
@@ -241,14 +143,97 @@ Energy potentials:
       - [get_radiation_metadata, building_name]
       - [get_zone_geometry]
       - [get_radiation_building, building_name]
-      - [get_database_conversion_systems]
+      - [get_database_components_conversion_solar_collectors]
       - [get_weather_file]
 
-Networks:
+  - name: shallow-geothermal-potential
+    label: Shallow Geothermal Potential
+    short_description: Calculate heat extracted from shallow geothermal probes
+    description: This Feature calculates the heat extracted from a geothermal probes (up to 50 m deep).
+    interfaces: [cli, dashboard]
+    module: cea.resources.geothermal
+    parameters: ['general:scenario', shallow-geothermal]
+
+  - name: water-body-potential
+    label: Water Body Potential
+    short_description: Calculate heat extracted from water bodies
+    description: This Feature calculates the heat extracted from a water body such as a lake or a reservoir.
+    interfaces: [cli, dashboard]
+    module: cea.resources.water_body_potential
+    parameters: ['general:scenario', water-body]
+
+  - name: sewage-potential
+    label: Sewage Heat Potential
+    short_description: Calculate heat extracted from sewage heat exchangers
+    description: This Feature calculates the heat extracted from sewage heat exchangers.
+    interfaces: [cli, dashboard]
+    module: cea.resources.sewage_heat_exchanger
+    parameters: ['general:scenario', sewage]
+    input-files:
+      - [get_total_demand]
+      - [get_demand_results_file, building_name]
+
+Energy Demand Forecasting:
+  - name: occupancy-helper
+    label: "Energy Demand Part 1: building occupancy"
+    short_description: Estimate building occupancy profiles using CEA models
+    description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
+    interfaces: [dashboard, cli]
+    module: cea.demand.occupancy_helper
+    parameters: ['general:scenario',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'general:debug',
+                 occupancy-helper]
+    input-files:
+      - [get_building_internal]
+      - [get_building_comfort]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_weather_file]
+
+  - name: demand
+    label: "Energy Demand Part 2: load modelling"
+    short_description: Forecast energy demand of buildings using CEA models
+    description: This Feature uses CEA models to forecast the energy demand of buildings.
+    interfaces: [cli, dashboard]
+    module: cea.demand.demand_main
+    parameters: ['general:scenario',
+                 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free',
+                 'general:debug',
+                 demand]
+    input-files:
+      - [get_weather_file]
+      - [get_database_assemblies_envelope_mass]
+      - [get_database_assemblies_envelope_tightness]
+      - [get_database_assemblies_envelope_floor]
+      - [get_database_assemblies_envelope_wall]
+      - [get_database_assemblies_envelope_window]
+      - [get_database_assemblies_envelope_shading]
+      - [get_database_assemblies_envelope_roof]
+      - [get_database_assemblies_hvac_controller]
+      - [get_database_assemblies_hvac_cooling]
+      - [get_database_assemblies_hvac_heating]
+      - [get_database_assemblies_hvac_hot_water]
+      - [get_building_comfort]
+      - [get_building_internal]
+      - [get_building_architecture]
+      - [get_building_air_conditioning]
+      - [get_building_supply]
+      - [get_building_weekly_schedules, building_name]
+      - [get_zone_geometry]
+      - [get_radiation_metadata, building_name]
+      - [get_radiation_building, building_name]
+      - [get_occupancy_model_file, building_name]
+
+
+Thermal Network Design:
 
   - name: network-layout
-    label: Thermal network Part I (layout)
-    description: Create a potential layout of the network with the minimum spanning tree
+    label: "Thermal Network Part 1: layout"
+    short_description: Create thermal network piping layout using minimum spanning tree
+    description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
@@ -258,52 +243,73 @@ Networks:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: Thermal network Part II (simulation)
-    description: Solve the thermal hydraulic network
+    label: "Thermal Network Part 2: flow & sizing"
+    short_description: Solve thermal hydraulic network flow and sizing
+    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network',
-                 'thermal-network-optimization:use-representative-week-per-month']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
       - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
-      - [get_database_conversion_systems]
+      - [get_db4_components_conversion_folder]
+      - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
-Optimization:
+
+Life Cycle Analysis:
+
+  - name: emissions
+    label: Emissions
+    short_description: Calculate embodied and operational emissions of buildings
+    description: This Feature calculates the embodied and operational emissions of buildings.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.main
+    parameters: ['general:scenario', emissions]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_building_supply]
+
+  - name: system-costs
+    label: Energy Supply System Costs
+    short_description: Calculate costs for energy supply systems
+    description: This Feature calculates the costs for energy supply systems.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.costs.system_costs
+    parameters: ['general:scenario', costs]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+
+
+Energy Supply System Optimisation:
 
   - name: thermal-network-optimization
-    label: Thermal network optimization
-    description: Optimize network design variables (plant locations, layout,...)
+    label: Thermal Network Optimisation
+    short_description: Optimise thermal network design variables
+    description: This Feature optimises network design variables (plant locations, layout,...).
     interfaces: [cli]
     module: cea.technologies.thermal_network.thermal_network_optimization
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
                  thermal-network-optimization]
 
   - name: decentralized
-    label: Supply system Part I (decentralized)
-    description: Run optimization for decentralized operation
+    label: "Suppy System Optimisation: building-scale"
+    short_description: Optimise decentralised energy supply systems
+    description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
-
-#  - name: optimization
-#    label: Supply system Part II (centralized)
-#    description: Run optimization for centralized operation
-#    interfaces: [cli, dashboard]
-#    module: cea.optimization.optimization_main
-#    parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', optimization]
-#    input-files:
-#      - [get_street_network]
-#      - [get_total_demand]
-#      - [get_water_body_potential]
-#      - [get_sewage_heat_potential]
-#      - [get_geothermal_potential]
+    input-files:
+      - [get_total_demand]
 
   - name: optimization-new
-    label: Supply system part II (centralized)
-    description: This optimisation script is projected to replace 'Supply System Part II (centralized)', but is currently still in its final testing phase
+    label: "Suppy System Optimisation: district-scale"
+    short_description: Optimise centralised energy supply systems
+    description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
@@ -312,66 +318,158 @@ Optimization:
       - [get_street_network]
       - [get_total_demand]
 
+
+Data Management:
+
+  - name: database-helper
+    label: Database Helper
+    short_description: Load CEA Database into current scenario
+    description: This Feature loads a CEA Database into the current Scenario.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.database_helper
+    parameters: ['general:scenario', database-helper]
+
+  - name: archetypes-mapper
+    label: Archetypes Mapper
+    short_description: Populate building properties using archetypal database
+    description: This Feature populates building properties and systems types for buildings based on the CEA Archetypal Database.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.archetypes_mapper
+    parameters: ['general:scenario', archetypes-mapper]
+    input-files:
+      - [get_zone_geometry]
+
+  - name: weather-helper
+    label: Weather Helper
+    short_description: Fetch weather data from third party sources
+    description: |
+      This Feature fetches .epw weather data from third party sources if no file is provided by the user.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.weather_helper
+    parameters: ['general:scenario', weather-helper]
+    input-files:
+      - [ get_zone_geometry ]
+
+  - name: surroundings-helper
+    label: Surroundings Helper
+    short_description: Query surrounding building geometry from OpenStreetMap
+    description: This Feature queries geometry of surrounding buildings from OpenStreetMap.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.surroundings_helper
+    parameters: ['general:scenario', surroundings-helper]
+    input-files:
+      - [get_zone_geometry]
+
+  - name: terrain-helper
+    label: Terrain Helper
+    short_description: Fetch topography data from third party sources
+    description:  This Feature fetches .tif topography data from third party sources.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.terrain_helper
+    parameters: ['general:scenario', terrain-helper]
+    input-files:
+      - [get_zone_geometry]
+      - [get_surroundings_geometry]
+
+  - name: streets-helper
+    label: Streets Helper
+    short_description: Query streets geometry from OpenStreetMap
+    description: This Feature queries streets geometry from OpenStreetMap.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.streets_helper
+    parameters: ['general:scenario', streets-helper]
+    input-files:
+      - [get_surroundings_geometry]
+
+  - name: trees-helper
+    label: Trees Helper
+    short_description: Import tree geometries into scenario
+    description: This Feature imports tree geometries. Check CEA Learning Camp Lesson cea-a-02 for details.
+    interfaces: [ cli, dashboard ]
+    module: cea.datamanagement.trees_helper
+    parameters: [ 'general:scenario', trees-helper ]
+    input-files:
+      - [ get_zone_geometry ]
+      - [ get_terrain ]
+
+
 Utilities:
 
-  - name: dbf-to-csv-to-dbf
-    label: DBF to CSV to DBF
-    description: dbf => csv (xlsx) => dbf
-    interfaces: [cli, dashboard]
-    module: cea.utilities.dbf
-    parameters: ['general:scenario', dbf-tools]
+  - name: cea4-format-helper
+    label: CEA-4 Format Helper
+    short_description: Verify and migrate inputs to CEA-4 format
+    description: |
+      This Feature verifies the inputs are in the correct format for CEA-4.
+      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
 
-  - name: shp-to-csv-to-shp
-    label: SHP to CSV to SHP
-    description: shp => csv (xlsx) => shp
-    interfaces: [ cli, dashboard ]
-    module: cea.utilities.shapefile
-    parameters: [ 'general:scenario', shapefile-tools]
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.format_helper.format_helper
+    parameters: ['general:scenario',format-helper]
+
+  - name: cea4-migrate
+    label: CEA-4 Format Helper - Migrate
+    short_description: Migrate Late-CEA-3 inputs to CEA-4 format
+    description: |
+      This Feature migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+
+    interfaces: [cli]
+    module: cea.datamanagement.format_helper.cea4_migrate
+    parameters: ['general:scenario']
+
+  - name: cea4-verify
+    label: CEA-4 Format Helper - Verify
+    short_description: Verify inputs are in correct CEA-4 format
+    description: |
+      This Feature verifies the inputs are in the correct format for CEA-4.
+
+    interfaces: [cli]
+    module: cea.datamanagement.format_helper.cea4_verify
+    parameters: ['general:scenario']
 
   - name: sensitivity-analysis-sampler
-    label: Generate samples for SA
-    description: Generate samples for sensitivity analysis using Sobol Method
+    label: Generate Samples for Sensitivity Analysis (SA)
+    short_description: Generate samples for sensitivity analysis using Sobol method
+    description: This Feature generates samples for sensitivity analysis using Sobol Method.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
   - name: batch-process-workflow
-    label: Batch process Workflow
-    description: |
-      Batch process the current scenario or all scenarios under this project. Design the CEA workflow below. 
-      Change the default settings under the respective tool tabs and Save to Config.
+    label: Batch Process Workflow
+    short_description: Batch process scenarios using configured workflow
+    description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
     interfaces: [ cli, dashboard ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
-  - name: data-migrator
-    label: Data migrator
-    description: "Migrate older scenario inputs to the latest version.
-                  Please consider running this for scenario created before v3.22.
-                  NOTE: This cannot be undone - save a copy of the scenario first."
-    interfaces: [ cli]
-    module: cea.datamanagement.data_migrator
-    parameters: [ 'general:scenario' ]
-    input-files:
-      - [ get_database_construction_standards ]
-
-  - name: data-initializer
-    label: Database initializer
-    description: Initialize databases for CEA
+  - name: dbf-to-csv-to-dbf
+    label: .dbf to .csv to .dbf
+    short_description: Convert files between DBF and CSV formats
+    description: This Feature converts files from .dbf to .csv (.xlsx) and back to .dbf.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.data_initializer
-    parameters: ['general:scenario', data-initializer]
+    module: cea.utilities.dbf
+    parameters: ['general:scenario', dbf-tools]
+
+  - name: shp-to-csv-to-shp
+    label: .shp to .csv to .shp
+    short_description: Convert files between shapefile and CSV formats
+    description: This Feature converts files from .shp to .csv (.xlsx) and back to .shp.
+    interfaces: [ cli, dashboard ]
+    module: cea.utilities.shapefile
+    parameters: [ 'general:scenario', shapefile-tools]
 
   - name: create-new-scenario
-    label: Create new scenario
-    description: Creates a new scenario
+    label: Create a New Scenario
+    short_description: Facilitate creating a new scenario
+    description: This Feature facilitate creating a new scenario.
     interfaces: []
     module: cea.datamanagement.create_new_scenario
     parameters: [create-new-scenario]
 
   - name: rename-building
-    label: Rename building
-    description: Renames a building in the input files
+    label: Rename Building
+    short_description: Facilitate renaming buildings in scenario
+    description: This Feature facilitates renaming a Building.
     interfaces: [cli, dashboard]
     module: cea.utilities.rename_building
     parameters: ['general:scenario', rename-building]
@@ -380,7 +478,8 @@ Utilities:
 
   - name: create-mixed-use-type
     label: Create mixed-use type
-    description: Creates a new use-type by aggregating values from a list of different use-types
+    short_description: Create new use-type by aggregating existing use-types
+    description: This Feature facilitates creating a new use-type by aggregating values from a list of different use-types
     interfaces: [cli]
     module: cea.utilities.create_mixed_use_type
     parameters: ['general:scenario', create-mixed-use-type]
@@ -389,6 +488,7 @@ Utilities:
 
   - name: test
     label: Test CEA
+    short_description: Run CEA tests
     description: Run some tests on the CEA
     interfaces: [cli]
     module: cea.tests
@@ -396,6 +496,7 @@ Utilities:
 
   - name: run-unit-tests
     label: Unit tests
+    short_description: Run all unit tests in the cea/tests folder
     description: Run all the unit tests in the cea/tests folder
     interfaces: [test, cli]
     module: cea.tests.run_unit_tests
@@ -403,6 +504,7 @@ Utilities:
 
   - name: run-all-plots
     label: Run all plots
+    short_description: Run all plots for testing purposes
     description: Run all the plots for test purposes
     interfaces: [test, cli]
     module: cea.tests.run_all_plots
@@ -413,6 +515,7 @@ default:
 
   - name: multi-criteria-analysis
     label: Multicriteria analysis
+    short_description: Perform multicriteria analysis
     description: Multicriteria analysis
     interfaces: [cli]
     module: cea.analysis.multicriteria.main
@@ -420,15 +523,17 @@ default:
 
   - name: zone-helper
     label: Zone helper
+    short_description: Query zone geometry from OpenStreetMap
     description: Query zone geometry from Open Street Maps
     interfaces: [cli]
     module: cea.datamanagement.zone_helper
     parameters: ['general:scenario', zone-helper]
     input-files:
-      - [get_database_construction_standards]
+      - [get_database_archetypes_construction_type]
 
   - name: create-polygon
     label: Create Polygon
+    short_description: Create polygon shapefile from coordinate tuples
     description: Creates a polygon shapefile from a list of comma-separated coordinate tuples
     interfaces: [cli]
     module: cea.utilities.create_polygon
@@ -436,6 +541,7 @@ default:
 
   - name: compile
     label: compile
+    short_description: Compile PYD files
     description: compile
     interfaces: [cli]
     module: cea.utilities.compile_pyd_files
@@ -443,6 +549,7 @@ default:
 
   - name: dashboard
     label: dashboard
+    short_description: Launch CEA dashboard interface
     description: dashboard
     interfaces: [cli]
     module: cea.interfaces.dashboard.dashboard
@@ -450,6 +557,7 @@ default:
 
   - name: excel-to-shapefile
     label: excel-to-shapefile
+    short_description: Convert Excel files to shapefile format
     description: excel-to-shapefile
     interfaces: [cli]
     module: cea.interfaces.cli.excel_to_shapefile
@@ -457,6 +565,7 @@ default:
 
   - name: extract-reference-case
     label: extract-reference-case
+    short_description: Extract reference case examples
     description: extract-reference-case
     interfaces: [cli]
     module: cea.examples.extract_reference_case
@@ -464,6 +573,7 @@ default:
 
   - name: list-demand-graphs-fields
     label: list-demand-graphs-fields
+    short_description: List available fields for demand graphs
     description: list-demand-graphs-fields
     interfaces: [cli]
     module: cea.interfaces.cli.list_demand_graphs_fields
@@ -471,6 +581,7 @@ default:
 
   - name: shapefile-to-excel
     label: shapefile-to-excel
+    short_description: Convert shapefile to Excel format
     description: shapefile-to-excel
     interfaces: [cli]
     module: cea.interfaces.cli.shapefile_to_excel
@@ -478,6 +589,7 @@ default:
 
   - name: trace-inputlocator
     label: trace-inputlocator
+    short_description: Trace all InputLocator calls for a script
     description: trace all calls to the InputLocator for a script
     interfaces: [cli]
     module: cea.tests.trace_inputlocator
@@ -485,6 +597,7 @@ default:
 
   - name: workflow
     label: Workflow
+    short_description: Run workflow.yml file from start to end
     description: Run a workflow.yml file from start to end
     interfaces: [cli]
     module: cea.workflows.workflow
@@ -493,6 +606,7 @@ default:
 Documentation:
   - name: html
     label: html
+    short_description: Run all documentation methods via command line
     description: Run all documentation methods via the command line
     interfaces: [doc]
     module: cea.utilities.doc_html
@@ -500,6 +614,7 @@ Documentation:
 
   - name: graphviz
     label: graphviz
+    short_description: Render graphviz files for all scripts
     description: Render the graphviz.gv files for all scripts in the schema data
     interfaces: [doc]
     module: cea.utilities.doc_graphviz
@@ -507,6 +622,7 @@ Documentation:
 
   - name: glossary
     label: glossary
+    short_description: Update glossary documentation
     description: Updates the glossary documentation
     interfaces: [doc]
     module: cea.utilities.doc_glossary
@@ -514,6 +630,7 @@ Documentation:
 
   - name: schema
     label: schema
+    short_description: Display schema information for locator methods
     description: Display schema information of an (existing) file given a locator method
     interfaces: [doc]
     module: cea.utilities.doc_schemas
@@ -522,6 +639,7 @@ Documentation:
 Development:
   - name: build
     label: build
+    short_description: Build new installer for current version
     description: build a new installer for the current version
     interfaces: [dev]
     module: cea.dev.build
@@ -529,6 +647,7 @@ Development:
 
   - name: release
     label: release
+    short_description: Build installer for release version
     description: build a new installer for the current version
     interfaces: [ dev ]
     module: cea.dev.release
@@ -536,7 +655,46 @@ Development:
 
   - name: update-zenodo
     label: update-zenodo
+    short_description: Update Zenodo references to latest available online
     description: Updates relevant Zenodo references to the latest available online
     interfaces: [ dev ]
     module: cea.dev.update_zenodo
     parameters: []
+
+
+Visualisation:
+
+  - name: plot-demand
+    label: Plot - Building Energy Demand
+    short_description: Plot bar chart of building energy demand results
+    description: This Feature plots bar chart of the results of building energy demand forecasting
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-demand, plots-building-filter]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-solar
+    label: Plot - Solar Technology
+    short_description: Plot bar chart of solar energy technologies' yields results
+    description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-comfort-chart
+    label: Plot - Building Comfort Chart
+    short_description: Plot comfort and discomfort hours for buildings
+    description: This Feature plots comfort and discomfort hours for buildings
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.comfort_chart
+    parameters: ['general:scenario', plots-comfort-chart, plots-building-filter]
+    input-files:
+      - [get_total_demand]
+      - [get_building_architecture]
+      - [get_zone_geometry]

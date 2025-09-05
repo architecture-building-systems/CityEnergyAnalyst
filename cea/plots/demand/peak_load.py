@@ -52,7 +52,7 @@ class PeakLoadCurvePlot(cea.plots.demand.DemandPlotBase):
             for field in analysis_fields:
                 y = dataframe[field]
                 name = NAMING[field]
-                trace = go.Bar(x=dataframe["Name"], y=y, name=name, marker=dict(color=COLOR[field]))
+                trace = go.Bar(x=dataframe["name"], y=y, name=name, marker=dict(color=COLOR[field]))
                 traces.append(trace)
             return traces
 
@@ -84,10 +84,10 @@ def peak_load_district(data_frame_totals, analysis_fields, title, output_path):
                                                       ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame_totals[field]
-        total_perc = (y / data_frame_totals['total'] * 100).round(2).values
-        total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
+        # total_perc = (y / data_frame_totals['total'] * 100).round(2).values
+        # total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         name = NAMING[field]
-        trace = go.Bar(x=data_frame_totals["Name"], y=y, name=name,
+        trace = go.Bar(x=data_frame_totals["name"], y=y, name=name,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 

@@ -1,29 +1,27 @@
-from flask import Blueprint
-from flask_restx import Api
-from .tools import api as tools
-from .project import api as project
-from .inputs import api as inputs
-from .dashboard import api as dashboard
-from .glossary import api as glossary
-from .databases import api as databases
-from .contents import api as contents
+from fastapi import APIRouter
 
-blueprint = Blueprint('api', __name__, url_prefix='/api')
-api = Api(blueprint)
+import cea.interfaces.dashboard.api.inputs as inputs
+import cea.interfaces.dashboard.api.contents as contents
+import cea.interfaces.dashboard.api.dashboards as dashboards
+import cea.interfaces.dashboard.api.databases as databases
+import cea.interfaces.dashboard.api.glossary as glossary
+import cea.interfaces.dashboard.api.project as project
+import cea.interfaces.dashboard.api.tools as tools
+import cea.interfaces.dashboard.api.weather as weather
+import cea.interfaces.dashboard.api.geometry as geometry
+import cea.interfaces.dashboard.api.map_layers as map_layers
+import cea.interfaces.dashboard.api.user as user
 
-api.add_namespace(tools, path='/tools')
-api.add_namespace(project, path='/project')
-api.add_namespace(inputs, path='/inputs')
-api.add_namespace(inputs, path='/inputs')
-api.add_namespace(dashboard, path='/dashboards')
-api.add_namespace(glossary, path='/glossary')
-api.add_namespace(databases, path='/databases')
-api.add_namespace(contents, path='/contents')
+router = APIRouter()
 
-
-@api.errorhandler
-def default_error_handler(error):
-    """Default error handler"""
-    import traceback
-    trace = traceback.format_exc()
-    return {'message': str(error), 'trace': trace}, 500
+router.include_router(inputs.router, prefix="/inputs")
+router.include_router(contents.router, prefix="/contents")
+router.include_router(dashboards.router, prefix="/dashboards")
+router.include_router(databases.router, prefix="/databases")
+router.include_router(glossary.router, prefix="/glossary")
+router.include_router(project.router, prefix="/project")
+router.include_router(tools.router, prefix="/tools")
+router.include_router(weather.router, prefix="/weather")
+router.include_router(geometry.router, prefix="/geometry")
+router.include_router(map_layers.router, prefix="/map_layers")
+router.include_router(user.router, prefix="/user")

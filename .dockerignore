@@ -12,14 +12,24 @@ __pycache__
 .env
 .venv
 venv
+.pixi
 
 # PyCharm
 .idea
 
 bin
+dist
 docs
 logo
 notebooks
 setup
 
 *.md
+
+# external
+external/.pixi
+external/dist/
+
+# Docker files
+Dockerfile
+.dockerignore

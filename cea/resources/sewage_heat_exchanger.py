@@ -10,6 +10,8 @@ import numpy as np
 from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_LPERS, T_MIN, AT_MIN_K, P_SEWAGEWATER_KGPERM3
 import cea.config
 import cea.inputlocator
+from cea.utilities.date import get_date_range_hours_from_year
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -37,10 +39,16 @@ def calc_sewage_heat_exchanger(locator, config):
     twaste = []
     mXt = []
     counter = 0
-    names = pd.read_csv(locator.get_total_demand()).Name
+    names = pd.read_csv(locator.get_total_demand()).name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
     V_lps_external = config.sewage.sewage_water_district
+
+    # create date range for the calculation year
+    weather_file = locator.get_weather_file()
+    weather_data = epwreader.epw_reader(weather_file)
+    year = weather_data['year'][0]
+    date_range = get_date_range_hours_from_year(year)
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
@@ -59,7 +67,8 @@ def calc_sewage_heat_exchanger(locator, config):
                                                                               heat_exchanger_length, T_MIN, AT_MIN_K, V_lps_external)
 
     #save to disk
-    pd.DataFrame({"Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : twaste_zone,
+    locator.ensure_parent_folder_exists(locator.get_sewage_heat_potential())
+    pd.DataFrame({"date": pd.to_datetime(date_range), "Qsw_kW" : Q_source, "Ts_C" : t_source, "T_out_sw_C" : t_out, "T_in_sw_C" : twaste_zone,
                   "mww_zone_kWperC":mcpwaste_total,
                     "T_out_HP_C" : tout_e, "T_in_HP_C" : tin_e}).to_csv(locator.get_sewage_heat_potential(),
                                                                       index=False, float_format='%.3f')

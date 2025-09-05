@@ -129,8 +129,8 @@ class NetworkInfo(object):
 
         # write buildings names to object
         total_demand = pd.read_csv(locator.get_total_demand())
-        self.building_names = total_demand.Name.values
-        self.number_of_buildings_in_district = total_demand.Name.count()
+        self.building_names = total_demand.name.values
+        self.number_of_buildings_in_district = total_demand.name.count()
 
         self.__weather_data = None
 
@@ -209,6 +209,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
     all_individuals_df.columns = network_info.generation_info + network_info.cost_info
     all_individuals_df = all_individuals_df.sort_values(by=['total'])
+    locator.ensure_parent_folder_exists(locator.get_optimization_network_all_individuals_results_file(network_info.network_type))
     all_individuals_df.to_csv(locator.get_optimization_network_all_individuals_results_file(network_info.network_type),
                               index=False)
     return np.nan
@@ -599,7 +600,7 @@ def calc_anchor_load_building(network_info):
         assert network_info.network_type == "DC"
         field = "QC_sys_MWhyr"
     max_value = total_demand[field].max()  # find maximum value
-    building_series = total_demand['Name'][total_demand[field] == max_value].values[0]
+    building_series = total_demand['name'][total_demand[field] == max_value].values[0]
     # find building index at which the demand is the maximum value
     building_index = np.where(network_info.building_names == building_series)[0]
     return int(building_index)

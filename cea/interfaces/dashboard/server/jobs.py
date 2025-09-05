@@ -1,188 +1,266 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
-
 import subprocess
-from dataclasses import dataclass, asdict
-from datetime import datetime
+import sys
+import uuid
+from typing import Dict, Any, List
+from urllib.parse import urlparse
 
 import psutil
+import sqlalchemy.exc
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import select
 
-from flask_restx import Namespace, Resource, fields, reqparse
-from flask import request, current_app
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
+    CEAUserID, CEASeverDemoAuthCheck, CEAStreams
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
+from cea.interfaces.dashboard.lib.database.session import SessionDep
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.interfaces.dashboard.lib.socketio import sio
 
-__author__ = "Daren Thomas"
-__copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
-
-
-api = Namespace('Jobs', description='A job server for cea-worker processes')
-
-# Job states
-JOB_STATE_PENDING = 0
-JOB_STATE_STARTED = 1
-JOB_STATE_SUCCESS = 2
-JOB_STATE_ERROR = 3
-JOB_STATE_CANCELED = 4
-
-job_info_model = api.model('JobInfo', {
-    'id': fields.Integer,
-    'script': fields.String,
-    'state': fields.Integer,
-    'error': fields.String,
-    'parameters': fields.Raw,
-    'start_time': fields.DateTime,
-    'end_time': fields.DateTime,
-})
-
-job_info_request_parser = reqparse.RequestParser()
-job_info_request_parser.add_argument("id", type=int, location="json")
-job_info_request_parser.add_argument("script", type=str, required=True, location="json")
-job_info_request_parser.add_argument("state", location="json")
-job_info_request_parser.add_argument("error", location="json")
-job_info_request_parser.add_argument("parameters", type=dict, location="json")
+# FIXME: Add auth checks after giving workers access token
+router = APIRouter()
+logger = getCEAServerLogger("cea-server-jobs")
 
 
-worker_processes = {}  # jobid -> subprocess.Popen
+class JobError(BaseModel):
+    message: str
+    stacktrace: str
 
 
-def next_id():
-    """FIXME: replace with better solution"""
+class JobOutput(BaseModel):
+    output: Any
+
+
+@router.get("/", dependencies=[CEASeverDemoAuthCheck])
+@router.get("/list")
+async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
+    """Get a list of jobs for the current project"""
+    result = await session.execute(select(JobInfo).where(JobInfo.project_id == project_id))
+    return result.scalars().all()
+
+
+@router.get("/{job_id}")
+async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
+    """Return a JobInfo by id"""
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+
+@router.post("/new", dependencies=[CEASeverDemoAuthCheck])
+async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
+                         settings: CEAServerSettings) -> JobInfo:
+    """Post a new job to the list of jobs to complete"""
+    args = payload
+    logger.info(f"Adding new job: args={args}")
+
+    parameters = args["parameters"]
+
+    # FIXME: Forcing remote multiprocessing to be disabled for now,
+    #  find solution for restricting number of processes per user
+    if not settings.local:
+        parameters["multiprocessing"] = False
+
+    job = JobInfo(script=args["script"], parameters=parameters, project_id=project_id, created_by=user_id)
+    session.add(job)
+    await session.commit()
+    await session.refresh(job)
+
+    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
+
+
+@router.post("/started/{job_id}")
+async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
     try:
-        return max(jobs.keys()) + 1
-    except ValueError:
-        # this is the first job...
-        return 1
+        job.state = JobState.STARTED
+        job.start_time = get_current_time()
+        await session.commit()
+        await session.refresh(job)
 
-
-# FIXME: replace with database or similar solution
-@dataclass
-class JobInfo:
-    """Store all the information required to run a job"""
-    id: str
-    script: str
-    parameters: dict
-    state: int = JOB_STATE_PENDING
-    error: str = None
-    start_time: datetime = None
-    end_time: datetime = None
-
-
-jobs = {
-    # jobid -> JobInfo
-}
-
-
-@api.route("/<int:jobid>")
-class Job(Resource):
-    @api.marshal_with(job_info_model)
-    def get(self, jobid):
-        """Return a JobInfo by id"""
-        return jobs[jobid]
-
-
-@api.route("/new")
-class NewJob(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self):
-        """Post a new job to the list of jobs to complete"""
-        args = job_info_request_parser.parse_args()
-        print("NewJob: args={args}".format(**locals()))
-        job = JobInfo(id=next_id(), script=args.script, parameters=args.parameters)
-        jobs[job.id] = job
-        current_app.socketio.emit("cea-job-created", api.marshal(job, job_info_model))
+        await sio.emit("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@api.route("/list")
-class ListJobs(Resource):
-    @api.marshal_with(job_info_model, as_list=True)
-    def get(self):
-        return [asdict(job) for job in jobs.values()]
+@router.post("/success/{job_id}")
+async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
+                          worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfo:
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
-
-@api.route("/started/<int:jobid>")
-class JobStarted(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_STARTED
-        job.start_time = datetime.now()
-        current_app.socketio.emit("cea-worker-started", api.marshal(job, job_info_model))
-        return job
-
-
-@api.route("/success/<int:jobid>")
-class JobSuccess(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_SUCCESS
+    try:
+        job.state = JobState.SUCCESS
         job.error = None
-        job.end_time = datetime.now()
-        if job.id in worker_processes:
-            del worker_processes[job.id]
-        current_app.socketio.emit("cea-worker-success", api.marshal(job, job_info_model))
+        job.end_time = get_current_time()
+        job.stdout = "".join(await streams.pop(job_id, []))
+        await session.commit()
+        await session.refresh(job)
+
+        if job.id in await worker_processes.values():
+            await worker_processes.delete(job.id)
+
+        job_info = job.model_dump(mode='json')
+        job_info["output"] = output.output
+        await sio.emit("cea-worker-success", job_info, room=f"user-{job.created_by}")
         return job
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@api.route("/error/<int:jobid>")
-class JobError(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_ERROR
-        job.error = request.data.decode()
-        job.end_time = datetime.now()
-        if job.id in worker_processes:
-            del worker_processes[job.id]
-        current_app.socketio.emit("cea-worker-error", api.marshal(job, job_info_model))
+@router.post("/error/{job_id}")
+async def set_job_error(session: SessionDep, job_id: str, error: JobError, streams: CEAStreams,
+                        worker_processes: CEAWorkerProcesses) -> JobInfo:
+    message = error.message
+    stacktrace = error.stacktrace
+
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    try:
+        job.state = JobState.ERROR
+        job.error = message
+        job.end_time = get_current_time()
+        job.stdout = "".join(await streams.pop(job_id, []))
+        job.stderr = stacktrace
+        await session.commit()
+        await session.refresh(job)
+
+        if job.id in await worker_processes.values():
+            await worker_processes.delete(job.id)
+        await sio.emit("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+
+        logger.warning(f"Error found in job {job_id}: {job.error}")
+        logger.error(f"stacktrace:\n{job.stderr}")
         return job
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@api.route('/start/<int:jobid>')
-class JobStart(Resource):
-    def post(self, jobid):
-        """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
-        print("tools/route_start: {jobid}".format(**locals()))
-        worker_processes[jobid] = subprocess.Popen(["python", "-m", "cea.worker", "{jobid}".format(jobid=jobid)])
-        return jobid
+@router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
+async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
+                    settings: CEAServerSettings):
+    """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
+
+    # Validate job_id is a valid UUID
+    try:
+        uuid.UUID(job_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid job_id format. Must be a valid UUID.")
+
+    # Validate server_url is a valid HTTP/HTTPS URL
+    try:
+        parsed_url = urlparse(str(server_url))
+        if not parsed_url.scheme or parsed_url.scheme not in ['http', 'https']:
+            raise HTTPException(status_code=400, detail="Invalid server_url. Must be a valid HTTP or HTTPS URL.")
+        if not parsed_url.netloc:
+            raise HTTPException(status_code=400, detail="Invalid server_url. Missing hostname.")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid server_url format.")
+
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Use validated parameters in command
+    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
+    logger.debug(f"command: {command}")
+    process = subprocess.Popen(command)
+
+    await worker_processes.set(job_id, process.pid)
+    return job_id
 
 
-@api.route("/cancel/<int:jobid>")
-class JobCanceled(Resource):
-    @api.marshal_with(job_info_model)
-    def post(self, jobid):
-        job = jobs[jobid]
-        job.state = JOB_STATE_CANCELED
+@router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    try:
+        job.state = JobState.CANCELED
         job.error = "Canceled by user"
-        job.end_time = datetime.now()
-        kill_job(jobid)
-        current_app.socketio.emit("cea-worker-canceled", api.marshal(job, job_info_model))
+        job.end_time = get_current_time()
+        await session.commit()
+        await session.refresh(job)
+
+        await kill_job(job_id, worker_processes)
+        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-def kill_job(jobid):
+@router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
+    """
+    Delete a job from the database. This is only possible if the job is not running.
+    """
+    try:
+        job = await session.get(JobInfo, job_id)
+    except sqlalchemy.exc.OperationalError as e:
+        logger.error(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
+
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    if job.state == JobState.STARTED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
+
+    try:
+        job.state = JobState.DELETED
+        await session.delete(job)
+        await session.commit()
+
+        return job
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+async def kill_job(jobid, worker_processes):
     """Kill the processes associated with a jobid"""
-    if jobid not in worker_processes:
+    if jobid not in await worker_processes.keys():
+        logger.warning(f"Unable to kill job. Could no find job: {jobid}.")
         return
 
-    popen = worker_processes[jobid]
+    pid = await worker_processes.get(jobid)
     # using code from here: https://stackoverflow.com/a/4229404/2260
     # to terminate child processes too
-    print("killing child processes of {jobid} ({pid})".format(jobid=jobid, pid=popen.pid))
+    logger.warning(f"killing child processes of {jobid} ({pid})")
     try:
-        process = psutil.Process(popen.pid)
+        process = psutil.Process(pid)
+
+        children = process.children(recursive=True)
+        for child in children:
+            logger.warning(f"-- killing child {pid}")
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
+        process.kill()
     except psutil.NoSuchProcess:
         return
-    children = process.children(recursive=True)
-    for child in children:
-        print("-- killing child {pid}".format(pid=child.pid))
-        child.kill()
-    process.kill()
-    del worker_processes[jobid]
+    finally:
+        await worker_processes.delete(jobid)

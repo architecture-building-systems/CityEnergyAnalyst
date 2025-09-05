@@ -1,0 +1,6 @@
+description,code,class_dhw,Tsww0_C,Qwwmax_Wm2
+,HVAC_HOTWATER_AS0,NONE,0,0
+High temperature water (60/10) ,HVAC_HOTWATER_AS1,HIGH_TEMP,60,500
+Medium temperature water (45/10) ,HVAC_HOTWATER_AS2,MEDIUM_TEMP,45,500
+Low temperature water + sanitation (35/10) ,HVAC_HOTWATER_AS3,LOW_TEMP,35,500
+High temperature in the tropics (60/25) ,HVAC_HOTWATER_AS4,HIGH_TEMP,60,500

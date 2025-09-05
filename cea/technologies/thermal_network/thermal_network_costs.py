@@ -570,8 +570,8 @@ def main(config):
     ## read in basic information and save to object, e.g. building demand, names, total number of buildings
 
     total_demand = pd.read_csv(locator.get_total_demand())
-    network_info.building_names = total_demand.Name.values
-    network_info.number_of_buildings_in_district = total_demand.Name.count()
+    network_info.building_names = total_demand.name.values
+    network_info.number_of_buildings_in_district = total_demand.name.count()
 
     # write disconnected_buildings_index into network_info
     disconnected_buildings_list = config.network_layout.disconnected_buildings
@@ -623,6 +623,7 @@ def main(config):
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['network_length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index').T
+    locator.ensure_parent_folder_exists(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     return
 

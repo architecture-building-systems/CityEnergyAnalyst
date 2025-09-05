@@ -33,14 +33,17 @@ import multiprocessing
 from copy import copy
 from deap import algorithms, base, tools
 
+from cea.optimization_new.building import Building
 from cea.optimization_new.network import Network
 from cea.optimization_new.supplySystem import SupplySystem
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+from cea.optimization_new.containerclasses.energyPotential import EnergyPotential
 from cea.optimization_new.containerclasses.systemCombination import SystemCombination
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
-from cea.optimization_new.helpercalsses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector, CapacityIndicatorVectorMemory
+from cea.optimization_new.helperclasses.optimization.connectivity import ConnectivityVector
+from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
 
 
 class DistrictEnergySystem(object):
@@ -50,19 +53,20 @@ class DistrictEnergySystem(object):
     _civ_memory = CapacityIndicatorVectorMemory()
     optimisation_algorithm = GeneticAlgorithm()
 
-    def __init__(self, connectivity, buildings, energy_potentials):
+    def __init__(self, connectivity: ConnectivityVector, buildings: list[Building], energy_potentials: list[EnergyPotential]):
         self._identifier = 'xxx'
         self.connectivity = connectivity
 
         self.consumers = buildings
         self.stand_alone_buildings = []
-        self.networks = []
+        self.networks: list[Network] = []
 
         self.energy_potentials = energy_potentials
         self.distributed_potentials = {}
 
         self.subsystem_demands = {}
-        self.supply_systems = {}
+        self.candidate_supply_systems: dict[str, list[SupplySystem]] = {}
+        self.supply_systems: dict[str, SupplySystem] = {}
         self.best_supsys_combinations = []
 
     @property
@@ -93,14 +97,14 @@ class DistrictEnergySystem(object):
         object_copy.subsystem_demands = self.subsystem_demands
 
         #  Then, all attributes that are unique to the original object and need to be copied (new memory address)
-        object_copy.supply_systems = {network: [copy(supply_system) for supply_system in supply_systems]
-                                      for network, supply_systems in self.supply_systems.items()}
+        object_copy.supply_systems = {network: supply_system
+                                      for network, supply_system in self.supply_systems.items()}
 
         return object_copy
 
     @staticmethod
     def evaluate_energy_system(connectivity_vector, district_buildings, energy_potentials, optimization_tracker=None,
-                               process_memory=None):
+                               process_memory: MemoryPreserver | None = None):
         """
         Identify optimal district energy systems. The selected district energy systems represent an optimal combination
         of the most favourable supply systems for each of the networks in the district (i.e. the best combinations of
@@ -121,7 +125,7 @@ class DistrictEnergySystem(object):
         :type process_memory: <cea.optimization_new.helperclasses.multiprocessing.memoryPreserver>-MemoryPreserver class
                               object
         """
-        if process_memory.multiprocessing:
+        if process_memory and process_memory.multiprocessing:
             process_memory.recall_class_variables()
 
         if optimization_tracker:
@@ -139,7 +143,8 @@ class DistrictEnergySystem(object):
         non_dominated_systems, optimization_tracker \
             = new_district_cooling_system.evaluate(optimization_tracker)
 
-        process_memory.update(['DistrictEnergySystem'])
+        if process_memory:
+            process_memory.update(['DistrictEnergySystem'])
 
         return non_dominated_systems, process_memory, optimization_tracker
 
@@ -177,6 +182,9 @@ class DistrictEnergySystem(object):
         # ... or find the optimal supply systems for each network
         self.generate_optimal_supply_systems()
 
+        # add network costs to all candidate supply systems
+        self.add_network_costs_to_candidates()
+
         # aggregate objective functions for all subsystems across the entire district energy system
         self.combine_supply_systems_and_networks()
 
@@ -207,15 +215,10 @@ class DistrictEnergySystem(object):
                                               in zip(building_ids, buildings_are_disconnected)
                                               if is_disconnected]
             else:
-                buildings_are_connected_to_network = [connection == network_id for connection in self.connectivity]
-                connected_buildings = [building_id for [building_id, is_connected]
-                                       in zip(building_ids, buildings_are_connected_to_network)
-                                       if is_connected]
-                full_network_identifier = 'N' + str(1000 + network_id)
-                network = Network(self.connectivity, full_network_identifier, connected_buildings)
-                network.run_steiner_tree_optimisation()
-                network.calculate_operational_conditions()
+                network = Network.build_network(network_id, building_ids, self.connectivity, generate_dataframes=True)
+                network.calculate_operational_conditions(self.connectivity.as_str(for_filename=True))
                 self.networks.append(network)
+
         return self.networks
 
     def aggregate_demand(self):
@@ -341,6 +344,8 @@ class DistrictEnergySystem(object):
             designated_supply_system.evaluate()
             self.supply_systems[network.identifier] = designated_supply_system
 
+        self.combine_supply_systems_and_networks()
+
         return self.supply_systems
 
     def generate_optimal_supply_systems(self):
@@ -355,11 +360,28 @@ class DistrictEnergySystem(object):
                                                      available_potentials=self.distributed_potentials[network.identifier])
             system_structure.build()
 
+            # find the pareto-optimal supply systems for the for a given subsystem (network or stand-alone building)
+            #   this doesn't mean that all of these candidate supply systems are optimal in the context of the whole
+            #   district energy system, but they are pareto-optimal for the subsystem they are associated with.
             pareto_optimal_systems = self.optimise_supply_system(system_structure, network)
             if pareto_optimal_systems:
-                self.supply_systems[network.identifier] = pareto_optimal_systems
+                self.candidate_supply_systems[network.identifier] = pareto_optimal_systems
 
-        return self.supply_systems
+        return self.candidate_supply_systems
+
+    def add_network_costs_to_candidates(self):
+        """
+        Add network costs to all candidate supply systems once after optimization.
+        This ensures network costs are included in fitness calculations without duplication.
+        """
+        for network_id, candidates in self.candidate_supply_systems.items():
+            # Get network cost for this network
+            network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id][0]
+            
+            # Add network cost to all candidate supply systems for this network
+            for supply_system in candidates:
+                if 'cost' in supply_system.overall_fitness.keys():
+                    supply_system.overall_fitness['cost'] += network_cost
 
     def optimise_supply_system(self, system_structure, subsystem):
         """
@@ -490,85 +512,143 @@ class DistrictEnergySystem(object):
 
     def combine_supply_systems_and_networks(self):
         """
-        Combine optimal supply systems of the different subsystems (networks or buildings) TODO: add latter option to config
-        of the district energy system and identify the non-dominated system combinations (i.e. combinations that
-        perform the best with respect to the selected optimisation objectives).
+        Combine supply systems of different subsystems using the appropriate strategy.
 
-        :return self.best_subsys_combinations: A list of identifiers specifying which supply system configuration has
-                                               been selected for each subsystems as part of the best system
-                                               combinations.
-        :rtype self.best_subsystem_combinations: list of list of str
+        For district energy systems that have not been optimized, i.e. that only have designated supply systems,
+        this method will combine the designated supply systems of the subsystems and sum their objective values.
+
+        For district energy systems that have undergone optimization, this method will combine the supply systems
+        of the subsystems (networks and stand-alone buildings) that minimise the selected objective functions for the
+        district energy system as a whole.
+
+        If not network supply systems have been designated or optimized, it will sum the fitness of all stand-alone
+        buildings within the district energy system.
+        
+        :return: List of best supply system combinations
         """
-        # create a system combination container with an associated fitness value (required by the sorting function of deap)
+        # Determine combination strategy and execute
+        if not self.candidate_supply_systems and self.supply_systems:
+            combinations = self._combine_designated_supply_systems()
+        elif self.candidate_supply_systems:
+            combinations = self._combine_candidate_supply_systems()
+        else:
+            combinations = self._create_standalone_only_combination()
+        
+        # Add stand-alone building fitness to all combinations
+        self._add_standalone_building_fitness_to_combinations(combinations)
+        
+        self.best_supsys_combinations = combinations
+        return combinations
+
+    def _combine_designated_supply_systems(self):
+        """
+        Combine designated supply systems by aggregating their objective values.
+        """
         algorithm = SupplySystem.optimisation_algorithm
+        
+        # Build encoding and aggregate fitness
+        encoding = [self.connectivity.as_str()]
+        total_fitness = [0] * algorithm.nbr_objectives
+        
+        for network_id, supply_system in self.supply_systems.items():
+            encoding.append(f"{network_id}-0")
+            
+            # Add network piping cost to supply system fitness if 'cost' key exists
+            if 'cost' in supply_system.overall_fitness.keys():
+                network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id]
 
-        # initialise a list of supply system combinations by adding the supply systems of the first network to them
-        if not self.supply_systems: # for a district without networks
-            first_network = None
-            connectivity_str = self.connectivity.as_str()
-            supply_system_combinations = [SystemCombination([connectivity_str])]
-            supply_system_combinations[0].fitness.values = tuple([0] * algorithm.nbr_objectives)
-        else:
-            first_network = list(self.supply_systems.keys())[0]
-            connectivity_str = self.connectivity.as_str()
-            supply_system_combinations = [SystemCombination([connectivity_str,  first_network + "-" + str(i)])
-                                          for i, supply_system in enumerate(self.supply_systems[first_network])]
-            for i, system_combination in enumerate(supply_system_combinations):
-                self.add_network_cost(first_network, i)
-                system_combination.fitness.values = tuple(self.supply_systems[first_network][i].overall_fitness.values())
-            supply_system_combinations = tools.emo.sortLogNondominated(supply_system_combinations, 100,
-                                                                       first_front_only=True)
+                if len(network_cost) > 0:
+                    supply_system.overall_fitness['cost'] += network_cost[0]
 
-        # calculate fitness value of the stand-alone buildings
+            for i, value in enumerate(supply_system.overall_fitness.values()):
+                total_fitness[i] += value
+        
+        # Create single combination
+        combination = SystemCombination(encoding)
+        combination.fitness.values = tuple(total_fitness)
+        return [combination]
+
+    def _combine_candidate_supply_systems(self):
+        """
+        Combine candidate supply systems using hierarchical non-dominated sorting.
+        """
+        network_ids = list(self.candidate_supply_systems.keys())
+        connectivity_str = self.connectivity.as_str()
+        
+        # Initialize with first network's combinations
+        combinations = [
+            self._create_combination([connectivity_str, f"{network_ids[0]}-{i}"], supply_system)
+            for i, supply_system in enumerate(self.candidate_supply_systems[network_ids[0]])
+        ]
+        combinations = tools.emo.sortLogNondominated(combinations, 100, first_front_only=True)
+        
+        # Hierarchically combine with remaining networks
+        for network_id in network_ids[1:]:
+            max_k = min(10, len(self.candidate_supply_systems[network_id]))
+            
+            # Generate all new combinations
+            new_combinations = [
+                self._extend_combination(combo, network_id, i, self.candidate_supply_systems[network_id][i])
+                for combo in combinations
+                for i in range(max_k)
+            ]
+            
+            # Keep only non-dominated solutions
+            combinations = tools.emo.sortLogNondominated(new_combinations, 100, first_front_only=True)
+        
+        return combinations
+
+    def _create_standalone_only_combination(self):
+        """Create combination for stand-alone buildings only (no networks)."""
+        algorithm = SupplySystem.optimisation_algorithm
+        combination = SystemCombination([self.connectivity.as_str()])
+        combination.fitness.values = tuple([0] * algorithm.nbr_objectives)
+        return [combination]
+    
+    def _create_combination(self, encoding: str, supply_system: SupplySystem):
+        """Create a SystemCombination with given encoding and supply system fitness."""
+        combination = SystemCombination(encoding)
+        combination.fitness.values = tuple(supply_system.overall_fitness.values())
+        return combination
+    
+    def _extend_combination(self, base_combination: SystemCombination, network_id: str, index: int, supply_system: SupplySystem):
+        """Extend existing combination with new network's supply system."""
+        new_encoding = base_combination.encoding + [f"{network_id}-{index}"]
+        new_combination = SystemCombination(new_encoding)
+        new_combination.fitness.values = tuple(
+            f1 + f2 for f1, f2 in zip(
+                base_combination.fitness.values, 
+                supply_system.overall_fitness.values()
+            )
+        )
+        return new_combination
+    
+    def _add_standalone_building_fitness_to_combinations(self, combinations: list[SystemCombination]):
+        """Add stand-alone building fitness to all combinations."""
+        standalone_fitness = self._calculate_stand_alone_building_fitness()
+        for combination in combinations:
+            combination.fitness.values = tuple(
+                f1 + f2 for f1, f2 in zip(combination.fitness.values, standalone_fitness)
+            )
+    
+    def _calculate_stand_alone_building_fitness(self):
+        """Calculate total fitness contribution from stand-alone buildings."""
+        algorithm = SupplySystem.optimisation_algorithm
+        
         if not self.stand_alone_buildings:
-            total_stand_alone_building_fitness = (0,) * algorithm.nbr_objectives
-        else:
-            stand_alone_building_fitnesses = [building.stand_alone_supply_system.overall_fitness
-                                              for building in self.consumers
-                                              if building.identifier in self.stand_alone_buildings]
-            total_stand_alone_building_fitness = tuple([sum([building_fitness[objective]
-                                                             for building_fitness in stand_alone_building_fitnesses])
-                                                        for objective in stand_alone_building_fitnesses[0].keys()])
+            return (0,) * algorithm.nbr_objectives
+        
+        fitnesses = [
+            building.stand_alone_supply_system.overall_fitness
+            for building in self.consumers
+            if building.identifier in self.stand_alone_buildings
+        ]
+        
+        return tuple(
+            sum(fitness[objective] for fitness in fitnesses)
+            for objective in fitnesses[0].keys()
+        )
 
-        # combining non-dominated supply-system solutions for all networks
-        for network, supply_system in self.supply_systems.items():
-            if network == first_network:
-                continue
-
-            new_supply_system_combinations = []
-            for combination in supply_system_combinations:
-                new_combinations = [SystemCombination(combination.encoding + [network + '-' + str(i)])
-                                    for i, supply_system in enumerate(self.supply_systems[network])]
-                for i, system_combination in enumerate(new_combinations):
-                    self.add_network_cost(network, i)
-                    system_combination.fitness.values = \
-                        tuple([fit_1 + fit_2 for fit_1, fit_2 in
-                               zip(list(combination.fitness.values),
-                                   self.supply_systems[network][i].overall_fitness.values())])
-
-                new_supply_system_combinations += new_combinations
-            supply_system_combinations = tools.emo.sortLogNondominated(new_supply_system_combinations, 100,
-                                                                       first_front_only=True)
-
-        # add the stand-alone building's fitness values to reflect the fitness of the whole district energy system
-        for supsys_combination in supply_system_combinations:
-            supsys_combination.fitness.values = tuple([fit_1 + fit_2 for fit_1, fit_2 in
-                                                       zip(list(supsys_combination.fitness.values),
-                                                           total_stand_alone_building_fitness)])
-
-        self.best_supsys_combinations = supply_system_combinations
-
-        return self.best_supsys_combinations
-
-    def add_network_cost(self, network_id, supply_system_index):
-        """ Add the network cost to its associated supply system's overall fitness """
-        # retrieve the network cost
-        network_cost = [network.annual_piping_cost for network in self.networks if network.identifier == network_id][0]
-        # if cost is part of the objective functions, add the network cost
-        if 'cost' in self.supply_systems[network_id][supply_system_index].overall_fitness.keys():
-            self.supply_systems[network_id][supply_system_index].overall_fitness['cost'] += network_cost
-
-        return
 
     def select_supply_system_combination(self, supply_system_combination):
         """
@@ -584,7 +664,7 @@ class DistrictEnergySystem(object):
         # specify the selected SupplySystem for each of the subsystems (one supply system per network &
         #   per stand-alone building)
         for subsystem_id, supsys_index in supply_system_selection.items():
-            definitive_des.supply_systems[subsystem_id] = self.supply_systems[subsystem_id][supsys_index]
+            definitive_des.supply_systems[subsystem_id] = self.candidate_supply_systems[subsystem_id][supsys_index]
 
         # update some object attributes
         definitive_des.best_supsys_combinations = None

@@ -1,55 +1,54 @@
-import webbrowser
+import os
+import sys
 
-from flask import Flask
-from flask_cors import CORS
-from flask_socketio import SocketIO
+import uvicorn
 
-import cea.config
-import cea.plots
-import cea.plots.cache
+from cea.config import Configuration
+from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.settings import get_settings, Settings
+
+
+def load_from_config(settings: Settings, config: Configuration) -> None:
+    """
+    Load settings from config file if not set in Settings (not found in env vars)
+    """
+    if settings.host is None:
+        settings.host = config.server.host
+
+    if settings.port is None:
+        settings.port = config.server.port
+
+    if settings.project_root is None:
+        config_project_root = config.server.project_root
+
+        # Treat empty string in config as unset and ignore
+        if config_project_root != "":
+            settings.project_root = config_project_root
+
+            # Ensure project root exists before starting the server
+            if not os.path.exists(settings.project_root):
+                raise ValueError(f"The path `{settings.project_root}` does not exist. "
+                                f"Make sure project_root in config is set correctly.")
 
 
 def main(config):
-    config.restricted_to = None  # allow access to the whole config file
-    plot_cache = cea.plots.cache.MemoryPlotCache(config.project)
-    app = Flask(__name__)
-    CORS(app)
-    app.config.from_mapping({'SECRET_KEY': 'secret'})
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    # Load settings from env vars (priority) then config file
+    settings = get_settings()
+    load_from_config(settings, config)
+    logger.info(f"Using settings: {settings}")
 
-    if config.server.browser:
-        from cea.interfaces.dashboard.frontend import blueprint as frontend
-        app.register_blueprint(frontend)
-
-    from cea.interfaces.dashboard.plots.routes import blueprint as plots_blueprint
-    from cea.interfaces.dashboard.server import blueprint as server_blueprint, shutdown_server
-    from cea.interfaces.dashboard.api import blueprint as api_blueprint
-
-    app.register_blueprint(plots_blueprint)
-    app.register_blueprint(api_blueprint)
-    app.register_blueprint(server_blueprint)
-
-    # keep a copy of the configuration we're using
-    app.cea_config = config
-    app.plot_cache = plot_cache
-    app.socketio = socketio
-
-    print("start CEA dashboard server")
-    
-    if config.server.browser:
-        url = f"http://{config.server.host}:{config.server.port}"
-        print(f"Open {url} in your browser to access the GUI")
-        webbrowser.open(url)
-
-    print("Press Ctrl+C to stop server")
     try:
-        socketio.run(app, host=config.server.host, port=config.server.port)
+        settings.to_env_vars()
+
+        uvicorn.run("cea.interfaces.dashboard.app:app",
+                    reload=config.server.dev,
+                    workers=settings.workers,
+                    host=settings.host, port=settings.port)
     except KeyboardInterrupt:
-        with app.app_context():
-            shutdown_server()
-
-    print("server exited")
+        sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import cea.config
+
     main(cea.config.Configuration())

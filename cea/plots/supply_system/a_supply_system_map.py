@@ -14,7 +14,6 @@ import cea.plots.supply_system
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import layout_network, NetworkLayout
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-from cea.utilities.dbf import dbf_to_dataframe
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -188,15 +187,14 @@ class SupplySystemMapPlot(cea.plots.supply_system.SupplySystemPlotBase):
 
 
 def get_building_connectivity(locator):
-    supply_systems = dbf_to_dataframe(locator.get_building_supply())
-    data_all_in_one_systems = pd.read_excel(locator.get_database_supply_assemblies(), sheet_name=None)
-    heating_infrastructure = data_all_in_one_systems['HEATING']
+    supply_systems = pd.read_csv(locator.get_building_supply())
+    heating_infrastructure = pd.read_csv(locator.get_database_assemblies_supply_heating())
     heating_infrastructure = heating_infrastructure.set_index('code')['scale']
 
-    cooling_infrastructure = data_all_in_one_systems['COOLING']
+    cooling_infrastructure = pd.read_csv(locator.get_database_assemblies_supply_cooling())
     cooling_infrastructure = cooling_infrastructure.set_index('code')['scale']
 
-    building_connectivity = supply_systems[['Name']].copy()
+    building_connectivity = supply_systems[['name']].copy()
     building_connectivity['DH_connectivity'] = (
             supply_systems['type_hs'].map(heating_infrastructure) == 'DISTRICT').astype(int)
     building_connectivity['DC_connectivity'] = (

@@ -120,7 +120,7 @@ def calc_graph(analysis_fields, data):
         name = NAMING[field]
         total_percent = (y / data['total'] * 100).round(2).values
         total_percent_txt = ["(%.2f %%)" % x for x in total_percent]
-        trace = go.Bar(x=data["Name"], y=y, name=name, text=total_percent_txt, orientation='v',
+        trace = go.Bar(x=data["name"], y=y, name=name, text=total_percent_txt, orientation='v',
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 

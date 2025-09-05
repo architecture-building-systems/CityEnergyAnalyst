@@ -29,8 +29,8 @@ from math import isclose
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-from cea.optimization_new.helpercalsses.optimization.algorithm import GeneticAlgorithm
-from cea.optimization_new.helpercalsses.optimization.capacityIndicator import CapacityIndicatorVector
+from cea.optimization_new.helperclasses.optimization.algorithm import GeneticAlgorithm
+from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector
 
 
 class SupplySystem(object):
@@ -413,12 +413,9 @@ class SupplySystem(object):
         Calculate green house gas emissions of all system energy demand flows.
         """
 
-        self.greenhouse_gas_emissions = \
-            {ec_code: pd.Series((energy * EnergyCarrier.get_ghg_for_timestep(ec_code, timestep)
-                                 for timestep, energy
-                                 in energy_flow.replace(list(energy_flow[energy_flow<0]), 0).items()),
-                                index=EnergyFlow.time_series)
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+        self.greenhouse_gas_emissions = {ec_code: pd.Series(EnergyCarrier.fetch_ghg_emissions(ec_code, energy_flow_profile),
+                                                            index=EnergyFlow.time_series)
+             for ec_code, energy_flow_profile in self.system_energy_demand.items()}
 
         return self.greenhouse_gas_emissions
 
@@ -436,11 +433,8 @@ class SupplySystem(object):
                 else:
                     annual_component_cost[component_code] = (component.inv_cost_annual + component.om_fix_cost_annual)
 
-        annual_energy_supply_cost = \
-            {ec_code: sum(energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'buy') if energy > 0
-                          else - energy * EnergyCarrier.get_price_for_timestep(ec_code, timestep, 'sell')
-                          for timestep, energy in energy_flow.items())
-             for ec_code, energy_flow in self.system_energy_demand.items()}
+        annual_energy_supply_cost = {ec_code: EnergyCarrier.fetch_cost(ec_code, energy_flow)
+                                     for ec_code, energy_flow in self.system_energy_demand.items()}
 
         self.annual_cost = {**annual_component_cost, **annual_energy_supply_cost}
 

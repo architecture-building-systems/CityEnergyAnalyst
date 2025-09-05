@@ -1,8 +1,8 @@
 name: Docker build
 
 on:
-  push:
-    branches: [master]
+  # push:
+  #   branches: [master]
   release:
     types: [published]
 
@@ -46,6 +46,8 @@ jobs:
         run: |
           docker buildx imagetools create \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/cea:${GITHUB_REF##*/} \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/cea:latest \
             --tag ghcr.io/${{ env.REPO_NAME }}/cea:${GITHUB_REF##*/} \
+            --tag ghcr.io/${{ env.REPO_NAME }}/cea:latest \
             ghcr.io/${{ env.REPO_NAME }}/cea:dev
             
