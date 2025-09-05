@@ -123,24 +123,35 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 async def create_new_job(request: Request, session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
-    form_data = await request.form()
-
-    # Parse nested parameters structure using regex
-    parameters = {}
-    script = None
-    parameter_pattern = re.compile(r'^parameters\[([^\[\]]+)\]$')
+    content_type = request.headers.get("content-type", "")
     
-    for key, value in form_data.items():
-        if key == "script":
-            script = value
-        else:
-            # Try to match parameter pattern
-            match = parameter_pattern.match(key)
-            if match:
-                param_name = match.group(1)
-                parameters[param_name] = value
+    # Handle both form data and JSON payloads for backwards compatibility
+    if "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
+        # Form data handling (supports file uploads)
+        form_data = await request.form()
+        
+        # Parse nested parameters structure using regex
+        parameters = {}
+        script = None
+        parameter_pattern = re.compile(r'^parameters\[([^\[\]]+)\]$')
+        
+        for key, value in form_data.items():
+            if key == "script":
+                script = value
+            else:
+                # Try to match parameter pattern
+                match = parameter_pattern.match(key)
+                if match:
+                    param_name = match.group(1)
+                    parameters[param_name] = value
+        
+        args = {"script": script, "parameters": parameters}
+    else:
+        # JSON handling (backwards compatibility)
+        json_data = await request.json()
+        args = json_data
+        logger.info(f"Received JSON payload: {json_data}")
     
-    args = {"script": script, "parameters": parameters}
     logger.info(f"Adding new job: args={args}")
 
     # Create job first to get job ID for temp file handling
