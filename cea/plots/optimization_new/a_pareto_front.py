@@ -246,7 +246,7 @@ def plot_pareto_front(objectives, objective_values_dict):
     fig = go.Figure(data=traces, layout=layout)
     fig.update_xaxes(ticks='outside', gridcolor='grey')
     fig.update_yaxes(ticks='outside', gridcolor='grey')
-    fig.show()
+    fig.show(renderer="browser")
 
 def add_3D_scatter_plot(objectives, objective_values):
         # Create 3D scatter plots if there are 3 or more objective functions, introduce corresponding elements to the
@@ -324,6 +324,8 @@ def main(config=cea.config.Configuration()):
         objective_values_dict[run_id] = objective_function_values
 
     plot_pareto_front(objectives, objective_values_dict)
+    add_3D_scatter_plot(objectives, objective_values_dict)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
