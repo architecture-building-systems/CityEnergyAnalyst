@@ -56,9 +56,6 @@ def demand_calculation(locator, config):
     building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
-    loads_output = config.demand.loads_output
-    massflows_output = config.demand.massflows_output
-    temperatures_output = config.demand.temperatures_output
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -87,9 +84,6 @@ def demand_calculation(locator, config):
         repeat(locator, n),
         repeat(use_dynamic_infiltration, n),
         repeat(resolution_output, n),
-        repeat(loads_output, n),
-        repeat(massflows_output, n),
-        repeat(temperatures_output, n),
         repeat(config, n),
         repeat(debug, n))
 
