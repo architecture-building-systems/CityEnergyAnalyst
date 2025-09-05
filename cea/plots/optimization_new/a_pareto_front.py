@@ -16,8 +16,6 @@ __status__ = "Production"
 
 import csv
 import os
-import sys
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -329,9 +327,8 @@ def plot_pareto_front(objectives, objective_values_dict):
     fig.update_xaxes(ticks='outside', gridcolor='grey')
     fig.update_yaxes(ticks='outside', gridcolor='grey')
 
-    if sys.stdout.isatty():
-        fig.show(renderer="browser")
-    return fig.to_html()
+    fig.show(renderer="browser")
+    return fig
 
 def add_3D_scatter_plot(objectives, objective_values_dict):
     """
@@ -457,9 +454,8 @@ def add_3D_scatter_plot(objectives, objective_values_dict):
 
     # Show the plot
     fig = go.Figure(data=traces, layout=layout)
-    if sys.stdout.isatty():
-        fig.show(renderer="browser")
-    return fig.to_html()
+    fig.show(renderer="browser")
+    return fig
 
 
 def main(config=cea.config.Configuration()):

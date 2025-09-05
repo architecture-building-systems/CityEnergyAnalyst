@@ -701,8 +701,8 @@ Visualisation:
 
   - name: plot-pareto-front
     label: Plot - Pareto Front
-    short_description: Plot Pareto front for optimization results
-    description: This Feature plots the Pareto front for optimization results
+    short_description: Plot Pareto front for optimisation results
+    description: This Feature plots the Pareto front for optimisation results
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.pareto_front
     parameters: ['general:scenario']
