@@ -285,7 +285,7 @@ Life Cycle Analysis:
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.emission_time_dependent
     parameters: ['general:scenario', emission-time-dependent]
-    input-files: 
+    input-files:
       - [get_demand_results_file, building_name]
       - [get_building_architecture]
       - [get_zone_geometry]
