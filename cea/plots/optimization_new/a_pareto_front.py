@@ -107,44 +107,131 @@ def read_network_costs_from_file(file_paths):
 
     return network_costs_df
 
-def find_control_point(x, y):
-    """Calculate the point used as the control point in the Bézier curve."""
-    nbr_points = len(x)
-    quarter= int(nbr_points / 4)
-
-    x_control = x[quarter]
-    y_control = y[-quarter]
-    return x_control, y_control
-
-
-def fit_bezier_curve_with_mean_control_point(x, y):
-    """Fit a quadratic Bézier curve using the mean point as the control point and return the curve with shading coordinates."""
-    p_control = find_control_point(x, y)
-
-    t = np.linspace(0, 1, 300)
-    curve_x = bezier_curve(t, x[0], p_control[0], x[-1])
-    curve_y = bezier_curve(t, y[0], p_control[1], y[-1])
-
-    # Extend the curve to create a shaded area (to the right and above the entire plot)
-    x_extension = max(curve_x) + (max(curve_x) - min(curve_x)) * 0.5
-    y_extension = max(curve_y) + (max(curve_y) - min(curve_y)) * 0.5
-
-    shade_x = np.concatenate([curve_x, [x_extension], [x_extension], [curve_x[0]]])
-    shade_y = np.concatenate([curve_y, [curve_y[-1]], [y_extension], [y_extension]])
-
-    return curve_x, curve_y, shade_x, shade_y
+def _create_expanded_rectangle(x, y, expansion_factor=0.2):
+    """Create a simple expanded rectangle around points."""
+    x_min, x_max = np.min(x), np.max(x)
+    y_min, y_max = np.min(y), np.max(y)
+    x_range = x_max - x_min if x_max != x_min else 1.0
+    y_range = y_max - y_min if y_max != y_min else 1.0
+    
+    x_expanded = [
+        x_min - x_range * expansion_factor, 
+        x_max + x_range * expansion_factor, 
+        x_max + x_range * expansion_factor, 
+        x_min - x_range * expansion_factor, 
+        x_min - x_range * expansion_factor
+    ]
+    y_expanded = [
+        y_min - y_range * expansion_factor, 
+        y_min - y_range * expansion_factor,
+        y_max + y_range * expansion_factor, 
+        y_max + y_range * expansion_factor,
+        y_min - y_range * expansion_factor
+    ]
+    
+    return x_expanded, y_expanded
 
 
-def bezier_curve(t, P0, P1, P2):
-    """Quadratic Bézier curve function."""
-    return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
+def create_solution_space_boundary(x, y):
+    """
+    Create a boundary around solution points using convex hull approach.
+    For projected multi-objective Pareto fronts, this represents the solution space
+    rather than claiming to be an optimal boundary.
+    """
+    if len(x) < 3:
+        return _create_expanded_rectangle(x, y, expansion_factor=0.2)
+    
+    try:
+        from scipy.spatial import ConvexHull
+        
+        points = np.column_stack([x, y])
+        hull = ConvexHull(points)
+        hull_points = points[hull.vertices]
+        
+        # Close the polygon
+        hull_x = np.append(hull_points[:, 0], hull_points[0, 0])
+        hull_y = np.append(hull_points[:, 1], hull_points[0, 1])
+        
+        return hull_x.tolist(), hull_y.tolist()
+        
+    except Exception as e:
+        print(f"Warning: Could not create solution space boundary: {e}")
+        return _create_expanded_rectangle(x, y, expansion_factor=0.0)
+
+
+def create_extended_problem_space(x, y, extension_factor=0.5):
+    """
+    Create a rectangle showing the extended problem space direction.
+    Extends in positive directions (typically representing worse objective values).
+    """
+    x_min, x_max = np.min(x), np.max(x)
+    y_min, y_max = np.min(y), np.max(y)
+    x_range = x_max - x_min if x_max != x_min else 1.0
+    y_range = y_max - y_min if y_max != y_min else 1.0
+    
+    # Extend in positive directions (typically worse for optimization objectives)
+    x_extension = x_max + x_range * extension_factor
+    y_extension = y_max + y_range * extension_factor
+    
+    rect_x = [x_min, x_extension, x_extension, x_min, x_min]
+    rect_y = [y_min, y_min, y_extension, y_extension, y_min]
+    
+    return rect_x, rect_y
+
+
+def _create_space_visualization_traces(other_solutions, objectives, i, j, color, run_name):
+    """
+    Create visualization traces for solution space boundaries and extended problem space.
+    Returns a list of plotly traces to be added to the plot.
+    """
+    traces = []
+    
+    if len(other_solutions) < 3:
+        return traces
+    
+    try:
+        x_data = np.array(other_solutions[objectives[i]], dtype=float)
+        y_data = np.array(other_solutions[objectives[j]], dtype=float)
+        
+        # Create solution space boundary
+        boundary_x, boundary_y = create_solution_space_boundary(x_data, y_data)
+        traces.append(go.Scatter(
+            x=boundary_x,
+            y=boundary_y,
+            fill='toself',
+            fillcolor=color,
+            line=dict(color=color, width=1, dash='dash'),
+            name=f'Solution Space {run_name}',
+            visible=False,
+            opacity=0.2,
+            hovertemplate=f'Solution Space Projection<br>{run_name}<extra></extra>'
+        ))
+        
+        # Create extended problem space
+        rect_x, rect_y = create_extended_problem_space(x_data, y_data)
+        traces.append(go.Scatter(
+            x=rect_x,
+            y=rect_y,
+            fill='toself',
+            fillcolor=color,
+            line=dict(color=color, width=1, dash='dot'),
+            name=f'Extended Problem Space {run_name}',
+            visible=False,
+            opacity=0.1,
+            hovertemplate=f'Extended Problem Space<br>{run_name}<br>(Indicative Direction)<extra></extra>'
+        ))
+        
+    except Exception as e:
+        print(f"Warning: Solution space visualization failed for run {run_name} with objectives {objectives[i]} and {objectives[j]}: {e}")
+    
+    return traces
 
 
 def plot_pareto_front(objectives, objective_values_dict):
     """
-    Create a series of scatter plots to visualize the Pareto fronts of the optimization for multiple runs.
-    Draw Bézier curves through the points belonging to each non-dominated front using the mean point as the control point,
-    and shade the area above and to the right of the curve to cover the top-right quadrant.
+    Create a series of 2D scatter plots to visualize projections of multi-objective optimization solutions.
+    Shows solution space boundaries for projected non-dominated solutions from multiple optimization runs.
+    Note: 2D projections of multi-objective Pareto fronts may contain apparently dominated points.
     """
     nbr_traces = len(objectives) * (len(objectives) - 1) * len(objective_values_dict) * 2
     base_visibility = [False] * nbr_traces
@@ -197,39 +284,10 @@ def plot_pareto_front(objectives, objective_values_dict):
                         visible=False
                     ))
 
-                # # Fit Bézier curve to the Pareto front using the mean control point and get the shading coordinatesFit Bézier curve
-                fit_data = other_solutions
-                if len(fit_data) >= 2:   # only if there are 2 or more non-dominated solutions
-                    try:
-                        curve_x, curve_y, shade_x, shade_y = fit_bezier_curve_with_mean_control_point(
-                            np.array(fit_data[objectives[i]], dtype=float),
-                            np.array(fit_data[objectives[j]], dtype=float))
-
-                        # Add the fitted Bézier curve to the plot
-                        current_traces.append(go.Scatter(
-                            x=curve_x,
-                            y=curve_y,
-                            mode='lines',
-                            line=dict(color=color, width=2),
-                            name=f'Fitted Bézier run {run_name}',
-                            visible=False
-                        ))
-
-                        # Add the shaded area above and to the right of the curve
-                        current_traces.append(go.Scatter(
-                            x=shade_x,
-                            y=shade_y,
-                            fill='toself',
-                            fillcolor=color,
-                            line=dict(color='rgba(255,255,255,0)'),  # No border line
-                            name=f'Suggested solution space {run_name}',
-                            visible=False,
-                            opacity=0.3  # Adjust opacity for shading
-                        ))
-
-                    except Exception as e:
-                        print(
-                            f"Bézier fitting failed for run {run_name} with objectives {objectives[i]} and {objectives[j]}: {e}")
+                # Add solution space visualizations
+                current_traces.extend(
+                    _create_space_visualization_traces(other_solutions, objectives, i, j, color, run_name)
+                )
 
             visibility = base_visibility.copy()
             visibility[len(traces):len(traces) + len(current_traces)] = [True] * len(current_traces)
@@ -246,7 +304,7 @@ def plot_pareto_front(objectives, objective_values_dict):
         trace.visible = True
 
     layout = go.Layout(
-        title='Pareto Front Comparison',
+        title='Multi-Objective Solution Comparison (2D Projections)',
         xaxis=dict(title=objectives[0]),
         yaxis=dict(title=objectives[1]),
         width=800,
