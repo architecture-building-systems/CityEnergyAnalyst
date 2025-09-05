@@ -53,9 +53,8 @@ dependencies = [
     "ephem",
     "numpy-financial",
     "python-louvain",
-    "pytz", # Not required from 3.9
+    "tzfpy[pytz]",
     "salib",
-    "timezonefinder",
     "openpyxl",
     "plotly",
     "utm",
