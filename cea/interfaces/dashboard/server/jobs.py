@@ -62,8 +62,11 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
                 temp_dir = tempfile.mkdtemp(prefix=get_cea_job_temp_prefix(job_id))
                 logger.info(f"Created temporary directory for job {job_id}: {temp_dir}")
             
-            # Write file to temp directory
-            file_path = os.path.join(temp_dir, value.filename or f"upload_{key}")
+            # Write file to temp directory with safe filename
+            safe_filename = os.path.basename(value.filename or f"upload_{key}") if value.filename else f"upload_{key}"
+            # Remove any remaining path separators and null bytes
+            safe_filename = safe_filename.replace(os.sep, "_").replace(os.altsep or "", "_").replace("\0", "")
+            file_path = os.path.join(temp_dir, safe_filename)
             
             try:
                 with open(file_path, "wb") as f:
