@@ -33,14 +33,12 @@ class OperationalHourlyTimeline:
     ):
         self.locator = locator
         self.bpr = bpr
-        self.emission_intensity_timeline = self._expand_feedstock_emissions(
-            feedstock_db
-        )
+        self.feedstock_db = feedstock_db
+        self.emission_intensity_timeline = self.expand_feedstock_emissions()
         self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name))
-        self.operational_emission_timeline = self._create_operational_timeline()
+        self.operational_emission_timeline = self.create_operational_timeline()
 
-    @staticmethod
-    def _create_operational_timeline() -> pd.DataFrame:
+    def create_operational_timeline(self) -> pd.DataFrame:
         """
         Create an operational timeline DataFrame with four columns:
         - `heating_kgCO2`: emission for heating supply
@@ -65,8 +63,7 @@ class OperationalHourlyTimeline:
 
         return timeline
 
-    @staticmethod
-    def _expand_feedstock_emissions(feedstock_db: Feedstocks) -> pd.DataFrame:
+    def expand_feedstock_emissions(self) -> pd.DataFrame:
         """
         generate a hourly timeline of feedstock emission intensity
         by repeating the hourly values in the feedstock database.
@@ -87,9 +84,9 @@ class OperationalHourlyTimeline:
         # The emission in feedstock databases are recorded for example in hours of a day.
         # To match the yearly operational timeline, expanded emission intensity timeline
         expanded_timeline = pd.DataFrame(
-            index=range(HOURS_IN_YEAR), columns=feedstock_db._library.keys()
+            index=range(HOURS_IN_YEAR), columns=self.feedstock_db._library.keys()
         )
-        for feedstock, df in feedstock_db._library.items():
+        for feedstock, df in self.feedstock_db._library.items():
             # if original timeline is not n * 24 hours, throw warning that definition might be problematic
             if len(df) % 24 != 0:
                 print(f"Warning: {feedstock} timeline is not n * 24 hours. The definition will not repeat in a daily basis.")
