@@ -36,9 +36,9 @@ class OperationalHourlyTimeline:
         self.feedstock_db = feedstock_db
         self.emission_intensity_timeline = self.expand_feedstock_emissions()
         self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name))
-        self.operational_emission_timeline = self.create_operational_timeline()
+        self.operational_emission_timeline = self.create_operational_timeline(n_hours=HOURS_IN_YEAR)
 
-    def create_operational_timeline(self) -> pd.DataFrame:
+    def create_operational_timeline(self, n_hours: int) -> pd.DataFrame:
         """
         Create an operational timeline DataFrame with four columns:
         - `heating_kgCO2`: emission for heating supply
@@ -52,7 +52,7 @@ class OperationalHourlyTimeline:
         :rtype: pd.DataFrame
         """
         timeline = pd.DataFrame(
-            index=range(HOURS_IN_YEAR),
+            index=range(n_hours),
             columns=[f"{key}_kgCO2" for key in self._tech_name_mapping.keys()]
             + [
                 f"{tuple[0]}_{feedstock}_kgCO2"
