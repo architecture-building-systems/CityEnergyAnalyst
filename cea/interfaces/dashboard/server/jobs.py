@@ -1,17 +1,22 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import uuid
 from typing import Dict, Any, List
 from urllib.parse import urlparse
 
 import psutil
 import sqlalchemy.exc
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
+from sqlalchemy.sql.annotation import Annotated
 from sqlmodel import select
+from starlette.datastructures import UploadFile as _UploadFile
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
     CEAUserID, CEASeverDemoAuthCheck, CEAStreams
@@ -34,6 +39,68 @@ class JobOutput(BaseModel):
     output: Any
 
 
+async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dict[str, Any]:
+    """
+    Process job parameters, handling UploadFile types by writing them to temporary storage
+    and replacing the UploadFile with the file path.
+    
+    Returns:
+        Dict with file paths substituted and temp directory path (if any files were processed)
+    """
+    processed_params = parameters.copy()
+    temp_dir = None
+
+    print(type(parameters), parameters)
+
+    # Look for UploadFile instances in parameters
+    for key, value in parameters.items():
+        if isinstance(value, _UploadFile):
+            # Create temp directory with job ID if not already created
+            if temp_dir is None:
+                temp_dir = tempfile.mkdtemp(prefix=f"cea_job_{job_id}_")
+                logger.info(f"Created temporary directory for job {job_id}: {temp_dir}")
+            
+            # Write file to temp directory
+            file_path = os.path.join(temp_dir, value.filename or f"upload_{key}")
+            
+            try:
+                with open(file_path, "wb") as f:
+                    content = await value.read()
+                    f.write(content)
+                
+                # Replace UploadFile with file path in parameters
+                processed_params[key] = file_path
+                logger.info(f"Wrote uploaded file for parameter '{key}' to: {file_path}")
+                
+            except Exception as e:
+                # Clean up temp directory if file writing failed
+                if temp_dir and os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                logger.error(f"Failed to write uploaded file for parameter '{key}': {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to process uploaded file: {key}")
+    
+    return processed_params
+
+
+def cleanup_job_temp_files(job_id: str):
+    """
+    Clean up temporary files for a job by finding and removing temp directories
+    that match the job ID pattern.
+    """
+    temp_base = tempfile.gettempdir()
+    job_temp_prefix = f"cea_job_{job_id}_"
+    
+    try:
+        for item in os.listdir(temp_base):
+            if item.startswith(job_temp_prefix):
+                temp_dir_path = os.path.join(temp_base, item)
+                if os.path.isdir(temp_dir_path):
+                    shutil.rmtree(temp_dir_path)
+                    logger.info(f"Cleaned up temporary directory for job {job_id}: {temp_dir_path}")
+    except Exception as e:
+        logger.error(f"Error cleaning up temp files for job {job_id}: {e}")
+
+
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
 @router.get("/list")
 async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
@@ -52,26 +119,55 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
 
 
 @router.post("/new", dependencies=[CEASeverDemoAuthCheck])
-async def create_new_job(payload: Dict[str, Any], session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
+async def create_new_job(request: Request, session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
-    args = payload
+    form_data = await request.form()
+    print(type(form_data), form_data)
+    
+    # Parse nested parameters structure
+    parameters = {}
+    script = None
+    
+    for key, value in form_data.items():
+        if key == "script":
+            script = value
+        elif key.startswith("parameters[") and key.endswith("]"):
+            # Extract parameter name from parameters[name] format
+            param_name = key[11:-1]  # Remove "parameters[" and "]"
+            parameters[param_name] = value
+    
+    args = {"script": script, "parameters": parameters}
     logger.info(f"Adding new job: args={args}")
 
-    parameters = args["parameters"]
-
-    # FIXME: Forcing remote multiprocessing to be disabled for now,
-    #  find solution for restricting number of processes per user
-    if not settings.local:
-        parameters["multiprocessing"] = False
-
-    job = JobInfo(script=args["script"], parameters=parameters, project_id=project_id, created_by=user_id)
+    # Create job first to get job ID for temp file handling
+    job = JobInfo(script=args["script"], parameters={}, project_id=project_id, created_by=user_id)
     session.add(job)
     await session.commit()
     await session.refresh(job)
 
-    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    try:
+        # Process parameters to handle any UploadFile instances
+        parameters = await process_job_parameters(args["parameters"], job.id)
+
+        # FIXME: Forcing remote multiprocessing to be disabled for now,
+        #  find solution for restricting number of processes per user
+        if not settings.local:
+            parameters["multiprocessing"] = False
+
+        # Update job with processed parameters
+        job.parameters = parameters
+        await session.commit()
+        await session.refresh(job)
+
+        await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+        return job
+    except Exception as e:
+        # If parameter processing fails, clean up the job and any temp files
+        cleanup_job_temp_files(job.id)
+        await session.delete(job)
+        await session.commit()
+        raise
 
 
 @router.post("/started/{job_id}")
@@ -112,6 +208,9 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
 
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
+
         job_info = job.model_dump(mode='json')
         job_info["output"] = output.output
         await sio.emit("cea-worker-success", job_info, room=f"user-{job.created_by}")
@@ -143,6 +242,10 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
         if job.id in await worker_processes.values():
             await worker_processes.delete(job.id)
+
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
+
         await sio.emit("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
 
         logger.warning(f"Error found in job {job_id}: {job.error}")
@@ -202,6 +305,10 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         await session.refresh(job)
 
         await kill_job(job_id, worker_processes)
+
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
+
         await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
     except Exception as e:
@@ -231,6 +338,9 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         job.state = JobState.DELETED
         await session.delete(job)
         await session.commit()
+
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
 
         return job
     except Exception as e:
