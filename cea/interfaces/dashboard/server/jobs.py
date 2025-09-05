@@ -179,7 +179,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 
         await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
         return job
-    except Exception as e:
+    except Exception:
         # If parameter processing fails, clean up the job and any temp files
         cleanup_job_temp_files(job.id)
         await session.delete(job)
