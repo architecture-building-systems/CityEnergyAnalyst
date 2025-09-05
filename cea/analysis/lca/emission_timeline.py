@@ -142,12 +142,22 @@ class BuildingEmissionTimeline:
             biogenic: float = self.envelope_lookup.get_item_value(
                 code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
             )
+            demolition: float = 0.0 # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
             self.log_emission_with_lifetime(
                 emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2"
             )
             self.log_emission_with_lifetime(
                 emission=-biogenic * area, lifetime=lifetime, col=f"biogenic_{key}_kgCO2"
+            )
+            self.log_emission_with_lifetime(
+                emission=demolition * area, lifetime=lifetime, col=f"demolition_{key}_kgCO2"
+            )
+            self.log_emission_in_timeline(
+                emission=0.0,  # when building is first built, no demolition emission
+                year=self.geometry["year"],
+                col=f"demolition_{key}_kgCO2",
+                additive=False,
             )
 
     def fill_operational_emissions(self) -> None:
@@ -156,6 +166,29 @@ class BuildingEmissionTimeline:
             raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
         # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
         self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[self._OPERATIONAL_COLS].sum(axis=0)
+
+    def demolish(self, demolition_year: int) -> None:
+        """
+        1. Erase all future emissions after demolition year, including operational emissions.
+        2. Log demolition emissions in the demolition year.
+
+        :param demolition_year: the year, after end of which the building does not exist anymore.
+        :type demolition_year: int
+        """
+        # if demolition_year < self.geometry["year"], raise error
+        if demolition_year < self.geometry["year"]:
+            raise ValueError("Demolition year must be greater than or equal to the construction year.")
+        
+        self.timeline.loc[self.timeline.index >= demolition_year, :] = 0.0
+        for key, value in self._MAPPING_DICT.items():
+            type_str = f"type_{value}"
+            demolition: float = 0.0 # dummy value, not implemented yet
+            area: float = self.surface_area[f"A{key}"]
+            # if demolition_year > self.timeline.index.max(), do nothing
+            if demolition_year <= self.timeline.index.max():
+                self.log_emission_in_timeline(
+                    emission=demolition * area, year=demolition_year, col=f"demolition_{key}_kgCO2"
+                )
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
         """Initialize the timeline as a dataframe of `0.0`s, 
@@ -206,9 +239,12 @@ class BuildingEmissionTimeline:
         self.log_emission_in_timeline(emission, years, col)
 
     def log_emission_in_timeline(
-        self, emission: float, year: int | list[int], col: str
+        self, emission: float, year: int | list[int], col: str, additive: bool = True
     ) -> None:
-        self.timeline.loc[year, col] += emission
+        if additive:
+            self.timeline.loc[year, col] += emission
+        else:
+            self.timeline.loc[year, col] = emission
 
     def get_component_quantity(self, building_properties: BuildingProperties) -> dict[str, float]:
         """

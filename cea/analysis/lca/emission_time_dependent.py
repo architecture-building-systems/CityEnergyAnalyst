@@ -72,6 +72,7 @@ def embodied(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_timeline()
+        timeline.demolish(demolition_year=end_year + 1)  # no demolition by default
         timeline.save_timeline()
         print(
             f"Emission timeline for {building} calculated and saved in: {locator.get_lca_timeline_building(building)}."
@@ -82,14 +83,14 @@ def embodied(config: Configuration) -> None:
     df_by_year = to_ton(sum_by_index([df for _, df in results]))
     df_by_building.to_csv(
         os.path.join(
-            locator.get_lca_timeline_folder(), "Total_embodied_per_building.csv"
+            locator.get_lca_timeline_folder(), "Total_emission_per_building.csv"
         )
     )
     df_by_year.to_csv(
-        os.path.join(locator.get_lca_timeline_folder(), "Total_embodied_per_year.csv")
+        os.path.join(locator.get_lca_timeline_folder(), "Total_emission_timeline.csv")
     )
     print(
-        f"District-level embodied emissions saved in: {locator.get_lca_timeline_folder()}"
+        f"District-level total emissions saved in: {locator.get_lca_timeline_folder()}"
     )
 
 
