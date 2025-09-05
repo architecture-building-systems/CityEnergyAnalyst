@@ -33,8 +33,8 @@ def operational(config: Configuration) -> None:
         )
         results.append([building, timeline.operational_emission_timeline])
 
-    df_by_building = sum_by_building(results)
-    df_by_hour = sum_by_index([df for _, df in results])
+    df_by_building = to_ton(sum_by_building(results))
+    df_by_hour = to_ton(sum_by_index([df for _, df in results]))
     df_by_building.to_csv(
         os.path.join(
             locator.get_lca_timeline_folder(),
@@ -74,12 +74,12 @@ def embodied(config: Configuration) -> None:
         timeline.fill_timeline()
         timeline.save_timeline()
         print(
-            f"Embodied and operational emissions timeline for {building} calculated and saved in: {locator.get_lca_timeline_building(building)}."
+            f"Emission timeline for {building} calculated and saved in: {locator.get_lca_timeline_building(building)}."
         )
         results.append((building, timeline.timeline))
 
-    df_by_building = sum_by_building(results)
-    df_by_year = sum_by_index([df for _, df in results])
+    df_by_building = to_ton(sum_by_building(results))
+    df_by_year = to_ton(sum_by_index([df for _, df in results]))
     df_by_building.to_csv(
         os.path.join(
             locator.get_lca_timeline_folder(), "Total_embodied_per_building.csv"
@@ -185,6 +185,19 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
     )
     out.index.rename(dfs[0].index.name, inplace=True)
     return out
+
+
+def to_ton(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert a dataframe in kgCO2 to tonCO2 by dividing all values by 1000, and also rename the columns by changing 'kgCO2' to 'tonCO2'.
+
+    :param df: A dataframe with values in kgCO2.
+    :type df: pd.DataFrame
+    :return: A dataframe with values in tonCO2.
+    :rtype: pd.DataFrame
+    """
+    df_ton = df / 1000.0
+    df_ton.columns = df_ton.columns.str.replace("kgCO2", "tonCO2")
+    return df_ton
 
 
 def main(config: Configuration) -> None:
