@@ -2,7 +2,6 @@
 jobs: maintain a list of jobs to be simulated.
 """
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -146,29 +145,18 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     if "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
         # Form data handling (supports file uploads)
         form_data = await request.form()
-        
-        # Parse nested parameters structure using regex
-        parameters = {}
-        script = None
-        parameter_pattern = re.compile(r'^parameters\[([^\[\]]+)\]$')
-        
-        for key, value in form_data.items():
-            if key == "script":
-                script = value
-            else:
-                # Try to match parameter pattern
-                match = parameter_pattern.match(key)
-                if match:
-                    param_name = match.group(1)
-                    # Convert string booleans to actual booleans for form data
-                    if isinstance(value, str):
-                        if value.lower() == 'true':
-                            parameters[param_name] = True
-                        elif value.lower() == 'false':
-                            parameters[param_name] = False
-                    else:
-                        parameters[param_name] = value
-        
+        script = form_data.get("script")
+        parameters = form_data.get("parameters")
+
+        if parameters is None:
+            raise HTTPException(status_code=400, detail="Missing 'parameters' field in form data.")
+
+        import json
+        try:
+            parameters = json.loads(parameters)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid format in 'parameters' field.")
+
         args = {"script": script, "parameters": parameters}
     else:
         # JSON handling (backwards compatibility)
