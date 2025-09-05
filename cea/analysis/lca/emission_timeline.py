@@ -1,6 +1,11 @@
 from __future__ import annotations
 import os
 import pandas as pd
+from cea.constants import (
+    SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
+    CONVERSION_AREA_TO_FLOOR_AREA_RATIO,
+    EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS,
+)
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,12 +23,12 @@ class BuildingEmissionTimeline:
     of each component can be tracked over time.
 
     Each building component has two main types of emissions associated with it:
-    - `embodied`: the emissions associated with the materials and
+    - `production`: the emissions associated with the materials and
     construction processes used to create the building component.
     - `biogenic`: the emissions that are stored within the material that
     would have otherwise been released during other processes or
     because of decay or wasting. In some results it's also called `uptake`.
-    - `demolition`: the emissions associated with the deconstruction and 
+    - `demolition`: the emissions associated with the deconstruction and
     disposal of building materials at the end of their service life.
 
     The components include:
@@ -47,12 +52,10 @@ class BuildingEmissionTimeline:
         between two floors, typically uninsulated.
         - `base`: the part of the building that is in contact with the ground,
             typically insulated.
-    - `others`: other components that are not part of the building envelope,
-        such as HVAC systems, elevators, etc. Currently not implemented.
-    - `deconstruction`: the emissions associated with the deconstruction
-        and disposal of building materials at the end of their service life.
+    - `technical_systems`: the technical systems of the building, including
+        heating, cooling, ventilation, domestic hot water, electrical systems,
 
-    Therefore, the column name is `{type}_{component}`, e.g., `embodied_wall_ag`,
+    Therefore, the column name is `{type}_{component}`, e.g., `production_wall_ag`,
     `biogenic_roof`.
 
     Finally, the yearly operational emission `operational` is also tracked
@@ -69,6 +72,7 @@ class BuildingEmissionTimeline:
         "underside": "base",
         "floor": "floor",
         "base": "base",
+        "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
     _OPERATIONAL_COLS = [
         "heating_kgCO2",
@@ -131,27 +135,20 @@ class BuildingEmissionTimeline:
         the beginning construction year into the timeline,
         and whenever any component needs to be renovated.
         """
-        for key, value in self._MAPPING_DICT.items():
-            type_str = f"type_{value}"
-            lifetime: int = self.envelope_lookup.get_item_value(
-                code=self.envelope[type_str], field="Service_Life"
-            )
-            ghg: float = self.envelope_lookup.get_item_value(
-                code=self.envelope[type_str], field="GHG_kgCO2m2"
-            )
-            biogenic: float = self.envelope_lookup.get_item_value(
-                code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
-            )
-            demolition: float = 0.0 # dummy value, not implemented yet
-            area: float = self.surface_area[f"A{key}"]
+
+        def log_emissions(area, ghg, biogenic, demolition, lifetime, key):
             self.log_emission_with_lifetime(
                 emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2"
             )
             self.log_emission_with_lifetime(
-                emission=-biogenic * area, lifetime=lifetime, col=f"biogenic_{key}_kgCO2"
+                emission=-biogenic * area,
+                lifetime=lifetime,
+                col=f"biogenic_{key}_kgCO2",
             )
             self.log_emission_with_lifetime(
-                emission=demolition * area, lifetime=lifetime, col=f"demolition_{key}_kgCO2"
+                emission=demolition * area,
+                lifetime=lifetime,
+                col=f"demolition_{key}_kgCO2",
             )
             self.log_emission_in_timeline(
                 emission=0.0,  # when building is first built, no demolition emission
@@ -160,12 +157,42 @@ class BuildingEmissionTimeline:
                 additive=False,
             )
 
+        for key, value in self._MAPPING_DICT.items():
+            area: float = self.surface_area[f"A{key}"]
+
+            if key == "technical_systems":
+                lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
+                ghg = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
+                biogenic = 0.0
+                demolition = 0.0  # dummy value, not implemented yet
+            else:
+                type_str = f"type_{value}"
+                lifetime: int = self.envelope_lookup.get_item_value(
+                    code=self.envelope[type_str], field="Service_Life"
+                )
+                ghg: float = self.envelope_lookup.get_item_value(
+                    code=self.envelope[type_str], field="GHG_kgCO2m2"
+                )
+                biogenic: float = self.envelope_lookup.get_item_value(
+                    code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
+                )
+                demolition: float = 0.0  # dummy value, not implemented yet
+
+            log_emissions(area, ghg, biogenic, demolition, lifetime, key)
+
     def fill_operational_emissions(self) -> None:
-        operational_emissions = pd.read_csv(self.locator.get_lca_operational_hourly_building(self.name), index_col="hour")
+        operational_emissions = pd.read_csv(
+            self.locator.get_lca_operational_hourly_building(self.name),
+            index_col="hour",
+        )
         if len(operational_emissions) != 8760:
-            raise ValueError(f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!")
+            raise ValueError(
+                f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!"
+            )
         # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
-        self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[self._OPERATIONAL_COLS].sum(axis=0)
+        self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[
+            self._OPERATIONAL_COLS
+        ].sum(axis=0)
 
     def demolish(self, demolition_year: int) -> None:
         """
@@ -177,21 +204,24 @@ class BuildingEmissionTimeline:
         """
         # if demolition_year < self.geometry["year"], raise error
         if demolition_year < self.geometry["year"]:
-            raise ValueError("Demolition year must be greater than or equal to the construction year.")
-        
+            raise ValueError(
+                "Demolition year must be greater than or equal to the construction year."
+            )
+
         self.timeline.loc[self.timeline.index >= demolition_year, :] = 0.0
         for key, value in self._MAPPING_DICT.items():
-            type_str = f"type_{value}"
-            demolition: float = 0.0 # dummy value, not implemented yet
+            demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
             # if demolition_year > self.timeline.index.max(), do nothing
             if demolition_year <= self.timeline.index.max():
                 self.log_emission_in_timeline(
-                    emission=demolition * area, year=demolition_year, col=f"demolition_{key}_kgCO2"
+                    emission=demolition * area,
+                    year=demolition_year,
+                    col=f"demolition_{key}_kgCO2",
                 )
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
-        """Initialize the timeline as a dataframe of `0.0`s, 
+        """Initialize the timeline as a dataframe of `0.0`s,
         indexed by year, for the building emissions.
 
         :param end_year: The year to end the timeline.
@@ -210,7 +240,8 @@ class BuildingEmissionTimeline:
                 **{
                     f"{emission}_{component}_kgCO2": 0.0
                     for emission in self._EMISSION_TYPES
-                    for component in self._MAPPING_DICT.keys()
+                    for component in list(self._MAPPING_DICT.keys())
+                    + ["technical_systems"]
                 },
                 **{col: 0.0 for col in self._OPERATIONAL_COLS},
             }
@@ -271,6 +302,7 @@ class BuildingEmissionTimeline:
             If the floor area is neither touching the ground nor the outside air,
             it should be internal. Therefore, the calculation formula thus is:
             `Afloor = GFA_m2 - Aunderside - footprint`
+        - `Atechnical_systems`: total area of technical systems. Same as GFA.
 
         :param building_properties: The building properties object containing results
             for all buildings in the district. Two attributes are relevant
@@ -292,7 +324,7 @@ class BuildingEmissionTimeline:
         surface_area["Awall_bg"] = (
             self.geometry["perimeter"] * self.geometry["height_bg"]
         )
-        surface_area["Awall_part"] = 0.0  # not implemented
+        surface_area["Awall_part"] = rc_model_props["GFA_m2"] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO
         surface_area["Awin_ag"] = rc_model_props["Awin_ag"]
 
         # calculate the area of each component
@@ -318,4 +350,5 @@ class BuildingEmissionTimeline:
             - area_base,
         )
         surface_area["Abase"] = area_base
+        surface_area["Atechnical_systems"] = rc_model_props["GFA_m2"]
         return surface_area
