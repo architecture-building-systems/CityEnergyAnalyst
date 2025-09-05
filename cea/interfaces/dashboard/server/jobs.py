@@ -67,9 +67,14 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
             # Remove any remaining path separators and null bytes
             safe_filename = safe_filename.replace(os.sep, "_").replace(os.altsep or "", "_").replace("\0", "")
             file_path = os.path.join(temp_dir, safe_filename)
+            # Normalize and ensure the file path is within temp_dir
+            normalized_file_path = os.path.realpath(file_path)
+            if not normalized_file_path.startswith(os.path.realpath(temp_dir) + os.sep):
+                logger.error(f"Attempt to write file outside temp_dir detected for job {job_id}. Path: {normalized_file_path}")
+                raise ValueError("Unsafe file path detected.")
             
             try:
-                with open(file_path, "wb") as f:
+                with open(normalized_file_path, "wb") as f:
                     # Stream the upload in chunks to avoid loading entire file into memory
                     chunk_size = 64 * 1024  # 64KB chunks
                     try:
