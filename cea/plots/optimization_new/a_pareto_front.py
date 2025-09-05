@@ -295,7 +295,7 @@ def add_3D_scatter_plot(objectives, objective_values):
 
         # Show the plot
         fig = go.Figure(data=data, layout=layout)
-        fig.show()
+        fig.show(renderer="browser")
 
 
 def main(config=cea.config.Configuration()):
@@ -305,7 +305,7 @@ def main(config=cea.config.Configuration()):
     objective_values_dict = {}
 
     for run_id in run_ids:
-        optimisation_results = locator.get_new_optimization_results_folder(run_id=run_id)
+        optimisation_results = locator.get_centralized_optimization_results_folder()
         individual_supply_system_results = [
             locator.get_new_optimization_optimal_supply_systems_summary_file(run_id, subfolder)
             for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging'
