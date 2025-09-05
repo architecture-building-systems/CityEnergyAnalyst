@@ -166,6 +166,9 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     
     logger.info(f"Adding new job: args={args}")
 
+    if not args["script"]:
+        raise HTTPException(status_code=422, detail="Missing required field: 'script'.")
+
     # Create job first to get job ID for temp file handling
     job = JobInfo(script=args["script"], parameters={}, project_id=project_id, created_by=user_id)
     session.add(job)
