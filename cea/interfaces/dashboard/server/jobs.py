@@ -50,8 +50,6 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
     processed_params = parameters.copy()
     temp_dir = None
 
-    print(type(parameters), parameters)
-
     # Look for UploadFile instances in parameters
     for key, value in parameters.items():
         if isinstance(value, _UploadFile):
