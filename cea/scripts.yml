@@ -276,12 +276,12 @@ Life Cycle Analysis:
   - name: emission-time-dependent
     label: Emission - Time Dependent
     short_description: Calculate operational and embodied emission, and their progress through time.
-    description: First, This feature generates hourly operational emission for heating, cooling, hot water 
-      and electricity consumption for each building.    
-      Then, this Feature accounts for all possible emissions since the building's initial construction, 
-      including construction, renovation, deconstruction, biogenic carbon storage and operational emissions. 
-      The timeline records all activities every year, assuming all components are renovated or replaced 
-      according to its lifetime. 
+    description: First, This feature generates hourly operational emission for heating, cooling, hot water
+      and electricity consumption for each building.
+      Then, this Feature accounts for all possible emissions since the building's initial construction,
+      including construction, renovation, deconstruction, biogenic carbon storage and operational emissions.
+      The timeline records all activities every year, assuming all components are renovated or replaced
+      according to its lifetime.
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.emission_time_dependent
     parameters: ['general:scenario', emission-time-dependent]
