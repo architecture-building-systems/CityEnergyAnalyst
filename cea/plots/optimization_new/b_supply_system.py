@@ -2,7 +2,6 @@ import os
 import re
 import math
 import yaml
-import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from PIL import Image
@@ -79,10 +78,10 @@ class SupplySystemGraphInfo(object):
 
     def _idenfify_sinks_and_sources(self):
         """ Identify the sinks and sources of the supply system """
-        ec_cat_to_sinks = [re.sub(f"\d+", "_", energy_carrier)
+        ec_cat_to_sinks = [re.sub(r"\d+", "_", energy_carrier)
                            for energy_carrier, energy_flow in self.energy_flows.items()
                            if any([link[1] == 'sinks' for link in energy_flow.links])]
-        ec_cat_from_sources = [re.sub(f"\d+", "_", energy_carrier)
+        ec_cat_from_sources = [re.sub(r"\d+", "_", energy_carrier)
                                for energy_carrier, energy_flow in self.energy_flows.items()
                                if any([link[0] == 'sources' for link in energy_flow.links])]
 
@@ -223,7 +222,7 @@ class SupplySystemGraphInfo(object):
         ecs_from_sources = [energy_flow.energy_carrier for energy_flow in self.energy_flows.values()
                             if any([link[0] == 'sources' for link in energy_flow.links])]
         ecs_from_specific_sources = {source.code: [ec for ec in ecs_from_sources
-                                                   if re.sub(f"\d+", "_", ec) == source.ec_category_code]
+                                                   if re.sub(r"\d+", "_", ec) == source.ec_category_code]
                                      for source in self.sinks_and_sources['sources'].values()}
         [source.set_anchorpoints(ecs_from_specific_sources[source.code])
          for source in self.sinks_and_sources['sources'].values()]
@@ -231,7 +230,7 @@ class SupplySystemGraphInfo(object):
         ecs_to_sinks = [energy_flow.energy_carrier for energy_flow in self.energy_flows.values()
                         if any([link[1] == 'sinks' for link in energy_flow.links])]
         ecs_to_specific_sinks = {sink.code: [ec for ec in ecs_to_sinks
-                                             if re.sub(f"\d+", "_", ec) == sink.ec_category_code]
+                                             if re.sub(r"\d+", "_", ec) == sink.ec_category_code]
                                  for sink in self.sinks_and_sources['sinks'].values()}
         [sink.set_anchorpoints(ecs_to_specific_sinks[sink.code])
          for sink in self.sinks_and_sources['sinks'].values()]
@@ -481,7 +480,7 @@ class EnergyFlowGraphInfo(object):
                 links.append(("tertiary", "sinks"))
 
         for category in self.instances["other_absorbers"].keys():
-            if category == "primary" and not "secondary" in self.instances["main_generators"].keys():
+            if category == "primary" and "secondary" not in self.instances["main_generators"].keys():
                 links.append(("sources", "primary"))
             elif category == "secondary":
                 links.append(("sources", "secondary"))

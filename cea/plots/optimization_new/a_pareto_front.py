@@ -19,7 +19,6 @@ import os
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from scipy.optimize import curve_fit
 
 import cea.config
 from cea.inputlocator import InputLocator
