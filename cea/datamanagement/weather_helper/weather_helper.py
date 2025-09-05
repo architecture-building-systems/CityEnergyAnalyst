@@ -88,6 +88,11 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather = config.weather_helper.weather
 
+    if not weather:
+        raise ValueError("No weather file provided. "
+                         "Please specify a weather file or select an option to fetch data automatically. "
+                         "e.g --weather climate.onebuilding.org")
+
     locator.ensure_parent_folder_exists(locator.get_weather_file())
     if config.weather_helper.weather == 'climate.onebuilding.org':
         print("No weather provided, fetching from online sources.")
