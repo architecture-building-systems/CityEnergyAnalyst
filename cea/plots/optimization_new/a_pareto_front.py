@@ -82,14 +82,14 @@ def read_objective_values_from_file(file_paths):
             assert objectives == new_objectives, 'There is a mismatch in the objective functions used for the '\
                                                  'optimization. Please check the optimization results.'
 
-        # Get the DCS-solution code from the file path and use it as a key to store the objective function values
+        # Get the DES-solution code from the file path and use it as a key to store the objective function values
         objective_function_values_df = \
             pd.concat([objective_function_values_df, pd.DataFrame([file_path.split(os.sep)[-3]] + values).T],
                       axis=0, sort=False,  ignore_index=False)
 
     # Rename the columns of the dataframe and reset the indexes
     objective_function_values_df.reset_index(inplace=True, drop=True)
-    objective_function_values_df.columns = ['DCS-solution'] + objectives
+    objective_function_values_df.columns = ['DES-solution'] + objectives
 
     return objectives, objective_function_values_df
 
@@ -103,7 +103,7 @@ def read_network_costs_from_file(file_paths):
     network_costs = [read_network_costs(file_path)/network_lifetime for file_path in file_paths]
 
     # Create a dataframe with the supply system code and the network costs
-    network_costs_df = pd.DataFrame({'DCS-solution': system_id, 'Network cost [USD]': network_costs})
+    network_costs_df = pd.DataFrame({'DES-solution': system_id, 'Network cost [USD]': network_costs})
 
     return network_costs_df
 
@@ -160,8 +160,8 @@ def plot_pareto_front(objectives, objective_values_dict):
                 color = colors[0] if not run_id else colors[run_id % len(colors)]
 
                 # Separate current_DES from other solutions
-                current_des_data = objective_values[objective_values['DCS-solution'] == 'current_DES']
-                other_solutions = objective_values[objective_values['DCS-solution'] != 'current_DES']
+                current_des_data = objective_values[objective_values['DES-solution'] == 'current_DES']
+                other_solutions = objective_values[objective_values['DES-solution'] != 'current_DES']
                 
                 # Scatter plot for other solutions
                 if not other_solutions.empty:
@@ -169,8 +169,8 @@ def plot_pareto_front(objectives, objective_values_dict):
                         x=other_solutions[objectives[i]],
                         y=other_solutions[objectives[j]],
                         mode='markers',
-                        name=f'DCS-solution {run_name}',
-                        text=other_solutions['DCS-solution'],
+                        name=f'DES-solution {run_name}',
+                        text=other_solutions['DES-solution'],
                         marker=dict(
                             size=12,
                             color=color,
@@ -187,7 +187,7 @@ def plot_pareto_front(objectives, objective_values_dict):
                         y=current_des_data[objectives[j]],
                         mode='markers',
                         name=f'Current DES {run_name}',
-                        text=current_des_data['DCS-solution'],
+                        text=current_des_data['DES-solution'],
                         marker=dict(
                             size=10,
                             color='grey',
@@ -295,8 +295,8 @@ def add_3D_scatter_plot(objectives, objective_values_dict):
             color = colors[0] if not run_id else colors[run_id % len(colors)]
             
             # Separate current_DES from other solutions
-            current_des_data = objective_values[objective_values['DCS-solution'] == 'current_DES']
-            other_solutions = objective_values[objective_values['DCS-solution'] != 'current_DES']
+            current_des_data = objective_values[objective_values['DES-solution'] == 'current_DES']
+            other_solutions = objective_values[objective_values['DES-solution'] != 'current_DES']
             
             # Scatter plot for other solutions
             if not other_solutions.empty:
@@ -305,8 +305,8 @@ def add_3D_scatter_plot(objectives, objective_values_dict):
                     y=other_solutions[objectives[j]],
                     z=other_solutions[objectives[k]],
                     mode='markers',
-                    name=f'DCS-solution {run_name}',
-                    text=other_solutions['DCS-solution'],
+                    name=f'DES-solution {run_name}',
+                    text=other_solutions['DES-solution'],
                     marker=dict(
                         size=8,
                         color=color,
@@ -324,7 +324,7 @@ def add_3D_scatter_plot(objectives, objective_values_dict):
                     z=current_des_data[objectives[k]],
                     mode='markers',
                     name=f'Current DES {run_name}',
-                    text=current_des_data['DCS-solution'],
+                    text=current_des_data['DES-solution'],
                     marker=dict(
                         size=6,
                         color='grey',
