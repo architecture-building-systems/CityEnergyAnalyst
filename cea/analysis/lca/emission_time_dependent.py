@@ -12,7 +12,7 @@ from cea.datamanagement.database.components import Feedstocks
 from cea.utilities import epwreader
 
 
-def operational(config: Configuration) -> None:
+def operational_hourly(config: Configuration) -> None:
     locator = InputLocator(config.scenario)
     buildings = config.emission_time_dependent.buildings
     weather_path = locator.get_weather_file()
@@ -51,7 +51,7 @@ def operational(config: Configuration) -> None:
     )
 
 
-def embodied(config: Configuration) -> None:
+def total_yearly(config: Configuration) -> None:
     locator = InputLocator(scenario=config.scenario)
     buildings: list[str] = config.emission_time_dependent.buildings
     end_year: int = config.emission_time_dependent.end_year
@@ -202,8 +202,8 @@ def to_ton(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main(config: Configuration) -> None:
-    operational(config)
-    embodied(config)
+    operational_hourly(config)
+    total_yearly(config)
 
 
 if __name__ == "__main__":
