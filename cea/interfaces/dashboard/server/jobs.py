@@ -39,6 +39,10 @@ class JobOutput(BaseModel):
     output: Any
 
 
+def get_cea_job_temp_prefix(job_id: str) -> str:
+    """Get the prefix used for temporary directories for a given job ID."""
+    return f"cea_job_{job_id}_"
+
 async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dict[str, Any]:
     """
     Process job parameters, handling UploadFile types by writing them to temporary storage
@@ -55,7 +59,7 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
         if isinstance(value, _UploadFile):
             # Create temp directory with job ID if not already created
             if temp_dir is None:
-                temp_dir = tempfile.mkdtemp(prefix=f"cea_job_{job_id}_")
+                temp_dir = tempfile.mkdtemp(prefix=get_cea_job_temp_prefix(job_id))
                 logger.info(f"Created temporary directory for job {job_id}: {temp_dir}")
             
             # Write file to temp directory
@@ -86,11 +90,10 @@ def cleanup_job_temp_files(job_id: str):
     that match the job ID pattern.
     """
     temp_base = tempfile.gettempdir()
-    job_temp_prefix = f"cea_job_{job_id}_"
-    
+
     try:
         for item in os.listdir(temp_base):
-            if item.startswith(job_temp_prefix):
+            if item.startswith(get_cea_job_temp_prefix(job_id)):
                 temp_dir_path = os.path.join(temp_base, item)
                 if os.path.isdir(temp_dir_path):
                     shutil.rmtree(temp_dir_path)
