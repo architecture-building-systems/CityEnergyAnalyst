@@ -28,12 +28,14 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
-    type_mat_default = network_layout.type_mat
+    # type_mat_default = network_layout.type_mat
+    type_mat_default = TYPE_MAT_DEFAULT
     pipe_diameter_default = network_layout.pipe_diameter
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
-    allow_looped_networks = network_layout.allow_looped_networks
+    # allow_looped_networks = network_layout.allow_looped_networks
+    allow_looped_networks = False
     steiner_algorithm = network_layout.algorithm
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
