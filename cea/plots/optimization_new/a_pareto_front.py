@@ -268,7 +268,7 @@ def plot_pareto_front(objectives, objective_values_dict):
     fig = go.Figure(data=traces, layout=layout)
     fig.update_xaxes(ticks='outside', gridcolor='grey')
     fig.update_yaxes(ticks='outside', gridcolor='grey')
-    # fig.show(renderer="browser")
+    fig.show(renderer="browser")
     return fig.to_html()
 
 def add_3D_scatter_plot(objectives, objective_values_dict):
