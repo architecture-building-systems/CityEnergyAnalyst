@@ -160,7 +160,14 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
                 match = parameter_pattern.match(key)
                 if match:
                     param_name = match.group(1)
-                    parameters[param_name] = value
+                    # Convert string booleans to actual booleans for form data
+                    if isinstance(value, str):
+                        if value.lower() == 'true':
+                            parameters[param_name] = True
+                        elif value.lower() == 'false':
+                            parameters[param_name] = False
+                    else:
+                        parameters[param_name] = value
         
         args = {"script": script, "parameters": parameters}
     else:
