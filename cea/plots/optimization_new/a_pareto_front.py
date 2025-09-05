@@ -417,8 +417,12 @@ def main(config=cea.config.Configuration()):
                 elif folder_name.startswith('centralized_run_'):
                     run_id = folder_name.replace('centralized_run_', '')
                     run_ids.append(int(run_id))
-    
-    print(f"Found optimization run_ids: {run_ids}")
+
+    if run_ids:
+        print(f"Found optimization run_ids: {run_ids}")
+    else:
+        print("No optimization results found! Please run the centralised optimisation script before plotting.")
+        return
 
     for run_id in run_ids:
         locator.optimization_run = run_id
@@ -440,7 +444,7 @@ def main(config=cea.config.Configuration()):
 
         objective_values_dict[run_id] = objective_function_values
 
-    return plot_pareto_front(objectives, objective_values_dict)
+    plot_pareto_front(objectives, objective_values_dict)
     add_3D_scatter_plot(objectives, objective_values_dict)
 
 
