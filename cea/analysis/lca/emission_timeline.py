@@ -76,6 +76,7 @@ class BuildingEmissionTimeline:
         "hot_water_kgCO2",
         "electricity_kgCO2",
     ]
+    _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
     def __init__(
         self,
@@ -169,21 +170,15 @@ class BuildingEmissionTimeline:
         start_year = self.geometry["year"]
         if start_year >= end_year:
             raise ValueError("The starting year must be less than the ending year.")
-        component_types = self._MAPPING_DICT.keys()
-        emission_types = ["production", "biogenic", "demolition"]
 
         timeline = pd.DataFrame(
             {
                 "year": range(start_year, end_year + 1),
                 **{
                     f"{emission}_{component}_kgCO2": 0.0
-                    for emission in emission_types
-                    for component in component_types
+                    for emission in self._EMISSION_TYPES
+                    for component in self._MAPPING_DICT.keys()
                 },
-                # "heating_kgCO2": 0.0,
-                # "cooling_kgCO2": 0.0,
-                # "hot_water_kgCO2": 0.0,
-                # "electricity_kgCO2": 0.0,
                 **{col: 0.0 for col in self._OPERATIONAL_COLS},
             }
         )
