@@ -87,17 +87,17 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
 def cleanup_job_temp_files(job_id: str):
     """
     Clean up temporary files for a job by finding and removing temp directories
-    that match the job ID pattern.
+    that match the job ID pattern using glob pattern matching.
     """
+    import glob
     temp_base = tempfile.gettempdir()
+    pattern = os.path.join(temp_base, f"{get_cea_job_temp_prefix(job_id)}*")
 
     try:
-        for item in os.listdir(temp_base):
-            if item.startswith(get_cea_job_temp_prefix(job_id)):
-                temp_dir_path = os.path.join(temp_base, item)
-                if os.path.isdir(temp_dir_path):
-                    shutil.rmtree(temp_dir_path)
-                    logger.info(f"Cleaned up temporary directory for job {job_id}: {temp_dir_path}")
+        for temp_dir_path in glob.glob(pattern):
+            if os.path.isdir(temp_dir_path):
+                shutil.rmtree(temp_dir_path)
+                logger.info(f"Cleaned up temporary directory for job {job_id}: {temp_dir_path}")
     except Exception as e:
         logger.error(f"Error cleaning up temp files for job {job_id}: {e}")
 
