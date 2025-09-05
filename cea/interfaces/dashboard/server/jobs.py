@@ -2,6 +2,7 @@
 jobs: maintain a list of jobs to be simulated.
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -125,17 +126,20 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     form_data = await request.form()
     print(type(form_data), form_data)
     
-    # Parse nested parameters structure
+    # Parse nested parameters structure using regex
     parameters = {}
     script = None
+    parameter_pattern = re.compile(r'^parameters\[([^\[\]]+)\]$')
     
     for key, value in form_data.items():
         if key == "script":
             script = value
-        elif key.startswith("parameters[") and key.endswith("]"):
-            # Extract parameter name from parameters[name] format
-            param_name = key[11:-1]  # Remove "parameters[" and "]"
-            parameters[param_name] = value
+        else:
+            # Try to match parameter pattern
+            match = parameter_pattern.match(key)
+            if match:
+                param_name = match.group(1)
+                parameters[param_name] = value
     
     args = {"script": script, "parameters": parameters}
     logger.info(f"Adding new job: args={args}")
