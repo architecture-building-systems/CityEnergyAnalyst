@@ -124,8 +124,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     form_data = await request.form()
-    print(type(form_data), form_data)
-    
+
     # Parse nested parameters structure using regex
     parameters = {}
     script = None
