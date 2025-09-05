@@ -156,58 +156,80 @@ def plot_pareto_front(objectives, objective_values_dict):
         for j in range(i + 1, len(objectives)):
             current_traces = []
             for run_id, objective_values in objective_values_dict.items():
-                color = colors[run_id % len(colors)]
+                run_name = 'main' if not run_id else 'run ' + str(run_id)
+                color = colors[0] if not run_id else colors[run_id % len(colors)]
 
-                # Scatter plot for the current run (including 'current_DES')
-                current_traces.append(go.Scatter(
-                    x=objective_values[objectives[i]],
-                    y=objective_values[objectives[j]],
-                    mode='markers',
-                    name=f'DCS-solution run {run_id}',
-                    text=objective_values['DCS-solution'],
-                    marker=dict(
-                        size=12,
-                        color=color,
-                        line=dict(width=2, color='black'),
-                        opacity=0.8
-                    ),
-                    visible=False
-                ))
-
-                # Exclude 'current_DES' from the fitting process
-                fit_data = objective_values[objective_values['DCS-solution'] != 'current_DES']
-
-                # Fit Bézier curve to the Pareto front using the mean control point and get the shading coordinates
-                try:
-                    curve_x, curve_y, shade_x, shade_y = fit_bezier_curve_with_mean_control_point(
-                        np.array(fit_data[objectives[i]], dtype=float),
-                        np.array(fit_data[objectives[j]], dtype=float))
-
-                    # Add the fitted Bézier curve to the plot
+                # Separate current_DES from other solutions
+                current_des_data = objective_values[objective_values['DCS-solution'] == 'current_DES']
+                other_solutions = objective_values[objective_values['DCS-solution'] != 'current_DES']
+                
+                # Scatter plot for other solutions
+                if not other_solutions.empty:
                     current_traces.append(go.Scatter(
-                        x=curve_x,
-                        y=curve_y,
-                        mode='lines',
-                        line=dict(color=color, width=2),
-                        name=f'Fitted Bézier run {run_id}',
+                        x=other_solutions[objectives[i]],
+                        y=other_solutions[objectives[j]],
+                        mode='markers',
+                        name=f'DCS-solution {run_name}',
+                        text=other_solutions['DCS-solution'],
+                        marker=dict(
+                            size=12,
+                            color=color,
+                            line=dict(width=2, color='black'),
+                            opacity=0.8
+                        ),
+                        visible=False
+                    ))
+                
+                # Scatter plot for current_DES with special styling
+                if not current_des_data.empty:
+                    current_traces.append(go.Scatter(
+                        x=current_des_data[objectives[i]],
+                        y=current_des_data[objectives[j]],
+                        mode='markers',
+                        name=f'Current DES {run_name}',
+                        text=current_des_data['DCS-solution'],
+                        marker=dict(
+                            size=10,
+                            color='grey',
+                            line=dict(width=4, color=color),
+                            opacity=1.0
+                        ),
                         visible=False
                     ))
 
-                    # Add the shaded area above and to the right of the curve
-                    current_traces.append(go.Scatter(
-                        x=shade_x,
-                        y=shade_y,
-                        fill='toself',
-                        fillcolor=color,
-                        line=dict(color='rgba(255,255,255,0)'),  # No border line
-                        name=f'Suggested solution space {run_id}',
-                        visible=False,
-                        opacity=0.3  # Adjust opacity for shading
-                    ))
+                # # Fit Bézier curve to the Pareto front using the mean control point and get the shading coordinatesFit Bézier curve
+                fit_data = other_solutions
+                if len(fit_data) >= 2:   # only if there are 2 or more non-dominated solutions
+                    try:
+                        curve_x, curve_y, shade_x, shade_y = fit_bezier_curve_with_mean_control_point(
+                            np.array(fit_data[objectives[i]], dtype=float),
+                            np.array(fit_data[objectives[j]], dtype=float))
 
-                except Exception as e:
-                    print(
-                        f"Bézier fitting failed for run {run_id} with objectives {objectives[i]} and {objectives[j]}: {e}")
+                        # Add the fitted Bézier curve to the plot
+                        current_traces.append(go.Scatter(
+                            x=curve_x,
+                            y=curve_y,
+                            mode='lines',
+                            line=dict(color=color, width=2),
+                            name=f'Fitted Bézier run {run_name}',
+                            visible=False
+                        ))
+
+                        # Add the shaded area above and to the right of the curve
+                        current_traces.append(go.Scatter(
+                            x=shade_x,
+                            y=shade_y,
+                            fill='toself',
+                            fillcolor=color,
+                            line=dict(color='rgba(255,255,255,0)'),  # No border line
+                            name=f'Suggested solution space {run_name}',
+                            visible=False,
+                            opacity=0.3  # Adjust opacity for shading
+                        ))
+
+                    except Exception as e:
+                        print(
+                            f"Bézier fitting failed for run {run_name} with objectives {objectives[i]} and {objectives[j]}: {e}")
 
             visibility = base_visibility.copy()
             visibility[len(traces):len(traces) + len(current_traces)] = [True] * len(current_traces)
@@ -248,66 +270,160 @@ def plot_pareto_front(objectives, objective_values_dict):
     fig.update_yaxes(ticks='outside', gridcolor='grey')
     fig.show(renderer="browser")
 
-def add_3D_scatter_plot(objectives, objective_values):
-        # Create 3D scatter plots if there are 3 or more objective functions, introduce corresponding elements to the
-    #   drop-down menu and add them to the list of traces
+def add_3D_scatter_plot(objectives, objective_values_dict):
+    """
+    Create 3D scatter plots for all combinations of 3 objectives from multiple optimization runs.
+    """
+    if len(objectives) < 3:
+        return
+    
+    from itertools import combinations
+    
+    traces = []
+    buttons = []
+    colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow']
+    
+    # Generate all combinations of 3 objectives
+    objective_combinations = list(combinations(range(len(objectives)), 3))
+    
+    for combo_idx, (i, j, k) in enumerate(objective_combinations):
+        current_traces = []
+        
+        for run_id, objective_values in objective_values_dict.items():
+            run_name = 'main' if not run_id else 'run ' + str(run_id)
+            color = colors[0] if not run_id else colors[run_id % len(colors)]
+            
+            # Separate current_DES from other solutions
+            current_des_data = objective_values[objective_values['DCS-solution'] == 'current_DES']
+            other_solutions = objective_values[objective_values['DCS-solution'] != 'current_DES']
+            
+            # Scatter plot for other solutions
+            if not other_solutions.empty:
+                current_traces.append(go.Scatter3d(
+                    x=other_solutions[objectives[i]],
+                    y=other_solutions[objectives[j]],
+                    z=other_solutions[objectives[k]],
+                    mode='markers',
+                    name=f'DCS-solution {run_name}',
+                    text=other_solutions['DCS-solution'],
+                    marker=dict(
+                        size=8,
+                        color=color,
+                        line=dict(width=2, color='black'),
+                        opacity=0.8
+                    ),
+                    visible=False
+                ))
+            
+            # Scatter plot for current_DES with special styling
+            if not current_des_data.empty:
+                current_traces.append(go.Scatter3d(
+                    x=current_des_data[objectives[i]],
+                    y=current_des_data[objectives[j]],
+                    z=current_des_data[objectives[k]],
+                    mode='markers',
+                    name=f'Current DES {run_name}',
+                    text=current_des_data['DCS-solution'],
+                    marker=dict(
+                        size=6,
+                        color='grey',
+                        line=dict(width=4, color=color),
+                        opacity=1.0
+                    ),
+                    visible=False
+                ))
+        
+        # Create button for this combination
+        visibility = [False] * len(traces) + [True] * len(current_traces) + [False] * (len(objective_combinations) - combo_idx - 1) * len(current_traces) * len(objective_values_dict)
+        
+        buttons.append(dict(
+            args=[{'visible': visibility},
+                  {'scene.xaxis.title.text': objectives[i],
+                   'scene.yaxis.title.text': objectives[j],
+                   'scene.zaxis.title.text': objectives[k]}],
+            label=f'{objectives[i]} vs {objectives[j]} vs {objectives[k]}',
+            method='update'
+        ))
+        
+        traces.extend(current_traces)
+    
+    # Make first combination visible by default
+    if traces:
+        for trace_idx in range(len(objective_values_dict) * 2):  # 2 traces per run (solutions + current_DES)
+            if trace_idx < len(traces):
+                traces[trace_idx].visible = True
+    
+    # Customize the layout
+    layout = go.Layout(
+        title='3D Pareto Front Comparison',
+        scene=dict(
+            xaxis_title=objectives[0],
+            yaxis_title=objectives[1],
+            zaxis_title=objectives[2],
+            xaxis=dict(
+                ticks='outside',
+                backgroundcolor="rgb(254, 253, 224)",
+                gridcolor="grey",
+                showbackground=True
+            ),
+            yaxis=dict(
+                ticks='outside',
+                backgroundcolor="rgb(255, 238, 217)",
+                gridcolor="grey",
+                showbackground=True
+            ),
+            zaxis=dict(
+                ticks='outside',
+                backgroundcolor="rgb(190, 235, 243)",
+                gridcolor="grey",
+                showbackground=True
+            )
+        ),
+        showlegend=True,
+        updatemenus=[dict(
+            buttons=buttons,
+            direction='down',
+            pad={'r': 10, 't': 10},
+            showactive=True,
+            x=0.1,
+            xanchor='left',
+            y=1.0,
+            yanchor='top'
+        )]
+    )
 
-    if len(objectives) >= 3:
-        data = go.Scatter3d(x=objective_values[objectives[0]],
-                            y=objective_values[objectives[1]],
-                            z=objective_values[objectives[3]],
-                            mode='markers',
-                            name='DCS-solution',
-                            text=objective_values['DCS-solution'],
-                            marker=dict(
-                                size=15,
-                                color=[int(code.split('_')[-1]) for code in objective_values['DCS-solution']
-                                       if code.split('_')[-1].isdigit()],
-                                colorscale='Viridis',
-                                opacity=0.9,
-                                line=dict(width=4,
-                                          color='black')
-                            )
-                            )
-
-
-        # Customize the layout
-        layout = go.Layout(scene=dict(xaxis_title=objectives[0],
-                                      yaxis_title=objectives[1],
-                                      zaxis_title=objectives[3],
-                                      xaxis=dict(
-                                          ticks='outside',
-                                          backgroundcolor="rgb(254, 253, 224)",
-                                          gridcolor="grey",
-                                          showbackground=True),
-                                      yaxis=dict(
-                                          ticks='outside',
-                                          backgroundcolor="rgb(255, 238, 217)",
-                                          gridcolor="grey",
-                                          showbackground=True),
-                                      zaxis=dict(
-                                          ticks='outside',
-                                          backgroundcolor="rgb(190, 235, 243)",
-                                          gridcolor="grey",
-                                          showbackground=True)
-                                      )
-                           )
-
-        # Show the plot
-        fig = go.Figure(data=data, layout=layout)
-        fig.show(renderer="browser")
+    # Show the plot
+    fig = go.Figure(data=traces, layout=layout)
+    fig.show(renderer="browser")
 
 
 def main(config=cea.config.Configuration()):
     """Test this plot"""
-    run_ids = [1, 4]  # List of run IDs to compare
     locator = InputLocator(scenario=config.scenario)
     objective_values_dict = {}
+    
+    # Identify all potential optimization run folders and extract run_ids
+    optimization_base_folder = locator.get_optimization_results_folder()
+    run_ids = []
+    
+    if os.path.exists(optimization_base_folder):
+        for folder_name in os.listdir(optimization_base_folder):
+            folder_path = os.path.join(optimization_base_folder, folder_name)
+            if os.path.isdir(folder_path):
+                # Check for 'centralized' (default) or 'centralized_run_{X}' patterns
+                if folder_name == 'centralized':
+                    run_ids.append(None)
+                elif folder_name.startswith('centralized_run_'):
+                    run_id = folder_name.replace('centralized_run_', '')
+                    run_ids.append(int(run_id))
+    
+    print(f"Found optimization run_ids: {run_ids}")
 
     for run_id in run_ids:
+        locator.optimization_run = run_id
         optimisation_results = locator.get_centralized_optimization_results_folder()
         individual_supply_system_results = [
-            locator.get_new_optimization_optimal_supply_systems_summary_file(run_id, subfolder)
+            locator.get_new_optimization_optimal_supply_systems_summary_file(subfolder)
             for subfolder in os.listdir(optimisation_results) if not subfolder == 'debugging'
         ]
         objectives, objective_function_values = read_objective_values_from_file(individual_supply_system_results)
