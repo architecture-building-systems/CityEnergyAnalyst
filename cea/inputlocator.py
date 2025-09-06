@@ -1433,6 +1433,18 @@ class InputLocator(object):
     def get_lca_mobility(self):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+    
+    def get_lca_timeline_folder(self):
+        """scenario/outputs/data/emissions/timeline"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "timeline")
+    
+    def get_lca_timeline_building(self, building: str):
+        """scenario/outputs/data/emissions/timeline/{building}_timeline.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"{building}_timeline.csv")
+
+    def get_lca_operational_hourly_building(self, building: str):
+        """scenario/outputs/data/emissions/timeline/{building}_operational_hourly.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_hourly.csv")
 
     # COSTS
     def get_costs_folder(self):
