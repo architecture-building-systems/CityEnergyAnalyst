@@ -1,7 +1,9 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -142,42 +144,48 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     content_type = request.headers.get("content-type", "")
     
     # Handle both form data and JSON payloads for backwards compatibility
-    if "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
+    if "application/json" in content_type:
+        # JSON handling (backwards compatibility)
+        json_data = await request.json()
+
+        script = json_data.get("script")
+        parameters = json_data.get("parameters")
+    elif "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
         # Form data handling (supports file uploads)
         form_data = await request.form()
         script = form_data.get("script")
-        parameters = form_data.get("parameters")
+        parameters = {}
 
-        if parameters is None:
-            raise HTTPException(status_code=400, detail="Missing 'parameters' field in form data.")
-
-        import json
-        try:
-            parameters = json.loads(parameters)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid format in 'parameters' field.")
-
-        args = {"script": script, "parameters": parameters}
+        # Regex to match parameters[key] pattern
+        parameter_pattern = re.compile(r'^parameters\[([^\[\]]+)\]$')
+        for key, value in form_data.items():
+            match = parameter_pattern.match(key)
+            if match:
+                param_name = match.group(1)
+                # Convert string booleans to actual booleans for form data
+                if isinstance(value, _UploadFile):
+                    parameters[param_name] = value  # Keep UploadFile as is for processing later
+                elif isinstance(value, str):
+                    # Handle nested JSON structures or boolean string in form data
+                    try:
+                        parameters[param_name] = json.loads(value)  # parse if it's JSON
+                    except Exception:
+                        parameters[param_name] = value
     else:
-        # JSON handling (backwards compatibility)
-        json_data = await request.json()
-        args = json_data
-        logger.info(f"Received JSON payload: {json_data}")
-    
-    logger.info(f"Adding new job: args={args}")
+        raise HTTPException(status_code=400, detail="Unsupported content type.")
 
-    if not args["script"]:
+    if script is None:
         raise HTTPException(status_code=422, detail="Missing required field: 'script'.")
 
     # Create job first to get job ID for temp file handling
-    job = JobInfo(script=args["script"], parameters={}, project_id=project_id, created_by=user_id)
+    job = JobInfo(script=script, parameters={}, project_id=project_id, created_by=user_id)
     session.add(job)
     await session.commit()
     await session.refresh(job)
 
     try:
         # Process parameters to handle any UploadFile instances
-        parameters = await process_job_parameters(args["parameters"], job.id)
+        parameters = await process_job_parameters(parameters, job.id)
 
         # FIXME: Forcing remote multiprocessing to be disabled for now,
         #  find solution for restricting number of processes per user
