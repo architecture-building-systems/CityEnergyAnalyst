@@ -44,9 +44,9 @@ def excel_to_shapefile(excel_file, shapefile, index, crs, polygon=True):
     """
     df = pd.read_excel(excel_file)
     if polygon:
-        geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Polygon(json.loads(g)) for g in df.geometry]
     else:
-        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.LineString(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)

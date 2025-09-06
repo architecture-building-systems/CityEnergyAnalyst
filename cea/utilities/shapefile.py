@@ -27,7 +27,7 @@ __status__ = "Production"
 
 import pandas as pd
 import geopandas as gpd
-import shapely.geometry
+import shapely
 import json
 import os
 
@@ -75,11 +75,11 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
     # Convert geometry based on type
     if geometry_type == "polygon":
-        geometry = [shapely.geometry.Polygon(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Polygon(json.loads(g)) for g in df.geometry]
     elif geometry_type == "polyline":
-        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.LineString(json.loads(g)) for g in df.geometry]
     elif geometry_type == "point":
-        geometry = [shapely.geometry.Point(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Point(json.loads(g)) for g in df.geometry]
     else:
         raise ValueError("Invalid geometry type. Use 'polygon', 'polyline', or 'point'.")
 
