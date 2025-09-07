@@ -68,9 +68,9 @@ def copy_weather_file(source_weather_file, locator):
     :return: (this script doesn't return anything)
     """
     from shutil import copyfile
-    assert os.path.exists(source_weather_file), "Could not find weather file: {source_weather_file}".format(
-        source_weather_file=source_weather_file
-    )
+    if not os.path.exists(source_weather_file):
+        raise ValueError(f"Could not find weather file: {source_weather_file}")
+
     copyfile(source_weather_file, locator.get_weather_file())
     print("Set weather for scenario <{scenario}> to {source_weather_file}".format(
         scenario=os.path.basename(locator.scenario),
