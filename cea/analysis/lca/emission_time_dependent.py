@@ -14,7 +14,7 @@ from cea.utilities import epwreader
 
 def operational_hourly(config: Configuration) -> None:
     locator = InputLocator(config.scenario)
-    buildings = config.emission_time_dependent.buildings
+    buildings = config.emissions.buildings
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
@@ -35,17 +35,8 @@ def operational_hourly(config: Configuration) -> None:
 
     df_by_building = to_ton(sum_by_building(results))
     df_by_hour = to_ton(sum_by_index([df for _, df in results]))
-    df_by_building.to_csv(
-        os.path.join(
-            locator.get_lca_timeline_folder(),
-            "Total_yearly_operational_per_building.csv",
-        )
-    )
-    df_by_hour.to_csv(
-        os.path.join(
-            locator.get_lca_timeline_folder(), "Total_yearly_operational_per_hour.csv"
-        )
-    )
+    df_by_building.to_csv(locator.get_total_yearly_operational_building())
+    df_by_building.to_csv(locator.get_total_yearly_operational_hour())
     print(
         f"District-level operational emissions saved in: {locator.get_lca_timeline_folder()}"
     )
@@ -53,8 +44,11 @@ def operational_hourly(config: Configuration) -> None:
 
 def total_yearly(config: Configuration) -> None:
     locator = InputLocator(scenario=config.scenario)
-    buildings: list[str] = config.emission_time_dependent.buildings
-    end_year: int = config.emission_time_dependent.end_year
+    buildings: list[str] = config.emissions.buildings
+    if config.emissions.year_end is None:
+        end_year: int = 2100
+    else:
+        end_year: int = config.emissions.year_end
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
@@ -81,14 +75,8 @@ def total_yearly(config: Configuration) -> None:
 
     df_by_building = to_ton(sum_by_building(results))
     df_by_year = to_ton(sum_by_index([df for _, df in results]))
-    df_by_building.to_csv(
-        os.path.join(
-            locator.get_lca_timeline_folder(), "Total_emission_per_building.csv"
-        )
-    )
-    df_by_year.to_csv(
-        os.path.join(locator.get_lca_timeline_folder(), "Total_emission_timeline.csv")
-    )
+    df_by_building.to_csv(locator.get_total_emissions_building_year_end(year_end=end_year))
+    df_by_year.to_csv(locator.get_total_emissions_timeline_year_end(year_end=end_year))
     print(
         f"District-level total emissions saved in: {locator.get_lca_timeline_folder()}"
     )

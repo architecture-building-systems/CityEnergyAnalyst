@@ -148,6 +148,8 @@ class bar_plot:
                 title = "CEA-4 Photovoltaic-Thermal (PVT) Panels: {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'sc':
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
+            elif plot_cea_feature == 'emissions':
+                title = "CEA-4 Life Cycle Analysis"
 
         # Set the y-axis label
         if self.y_label:

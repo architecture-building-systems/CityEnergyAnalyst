@@ -261,9 +261,14 @@ Thermal Network Design:
 Life Cycle Analysis:
 
   - name: emissions
-    label: Emissions - Simplified
+    label: Emissions
     short_description: Calculate embodied and operational emissions of buildings
-    description: This Feature calculates the embodied and operational emissions of buildings.
+    description: |
+      This Feature calculates the aggregated embodied and operational emissions for each building, with an option for hourly (8,760 hours) operational emissions and projected annual embodied emissions until a given year.
+      
+      Embodied emissions: building's initial construction, including construction, renovation, deconstruction, biogenic carbon storage.
+      Operational emissions: supply systems operation.
+
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -272,20 +277,6 @@ Life Cycle Analysis:
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_building_supply]
-
-  - name: emission-time-dependent
-    label: Emission - Time Dependent
-    short_description: Calculate operational and embodied emission, and their progress through time.
-    description: First, This feature generates hourly operational emission for heating, cooling, hot water
-      and electricity consumption for each building.
-      Then, this Feature accounts for all possible emissions since the building's initial construction,
-      including construction, renovation, deconstruction, biogenic carbon storage and operational emissions.
-      The timeline records all activities every year, assuming all components are renovated or replaced
-      according to its lifetime.
-    interfaces: [cli, dashboard]
-    module: cea.analysis.lca.emission_time_dependent
-    parameters: ['general:scenario', emission-time-dependent]
-    input-files:
       - [get_demand_results_file, building_name]
       - [get_building_architecture]
       - [get_zone_geometry]
@@ -700,6 +691,30 @@ Visualisation:
       - [get_total_demand]
       - [get_building_architecture]
       - [get_zone_geometry]
+
+  - name: plot-embodied-emissions
+    label: Plot - Embodied Emissions
+    short_description: Plot bar chart of building embodied emissions
+    description: This Feature plots bar chart of the results of embodied emissions
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-embodied-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
+  - name: plot-operational-emissions
+    label: Plot - Operational Emissions
+    short_description: Plot bar chart of building operational emissions
+    description: This Feature plots bar chart of the results of operational emissions
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
 
   - name: plot-solar
     label: Plot - Solar Technology
