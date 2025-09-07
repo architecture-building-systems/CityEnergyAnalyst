@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 
 from cea.config import Configuration
