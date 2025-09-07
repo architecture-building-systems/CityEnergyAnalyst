@@ -119,7 +119,7 @@ def exec_cea_commands(config, cea_scenario):
                        capture_output=True)
 
     if demand_forecasting:
-        subprocess.run(['cea', 'occupancy-helper', '--scenario', cea_scenario], env=my_env, check=True,
+        subprocess.run(['cea', 'occupancy', '--scenario', cea_scenario], env=my_env, check=True,
                        capture_output=True)
         subprocess.run(['cea', 'demand', '--scenario', cea_scenario], env=my_env, check=True, capture_output=True)
 
