@@ -72,10 +72,8 @@ def copy_weather_file(source_weather_file, locator):
         raise ValueError(f"Could not find weather file: {source_weather_file}")
 
     copyfile(source_weather_file, locator.get_weather_file())
-    print("Set weather for scenario <{scenario}> to {source_weather_file}".format(
-        scenario=os.path.basename(locator.scenario),
-        source_weather_file=source_weather_file
-    ))
+    print(f"Weather for scenario [{os.path.basename(locator.scenario)}] has been set to "
+          f"{os.path.basename(source_weather_file)}")
 
 
 def main(config):
