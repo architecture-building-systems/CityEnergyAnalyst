@@ -9,7 +9,7 @@ import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
-from shapely.geometry import LineString
+from shapely import LineString
 
 import cea.config
 import cea.inputlocator

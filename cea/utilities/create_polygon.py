@@ -9,7 +9,7 @@ import cea.inputlocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 import geopandas as gpd
-from shapely.geometry import Polygon
+from shapely import Polygon
 
 __author__ = "Reynold Mok"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
