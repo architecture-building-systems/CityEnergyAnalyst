@@ -62,11 +62,19 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
             if temp_dir is None:
                 temp_dir = tempfile.mkdtemp(prefix=get_cea_job_temp_prefix(job_id))
                 logger.info(f"Created temporary directory for job {job_id}: {temp_dir}")
-            
+
             # Write file to temp directory with safe filename
-            safe_filename = os.path.basename(value.filename or f"upload_{key}") if value.filename else f"upload_{key}"
-            # Remove any remaining path separators and null bytes
-            safe_filename = safe_filename.replace(os.sep, "_").replace(os.altsep or "", "_").replace("\0", "")
+            if value.filename:
+                safe_filename = os.path.basename(value.filename)
+                # Remove dangerous characters but preserve the original filename structure
+                import string
+                safe_chars = string.ascii_letters + string.digits + ".-_"
+                safe_filename = "".join(c if c in safe_chars else "_" for c in safe_filename)
+                # Ensure filename is not empty after sanitization
+                if not safe_filename or safe_filename.startswith("."):
+                    safe_filename = f"upload_{key}"
+            else:
+                safe_filename = f"upload_{key}"
             file_path = os.path.join(temp_dir, safe_filename)
             # Normalize and ensure the file path is within temp_dir
             normalized_file_path = os.path.realpath(file_path)
@@ -142,7 +150,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
                          settings: CEAServerSettings) -> JobInfo:
     """Post a new job to the list of jobs to complete"""
     content_type = request.headers.get("content-type", "")
-    
+
     # Handle both form data and JSON payloads for backwards compatibility
     if "application/json" in content_type:
         # JSON handling (backwards compatibility)
@@ -177,11 +185,8 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     if script is None:
         raise HTTPException(status_code=422, detail="Missing required field: 'script'.")
 
-    # Create job first to get job ID for temp file handling
+    # Create job first with empty parameters to get job ID for temp file handling
     job = JobInfo(script=script, parameters={}, project_id=project_id, created_by=user_id)
-    session.add(job)
-    await session.commit()
-    await session.refresh(job)
 
     try:
         # Process parameters to handle any UploadFile instances
@@ -194,17 +199,17 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 
         # Update job with processed parameters
         job.parameters = parameters
-        await session.commit()
-        await session.refresh(job)
-
-        await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-        return job
-    except Exception:
+    except Exception as e:
         # If parameter processing fails, clean up the job and any temp files
         cleanup_job_temp_files(job.id)
-        await session.delete(job)
-        await session.commit()
-        raise
+        raise e
+
+    session.add(job)
+    await session.commit()
+    await session.refresh(job)
+
+    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 @router.post("/started/{job_id}")
