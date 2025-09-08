@@ -89,7 +89,7 @@ def full_report_to_xls(tsd_df, output_folder, basename):
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     #timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     #output_path = os.path.join(output_folder,"%(basename)s-%(timestamp)s.xls" % locals())
-    output_path = os.path.join(output_folder, "%(basename)s.xls" % locals())
+    output_path = os.path.join(output_folder, "%(basename)s.xlsx" % locals())
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         tsd_df.to_excel(writer, na_rep="NaN")
 
