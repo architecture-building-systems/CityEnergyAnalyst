@@ -894,4 +894,4 @@ class TimeSeriesData:
             if hasattr(obj, solar_irradiation_type):
                 return getattr(obj, solar_irradiation_type)
 
-        raise ValueError(f"Moisture type '{occupancy_var}' not found in any occupancy-related properties.")
+        raise ValueError(f"Moisture type '{solar_irradiation_type}' not found in any occupancy-related properties.")
