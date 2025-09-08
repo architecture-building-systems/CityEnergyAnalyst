@@ -40,9 +40,22 @@ def full_report_to_xls(tsd, output_folder, basename):
 def quick_visualization_tsd(tsd, output_folder, basename):
 
     # import keys
-    from cea.demand.thermal_loads import TSD_KEYS_HEATING_LOADS, TSD_KEYS_HEATING_TEMP, TSD_KEYS_RC_TEMP, \
-        TSD_KEYS_COOLING_LOADS, TSD_KEYS_MOISTURE, TSD_KEYS_VENTILATION_FLOWS, TSD_KEYS_COOLING_SUPPLY_TEMP, \
-        TSD_KEYS_COOLING_SUPPLY_FLOWS
+    TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
+                              'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs_sys_shu', 'Qhs_sys_ahu',
+                              'Qhs_sys_aru', 'DH_hs', 'Qhs', 'Qhs_sys', 'QH_sys', 'DH_ww', 'Qww_sys', 'Qww',
+                              'Qhs', 'Qhpro_sys']
+    TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
+                              'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs_sys_scu', 'Qcs_sys_ahu',
+                              'Qcs_sys_aru', 'DC_cs', 'Qcs', 'Qcs_sys', 'QC_sys', 'DC_cre', 'Qcre_sys', 'Qcre',
+                              'DC_cdata', 'Qcdata_sys', 'Qcdata', 'Qcpro_sys']
+    TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
+    TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcs_sys_ahu', 'mcpcs_sys_aru', 'mcpcs_sys_scu', 'mcpcs_sys']
+    TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcs_sys_re_ahu', 'Tcs_sys_re_aru', 'Tcs_sys_re_scu', 'Tcs_sys_sup_ahu',
+                                    'Tcs_sys_sup_aru', 'Tcs_sys_sup_scu', 'Tcs_sys_sup', 'Tcs_sys_re',
+                                    'Tcdata_sys_re', 'Tcdata_sys_sup', 'Tcre_sys_re', 'Tcre_sys_sup']
+    TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
+    TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+    TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
 
     # set to True to produce plotly graphs of selected variables
     plot_heat_load = True
@@ -51,7 +64,7 @@ def quick_visualization_tsd(tsd, output_folder, basename):
     plot_cool_moisture = True
     plot_cool_air = True
     plot_cool_sup = True
-    auto_open = False 
+    auto_open = False
 
     if plot_heat_load:
         filename = os.path.join(output_folder, "heat-load-{}.html").format(basename)
