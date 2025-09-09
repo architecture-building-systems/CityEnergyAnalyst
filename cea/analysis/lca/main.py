@@ -40,7 +40,7 @@ def emissions_simplified(locator, config):
         year_to_calculate = config.emissions.year_to_calculate
         if year_to_calculate is None:
             year_to_calculate = 2025
-            lca_embodied(year_to_calculate, locator)
+        lca_embodied(year_to_calculate, locator)
 
     # operation emissions
     if operation:
