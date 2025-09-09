@@ -265,10 +265,9 @@ Life Cycle Analysis:
     short_description: Calculate embodied and operational emissions of buildings
     description: |
       This Feature calculates the aggregated embodied and operational emissions for each building, with an option for hourly (8,760 hours) operational emissions and projected annual embodied emissions until a given year.
-      
+
       Embodied emissions: building's initial construction, including construction, renovation, deconstruction, biogenic carbon storage.
       Operational emissions: supply systems operation.
-
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -278,9 +277,6 @@ Life Cycle Analysis:
       - [get_zone_geometry]
       - [get_building_supply]
       - [get_demand_results_file, building_name]
-      - [get_building_architecture]
-      - [get_zone_geometry]
-      - [get_building_supply]
       - [get_weather_file]
       - [get_database_assemblies_envelope_floor]
       - [get_database_assemblies_envelope_wall]
