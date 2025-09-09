@@ -32,4 +32,16 @@ def migrate_void_deck_data(locator: cea.inputlocator.InputLocator) -> None:
             warnings.warn(
                 "No void_deck data found in envelope.csv, setting to 0 in zone.shp"
             )
+        
+        # Validate that floors_ag is larger than void_deck for each building
+        for idx, row in zone_gdf.iterrows():
+            if row['floors_ag'] - row['void_deck'] <= 0:
+                raise ValueError(f"floors_ag should be larger than void_deck, cannot be equal or smaller. Building: {row.get('name', idx)}, floors_ag: {row['floors_ag']}, void_deck: {row['void_deck']}")
+        
         zone_gdf.to_file(locator.get_zone_geometry(), driver="ESRI Shapefile")
+
+    else:
+        for idx, row in zone_gdf.iterrows():
+            if row['floors_ag'] - row['void_deck'] <= 0:
+                raise ValueError(
+                    f"floors_ag should be larger than void_deck, cannot be equal or smaller. Building: {row.get('name', idx)}, floors_ag: {row['floors_ag']}, void_deck: {row['void_deck']}")

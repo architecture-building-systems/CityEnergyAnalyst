@@ -479,6 +479,7 @@ def main(config):
     print('Running occupancy model for scenario %s' % config.scenario)
     print('Running occupancy model  with schedule model=%s' % config.occupancy_helper.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
+    migrate_void_deck_data(locator)
     occupancy_helper_main(locator, config)
 
 
