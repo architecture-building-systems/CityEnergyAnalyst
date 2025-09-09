@@ -204,8 +204,9 @@ def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, reso
         print('Creating instant plotly visualizations of demand variable time series.')
         print('Behavior can be changed in cea.utilities.reporting code.')
         print('Writing detailed demand results of {} to .xls file.'.format(building_name))
-        reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
-        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+        tsd_df = reporting.calc_full_hourly_dataframe(tsd, date)
+        reporting.quick_visualization_tsd(tsd_df, locator.get_demand_results_folder(), building_name)
+        reporting.full_report_to_xls(tsd_df, locator.get_demand_results_folder(), building_name)
 
     writer.results_to_csv(tsd, bpr, locator, date, building_name)
 

@@ -839,3 +839,59 @@ class TimeSeriesData:
                 return getattr(obj, temperature_type)
         
         raise ValueError(f"Temperature type '{temperature_type}' not found in any temperature properties.")
+
+    def get_moisture_value(self, moisture_type: str):
+        """
+        Get the moisture values for a specific moisture measurement type.
+        """
+        load_objects = [
+            self.moisture
+        ]
+
+        for obj in load_objects:
+            if hasattr(obj, moisture_type):
+                return getattr(obj, moisture_type)
+
+        raise ValueError(f"Moisture type '{moisture_type}' not found in any moisture properties.")
+
+    def get_ventilation_mass_flow_value(self, ventilation_type: str):
+        """
+        Get the ventilation mass flow value for a specific ventilation type.
+        """
+        load_objects = [
+            self.ventilation_mass_flows
+        ]
+
+        for obj in load_objects:
+            if hasattr(obj, ventilation_type):
+                return getattr(obj, ventilation_type)
+
+        raise ValueError(f"Moisture type '{ventilation_type}' not found in any ventilation properties.")
+
+    def get_occupancy_value(self, occupancy_var: str):
+        """
+        Get the value for a specific occupancy-related variable.
+        """
+        load_objects = [
+            self.occupancy
+        ]
+
+        for obj in load_objects:
+            if hasattr(obj, occupancy_var):
+                return getattr(obj, occupancy_var)
+
+        raise ValueError(f"Moisture type '{occupancy_var}' not found in any occupancy-related properties.")
+
+    def get_solar_value(self, solar_irradiation_type: str):
+        """
+        Get the solar irradiation value for a specific solar irradiation type.
+        """
+        load_objects = [
+            self.solar
+        ]
+
+        for obj in load_objects:
+            if hasattr(obj, solar_irradiation_type):
+                return getattr(obj, solar_irradiation_type)
+
+        raise ValueError(f"Moisture type '{solar_irradiation_type}' not found in any occupancy-related properties.")
