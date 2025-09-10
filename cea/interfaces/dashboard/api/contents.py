@@ -14,6 +14,7 @@ from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
 import cea.config
+import cea.inputlocator
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
@@ -28,6 +29,11 @@ from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 MAX_FILE_SIZE = 1000 * 1024 * 1024  # 1GB
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
 UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
+
+SIMPLIFIED_OUTPUT_FILE_LOCATORS = [
+    "get_total_demand",
+    "get_total_demand_hourly",
+]
 
 
 logger = getCEAServerLogger("cea-server-contents")
@@ -455,6 +461,20 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     item_path = root_path / file
                                     relative_path = str(Path(scenario) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
+                    elif output_files_level == "simplified":
+                        # Include files from locator functions
+                        locator = cea.inputlocator.InputLocator(str(scenario_path))
+                        for func_name in SIMPLIFIED_OUTPUT_FILE_LOCATORS:
+                            if hasattr(locator, func_name):
+                                func = getattr(locator, func_name)
+                                if callable(func):
+                                    try:
+                                        item_path = Path(func())
+                                        if item_path.exists() and item_path.suffix in VALID_EXTENSIONS:
+                                            relative_path = str(Path(scenario) / "outputs" / item_path.name)
+                                            files_to_zip.append((item_path, relative_path))
+                                    except Exception as e:
+                                        logger.warning(f"Error locating simplified output file with {func_name}: {e}")
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
