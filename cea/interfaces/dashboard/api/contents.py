@@ -422,9 +422,13 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name
-            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+
+            # Use compresslevel=1 for faster zipping, at the cost of compression ratio
+            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as zip_file:
                 base_path = Path(project_root) / project
                 
+                # Collect all files first for batch processing
+                files_to_zip = []
                 for scenario in scenarios:
                     scenario_path = base_path / scenario
                     if not scenario_path.exists():
@@ -433,14 +437,22 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                     target_path = (scenario_path / "inputs") if input_files_only else scenario_path
                     prefix = f"{scenario}/inputs" if input_files_only else scenario
                     
-                    for item_path in target_path.rglob('*'):
-                        if item_path.is_file() and item_path.suffix in VALID_EXTENSIONS:
-                            relative_path = str(Path(prefix) / item_path.relative_to(target_path))
-                            zip_file.write(item_path, arcname=relative_path)
+                    for root, dirs, files in os.walk(target_path):
+                        root_path = Path(root)
+                        for file in files:
+                            if Path(file).suffix in VALID_EXTENSIONS:
+                                item_path = root_path / file
+                                relative_path = str(Path(prefix) / item_path.relative_to(target_path))
+                                files_to_zip.append((item_path, relative_path))
+                
+                # Batch write all files to zip
+                logger.info(f"Writing {len(files_to_zip)} files to zip...")
+                for item_path, archive_name in files_to_zip:
+                    zip_file.write(item_path, arcname=archive_name)
         
         # Get the file size for Content-Length header
         file_size = os.path.getsize(temp_file_path)
-        
+
         # Define the streaming function
         async def file_streamer():
             try:
