@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
 
@@ -2385,8 +2385,9 @@ def process_building_summary(config, locator,
 
     # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
     if not plot:
-        folder_name = config.result_summary.folder_name_to_save_exported_results
-        summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+        folder_name = config.result_summary.folder_name_to_save_exported_results or "summary"
+        summary_folder = locator.get_export_results_summary_folder(f"{folder_name}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}")
+        print(f"Results will be saved to: {summary_folder}")
     else:
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
