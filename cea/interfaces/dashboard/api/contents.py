@@ -397,6 +397,7 @@ class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
+    output_files: Literal["simplified", "detailed"] = "simplified"
 
 
 @router.post("/scenario/download")
@@ -414,7 +415,8 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
 
     project = form.project.strip()
     scenarios = form.scenarios
-    input_files_only = form.input_files
+    input_files = form.input_files
+    output_files_level = form.output_files
 
     filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
 
@@ -433,17 +435,16 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                     scenario_path = base_path / scenario
                     if not scenario_path.exists():
                         continue
-                        
-                    target_path = (scenario_path / "inputs") if input_files_only else scenario_path
-                    prefix = f"{scenario}/inputs" if input_files_only else scenario
-                    
-                    for root, dirs, files in os.walk(target_path):
-                        root_path = Path(root)
-                        for file in files:
-                            if Path(file).suffix in VALID_EXTENSIONS:
-                                item_path = root_path / file
-                                relative_path = str(Path(prefix) / item_path.relative_to(target_path))
-                                files_to_zip.append((item_path, relative_path))
+
+                    if input_files:
+                        input_paths = (scenario_path / "inputs")
+                        for root, dirs, files in os.walk(input_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(Path(scenario) / "inputs" / item_path.relative_to(input_paths))
+                                    files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
