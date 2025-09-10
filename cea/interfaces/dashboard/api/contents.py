@@ -397,7 +397,7 @@ class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
-    output_files: Literal["simplified", "detailed"] = "simplified"
+    output_files: Literal["simplified", "detailed"]
 
 
 @router.post("/scenario/download")
@@ -444,6 +444,16 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
                                     relative_path = str(Path(scenario) / "inputs" / item_path.relative_to(input_paths))
+                                    files_to_zip.append((item_path, relative_path))
+
+                    if output_files_level == "detailed":
+                        output_paths = (scenario_path / "outputs")
+                        for root, dirs, files in os.walk(output_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(Path(scenario) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
