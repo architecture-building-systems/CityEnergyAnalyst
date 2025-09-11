@@ -408,6 +408,8 @@ def run_summary(project: str, scenario_name: str):
     config.project = project
     config.scenario_name = scenario_name
 
+    config.result_summary.aggregate_by_building = True
+
     try:
         from cea.import_export.result_summary import main as result_summary_main
         result_summary_main(config)
