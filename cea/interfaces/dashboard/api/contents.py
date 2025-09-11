@@ -399,7 +399,7 @@ class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
-    output_files: Literal["simplified", "detailed"]
+    output_files: Literal["summary", "detailed"]
 
 
 def run_summary(project: str, scenario_name: str):
@@ -473,7 +473,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     item_path = root_path / file
                                     relative_path = str(Path(scenario) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
-                    elif output_files_level == "simplified":
+                    elif output_files_level == "summary":
                         # create summary files first
                         await run_in_threadpool(run_summary, base_path, scenario)
 
