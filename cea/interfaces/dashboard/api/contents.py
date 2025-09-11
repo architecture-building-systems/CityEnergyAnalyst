@@ -473,7 +473,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     files_to_zip.append((item_path, relative_path))
                     elif output_files_level == "simplified":
                         # create summary files first
-                        await run_in_threadpool(run_summary(base_path, scenario))
+                        await run_in_threadpool(run_summary, base_path, scenario)
 
                         export_paths = (scenario_path / "export" / "results")
                         for root, dirs, files in os.walk(export_paths):
