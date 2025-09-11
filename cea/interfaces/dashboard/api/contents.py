@@ -30,11 +30,6 @@ MAX_FILE_SIZE = 1000 * 1024 * 1024  # 1GB
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
 UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
 
-SIMPLIFIED_OUTPUT_FILE_LOCATORS = [
-    "get_total_demand",
-    "get_total_demand_hourly",
-]
-
 
 logger = getCEAServerLogger("cea-server-contents")
 
@@ -406,6 +401,20 @@ class DownloadScenario(BaseModel):
     output_files: Literal["simplified", "detailed"]
 
 
+def run_summary(project: str, scenario_name: str):
+    """Run the summary function to ensure all summary files are generated"""
+    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    config.project = project
+    config.scenario_name = scenario_name
+
+    try:
+        from cea.import_export.result_summary import main as result_summary_main
+        result_summary_main(config)
+    except Exception as e:
+        logger.error(f"Error generating summary for {scenario_name}: {str(e)}")
+        raise e
+
+
 @router.post("/scenario/download")
 async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
     if not form.project or not form.scenarios:
@@ -462,19 +471,18 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
                     elif output_files_level == "simplified":
-                        # Include files from locator functions
-                        locator = cea.inputlocator.InputLocator(str(scenario_path))
-                        for func_name in SIMPLIFIED_OUTPUT_FILE_LOCATORS:
-                            if hasattr(locator, func_name):
-                                func = getattr(locator, func_name)
-                                if callable(func):
-                                    try:
-                                        item_path = Path(func())
-                                        if item_path.exists() and item_path.suffix in VALID_EXTENSIONS:
-                                            relative_path = str(Path(scenario) / "outputs" / item_path.name)
-                                            files_to_zip.append((item_path, relative_path))
-                                    except Exception as e:
-                                        logger.warning(f"Error locating simplified output file with {func_name}: {e}")
+                        # create summary files first
+                        run_summary(base_path, scenario)
+
+                        export_paths = (scenario_path / "export" / "results")
+                        for root, dirs, files in os.walk(export_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(
+                                        Path(scenario) / "export" / "results" / item_path.relative_to(export_paths))
+                                    files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
