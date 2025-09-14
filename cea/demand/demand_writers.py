@@ -88,7 +88,7 @@ class DemandWriter(ABC):
         self.write_to_hdf5(building_name, columns, hourly_data, locator)
 
         # save total for the year
-        columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd)
+        columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd, locator)
         # save to disc
         partial_total_data = pd.DataFrame(data, index=[0])
         partial_total_data.drop('name', inplace=True, axis=1)
@@ -102,12 +102,12 @@ class DemandWriter(ABC):
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
         # save annual values to a temp file for YearlyDemandWriter
-        columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd)
+        columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd, locator)
         pd.DataFrame(data, index=[0]).to_csv(
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
             index=False, columns=columns, float_format='%.3f', na_rep='nan')
 
-    def calc_yearly_dataframe(self, bpr: BuildingPropertiesRow, building_name, tsd: TimeSeriesData):
+    def calc_yearly_dataframe(self, bpr: BuildingPropertiesRow, building_name, tsd: TimeSeriesData, locator):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
         data = dict((x + '_MWhyr', np.nan_to_num(tsd.get_load_value(x)).sum() / 1000000) for x in self.load_vars)
@@ -116,9 +116,17 @@ class DemandWriter(ABC):
         keys = data.keys()
         columns = self.OTHER_VARS
         columns.extend(keys)
+
+        # get the architecture data
+        architecture_df = pd.read_csv(locator.get_architecture_csv())
+        Af_m2 = float(architecture_df.loc[architecture_df['name'] == building_name, 'Af_m2'].iloc[0])
+        Aroof_m2 = float(architecture_df.loc[architecture_df['name'] == building_name, 'Aroof_m2'].iloc[0])
+        GFA_m2 = float(architecture_df.loc[architecture_df['name'] == building_name, 'GFA_m2'].iloc[0])
+        Aocc_m2 = float(architecture_df.loc[architecture_df['name'] == building_name, 'Aocc_m2'].iloc[0])
+
         # add other default elements
-        data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.rc_model.Aroof,
-                     'GFA_m2': bpr.rc_model.GFA_m2, 'Aocc_m2': bpr.rc_model.Aocc,
+        data.update({'name': building_name, 'Af_m2': Af_m2, 'Aroof_m2': Aroof_m2,
+                     'GFA_m2': GFA_m2, 'Aocc_m2': Aocc_m2,
                      'people0': tsd.occupancy.people.max()})
         return columns, data
 
