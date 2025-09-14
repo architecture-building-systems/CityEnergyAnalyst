@@ -178,7 +178,7 @@ def get_results_path(locator, cea_feature, list_buildings):
     list_appendix = []
 
     if cea_feature == 'architecture':
-        path = locator.get_total_demand()
+        path = locator.get_architecture_csv()
         list_paths.append(path)
         list_appendix.append(cea_feature)
 
