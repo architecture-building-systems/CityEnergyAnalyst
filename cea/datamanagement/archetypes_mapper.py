@@ -98,6 +98,9 @@ def archetypes_mapper(locator,
 
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df)
+    
+    # Generate architecture CSV file with geometric properties
+    generate_architecture_csv(locator, building_typology_df)
 
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
@@ -399,6 +402,77 @@ def verify_building_standards(building_typology_df, db_standards):
     if not typology_standards.issubset(db_standards):
         diff = typology_standards.difference(db_standards)
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
+
+
+def generate_architecture_csv(locator, building_typology_df):
+    """
+    Generate an architecture CSV file with geometric properties similar to what's calculated 
+    in demand_writers.py calc_yearly_dataframe method.
+    
+    :param locator: InputLocator instance
+    :param building_typology_df: GeoDataFrame containing building geometry data
+    """
+    # Get architecture database to access Hs, Ns, Es, occupied_bg values
+    architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
+    prop_architecture_df = building_typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
+    
+    # Calculate architectural properties for each building
+    architecture_data = []
+    
+    for idx, building in prop_architecture_df.iterrows():
+        # Calculate areas based on geometry
+        footprint = building.geometry.area  # building footprint area
+        floors_ag = building.get('floors_ag')  # above-ground floors
+        floors_bg = building.get('floors_bg')  # below-ground floors
+        void_deck = building.get('void_deck')  # void deck floors
+        
+        # Get shares from architecture database
+        Hs = building.get('Hs')  # Share of GFA that is conditioned
+        Ns = building.get('Ns')  # Share of GFA that is occupied
+        # Es = building.get('Es')  # Share of GFA that is electrified
+        occupied_bg = building.get('occupied_bg')  # Whether basement is occupied
+        
+        # Calculate GFA components using proper equations
+        gfa_ag_m2 = footprint * (floors_ag - void_deck)  # Above-ground GFA
+        gfa_bg_m2 = footprint * floors_bg  # Below-ground GFA
+        gfa_m2 = gfa_ag_m2 + gfa_bg_m2  # Total GFA
+        
+        # Split shares between above and below ground areas
+        # Using the same logic as in useful_areas.py split_above_and_below_ground_shares
+        effective_floors_ag = floors_ag - void_deck
+        share_ag = effective_floors_ag / (effective_floors_ag + floors_bg * occupied_bg) if (effective_floors_ag + floors_bg * occupied_bg) > 0 else 1.0
+        share_bg = 1 - share_ag
+        
+        Hs_ag = Hs * share_ag
+        Hs_bg = Hs * share_bg  
+        Ns_ag = Ns * share_ag
+        Ns_bg = Ns * share_bg
+        
+        # Calculate areas using proper equations from useful_areas.py
+        af_m2 = gfa_ag_m2 * Hs_ag + gfa_bg_m2 * Hs_bg  # Conditioned floor area
+        aocc_m2 = gfa_ag_m2 * Ns_ag + gfa_bg_m2 * Ns_bg  # Occupied floor area
+        aroof_m2 = footprint  # Roof area equals footprint
+
+        
+        building_data = {
+            'name': building['name'],
+            'Af_m2': af_m2,
+            'Aroof_m2': aroof_m2, 
+            'GFA_m2': gfa_m2,
+            'Aocc_m2': aocc_m2,
+        }
+        
+        architecture_data.append(building_data)
+    
+    # Create DataFrame and save to CSV
+    architecture_df = pd.DataFrame(architecture_data)
+    
+    # Ensure parent folder exists
+    locator.ensure_parent_folder_exists(locator.get_architecture_csv())
+    
+    # Save to CSV file
+    architecture_df.to_csv(locator.get_architecture_csv(), index=False, float_format='%.3f')
+    print(f"Architecture data generated and saved to: {locator.get_architecture_csv()}")
 
 
 def main(config):
