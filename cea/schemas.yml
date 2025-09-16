@@ -19439,7 +19439,6 @@ get_terrain:
         values: TODO
   used_by:
   - radiation
-  - occupancy
 get_thermal_demand_csv_file:
   created_by:
   - thermal_network
