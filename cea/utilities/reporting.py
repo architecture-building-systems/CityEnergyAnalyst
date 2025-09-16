@@ -95,7 +95,7 @@ def full_report_to_xls(tsd_df, output_folder, basename):
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     #timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     #output_path = os.path.join(output_folder,"%(basename)s-%(timestamp)s.xls" % locals())
-    output_path = os.path.join(output_folder, "%(basename)s.xlsx" % locals())
+    output_path = os.path.join(output_folder, f"{basename}.xlsx")
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         tsd_df.to_excel(writer, na_rep="NaN")
 
@@ -112,7 +112,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
     auto_open = False
 
     if plot_heat_load:
-        filename = os.path.join(output_folder, "heat-load-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"heat-load-{basename}.html")
         traces = []
         for key in TSD_KEYS_HEATING_LOADS:
             y = tsd_df[key][50:150]
@@ -122,7 +122,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_heat_temp:
-        filename = os.path.join(output_folder, "heat-temp-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"heat-temp-{basename}.html")
         traces = []
         for key in TSD_KEYS_HEATING_TEMP | TSD_KEYS_RC_TEMP:
             y = tsd_df[key][50:150]
@@ -132,7 +132,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_load:
-        filename = os.path.join(output_folder, "cool-load-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"cool-load-{basename}.html")
         traces = []
         for key in TSD_KEYS_COOLING_LOADS:
             y = tsd_df[key]
@@ -142,7 +142,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_moisture:
-        filename = os.path.join(output_folder, "cool-moisture-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"cool-moisture-{basename}.html")
         traces = []
         for key in TSD_KEYS_MOISTURE:
             y = tsd_df[key]
@@ -152,7 +152,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_air:
-        filename = os.path.join(output_folder, "cool-air-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"cool-air-{basename}.html")
         traces = []
         for key in TSD_KEYS_VENTILATION_FLOWS:
             y = tsd_df[key]
@@ -162,7 +162,7 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_sup:
-        filename = os.path.join(output_folder, "cool-sup-{}.html").format(basename)
+        filename = os.path.join(output_folder, f"cool-sup-{basename}.html")
         traces = []
         for key in TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_COOLING_SUPPLY_FLOWS:
             y = tsd_df[key]
