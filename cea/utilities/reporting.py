@@ -2,6 +2,8 @@
 Functions for Report generation
 """
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 import os
@@ -24,6 +26,8 @@ from cea.demand.time_series_data import (
     Occupancy,
 )
 
+if TYPE_CHECKING:
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -57,9 +61,9 @@ ALL_KEYS = (TSD_KEYS_PEOPLE | TSD_KEYS_SOLAR | TSD_KEYS_HEATING_LOADS | TSD_KEYS
            TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
            TSD_KEYS_COOLING_SUPPLY_FLOWS | TSD_KEYS_HEATING_TEMP | TSD_KEYS_HEATING_SUPPLY_TEMP |
            TSD_KEYS_COOLING_TEMP | TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_RC_TEMP | TSD_KEYS_MOISTURE |
-           TSD_KEYS_VENTILATION_FLOWS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+           TSD_KEYS_VENTILATION_FLOWS)
 
-def calc_full_hourly_dataframe(tsd, date):
+def calc_full_hourly_dataframe(tsd: TimeSeriesData, date: pd.DatetimeIndex) -> pd.DataFrame:
     """
     This function creates a dataframe with all tsd_df values for full reporting
     """
