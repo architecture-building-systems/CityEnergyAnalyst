@@ -59,7 +59,7 @@ TSD_KEYS_ENERGY_BALANCE_DASHBOARD = {field.name for field in fields(EnergyBalanc
 TSD_KEYS_SOLAR = {field.name for field in fields(Solar)}
 TSD_KEYS_PEOPLE = {field.name for field in fields(Occupancy)}
 
-ALL_KEYS = (TSD_KEYS_PEOPLE | TSD_KEYS_SOLAR | TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS |
+ALL_KEYS = (TSD_KEYS_PEOPLE | TSD_KEYS_SOLAR | TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD |
            TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
            TSD_KEYS_COOLING_SUPPLY_FLOWS | TSD_KEYS_HEATING_TEMP | TSD_KEYS_HEATING_SUPPLY_TEMP |
            TSD_KEYS_COOLING_TEMP | TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_RC_TEMP | TSD_KEYS_MOISTURE |
@@ -75,7 +75,7 @@ def calc_full_hourly_dataframe(tsd: TimeSeriesData, date: pd.DatetimeIndex) -> p
         tsd_df[key] = tsd.get_occupancy_value(key)
     for key in TSD_KEYS_SOLAR:
         tsd_df[key] = tsd.get_solar_value(key)
-    for key in TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS:
+    for key in TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD:
         tsd_df[key] = tsd.get_load_value(key)
     for key in (TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
                TSD_KEYS_COOLING_SUPPLY_FLOWS):
