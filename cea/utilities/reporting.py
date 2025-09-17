@@ -2,6 +2,8 @@
 Functions for Report generation
 """
 from __future__ import annotations
+
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -100,7 +102,7 @@ def full_report_to_xls(tsd_df, output_folder, basename):
         tsd_df.to_excel(writer, na_rep="NaN")
 
 
-def quick_visualization_tsd(tsd_df, output_folder, basename):
+def quick_visualization_tsd(tsd_df: pd.DataFrame, output_folder, basename):
 
     # set to True to produce plotly graphs of selected variables
     plot_heat_load = True
@@ -142,9 +144,14 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         if should_plot:
             filename = os.path.join(output_folder, f"{plot_name}-{basename}.html")
             traces = []
+
+            if len(tsd_df.index) != HOURS_IN_YEAR:
+                warnings.warn(f"Warning: The dataframe index length is {len(tsd_df.index)}, expected {HOURS_IN_YEAR}.",
+                              UserWarning)
+
             for key in keys:
                 y = tsd_df[key]
-                trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+                trace = go.Scattergl(x=tsd_df.index, y=y, name=key, mode='lines+markers')
                 traces.append(trace)
             fig = go.Figure(data=traces)
             plot(fig, filename=filename, auto_open=auto_open)
