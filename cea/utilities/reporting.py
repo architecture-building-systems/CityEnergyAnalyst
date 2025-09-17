@@ -123,8 +123,9 @@ def quick_visualization_tsd(tsd_df: pd.DataFrame, output_folder, basename):
             filename = os.path.join(output_folder, f"{plot_name}-{basename}.html")
             traces = []
             for key in keys:
+                x = tsd_df.index[50:150]
                 y = tsd_df[key][50:150]
-                trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
+                trace = go.Scattergl(x=x, y=y, name=key, mode='lines+markers')
                 traces.append(trace)
             fig = go.Figure(data=traces)
             plot(fig, filename=filename, auto_open=auto_open)
