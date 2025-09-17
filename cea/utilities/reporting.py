@@ -131,42 +131,20 @@ def quick_visualization_tsd(tsd_df, output_folder, basename):
         fig = go.Figure(data=traces)
         plot(fig, filename=filename, auto_open=auto_open)
 
-    if plot_cool_load:
-        filename = os.path.join(output_folder, f"cool-load-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_COOLING_LOADS:
-            y = tsd_df[key]
-            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
+    cooling_plots = {
+        'cool-load': (plot_cool_load, TSD_KEYS_COOLING_LOADS),
+        'cool-moisture': (plot_cool_moisture, TSD_KEYS_MOISTURE),
+        'cool-air': (plot_cool_air, TSD_KEYS_VENTILATION_FLOWS),
+        'cool-sup': (plot_cool_sup, TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_COOLING_SUPPLY_FLOWS),
+    }
 
-    if plot_cool_moisture:
-        filename = os.path.join(output_folder, f"cool-moisture-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_MOISTURE:
-            y = tsd_df[key]
-            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
-
-    if plot_cool_air:
-        filename = os.path.join(output_folder, f"cool-air-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_VENTILATION_FLOWS:
-            y = tsd_df[key]
-            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
-
-    if plot_cool_sup:
-        filename = os.path.join(output_folder, f"cool-sup-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_COOLING_SUPPLY_FLOWS:
-            y = tsd_df[key]
-            trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
+    for plot_name, (should_plot, keys) in cooling_plots.items():
+        if should_plot:
+            filename = os.path.join(output_folder, f"{plot_name}-{basename}.html")
+            traces = []
+            for key in keys:
+                y = tsd_df[key]
+                trace = go.Scattergl(x=np.linspace(1, HOURS_IN_YEAR, HOURS_IN_YEAR), y=y, name=key, mode='lines+markers')
+                traces.append(trace)
+            fig = go.Figure(data=traces)
+            plot(fig, filename=filename, auto_open=auto_open)
