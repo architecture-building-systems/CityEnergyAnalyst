@@ -113,25 +113,21 @@ def quick_visualization_tsd(tsd_df: pd.DataFrame, output_folder, basename):
     plot_cool_sup = True
     auto_open = False
 
-    if plot_heat_load:
-        filename = os.path.join(output_folder, f"heat-load-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_HEATING_LOADS:
-            y = tsd_df[key][50:150]
-            trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
+    heating_plots = {
+        'heat-load': (plot_heat_load, TSD_KEYS_HEATING_LOADS),
+        'heat-temp': (plot_heat_temp, TSD_KEYS_HEATING_TEMP | TSD_KEYS_RC_TEMP),
+    }
 
-    if plot_heat_temp:
-        filename = os.path.join(output_folder, f"heat-temp-{basename}.html")
-        traces = []
-        for key in TSD_KEYS_HEATING_TEMP | TSD_KEYS_RC_TEMP:
-            y = tsd_df[key][50:150]
-            trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename=filename, auto_open=auto_open)
+    for plot_name, (should_plot, keys) in heating_plots.items():
+        if should_plot:
+            filename = os.path.join(output_folder, f"{plot_name}-{basename}.html")
+            traces = []
+            for key in keys:
+                y = tsd_df[key][50:150]
+                trace = go.Scattergl(x=np.linspace(1, 100, 100), y=y, name=key, mode='lines+markers')
+                traces.append(trace)
+            fig = go.Figure(data=traces)
+            plot(fig, filename=filename, auto_open=auto_open)
 
     cooling_plots = {
         'cool-load': (plot_cool_load, TSD_KEYS_COOLING_LOADS),
