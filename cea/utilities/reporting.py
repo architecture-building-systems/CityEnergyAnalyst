@@ -70,7 +70,7 @@ def calc_full_hourly_dataframe(tsd: TimeSeriesData, date: pd.DatetimeIndex) -> p
     This function creates a dataframe with all tsd_df values for full reporting
     """
 
-    tsd_df = pd.DataFrame(index=date, columns=list(ALL_KEYS))
+    tsd_df = pd.DataFrame(index=date, columns=list(ALL_KEYS), dtype=np.float64)
     for key in TSD_KEYS_PEOPLE:
         tsd_df[key] = tsd.get_occupancy_value(key)
     for key in TSD_KEYS_SOLAR:
