@@ -16,6 +16,7 @@ from dataclasses import fields
 from cea.demand.time_series_data import (
     HeatingLoads,
     CoolingLoads,
+    ElectricalLoads,
     HeatingSystemTemperatures,
     HeatingSystemMassFlows,
     CoolingSystemTemperatures,
@@ -43,6 +44,9 @@ __status__ = "Production"
 # TSD keys extracted from dataclass fields - single source of truth
 TSD_KEYS_HEATING_LOADS = {field.name for field in fields(HeatingLoads)}
 TSD_KEYS_COOLING_LOADS = {field.name for field in fields(CoolingLoads)}
+TSD_KEYS_ELECTRICAL_LOADS = {field.name for field in fields(ElectricalLoads)}
+TSD_KEYS_ENERGY_BALANCE_DASHBOARD = {field.name for field in fields(EnergyBalanceDashboard)}
+
 # Extract subsets of fields from dataclasses based on naming patterns
 TSD_KEYS_HEATING_TEMP = {f.name for f in fields(HeatingSystemTemperatures) if f.name.startswith('ta_')}
 TSD_KEYS_HEATING_FLOWS = {f.name for f in fields(HeatingSystemMassFlows) if f.name.startswith('ma_')}
@@ -55,15 +59,15 @@ TSD_KEYS_HEATING_SUPPLY_TEMP = {f.name for f in fields(HeatingSystemTemperatures
 TSD_KEYS_RC_TEMP = {field.name for field in fields(RCModelTemperatures)}
 TSD_KEYS_MOISTURE = {field.name for field in fields(Moisture)}
 TSD_KEYS_VENTILATION_FLOWS = {field.name for field in fields(VentilationMassFlows)}
-TSD_KEYS_ENERGY_BALANCE_DASHBOARD = {field.name for field in fields(EnergyBalanceDashboard)}
 TSD_KEYS_SOLAR = {field.name for field in fields(Solar)}
 TSD_KEYS_PEOPLE = {field.name for field in fields(Occupancy)}
 
-ALL_KEYS = (TSD_KEYS_PEOPLE | TSD_KEYS_SOLAR | TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD |
-           TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
-           TSD_KEYS_COOLING_SUPPLY_FLOWS | TSD_KEYS_HEATING_TEMP | TSD_KEYS_HEATING_SUPPLY_TEMP |
-           TSD_KEYS_COOLING_TEMP | TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_RC_TEMP | TSD_KEYS_MOISTURE |
-           TSD_KEYS_VENTILATION_FLOWS)
+ALL_KEYS = (TSD_KEYS_PEOPLE | TSD_KEYS_SOLAR | TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS |
+            TSD_KEYS_ELECTRICAL_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD |
+            TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
+            TSD_KEYS_COOLING_SUPPLY_FLOWS | TSD_KEYS_HEATING_TEMP | TSD_KEYS_HEATING_SUPPLY_TEMP |
+            TSD_KEYS_COOLING_TEMP | TSD_KEYS_COOLING_SUPPLY_TEMP | TSD_KEYS_RC_TEMP | TSD_KEYS_MOISTURE |
+            TSD_KEYS_VENTILATION_FLOWS)
 
 def calc_full_hourly_dataframe(tsd: TimeSeriesData, date: pd.DatetimeIndex) -> pd.DataFrame:
     """
@@ -75,7 +79,7 @@ def calc_full_hourly_dataframe(tsd: TimeSeriesData, date: pd.DatetimeIndex) -> p
         tsd_df[key] = tsd.get_occupancy_value(key)
     for key in TSD_KEYS_SOLAR:
         tsd_df[key] = tsd.get_solar_value(key)
-    for key in TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD:
+    for key in TSD_KEYS_HEATING_LOADS | TSD_KEYS_COOLING_LOADS | TSD_KEYS_ELECTRICAL_LOADS | TSD_KEYS_ENERGY_BALANCE_DASHBOARD:
         tsd_df[key] = tsd.get_load_value(key)
     for key in (TSD_KEYS_HEATING_FLOWS | TSD_KEYS_HEATING_SUPPLY_FLOWS | TSD_KEYS_COOLING_FLOWS |
                TSD_KEYS_COOLING_SUPPLY_FLOWS):
