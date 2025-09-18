@@ -445,46 +445,53 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
 
             # Use compresslevel=1 for faster zipping, at the cost of compression ratio
             with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as zip_file:
-                base_path = Path(project_root) / project
+                base_path = Path(secure_path(Path(project_root, project).resolve()))
                 
                 # Collect all files first for batch processing
                 files_to_zip = []
                 for scenario in scenarios:
-                    scenario_path = base_path / scenario
+                    # sanitize scenario for fs ops and zip arcnames
+                    scenario_name = Path(scenario).name
+                    scenario_path = Path(secure_path((base_path / scenario_name).resolve()))
+
                     if not scenario_path.exists():
                         continue
 
-                    if input_files:
-                        input_paths = (scenario_path / "inputs")
+                    input_paths = (scenario_path / "inputs")
+                    if input_files and input_paths.exists():
                         for root, dirs, files in os.walk(input_paths):
                             root_path = Path(root)
                             for file in files:
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
-                                    relative_path = str(Path(scenario) / "inputs" / item_path.relative_to(input_paths))
+                                    relative_path = str(Path(scenario_name) / "inputs" / item_path.relative_to(input_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    if output_files_level == "detailed":
-                        output_paths = (scenario_path / "outputs")
+                    output_paths = (scenario_path / "outputs")
+                    if output_files_level == "detailed" and output_paths.exists():
                         for root, dirs, files in os.walk(output_paths):
                             root_path = Path(root)
                             for file in files:
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
-                                    relative_path = str(Path(scenario) / "outputs" / item_path.relative_to(output_paths))
+                                    relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
+
                     elif output_files_level == "summary":
                         # create summary files first
-                        await run_in_threadpool(run_summary, str(base_path), scenario)
+                        await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
                         export_paths = (scenario_path / "export" / "results")
+                        if not export_paths.exists():
+                            raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
+
                         for root, dirs, files in os.walk(export_paths):
                             root_path = Path(root)
                             for file in files:
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
                                     relative_path = str(
-                                        Path(scenario) / "export" / "results" / item_path.relative_to(export_paths))
+                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(export_paths))
                                     files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
