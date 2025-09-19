@@ -98,9 +98,7 @@ def archetypes_mapper(locator,
 
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df)
-    
-    # Generate architecture CSV file with geometric properties
-    generate_architecture_csv(locator, building_typology_df)
+
 
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
