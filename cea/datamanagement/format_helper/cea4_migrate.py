@@ -24,7 +24,7 @@ from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict, add_oc
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4, CSV_BUILDING_PROPERTIES_3_CSV
 from cea.datamanagement.format_helper.cea4_verify_db import check_directory_contains_csv
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.utilities.dbf import dbf_to_dataframe
 
 COLUMNS_ZONE_3 = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']

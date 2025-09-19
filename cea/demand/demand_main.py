@@ -9,7 +9,6 @@ from itertools import repeat
 import geopandas as gpd
 
 import cea.config
-from cea.datamanagement.archetypes_mapper import generate_architecture_csv
 import cea.inputlocator
 import cea.utilities.parallel
 from cea import MissingInputDataException
@@ -18,7 +17,7 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import generate_architecture_csv, migrate_void_deck_data
 
 
 __author__ = "Jimeno A. Fonseca"

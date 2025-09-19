@@ -12,7 +12,7 @@ import geopandas as gpd
 from cea import CEAException
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.archetypes_mapper import generate_architecture_csv
+from cea.datamanagement.utils import generate_architecture_csv
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
