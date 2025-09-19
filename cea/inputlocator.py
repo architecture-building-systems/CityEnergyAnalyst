@@ -1440,11 +1440,11 @@ class InputLocator(object):
 
     def get_lca_embodied(self):
         """scenario/outputs/data/emissions/Total_LCA_embodied.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Simplified_LCA_embodied_selected_year.csv')
 
     def get_lca_operation(self):
         """scenario/outputs/data/emissions/Total_emissions_operation.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Simplified_LCA_operational_selected_year.csv')
 
     def get_lca_mobility(self):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
