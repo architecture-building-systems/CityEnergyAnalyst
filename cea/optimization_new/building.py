@@ -235,7 +235,7 @@ class Building(object):
                              f"compatible with one another. Please correct your system choice in the INPUT "
                              f"EDITOR accordingly.")
         elif len(set(main_energy_carriers)) == 0:
-            raise ValueError(f"Consider changing network_type. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+            raise ValueError("Consider changing network_type. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
         else:
             self.demand_flow.energy_carrier = main_energy_carriers[0]
 
