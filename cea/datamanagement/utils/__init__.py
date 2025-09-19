@@ -29,7 +29,7 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
             )
             zone_gdf["void_deck"] = zone_gdf["void_deck"].fillna(0)
             zone_gdf.to_file(locator.get_zone_geometry())
-            
+
             print("Migrated void_deck data from envelope.csv to zone.shp.")
             envelope_df.drop(columns=["void_deck"], inplace=True)
             envelope_df.to_csv(locator.get_building_architecture(), index=False)
@@ -64,7 +64,12 @@ def generate_architecture_csv(locator: InputLocator, building_zone_df: gpd.GeoDa
     """
     # Get architecture database to access Hs, Ns, Es, occupied_bg values
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
-    prop_architecture_df = building_zone_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
+    prop_architecture_df = building_zone_df.merge(architecture_DB, how="left", on="const_type")
+
+    if prop_architecture_df[['Hs', 'Ns', 'occupied_bg']].isna().any(axis=None):
+        missing = prop_architecture_df[prop_architecture_df[['Hs', 'Ns', 'occupied_bg']].isna().any(axis=1)]
+        raise ValueError(f"Missing architecture properties for buildings: {missing['name'].tolist()}."
+                         f" Please check the architecture database.")
 
     # Ensure void_deck data is present in building_zone_df
     migrate_void_deck_data(locator)
