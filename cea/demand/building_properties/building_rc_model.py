@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from cea.demand.constants import H_MS, H_IS, B_F
+from cea.demand.constants import H_MS, H_IS, B_F, LAMBDA_AT
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 
@@ -121,6 +121,9 @@ class BuildingRCModel:
         # Calculate useful (electrified/conditioned/occupied) floor areas
         df = calc_useful_areas(df)
 
+        # area of all surfaces facing the building zone
+        df['Atot'] = df['Af'] * LAMBDA_AT
+
         # if 'Cm_Af' in self.get_overrides_columns():
         #     # Internal heat capacity is not part of input, calculate [J/K]
         #     df['Cm'] = self._overrides['Cm_Af'] * df['Af']
@@ -228,12 +231,6 @@ class BuildingRCModel:
 
         # adjust envelope areas with Void_deck
         df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
-
-        # get other quantities.
-        df['floors'] = df['floors_bg'] + df['floors_ag'] - df["void_deck"]
-        df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['GFA_ag_m2'] = df['footprint'] * (df['floors_ag'] - df["void_deck"])
-        df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
 
         return df
 
