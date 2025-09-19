@@ -11,19 +11,18 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from cea.demand.time_series_data import (EnergyBalanceDashboard, Solar, ElectricalLoads, HeatingLoads, 
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, 
                                        CoolingLoads, FuelSource, HeatingSystemMassFlows, 
                                        CoolingSystemMassFlows, HeatingSystemTemperatures, 
                                        CoolingSystemTemperatures, RCModelTemperatures)
+
+from cea.utilities.reporting import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
     from cea.demand.time_series_data import TimeSeriesData
 
 FLOAT_FORMAT = '%.3f'
-
-TSD_KEYS_ENERGY_BALANCE_DASHBOARD = list(EnergyBalanceDashboard.__dataclass_fields__.keys())
-TSD_KEYS_SOLAR = list(Solar.__dataclass_fields__.keys())
 
 
 def get_all_load_keys():
@@ -66,7 +65,7 @@ class DemandWriter(ABC):
         self.mass_flow_vars = massflows if massflows else get_all_massflow_keys()
         self.temperature_vars = temperatures if temperatures else get_all_temperature_keys()
 
-        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD | TSD_KEYS_SOLAR
 
         self.OTHER_VARS = ['name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
