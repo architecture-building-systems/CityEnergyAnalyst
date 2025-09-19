@@ -69,7 +69,7 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
         else:
             return "str"  # Default fallback
 
-    except:
+    except Exception:
         return "str"  # Fallback if source analysis fails
 
 
@@ -132,7 +132,7 @@ def _generate_configuration_class_stub(section_attrs: list[str], general_params:
                         return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
                     
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
-                except:
+                except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
     
     # Core attributes
@@ -197,7 +197,7 @@ def _generate_section_class_stub() -> str:
                         return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
                     
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
-                except:
+                except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
     
     attributes = [
@@ -242,7 +242,7 @@ def _generate_parameter_class_stub() -> str:
                         return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
                     
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
-                except:
+                except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
     
     attributes = [
