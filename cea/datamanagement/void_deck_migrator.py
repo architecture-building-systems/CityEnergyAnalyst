@@ -37,5 +37,6 @@ def migrate_void_deck_data(locator: cea.inputlocator.InputLocator) -> None:
     actual_floors = zone_gdf["floors_ag"] - zone_gdf["void_deck"]
     invalid_floors = zone_gdf[actual_floors <= 0]
     if len(invalid_floors) > 0:
-        warnings.warn(f"Some buildings have void_deck greater than floors_ag: {invalid_floors["name"].tolist()}",
+        invalid_buildings = invalid_floors["name"].tolist()
+        warnings.warn(f"Some buildings have void_deck greater than floors_ag: {invalid_buildings}",
                       RuntimeWarning)
