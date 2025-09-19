@@ -6,7 +6,7 @@ Ensure this file exists or break the script.
 
 import cea.inputlocator
 import os
-import cea.config
+
 from cea.import_export.result_summary import process_building_summary
 import pandas as pd
 
