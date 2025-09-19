@@ -22,7 +22,7 @@ __status__ = "Production"
 from cea.datamanagement.format_helper.cea4_verify_db import get_csv_filenames
 
 
-def lca_operation(locator):
+def lca_operation(locator: cea.inputlocator.InputLocator):
     """
     Algorithm to calculate the primary energy and GHG_kgCO2MJ emissions of buildings according to the method used in the
     integrated model of [Fonseca-Schlueter-2015]_ and the performance factors of [ecobau.ch].

@@ -109,7 +109,10 @@ class Domain(object):
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
         if buildings_in_domain is None:
-            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
+            if self.buildings == []:
+                raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+            else:
+                buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
