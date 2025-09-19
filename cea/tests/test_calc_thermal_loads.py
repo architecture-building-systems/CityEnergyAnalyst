@@ -8,8 +8,10 @@ import shutil
 import unittest
 
 import pandas as pd
+import geopandas as gpd
 
 from cea.config import DEFAULT_CONFIG, Configuration
+from cea.datamanagement.utils import generate_architecture_csv
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
@@ -38,6 +40,10 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # Extract reference case
         cls.locator = ReferenceCaseOpenLocator()
+
+        # FIXME: Update reference case to have architecture file
+        # Ensure that the architecture csv is generated
+        generate_architecture_csv(cls.locator, gpd.read_file(cls.locator.get_zone_geometry()))
 
         cls.config = Configuration(DEFAULT_CONFIG)
         cls.config.scenario = cls.locator.scenario
