@@ -52,7 +52,7 @@ def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.co
     architecture = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
     # get building properties
-    zone_df = Gdf.from_file(locator.get_zone_geometry())
+    zone_df = Gdf.from_file(locator.get_zone_geometry()).set_index('name')
     prop_geometry = calc_useful_areas(zone_df, architecture)
 
     # get calculation year from weather file

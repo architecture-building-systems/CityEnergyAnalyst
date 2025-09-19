@@ -27,7 +27,7 @@ def calc_useful_areas(zone_df: gpd.GeoDataFrame, architecture_df: pd.DataFrame) 
         - Aef: Electrified floor area [m2]
     """
     # Merge zone data with architecture data to get building properties
-    df = zone_df.merge(architecture_df, how='left', on='name').set_index('name')
+    df = zone_df.merge(architecture_df, how='left', left_index=True, right_index=True)
 
     # reproject to projected coordinate system (in meters) to calculate area
     lat, lon = get_lat_lon_projected_shapefile(zone_df)
