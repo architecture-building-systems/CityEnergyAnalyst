@@ -406,8 +406,13 @@ def verify_building_standards(building_typology_df, db_standards):
 
 def generate_architecture_csv(locator, building_typology_df: gpd.GeoDataFrame):
     """
-    Generate an architecture CSV file with geometric properties similar to what's calculated 
-    in demand_writers.py calc_yearly_dataframe method.
+    Generate an architecture CSV file with geometric properties
+
+    Includes:
+    - Af_m2: Conditioned floor area [m2]
+    - Aroof_m2: Roof area [m2]
+    - GFA_m2: Gross floor area [m2]
+    - Aocc_m2: Occupied floor area [m2]
     
     :param locator: InputLocator instance
     :param building_typology_df: GeoDataFrame containing building geometry data
