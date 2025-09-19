@@ -416,56 +416,50 @@ def generate_architecture_csv(locator, building_typology_df):
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     prop_architecture_df = building_typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     
-    # Calculate architectural properties for each building
-    architecture_data = []
-    
-    for idx, building in prop_architecture_df.iterrows():
-        # Calculate areas based on geometry
-        footprint = building.geometry.area  # building footprint area
-        floors_ag = building.get('floors_ag')  # above-ground floors
-        floors_bg = building.get('floors_bg')  # below-ground floors
-        void_deck = building.get('void_deck')  # void deck floors
-        
-        # Get shares from architecture database
-        Hs = building.get('Hs')  # Share of GFA that is conditioned
-        Ns = building.get('Ns')  # Share of GFA that is occupied
-        # Es = building.get('Es')  # Share of GFA that is electrified
-        occupied_bg = building.get('occupied_bg')  # Whether basement is occupied
-        
-        # Calculate GFA components using proper equations
-        gfa_ag_m2 = footprint * (floors_ag - void_deck)  # Above-ground GFA
-        gfa_bg_m2 = footprint * floors_bg  # Below-ground GFA
-        gfa_m2 = gfa_ag_m2 + gfa_bg_m2  # Total GFA
-        
-        # Split shares between above and below ground areas
-        # Using the same logic as in useful_areas.py split_above_and_below_ground_shares
-        effective_floors_ag = floors_ag - void_deck
-        share_ag = effective_floors_ag / (effective_floors_ag + floors_bg * occupied_bg) if (effective_floors_ag + floors_bg * occupied_bg) > 0 else 1.0
-        share_bg = 1 - share_ag
-        
-        Hs_ag = Hs * share_ag
-        Hs_bg = Hs * share_bg  
-        Ns_ag = Ns * share_ag
-        Ns_bg = Ns * share_bg
-        
-        # Calculate areas using proper equations from useful_areas.py
-        af_m2 = gfa_ag_m2 * Hs_ag + gfa_bg_m2 * Hs_bg  # Conditioned floor area
-        aocc_m2 = gfa_ag_m2 * Ns_ag + gfa_bg_m2 * Ns_bg  # Occupied floor area
-        aroof_m2 = footprint  # Roof area equals footprint
+    # Calculate architectural properties
+    # Calculate areas based on geometry
+    footprint = prop_architecture_df.geometry.area  # building footprint area
+    floors_ag = prop_architecture_df['floors_ag']  # above-ground floors
+    floors_bg = prop_architecture_df['floors_bg']  # below-ground floors
+    void_deck = prop_architecture_df['void_deck']  # void deck floors
 
-        
-        building_data = {
-            'name': building['name'],
-            'Af_m2': af_m2,
-            'Aroof_m2': aroof_m2, 
-            'GFA_m2': gfa_m2,
-            'Aocc_m2': aocc_m2,
-        }
-        
-        architecture_data.append(building_data)
-    
-    # Create DataFrame and save to CSV
-    architecture_df = pd.DataFrame(architecture_data)
+    # Get shares from architecture database
+    Hs = prop_architecture_df['Hs']  # Share of GFA that is conditioned
+    Ns = prop_architecture_df['Ns']  # Share of GFA that is occupied
+    occupied_bg = prop_architecture_df['occupied_bg']  # Whether basement is occupied
+
+    # Calculate GFA components using proper equations
+    gfa_ag_m2 = footprint * (floors_ag - void_deck)  # Above-ground GFA
+    gfa_bg_m2 = footprint * floors_bg  # Below-ground GFA
+    gfa_m2 = gfa_ag_m2 + gfa_bg_m2  # Total GFA
+
+    # Split shares between above and below ground areas
+    # Using the same logic as in useful_areas.py split_above_and_below_ground_shares
+    effective_floors_ag = floors_ag - void_deck
+    denominator = effective_floors_ag + floors_bg * occupied_bg
+    share_ag = effective_floors_ag / denominator
+    # Handle division by zero case
+    share_ag = share_ag.fillna(1.0).where(denominator > 0, 1.0)
+    share_bg = 1 - share_ag
+
+    Hs_ag = Hs * share_ag
+    Hs_bg = Hs * share_bg
+    Ns_ag = Ns * share_ag
+    Ns_bg = Ns * share_bg
+
+    # Calculate areas using proper equations from useful_areas.py
+    af_m2 = gfa_ag_m2 * Hs_ag + gfa_bg_m2 * Hs_bg  # Conditioned floor area
+    aocc_m2 = gfa_ag_m2 * Ns_ag + gfa_bg_m2 * Ns_bg  # Occupied floor area
+    aroof_m2 = footprint  # Roof area equals footprint
+
+    # Create DataFrame directly from vectorized calculations
+    architecture_df = pd.DataFrame({
+        'name': prop_architecture_df['name'],
+        'Af_m2': af_m2,
+        'Aroof_m2': aroof_m2,
+        'GFA_m2': gfa_m2,
+        'Aocc_m2': aocc_m2,
+    })
     
     # Ensure parent folder exists
     locator.ensure_parent_folder_exists(locator.get_architecture_csv())
