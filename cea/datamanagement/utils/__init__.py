@@ -66,6 +66,9 @@ def generate_architecture_csv(locator: InputLocator, building_zone_df: gpd.GeoDa
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     prop_architecture_df = building_zone_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
 
+    # Ensure void_deck data is present in building_zone_df
+    migrate_void_deck_data(locator)
+
     # Calculate architectural properties
     # Calculate areas based on geometry
     footprint = building_zone_df.geometry.area  # building footprint area
