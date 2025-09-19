@@ -10,7 +10,6 @@ The geometry column is serialized to a nested list of coordinates using the JSON
 """
 
 
-import shapely
 import cea.config
 import cea.inputlocator
 
