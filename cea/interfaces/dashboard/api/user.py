@@ -1,16 +1,39 @@
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from pydantic import BaseModel
 
 from cea.interfaces.dashboard.dependencies import CEAUser, CEAAuthClient
+from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 logger = getCEAServerLogger("cea-server-user")
 
 router = APIRouter()
 
+class UserInfo(BaseModel):
+    id: str
+    primary_email: str
+    display_name: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    onboarded: bool = False
+    pro_user: bool = False
+
 
 @router.get("")
 async def get_user_info(user: CEAUser):
-    return user
+    # Ignore if local user
+    if user.get("id") == LOCAL_USER_ID:
+        return user
+
+    return UserInfo(
+        id=user.get("id"),
+        display_name=user.get("display_name"),
+        primary_email=user.get("primary_email"),
+        profile_image_url=user.get("profile_image_url"),
+        onboarded=user.get("onboarded"),
+        pro_user=user.get("pro_user"),
+    )
 
 
 @router.post("/session/refresh")

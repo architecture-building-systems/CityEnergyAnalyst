@@ -136,6 +136,11 @@ class EnergyCarrier(object):
             self.qual_unit = energy_carrier['unit_qual'].iloc[0]
             self.mean_qual = energy_carrier['mean_qual'].iloc[0]
 
+    def describe(self):
+        """ Provide a short written description of the energy carrier."""
+        description = self._description + ": " + str(self.mean_qual) + " " + self.qual_unit
+        return description
+
     @staticmethod
     def initialize_class_variables(domain):
         """

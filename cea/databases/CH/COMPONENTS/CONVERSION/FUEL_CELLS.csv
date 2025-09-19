@@ -1,3 +1,2 @@
 description,code,cap_min,cap_max,unit,currency,a,b,c,d,e,LT_yr,O&M_%,IR_%, Assumptions
-solid oxide fuel cell,FC1,1000,10000,W,USD-2015,0,13.721413721413722,1,0,0,10,5,5,
 solid oxide fuel cell,FC1,1,10000000000,W,USD-2015,0,13.721413721413722,1,0,0,10,5,5,everything
