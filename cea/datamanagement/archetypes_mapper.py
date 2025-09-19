@@ -404,7 +404,7 @@ def verify_building_standards(building_typology_df, db_standards):
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
 
 
-def generate_architecture_csv(locator, building_typology_df):
+def generate_architecture_csv(locator, building_typology_df: gpd.GeoDataFrame):
     """
     Generate an architecture CSV file with geometric properties similar to what's calculated 
     in demand_writers.py calc_yearly_dataframe method.
