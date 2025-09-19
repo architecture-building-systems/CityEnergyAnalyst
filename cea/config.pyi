@@ -1,7 +1,7 @@
 # Type stub file for cea.config
 # Auto-generated from default.config - do not edit manually
 
-from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal
+from typing import Any, Dict, List, Optional, Generator, Tuple, overload, Literal
 import configparser
 
 class RestrictionContextManager:
