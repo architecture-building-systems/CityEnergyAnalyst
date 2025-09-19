@@ -11,7 +11,7 @@ import pandas as pd
 
 from cea.config import DEFAULT_CONFIG, Configuration
 from cea.demand.building_properties import BuildingProperties
-from cea.demand.occupancy_helper import occupancy_helper_main
+from cea.demand.occupancy import occupancy_main
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
@@ -60,8 +60,8 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B1011']
         self.config.general.multiprocessing = False
-        self.config.occupancy_helper.occupancy_model = "deterministic"
-        occupancy_helper_main(self.locator, self.config, building='B1011')
+        self.config.occupancy.occupancy_model = "deterministic"
+        occupancy_main(self.locator, self.config, building='B1011')
 
         result = calc_thermal_loads('B1011', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
@@ -111,7 +111,7 @@ class TestCalcThermalLoads(unittest.TestCase):
 def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date, locator,
                             use_dynamic_infiltration_calculation, resolution_output, config, debug):
     config.general.multiprocessing = False
-    occupancy_helper_main(locator, config, building=building)
+    occupancy_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date, locator,
                        use_dynamic_infiltration_calculation, resolution_output, config, debug)
     df = pd.read_csv(locator.get_demand_results_file(building))
