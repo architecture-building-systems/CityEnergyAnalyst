@@ -9,6 +9,20 @@ if TYPE_CHECKING:
 
 # TODO: Double check usages of this function
 def calc_useful_areas(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate useful (electrified/conditioned/occupied) floor areas based on building properties
+    and assumptions on how these are distributed in the building.
+
+    Adds the following columns to the dataframe:
+        - Hs_ag: Share of above-ground gross floor area that is heated/cooled (conditioned)
+        - Hs_bg: Share of below-ground gross floor area that is heated/cooled (conditioned)
+        - Ns_ag: Share of above-ground gross floor area that is occupied
+        - Ns_bg: Share of below-ground gross floor area that is occupied
+        - Aocc: Occupied floor area [m2]
+        - Af: Conditioned floor area [m2]
+        - Aef: Electrified floor area [m2]
+        - Atot: Area of all surfaces facing the building zone [m2]
+    """
     # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
     df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = split_above_and_below_ground_shares(
         df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'] - df['void_deck'], df['floors_bg'])
