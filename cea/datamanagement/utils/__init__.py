@@ -62,8 +62,11 @@ def generate_architecture_csv(locator: InputLocator, building_typology_df: gpd.G
     """
     # Get architecture database to access Hs, Ns, Es, occupied_bg values
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
-    prop_architecture_df = building_typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
-    
+    prop_architecture_df = building_typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type',
+                                                    # avoid column name conflicts and keep left ones
+                                                    # possible conflicts: 'void_deck'
+                                                    suffixes=('', '_y'))
+
     # Calculate architectural properties
     # Calculate areas based on geometry
     footprint = prop_architecture_df.geometry.area  # building footprint area
