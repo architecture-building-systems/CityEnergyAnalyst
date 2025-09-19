@@ -5,9 +5,9 @@ Update the user configuration file and show the current settings.
 import sys
 
 import cea.config
-import cea.inputlocator
 import cea.scripts
 from cea.plugin import instantiate_plugin
+from cea.utilities import parse_string_to_list
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,7 +46,7 @@ def main(args=None):
     elif script_name == "add-plugins":
         plugins_fqname = "general:plugins"
         parameter = config.get_parameter(plugins_fqname)
-        plugins = cea.config.parse_string_to_list(parameter.encode(parameter.get()))
+        plugins = parse_string_to_list(parameter.encode(parameter.get()))
 
         new_plugins = [p for p in args if p not in plugins]  # filter existing plugins
         valid_plugins = [p for p in new_plugins if instantiate_plugin(p) is not None]
