@@ -232,8 +232,10 @@ class Building(object):
 
         if len(set(main_energy_carriers)) > 1:
             raise ValueError(f"The primary components of the building {self.identifier}'s supply system are not "
-                             f"compatible with one another compatible. Please correct your system choice in the INPUT "
+                             f"compatible with one another. Please correct your system choice in the INPUT "
                              f"EDITOR accordingly.")
+        elif len(set(main_energy_carriers)) == 0:
+            raise ValueError(f"Consider changing network_type. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
         else:
             self.demand_flow.energy_carrier = main_energy_carriers[0]
 
