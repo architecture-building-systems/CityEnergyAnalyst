@@ -178,7 +178,7 @@ def get_results_path(locator, cea_feature, list_buildings):
     list_appendix = []
 
     if cea_feature == 'architecture':
-        path = locator.get_total_demand()
+        path = locator.get_architecture_csv()
         list_paths.append(path)
         list_appendix.append(cea_feature)
 
@@ -2142,7 +2142,12 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         df_time_path = locator.get_export_results_summary_cea_feature_time_period_file(
             summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
         )
-        df_time_resolution = pd.read_csv(df_time_path)
+
+        if not os.path.exists(df_time_path):
+            print(f"File not found: {df_time_path}.")
+            break
+        else:
+            df_time_resolution = pd.read_csv(df_time_path)
 
         if bool_use_acronym:
             df_time_resolution.columns = map_metrics_and_cea_columns(

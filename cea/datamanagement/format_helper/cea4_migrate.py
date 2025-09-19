@@ -24,6 +24,7 @@ from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict, add_oc
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4, CSV_BUILDING_PROPERTIES_3_CSV
 from cea.datamanagement.format_helper.cea4_verify_db import check_directory_contains_csv
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.utilities.dbf import dbf_to_dataframe
 
 COLUMNS_ZONE_3 = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
@@ -550,9 +551,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                 pass
                 # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp already follows the CEA-4 format.')
             else:
-                raise ValueError('! zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
-                                 'Check the following column(s) for CEA-3 format: {list_missing_attributes_zone_3}.'.format(list_missing_attributes_zone_3=list_missing_attributes_zone_3),
-                                 'Check the following column(s) for CEA-4 format: {list_missing_attributes_zone_4}.'.format(list_missing_attributes_zone_4=list_missing_attributes_zone_4)
+                if list_missing_attributes_zone_4[0] == 'void_deck' and len(list_missing_attributes_zone_4) == 1:
+                    config = cea.config.Configuration()
+                    locator = cea.inputlocator.InputLocator(config.scenario)
+                    migrate_void_deck_data(locator)
+                else:
+                    raise ValueError('! zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration. Check the following column(s) for CEA-3 format: {list_missing_attributes_zone_3}.'.format(list_missing_attributes_zone_3=list_missing_attributes_zone_3), 'Check the following column(s) for CEA-4 format: {list_missing_attributes_zone_4}.'.format(list_missing_attributes_zone_4=list_missing_attributes_zone_4)
                                  )
         else:
             print("! Ensure zone.shp (CEA-3 format) is present in building-geometry folder.")
@@ -571,9 +575,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                 pass
                 # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'surroundings.shp already follows the CEA-4 format.')
             else:
-                raise ValueError('surroundings.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
-                                 'Check the following column(s) for CEA-3 format: {list_missing_attributes_surroundings_3}.'.format(list_missing_attributes_surroundings_3=list_missing_attributes_surroundings_3),
-                                 'Check the following column(s) for CEA-4 format: {list_missing_attributes_surroundings_4}.'.format(list_missing_attributes_surroundings_4=list_missing_attributes_surroundings_4)
+                if list_missing_attributes_zone_4[0] == 'void_deck' and len(list_missing_attributes_zone_4) == 1:
+                    config = cea.config.Configuration()
+                    locator = cea.inputlocator.InputLocator(config.scenario)
+                    migrate_void_deck_data(locator)
+                else:
+                    raise ValueError('surroundings.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration. Check the following column(s) for CEA-3 format: {list_missing_attributes_surroundings_3}.'.format(list_missing_attributes_surroundings_3=list_missing_attributes_surroundings_3), 'Check the following column(s) for CEA-4 format: {list_missing_attributes_surroundings_4}.'.format(list_missing_attributes_surroundings_4=list_missing_attributes_surroundings_4)
                                  )
         else:
             print('! (optional) Run Surroundings Helper to generate surroundings.shp after the data migration.')
