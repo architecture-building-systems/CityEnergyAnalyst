@@ -47,7 +47,7 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
                       RuntimeWarning)
 
 
-def generate_architecture_csv(locator: InputLocator, building_typology_df: gpd.GeoDataFrame):
+def generate_architecture_csv(locator: InputLocator, building_zone_df: gpd.GeoDataFrame):
     """
     Generate an architecture CSV file with geometric properties
 
@@ -58,21 +58,18 @@ def generate_architecture_csv(locator: InputLocator, building_typology_df: gpd.G
     - Aocc_m2: Occupied floor area [m2]
     
     :param locator: InputLocator instance
-    :param building_typology_df: GeoDataFrame containing building geometry data
+    :param building_zone_df: GeoDataFrame containing building geometry data
     """
     # Get architecture database to access Hs, Ns, Es, occupied_bg values
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
-    prop_architecture_df = building_typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type',
-                                                    # avoid column name conflicts and keep left ones
-                                                    # possible conflicts: 'void_deck'
-                                                    suffixes=('', '_y'))
+    prop_architecture_df = building_zone_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
 
     # Calculate architectural properties
     # Calculate areas based on geometry
-    footprint = prop_architecture_df.geometry.area  # building footprint area
-    floors_ag = prop_architecture_df['floors_ag']  # above-ground floors
-    floors_bg = prop_architecture_df['floors_bg']  # below-ground floors
-    void_deck = prop_architecture_df['void_deck']  # void deck floors
+    footprint = building_zone_df.geometry.area  # building footprint area
+    floors_ag = building_zone_df['floors_ag']  # above-ground floors
+    floors_bg = building_zone_df['floors_bg']  # below-ground floors
+    void_deck = building_zone_df['void_deck']  # void deck floors
 
     # Get shares from architecture database
     Hs = prop_architecture_df['Hs']  # Share of GFA that is conditioned
