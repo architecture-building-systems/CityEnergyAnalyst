@@ -6,7 +6,10 @@ import os
 import time
 from itertools import repeat
 
+import geopandas as gpd
+
 import cea.config
+from cea.datamanagement.archetypes_mapper import generate_architecture_csv
 import cea.inputlocator
 import cea.utilities.parallel
 from cea import MissingInputDataException
@@ -110,6 +113,10 @@ def main(config):
 
     if not radiation_files_exist(locator, config):
         raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
+    
+    # Ensure that the architecture csv is generated
+    zone_df = gpd.read_file(locator.get_zone_geometry())
+    generate_architecture_csv(locator, zone_df)
 
     demand_calculation(locator=locator, config=config)
 
