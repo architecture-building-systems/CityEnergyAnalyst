@@ -11,7 +11,7 @@ import warnings
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely.geometry import Point, LineString, MultiPoint, box
+from shapely import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
 
 import cea.config
@@ -211,7 +211,7 @@ def snappy_endings(lines, max_distance, crs):
     return df
 
 
-def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs):
+def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, tolerance_grid_snap: float, crs: str):
     """
     Split the union of lines with the union of points resulting
 
@@ -225,8 +225,8 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
     """
 
     # union all geometries
-    line = gdf_line.geometry.unary_union
-    snap_points = gdf_points.geometry.unary_union
+    line = gdf_line.geometry.union_all()
+    snap_points = gdf_points.geometry.union_all()
 
     # snap and split coords on line
     # returns GeometryCollection

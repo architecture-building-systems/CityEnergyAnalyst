@@ -10,7 +10,7 @@ from typing import Union
 import numpy as np
 import osmnx
 from geopandas import GeoDataFrame as Gdf
-from shapely.geometry import Polygon
+from shapely import Polygon
 import pandas as pd
 
 import cea.config
