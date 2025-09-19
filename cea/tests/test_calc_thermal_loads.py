@@ -49,9 +49,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, epwreader.epw_reader(cls.locator.get_weather_file()))
         cls.use_dynamic_infiltration_calculation = cls.config.demand.use_dynamic_infiltration_calculation
         cls.resolution_output = cls.config.demand.resolution_output
-        cls.loads_output = cls.config.demand.loads_output
-        cls.massflows_output = cls.config.demand.massflows_output
-        cls.temperatures_output = cls.config.demand.temperatures_output
         cls.debug = cls.config.debug
 
     def setUp(self):
@@ -68,7 +65,6 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         result = calc_thermal_loads('B1011', bpr, self.weather_data, self.date_range, self.locator,
                                     self.use_dynamic_infiltration_calculation, self.resolution_output,
-                                    self.loads_output, self.massflows_output, self.temperatures_output,
                                     self.config, self.debug)
         self.assertIsNone(result)
         self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B1011')),
@@ -97,9 +93,6 @@ class TestCalcThermalLoads(unittest.TestCase):
                                                                                self.date_range, self.locator,
                                                                                self.use_dynamic_infiltration_calculation,
                                                                                self.resolution_output,
-                                                                               self.loads_output,
-                                                                               self.massflows_output,
-                                                                               self.temperatures_output,
                                                                                self.config, self.debug)
             expected_qhs_sys_kwh = buildings[b][0]
             expected_qcs_sys_kwh = buildings[b][1]
@@ -116,13 +109,11 @@ class TestCalcThermalLoads(unittest.TestCase):
 
 
 def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date, locator,
-                            use_dynamic_infiltration_calculation, resolution_output, loads_output,
-                            massflows_output, temperatures_output, config, debug):
+                            use_dynamic_infiltration_calculation, resolution_output, config, debug):
     config.general.multiprocessing = False
     occupancy_helper_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date, locator,
-                       use_dynamic_infiltration_calculation, resolution_output, loads_output,
-                       massflows_output, temperatures_output, config, debug)
+                       use_dynamic_infiltration_calculation, resolution_output, config, debug)
     df = pd.read_csv(locator.get_demand_results_file(building))
     return building, float(df['Qhs_sys_kWh'].sum()), df['Qcs_sys_kWh'].sum(), float(df['Qww_sys_kWh'].sum())
 

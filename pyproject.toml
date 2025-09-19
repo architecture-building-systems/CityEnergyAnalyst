@@ -53,9 +53,8 @@ dependencies = [
     "ephem",
     "numpy-financial",
     "python-louvain",
-    "pytz", # Not required from 3.9
+    "tzfpy[pytz]",
     "salib",
-    "timezonefinder",
     "openpyxl",
     "plotly",
     "utm",
@@ -135,8 +134,6 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-cea = "cea"
-server = "cea dashboard"
 test = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 

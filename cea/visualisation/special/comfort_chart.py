@@ -4,14 +4,17 @@
 
 
 import math
+import os
 import pandas as pd
 import numpy as np
 import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
-import cea.plots.demand
-from cea.plots.colors import COLORS_TO_RGB
 
+import cea.config
+import cea.plots.demand
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -48,7 +51,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['Name'] == self.building]
+        return self.hourly_loads[self.hourly_loads['name'] == self.building]
 
     @property
     def dict_graph(self):
@@ -59,24 +62,209 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
     def calc_graph(self):
         # calculate points of comfort in different conditions
 
-        # create scatter of comfort
-        traces_graph = calc_graph(self.dict_graph)
-
-        # create lines of constant relative humidity
-        traces_relative_humidity = create_relative_humidity_lines()
-        traces_graph.extend(traces_relative_humidity)
+        # create lines of constant relative humidity first (as background)
+        traces_graph = create_relative_humidity_lines()
+        
+        # create scatter of comfort on top
+        traces_comfort = calc_graph(self.dict_graph)
+        traces_graph.extend(traces_comfort)
 
         # add text for winter / summer comfort zones
-        trace_layout = go.Scattergl(
+        trace_layout = go.Scatter(
             x=[23, 26.5],
-            y=[3, 3],
-            text=['Winter comfort zone',
-                  'Summer comfort zone'],
+            y=[2, 3],
+            text=['Comfort zone: heating season',
+                  'Comfort zone: cooling season'],
             mode='text',
             showlegend=False
         )
         traces_graph.append(trace_layout)
         return traces_graph
+
+    def _plot_data_producer(self):
+        """Override to bypass caching and ensure traces are returned correctly"""
+        traces = self.calc_graph()
+        # DON'T add the table here - let's see if that's what's breaking it
+        return traces
+        
+    def plot(self, auto_open=False):
+        """Use direct Plotly to ensure curves work, with table and proper styling"""
+        os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
+        
+        # Get all the traces directly (this works and shows curves)
+        traces = self.calc_graph()
+        
+        # Create the layout with styling (no title in chart)
+        layout = create_layout("")
+        
+        # Create figure with direct Plotly (this ensures curves show)
+        import plotly.graph_objs as go
+        
+        fig = go.Figure(data=traces, layout=layout)
+        
+        # Apply CEA styling manually with narrower width
+        fig['layout'].update(dict(
+            hovermode='closest',
+            width=500,
+            height=500,
+            plot_bgcolor='#F7F7F7',  # Set chart background to light gray
+            paper_bgcolor='rgba(0,0,0,0)',  # Make outer background transparent
+            title=None  # Remove plotly chart title
+        ))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
+        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+        
+        # Make legend background transparent
+        fig['layout']['legend'].update(dict(
+            bgcolor='rgba(0,0,0,0)',  # Transparent background
+            bordercolor='rgba(0,0,0,0)'  # Transparent border
+        ))
+        
+        # Generate the chart HTML
+        import plotly.offline as pyo
+        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+        
+        # Generate the academic-style table HTML
+        table_html = self.create_academic_table()
+        
+        # Combine chart and table in a clean layout
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>{self.title}</title>
+            <style>
+                body {{
+                    font-family: 'Arial', sans-serif;
+                    margin: 14px;
+                    background-color: white;
+                }}
+                .container {{
+                    max-width: 800px;
+                    margin: 0;
+                }}
+                .chart-container {{
+                    background-color: transparent;
+                    padding: 0;
+                    margin-bottom: 20px;
+                    width: 500px;
+                }}
+                .table-container {{
+                    background-color: transparent;
+                    padding: 0;
+                    width: 500px;
+                }}
+                h1 {{
+                    text-align: left;
+                    color: #333;
+                    font-size: 20px;
+                    margin-bottom: 0px;
+                    margin-left: 0px
+                }}
+                h2 {{
+                    color: #333;
+                    margin-bottom: 0px;
+                    display: none;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>{self.title}</h1>
+                <div class="chart-container">
+                    {chart_html}
+                </div>
+                <div class="table-container">
+                    {table_html}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        with open(self.output_path, 'w') as f:
+            f.write(full_html)
+        
+        print("Plotted '%s' to %s" % (self.name, self.output_path))
+        if auto_open:
+            import webbrowser
+            webbrowser.open(self.output_path)
+
+    def create_academic_table(self):
+        """Create academic-style HTML table with proper formatting"""
+        
+        # Get table data
+        table_data = self.calc_table()
+        
+        # Create academic-style HTML table
+        table_html = """
+        <style>
+            .academic-table {
+                width: 470px;
+                margin-left: 0px;
+                border-collapse: collapse;
+                font-family: 'Arial', sans-serif;
+                font-size: 12px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .academic-table th {
+                background-color: white;
+                font-weight: bold;
+                padding: 1px 0px;
+                text-align: left;
+                border-top: 2px solid #333;
+                border-bottom: 1px solid #333;
+            }
+            .academic-table td {
+                padding: 1px 0px;
+                text-align: left;
+                border: none;
+            }
+            .academic-table td:nth-child(2),
+            .academic-table td:nth-child(3) {
+                text-align: right;
+            }
+            .academic-table tr:last-child td {
+                border-bottom: 2px solid #333;
+            }
+            .academic-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+        </style>
+        <table class="academic-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Comfort [h]</th>
+                    <th>Discomfort [h]</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        # Add data rows
+        conditions = table_data['Occupied hours'].tolist()
+        comfort_hours = table_data['Comfort [h]'].tolist()
+        uncomfort_hours = table_data['Uncomfort [h]'].tolist()
+        
+        for i in range(len(conditions)):
+            table_html += f"""
+                <tr>
+                    <td>{conditions[i].title()}</td>
+                    <td>{comfort_hours[i]}</td>
+                    <td>{uncomfort_hours[i]}</td>
+                </tr>
+            """
+        
+        table_html += """
+            </tbody>
+        </table>
+        """
+        
+        return table_html
 
     def calc_table(self):
         """
@@ -105,8 +293,9 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_uncomfort, perc_summer_uncomfort)
 
         # draw table
-        column_names = ['condition', 'comfort [h]', 'uncomfort [h]']
-        column_data = [['summer occupied', 'winter occupied'], [cell_summer_comfort, cell_winter_comfort],
+        column_names = ['Occupied hours', 'Comfort [h]', 'Uncomfort [h]']
+        column_data = [['Cooling season - occupied', 'Heating season - occupied'],
+                       [cell_summer_comfort, cell_winter_comfort],
                       [cell_summer_uncomfort, cell_winter_uncomfort]]
         table_df = pd.DataFrame({cn: cd for cn, cd in zip(column_names, column_data)}, columns=column_names)
         return table_df
@@ -161,15 +350,17 @@ def create_layout(title):
     """
 
     layout = {
+        'title': title,
         'xaxis': {
             'title': 'Operative Temperature [°C]',
-            'range': [5, 35],
-            'domain': XAXIS_DOMAIN_GRAPH
+            'range': [5, 49],
+            'domain': XAXIS_DOMAIN_GRAPH,
+            'dtick': 5  # Set tick interval to 5°C
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
             'side': 'right',
-            'range': [0, 25],
+            'range': [0, 44],
             'domain': YAXIS_DOMAIN_GRAPH,
             'showgrid': True,
         },
@@ -189,10 +380,10 @@ def create_layout(title):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLORS_TO_RGB['green'],
-                'opacity': 0.4,
+                'fillcolor': COLOURS_TO_RGB['blue'],
+                'opacity': 0.2,
                 'line': {
-                    'color': COLORS_TO_RGB['green'],
+                    'color': COLOURS_TO_RGB['blue'],
                 },
             },
             # Summer comfort zone
@@ -206,10 +397,10 @@ def create_layout(title):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLORS_TO_RGB['yellow'],
-                'opacity': 0.4,
+                'fillcolor': COLOURS_TO_RGB['red'],
+                'opacity': 0.2,
                 'line': {
-                    'color': COLORS_TO_RGB['yellow'],
+                    'color': COLOURS_TO_RGB['red'],
                 },
             },
 
@@ -232,17 +423,21 @@ def calc_graph(dict_graph):
     traces = []
 
     # draw scatter of comfort conditions in building
-    trace = go.Scattergl(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
+    trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
+                       name='Heating season - occupied hours', mode='markers',
+                       marker=dict(color=COLOURS_TO_RGB['red'], size=6, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
+                       name='Heating season - unoccupied hours', mode='markers',
+                       marker=dict(color=COLOURS_TO_RGB['blue'], size=4, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
+    trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
+                       name='Cooling season - occupied hours', mode='markers',
+                       marker=dict(color=COLOURS_TO_RGB['purple'], size=6, opacity=0.7))
     traces.append(trace)
-    trace = go.Scattergl(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
+                       name='Cooling season - unoccupied hours', mode='markers',
+                       marker=dict(color=COLOURS_TO_RGB['orange'], size=4, opacity=0.7))
     traces.append(trace)
 
     return traces
@@ -260,14 +455,15 @@ def create_relative_humidity_lines():
 
     # draw lines of constant relative humidity for psychrometric chart
     rh_lines = np.linspace(0.1, 1, 10)  # lines from 10% to 100%
-    t_axis = np.linspace(-5, 45, 50)
+    t_axis = np.linspace(5, 49, 50)  # match x-axis range
     P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
 
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scattergl(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
-                           line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
+        trace = go.Scatter(x=t_axis, y=y_data, mode='lines', name="{:.0%} relative humidity".format(rh_line),
+                           line=dict(color='rgba(150,150,150,0.5)', width=1), showlegend=False,
+                           xaxis='x', yaxis='y', hoverinfo='skip')
         traces.append(trace)
 
     return traces
@@ -291,22 +487,22 @@ def calc_data(data_frame, locator):
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
-    from cea.demand.building_properties import verify_has_season
+    from cea.demand.building_properties.building_hvac import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    building_name = data_frame.name[0]
+    building_name = data_frame.name.iloc[0]
     air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
     has_winter = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'heat_starts'],
-                                   air_con_data.loc[building_name, 'heat_ends'])
+                                   air_con_data.loc[building_name, 'hvac_heat_starts'],
+                                   air_con_data.loc[building_name, 'hvac_heat_ends'])
     has_summer = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'cool_starts'],
-                                   air_con_data.loc[building_name, 'cool_ends'])
+                                   air_con_data.loc[building_name, 'hvac_cool_starts'],
+                                   air_con_data.loc[building_name, 'hvac_cool_ends'])
 
-    winter_start = air_con_data.loc[building_name, 'heat_starts']
-    winter_end = air_con_data.loc[building_name, 'heat_ends']
-    summer_start = air_con_data.loc[building_name, 'cool_starts']
-    summer_end =  air_con_data.loc[building_name, 'cool_ends']
+    winter_start = air_con_data.loc[building_name, 'hvac_heat_starts']
+    winter_end = air_con_data.loc[building_name, 'hvac_heat_ends']
+    summer_start = air_con_data.loc[building_name, 'hvac_cool_starts']
+    summer_end =  air_con_data.loc[building_name, 'hvac_cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
@@ -386,8 +582,8 @@ def calc_table(dict_graph):
 
     # draw table
     table = go.Table(domain=dict(x=[0.0, 1], y=[YAXIS_DOMAIN_GRAPH[1], 1.0]),
-                     header=dict(values=['condition', 'comfort [h]', 'uncomfort [h]']),
-                     cells=dict(values=[['summer occupied', 'winter occupied'],
+                     header=dict(values=['Occupied hours', 'Comfort [h]', 'Uncomfort [h]']),
+                     cells=dict(values=[['Cooling season', 'Heating season'],
                                         [cell_summer_comfort, cell_winter_comfort],
                                         [cell_summer_uncomfort, cell_winter_uncomfort]]),
                      visible=True)
@@ -400,11 +596,11 @@ def check_comfort(temperature, moisture, vertices_comfort_area):
     checks if a point of operative temperature and moisture ratio is inside the polygon of comfort defined by its
      vertices, the function only works if the polygon has constant moisture ratio edges
 
-    :param temperature: operative temperature [Â°C]
+    :param temperature: operative temperature [°C]
     :type temperature: list
     :param moisture: moisture ratio [g/kg dry air]
     :type moisture: list
-    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([Â°C],[g/kg dry air])
+    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([°C],[g/kg dry air])
     :type vertices_comfort_area: list of tuples
     :return: hours of comfort, hours of uncomfort
     :rtype: double, double
@@ -528,7 +724,7 @@ def calc_constant_rh_curve(t_array, rh, p):
     """
     Calculates curves of humidity ratio at different temperatures for a constant relative humidity and pressure
 
-    :param t_array: array pf temperatures [Â°C]
+    :param t_array: array pf temperatures [°C]
     :type t_array: numpy.array
     :param rh: relative humidity [-]
     :type rh: double
@@ -543,20 +739,197 @@ def calc_constant_rh_curve(t_array, rh, p):
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
 
+def create_multi_building_plot(building_plots):
+    # Generate individual chart data for each building
+    charts_data = []
+    include_js = True
+    for plot_obj in building_plots:
+        print(f"\n=== Building {plot_obj.building} ===")
+        # Check if dict_graph is unique per building
+        dict_graph = plot_obj.dict_graph
+        print(f"Winter occupied points: {len(dict_graph['t_op_occupied_winter'])}")
+        print(f"Summer occupied points: {len(dict_graph['t_op_occupied_summer'])}")
+        if len(dict_graph['t_op_occupied_winter']) > 0:
+            print(f"Winter temp range: {min(dict_graph['t_op_occupied_winter']):.2f} - {max(dict_graph['t_op_occupied_winter']):.2f}")
+        if len(dict_graph['t_op_occupied_summer']) > 0:
+            print(f"Summer temp range: {min(dict_graph['t_op_occupied_summer']):.2f} - {max(dict_graph['t_op_occupied_summer']):.2f}")
+        
+        # Get traces and layout for this building
+        traces = plot_obj.calc_graph()
+        layout = create_layout("")
+        
+        # Create figure
+        fig = go.Figure(data=traces, layout=layout)
+        
+        # Apply styling
+        fig['layout'].update(dict(
+            hovermode='closest',
+            width=500,
+            height=500,
+            plot_bgcolor='#F7F7F7',
+            paper_bgcolor='rgba(0,0,0,0)',
+            title=None
+        ))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
+        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['font'].update(dict(size=10))
+        
+        # Make legend background transparent
+        fig['layout']['legend'].update(dict(
+            bgcolor='rgba(0,0,0,0)',
+            bordercolor='rgba(0,0,0,0)'
+        ))
+        
+        # Generate chart HTML and table
+        import plotly.offline as pyo
+        js_opt = 'cdn' if include_js else False
+        chart_html = pyo.plot(fig, output_type='div', include_plotlyjs=js_opt)
+        include_js = False
+        table_html = plot_obj.create_academic_table()
+        
+        charts_data.append({
+            'building': plot_obj.building,
+            'chart_html': chart_html,
+            'table_html': table_html
+        })
+    
+    # Create combined HTML layout - use the correct scenario path from the first plot object
+    output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "comfort-chart.html")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+    # Generate charts HTML with horizontal layout
+    charts_html = ""
+    for i, chart_data in enumerate(charts_data):
+        margin_left = "100px" if i > 0 else "0px"
+        charts_html += f"""
+        <div style="display: inline-block; vertical-align: top; margin-left: {margin_left};">
+            <h2 style="text-align: left; color: #333; font-size: 18px; margin-bottom: 1px; margin-left: 5px;">
+                Building {chart_data['building']}
+            </h2>
+            <div style="background-color: transparent; padding: 0; margin-bottom: 20px; width: 300px;">
+                {chart_data['chart_html']}
+            </div>
+            <div style="background-color: transparent; padding: 0; width: 300px;">
+                {chart_data['table_html']}
+            </div>
+        </div>
+        """
+    
+    
+    # Complete HTML document with improved layout
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Comfort Chart(s)</title>
+        <style>
+            body {{
+                font-family: 'Arial', sans-serif;
+                margin: 14px;
+                background-color: white;
+                min-width: fit-content;
+            }}
+            .container {{
+                width: 100vw;
+                overflow-x: auto;
+                min-width: 1200px;
+            }}
+            .charts-wrapper {{
+                display: flex;
+                flex-direction: row;
+                gap: 100px;
+                width: max-content;
+            }}
+            .chart-item {{
+                display: flex;
+                flex-direction: column;
+                width: 500px;
+                flex-shrink: 0;
+            }}
+            h1 {{
+                text-align: left;
+                color: #333;
+                font-size: 20px;
+                margin-bottom: 5px;
+                margin-left: 0px;
+            }}
+            h2 {{
+                color: #333;
+                font-size: 18px;
+                margin-bottom: 2px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Comfort Chart - Multiple Buildings ({len(charts_data)} buildings)</h1>
+            <div class="charts-wrapper">
+    """
+    
+    for chart_data in charts_data:
+        full_html += f"""
+                <div class="chart-item">
+                    <h2>- Building {chart_data['building']}</h2>
+                    <div style="background-color: transparent; padding: 0; margin-bottom: 20px;">
+                        {chart_data['chart_html']}
+                    </div>
+                    <div style="background-color: transparent; padding: 0;">
+                        {chart_data['table_html']}
+                    </div>
+                </div>
+        """
+    
+    full_html += """
+            </div>
+        </div>
+    </body>
+    </html>
+    """
 
-def main():
-    import cea.config
+    with open(output_path, 'w') as f:
+        f.write(full_html)
+    
+    print(f"Plotted multi-building comfort chart to {output_path}")
+    import webbrowser
+    webbrowser.open(output_path)
+    
+    return full_html
+
+
+def main(config):
     import cea.inputlocator
 
-    config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
 
-    ComfortChartPlot(config.project, {'building': locator.get_zone_building_names()[0],
-                                      'scenario-name': config.scenario_name},
-                     cache).plot(auto_open=True)
+    list_buildings = config.plots_comfort_chart.buildings
+    integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
+    integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
+    list_standard = config.plots_building_filter.filter_buildings_by_construction_type
+    list_main_use_type = config.plots_building_filter.filter_buildings_by_use_type
+    ratio_main_use_type = config.plots_building_filter.min_ratio_as_main_use
+    _, list_buildings = filter_buildings(locator, list_buildings,
+                             integer_year_start, integer_year_end, list_standard,
+                             list_main_use_type, ratio_main_use_type)
+
+    print(f"Filtered buildings list: {list_buildings}")
+    print(f"Number of buildings: {len(list_buildings)}")
+
+    # Generate comfort charts for all buildings
+    building_plots = []
+    for building in list_buildings:
+        plot_obj = ComfortChartPlot(config.project, {'building': building,
+                                                    'scenario-name': config.scenario_name},
+                                   cache)
+        building_plots.append(plot_obj)
+    
+    # Create multi-building plot
+    plot_html = create_multi_building_plot(building_plots)
+
+    return plot_html
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())

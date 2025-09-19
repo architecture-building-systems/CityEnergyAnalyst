@@ -16,7 +16,7 @@ from cea.demand.building_properties.building_solar import get_thermal_resistance
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 from cea.demand.time_series_data import TimeSeriesData, Weather
 from cea.utilities import reporting
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from cea.config import Configuration
@@ -31,9 +31,6 @@ def calc_thermal_loads(building_name: str,
                        locator: InputLocator,
                        use_dynamic_infiltration_calculation: bool,
                        resolution_outputs: str,
-                       loads_output: List[str],
-                       massflows_output: List[str],
-                       temperatures_output: List[str],
                        config: Configuration,
                        debug: bool,
                        ):
@@ -85,12 +82,6 @@ def calc_thermal_loads(building_name: str,
     :rtype use_dynamic_infiltration_calculation: bool
     :param resolution_outputs: Time step resolution of the demand simulation (hourly or monthly).
     :type resolution_outputs: str
-    :param loads_output: List of loads output by the demand simulation (to simulate all load types in demand_writer, leave blank).
-    :type loads_output: list[str]
-    :param massflows_output: List of mass flow rates output by the demand simulation (to simulate all system mass flow rates in demand_writer, leave blank).
-    :type massflows_output: list[str]
-    :param temperatures_output: List of temperatures output by the demand simulation (to simulate all temperatures in demand_writer, leave blank).
-    :type temperatures_output: list[str]
     :param config: cea configuration
     :type config: cea.configuration.Configuration
     :param debug: Enable debugging-specific behaviors.
@@ -189,8 +180,7 @@ def calc_thermal_loads(building_name: str,
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
     # WRITE SOLAR RESULTS
-    write_results(bpr, building_name, date_range, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd, debug)
+    write_results(bpr, building_name, date_range, locator, resolution_outputs, tsd, debug)
 
     return
 
@@ -202,12 +192,11 @@ def calc_QH_sys_QC_sys(tsd: TimeSeriesData) -> TimeSeriesData:
     return tsd
 
 
-def write_results(bpr: BuildingPropertiesRow, building_name, date, loads_output, locator, massflows_output,
-                  resolution_outputs, temperatures_output, tsd: TimeSeriesData, debug):
+def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, resolution_outputs, tsd: TimeSeriesData, debug):
     if resolution_outputs == 'hourly':
-        writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
+        writer = demand_writers.HourlyDemandWriter()
     elif resolution_outputs == 'monthly':
-        writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
+        writer = demand_writers.MonthlyDemandWriter()
     else:
         raise Exception('error')
 
@@ -215,8 +204,9 @@ def write_results(bpr: BuildingPropertiesRow, building_name, date, loads_output,
         print('Creating instant plotly visualizations of demand variable time series.')
         print('Behavior can be changed in cea.utilities.reporting code.')
         print('Writing detailed demand results of {} to .xls file.'.format(building_name))
-        reporting.quick_visualization_tsd(tsd, locator.get_demand_results_folder(), building_name)
-        reporting.full_report_to_xls(tsd, locator.get_demand_results_folder(), building_name)
+        tsd_df = reporting.calc_full_hourly_dataframe(tsd, date)
+        reporting.quick_visualization_tsd(tsd_df, locator.get_demand_results_folder(), building_name)
+        reporting.full_report_to_xls(tsd_df, locator.get_demand_results_folder(), building_name)
 
     writer.results_to_csv(tsd, bpr, locator, date, building_name)
 

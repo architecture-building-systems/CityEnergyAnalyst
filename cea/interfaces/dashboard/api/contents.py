@@ -19,9 +19,9 @@ from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAProjectRoot, CEAServerLimits
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings, get_settings
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
@@ -168,7 +168,8 @@ def filter_valid_files(file_list: List[str]) -> List[str]:
     return list(filter(lambda f: Path(f).suffix in VALID_EXTENSIONS, file_list))
 
 @router.post("/scenario/upload")
-async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot) -> UploadScenarioResult:
+async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot,
+                          limit_settings: CEAServerLimits) -> UploadScenarioResult:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
@@ -191,7 +192,6 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     project_path = Path(secure_path(Path(project_root, project_name).resolve()))
 
     settings = get_settings()
-    limit_settings = LimitSettings()
     if not settings.local:
         num_projects = len(await get_project_choices(project_root))
         if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:

@@ -11,7 +11,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from cea.demand.time_series_data import EnergyBalanceDashboard, Solar
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, 
+                                       CoolingLoads, FuelSource, HeatingSystemMassFlows, 
+                                       CoolingSystemMassFlows, HeatingSystemTemperatures, 
+                                       CoolingSystemTemperatures, RCModelTemperatures)
+
+from cea.utilities.reporting import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
@@ -19,8 +24,32 @@ if TYPE_CHECKING:
 
 FLOAT_FORMAT = '%.3f'
 
-TSD_KEYS_ENERGY_BALANCE_DASHBOARD = list(EnergyBalanceDashboard.__dataclass_fields__.keys())
-TSD_KEYS_SOLAR = list(Solar.__dataclass_fields__.keys())
+
+def get_all_load_keys():
+    """Get all available load keys from time series data classes."""
+    load_keys = []
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelSource]
+    for cls in load_classes:
+        load_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return load_keys
+
+
+def get_all_massflow_keys():
+    """Get all available mass flow keys from time series data classes."""
+    massflow_keys = []
+    massflow_classes = [HeatingSystemMassFlows, CoolingSystemMassFlows]
+    for cls in massflow_classes:
+        massflow_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return massflow_keys
+
+
+def get_all_temperature_keys():
+    """Get all available temperature keys from time series data classes."""
+    temperature_keys = []
+    temperature_classes = [HeatingSystemTemperatures, CoolingSystemTemperatures, RCModelTemperatures]
+    for cls in temperature_classes:
+        temperature_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return temperature_keys
 
 class DemandWriter(ABC):
     """
@@ -30,12 +59,13 @@ class DemandWriter(ABC):
     - implement the `write_to_csv` method
     """
 
-    def __init__(self, loads, massflows, temperatures):
-        self.load_vars = loads
-        self.mass_flow_vars = massflows
-        self.temperature_vars = temperatures
+    def __init__(self, loads=None, massflows=None, temperatures=None):
+        # If empty lists are provided, generate all available keys
+        self.load_vars = loads if loads else get_all_load_keys()
+        self.mass_flow_vars = massflows if massflows else get_all_massflow_keys()
+        self.temperature_vars = temperatures if temperatures else get_all_temperature_keys()
 
-        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD | TSD_KEYS_SOLAR
 
         self.OTHER_VARS = ['name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
@@ -121,7 +151,7 @@ class DemandWriter(ABC):
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
@@ -139,7 +169,7 @@ class HourlyDemandWriter(DemandWriter):
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures)
         self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
                        'october', 'november', 'december']

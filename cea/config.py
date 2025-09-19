@@ -1159,16 +1159,19 @@ def get_scenarios_list(project_path: str) -> List[str]:
 
     def is_valid_scenario(folder_name):
         """
-        A scenario must be a valid path
         A scenario can't start with a `.` like `.config`
+        A scenario must have an `inputs` folder inside it
         """
         folder_path = os.path.join(normalized_path, folder_name)
 
         # TODO: Use .gitignore to ignore scenarios
-        return all([os.path.isdir(folder_path),
-                    not folder_name.startswith('.'),
-                    folder_name != "__pycache__",
-                    folder_name != "__MACOSX"])
+        return (
+            os.path.isdir(folder_path) 
+            and os.path.exists(os.path.join(folder_path, 'inputs'))
+            and not folder_name.startswith(".")
+            and folder_name != "__pycache__"
+            and folder_name != "__MACOSX"
+        )
 
     return sorted([folder_name for folder_name in os.listdir(normalized_path) if is_valid_scenario(folder_name)])
 
@@ -1283,6 +1286,22 @@ class ColumnChoiceParameter(ChoiceParameter):
 
 class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
+
+
+class PlotContextParameter(Parameter):
+    """A parameter that accepts a dict containing plot context information."""
+    
+    def encode(self, value) -> str:
+        if not isinstance(value, dict):
+            raise ValueError(f"Expected a dict for plot context, got {type(value)}")
+        return json.dumps(value)
+
+    def decode(self, value) -> dict[str, Any]:
+        try:
+            return json.loads(value) if value else {}
+        except json.JSONDecodeError as e:
+            raise ValueError("Could not decode plot context dict. Ensure it is a valid JSON string,"
+                             "using double quotes for keys and string values.") from e
 
 
 def validate_coord_tuple(coord_tuple):
