@@ -127,7 +127,7 @@ class BuildingEmissionTimeline:
         if not os.path.exists(self.locator.get_lca_timeline_folder()):
             os.makedirs(self.locator.get_lca_timeline_folder())
 
-        self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name))
+        self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name), float_format='%.2f')
 
     def fill_embodied_emissions(self) -> None:
         """
