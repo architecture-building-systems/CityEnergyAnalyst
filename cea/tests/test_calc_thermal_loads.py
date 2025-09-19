@@ -11,7 +11,7 @@ import pandas as pd
 import geopandas as gpd
 
 from cea.config import DEFAULT_CONFIG, Configuration
-from cea.datamanagement.utils import generate_architecture_csv
+from cea.datamanagement.utils import generate_architecture_csv, migrate_void_deck_data
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
@@ -41,8 +41,9 @@ class TestCalcThermalLoads(unittest.TestCase):
         # Extract reference case
         cls.locator = ReferenceCaseOpenLocator()
 
-        # FIXME: Update reference case to have architecture file
+        # FIXME: Update reference case to have void deck and architecture file
         # Ensure that the architecture csv is generated
+        migrate_void_deck_data(cls.locator)
         generate_architecture_csv(cls.locator, gpd.read_file(cls.locator.get_zone_geometry()))
 
         cls.config = Configuration(DEFAULT_CONFIG)
