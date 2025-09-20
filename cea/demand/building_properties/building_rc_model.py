@@ -142,7 +142,7 @@ class BuildingRCModel:
         df['Htr_w'] = envelope['Awin_ag'] * envelope['U_win'] * np.sqrt(areas_df['Hs_ag'])
 
         # check if buildings are completely above ground
-        is_floating = (areas_df["void_deck"] > 0).astype(int)
+        is_floating = (geometry["void_deck"] > 0).astype(int)
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
