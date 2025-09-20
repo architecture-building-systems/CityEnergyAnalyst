@@ -707,7 +707,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
     Qs = tsd.occupancy.Qs[t]
     a_t = bpr.rc_model.Atot
     a_m = bpr.rc_model.Am
-    a_w = bpr.rc_model.Awin_ag
+    a_w = bpr.envelope.Awin_ag
     c_m = bpr.rc_model.Cm / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
