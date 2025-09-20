@@ -8,10 +8,8 @@ import shutil
 import unittest
 
 import pandas as pd
-import geopandas as gpd
 
 from cea.config import DEFAULT_CONFIG, Configuration
-from cea.datamanagement.utils import generate_architecture_csv
 from cea.demand.building_properties import BuildingProperties
 from cea.demand.occupancy_helper import occupancy_helper_main
 from cea.demand.thermal_loads import calc_thermal_loads
