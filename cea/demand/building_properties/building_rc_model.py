@@ -170,6 +170,7 @@ class BuildingRCModel:
 
     def geometry_reader_radiation_daysim(self,
                                          locator: InputLocator,
+                                         envelope: pd.DataFrame,
                                          geometry: pd.DataFrame) -> pd.DataFrame:
         """
 
@@ -177,6 +178,8 @@ class BuildingRCModel:
         consistent with other imported geometry parameters.
 
         :param locator: an InputLocator for locating the input files
+
+        :param envelope: The contents of the `envelope.csv` file indexed by building name.
 
         :param geometry: The contents of the `zone.shp` file indexed by building name.
 
@@ -202,35 +205,34 @@ class BuildingRCModel:
         Shape_Leng. This data is used to calculate the wall and window areas.)
 
         """
-        df = pd.DataFrame(index=geometry.index)
 
         # add result columns to envelope df
-        df['Awall_ag'] = np.nan
-        df['Awin_ag'] = np.nan
-        df['Aroof'] = np.nan
-        df['Aunderside'] = np.nan
+        envelope['Awall_ag'] = np.nan
+        envelope['Awin_ag'] = np.nan
+        envelope['Aroof'] = np.nan
+        envelope['Aunderside'] = np.nan
 
         # call all building geometry files in a loop
         for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
-            df.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
+            envelope.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
                                                       geometry_data['walls_west_m2'][0] + \
                                                       geometry_data['walls_south_m2'][0] + \
                                                       geometry_data['walls_north_m2'][0]
-            df.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
+            envelope.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
                                                      geometry_data['windows_west_m2'][0] + \
                                                      geometry_data['windows_south_m2'][0] + \
                                                      geometry_data['windows_north_m2'][0]
-            df.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
             if 'undersides_bottom_m2' not in geometry_data.columns:
                 geometry_data['undersides_bottom_m2'] = 0
-            df.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
+            envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
 
         # adjust envelope areas with Void_deck
-        df['Aop_bg'] = geometry['height_bg'] * geometry['perimeter'] + geometry['footprint']
+        envelope['Aop_bg'] = geometry['height_bg'] * geometry['perimeter'] + geometry['footprint']
 
-        return df
+        return envelope
 
     def lookup_effective_mass_area_factor(self, cm):
         """
