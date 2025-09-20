@@ -41,10 +41,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         # Extract reference case
         cls.locator = ReferenceCaseOpenLocator()
 
-        # FIXME: Update reference case to have architecture file
-        # Ensure that the architecture csv is generated
-        generate_architecture_csv(cls.locator, gpd.read_file(cls.locator.get_zone_geometry()))
-
         cls.config = Configuration(DEFAULT_CONFIG)
         cls.config.scenario = cls.locator.scenario
         cls.weather_data = epwreader.epw_reader(cls.locator.get_weather('Zug_inducity_2009'))[
