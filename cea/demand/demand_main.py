@@ -113,10 +113,6 @@ def main(config):
     if not radiation_files_exist(locator, config):
         raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
     
-    # Ensure that the architecture csv is generated
-    zone_df = gpd.read_file(locator.get_zone_geometry())
-    generate_architecture_csv(locator, zone_df)
-
     demand_calculation(locator=locator, config=config)
 
 
