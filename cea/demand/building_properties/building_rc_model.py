@@ -12,6 +12,7 @@ from cea.demand.control_heating_cooling_systems import has_heating_system, has_c
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import geopandas as gpd
     from cea.inputlocator import InputLocator
 
 
@@ -21,7 +22,7 @@ class BuildingRCModel:
     """
 
     def __init__(self, locator: InputLocator, building_names: list[str],
-                 typology: pd.DataFrame, envelope: pd.DataFrame, geometry: pd.DataFrame,
+                 typology: pd.DataFrame, envelope: pd.DataFrame, geometry: gpd.GeoDataFrame,
                  hvac_temperatures: pd.DataFrame):
         """
         Read building RC Model properties and construct a new BuildingRCModel object.
@@ -44,7 +45,7 @@ class BuildingRCModel:
                            locator: InputLocator,
                            typology: pd.DataFrame,
                            envelope: pd.DataFrame,
-                           geometry: pd.DataFrame,
+                           geometry: gpd.GeoDataFrame,
                            hvac_temperatures: pd.DataFrame) -> pd.DataFrame:
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
