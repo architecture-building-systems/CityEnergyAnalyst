@@ -111,7 +111,7 @@ class BuildingRCModel:
         # Calculate useful (electrified/conditioned/occupied) floor areas
         areas_df = calc_useful_areas(geometry, envelope)
         # calculate building geometry and update envelope areas
-        self.geometry_reader_radiation_daysim(locator, envelope, geometry)
+        self.geometry_reader_radiation_daysim(locator, envelope, areas_df)
 
         df = pd.DataFrame(index=geometry.index)
 
@@ -161,8 +161,8 @@ class BuildingRCModel:
         df['Htr_ms'] = H_MS * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
-        
-        return df
+
+        return df.merge(areas_df[['Af', 'Aef', 'footprint', 'GFA_m2', 'Aocc', 'Hs_ag']], left_index=True, right_index=True)
 
 
     def geometry_reader_radiation_daysim(self,

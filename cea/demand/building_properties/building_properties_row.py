@@ -270,10 +270,12 @@ class SolarProperties:
 @dataclass(frozen=True)
 class RCModelProperties:
     # --- Area properties ---
+    footprint: Annotated[float, "Building footprint area [m2]"]
     Atot: Annotated[float, "Area of all surfaces facing the building zone [m2]"]
+    Am: Annotated[float, "Effective mass area [m2]"]
+    # TODO: Determine if these fields belong here (calculated using calc_useful_areas)
     Af: Annotated[float, "Conditioned floor area (areas that are heated or cooled) [m2]"]
     GFA_m2: Annotated[float, "Gross floor area [m2]"]
-    Am: Annotated[float, "Effective mass area [m2]"]
     Aef: Annotated[float, "Electrified area (share of gross floor area that is electrified) [m2]"]
     Aocc: Annotated[float, "Occupied floor area [m2]"]
     Hs_ag: Annotated[float, "Share of above-ground gross floor area that is conditioned [m2/m2]"]
