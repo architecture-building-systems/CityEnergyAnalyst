@@ -234,6 +234,13 @@ class EnvelopeProperties:
     A_op: Annotated[float, "Opaque area above ground [m2]"]
     win_wall: Annotated[float, "Window to wall ratio [-]"]
 
+    # Area fields added from BuildingRCModel
+    Aroof: Annotated[float, "Roof area [m2]"]
+    Aunderside: Annotated[float, "Underside area [m2]"]
+    Awall_ag: Annotated[float, "Above ground wall area [m2]"]
+    Awin_ag: Annotated[float, "Above ground window area [m2]"]
+    Aop_bg: Annotated[float, "Area of opaque surfaces below ground [m2]"]
+
     # FIXME: These fields does not neccessarily describe the building envelope
     Es: Annotated[float, "Heated/cooled share [-]"]
     occupied_bg: Annotated[float, "Basement occupation factor [-]"]
@@ -267,14 +274,9 @@ class RCModelProperties:
     Af: Annotated[float, "Conditioned floor area (areas that are heated or cooled) [m2]"]
     GFA_m2: Annotated[float, "Gross floor area [m2]"]
     footprint: Annotated[float, "Building footprint area [m2]"]
-    Aroof: Annotated[float, "Roof area [m2]"]
-    Aunderside: Annotated[float, "Underside area [m2]"]
-    Awall_ag: Annotated[float, "Above ground wall area [m2]"]
-    Awin_ag: Annotated[float, "Above ground window area [m2]"]
     Am: Annotated[float, "Effective mass area [m2]"]
     Aef: Annotated[float, "Electrified area (share of gross floor area that is electrified) [m2]"]
     Aocc: Annotated[float, "Occupied floor area [m2]"]
-    Aop_bg: Annotated[float, "Area of opaque surfaces below ground [m2]"]
     Hs_ag: Annotated[float, "Share of above-ground gross floor area that is conditioned [m2/m2]"]
 
     # --- Thermal properties ---
