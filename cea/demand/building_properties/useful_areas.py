@@ -26,8 +26,13 @@ def calc_useful_areas(zone_df: gpd.GeoDataFrame, architecture_df: pd.DataFrame) 
         - Af: Conditioned floor area [m2]
         - Aef: Electrified floor area [m2]
     """
+    # Ensure void_deck data is only present in zone_df
+    props = {}
+    if "void_deck" in zone_df.columns and "void_deck" in architecture_df.columns:
+        props['suffixes'] = ('', '_arch')
+
     # Merge zone data with architecture data to get building properties
-    df = zone_df.merge(architecture_df, how='left', left_index=True, right_index=True)
+    df = zone_df.merge(architecture_df, how='left', left_index=True, right_index=True, **props)
 
     # reproject to projected coordinate system (in meters) to calculate area
     lat, lon = get_lat_lon_projected_shapefile(zone_df)
