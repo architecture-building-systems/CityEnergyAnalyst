@@ -169,7 +169,6 @@ class BuildingRCModel:
 
     def geometry_reader_radiation_daysim(self,
                                          locator: InputLocator,
-                                         envelope: pd.DataFrame,
                                          geometry: pd.DataFrame) -> pd.DataFrame:
         """
 
@@ -178,20 +177,19 @@ class BuildingRCModel:
 
         :param locator: an InputLocator for locating the input files
 
-        :param envelope: The contents of the `architecture.shp` file, indexed by building name.
-
         :param geometry: The contents of the `zone.shp` file indexed by building name.
 
         :return: Adjusted Daysim geometry data containing the following:
 
             - name: Name of building.
-            - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
+            - Awin_ag: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
             - Awall_ag: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
             - Aop_bg: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
             - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
-            - GFA_m2: Gross floor area [m2]
-            - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
-            - surface_volume: Surface to volume ratio [m^-1]
+            - Aunderside: Area of the underside (only if building is floating, otherwise 0) [m2]
+            # - GFA_m2: Gross floor area [m2]
+            # - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
+            # - surface_volume: Surface to volume ratio [m^-1]
 
         :rtype: DataFrame
 
@@ -203,34 +201,33 @@ class BuildingRCModel:
         Shape_Leng. This data is used to calculate the wall and window areas.)
 
         """
+        df = pd.DataFrame(index=geometry.index)
 
         # add result columns to envelope df
-        envelope['Awall_ag'] = np.nan
-        envelope['Awin_ag'] = np.nan
-        envelope['Aroof'] = np.nan
-        envelope['Aunderside'] = np.nan
+        df['Awall_ag'] = np.nan
+        df['Awin_ag'] = np.nan
+        df['Aroof'] = np.nan
+        df['Aunderside'] = np.nan
 
         # call all building geometry files in a loop
         for building_name in self.building_names:
             geometry_data = pd.read_csv(locator.get_radiation_building(building_name))
-            envelope.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
+            df.loc[building_name, 'Awall_ag'] = geometry_data['walls_east_m2'][0] + \
                                                       geometry_data['walls_west_m2'][0] + \
                                                       geometry_data['walls_south_m2'][0] + \
                                                       geometry_data['walls_north_m2'][0]
-            envelope.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
+            df.loc[building_name, 'Awin_ag'] = geometry_data['windows_east_m2'][0] + \
                                                      geometry_data['windows_west_m2'][0] + \
                                                      geometry_data['windows_south_m2'][0] + \
                                                      geometry_data['windows_north_m2'][0]
-            envelope.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
+            df.loc[building_name, 'Aroof'] = geometry_data['roofs_top_m2'][0]
             if 'undersides_bottom_m2' not in geometry_data.columns:
                 geometry_data['undersides_bottom_m2'] = 0
-            envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
-
-        df = envelope.merge(geometry, left_index=True, right_index=True)
+            df.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
 
         # adjust envelope areas with Void_deck
-        df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
+        df['Aop_bg'] = geometry['height_bg'] * geometry['perimeter'] + geometry['footprint']
 
         return df
 
