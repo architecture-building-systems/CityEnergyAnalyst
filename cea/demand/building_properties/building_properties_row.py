@@ -289,13 +289,6 @@ class RCModelProperties:
     Htr_op: Annotated[float, "Thermal transmission coefficient for opaque surfaces in RC-model [W/K]"]
     Htr_w: Annotated[float, "Thermal transmission coefficient for windows in RC-model [W/K]"]
 
-    # FIXME: Decide if these fields should be in envelope or rc_model
-    # --- U-values (Duplicated Envelope properties) ---
-    U_wall: Annotated[float, "U-value of wall [W/m2K]"]
-    U_roof: Annotated[float, "U-value of roof [W/m2K]"]
-    U_win: Annotated[float, "U-value of windows [W/m2K]"]
-    U_base: Annotated[float, "U-value of floor [W/m2K]"]
-
     @classmethod
     def from_dict(cls, rc_model: dict):
         field_names = cls.__annotations__.keys()
