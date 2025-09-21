@@ -57,17 +57,17 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
 
     # Calculate disconnected buildings_demands files and substation operation.
     substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Q'])
-    substations_Q = pd.DataFrame()
+    Q_nom_list = []
     for name in buildings_demands.keys():
         print(name)
         # calculate substation parameters (A,UA) per building and store to .csv (target)
         substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
         substations_HEX_specs.loc[name] = substation_HEX
-        if substations_Q.empty:
-            substations_Q = pd.DataFrame(substation_HEX[2])
-        else:
-            substations_Q = pd.concat([substations_Q, substation_HEX[2]])
+        Q_nom_list.append(substation_HEX[2])
+
+    # Convert list of Series to DataFrame
+    substations_Q = pd.DataFrame(Q_nom_list, index=buildings_demands.keys())
 
     print(time.perf_counter() - t0, "seconds process time for the Substation Routine \n")
     return substations_HEX_specs, substations_Q
@@ -170,10 +170,10 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
         UA_columns.append('UA_cooling_cs_' + system)
         Q_columns.append('Q_hex_c_' + system)
 
-    # Dataframes for storage
-    hex_areas = pd.DataFrame(columns=area_columns, index=['0'])
-    UA_data = pd.DataFrame(columns=UA_columns, index=['0'])
-    Q_nom_data = pd.DataFrame(columns=Q_columns, index=[building_demand['name'].values[0]])
+    # Series for storage
+    hex_areas = pd.Series(index=area_columns, dtype=float)      # Series 1
+    UA_data = pd.Series(index=UA_columns, dtype=float)          # Series 2
+    Q_nom_data = pd.Series(index=Q_columns, dtype=float)        # Series 3
 
     ## Heating
     for system in substation_systems['heating']:
@@ -328,11 +328,10 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     heat = []
 
     # Heating ahu
-    if 'UA_heating_hs_ahu' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_heating_hs_ahu' in substation_HEX_specs.HEX_UA:
         Qhs_sys_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hs_sys', 'ahu_',
                                                                                     T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_ahu[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_ahu,
                                                                                     thermal_network.ch_old['hs_ahu'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -345,11 +344,10 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         thermal_network.ch_old['hs_ahu'][t][name] = float(ch_value)
 
     # Heating aru
-    if 'UA_heating_hs_aru' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_heating_hs_aru' in substation_HEX_specs.HEX_UA:
         Qhs_sys_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hs_sys', 'aru_',
                                                                                     T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_aru[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_aru,
                                                                                     thermal_network.ch_old['hs_aru'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -362,11 +360,10 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         thermal_network.ch_old['hs_aru'][t][name] = float(ch_value)
 
     # Heating shu
-    if 'UA_heating_hs_shu' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_heating_hs_shu' in substation_HEX_specs.HEX_UA:
         Qhs_sys_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hs_sys', 'shu_',
                                                                                     T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_shu[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_shu,
                                                                                     thermal_network.ch_old['hs_shu'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -378,10 +375,9 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         thermal_network.ch_value['hs_shu'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_shu'][t][name] = float(ch_value)
 
-    if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA:
         Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
-                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_ww[
-                                                                            '0'],
+                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_ww,
                                                                         thermal_network.ch_old['hs_ww'][t][name],
                                                                         thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_ww)
@@ -416,11 +412,10 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
     heat = []
 
     # Cooling ahu
-    if 'UA_cooling_cs_ahu' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_ahu' in substation_HEX_specs.HEX_UA:
         Qcs_sys_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu, cc_value = calc_HEX_cooling(building, 'cs_sys', 'ahu_',
                                                                                     T_DC_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu,
                                                                                     thermal_network.cc_old['cs_ahu'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -432,11 +427,10 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_value['cs_ahu'][t][name] = float(cc_value)
 
     # Cooling aru
-    if 'UA_cooling_cs_aru' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_aru' in substation_HEX_specs.HEX_UA:
         Qcs_sys_aru, t_DC_return_cs_aru, mcp_DC_hs_aru, cc_value = calc_HEX_cooling(building, 'cs_sys', 'aru_',
                                                                                     T_DC_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_aru[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_aru,
                                                                                     thermal_network.cc_old['cs_aru'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -448,11 +442,10 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_value['cs_aru'][t][name] = float(cc_value)
 
     # Cooling scu
-    if 'UA_cooling_cs_scu' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_scu' in substation_HEX_specs.HEX_UA:
         Qcs_sys_scu, t_DC_return_cs_scu, mcp_DC_hs_scu, cc_value = calc_HEX_cooling(building, 'cs_sys', 'scu_',
                                                                                     T_DC_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_scu[
-                                                                                        '0'],
+                                                                                    substation_HEX_specs.HEX_UA.UA_cooling_cs_scu,
                                                                                     thermal_network.cc_old['cs_scu'][t][
                                                                                         name],
                                                                                     thermal_network.delta_cap_mass_flow[
@@ -463,10 +456,9 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_old['cs_scu'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_scu'][t][name] = float(cc_value)
 
-    if 'UA_cooling_cs_data' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_data' in substation_HEX_specs.HEX_UA:
         Qcdata_sys, t_DC_return_data, mcp_DC_data, cc_value = calc_HEX_cooling(building, 'cdata_sys', '', T_DC_supply_K,
-                                                                               substation_HEX_specs.HEX_UA.UA_cooling_cs_data[
-                                                                                   '0'],
+                                                                               substation_HEX_specs.HEX_UA.UA_cooling_cs_data,
                                                                                thermal_network.cc_old['cs_data'][t][
                                                                                    name],
                                                                                thermal_network.delta_cap_mass_flow[t])
@@ -476,10 +468,9 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_old['cs_data'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_data'][t][name] = float(cc_value)
 
-    if 'UA_cooling_cs_re' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_re' in substation_HEX_specs.HEX_UA:
         Qcre_sys, t_DC_return_re_sys, mcp_DC_re_sys, cc_value = calc_HEX_cooling(building, 'cre_sys', '', T_DC_supply_K,
-                                                                                 substation_HEX_specs.HEX_UA.UA_cooling_cs_re[
-                                                                                     '0'],
+                                                                                 substation_HEX_specs.HEX_UA.UA_cooling_cs_re,
                                                                                  thermal_network.cc_old['cs_re'][t][
                                                                                      name],
                                                                                  thermal_network.delta_cap_mass_flow[t])
