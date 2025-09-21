@@ -1,18 +1,14 @@
 """
-CEAFrontEnd – Combines everything
+CEAFrontEnd - Combines everything
 
 """
 
-import os
 import sys
 from typing import Any
 
-import geopandas as gpd
 
 from cea import CEAException
 import cea.config
-import cea.inputlocator
-from cea.datamanagement.utils import generate_architecture_csv
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
@@ -91,12 +87,6 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     else:
         plot_cea_feature_umbrella = plot_cea_feature
         solar_panel_types_list = []
-
-    # Ensure that the architecture csv is generated for gfa normalization
-    locator = cea.inputlocator.InputLocator(scenario=scenario)
-    if not os.path.exists(locator.get_architecture_csv()):
-        zone_df = gpd.read_file(locator.get_zone_geometry())
-        generate_architecture_csv(locator, zone_df)
 
     # Find the plot config section for the cea feature
     try:
