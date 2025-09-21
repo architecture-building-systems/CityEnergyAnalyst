@@ -83,67 +83,65 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
     buildings_demands = {}
     for name in building_names:
         name = str(name)
-        buildings_demands[name] = pd.read_csv(locator.get_demand_results_file(name),
-                                              usecols=(BUILDINGS_DEMANDS_COLUMNS))
+        demand_df = pd.read_csv(locator.get_demand_results_file(name),
+                                usecols=(BUILDINGS_DEMANDS_COLUMNS))
         Q_substation_heating = 0
         T_supply_heating_C = np.nan
         for system in substation_systems['heating']:
             if system == 'ww':
-                Q_substation_heating = Q_substation_heating + buildings_demands[name].Qww_sys_kWh
+                Q_substation_heating = Q_substation_heating + demand_df.Qww_sys_kWh
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
-                                                                  np.where(buildings_demands[name].Qww_sys_kWh > 0,
-                                                                           buildings_demands[name].Tww_sys_sup_C,
+                                                                  np.where(demand_df.Qww_sys_kWh > 0,
+                                                                           demand_df.Tww_sys_sup_C,
                                                                            np.nan))
             else:
-                Q_substation_heating = Q_substation_heating + buildings_demands[name]['Qhs_sys_' + system + '_kWh']
+                Q_substation_heating = Q_substation_heating + demand_df['Qhs_sys_' + system + '_kWh']
                 # set the building side heating supply temperature
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
-                                                                  np.where(buildings_demands[name][
-                                                                               'Qhs_sys_' + system + '_kWh'] > 0,
-                                                                           buildings_demands[name][
-                                                                               'Ths_sys_sup_' + system + '_C'],
+                                                                  np.where(demand_df['Qhs_sys_' + system + '_kWh'] > 0,
+                                                                           demand_df['Ths_sys_sup_' + system + '_C'],
                                                                            np.nan))
 
         Q_substation_cooling = 0
         T_supply_cooling_C = np.nan
         for system in substation_systems['cooling']:
             if system == 'data':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdata_sys_kWh)
+                Q_substation_cooling = Q_substation_cooling + abs(demand_df.Qcdata_sys_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                   np.where(
-                                                                      abs(buildings_demands[name].Qcdata_sys_kWh) > 0,
-                                                                      buildings_demands[name].Tcdata_sys_sup_C,
+                                                                      abs(demand_df.Qcdata_sys_kWh) > 0,
+                                                                      demand_df.Tcdata_sys_sup_C,
                                                                       np.nan))
             elif system == 're':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcre_sys_kWh)
+                Q_substation_cooling = Q_substation_cooling + abs(demand_df.Qcre_sys_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                   np.where(
-                                                                      abs(buildings_demands[name].Qcre_sys_kWh) > 0,
-                                                                      buildings_demands[name].Tcre_sys_sup_C,
+                                                                      abs(demand_df.Qcre_sys_kWh) > 0,
+                                                                      demand_df.Tcre_sys_sup_C,
                                                                       np.nan))
             else:
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
+                Q_substation_cooling = Q_substation_cooling + abs(demand_df['Qcs_sys_' + system + '_kWh'])
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(abs(buildings_demands[name][
-                                                                                   'Qcs_sys_' + system + '_kWh']) > 0,
-                                                                           buildings_demands[name][
-                                                                               'Tcs_sys_sup_' + system + '_C'],
+                                                                  np.where(abs(demand_df['Qcs_sys_' + system + '_kWh']) > 0,
+                                                                           demand_df['Tcs_sys_sup_' + system + '_C'],
                                                                            np.nan))
 
         # find the target substation supply temperature
         T_supply_DH_C = np.where(Q_substation_heating > 0, T_supply_heating_C + DT_HEAT, np.nan)
         T_supply_DC_C = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling_C - DT_COOL, np.nan)
 
-        buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
-        buildings_demands[name]['Q_substation_cooling'] = abs(Q_substation_cooling)
-        buildings_demands[name]['T_sup_target_DH'] = T_supply_DH_C
-        buildings_demands[name]['T_sup_target_DC'] = T_supply_DC_C
+        demand_df['Q_substation_heating'] = Q_substation_heating
+        demand_df['Q_substation_cooling'] = abs(Q_substation_cooling)
+        demand_df['T_sup_target_DH'] = T_supply_DH_C
+        demand_df['T_sup_target_DC'] = T_supply_DC_C
 
-        buildings_demands[name]['T_re_target_DH'] = T_supply_DH_C - delta_T_supply_return
-        buildings_demands[name]['T_re_target_DC'] = T_supply_DC_C + delta_T_supply_return
+        demand_df['T_re_target_DH'] = T_supply_DH_C - delta_T_supply_return
+        demand_df['T_re_target_DC'] = T_supply_DC_C + delta_T_supply_return
 
-        buildings_demands[name]['V_substation_heating_m3pers'] = (buildings_demands[name]['Q_substation_heating'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
-        buildings_demands[name]['V_substation_cooling_m3pers'] = (buildings_demands[name]['Q_substation_cooling'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
+        demand_df['V_substation_heating_m3pers'] = (demand_df['Q_substation_heating'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
+        demand_df['V_substation_cooling_m3pers'] = (demand_df['Q_substation_cooling'] * 1000 / (delta_T_supply_return  * HEAT_CAPACITY_OF_WATER_JPERKGK)) / P_WATER_KGPERM3
+
+        buildings_demands[name] = demand_df
 
     return buildings_demands
 
