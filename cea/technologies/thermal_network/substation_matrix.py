@@ -58,10 +58,10 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
     # Calculate disconnected buildings_demands files and substation operation.
     substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA'])
     Q_nom_list = []
-    for name in buildings_demands.keys():
+    for name, demand in buildings_demands.items():
         print(name)
         # calculate substation parameters (A,UA) per building and store to .csv (target)
-        hex_areas, UA_data, Q_nom_data = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
+        hex_areas, UA_data, Q_nom_data = substation_HEX_sizing(demand, substation_systems, thermal_network)
         # write into dataframe
         substations_HEX_specs.loc[name] = {'HEX_areas': hex_areas, 'HEX_UA': UA_data}
         Q_nom_list.append(Q_nom_data)
