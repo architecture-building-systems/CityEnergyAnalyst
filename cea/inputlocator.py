@@ -1329,15 +1329,6 @@ class InputLocator(object):
 
     # OUTPUTS
 
-    # ARCHITECTURE
-    def get_architecture_folder(self):
-        """scenario/outputs/data/architecture"""
-        return os.path.join(self.scenario, 'outputs', 'data', 'architecture')
-
-    def get_architecture_csv(self):
-        """scenario/outputs/data/architecture/architecture.csv"""
-        return os.path.join(self.get_architecture_folder(), 'architecture.csv')
-
     # SOLAR-RADIATION
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
