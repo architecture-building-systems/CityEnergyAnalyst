@@ -56,15 +56,15 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
     t0 = time.perf_counter()
 
     # Calculate disconnected buildings_demands files and substation operation.
-    substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Q'])
+    substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA'])
     Q_nom_list = []
     for name in buildings_demands.keys():
         print(name)
         # calculate substation parameters (A,UA) per building and store to .csv (target)
-        substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
+        hex_areas, UA_data, Q_nom_data = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
-        substations_HEX_specs.loc[name] = substation_HEX
-        Q_nom_list.append(substation_HEX[2])
+        substations_HEX_specs.loc[name] = {'HEX_areas': hex_areas, 'HEX_UA': UA_data}
+        Q_nom_list.append(Q_nom_data)
 
     # Convert list of Series to DataFrame
     substations_Q = pd.DataFrame(Q_nom_list, index=buildings_demands.keys())
@@ -206,7 +206,7 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
                 'Q_hex_c_' + system] = calc_hex_area_from_demand(
                 building_demand, 'cs_sys',
                 system + '_', T_DC_supply_C, thermal_network)
-    return [hex_areas, UA_data, Q_nom_data]
+    return hex_areas, UA_data, Q_nom_data
 
 
 def calc_hex_area_from_demand(building_demand, load_type, building_system, T_supply_C, thermal_network):
