@@ -269,7 +269,7 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
-    sensors_rad_clean = sensors_rad_clean.applymap(lambda x: f(x))
+    sensors_rad_clean = sensors_rad_clean.map(lambda x: f(x))
 
     return max_annual_radiation, annual_radiation_threshold_Whperm2, sensors_rad_clean, sensors_metadata_clean
 
