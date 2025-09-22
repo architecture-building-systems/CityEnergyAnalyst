@@ -118,12 +118,16 @@ class EnergyCarrier(object):
 
     @mean_qual.setter
     def mean_qual(self, new_mean_qual):
-        if not (isinstance(new_mean_qual, (int, float)) or (new_mean_qual == '-')):
-            raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
-                             "Acceptable values are numerical or '-'.")
-        else:
-            self._mean_qual = new_mean_qual
+        if isinstance(new_mean_qual, (int, float)):
+            self._mean_qual = float(new_mean_qual)
 
+        # FIXME: Decide on how to handle non-numerical mean_qual values
+        elif (new_mean_qual == '-'):
+            self._mean_qual = float('nan')
+
+        else:
+            raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
+                              "Acceptable values are numerical or '-'.")
     def _set_to(self, code):
         if code:
             energy_carrier = EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['code'] == code]
