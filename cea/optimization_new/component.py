@@ -49,7 +49,7 @@ class Component(object):
     _components_database = None
     _model_complexity = None
     _csv_name = None
-    code_to_class_mapping = {}
+    code_to_class_mapping = None
     possible_main_ecs = {}
 
     def __init__(self, data_base_tab,  model_code, capacity):

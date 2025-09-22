@@ -222,6 +222,10 @@ class Building(object):
         building's allocated supply system, if it's not, correct the demand profile to match the supply system's
         energy carrier.
         """
+        if Component.code_to_class_mapping is None:
+            raise ValueError("Please make sure the Component-class has been initialised properly before checking the "
+                             "building's demand energy carrier.")
+
         primary_component_classes = [Component.code_to_class_mapping[component_code]
                                      for component_code in self._stand_alone_supply_system_composition['primary']]
         instantiated_components = [component_class(code, 'primary', self.demand_flow.profile.max())
