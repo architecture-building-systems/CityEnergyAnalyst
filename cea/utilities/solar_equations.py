@@ -146,7 +146,7 @@ def calc_sun_properties(latitude, longitude, weather_data, datetime_local, confi
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(numeric_only=True), 2)
+    T_G_day = np.round(T_G_hour.groupby(['dayofyear'], observed=False).mean(numeric_only=True), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
@@ -718,7 +718,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' + sensors_metadata_cat['orientation']
     sensors_metadata_cat['surface'] = sensors_metadata_cat.index
     # group the sensors by categories
-    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'])
+    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'], observed=False)
     group_keys = sensor_groups_ob.groups.keys()
     number_groups = len(group_keys)
 
