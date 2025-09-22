@@ -28,8 +28,8 @@ from typing import Optional, ClassVar, Dict, Any
 
 @dataclass(frozen=True)
 class EnergyCarrier:
-    # Instance fields
-    code: str
+    # TODO: This is only optional to support default EnergyCarrier creation. Consider removing this option in the future.
+    code: Optional[str]
     description: str
     type: str
     subtype: str
@@ -117,7 +117,18 @@ class EnergyCarrier:
                    qualifier=qualifier,
                    qual_unit=qual_unit,
                    mean_qual=mean_qual)
-
+    
+    @classmethod
+    def default(cls) -> 'EnergyCarrier':
+        """Create a default EnergyCarrier instance."""
+        return cls(code=None,
+                   description="",
+                   type='none',
+                   subtype='none',
+                   qualifier='none',
+                   qual_unit='none',
+                   mean_qual=float('nan'))
+        
     def describe(self):
         """ Provide a short written description of the energy carrier."""
         description = self.description + ": " + str(self.mean_qual) + " " + self.qual_unit

@@ -45,7 +45,7 @@ class SupplySystemStructure(object):
     _system_type = ''
     _climatic_reference_temperature = None
     _network_temperature = None
-    _default_final_energy_carrier = EnergyCarrier()
+    _default_final_energy_carrier = EnergyCarrier.default()
     _infinite_energy_carriers = []
     _releasable_environmental_energy_carriers = []
     _releasable_grid_based_energy_carriers = []

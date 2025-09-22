@@ -60,7 +60,7 @@ class Component(object):
         self.technology = ' '.join([part.capitalize() for part in data_base_tab.split('_')])
         self.type = self._model_data['type'].values[0]  # given by working principle (only 1 code is installed for each type per component)
         self.capacity = capacity
-        self.main_energy_carrier = EnergyCarrier()
+        self.main_energy_carrier = EnergyCarrier.default()
         self.input_energy_carriers = {}
         self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
