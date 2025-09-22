@@ -49,7 +49,7 @@ class Component(object):
     _components_database = None
     _model_complexity = None
     _csv_name = None
-    code_to_class_mapping = None
+    code_to_class_mapping = {}
     possible_main_ecs = {}
 
     def __init__(self, data_base_tab,  model_code, capacity):
@@ -83,7 +83,7 @@ class Component(object):
         HeatExchanger.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
-    def create_code_mapping(database):
+    def create_code_mapping(database) -> dict[str, type["Component"]]:
         """ Map component codes in the database to their corresponding database tab names. """
         component_code_to_tab_mapping = {}
         for database_tab in database.keys():
