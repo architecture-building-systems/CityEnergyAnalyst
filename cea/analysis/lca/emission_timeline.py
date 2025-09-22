@@ -318,21 +318,22 @@ class BuildingEmissionTimeline:
         :rtype: dict[str, float]
         """
         rc_model_props = building_properties.rc_model[self.name]
+        envelope_props = building_properties.envelope[self.name]
 
         surface_area = {}
-        surface_area["Awall_ag"] = rc_model_props["Awall_ag"]
+        surface_area["Awall_ag"] = envelope_props["Awall_ag"]
         surface_area["Awall_bg"] = (
             self.geometry["perimeter"] * self.geometry["height_bg"]
         )
         surface_area["Awall_part"] = rc_model_props["GFA_m2"] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO
-        surface_area["Awin_ag"] = rc_model_props["Awin_ag"]
+        surface_area["Awin_ag"] = envelope_props["Awin_ag"]
 
         # calculate the area of each component
         # horizontal: roof, floor, underside, upperside (not implemented), base
         # vertical: wall_ag, wall_bg, wall_part (not implemented), win_ag
-        surface_area["Aroof"] = rc_model_props["Aroof"]
+        surface_area["Aroof"] = envelope_props["Aroof"]
         surface_area["Aupperside"] = 0.0  # not implemented
-        surface_area["Aunderside"] = rc_model_props["Aunderside"]
+        surface_area["Aunderside"] = envelope_props["Aunderside"]
         # internal floors that are not base, not upperside and not underside
 
         # check if building ever have base
