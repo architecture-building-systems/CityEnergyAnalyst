@@ -20,6 +20,8 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import warnings
+
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
@@ -264,10 +266,15 @@ class EnergyCarrier:
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
                                            if EnergyCarrier.from_code(ec_code).mean_qual >=
@@ -287,10 +294,15 @@ class EnergyCarrier:
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
                                            if EnergyCarrier.from_code(ec_code).mean_qual <=
