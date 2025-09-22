@@ -73,12 +73,12 @@ class EnergyCarrier:
                              "the supply system components that should take the new type into account.")
 
         # Validate qualifier
-        if self.qualifier not in self._available_energy_carriers['qualifier']:
+        if self.qualifier not in set(self._available_energy_carriers['qualifier'].values):
             raise ValueError('Please make sure all basic energy carrier qualifiers appear in the data base, namely: '
                              'temperature, voltage, wavelength')
 
         # Validate qual_unit
-        if self.qual_unit not in self._available_energy_carriers['unit_qual']:
+        if self.qual_unit not in set(self._available_energy_carriers['unit_qual'].values):
             raise ValueError('Please make sure the energy carrier qualifier units are set correctly.')
         
         # Validate mean_qual
