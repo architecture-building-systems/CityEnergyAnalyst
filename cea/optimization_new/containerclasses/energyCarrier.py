@@ -92,7 +92,7 @@ class EnergyCarrier:
         if cls._available_energy_carriers.empty:
             raise ValueError("Energy carrier database not loaded. Call initialize_class_variables() first.")
 
-        if code not in cls._available_energy_carriers['code']:
+        if code not in set(cls._available_energy_carriers['code'].values):
             raise ValueError(f'Tried to assign a new energy energy carrier using the code "{code}". This code '
                              f'could not be found in the energy carriers database.')
 
