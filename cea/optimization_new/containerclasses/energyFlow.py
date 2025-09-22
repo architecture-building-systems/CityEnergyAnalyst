@@ -79,7 +79,7 @@ class EnergyFlow(object):
     def energy_carrier(self, new_energy_carrier):
         if isinstance(new_energy_carrier, str):
             try:
-                self._energy_carrier = EnergyCarrier(new_energy_carrier)
+                self._energy_carrier = EnergyCarrier.from_code(new_energy_carrier)
             except ValueError:
                 raise ValueError('The indicated energy carrier code is invalid.')
         elif isinstance(new_energy_carrier, EnergyCarrier):

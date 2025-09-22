@@ -221,7 +221,7 @@ class EnergyCarrier:
         """
         ambient_temperature = weather['drybulb_C'].mean()
         EnergyCarrier.ambient_thermal_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
 
     @staticmethod
     def get_thermal_ecs_of_subtype(subtype):
@@ -259,12 +259,12 @@ class EnergyCarrier:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
         if include_thermal_ec:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return hotter_energy_carrier_codes
 
@@ -282,12 +282,12 @@ class EnergyCarrier:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
         if include_thermal_ec:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return colder_energy_carrier_codes
 
@@ -366,11 +366,11 @@ class EnergyCarrier:
         :rtype: list
         """
         equivalent_discrete_low_temps = {
-            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
             for ec_subtype in subtypes
         }
         equivalent_discrete_high_temps = {
-            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
             for ec_subtype in subtypes
         }
 
@@ -461,8 +461,8 @@ class EnergyCarrier:
         if np.isnan(high_voltage) and np.isnan(low_voltage):
             electrical_ecs_between_voltages = []
         elif not np.isnan(high_voltage) and not np.isnan(low_voltage):
-            top_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
-            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
+            top_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
+            bottom_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
             electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
             electrical_ecs_between_voltages = [energy_carrier['code']
                                                for row, energy_carrier in electrical_ecs_of_subtype.iterrows()

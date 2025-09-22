@@ -654,7 +654,7 @@ class SupplySystemStructure(object):
         Find out which alternative energy carriers could potentially be converted into the required energy carrier
         using passive components.
         """
-        required_ec_type = EnergyCarrier(required_energy_carrier_code).type
+        required_ec_type = EnergyCarrier.from_code(required_energy_carrier_code).type
         if required_ec_type == 'thermal':
             if component_placement == 'tertiary' \
                     or (SupplySystemStructure._system_type == 'cooling' and component_placement == 'primary'):
@@ -694,7 +694,7 @@ class SupplySystemStructure(object):
         if active_component_placement == 'tertiary':  # i.e. active components are used for absorption/rejection
             placed_before = active_component_placement
             placed_after = demand_origin
-            mean_qual_before = EnergyCarrier(required_energy_carrier_code).mean_qual
+            mean_qual_before = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
 
             for active_component in active_components_to_feed:
                 passive_component_list = []
@@ -713,7 +713,7 @@ class SupplySystemStructure(object):
         else:  # i.e. active components are used for generation
             placed_before = demand_origin
             placed_after = active_component_placement
-            mean_qual_after = EnergyCarrier(required_energy_carrier_code).mean_qual
+            mean_qual_after = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
 
             for active_component in active_components_to_feed:
                 passive_component_list = []
@@ -996,7 +996,7 @@ class SupplySystemStructure(object):
             = SupplySystemStructure.get_network_temperature(config.optimization_new.network_temperature)
         SupplySystemStructure._default_final_energy_carrier \
             = SupplySystemStructure.get_default_final_energy_carrier(
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(
                 SupplySystemStructure._NETWORK_FLUID, SupplySystemStructure._network_temperature)))
         SupplySystemStructure._infinite_energy_carriers \
             = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources)
