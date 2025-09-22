@@ -91,15 +91,15 @@ class EnergyCarrier:
             raise ValueError(f'Tried to assign a new energy energy carrier using the code "{code}". This code '
                              f'could not be found in the energy carriers database.')
 
-        energy_carrier = cls._available_energy_carriers[cls._available_energy_carriers['code'] == code]
+        energy_carrier = cls._available_energy_carriers.loc[cls._available_energy_carriers['code'] == code].iloc[0]
 
         # Extract values from database
-        description = energy_carrier['description'].iloc[0]
-        energy_type = energy_carrier['type'].iloc[0]
-        subtype = energy_carrier['subtype'].iloc[0]
-        qualifier = energy_carrier['qualifier'].iloc[0]
-        qual_unit = energy_carrier['unit_qual'].iloc[0]
-        mean_qual_value = energy_carrier['mean_qual'].iloc[0]
+        description = energy_carrier['description']
+        energy_type = energy_carrier['type']
+        subtype = energy_carrier['subtype']
+        qualifier = energy_carrier['qualifier']
+        qual_unit = energy_carrier['unit_qual']
+        mean_qual_value = energy_carrier['mean_qual']
 
         # Handle mean_qual conversion and validation
         if isinstance(mean_qual_value, (int, float)):
