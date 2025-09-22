@@ -51,6 +51,9 @@ class EnergyCarrier:
     _daily_sell_price_profile: ClassVar[Dict[str, Dict[int, float]]] = {}      # in USD (2015) per kWh
 
     def __post_init__(self):
+        if self.code is None:
+            return  # Skip validation for default instance
+
         # Validate type
         allowed_types = ['thermal', 'electrical', 'combustible', 'radiation']
         if self.type not in allowed_types:
