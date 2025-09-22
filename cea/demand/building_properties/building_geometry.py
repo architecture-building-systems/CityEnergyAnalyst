@@ -4,6 +4,7 @@ Building geometry properties
 from __future__ import annotations
 from geopandas import GeoDataFrame as Gdf
 
+from cea.datamanagement.databases_verification import COLUMNS_ZONE_GEOMETRY
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 from typing import TYPE_CHECKING
@@ -25,18 +26,19 @@ class BuildingGeometry:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        prop_geometry: Gdf = Gdf.from_file(locator.get_zone_geometry()).set_index('name').loc[building_names]
+        prop_geometry = Gdf.from_file(locator.get_zone_geometry())[COLUMNS_ZONE_GEOMETRY + ['geometry']].set_index('name').loc[building_names]
 
         # reproject to projected coordinate system (in meters) to calculate area
         lat, lon = get_lat_lon_projected_shapefile(prop_geometry)
         target_crs = get_projected_coordinate_system(float(lat), float(lon))
-        prop_geometry: Gdf = prop_geometry.to_crs(target_crs)
+        prop_geometry = prop_geometry.to_crs(target_crs)
 
+        # TODO: Check usage of footprint and perimeter in other parts of the code
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(prop_geometry)
 
-        self._prop_geometry = prop_geometry.drop('geometry', axis=1)
+        self._prop_geometry = prop_geometry
 
     @staticmethod
     def calc_bounding_box_geom(gdf: Gdf) -> tuple[list[float], list[float]]:

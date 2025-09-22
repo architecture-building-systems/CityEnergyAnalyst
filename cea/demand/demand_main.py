@@ -15,7 +15,7 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import migrate_void_deck_data
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -110,7 +110,7 @@ def main(config):
 
     if not radiation_files_exist(locator, config):
         raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
-
+    
     demand_calculation(locator=locator, config=config)
 
 
