@@ -82,7 +82,7 @@ class EnergyFlow(object):
                 self._energy_carrier = EnergyCarrier(new_energy_carrier)
             except ValueError:
                 raise ValueError('The indicated energy carrier code is invalid.')
-        elif isinstance(new_energy_carrier, type(EnergyCarrier())):
+        elif isinstance(new_energy_carrier, EnergyCarrier):
             self._energy_carrier = new_energy_carrier
         else:
             raise ValueError('Please indicate a valid energy carrier.')
