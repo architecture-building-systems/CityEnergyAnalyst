@@ -465,7 +465,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
             # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
             edge_mass_flow_for_csv = pd.concat([edge_mass_flow_for_csv] * 4, ignore_index=True)
             while len(edge_mass_flow_for_csv.index) < HOURS_IN_YEAR:
-                edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
+                mean_row = edge_mass_flow_for_csv.mean().to_frame().T
+                edge_mass_flow_for_csv = pd.concat([edge_mass_flow_for_csv, mean_row], ignore_index=True)
             edge_mass_flow_for_csv.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                             thermal_network.network_name), index=False)
@@ -921,7 +922,8 @@ def extrapolate_datapoints_for_representative_weeks(representative_week_data):
     representative_week_df = pd.DataFrame(representative_week_data)
     representative_week_df = pd.concat([representative_week_df] * 4, ignore_index=True)
     while len(representative_week_df.index) < HOURS_IN_YEAR:
-        representative_week_df = representative_week_df.append(representative_week_df.mean(), ignore_index=True)
+        mean_row = representative_week_df.mean().to_frame().T
+        representative_week_df = pd.concat([representative_week_df, mean_row], ignore_index=True)
     return representative_week_df
 
 

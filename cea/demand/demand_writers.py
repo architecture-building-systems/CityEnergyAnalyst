@@ -265,7 +265,7 @@ class YearlyDemandWriter:
             if df is None:
                 df = pd.read_hdf(temporary_file, key='dataset')
             else:
-                df = df.append(pd.read_hdf(temporary_file, key='dataset'))
+                df = pd.concat([df, pd.read_hdf(temporary_file, key='dataset')], ignore_index=True)
         df.to_hdf(locator.get_total_demand('hdf'), key='dataset')
 
         """read saved data of monthly values and return as totals"""

@@ -217,7 +217,9 @@ class PluginPlotBase(PlotBase):
         raise AssertionError("cea.plots.PlotBase.calc_graph should not be part of the abstract interface")
 
     def calc_table(self):
-        raise DeprecationWarning("cea.plots.PlotBase.calc_table is not used anymore and will be removed in future")
+        import warnings
+        warnings.warn("cea.plots.PlotBase.calc_table is not used anymore and will be removed in future", 
+                     DeprecationWarning, stacklevel=2)
 
     @property
     def output_path(self):
