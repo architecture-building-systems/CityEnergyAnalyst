@@ -109,6 +109,7 @@ class BuildingEmissionTimeline:
         # self.building_properties = building_properties
         self.envelope_lookup = envelope_lookup
         self.geometry = building_properties.geometry[self.name]
+        self.typology = building_properties.typology[self.name]
         self.envelope = building_properties.envelope[self.name]
         self.surface_area = self.get_component_quantity(building_properties)
         self.timeline = self.initialize_timeline(end_year)
@@ -152,7 +153,7 @@ class BuildingEmissionTimeline:
             )
             self.log_emission_in_timeline(
                 emission=0.0,  # when building is first built, no demolition emission
-                year=self.geometry["year"],
+                year=self.typology["year"],
                 col=f"demolition_{key}_kgCO2",
                 additive=False,
             )
@@ -203,7 +204,7 @@ class BuildingEmissionTimeline:
         :type demolition_year: int
         """
         # if demolition_year < self.geometry["year"], raise error
-        if demolition_year < self.geometry["year"]:
+        if demolition_year < self.typology["year"]:
             raise ValueError(
                 "Demolition year must be greater than or equal to the construction year."
             )
@@ -230,7 +231,7 @@ class BuildingEmissionTimeline:
         :return: The initialized timeline DataFrame.
         :rtype: pd.DataFrame
         """
-        start_year = self.geometry["year"]
+        start_year = self.typology["year"]
         if start_year >= end_year:
             raise ValueError("The starting year must be less than the ending year.")
 
@@ -265,7 +266,7 @@ class BuildingEmissionTimeline:
             raise ValueError("Lifetime must be at least 1 year.")
 
         years = list(
-            range(self.geometry["year"], self.timeline.index.max() + 1, lifetime)
+            range(self.typology["year"], self.timeline.index.max() + 1, lifetime)
         )
         self.log_emission_in_timeline(emission, years, col)
 
