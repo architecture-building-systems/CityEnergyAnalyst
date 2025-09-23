@@ -341,7 +341,11 @@ def move_txt_modify_csv_files(scenario, verbose=False):
                     headers_schedules = rows[2]
                     schedules_df = pd.DataFrame(other_rows, columns=headers_schedules)
                     schedules_df.rename(columns=rename_dict, inplace=True)
-                    schedules_df = schedules_df.apply(pd.to_numeric, errors='ignore')
+                    for col in schedules_df.columns:
+                        try:
+                            schedules_df[col] = pd.to_numeric(schedules_df[col])
+                        except (ValueError, TypeError):
+                            pass  # Keep original values if conversion fails
 
                     # Drop the original 'day' and 'hour' columns
                     if 'day' in schedules_df.columns:
