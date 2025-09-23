@@ -3,9 +3,10 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 import datetime
-from enum import Enum
+from enum import StrEnum
 
-class ScriptStatus(str, Enum):
+
+class ScriptStatus(StrEnum):
     """
     Enum for the status of a script.
     """

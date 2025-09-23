@@ -11,6 +11,7 @@ import geopandas
 import pandas as pd
 import sqlalchemy.exc
 from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
+from fastapi.concurrency import run_in_threadpool
 from geopandas import GeoDataFrame
 from osgeo import gdal
 from pydantic import BaseModel
@@ -23,11 +24,12 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, create_project, CEAUserID, \
-    CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, \
+    create_project, CEAUserID, \
+    CEASeverDemoAuthCheck, CEAServerLimits
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings, get_settings
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -55,6 +57,7 @@ class ScenarioPath(BaseModel):
 class NewProject(BaseModel):
     project_name: str
     project_root: Optional[str] = None
+    example_project: bool = False
 
 
 class CreateScenario(BaseModel):
@@ -128,7 +131,7 @@ class CreateScenario(BaseModel):
         return await self._get_geometry_data(self.user_surroundings, "surroundings.shp")
 
     async def get_street_file(self):
-        return await self._get_geometry_data(self.street, "street.shp")
+        return await self._get_geometry_data(self.street, "streets.shp")
 
     @asynccontextmanager
     async def get_weather_file(self):
@@ -142,6 +145,9 @@ class CreateScenario(BaseModel):
 
     def should_generate_zone(self) -> bool:
         return self.user_zone == GENERATE_ZONE_CEA
+
+    def uploaded_zone(self) -> bool:
+        return isinstance(self.user_zone, _UploadFile)
 
     def should_generate_surroundings(self) -> bool:
         return self.user_surroundings == GENERATE_SURROUNDINGS_CEA
@@ -253,12 +259,11 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
 
 @router.post('/', dependencies=[CEASeverDemoAuthCheck])
 async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject,
-                             user_id: CEAUserID, session: SessionDep):
+                             user_id: CEAUserID, session: SessionDep, limit_settings: CEAServerLimits):
     """
     Create new project folder
     """
     settings = get_settings()
-    limit_settings = LimitSettings()
     # FIXME: project_choices will not work if project_root is not a directory
     if not settings.local and os.path.exists(project_root):
         num_projects = len(await get_project_choices(project_root))
@@ -283,7 +288,10 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
             detail=str(e),
         )
     try:
-        os.makedirs(project, exist_ok=True)
+        if new_project.example_project:
+            await run_in_threadpool(lambda: fetch_example_project(project))
+        else:
+            os.makedirs(project, exist_ok=True)
         try:
             # Add project to database
             await create_project(project, user_id, session)
@@ -348,7 +356,8 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2', dependencies=[CEASeverDemoAuthCheck])
-async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()]):
+async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()],
+                                 limit_settings: CEAServerLimits):
     project_path = scenario_form.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
@@ -362,7 +371,6 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         )
     
     settings = get_settings()
-    limit_settings = LimitSettings()
     if not settings.local:
         num_scenarios = len(cea.config.get_scenarios_list(cea_project))
         if limit_settings.num_scenarios is not None and limit_settings.num_scenarios <= num_scenarios:
@@ -458,6 +466,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         if scenario_form.should_generate_zone():
             return
 
+        # Add typology to zone if provided
         if scenario_form.typology is not None:
             # Copy typology using path
             _, extension = os.path.splitext(scenario_form.typology)
@@ -504,11 +513,27 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
 
             # create new file
             merged_gdf.to_file(locator.get_zone_geometry(), driver='ESRI Shapefile')
-        else:
+
+        # Ensure that typology columns exists in written files
+        # At this point there should be a file with zone and typology information
+        if not os.path.exists(locator.get_zone_geometry()):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail='User to provide Building information: construction year, '
-                                       'construction type, use types and their ratios.',
-                                )
+                                detail= "No building information (typology) found. It was neither generated nor provided.")
+
+        zone_typology_df = geopandas.read_file(locator.get_zone_geometry())
+        # If typology columns are missing but found in the original zone dataframe, we add it back in to written file
+        if set(COLUMNS_ZONE_TYPOLOGY).difference(zone_typology_df.columns) and not set(COLUMNS_ZONE_TYPOLOGY).difference(zone_df.columns):
+            for col in COLUMNS_ZONE_TYPOLOGY:
+                if col in zone_df.columns and col not in zone_typology_df.columns:
+                    zone_typology_df[col] = zone_df[col]
+            zone_typology_df.to_file(locator.get_zone_geometry())
+            return
+
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail='Unable to determine building information (typology). '
+                                   'User to provide Building information: construction year, '
+                                   'construction type, use types and their ratios.',
+                            )
 
     async def create_terrain(scenario_form, zone_df, locator):
         if scenario_form.should_generate_terrain():
@@ -592,7 +617,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f'Uncaught exception: {e}',
+                detail=f'Uncaught exception: [{e.__class__.__name__}] {e}',
             ) from e
 
     return {
@@ -760,6 +785,48 @@ async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_sc
             detail='Unable to duplicate scenario.',
         )
 
+EXAMPLE_PROJECT_TAG = "v4.0.0-beta.3"
+EXAMPLE_PROJECT_NAME = "reference-case-open"
+def fetch_example_project(project_path, tag=EXAMPLE_PROJECT_TAG, example_project_name=EXAMPLE_PROJECT_NAME):
+    """Fetch example project into the given project folder"""
+    # TODO: Replace this with a more robust method of fetching example projects
+    import zipfile
+    import requests
+    from io import BytesIO
+
+    project_repo = "cea-examples"
+    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/refs/tags/{EXAMPLE_PROJECT_TAG}.zip"
+    # Save to temp directory and return if already exists
+    temp_dir = os.path.join(tempfile.gettempdir(), "cea_example_project")
+    if os.path.exists(temp_dir):
+        logger.info(f"Using cached example project from {temp_dir} to {project_path}")
+        shutil.copytree(temp_dir, project_path)
+        return
+
+    extract_path = os.path.join(tempfile.gettempdir(), "cea_example_project_temp")
+    os.makedirs(extract_path, exist_ok=True)
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status codes
+
+        with zipfile.ZipFile(BytesIO(response.content)) as zf:
+            # Extract only the contents of the example project folder
+            suffix = tag if not tag.startswith('v') else tag[1:]
+            example_path = os.path.join(f"{project_repo}-{suffix}", example_project_name)
+            members = [m for m in zf.namelist() if m.startswith(example_path) and not m.endswith('/')]
+            zf.extractall(path=extract_path, members=members)
+        logger.info(f"Moving example project from {extract_path} to {temp_dir}")
+        shutil.move(os.path.join(extract_path, example_path), temp_dir)
+        shutil.copytree(temp_dir, project_path)
+        shutil.rmtree(extract_path)
+
+    except requests.RequestException as e:
+        logger.error(f"Failed to download example project: {e}")
+    except zipfile.BadZipFile as e:
+        logger.error(f"Downloaded file is not a valid zip file: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the example project: {e}")
 
 class ZoneFileNotFound(ValueError):
     """Raised when a zone file is not found."""

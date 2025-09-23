@@ -4,24 +4,26 @@ import shutil
 import tempfile
 import zipfile
 from dataclasses import dataclass, asdict
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, status, Form, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
 import cea.config
+import cea.inputlocator
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAProjectRoot, CEAServerLimits
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.settings import LimitSettings, get_settings
+from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 # TODO: Make this configurable
@@ -35,7 +37,7 @@ logger = getCEAServerLogger("cea-server-contents")
 router = APIRouter()
 
 
-class ContentType(Enum):
+class ContentType(StrEnum):
     directory = 'directory'
     file = 'file'
 
@@ -60,7 +62,7 @@ class ContentInfo:
     @staticmethod
     def _dict_factory(data):
         return {
-            field: value.value if isinstance(value, Enum) else value
+            field: value.value if isinstance(value, StrEnum) else value
             for field, value in data
         }
 
@@ -149,7 +151,7 @@ VALID_EXTENSIONS = {".shp", ".dbf", ".prj", ".cpg", ".shx",
 
 class UploadScenarioResult(BaseModel):
     class Info(BaseModel):
-        class Status(str, Enum):
+        class Status(StrEnum):
             PENDING = "pending"
             WARNING = "warning"
             SUCCESS = "success"
@@ -168,7 +170,8 @@ def filter_valid_files(file_list: List[str]) -> List[str]:
     return list(filter(lambda f: Path(f).suffix in VALID_EXTENSIONS, file_list))
 
 @router.post("/scenario/upload")
-async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot) -> UploadScenarioResult:
+async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot,
+                          limit_settings: CEAServerLimits) -> UploadScenarioResult:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
@@ -191,7 +194,6 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
     project_path = Path(secure_path(Path(project_root, project_name).resolve()))
 
     settings = get_settings()
-    limit_settings = LimitSettings()
     if not settings.local:
         num_projects = len(await get_project_choices(project_root))
         if form.type == "new" and limit_settings.num_projects is not None and limit_settings.num_projects <= num_projects:
@@ -397,6 +399,23 @@ class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
+    output_files: Literal["summary", "detailed"]
+
+
+def run_summary(project: str, scenario_name: str):
+    """Run the summary function to ensure all summary files are generated"""
+    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    config.project = project
+    config.scenario_name = scenario_name
+
+    config.result_summary.aggregate_by_building = True
+
+    try:
+        from cea.import_export.result_summary import main as result_summary_main
+        result_summary_main(config)
+    except Exception as e:
+        logger.error(f"Error generating summary for {scenario_name}: {str(e)}")
+        raise e
 
 
 @router.post("/scenario/download")
@@ -414,7 +433,8 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
 
     project = form.project.strip()
     scenarios = form.scenarios
-    input_files_only = form.input_files
+    input_files = form.input_files
+    output_files_level = form.output_files
 
     filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
 
@@ -422,25 +442,66 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name
-            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                base_path = Path(project_root) / project
+
+            # Use compresslevel=1 for faster zipping, at the cost of compression ratio
+            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as zip_file:
+                base_path = Path(secure_path(Path(project_root, project).resolve()))
                 
+                # Collect all files first for batch processing
+                files_to_zip = []
                 for scenario in scenarios:
-                    scenario_path = base_path / scenario
+                    # sanitize scenario for fs ops and zip arcnames
+                    scenario_name = Path(scenario).name
+                    scenario_path = Path(secure_path((base_path / scenario_name).resolve()))
+
                     if not scenario_path.exists():
                         continue
-                        
-                    target_path = (scenario_path / "inputs") if input_files_only else scenario_path
-                    prefix = f"{scenario}/inputs" if input_files_only else scenario
-                    
-                    for item_path in target_path.rglob('*'):
-                        if item_path.is_file() and item_path.suffix in VALID_EXTENSIONS:
-                            relative_path = str(Path(prefix) / item_path.relative_to(target_path))
-                            zip_file.write(item_path, arcname=relative_path)
+
+                    input_paths = (scenario_path / "inputs")
+                    if input_files and input_paths.exists():
+                        for root, dirs, files in os.walk(input_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(Path(scenario_name) / "inputs" / item_path.relative_to(input_paths))
+                                    files_to_zip.append((item_path, relative_path))
+
+                    output_paths = (scenario_path / "outputs")
+                    if output_files_level == "detailed" and output_paths.exists():
+                        for root, dirs, files in os.walk(output_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
+                                    files_to_zip.append((item_path, relative_path))
+
+                    elif output_files_level == "summary":
+                        # create summary files first
+                        await run_in_threadpool(run_summary, str(base_path), scenario_name)
+
+                        export_paths = (scenario_path / "export" / "results")
+                        if not export_paths.exists():
+                            raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
+
+                        for root, dirs, files in os.walk(export_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(
+                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(export_paths))
+                                    files_to_zip.append((item_path, relative_path))
+                
+                # Batch write all files to zip
+                logger.info(f"Writing {len(files_to_zip)} files to zip...")
+                for item_path, archive_name in files_to_zip:
+                    zip_file.write(item_path, arcname=archive_name)
         
         # Get the file size for Content-Length header
         file_size = os.path.getsize(temp_file_path)
-        
+
         # Define the streaming function
         async def file_streamer():
             try:

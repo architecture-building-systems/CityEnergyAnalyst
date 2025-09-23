@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
-
-
 from __future__ import annotations
 import numpy as np
 import datetime
@@ -11,7 +6,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
-    from building_properties import BuildingPropertiesRow
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -62,7 +58,7 @@ def has_cooling_system(hvac_class_cs):
             hvac_class_cs, supported.extend(unsupported)))
 
 
-def has_radiator_heating_system(bpr):
+def has_radiator_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has radiator heating system
 
@@ -82,7 +78,7 @@ def has_radiator_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_floor_heating_system(bpr):
+def has_floor_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has floor heating system
 
@@ -102,7 +98,7 @@ def has_floor_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems  %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_central_ac_heating_system(bpr):
+def has_central_ac_heating_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has central AC heating system
 
@@ -122,7 +118,7 @@ def has_central_ac_heating_system(bpr):
         raise ValueError('Invalid value for class_hs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_hs'], supported1.extend(supported2)))
 
 
-def has_local_ac_cooling_system(bpr):
+def has_local_ac_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has mini-split unit AC cooling system
 
@@ -143,7 +139,7 @@ def has_local_ac_cooling_system(bpr):
 
 
 
-def has_central_ac_cooling_system(bpr):
+def has_central_ac_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has central AC cooling system
 
@@ -162,7 +158,7 @@ def has_central_ac_cooling_system(bpr):
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
-def has_3for2_cooling_system(bpr):
+def has_3for2_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has 3for2 cooling system
 
@@ -182,7 +178,7 @@ def has_3for2_cooling_system(bpr):
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
 
-def has_ceiling_cooling_system(bpr):
+def has_ceiling_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has ceiling cooling system
 
@@ -201,7 +197,7 @@ def has_ceiling_cooling_system(bpr):
     else:
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
-def has_floor_cooling_system(bpr):
+def has_floor_cooling_system(bpr: BuildingPropertiesRow):
     """
     Checks if building has ceiling cooling system
 
@@ -220,7 +216,7 @@ def has_floor_cooling_system(bpr):
     else:
         raise ValueError('Invalid value for class_cs: %s. CEA only supports the following systems %s' %(bpr.hvac['class_cs'], supported1.extend(supported2)))
 
-def cooling_system_is_active(bpr, tsd, t):
+def cooling_system_is_active(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int) -> bool:
     """
     Checks whether the cooling system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
@@ -233,7 +229,7 @@ def cooling_system_is_active(bpr, tsd, t):
     :rtype: bool
     """
 
-    if not np.isnan(tsd['ta_cs_set'][t]) and not tsd['T_int'][t - 1] <= np.max([bpr.hvac['Tc_sup_air_ahu_C'],
+    if not np.isnan(tsd.rc_model_temperatures.ta_cs_set[t]) and not tsd.rc_model_temperatures.T_int[t - 1] <= np.max([bpr.hvac['Tc_sup_air_ahu_C'],
                                                                                bpr.hvac['Tc_sup_air_aru_C']]):
         # system has set point according to schedule of operation & internal temperature is not below the set point
         return True
@@ -241,7 +237,7 @@ def cooling_system_is_active(bpr, tsd, t):
         return False
 
 
-def heating_system_is_active(tsd, t):
+def heating_system_is_active(tsd: TimeSeriesData, t: int) -> bool:
     """
     Checks whether the heating system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
@@ -254,7 +250,7 @@ def heating_system_is_active(tsd, t):
     :rtype: bool
     """
 
-    if not np.isnan(tsd['ta_hs_set'][t]):
+    if not np.isnan(tsd.rc_model_temperatures.ta_hs_set[t]):
         # system has set point according to schedule of operation
         return True
     else:
@@ -278,7 +274,7 @@ def convert_date_to_hour(date):
     return int(delta.total_seconds() / SECONDS_PER_HOUR)
 
 
-def is_heating_season(t, bpr):
+def is_heating_season(t, bpr: BuildingPropertiesRow):
     """
     checks if time step is part of the heating season for the building
 
@@ -316,7 +312,7 @@ def is_heating_season(t, bpr):
         return False
 
 
-def is_cooling_season(t, bpr):
+def is_cooling_season(t, bpr: BuildingPropertiesRow):
     """
     checks if time step is part of the cooling season for the building
 
@@ -356,7 +352,7 @@ def is_cooling_season(t, bpr):
 # temperature controllers
 
 
-def get_temperature_setpoints_incl_seasonality(tsd: dict, bpr: BuildingPropertiesRow, schedules: pd.DataFrame):
+def get_temperature_setpoints_incl_seasonality(tsd: TimeSeriesData, bpr: BuildingPropertiesRow, schedules: pd.DataFrame) -> TimeSeriesData:
     """
 
     :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
@@ -369,16 +365,16 @@ def get_temperature_setpoints_incl_seasonality(tsd: dict, bpr: BuildingPropertie
     :rtype: dict
     """
     hours_in_the_year_vector = range(HOURS_IN_YEAR)
-    tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point, otypes=[float])(hours_in_the_year_vector,
+    tsd.rc_model_temperatures.ta_hs_set = np.vectorize(get_heating_system_set_point, otypes=[float])(hours_in_the_year_vector,
                                                                                   schedules['Ths_set_C'],
                                                                                   bpr)
-    tsd['ta_cs_set'] = np.vectorize(get_cooling_system_set_point, otypes=[float])(hours_in_the_year_vector,
+    tsd.rc_model_temperatures.ta_cs_set = np.vectorize(get_cooling_system_set_point, otypes=[float])(hours_in_the_year_vector,
                                                                                   schedules['Tcs_set_C'],
                                                                                   bpr)
     return tsd
 
 
-def get_heating_system_set_point(t, Ths_set_C, bpr):
+def get_heating_system_set_point(t, Ths_set_C, bpr: BuildingPropertiesRow):
     """
 
     :param people:
@@ -400,7 +396,7 @@ def get_heating_system_set_point(t, Ths_set_C, bpr):
         return np.nan  # huge so the system will be off
 
 
-def get_cooling_system_set_point(t, Tcs_set_C, bpr):
+def get_cooling_system_set_point(t, Tcs_set_C, bpr: BuildingPropertiesRow):
     """
 
     :param people:

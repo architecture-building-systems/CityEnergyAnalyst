@@ -10,12 +10,12 @@ import re
 from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
-COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag']
 COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
                          'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 NAME_COLUMN = 'name'
-COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'reference', 'geometry',
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag', 'reference', 'geometry',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
@@ -106,9 +106,32 @@ def check_na_values(df, columns=None):
     na_columns = df.columns[df.isna().any()].tolist()
     if na_columns:
         raise ValueError(f'There are NA values detected in the following required columns: {", ".join(na_columns)}')
+    
+def check_void_deck_values(df):
+    """
+    void_deck should exist in the zone geometry file. If not, create a new column with void_deck = 0 and print a warning.
+    If void_deck exists, check if it's >= 0 and is a integer.
+    """
 
+    if not pd.api.types.is_integer_dtype(df['void_deck']):
+        raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
+    
+    if (df['void_deck'] < 0).any():
+        raise ValueError('The void_deck column should not contain negative values. Please check your zone geometry file.')
+    
+    if (df['void_deck'] > df['floors_ag']).any():
+        raise ValueError('The void_deck column should not contain values greater than the number of floors above ground. '
+                         'Please check your zone geometry file.')
 
 def verify_input_geometry_zone(zone_df):
+    # TODO: remove this when void_deck always exist in geometry
+    not_exist_before = False
+    if 'void_deck' not in zone_df.columns:
+        # add void_deck to pass the verification first
+        Warning('The void_deck column should always exist in the zone geometry file. ')
+        zone_df['void_deck'] = 0
+        not_exist_before = True
+        
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
@@ -122,6 +145,11 @@ def verify_input_geometry_zone(zone_df):
 
     check_duplicated_names(zone_df)
 
+    check_void_deck_values(zone_df)
+
+    if not_exist_before:
+        # delete the void_deck column if it was not exist before
+        zone_df.drop(columns=['void_deck'], inplace=True)
 
 def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct

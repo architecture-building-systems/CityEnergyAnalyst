@@ -21,6 +21,7 @@ from typing import Dict, Optional
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
 from cea.resources.radiation.geometry_generator import BuildingGeometry
@@ -437,13 +438,14 @@ def calulate_cea_sensor_data(locator, config):
 #
 #         radiation_file.set_index("date").to_csv(radiation_file_path)
 
-
+# TODO: Check if this is still the case, since we are now able to compile and build the wheels
 def check_os():
     """
     Raise error if the operating system is not supported.
 
     Currently Intel Macs are not supported.
     """
+    return
     if sys.platform == "darwin" and platform.machine() == "x86_64":
         raise ValueError("Intel Macs are not supported.")
 
@@ -453,6 +455,7 @@ def main(config):
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    migrate_void_deck_data(locator)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 

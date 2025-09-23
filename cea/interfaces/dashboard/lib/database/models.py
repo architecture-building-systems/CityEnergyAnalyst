@@ -11,7 +11,6 @@ import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
                                                            database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
-from cea.interfaces.dashboard.settings import get_settings
 
 
 def determine_db_type():
@@ -89,9 +88,13 @@ class JobInfo(SQLModel, table=True):
 
     @computed_field
     def script_label(self) -> Optional[str]:
-        """Extract the scenario name from parameters if available"""
-        script = cea.scripts.by_name(self.script)
-        return script.label
+        """Extract the script label from parameters if available in scripts.yml"""
+        try:
+            script = cea.scripts.by_name(self.script)
+            return script.label
+        except cea.ScriptNotFoundException as e:
+            logger.error(f"Error extracting script label: {e}. Ensure that it is defined in scripts.yml")
+            return None
 
     @computed_field
     def scenario_name(self) -> Optional[str]:
@@ -115,16 +118,14 @@ async def initialize_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def create_db_and_tables():
-    # FIXME: Only running for local mode since it is expensive for remote connections
-    if not get_settings().local:
+    """Initialize database tables and run migrations if needed"""    
+    if not database_settings.init_tables:
+        logger.debug("Skipping database initialization")
         return
-
+    
     logger.info("Preparing database...")
     await initialize_db()
-
-    if get_settings().local:
-        await migrate_db()
-
+    await migrate_db()
 
 async def migrate_db():
     # TODO: Remove once in release new version

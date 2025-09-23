@@ -129,7 +129,7 @@ class DemandPlotBase(PlotBase):
 
     def _calculate_hourly_loads(self):
         data_demand = functools.reduce(self.add_fields, (pd.read_csv(self.locator.get_demand_results_file(building))
-                                                         for building in self.buildings)).set_index('DATE')
+                                                         for building in self.buildings)).set_index('date')
         return data_demand
 
     def calculate_hourly_loads(self):

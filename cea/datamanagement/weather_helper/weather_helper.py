@@ -36,7 +36,7 @@ def fetch_weather_data(weather_file: str, zone_file: str):
     weather_data = gpd.read_file(WEATHER_DATA_LOCATION)
 
     # Find nearest weather data based on centroid of zone
-    centroid = zone_gdf.make_valid().to_crs(weather_data.crs).unary_union.centroid
+    centroid = zone_gdf.make_valid().to_crs(weather_data.crs).union_all().centroid
     index = weather_data.sindex.nearest(centroid)[1][0]
     url = f"https://climate.onebuilding.org/{weather_data.iloc[index]['url']}"
     data_source_url = "https://climate.onebuilding.org/sources/default.html"
@@ -69,14 +69,12 @@ def copy_weather_file(source_weather_file, locator):
     :return: (this script doesn't return anything)
     """
     from shutil import copyfile
-    assert os.path.exists(source_weather_file), "Could not find weather file: {source_weather_file}".format(
-        source_weather_file=source_weather_file
-    )
+    if not os.path.exists(source_weather_file):
+        raise ValueError(f"Could not find weather file: {source_weather_file}")
+
     copyfile(source_weather_file, locator.get_weather_file())
-    print("Set weather for scenario <{scenario}> to {source_weather_file}".format(
-        scenario=os.path.basename(locator.scenario),
-        source_weather_file=source_weather_file
-    ))
+    print(f"Weather for scenario [{os.path.basename(locator.scenario)}] has been set to "
+          f"{os.path.basename(source_weather_file)}")
 
 
 def main(config):
@@ -88,6 +86,11 @@ def main(config):
     """
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather = config.weather_helper.weather
+
+    if not weather:
+        raise ValueError("No weather file provided. "
+                         "Please specify a weather file or select an option to fetch data automatically. "
+                         "e.g --weather climate.onebuilding.org")
 
     locator.ensure_parent_folder_exists(locator.get_weather_file())
     if config.weather_helper.weather == 'climate.onebuilding.org':

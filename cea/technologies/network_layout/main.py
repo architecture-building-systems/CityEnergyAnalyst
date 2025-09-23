@@ -21,8 +21,6 @@ __status__ = "Production"
 
 
 def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
-
-    # Local variables
     if plant_building_names is None:
         plant_building_names = []
     weight_field = 'Shape_Leng'
@@ -30,12 +28,15 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
-    type_mat_default = network_layout.type_mat
+    # type_mat_default = network_layout.type_mat
+    type_mat_default = TYPE_MAT_DEFAULT
     pipe_diameter_default = network_layout.pipe_diameter
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
-    allow_looped_networks = network_layout.allow_looped_networks
+    # allow_looped_networks = network_layout.allow_looped_networks
+    allow_looped_networks = False
+    steiner_algorithm = network_layout.algorithm
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_zone_shp = locator.get_zone_geometry()
@@ -75,7 +76,8 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                allow_looped_networks,
                                optimization_flag,
                                plant_building_names,
-                               disconnected_building_names)
+                               disconnected_building_names,
+                               steiner_algorithm)
 
 
 class NetworkLayout(object):
@@ -92,8 +94,11 @@ class NetworkLayout(object):
         self.allow_looped_networks = False
         self.consider_only_buildings_with_demand = False
 
+        self.algorithm = None
+
         attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
-                      "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings"]
+                      "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings",
+                      "algorithm"]
         for attr in attributes:
             # copy any matching attributes in network_layout (because it could be an instance of NetworkInfo)
             if hasattr(network_layout, attr):

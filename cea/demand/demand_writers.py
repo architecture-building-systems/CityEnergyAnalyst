@@ -3,14 +3,55 @@ A collection of classes that write out the demand results files. The default is 
 that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_demand` module for an example of using
 the `MonthlyDemandWriter`.
 """
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, 
+                                       CoolingLoads, FuelSource, HeatingSystemMassFlows, 
+                                       CoolingSystemMassFlows, HeatingSystemTemperatures, 
+                                       CoolingSystemTemperatures, RCModelTemperatures)
+
+from cea.utilities.reporting import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
+    from cea.demand.time_series_data import TimeSeriesData
+
 FLOAT_FORMAT = '%.3f'
 
 
-class DemandWriter(object):
+def get_all_load_keys():
+    """Get all available load keys from time series data classes."""
+    load_keys = []
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelSource]
+    for cls in load_classes:
+        load_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return load_keys
+
+
+def get_all_massflow_keys():
+    """Get all available mass flow keys from time series data classes."""
+    massflow_keys = []
+    massflow_classes = [HeatingSystemMassFlows, CoolingSystemMassFlows]
+    for cls in massflow_classes:
+        massflow_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return massflow_keys
+
+
+def get_all_temperature_keys():
+    """Get all available temperature keys from time series data classes."""
+    temperature_keys = []
+    temperature_classes = [HeatingSystemTemperatures, CoolingSystemTemperatures, RCModelTemperatures]
+    for cls in temperature_classes:
+        temperature_keys.extend(list(cls.__dataclass_fields__.keys()))
+    return temperature_keys
+
+class DemandWriter(ABC):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
     Subclasses are expected to:
@@ -18,18 +59,31 @@ class DemandWriter(object):
     - implement the `write_to_csv` method
     """
 
-    def __init__(self, loads, massflows, temperatures):
-        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
+    def __init__(self, loads=None, massflows=None, temperatures=None):
+        # If empty lists are provided, generate all available keys
+        self.load_vars = loads if loads else get_all_load_keys()
+        self.mass_flow_vars = massflows if massflows else get_all_massflow_keys()
+        self.temperature_vars = temperatures if temperatures else get_all_temperature_keys()
 
-        self.load_vars = loads
-        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
-        self.mass_flow_vars = massflows
-        self.temperature_vars = temperatures
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD | TSD_KEYS_SOLAR
 
         self.OTHER_VARS = ['name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'Aocc_m2', 'people0']
 
-    def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
-        columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
+
+    @abstractmethod
+    def write_to_csv(self, building_name, columns, hourly_data, locator):
+        """
+        Write the hourly data to a CSV file.
+        """
+    
+    @abstractmethod
+    def write_to_hdf5(self, building_name, columns, hourly_data, locator):
+        """
+        Write the hourly data to an HDF5 file.
+        """
+
+    def results_to_hdf5(self, tsd: TimeSeriesData, bpr: BuildingPropertiesRow, locator, date, building_name):
+        columns, hourly_data = self.calc_hourly_dataframe(date, tsd)
         self.write_to_hdf5(building_name, columns, hourly_data, locator)
 
         # save total for the year
@@ -41,9 +95,9 @@ class DemandWriter(object):
             locator.get_temporary_file('%(building_name)sT.hdf' % locals()),
             key='dataset')
 
-    def results_to_csv(self, tsd, bpr, locator, date, building_name):
+    def results_to_csv(self, tsd: TimeSeriesData, bpr: BuildingPropertiesRow, locator, date, building_name):
         # save hourly data
-        columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
+        columns, hourly_data = self.calc_hourly_dataframe(date, tsd)
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
         # save annual values to a temp file for YearlyDemandWriter
@@ -52,42 +106,44 @@ class DemandWriter(object):
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
             index=False, columns=columns, float_format='%.3f', na_rep='nan')
 
-    def calc_yearly_dataframe(self, bpr, building_name, tsd):
+    def calc_yearly_dataframe(self, bpr: BuildingPropertiesRow, building_name, tsd: TimeSeriesData):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
-        data = dict((x + '_MWhyr', np.nan_to_num(tsd[x]).sum() / 1000000) for x in self.load_vars)
-        data.update(dict((x + '0_kW', np.nan_to_num(tsd[x]).max() / 1000) for x in self.load_vars))
+        data = dict((x + '_MWhyr', np.nan_to_num(tsd.get_load_value(x)).sum() / 1000000) for x in self.load_vars)
+        data.update(dict((x + '0_kW', np.nan_to_num(tsd.get_load_value(x)).max() / 1000) for x in self.load_vars))
         # get order of columns
         keys = data.keys()
         columns = self.OTHER_VARS
         columns.extend(keys)
-        # add other default elements
-        data.update({'name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
-                     'GFA_m2': bpr.rc_model['GFA_m2'], 'Aocc_m2': bpr.rc_model['Aocc'],
-                     'people0': tsd['people'].max()})
+
+        # add other default elements]
+        data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.envelope.Aroof,
+                     'GFA_m2': bpr.rc_model.GFA_m2, 'Aocc_m2': bpr.rc_model.Aocc,
+                     'people0': tsd.occupancy.people.max()})
         return columns, data
 
-    def calc_hourly_dataframe(self, building_name, date, tsd):
+    def calc_hourly_dataframe(self, date, tsd: TimeSeriesData):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+        data = dict((x + '_kWh', np.nan_to_num(tsd.get_load_value(x)) / 1000) for x in
                     self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of loads from W to kW
-        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+        data.update(dict((x + '_kWh', np.nan_to_num(tsd.get_load_value(x)) / 1000) for x in
                          self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in
+        data.update(dict((x + '_kWperC', np.nan_to_num(tsd.get_mass_flow_value(x)) / 1000) for x in
                          self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in
+        data.update(dict((x + '_C', np.nan_to_num(tsd.get_temperature_value(x))) for x in
                          self.temperature_vars))  # TODO: convert nan to num at the very end.
+
         # get order of columns
-        columns = ['name', 'people', 'x_int']
+        columns = ['people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
         columns.extend([x + '_kWh' for x in self.load_plotting_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'date': date, 'name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
+        data.update({'date': date, 'people': tsd.occupancy.people, 'x_int': tsd.moisture.x_int * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('date')
         return columns, hourly_data
@@ -96,7 +152,7 @@ class DemandWriter(object):
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
@@ -114,7 +170,7 @@ class HourlyDemandWriter(DemandWriter):
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
 
-    def __init__(self, loads, massflows, temperatures):
+    def __init__(self, loads=None, massflows=None, temperatures=None):
         super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures)
         self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
                        'october', 'november', 'december']
@@ -193,7 +249,7 @@ class YearlyDemandWriter:
             else:
                 aggregated_hourly_results_df += hourly_results_per_building
 
-        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['name', 'x_int'])
+        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['x_int'])
 
         # save hourly results
         locator.ensure_parent_folder_exists(locator.get_total_demand_hourly('csv'))

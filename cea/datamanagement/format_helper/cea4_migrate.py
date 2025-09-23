@@ -24,6 +24,7 @@ from cea.datamanagement.format_helper.cea4_migrate_db import rename_dict, add_oc
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify, verify_shp, \
     COLUMNS_ZONE_4, print_verification_results_4, path_to_input_file_without_db_4, CSV_BUILDING_PROPERTIES_3_CSV
 from cea.datamanagement.format_helper.cea4_verify_db import check_directory_contains_csv
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.utilities.dbf import dbf_to_dataframe
 
 COLUMNS_ZONE_3 = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
@@ -35,7 +36,7 @@ COLUMNS_AIR_CONDITIONING_3 = ['Name',
                               'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent',
                               'heat_starts', 'heat_ends', 'cool_starts', 'cool_ends']
 COLUMNS_ARCHITECTURE_3 = ['Name',
-                          'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'void_deck', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+                          'Hs_ag', 'Hs_bg', 'Ns', 'Es', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
                           'type_cons', 'type_leak', 'type_floor', 'type_part', 'type_base', 'type_roof', 'type_wall',
                           'type_win', 'type_shade']
 COLUMNS_INDOOR_COMFORT_3 = ['Name',
@@ -60,7 +61,6 @@ columns_mapping_dict_envelope = {'Hs_ag': 'Hs',
                                  'Hs_bg': 'occupied_bg',
                                  'Ns': 'Ns',
                                  'Es': 'Es',
-                                 'void_deck': 'void_deck',
                                  'wwr_north': 'wwr_north',
                                  'wwr_south': 'wwr_south',
                                  'wwr_east': 'wwr_east',
@@ -322,6 +322,8 @@ def migrate_dbf_to_csv(scenario, item, required_columns, columns_mapping_dict=No
                 if 'occupied_bg' in df.columns:
                     if df['occupied_bg'].dtype != 'bool':
                         df = add_occupied_bg(scenario, df)
+                if 'void_deck' in df.columns:
+                    df.drop(columns='void_deck', inplace=True)
                 df.to_csv(path_to_input_file_without_db_4(scenario, item), index=False)
                 os.remove(path_to_input_file_without_db_3(scenario, item))
                 if verbose:
@@ -526,6 +528,14 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                         typology_df.rename(columns=columns_mapping_dict_typology, inplace=True)
                         zone_df_4 = pd.merge(zone_df_3, typology_df, left_on=['name'], right_on=["Name"], how='left')
                         zone_df_4.drop(columns=['Name'], inplace=True)
+
+                        # bring void_deck from architecture.dbf to zone.shp
+                        if 'void_deck' not in list_missing_columns_architecture_4:
+                            void_deck_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'architecture'))[['Name', 'void_deck']]
+                            zone_df_4 = pd.merge(zone_df_4, void_deck_df, left_on=['name'], right_on=["Name"], how='left')
+                        else:
+                            zone_df_4['void_deck'] = 0  # if void deck already does not exist in the architecture/envelope file, create a new column in the zone.shp with zeros
+
                         zone_df_4 = zone_df_4[COLUMNS_ZONE_4]
                         replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)
                         if verbose:
@@ -541,9 +551,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                 pass
                 # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'zone.shp already follows the CEA-4 format.')
             else:
-                raise ValueError('! zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
-                                 'Check the following column(s) for CEA-3 format: {list_missing_attributes_zone_3}.'.format(list_missing_attributes_zone_3=list_missing_attributes_zone_3),
-                                 'Check the following column(s) for CEA-4 format: {list_missing_attributes_zone_4}.'.format(list_missing_attributes_zone_4=list_missing_attributes_zone_4)
+                if list_missing_attributes_zone_4[0] == 'void_deck' and len(list_missing_attributes_zone_4) == 1:
+                    config = cea.config.Configuration()
+                    locator = cea.inputlocator.InputLocator(config.scenario)
+                    migrate_void_deck_data(locator)
+                else:
+                    raise ValueError('! zone.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration. Check the following column(s) for CEA-3 format: {list_missing_attributes_zone_3}.'.format(list_missing_attributes_zone_3=list_missing_attributes_zone_3), 'Check the following column(s) for CEA-4 format: {list_missing_attributes_zone_4}.'.format(list_missing_attributes_zone_4=list_missing_attributes_zone_4)
                                  )
         else:
             print("! Ensure zone.shp (CEA-3 format) is present in building-geometry folder.")
@@ -562,9 +575,12 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                 pass
                 # print('For Scenario: {scenario}, '.format(scenario=scenario_name), 'surroundings.shp already follows the CEA-4 format.')
             else:
-                raise ValueError('surroundings.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration.'
-                                 'Check the following column(s) for CEA-3 format: {list_missing_attributes_surroundings_3}.'.format(list_missing_attributes_surroundings_3=list_missing_attributes_surroundings_3),
-                                 'Check the following column(s) for CEA-4 format: {list_missing_attributes_surroundings_4}.'.format(list_missing_attributes_surroundings_4=list_missing_attributes_surroundings_4)
+                if list_missing_attributes_zone_4[0] == 'void_deck' and len(list_missing_attributes_zone_4) == 1:
+                    config = cea.config.Configuration()
+                    locator = cea.inputlocator.InputLocator(config.scenario)
+                    migrate_void_deck_data(locator)
+                else:
+                    raise ValueError('surroundings.shp exists but follows neither the CEA-3 nor CEA-4 format. CEA cannot proceed with the data migration. Check the following column(s) for CEA-3 format: {list_missing_attributes_surroundings_3}.'.format(list_missing_attributes_surroundings_3=list_missing_attributes_surroundings_3), 'Check the following column(s) for CEA-4 format: {list_missing_attributes_surroundings_4}.'.format(list_missing_attributes_surroundings_4=list_missing_attributes_surroundings_4)
                                  )
         else:
             print('! (optional) Run Surroundings Helper to generate surroundings.shp after the data migration.')

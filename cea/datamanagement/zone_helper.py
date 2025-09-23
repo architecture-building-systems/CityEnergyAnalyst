@@ -10,7 +10,7 @@ from typing import Union
 import numpy as np
 import osmnx
 from geopandas import GeoDataFrame as Gdf
-from shapely.geometry import Polygon
+from shapely import Polygon
 import pandas as pd
 
 import cea.config
@@ -104,6 +104,8 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
+
+        shapefile["void_deck"] = 0 # assume no void decks by default
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption

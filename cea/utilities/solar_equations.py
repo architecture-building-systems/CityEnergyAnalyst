@@ -12,8 +12,8 @@ import datetime
 import collections
 from math import radians, degrees, sin, acos, cos, tan, atan
 
+import tzfpy
 from pyarrow import feather
-from timezonefinder import TimezoneFinder
 import pytz
 
 __author__ = "Jimeno A. Fonseca"
@@ -118,9 +118,8 @@ def get_local_etc_timezone(latitude, longitude):
     '''
 
     # get the time zone at the given coordinates
-    tf = TimezoneFinder()
-    time = pytz.timezone(tf.timezone_at(lng=longitude, lat=latitude)).localize(
-        datetime.datetime(2011, 1, 1)).strftime('%z')
+    tz_name = tzfpy.get_tz(longitude, latitude)
+    time = pytz.timezone(tz_name).localize(datetime.datetime(2011, 1, 1)).strftime('%z')
 
     # invert sign and return in 'Etc/GMT' format
     if time[0] == '-':

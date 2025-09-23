@@ -7,6 +7,9 @@ unit tests. You can safely ignore the output printed to STDOUT - it is used for 
 
 NOTE: Check first to make sure the core algorithms are correct, i.e. the changes to the outputs behave as expected.
 """
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import configparser
 import json
 import os
@@ -21,7 +24,11 @@ from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
+
+# FIXME: Duplicated code with cea/tests/test_calc_thermal_loads.py
 def main(output_file):
     config = Configuration(DEFAULT_CONFIG)
     locator = ReferenceCaseOpenLocator()
@@ -32,17 +39,6 @@ def main(output_file):
     weather_path = locator.get_weather('Zug_inducity_2009')
     weather_data = epwreader.epw_reader(weather_path)[
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
-
-    # reinit database to ensure updated databases are loaded
-    from cea.datamanagement.database_helper import main as database_helper
-    config.database_helper.databases_path = "CH"
-    config.database_helper.databases = ["archetypes", "assemblies", "components"]
-    database_helper(config)
-
-    # run properties script
-    import cea.datamanagement.archetypes_mapper
-    cea.datamanagement.archetypes_mapper.archetypes_mapper(locator, True, True, True, True, True, True,
-                                                           locator.get_zone_building_names())
 
     year = weather_data['year'][0]
     date_range = get_date_range_hours_from_year(year)
@@ -126,7 +122,7 @@ def main(output_file):
     print("Wrote output to %(output_file)s" % locals())
 
 
-def run_for_single_building(building, bpr, weather_data, date_range, locator,
+def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date_range, locator,
                             use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
                             massflows_output, temperatures_output, config, debug):
     config.multiprocessing = False
