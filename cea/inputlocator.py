@@ -152,23 +152,9 @@ class InputLocator(object):
         """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
         return os.path.join(self.get_export_plots_folder(), 'selected_buildings.csv')
 
-    def get_export_results_summary_folder(self, hour_start, hour_end, folder_name):
-        if folder_name is None or folder_name.strip() == "":
-            """scenario/export/results/hours_{hour_start}_{hour_end}_done_{current_time}"""
-            path = os.path.join(self.get_export_results_folder(), f'unnamed_hours_{hour_start}_{hour_end}')
-        else:
-            """scenario/export/results/{folder_name}_done_{current_time}"""
-            path = os.path.join(self.get_export_results_folder(), f'{folder_name}_hours_{hour_start}_{hour_end}')
-
-        # new path ending with _1, _2, _3 if the user-defined path exists
-        base_path = path
-        counter = 1
-
-        while os.path.exists(path):
-            path = f"{base_path}_{counter}"
-            counter += 1
-
-        return path
+    def get_export_results_summary_folder(self, folder_name):
+        """scenario/export/results/{folder_name}"""
+        return os.path.join(self.get_export_results_folder(), folder_name)
 
     def get_export_results_summary_selected_building_file(self, summary_folder):
         """scenario/export/results/{folder_name}/selected_buildings.csv"""
