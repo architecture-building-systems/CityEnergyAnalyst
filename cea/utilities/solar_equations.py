@@ -234,21 +234,12 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     #. No solar panels on windows.
     """
 
-    def f(x):
-        # To filter the sensor points / hours with low radiation potential.
-        if x <= 50:
-            # eliminate points when hourly production < 50 W/m2
-            return 0
-        else:
-            # keep sensors above min radiation
-            return x
-
     # read radiation file
-    sensors_rad = feather.read_feather(radiation_sensor_path)
+    sensors_rad: pd.DataFrame = feather.read_feather(radiation_sensor_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2')  # add new row with yearly radiation
+    sensors_rad_sum = sensors_rad.sum(axis=0).to_frame('total_rad_Whm2')  # add new row with yearly radiation
     sensors_metadata.set_index('SURFACE', inplace=True)
     sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)  # [Wh/m2]
 
@@ -269,7 +260,9 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
-    sensors_rad_clean = sensors_rad_clean.map(lambda x: f(x))
+    # To filter the sensor points / hours with low radiation potential.
+    # eliminate points when hourly production < 50 W/m2
+    sensors_rad_clean = sensors_rad_clean.where(sensors_rad_clean > 50, 0)
 
     return max_annual_radiation, annual_radiation_threshold_Whperm2, sensors_rad_clean, sensors_metadata_clean
 
