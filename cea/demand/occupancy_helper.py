@@ -55,6 +55,12 @@ def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.co
     zone_df = Gdf.from_file(locator.get_zone_geometry()).set_index('name')
     prop_geometry = calc_useful_areas(zone_df, architecture)
 
+    # check for NaN values in Aocc, script will fail if there are any
+    na_rows = prop_geometry[prop_geometry['Aocc'].isna()]
+    if len(na_rows) > 0:
+        raise ValueError(f"Some buildings are missing 'Occupied floor area' values: {na_rows.index.tolist()}. "
+                         f"This could be due to GFA being zero or missing Hs/Ns/Es values in the building envelope properties.")
+
     # get calculation year from weather file
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
