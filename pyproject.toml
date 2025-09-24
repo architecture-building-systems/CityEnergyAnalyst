@@ -65,7 +65,7 @@ dependencies = [
 
     # CEA external tools
     "cea-external-tools>=0.2.1"
-]
+, "pyepwmorph>=0.3.1,<0.4"]
 
 [dependency-groups]
 lint = ["ruff"]
