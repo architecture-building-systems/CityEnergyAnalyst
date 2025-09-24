@@ -3,7 +3,6 @@ Functions to enable climate morphing for the EPW files based on pyepwmorph
 
 Title: pyepwmorph
 Description: This module provides functions to morph EPW files using the pyepwmorph library, a python package authored by Justin McCarty for accessing global climate models and using them to morph time series weather data in EPW files. An independent application can be found at www.morphepw.app. For a peer-reviewed article that uses pyepwmorph, please see https://doi.org/10.1088/1742-6596/2600/8/082005. 
-Citation: Follow CRAX example
 """
 
 # general import
@@ -21,6 +20,14 @@ from pyepwmorph.tools import utilities as pyepwmorph_utilities
 from pyepwmorph.tools import io as pyepwmorph_io
 from pyepwmorph.tools import configuration as pyepwmorph_config
 
+__author__ = "Justin McCarty"
+__copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"]
+__credits__ = ["Justin McCarty"]
+__license__ = "GNU General Public License v3.0"
+__version__ = "0.1"
+__maintainer__ = ["Justin McCarty"]
+__email__ = ["cea@arch.ethz.ch", "mccarty@arch.ethz.ch"]
+__status__ = "Production"
 
 def convert_scenario_names(name):
     """
@@ -43,6 +50,13 @@ def convert_scenario_names(name):
                          f"Please choose one of the following: best_case, moderate_case, semi_moderate_case, worst_case")
 
 def morphing_workflow(locator, config):
+    """Run the morphing workflow for the specified scenario.
+
+    Args:
+        locator (cea.inputlocator.InputLocator): The input locator for the scenario.
+        config (cea.config.Configuration): The configuration for the scenario.
+
+    """
     
     # 1. Read the inputs and create a epw_morph_configuration 
     # 1.1. project_name and output_directory
@@ -138,7 +152,10 @@ def morphing_workflow(locator, config):
 
 def main(config):
     """
-    This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
+    This script uses the pyepwmorph library to morph an EPW file based on user-defined parameters in the config file.
+    
+    Args:
+        config (cea.config.Configuration): The configuration for the scenario.
     """
     assert os.path.exists(
         config.scenario), 'Scenario not found: %s' % config.scenario
