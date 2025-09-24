@@ -12,6 +12,10 @@ from typing import NamedTuple, List, Optional, Dict, Any
 from cea import MissingInputDataException
 from cea.config import Configuration, DEFAULT_CONFIG
 from cea.inputlocator import InputLocator
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+
+
+logger = getCEAServerLogger("cea-server-map-layers")
 
 
 # locator_func = Callable[..., str]
@@ -44,6 +48,7 @@ class FileRequirement:
         if self.depends_on is not None:
             # Check if the current parameters meet the requirements
             if not all(value in current_params for value in self.depends_on):
+                logger.error(f"Missing required parameters for file requirement: {self.depends_on}")
                 raise ValueError("Missing required parameters")
 
         # Parse string locator
