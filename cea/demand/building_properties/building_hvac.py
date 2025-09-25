@@ -191,6 +191,7 @@ def verify_overlap_season(building_name, has_heating_season, has_cooling_season,
             return False
 
 
+# TODO: Remove building_name from function signature, not useful in function
 def verify_has_season(building_name, start, end):
     def invalid_date(date):
         if len(date) != 5 or "|" not in date:
