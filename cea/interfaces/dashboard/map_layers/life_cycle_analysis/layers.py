@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
 
+from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
 from cea.plots.colors import color_to_hex
@@ -121,15 +122,20 @@ class OperationalEmissionsMapLayer(MapLayer):
     description = ""
 
     def _get_data_columns(self) -> Optional[list]:
-        results_path = self.locator.get_lca_operation()
+        buildings = self.locator.get_zone_building_names()
+        results_path = self.locator.get_lca_operational_hourly_building(buildings[0])
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns)
+            columns = set(emissions_df.columns) - {"hour"}
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
         return sorted(list(columns - {"name", "GFA_m2"}))
+    
+    def _get_results_files(self, _):
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_lca_operational_hourly_building(building) for building in buildings]
 
     @classmethod
     def expected_parameters(cls):
@@ -141,6 +147,14 @@ class OperationalEmissionsMapLayer(MapLayer):
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
+                ),
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    default=[1, 365],
+                    description="Period to generate the data (start, end) in days",
+                    selector="time-series",
                 ),
             'radius':
                 ParameterDefinition(
@@ -183,8 +197,14 @@ class OperationalEmissionsMapLayer(MapLayer):
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = self.locator.get_zone_building_names()
-
+        period = parameters['period']
+        start, end = day_range_to_hour_range(period[0], period[1])
+        
         data_column = parameters['data-column']
+
+        if data_column is None or data_column not in self._get_data_columns():
+            raise ValueError(f"Invalid data column: {data_column}")
+
 
         output = {
             "data": [],
@@ -199,21 +219,42 @@ class OperationalEmissionsMapLayer(MapLayer):
             }
         }
 
+        def get_data(building, centroid):
+            data = pd.read_csv(self.locator.get_lca_operational_hourly_building(building), usecols=[data_column])[data_column]
+
+            total_min = 0
+            total_max = data.sum()
+
+            if start < end:
+                period_value = data.iloc[start:end + 1].sum()
+            else:
+                period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
+            period_min = period_value
+            period_max = period_value
+
+            data = {"position": [centroid.x, centroid.y], "value": period_value}
+
+            return total_min, total_max, period_min, period_max, data
+
         df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
         building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
-        
-        results_path = self.locator.get_lca_operation()
-        emissions_df = pd.read_csv(results_path, usecols=["name", data_column], index_col="name")[data_column].loc[
-            buildings]
 
-        output['data'] = [{"position": [centroid.x, centroid.y], "value": emissions} for centroid, emissions in
-                          zip(building_centroids, emissions_df)]
+        values = (get_data(building, centroid)
+                  for building, centroid in zip(buildings, building_centroids))
+
+        total_min, total_max, period_min, period_max, data = zip(*values)
+
+        output['data'] = data
         output['properties']['range'] = {
             'total': {
                 'label': 'Total Range',
-                'min': float(min(emissions_df)),
-                'max': float(max(emissions_df))
+                'min': float(min(total_min)),
+                'max': float(max(total_max))
             },
+            'period': {
+                'label': 'Period Range',
+                'min': float(min(period_min)),
+                'max': float(max(period_max))
+            }
         }
-
         return output
