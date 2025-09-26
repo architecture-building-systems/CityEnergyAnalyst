@@ -150,6 +150,8 @@ class bar_plot:
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'emissions':
                 title = "CEA-4 Life Cycle Analysis"
+            else:
+                raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the title mapping.")
 
         # Set the y-axis label
         if self.y_label:
@@ -238,6 +240,9 @@ class bar_plot:
                     y_label = "SC Heat Yield per Installed Area (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            
+            else:
+                raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the y_label mapping.")
 
         # Set the x-axis label
         if self.x_label:
