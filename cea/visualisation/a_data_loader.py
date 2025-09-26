@@ -35,8 +35,8 @@ dict_plot_metrics_cea_feature = {
     'pv': solar_metrics,
     'pvt': solar_metrics,
     'sc': solar_metrics,
-    'emissions-embodied': embodied_emission_metrics,
-    'emissions-operational': operational_emission_metrics
+    'embodied-emissions': embodied_emission_metrics,
+    'operational-emissions': operational_emission_metrics
 }
 
 dict_plot_analytics_cea_feature = {
@@ -44,8 +44,8 @@ dict_plot_analytics_cea_feature = {
     'pv': solar_analytics,
     'pvt': [],
     'sc': [],
-    'emissions-embodied': [],
-    'emissions-operational': []
+    'embodied-emissions': [],
+    'operational-emissions': []
 }
 
 # Trigger the summary feature and point to the csv results file
