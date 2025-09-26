@@ -152,6 +152,8 @@ class bar_plot:
                 title = "CEA-4 Life Cycle Analysis"
             elif plot_cea_feature == 'embodied-emissions':
                 title = "CEA-4 Embodied Emissions"
+            elif plot_cea_feature == 'operational-emissions':
+                title = "CEA-4 Operational Emissions"
             else:
                 raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the title mapping.")
 
@@ -256,6 +258,22 @@ class bar_plot:
                     y_label = "Embodied Emissions (g CO2-eq/yr)"
                 elif self.y_metric_unit == 'g' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "Embodied Emissions per Gross Floor Area (g CO2-eq/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            
+            elif plot_cea_feature == 'operational-emissions':
+                if self.y_metric_unit == 'ton' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (tonnes CO2-eq/yr)"
+                elif self.y_metric_unit == 'ton' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (tonnes CO2-eq/yr/m2)"
+                elif self.y_metric_unit == 'kg' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (kg CO2-eq/yr)"
+                elif self.y_metric_unit == 'kg' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (kg CO2-eq/yr/m2)"
+                elif self.y_metric_unit == 'g' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (g CO2-eq/yr)"
+                elif self.y_metric_unit == 'g' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (g CO2-eq/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
