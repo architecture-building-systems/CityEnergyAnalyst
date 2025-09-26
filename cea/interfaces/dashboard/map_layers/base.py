@@ -86,7 +86,7 @@ class ParameterDefinition:
     options_generator: Optional[str] = None
     depends_on: Optional[List[str]] = None
     selector: Optional[str] = None
-    range: Optional[str] = None
+    range: Optional[List[float]] = None
     filter: Optional[str] = None
 
     def generate_choices(self, layer: "MapLayer", current_params: dict) -> dict:
