@@ -19660,7 +19660,7 @@ get_thermal_network_velocity_edges_file:
   used_by: []
 get_total_yearly_operational_building:
   created_by:
-  - emission_time_dependent
+  - emissions
   file_path: outputs/data/emissions/timeline/Total_yearly_operational_building.csv
   file_type: csv
   schema:
