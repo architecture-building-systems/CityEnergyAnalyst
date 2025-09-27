@@ -7,7 +7,6 @@ Description: This module provides functions to morph EPW files using the pyepwmo
 
 # general import
 import os
-import datetime
 import shutil
 
 # CEA import
@@ -84,9 +83,9 @@ def morphing_workflow(locator, config):
     
     # 1.4 the baseline range against which the calculations are made
     # this the range of years used to calculate the baseline, should be taken from the EPW files
-    try: 
+    try:
         baseline_range = user_epw_object.detect_baseline_range()
-    except:
+    except Exception:
         print("Could not detect the baseline range from the EPW file, using default of 1985-2014")
         baseline_range = (1985, 2014)  # default if the EPW file does not have the years in it
     
