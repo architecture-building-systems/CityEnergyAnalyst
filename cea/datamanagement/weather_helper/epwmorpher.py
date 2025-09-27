@@ -15,6 +15,7 @@ import cea.inputlocator
 import cea.config
 
 # pyepwmorph import
+# pip install -e pyepwmorph for local dev
 from pyepwmorph.tools import workflow as pyepwmorph_workflow
 from pyepwmorph.tools import utilities as pyepwmorph_utilities
 from pyepwmorph.tools import io as pyepwmorph_io
@@ -23,7 +24,7 @@ from pyepwmorph.tools import configuration as pyepwmorph_config
 __author__ = "Justin McCarty"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"]
 __credits__ = ["Justin McCarty"]
-__license__ = "GNU General Public License v3.0"
+__license__ = "GPLv3+"
 __version__ = "0.1"
 __maintainer__ = ["Justin McCarty"]
 __email__ = ["cea@arch.ethz.ch", "mccarty@arch.ethz.ch"]
@@ -41,7 +42,7 @@ def convert_scenario_names(name):
         return "Best Case Scenario"
     elif name == "Moderate":
         return "Middle of the Road"
-    elif name == "Upper Middle": # pending a change in pyepwmorph
+    elif name == "Upper Middle": 
         return "Upper Middle Scenario"
     elif name == "Worst Case":
         return "Worst Case Scenario"
@@ -109,6 +110,7 @@ def morphing_workflow(locator, config):
         'INM-CM5-0', 'ACCESS-CM2', 'MIROC6', 'EC-Earth3-Veg-LR', 'BCC-CSM2-MR'
     ]
 
+    print(f"User variables are: {user_variables}")
     # 1. create the config object for the morpher
     morph_config = pyepwmorph_config.MorphConfig(project_name, 
                                             user_epw_file, 
@@ -120,9 +122,10 @@ def morphing_workflow(locator, config):
                                             model_sources=model_sources, 
                                             baseline_range=baseline_range)
     
-    # 2. Morph the EPW file
+    # # 2. Morph the EPW file
     print(f"Config pathways are: {morph_config.model_pathways}")
-        
+    print(f"Config variables are: {morph_config.model_variables}")
+    
     # 2.1 get climate model data
     year_model_dict = pyepwmorph_workflow.iterate_compile_model_data(morph_config.model_pathways,
                                                                     morph_config.model_variables,
