@@ -17,15 +17,28 @@ class EmbodiedEmissionsMapLayer(MapLayer):
     description = ""
 
     def _get_data_columns(self) -> Optional[list]:
-        results_path = self.locator.get_lca_embodied()
+        buildings = self.locator.get_zone_building_names()
+        results_path = self.locator.get_lca_timeline_building(buildings[0])
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns)
+            columns = set(emissions_df.columns) - {"year"}
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
         return sorted(list(columns - {"name", "GFA_m2"}))
+
+    def _get_period_range(self) -> list:
+        """Get the valid period range from available data"""
+        try:
+            buildings = self.locator.get_zone_building_names()
+            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
+            df = pd.read_csv(timeline_df)['year']
+            print(df.min(), df.max())
+            return [int(df.min()), int(df.max())]
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            return [0, 0]
+
 
     @classmethod
     def expected_parameters(cls):
@@ -37,6 +50,15 @@ class EmbodiedEmissionsMapLayer(MapLayer):
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
+                ),
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    description="Period to generate the data based on years",
+                    selector="slider",
+                    options_generator="_get_period_range",
+                    default=[0, 0],
                 ),
             'radius':
                 ParameterDefinition(
@@ -81,6 +103,10 @@ class EmbodiedEmissionsMapLayer(MapLayer):
         buildings = self.locator.get_zone_building_names()
 
         data_column = parameters['data-column']
+        period = parameters['period']
+        start, end = period
+
+        print(data_column, start, end)
 
         output = {
             "data": [],
@@ -95,23 +121,43 @@ class EmbodiedEmissionsMapLayer(MapLayer):
             }
         }
 
+        def get_data(building, centroid):
+            data = pd.read_csv(
+                self.locator.get_lca_timeline_building(building), usecols=["year", data_column], index_col="year"
+            )[data_column]
+
+            total_min = 0
+            total_max = data.sum()
+
+            period_value = data.loc[start:end].sum()
+            period_min = period_value
+            period_max = period_value
+
+            data = {"position": [centroid.x, centroid.y], "value": period_value}
+
+            return total_min, total_max, period_min, period_max, data
+
         df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
         building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
-        results_path = self.locator.get_lca_embodied()
-        emissions_df = pd.read_csv(results_path, usecols=["name", data_column], index_col="name")[data_column].loc[
-            buildings]
+        values = (get_data(building, centroid)
+                  for building, centroid in zip(buildings, building_centroids))
 
-        output['data'] = [{"position": [centroid.x, centroid.y], "value": emissions} for centroid, emissions in
-                          zip(building_centroids, emissions_df)]
+        total_min, total_max, period_min, period_max, data = zip(*values)
+
+        output['data'] = data
         output['properties']['range'] = {
             'total': {
                 'label': 'Total Range',
-                'min': float(min(emissions_df)),
-                'max': float(max(emissions_df))
+                'min': float(min(total_min)),
+                'max': float(max(total_max))
             },
+            'period': {
+                'label': 'Period Range',
+                'min': float(min(period_min)),
+                'max': float(max(period_max))
+            }
         }
-
         return output
 
 
