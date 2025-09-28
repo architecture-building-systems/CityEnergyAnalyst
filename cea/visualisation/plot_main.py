@@ -1,12 +1,14 @@
 """
-CEAFrontEnd – Combines everything
+CEAFrontEnd - Combines everything
 
 """
 
 import sys
 from typing import Any
-import cea.config
+
+
 from cea import CEAException
+import cea.config
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric

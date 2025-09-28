@@ -60,7 +60,7 @@ class Component(object):
         self.technology = ' '.join([part.capitalize() for part in data_base_tab.split('_')])
         self.type = self._model_data['type'].values[0]  # given by working principle (only 1 code is installed for each type per component)
         self.capacity = capacity
-        self.main_energy_carrier = EnergyCarrier()
+        self.main_energy_carrier = EnergyCarrier.default()
         self.input_energy_carriers = {}
         self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
@@ -83,7 +83,7 @@ class Component(object):
         HeatExchanger.initialize_subclass_variables(Component._components_database)
 
     @staticmethod
-    def create_code_mapping(database):
+    def create_code_mapping(database) -> dict[str, type["Component"]]:
         """ Map component codes in the database to their corresponding database tab names. """
         component_code_to_tab_mapping = {}
         for database_tab in database.keys():
@@ -229,12 +229,12 @@ class AbsorptionChiller(ActiveComponent):
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_gen_design'].values[0])),
-             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_gen_design'].values[0])),
+             EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
     def operate(self, cooling_out):
         """
@@ -300,11 +300,11 @@ class VapourCompressionChiller(ActiveComponent):
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_evap_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_cond_design'].values[0]))]
 
     def operate(self, cooling_out):
         """
@@ -366,11 +366,11 @@ class AirConditioner(ActiveComponent):
         self.minimum_COP = self._model_data['rated_COP_seasonal'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_indoor_rating'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_indoor_rating'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_outdoor_rating'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_outdoor_rating'].values[0]))]
 
     def operate(self, cooling_out):
         """
@@ -432,11 +432,11 @@ class Boiler(ActiveComponent):
         self.min_thermal_eff = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_out_rating'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_out_rating'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(self._model_data['fuel_code'].values[0])]
+            [EnergyCarrier.from_code(self._model_data['fuel_code'].values[0])]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_flue_gas_design'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_flue_gas_design'].values[0]))]
 
     def operate(self, heating_out):
         """
@@ -499,12 +499,12 @@ class CogenPlant(ActiveComponent):
         self.electrical_eff = self._model_data['elec_eff_design'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_out_design'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_out_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(self._model_data['fuel_code'].values[0])]
+            [EnergyCarrier.from_code(self._model_data['fuel_code'].values[0])]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_out_design'].values[0])),
-             EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_flue_gas_design'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_out_design'].values[0])),
+             EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_flue_gas_design'].values[0]))]
 
     def operate(self, heating_out):
         """
@@ -575,12 +575,12 @@ class HeatPump(ActiveComponent):
         self.thermal_ec_subtype_evaporator_side = self._model_data['medium_evap_side'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.thermal_ec_subtype_condenser_side,
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.thermal_ec_subtype_condenser_side,
                                                            self._model_data['T_cond_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.thermal_ec_subtype_evaporator_side,
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.thermal_ec_subtype_evaporator_side,
                                                             self._model_data['T_evap_design'].values[0])),
-             EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+             EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
 
     def operate(self, heating_load):
         """
@@ -654,11 +654,11 @@ class CoolingTower(ActiveComponent):
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
         self.main_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('water', self._model_data['T_water_in_design'].values[0]))
         self.input_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', self._model_data['V_power_supply'].values[0]))]
         self.output_energy_carriers = \
-            [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_in_design'].values[0]))]
+            [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', self._model_data['T_air_in_design'].values[0]))]
 
     def operate(self, heat_rejection):
         """
@@ -800,11 +800,11 @@ class PowerTransformer(PassiveComponent):
                              'are identical it makes no sense to install a power transformer.')
         # assign energy carriers
         if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
-            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))
-            self.input_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))]
+            self.main_energy_carrier = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))
+            self.input_energy_carriers = [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))]
         else:
-            self.main_energy_carrier = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))
-            self.output_energy_carriers = [EnergyCarrier(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))]
+            self.main_energy_carrier = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', voltage_before))
+            self.output_energy_carriers = [EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec('AC', voltage_after))]
 
     @staticmethod
     def initialize_subclass_variables(components_database):
@@ -938,14 +938,14 @@ class HeatExchanger(PassiveComponent):
         # assign energy carriers
         if not (self.placement['before'] == 'tertiary' or self.placement['after'] == 'tertiary'):
             self.main_energy_carrier = \
-                EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))
+                EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))
             self.input_energy_carriers = \
-                [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))]
+                [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))]
         else:
             self.main_energy_carrier = \
-                EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))
+                EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_in, temperature_before))
             self.output_energy_carriers = \
-                [EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))]
+                [EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_out, temperature_after))]
 
     def _reset_energy_carriers(self, heat_transfer, heat_source_temp=None, heat_sink_temp=None):
         """
@@ -960,7 +960,7 @@ class HeatExchanger(PassiveComponent):
                                  f"cannot sensibly be placed between the '{self.placement['before']}' and "
                                  f"the '{self.placement['after']}' component placement categories under "
                                  'this mode of operation.')
-            thermal_ec_hot_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_in, heat_source_temp))
+            thermal_ec_hot_side = EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_in, heat_source_temp))
             thermal_ec_cold_side = heat_transfer.energy_carrier
             self._check_he_model_requirements(thermal_ec_hot_side, thermal_ec_cold_side)
             self.main_energy_carrier = thermal_ec_cold_side
@@ -973,7 +973,7 @@ class HeatExchanger(PassiveComponent):
                                  f"placed between the '{self.placement['before']}' and the '{self.placement['after']}' "
                                  'component placement categories under this mode of operation.')
             thermal_ec_hot_side = heat_transfer.energy_carrier
-            thermal_ec_cold_side = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(self.medium_out, heat_sink_temp))
+            thermal_ec_cold_side = EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(self.medium_out, heat_sink_temp))
             self.main_energy_carrier = thermal_ec_hot_side
             self.input_energy_carriers = []
             self.output_energy_carriers = [thermal_ec_cold_side]

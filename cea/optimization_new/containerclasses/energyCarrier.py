@@ -20,121 +20,124 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import warnings
+
 import pandas as pd
 import numpy as np
+from dataclasses import dataclass
+from typing import Optional, ClassVar, Dict, Any
 
 
-class EnergyCarrier(object):
-    _available_energy_carriers = pd.DataFrame
-    _thermal_energy_carriers = {}
-    _electrical_energy_carriers = {}
-    _combustible_energy_carriers = {}
-    ambient_thermal_energy_carrier = None
-    _feedstock_tab = {}
-    _daily_ghg_profile = {}             # in kg CO2 eq. per kWh
-    _daily_buy_price_profile = {}       # in USD (2015) per kWh
-    _daily_sell_price_profile = {}      # in USD (2015) per kWh
+@dataclass(frozen=True)
+class EnergyCarrier:
+    # TODO: This is only optional to support default EnergyCarrier creation. Consider removing this option in the future.
+    code: Optional[str]
+    description: str
+    type: str
+    subtype: str
+    qualifier: str
+    qual_unit: str
+    mean_qual: float
 
-    def __init__(self, code=None):
-        self._code = None
-        self._description = 'some description'
-        self._type = 'e.g. thermal'
-        self._subtype = 'e.g. water'
-        self._qualifier = 'e.g. temperature'
-        self._qual_unit = 'e.g. °C'
-        self._mean_qual = 0.0
+    # Class variables
+    _available_energy_carriers: ClassVar[pd.DataFrame] = pd.DataFrame()
+    _thermal_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    _electrical_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    _combustible_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    ambient_thermal_energy_carrier: ClassVar[Optional['EnergyCarrier']] = None
+    _feedstock_tab: ClassVar[Dict[str, str]] = {}
+    _daily_ghg_profile: ClassVar[Dict[str, Dict[int, float]]] = {}             # in kg CO2 eq. per kWh
+    _daily_buy_price_profile: ClassVar[Dict[str, Dict[int, float]]] = {}       # in USD (2015) per kWh
+    _daily_sell_price_profile: ClassVar[Dict[str, Dict[int, float]]] = {}      # in USD (2015) per kWh
 
-        self._set_to(code)
+    def __post_init__(self):
+        if self.code is None:
+            return  # Skip validation for default instance
 
-    @property
-    def code(self):
-        return self._code
-
-    @code.setter
-    def code(self, new_code):
-        if new_code not in EnergyCarrier._available_energy_carriers['code'].to_list():
-            raise ValueError(f'Tried to assign a new energy energy carrier using the code "{new_code}". This code '
-                             f'could not be found in the energy carriers database.')
-        else:
-            self._code = new_code
-
-    @property
-    def type(self):
-        return self._type
-
-    @type.setter
-    def type(self, new_type):
+        # Validate type
         allowed_types = ['thermal', 'electrical', 'combustible', 'radiation']
-        if new_type not in allowed_types:
+        if self.type not in allowed_types:
             raise ValueError("The energy carrier data base contains an invalid energy type. Valid energy carrier "
                              "types are: \n 'thermal', 'electrical', 'combustible', 'radiation'")
-        else:
-            self._type = new_type
 
-    @property
-    def subtype(self):
-        return self._subtype
-
-    @subtype.setter
-    def subtype(self, new_subtype):
+        # Validate subtype
         allowed_subtypes = {'thermal': ['water', 'air', 'brine'],
                             'electrical': ['AC', 'DC'],
                             'combustible': ['fossil', 'biofuel'],
                             'radiation': ['-']}
-        if new_subtype not in allowed_subtypes[self.type]:
+        
+        if self.subtype not in allowed_subtypes[self.type]:
             raise ValueError("The energy carrier data base contains an invalid energy type. The only valid subtypes "
                              f"for energy carriers of type '{self.type}' are {allowed_subtypes[self.type]} for the "
                              "moment. \n Including further subtypes would require changes to be made to the code of "
                              "the supply system components that should take the new type into account.")
-        else:
-            self._subtype = new_subtype
 
-    @property
-    def qualifier(self):
-        return self._qualifier
-
-    @qualifier.setter
-    def qualifier(self, new_qualifier):
-        if new_qualifier not in EnergyCarrier._available_energy_carriers['qualifier'].to_list():
+        # Validate qualifier
+        if self.qualifier not in set(self._available_energy_carriers['qualifier'].values):
             raise ValueError('Please make sure all basic energy carrier qualifiers appear in the data base, namely: '
                              'temperature, voltage, wavelength')
-        else:
-            self._qualifier = new_qualifier
 
-    @property
-    def qual_unit(self):
-        return self._qual_unit
-
-    @qual_unit.setter
-    def qual_unit(self, new_qual_unit):
-        if new_qual_unit not in EnergyCarrier._available_energy_carriers['unit_qual'].to_list():
+        # Validate qual_unit
+        if self.qual_unit not in set(self._available_energy_carriers['unit_qual'].values):
             raise ValueError('Please make sure the energy carrier qualifier units are set correctly.')
-        else:
-            self._qual_unit = new_qual_unit
-
-    @property
-    def mean_qual(self):
-        return self._mean_qual
-
-    @mean_qual.setter
-    def mean_qual(self, new_mean_qual):
-        if not (isinstance(new_mean_qual, (int, float)) or (new_mean_qual == '-')):
+        
+        # Validate mean_qual
+        if not isinstance(self.mean_qual, (int, float)):
             raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
                              "Acceptable values are numerical or '-'.")
+
+    @classmethod
+    def from_code(cls, code: str) -> 'EnergyCarrier':
+        """Create an EnergyCarrier instance from a database code."""
+        if cls._available_energy_carriers.empty:
+            raise ValueError("Energy carrier database not loaded. Call initialize_class_variables() first.")
+
+        if code not in set(cls._available_energy_carriers['code'].values):
+            raise ValueError(f'Tried to assign a new energy energy carrier using the code "{code}". This code '
+                             f'could not be found in the energy carriers database.')
+
+        energy_carrier = cls._available_energy_carriers.loc[cls._available_energy_carriers['code'] == code].iloc[0]
+
+        # Extract values from database
+        description = energy_carrier['description']
+        energy_type = energy_carrier['type']
+        subtype = energy_carrier['subtype']
+        qualifier = energy_carrier['qualifier']
+        qual_unit = energy_carrier['unit_qual']
+        mean_qual_value = energy_carrier['mean_qual']
+
+        # Handle mean_qual conversion and validation
+        if isinstance(mean_qual_value, (int, float)):
+            mean_qual = float(mean_qual_value)
+        elif mean_qual_value == '-':
+            mean_qual = float('nan')
         else:
-            self._mean_qual = new_mean_qual
+            raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
+                             "Acceptable values are numerical or '-'.")
 
-    def _set_to(self, code):
-        if code:
-            energy_carrier = EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['code'] == code]
-
-            self.code = code
-            self._description = energy_carrier['description'].iloc[0]
-            self.type = energy_carrier['type'].iloc[0]
-            self.subtype = energy_carrier['subtype'].iloc[0]
-            self.qualifier = energy_carrier['qualifier'].iloc[0]
-            self.qual_unit = energy_carrier['unit_qual'].iloc[0]
-            self.mean_qual = energy_carrier['mean_qual'].iloc[0]
+        return cls(code=code,
+                   description=description,
+                   type=energy_type,
+                   subtype=subtype,
+                   qualifier=qualifier,
+                   qual_unit=qual_unit,
+                   mean_qual=mean_qual)
+    
+    @classmethod
+    def default(cls) -> 'EnergyCarrier':
+        """Create a default EnergyCarrier instance."""
+        return cls(code=None,
+                   description="",
+                   type='none',
+                   subtype='none',
+                   qualifier='none',
+                   qual_unit='none',
+                   mean_qual=float('nan'))
+        
+    def describe(self):
+        """ Provide a short written description of the energy carrier."""
+        description = self.description + ": " + str(self.mean_qual) + " " + self.qual_unit
+        return description
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -234,7 +237,7 @@ class EnergyCarrier(object):
         """
         ambient_temperature = weather['drybulb_C'].mean()
         EnergyCarrier.ambient_thermal_energy_carrier = \
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
 
     @staticmethod
     def get_thermal_ecs_of_subtype(subtype):
@@ -266,18 +269,23 @@ class EnergyCarrier(object):
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return hotter_energy_carrier_codes
 
@@ -289,18 +297,23 @@ class EnergyCarrier(object):
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return colder_energy_carrier_codes
 
@@ -379,11 +392,11 @@ class EnergyCarrier(object):
         :rtype: list
         """
         equivalent_discrete_low_temps = {
-            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
             for ec_subtype in subtypes
         }
         equivalent_discrete_high_temps = {
-            ec_subtype: EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
             for ec_subtype in subtypes
         }
 
@@ -474,8 +487,8 @@ class EnergyCarrier(object):
         if np.isnan(high_voltage) and np.isnan(low_voltage):
             electrical_ecs_between_voltages = []
         elif not np.isnan(high_voltage) and not np.isnan(low_voltage):
-            top_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
-            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
+            top_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
+            bottom_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
             electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
             electrical_ecs_between_voltages = [energy_carrier['code']
                                                for row, energy_carrier in electrical_ecs_of_subtype.iterrows()

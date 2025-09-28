@@ -15,7 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, \
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import migrate_void_deck_data
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

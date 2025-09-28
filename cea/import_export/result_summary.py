@@ -8,9 +8,11 @@ import pandas as pd
 import numpy as np
 import cea.config
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
+
+from cea.demand.building_properties.useful_areas import calc_useful_areas
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -172,15 +174,10 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
-def get_results_path(locator, cea_feature, list_buildings):
+def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list)-> tuple[list[str], list[str]]:
 
     list_paths = []
     list_appendix = []
-
-    if cea_feature == 'architecture':
-        path = locator.get_total_demand()
-        list_paths.append(path)
-        list_appendix.append(cea_feature)
 
     if cea_feature == 'demand':
         for building in list_buildings:
@@ -645,7 +642,7 @@ def check_list_nesting(input_list):
         raise ValueError("The input list contains a mix of lists and non-lists.")
 
 
-def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names):
+def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names) -> list[pd.DataFrame]:
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
     and returns a list of these DataFrames.
@@ -870,6 +867,25 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
         for sublist_paths in list_paths:
             list_useful_cea_results = load_cea_results_from_csv_files(hour_start, hour_end, sublist_paths, list_cea_column_names)
             list_list_useful_cea_results.append(list_useful_cea_results)
+    
+    # Special handling for architecture feature
+    if cea_feature == 'architecture':
+        # Load source data
+        zone_df = gpd.read_file(locator.get_zone_geometry()).set_index('name')
+        architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
+
+        # Generate architecture data using calc_useful_areas
+        result_df = calc_useful_areas(zone_df, architecture_df)
+
+        # Extract only the columns needed for architecture metrics
+        architecture_data = result_df[['Af', 'footprint', 'GFA_m2', 'Aocc']].rename(columns={
+            'Af': 'Af_m2',
+            'footprint': 'Aroof_m2',  # Assuming footprint corresponds to roof area
+            'Aocc': 'Aocc_m2'
+        }).reset_index()
+
+        list_list_useful_cea_results.append([architecture_data])
+        list_appendix.append('architecture')
 
     return list_list_useful_cea_results, list_appendix
 
@@ -2142,7 +2158,12 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         df_time_path = locator.get_export_results_summary_cea_feature_time_period_file(
             summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
         )
-        df_time_resolution = pd.read_csv(df_time_path)
+
+        if not os.path.exists(df_time_path):
+            print(f"File not found: {df_time_path}.")
+            break
+        else:
+            df_time_resolution = pd.read_csv(df_time_path)
 
         if bool_use_acronym:
             df_time_resolution.columns = map_metrics_and_cea_columns(
@@ -2385,8 +2406,9 @@ def process_building_summary(config, locator,
 
     # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
     if not plot:
-        folder_name = config.result_summary.folder_name_to_save_exported_results
-        summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+        folder_name = config.result_summary.folder_name_to_save_exported_results or "summary"
+        summary_folder = locator.get_export_results_summary_folder(f"{folder_name}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}")
+        print(f"Results will be saved to: {summary_folder}")
     else:
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)

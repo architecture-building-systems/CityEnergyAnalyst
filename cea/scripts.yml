@@ -263,7 +263,11 @@ Life Cycle Analysis:
   - name: emissions
     label: Emissions
     short_description: Calculate embodied and operational emissions of buildings
-    description: This Feature calculates the embodied and operational emissions of buildings.
+    description: |
+      This Feature calculates the aggregated embodied and operational emissions for each building, with an option for hourly (8,760 hours) operational emissions and projected annual embodied emissions until a given year.
+
+      Embodied emissions: building's initial construction, including construction, renovation, deconstruction, biogenic carbon storage.
+      Operational emissions: supply systems operation.
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -272,6 +276,14 @@ Life Cycle Analysis:
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_building_supply]
+      - [get_demand_results_file, building_name]
+      - [get_weather_file]
+      - [get_database_assemblies_envelope_floor]
+      - [get_database_assemblies_envelope_wall]
+      - [get_database_assemblies_envelope_window]
+      - [get_database_assemblies_envelope_roof]
+      - [get_radiation_metadata, building_name]
+      - [get_radiation_building, building_name]
 
   - name: system-costs
     label: Energy Supply System Costs
@@ -676,6 +688,30 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-embodied-emissions
+    label: Plot - Embodied Emissions
+    short_description: Plot bar chart of building embodied emissions
+    description: This Feature plots bar chart of the results of embodied emissions
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-embodied-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
+  - name: plot-operational-emissions
+    label: Plot - Operational Emissions
+    short_description: Plot bar chart of building operational emissions
+    description: This Feature plots bar chart of the results of operational emissions
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
   - name: plot-solar
     label: Plot - Solar Technology
     short_description: Plot bar chart of solar energy technologies' yields results
@@ -698,3 +734,13 @@ Visualisation:
       - [get_total_demand]
       - [get_building_architecture]
       - [get_zone_geometry]
+
+  - name: plot-pareto-front
+    label: Plot - Pareto Front
+    short_description: Plot Pareto front for optimisation results
+    description: This Feature plots the Pareto front for optimisation results
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.pareto_front
+    parameters: ['general:scenario']
+    input-files:
+      - [get_new_optimization_optimal_supply_systems_summary_file]

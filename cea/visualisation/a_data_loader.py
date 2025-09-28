@@ -6,7 +6,7 @@ Ensure this file exists or break the script.
 
 import cea.inputlocator
 import os
-import cea.config
+
 from cea.import_export.result_summary import process_building_summary
 import pandas as pd
 
@@ -27,11 +27,16 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
+embodied_emission_metrics = ['embodied_emissions_all', 'embodied_emission_production', 'embodied_emission_biogenic', 'embodied_emission_demolition']
+operational_emission_metrics = ['operational_emissions_all', 'operational_emission_electricity', 'operational_emission_space_cooling', 'operational_emission_space_heating', 'operational_emission_dhw']
+
 dict_plot_metrics_cea_feature = {
     'demand': demand_metrics,
     'pv': solar_metrics,
     'pvt': solar_metrics,
     'sc': solar_metrics,
+    'emissions-embodied': embodied_emission_metrics,
+    'emissions-operational': operational_emission_metrics
 }
 
 dict_plot_analytics_cea_feature = {
@@ -39,6 +44,8 @@ dict_plot_analytics_cea_feature = {
     'pv': solar_analytics,
     'pvt': [],
     'sc': [],
+    'emissions-embodied': [],
+    'emissions-operational': []
 }
 
 # Trigger the summary feature and point to the csv results file

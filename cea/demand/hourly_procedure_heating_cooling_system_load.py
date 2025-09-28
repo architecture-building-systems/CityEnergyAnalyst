@@ -760,9 +760,9 @@ def detailed_thermal_balance_to_tsd(tsd: TimeSeriesData, bpr: BuildingProperties
         h_base_em = 0.0
         h_roof_em = 0.0
     else:
-        h_wall_em = h_em * bpr.rc_model.Awall_ag * bpr.rc_model.U_wall / h_op_m
-        h_base_em = h_em * bpr.rc_model.Aop_bg * B_F * bpr.rc_model.U_base / h_op_m
-        h_roof_em = h_em * bpr.rc_model.Aroof * bpr.rc_model.U_roof / h_op_m
+        h_wall_em = h_em * bpr.envelope.Awall_ag * bpr.envelope.U_wall / h_op_m
+        h_base_em = h_em * bpr.envelope.Aop_bg * B_F * bpr.envelope.U_base / h_op_m
+        h_roof_em = h_em * bpr.envelope.Aroof * bpr.envelope.U_roof / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
     tsd.energy_balance_dashboard.Q_gain_sen_wall[t] = h_wall_em * (theta_em - theta_m)
