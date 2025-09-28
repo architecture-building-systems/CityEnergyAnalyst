@@ -106,9 +106,31 @@ class ParameterDefinition:
 
         return func()
 
+    def generate_range(self, layer: "MapLayer", current_params: dict) -> List[float]:
+        """Generate dynamic range for slider selector based on current parameters"""
+        if self.options_generator is None:
+            raise ValueError("Parameter does not support dynamic range")
+
+        if self.depends_on is None:
+            func = getattr(layer, self.options_generator)
+            range_values = func()
+        else:
+            if not all(k in current_params for k in self.depends_on):
+                raise ValueError("Missing required parameters for generating range")
+
+            func = getattr(layer, self.options_generator)
+            func = functools.partial(func, current_params)
+            range_values = func()
+
+        # Ensure the result is a 2-item list [min, max]
+        if not isinstance(range_values, list) or len(range_values) != 2:
+            raise ValueError("Range generator must return a 2-item list [min, max]")
+
+        return range_values
+
     def to_dict(self) -> dict:
         """Convert ParameterDefinition to a dictionary"""
-        return {
+        result = {
             "label": self.label,
             "type": self.type,
             "default": self.default,
@@ -118,6 +140,8 @@ class ParameterDefinition:
             "range": self.range,
             "filter": self.filter
         }
+        
+        return result
 
 
 class Category(NamedTuple):
@@ -174,8 +198,19 @@ class MapLayer(abc.ABC):
 
     def get_parameter_choices(self, parameter_name: str, parameters: dict) -> dict:
         """Returns the choices for the parameters for this layer"""
-        choices = self.expected_parameters().get(parameter_name).generate_choices(self, parameters)
+        parameter_def = self.expected_parameters().get(parameter_name)
+        if parameter_def is None:
+            raise ValueError(f"Parameter {parameter_name} not found")
+        choices = parameter_def.generate_choices(self, parameters)
         return choices
+
+    def get_parameter_range(self, parameter_name: str, parameters: dict) -> List[float]:
+        """Returns the dynamic range for slider parameters"""
+        parameter_def = self.expected_parameters().get(parameter_name)
+        if parameter_def is None:
+            raise ValueError(f"Parameter {parameter_name} not found")
+        range_values = parameter_def.generate_range(self, parameters)
+        return range_values
 
     def get_required_files(self, parameters) -> List[str]:
         """Returns the list of required files for this layer"""
