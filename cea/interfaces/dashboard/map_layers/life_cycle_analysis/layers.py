@@ -36,7 +36,6 @@ class EmbodiedEmissionsMapLayer(MapLayer):
             buildings = self.locator.get_zone_building_names()
             timeline_df = self.locator.get_lca_timeline_building(buildings[0])
             df = pd.read_csv(timeline_df)['year']
-            print(df.min(), df.max())
             return [int(df.min()), int(df.max())]
         except (FileNotFoundError, pd.errors.EmptyDataError):
             return [None, None]
