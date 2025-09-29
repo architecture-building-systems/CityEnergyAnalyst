@@ -37,7 +37,7 @@ class EmbodiedEmissionsMapLayer(MapLayer):
             print(df.min(), df.max())
             return [int(df.min()), int(df.max())]
         except (FileNotFoundError, pd.errors.EmptyDataError):
-            return [0, 0]
+            return [None, None]
 
 
     @classmethod
@@ -58,7 +58,6 @@ class EmbodiedEmissionsMapLayer(MapLayer):
                     description="Period to generate the data based on years",
                     selector="slider",
                     options_generator="_get_period_range",
-                    default=[0, 0],
                 ),
             'radius':
                 ParameterDefinition(
