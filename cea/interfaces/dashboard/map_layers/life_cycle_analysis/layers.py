@@ -18,6 +18,8 @@ class EmbodiedEmissionsMapLayer(MapLayer):
 
     def _get_data_columns(self) -> Optional[list]:
         buildings = self.locator.get_zone_building_names()
+        if not buildings:
+            return
         results_path = self.locator.get_lca_timeline_building(buildings[0])
 
         try:
@@ -166,6 +168,8 @@ class OperationalEmissionsMapLayer(MapLayer):
 
     def _get_data_columns(self) -> Optional[list]:
         buildings = self.locator.get_zone_building_names()
+        if not buildings:
+            return
         results_path = self.locator.get_lca_operational_hourly_building(buildings[0])
 
         try:
