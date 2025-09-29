@@ -23,12 +23,12 @@ logger = getCEAServerLogger("cea-server-map-layers")
 
 @dataclass()
 class ColourGradient:
-    color_array: List[str]
+    colour_array: List[str]
     points: int
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "color_array": self.color_array,
+            "colour_array": self.colour_array,
             "points": self.points
         }
 
