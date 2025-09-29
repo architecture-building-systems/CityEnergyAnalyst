@@ -486,19 +486,27 @@ def calc_data(building_name, data_frame, locator):
     from cea.demand.building_properties.building_hvac import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name').loc[building_name]
+    hvac_path = locator.get_building_air_conditioning()
+    try:
+        air_con_data = pd.read_csv(hvac_path).set_index('name')
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"HVAC configuration not found at {hvac_path}") from e
+    
+    if building_name not in air_con_data.index:
+        raise ValueError(f"Building '{building_name}' not found in HVAC configuration at {hvac_path}")
 
+    building_air_con_data = air_con_data.loc[building_name]
     has_winter = verify_has_season(building_name,
-                                   air_con_data.loc['hvac_heat_starts'],
-                                   air_con_data.loc['hvac_heat_ends'])
+                                   building_air_con_data.loc['hvac_heat_starts'],
+                                   building_air_con_data.loc['hvac_heat_ends'])
     has_summer = verify_has_season(building_name,
-                                   air_con_data.loc['hvac_cool_starts'],
-                                   air_con_data.loc['hvac_cool_ends'])
+                                   building_air_con_data.loc['hvac_cool_starts'],
+                                   building_air_con_data.loc['hvac_cool_ends'])
 
-    winter_start = air_con_data.loc['hvac_heat_starts']
-    winter_end = air_con_data.loc['hvac_heat_ends']
-    summer_start = air_con_data.loc['hvac_cool_starts']
-    summer_end =  air_con_data.loc['hvac_cool_ends']
+    winter_start = building_air_con_data.loc['hvac_heat_starts']
+    winter_end = building_air_con_data.loc['hvac_heat_ends']
+    summer_start = building_air_con_data.loc['hvac_cool_starts']
+    summer_end =  building_air_con_data.loc['hvac_cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
