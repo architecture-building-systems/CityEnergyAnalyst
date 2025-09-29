@@ -115,14 +115,16 @@ class ParameterDefinition:
 
         if self.depends_on is None:
             func = getattr(layer, self.options_generator)
-            range_values = func()
-        else:
-            if not all(k in current_params for k in self.depends_on):
-                raise ValueError("Missing required parameters for generating range")
+            return func()
+        
+        missing = [value for value in self.depends_on if value not in current_params]
+        if missing:
+            logger.error(f"Missing required parameters for range generation [{self.label}]: {missing}")
+            raise ValueError(f"Missing required parameters: [{missing}]")
 
-            func = getattr(layer, self.options_generator)
-            func = functools.partial(func, current_params)
-            range_values = func()
+        func = getattr(layer, self.options_generator)
+        func = functools.partial(func, current_params)
+        range_values = func()
 
         # Ensure the result is a 2-item list [min, max]
         if not isinstance(range_values, list) or len(range_values) != 2:
