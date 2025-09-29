@@ -51,7 +51,7 @@ class EmbodiedEmissionsMapLayer(MapLayer):
                     options_generator="_get_data_columns",
                     selector="choice",
                 ),
-            'period':
+            'timeline':
                 ParameterDefinition(
                     "Period",
                     "array",
@@ -103,10 +103,8 @@ class EmbodiedEmissionsMapLayer(MapLayer):
         buildings = self.locator.get_zone_building_names()
 
         data_column = parameters['data-column']
-        period = parameters['period']
+        period = parameters['timeline']
         start, end = period
-
-        print(data_column, start, end)
 
         output = {
             "data": [],
