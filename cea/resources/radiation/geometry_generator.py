@@ -108,7 +108,7 @@ def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS
 
 def calc_intersection(
     surface: Mesh, edges_coords: Point, edges_dir: Vector
-) -> Tuple[int | None, Point | None]:
+) -> tuple[int, Point]:
     """This script calculates the intersection of a ray from a particular point to the terrain.
 
     :param surface: the terrain mesh to be intersected.
@@ -122,10 +122,11 @@ def calc_intersection(
     :rtype: Tuple[int | None, Point | None]
     """
     ray = (edges_coords, edges_dir)
-    hits: list[tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
-    idx_face, u, v, t = hits[0] if hits else (None, None, None, None)
+    hits: list[tuple[int, float, float, float]] | None = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
+    # idx_face: int, u: float, v: float, t: float = hits[0] if hits else (None, None, None, None)
+    if hits:
+        idx_face, u, v, t = hits[0]
     # u, v are the barycentric coordinates of the intersection point on the face.
-    if idx_face is not None:
         face_points = surface.face_points(idx_face)
         w = 1 - u - v
         p0 = face_points[0]
@@ -138,12 +139,11 @@ def calc_intersection(
         )
         return idx_face, inter_pt
     else:
-        # No intersection found
-        return None, None
+        raise ValueError("No intersection found between the ray and the surface mesh.")
 
 def create_windows(surface: TopoDS_Face, 
                    wwr: float, 
-                   ref_pypt: Tuple[float, float, float],
+                   ref_pypt: tuple[float, float, float],
                    ) -> TopoDS_Face:
     """
     This function creates a window by schrinking the surface according to the wwr around the reference point.
@@ -322,10 +322,10 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
         and if they are intersected with other solids) into a file that could be used in other steps.
     """
     # Config variables
-    num_processes = config.get_number_of_processes()
-    zone_simplification = config.radiation.zone_geometry
-    surroundings_simplification = config.radiation.surrounding_geometry
-    neglect_adjacent_buildings = config.radiation.neglect_adjacent_buildings
+    num_processes: int = config.get_number_of_processes()
+    zone_simplification: float = config.radiation.zone_geometry # type: ignore
+    surroundings_simplification: float = config.radiation.surrounding_geometry # type: ignore
+    neglect_adjacent_buildings: bool = config.radiation.neglect_adjacent_buildings # type: ignore
 
     print('Calculating terrain intersection of building geometries')
     zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
@@ -568,7 +568,7 @@ def burn_buildings(geometry: shapely.Polygon,
     footprint_polygon = Polygon(point_list_3D)
     footprint_midpt = Point(*centroid_polygon(footprint_polygon))
     proj_vector = Vector(0, 0, 1)  # project upwards
-    face_id, inter_pt = calc_intersection(terrain_tin, footprint_midpt, proj_vector)
+    _, inter_pt = calc_intersection(terrain_tin, footprint_midpt, proj_vector)
     move_vector = Vector(0, 0, inter_pt.z)
     footprint_polygon.transform(Translation.from_vector(move_vector))
     return footprint_polygon, inter_pt.z
@@ -599,7 +599,6 @@ def calc_solid(face_footprint: Polygon,
     building_breps = []
     footprint_brep = Brep.from_polygons([face_footprint])
     building_breps.append(footprint_brep)  # add the footprint as the first face
-    viewer.scene.add(footprint_brep, name="Footprint")
 
     # iterate until to range_floors - 1, because the last floor is the roof
     for i_floor in range_floors[:-1]:
@@ -609,7 +608,7 @@ def calc_solid(face_footprint: Polygon,
         walls = from_floor_extrude_walls(polygon_floor, floor_to_floor_height)
         walls_brep = Brep.from_polygons(walls)
         building_breps.append(walls_brep)
-        viewer.scene.add(walls_brep, name=f"Floor {i_floor + 1} Walls")
+        # viewer.scene.add(walls_brep, name=f"Floor {i_floor + 1} Walls")
 
     # add the roof as the last face
     move_vector = Vector(0, 0, range_floors[-1] * floor_to_floor_height)
