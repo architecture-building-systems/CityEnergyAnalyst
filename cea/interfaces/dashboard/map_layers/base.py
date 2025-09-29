@@ -39,17 +39,19 @@ class FileRequirement:
     """
     description: str
     file_locator: str
-    depends_on: List[str] = None
+    depends_on: Optional[List[str]] = None
+    """A list of parameter names that this file requirement depends on."""
 
-    def get_required_files(self, layer: "MapLayer", current_params: Dict[str, Any] = None) -> List[str]:
+    def get_required_files(self, layer: "MapLayer", current_params: Dict[str, Any]) -> List[str]:
         """
         Find files matching the requirements based on current parameters
         """
         if self.depends_on is not None:
             # Check if the current parameters meet the requirements
-            if not all(value in current_params for value in self.depends_on):
-                logger.error(f"Missing required parameters for file requirement: {self.depends_on}")
-                raise ValueError("Missing required parameters")
+            missing = [value for value in self.depends_on if value not in current_params]
+            if missing:
+                logger.error(f"Missing required parameters for file requirement [{self.file_locator}]: {missing}")
+                raise ValueError(f"Missing required parameters: [{missing}]")
 
         # Parse string locator
         class_name, method_name = self.file_locator.rsplit(":", 1)
