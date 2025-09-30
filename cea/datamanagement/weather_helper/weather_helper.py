@@ -97,6 +97,10 @@ def main(config):
         locator.ensure_parent_folder_exists(weather_path)
         fetch_weather_data(weather_path, locator.get_zone_geometry())
     elif config.weather_helper.weather == 'pyepwmorph':
+        # Ensure the weather file exists before morphing
+        if not os.path.exists(weather_path):
+            raise FileNotFoundError(f"Unable to morph weather file: File not found at {weather_path}. "
+                                    f"Please provide a valid weather file path by fetching or importing it.")
         print(f"Morphing weather file {weather_path} using pyepwmorph")
         epwmorpher.main(config)
     else:
