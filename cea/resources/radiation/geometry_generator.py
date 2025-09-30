@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     import shapely
     import geopandas as gpd
     from compas.geometry import Line
-    from compas_occ.brep import OCCBrepFace
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -910,7 +909,7 @@ def check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster):
                          'Bounds of terrain must be larger than the total bounds of the scene.')
 
 
-def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Dataset) -> list[list[OCCBrepFace]]:
+def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Dataset) -> list[list[Polygon]]:
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
     tree_df = tree_df.to_crs(proj4_str)
@@ -922,10 +921,13 @@ def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Data
 
     with Pool(cpu_count() - 1) as pool:
         surfaces = [
-            solid.faces for (solid, _) in pool.starmap(
-                process_geometries, (
-                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
-                )
+            [face.to_polygon() for face in solid.faces]
+            for (solid, _) in pool.starmap(
+                process_geometries,
+                (
+                    (geom, elevation_map, (0, 1), z)
+                    for geom, z in zip(tree_df["geometry"], tree_df["height_tc"])
+                ),
             )
         ]
 
@@ -942,7 +944,7 @@ def geometry_main(config: cea.config.Configuration,
                   ) -> tuple[Mesh, 
                              list[str], 
                              list[str], 
-                             list[list[OCCBrepFace]]]:
+                             list[list[Polygon]]]:
     """reads the input data of a scenario, generates and stores 3D data of each building, 
     and generate 3D geometry of the terrain.
 
@@ -990,7 +992,7 @@ def geometry_main(config: cea.config.Configuration,
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df,
                                                                    elevation_map, config, geometry_pickle_dir)
 
-    tree_surfaces: list[list[OCCBrepFace]] = []
+    tree_surfaces: list[list[Polygon]] = []
     if len(trees_df.geometry) > 0:
         print("Creating tree surfaces")
         tree_surfaces = tree_geometry_generator(trees_df, terrain_raster)
