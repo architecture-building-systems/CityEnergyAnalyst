@@ -27,15 +27,72 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
-embodied_emission_metrics = ['embodied_emissions_all', 'embodied_emission_production', 'embodied_emission_biogenic', 'embodied_emission_demolition']
-operational_emission_metrics = ['operational_emissions_all', 'operational_emission_electricity', 'operational_emission_space_cooling', 'operational_emission_space_heating', 'operational_emission_dhw']
+lifecycle_emission_metrics = [
+    'heating',
+    'hot_water',
+    'cooling',
+    'electricity',
+    'production_wall_ag',
+    'production_wall_bg',
+    'production_wall_part',
+    'production_win_ag',
+    'production_roof',
+    'production_upperside',
+    'production_underside',
+    'production_floor',
+    'production_base',
+    'production_technical_systems',
+    'biogenic_wall_ag',
+    'biogenic_wall_bg',
+    'biogenic_wall_part',
+    'biogenic_win_ag',
+    'biogenic_roof',
+    'biogenic_upperside',
+    'biogenic_underside',
+    'biogenic_floor',
+    'biogenic_base',
+    'biogenic_technical_systems',
+    'demolition_wall_ag',
+    'demolition_wall_bg',
+    'demolition_wall_part',
+    'demolition_win_ag',
+    'demolition_roof',
+    'demolition_upperside',
+    'demolition_underside',
+    'demolition_floor',
+    'demolition_base',
+    'demolition_technical_systems'
+]
+
+
+operational_emission_metrics = [
+    'heating', 'hot_water', 'cooling', 'electricity',
+    'Qhs_sys_NATURALGAS', 'Qhs_sys_BIOGAS', 'Qhs_sys_SOLAR',
+    'Qhs_sys_DRYBIOMASS', 'Qhs_sys_WETBIOMASS', 'Qhs_sys_GRID',
+    'Qhs_sys_COAL', 'Qhs_sys_WOOD', 'Qhs_sys_OIL',
+    'Qhs_sys_HYDROGEN', 'Qhs_sys_NONE',
+    'Qww_sys_NATURALGAS', 'Qww_sys_BIOGAS', 'Qww_sys_SOLAR',
+    'Qww_sys_DRYBIOMASS', 'Qww_sys_WETBIOMASS', 'Qww_sys_GRID',
+    'Qww_sys_COAL', 'Qww_sys_WOOD', 'Qww_sys_OIL',
+    'Qww_sys_HYDROGEN', 'Qww_sys_NONE',
+    'Qcs_sys_NATURALGAS', 'Qcs_sys_BIOGAS', 'Qcs_sys_SOLAR',
+    'Qcs_sys_DRYBIOMASS', 'Qcs_sys_WETBIOMASS', 'Qcs_sys_GRID',
+    'Qcs_sys_COAL', 'Qcs_sys_WOOD', 'Qcs_sys_OIL',
+    'Qcs_sys_HYDROGEN', 'Qcs_sys_NONE',
+    'E_sys_NATURALGAS', 'E_sys_BIOGAS', 'E_sys_SOLAR',
+    'E_sys_DRYBIOMASS', 'E_sys_WETBIOMASS', 'E_sys_GRID',
+    'E_sys_COAL', 'E_sys_WOOD', 'E_sys_OIL',
+    'E_sys_HYDROGEN', 'E_sys_NONE'
+]
+
+
 
 dict_plot_metrics_cea_feature = {
     'demand': demand_metrics,
     'pv': solar_metrics,
     'pvt': solar_metrics,
     'sc': solar_metrics,
-    'embodied-emissions': embodied_emission_metrics,
+    'embodied-emissions': lifecycle_emission_metrics,
     'operational-emissions': operational_emission_metrics
 }
 

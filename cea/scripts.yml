@@ -688,13 +688,13 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
-  - name: plot-embodied-emissions
-    label: Plot - Embodied Emissions
-    short_description: Plot bar chart of building embodied emissions
-    description: This Feature plots bar chart of the results of embodied emissions
+  - name: plot-lifecycle-emissions
+    label: Plot - Lifecycle Emissions
+    short_description: Plot bar chart of building lifecycle emissions
+    description: This Feature plots bar chart of the results of lifecycle emissions
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-embodied-emissions, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
