@@ -58,22 +58,23 @@ def morphing_workflow(locator, config):
 
     """
     
-    # 1. Read the inputs and create a epw_morph_configuration 
+    # 1. Read the inputs and create a epw_morph_configuration
     # 1.1. project_name and output_directory
     project_name = f"{config.general.project.split(os.sep)[-1]}_{config.general.scenario}"
     # today = datetime.datetime.now().strftime("%Y%m%d")
-    
+
     output_directory = os.path.dirname(locator.get_weather_file())
-    shutil.copy(locator.get_weather_file(), os.path.join(output_directory, "before_morph_weather.epw"))
-    
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-    
-    
+    os.makedirs(output_directory, exist_ok=True)
+
     # 1.2. user_epw_file is specified in the config but defaults to the scenario file
     user_epw_file = locator.get_weather_file()
     if not os.path.exists(user_epw_file):
         raise FileNotFoundError(f"Could not find the specified EPW file: {user_epw_file}")
+
+    # Backup the original weather file only once to preserve the baseline across re-runs
+    backup_epw = os.path.join(output_directory, "before_morph_weather.epw")
+    if not os.path.exists(backup_epw):
+        shutil.copy2(user_epw_file, backup_epw)
     
     user_epw_object = pyepwmorph_io.Epw(user_epw_file)
     
