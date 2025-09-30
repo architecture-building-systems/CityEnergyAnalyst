@@ -87,22 +87,21 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     weather = config.weather_helper.weather
 
-    if config.weather_helper.morph:
-        epwmorpher.main(config)
-        print("Weather morphing complete. The original weather file has been backed up as 'before_morph_weather.epw' in the inputs folder. The morphed weather file according to your percentile of warming choice is now set as 'weather.epw'.")
-    
-    else:
-        if not weather:
-            raise ValueError("No weather file provided. "
-                            "Please specify a weather file or select an option to fetch data automatically. "
-                            "e.g --weather climate.onebuilding.org")
+    if not weather:
+        raise ValueError("No weather file provided. "
+                        "Please specify a weather file or select an option to fetch data automatically.")
 
-        locator.ensure_parent_folder_exists(locator.get_weather_file())
-        if config.weather_helper.weather == 'climate.onebuilding.org':
-            print("No weather provided, fetching from online sources.")
-            fetch_weather_data(locator.get_weather_file(), locator.get_zone_geometry())
-        else:
-            copy_weather_file(weather, locator)
+    weather_path = locator.get_weather_file()
+    if config.weather_helper.weather == 'climate.onebuilding.org':
+        print("No weather provided, fetching from online sources.")
+        locator.ensure_parent_folder_exists(weather_path)
+        fetch_weather_data(weather_path, locator.get_zone_geometry())
+    elif config.weather_helper.weather == 'pyepwmorph':
+        print(f"Morphing weather file {weather_path} using pyepwmorph")
+        epwmorpher.main(config)
+    else:
+        print(f"Copying weather file {weather} to {weather_path}")
+        copy_weather_file(weather, locator)
 
 
 if __name__ == '__main__':
