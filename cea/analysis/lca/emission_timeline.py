@@ -75,10 +75,10 @@ class BuildingEmissionTimeline:
         "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
     _OPERATIONAL_COLS = [
-        "heating_kgCO2",
-        "cooling_kgCO2",
-        "hot_water_kgCO2",
-        "electricity_kgCO2",
+        "operation_heating_kgCO2",
+        "operation_cooling_kgCO2",
+        "operation_hot_water_kgCO2",
+        "operation_electricity_kgCO2",
     ]
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
@@ -190,6 +190,16 @@ class BuildingEmissionTimeline:
             raise ValueError(
                 f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!"
             )
+
+        # Rename columns to add operation_ prefix
+        column_mapping = {
+            "heating_kgCO2": "operation_heating_kgCO2",
+            "cooling_kgCO2": "operation_cooling_kgCO2",
+            "hot_water_kgCO2": "operation_hot_water_kgCO2",
+            "electricity_kgCO2": "operation_electricity_kgCO2"
+        }
+        operational_emissions = operational_emissions.rename(columns=column_mapping)
+
         # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
         self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[
             self._OPERATIONAL_COLS

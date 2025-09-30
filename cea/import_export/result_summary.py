@@ -53,7 +53,7 @@ season_hours = {
 # Define metrics for plot
 dict_plot_metrics_cea_feature = {
     'architecture': 'architecture',
-    'embodied_emissions': 'emissions',
+    'lifecycle_emissions': 'emissions',
     'operation_emissions': 'emissions',
     'solar_irradiation': 'solar_irradiation',
     'demand': 'demand',
@@ -185,7 +185,7 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    if cea_feature == 'embodied_emissions':
+    if cea_feature == 'lifecycle_emissions':
         path = locator.get_lca_embodied()
         list_paths.append(path)
         list_appendix.append(cea_feature)
@@ -299,8 +299,31 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         "demand": ['grid_electricity_consumption[kWh]', 'enduse_electricity_demand[kWh]',
                    'enduse_cooling_demand[kWh]', 'enduse_space_cooling_demand[kWh]', 'enduse_heating_demand[kWh]',
                    'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
-        "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
-        "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+        "lifecycle_emissions": ['operation_heating[kgCO2]', 'operation_hot_water[kgCO2]', 'operation_cooling[kgCO2]', 'operation_electricity[kgCO2]',
+                                'production_wall_ag[kgCO2]', 'production_wall_bg[kgCO2]', 'production_wall_part[kgCO2]',
+                                'production_win_ag[kgCO2]', 'production_roof[kgCO2]', 'production_upperside[kgCO2]',
+                                'production_underside[kgCO2]', 'production_floor[kgCO2]', 'production_base[kgCO2]',
+                                'production_technical_systems[kgCO2]', 'biogenic_wall_ag[kgCO2]', 'biogenic_wall_bg[kgCO2]',
+                                'biogenic_wall_part[kgCO2]', 'biogenic_win_ag[kgCO2]', 'biogenic_roof[kgCO2]',
+                                'biogenic_upperside[kgCO2]', 'biogenic_underside[kgCO2]', 'biogenic_floor[kgCO2]',
+                                'biogenic_base[kgCO2]', 'biogenic_technical_systems[kgCO2]', 'demolition_wall_ag[kgCO2]',
+                                'demolition_wall_bg[kgCO2]', 'demolition_wall_part[kgCO2]', 'demolition_win_ag[kgCO2]',
+                                'demolition_roof[kgCO2]', 'demolition_upperside[kgCO2]', 'demolition_underside[kgCO2]',
+                                'demolition_floor[kgCO2]', 'demolition_base[kgCO2]', 'demolition_technical_systems[kgCO2]'],
+        "operation_emissions": ['heating[kgCO2]', 'hot_water[kgCO2]', 'cooling[kgCO2]', 'electricity[kgCO2]',
+                                'heating_NATURALGAS[kgCO2]', 'heating_BIOGAS[kgCO2]', 'heating_SOLAR[kgCO2]',
+                                'heating_DRYBIOMASS[kgCO2]', 'heating_WETBIOMASS[kgCO2]', 'heating_GRID[kgCO2]',
+                                'heating_COAL[kgCO2]', 'heating_WOOD[kgCO2]', 'heating_OIL[kgCO2]',
+                                'heating_HYDROGEN[kgCO2]', 'heating_NONE[kgCO2]', 'dhw_NATURALGAS[kgCO2]',
+                                'dhw_sys_BIOGAS[kgCO2]', 'dhw_sys_SOLAR[kgCO2]', 'dhw_sys_DRYBIOMASS[kgCO2]',
+                                'dhw_sys_WETBIOMASS[kgCO2]', 'dhw_sys_GRID[kgCO2]', 'dhw_sys_COAL[kgCO2]',
+                                'dhw_sys_WOOD[kgCO2]', 'dhw_sys_OIL[kgCO2]', 'dhw_sys_HYDROGEN[kgCO2]',
+                                'dhw_sys_NONE[kgCO2]', 'cooling_NATURALGAS[kgCO2]', 'cooling_BIOGAS[kgCO2]',
+                                'cooling_SOLAR[kgCO2]', 'cooling_DRYBIOMASS[kgCO2]', 'cooling_WETBIOMASS[kgCO2]',
+                                'cooling_GRID[kgCO2]', 'cooling_COAL[kgCO2]', 'cooling_WOOD[kgCO2]', 'cooling_OIL[kgCO2]',
+                                'cooling_HYDROGEN[kgCO2]', 'cooling_NONE[kgCO2]', 'electricity_NATURALGAS[kgCO2]', 'electricity_BIOGAS[kgCO2]',
+                                'electricity_SOLAR[kgCO2]', 'electricity_DRYBIOMASS[kgCO2]', 'electricity_WETBIOMASS[kgCO2]', 'electricity_GRID[kgCO2]',
+                                'electricity_COAL[kgCO2]', 'electricity_WOOD[kgCO2]', 'electricity_OIL[kgCO2]', 'electricity_HYDROGEN[kgCO2]', 'electricity_NONE[kgCO2]'],
         "solar_irradiation": ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]','irradiation_wall_north[kWh]',
                               'irradiation_window_south[kWh]','irradiation_wall_south[kWh]',
                               'irradiation_window_east[kWh]','irradiation_wall_east[kWh]',
@@ -389,9 +412,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'enduse_heating_demand[kWh]': ['QH_sys_kWh'],
         'enduse_space_heating_demand[kWh]': ['Qhs_sys_kWh'],
         'enduse_dhw_demand[kWh]': ['Qww_kWh'],
-        'embodied_emissions_building_construction[tonCO2-eq/yr]': ['GHG_sys_embodied_tonCO2yr'],
-        'operation_emissions[tonCO2-eq/yr]': ['GHG_sys_tonCO2'],
-        'operation_emissions_grid[tonCO2-eq/yr]': ['GRID_tonCO2'],
         'irradiation_roof[kWh]': ['roofs_top_kW'],
         'irradiation_window_north[kWh]': ['windows_north_kW'],
         'irradiation_wall_north[kWh]': ['walls_north_kW'],
@@ -481,6 +501,89 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
+        'heating[kgCO2]': ['heating_kgCO2'],
+        'hot_water[kgCO2]': ['hot_water_kgCO2'],
+        'cooling[kgCO2]': ['cooling_kgCO2'],
+        'electricity[kgCO2]': ['electricity_kgCO2'],
+        'heating_NATURALGAS[kgCO2]': ['Qhs_sys_NATURALGAS_kgCO2'],
+        'heating_BIOGAS[kgCO2]': ['Qhs_sys_BIOGAS_kgCO2'],
+        'heating_SOLAR[kgCO2]': ['Qhs_sys_SOLAR_kgCO2'],
+        'heating_DRYBIOMASS[kgCO2]': ['Qhs_sys_DRYBIOMASS_kgCO2'],
+        'heating_WETBIOMASS[kgCO2]': ['Qhs_sys_WETBIOMASS_kgCO2'],
+        'heating_GRID[kgCO2]': ['Qhs_sys_GRID_kgCO2'],
+        'heating_COAL[kgCO2]': ['Qhs_sys_COAL_kgCO2'],
+        'heating_WOOD[kgCO2]': ['Qhs_sys_WOOD_kgCO2'],
+        'heating_OIL[kgCO2]': ['Qhs_sys_OIL_kgCO2'],
+        'heating_HYDROGEN[kgCO2]': ['Qhs_sys_HYDROGEN_kgCO2'],
+        'heating_NONE[kgCO2]': ['Qhs_sys_NONE_kgCO2'],
+        'dhw_NATURALGAS[kgCO2]': ['Qww_NATURALGAS_kgCO2'],
+        'dhw_sys_BIOGAS[kgCO2]': ['Qww_BIOGAS_kgCO2'],
+        'dhw_sys_SOLAR[kgCO2]': ['Qww_SOLAR_kgCO2'],
+        'dhw_sys_DRYBIOMASS[kgCO2]': ['Qww_DRYBIOMASS_kgCO2'],
+        'dhw_sys_WETBIOMASS[kgCO2]': ['Qww_WETBIOMASS_kgCO2'],
+        'dhw_sys_GRID[kgCO2]': ['Qww_GRID_kgCO2'],
+        'dhw_sys_COAL[kgCO2]': ['Qww_COAL_kgCO2'],
+        'dhw_sys_WOOD[kgCO2]': ['Qww_WOOD_kgCO2'],
+        'dhw_sys_OIL[kgCO2]': ['Qww_OIL_kgCO2'],
+        'dhw_sys_HYDROGEN[kgCO2]': ['Qww_HYDROGEN_kgCO2'],
+        'dhw_sys_NONE[kgCO2]': ['Qww_NONE_kgCO2'],
+        'cooling_NATURALGAS[kgCO2]': ['Qcs_sys_NATURALGAS_kgCO2'],
+        'cooling_BIOGAS[kgCO2]': ['Qcs_sys_BIOGAS_kgCO2'],
+        'cooling_SOLAR[kgCO2]': ['Qcs_sys_SOLAR_kgCO2'],
+        'cooling_DRYBIOMASS[kgCO2]': ['Qcs_sys_DRYBIOMASS_kgCO2'],
+        'cooling_WETBIOMASS[kgCO2]': ['Qcs_sys_WETBIOMASS_kgCO2'],
+        'cooling_GRID[kgCO2]': ['Qcs_sys_GRID_kgCO2'],
+        'cooling_COAL[kgCO2]': ['Qcs_sys_COAL_kgCO2'],
+        'cooling_WOOD[kgCO2]': ['Qcs_sys_WOOD_kgCO2'],
+        'cooling_OIL[kgCO2]': ['Qcs_sys_OIL_kgCO2'],
+        'cooling_HYDROGEN[kgCO2]': ['Qcs_sys_HYDROGEN_kgCO2'],
+        'cooling_NONE[kgCO2]': ['Qcs_sys_NONE_kgCO2'],
+        'electricity_NATURALGAS[kgCO2]': ['E_sys_NATURALGAS_kgCO2'],
+        'electricity_BIOGAS[kgCO2]': ['E_sys_BIOGAS_kgCO2'],
+        'electricity_SOLAR[kgCO2]': ['E_sys_SOLAR_kgCO2'],
+        'electricity_DRYBIOMASS[kgCO2]': ['E_sys_DRYBIOMASS_kgCO2'],
+        'electricity_WETBIOMASS[kgCO2]': ['E_sys_WETBIOMASS_kgCO2'],
+        'electricity_GRID[kgCO2]': ['E_sys_GRID_kgCO2'],
+        'electricity_COAL[kgCO2]': ['E_sys_COAL_kgCO2'],
+        'electricity_WOOD[kgCO2]': ['E_sys_WOOD_kgCO2'],
+        'electricity_OIL[kgCO2]': ['E_sys_OIL_kgCO2'],
+        'electricity_HYDROGEN[kgCO2]': ['E_sys_HYDROGEN_kgCO2'],
+        'electricity_NONE[kgCO2]': ['E_sys_NONE_kgCO2'],
+        'operation_heating[kgCO2]': ['operation_heating_kgCO2'],
+        'operation_hot_water[kgCO2]': ['operation_hot_water_kgCO2'],
+        'operation_cooling[kgCO2]': ['operation_cooling_kgCO2'],
+        'operation_electricity[kgCO2': ['operation_electricity_kgCO2'],
+        'production_wall_ag[kgCO2]': ['production_wall_ag_kgCO2'],
+        'production_wall_bg[kgCO2]': ['production_wall_bg_kgCO2'],
+        'production_wall_part[kgCO2]': ['production_wall_part_kgCO2'],
+        'production_win_ag[kgCO2]': ['production_win_ag_kgCO2'],
+        'production_roof[kgCO2]': ['production_roof_kgCO2'],
+        'production_upperside[kgCO2]': ['production_upperside_kgCO2'],
+        'production_underside[kgCO2]': ['production_underside_kgCO2'],
+        'production_floor[kgCO2]': ['production_floor_kgCO2'],
+        'production_base[kgCO2]': ['production_base_kgCO2'],
+        'production_technical_systems[kgCO2]': ['production_technical_systems_kgCO2'],
+        'biogenic_wall_ag[kgCO2]': ['biogenic_wall_ag_kgCO2'],
+        'biogenic_wall_bg[kgCO2]': ['biogenic_wall_bg_kgCO2'],
+        'biogenic_wall_part[kgCO2]': ['biogenic_wall_part_kgCO2'],
+        'biogenic_win_ag[kgCO2]': ['biogenic_win_ag_kgCO2'],
+        'biogenic_roof[kgCO2]': ['biogenic_roof_kgCO2'],
+        'biogenic_upperside[kgCO2]': ['biogenic_upperside_kgCO2'],
+        'biogenic_underside[kgCO2]': ['biogenic_underside_kgCO2'],
+        'biogenic_floor[kgCO2]': ['biogenic_floor_kgCO2'],
+        'biogenic_base[kgCO2]': ['biogenic_base_kgCO2'],
+        'biogenic_technical_systems[kgCO2]': ['biogenic_technical_systems_kgCO2'],
+        'demolition_wall_ag[kgCO2]': ['demolition_wall_ag_kgCO2'],
+        'demolition_wall_bg[kgCO2]': ['demolition_wall_bg_kgCO2'],
+        'demolition_wall_part[kgCO2]': ['demolition_wall_part_kgCO2'],
+        'demolition_win_ag[kgCO2]': ['demolition_win_ag_kgCO2'],
+        'demolition_roof[kgCO2]': ['demolition_roof_kgCO2'],
+        'demolition_upperside[kgCO2]': ['demolition_upperside_kgCO2'],
+        'demolition_underside[kgCO2]': ['demolition_underside_kgCO2'],
+        'demolition_floor[kgCO2]': ['demolition_floor_kgCO2'],
+        'demolition_base[kgCO2]': ['demolition_base_kgCO2'],
+        'demolition_technical_systems[kgCO2]': ['demolition_technical_systems_kgCO2'],
+
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -1479,7 +1582,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         appendix = list_appendix[0]
 
         if plot_cea_feature is None:
-            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+            if appendix in ('architecture', 'lifecycle_emissions'):
                 # Create the .csv file path
                 path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
                 os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
@@ -1493,7 +1596,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
         else:
-            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+            if appendix in ('architecture', 'lifecycle_emissions'):
                 # Create the .csv file path
                 os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                 path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix)
@@ -2277,7 +2380,8 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
         list_list_metrics_with_date.append(list_metrics_district_heating)
     if 'dc' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
-
+    if 'operational_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_operation_emissions)
     return list_list_metrics_with_date
 
 
@@ -2292,7 +2396,7 @@ def get_list_list_metrics_without_date(config):
 
 def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
     list_list_metrics_without_date = []
-    if 'emissions' in list_cea_feature_to_plot:
+    if 'lifecycle_emissions' in list_cea_feature_to_plot:
         list_list_metrics_without_date.append(list_metrics_embodied_emissions)
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
