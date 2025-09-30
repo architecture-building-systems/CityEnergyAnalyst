@@ -35,7 +35,7 @@ import cea.utilities.parallel
 if TYPE_CHECKING:
     import shapely
     import geopandas as gpd
-    from compas.geometry import Line, Box
+    from compas.geometry import Line
     from compas_occ.brep import OCCBrepFace
 
 __author__ = "Jimeno A. Fonseca"
@@ -68,14 +68,14 @@ SURFACE_DIRECTION_LABELS = {'windows_east',
 
 
 def identify_surfaces_type(
-    face_list: list[OCCBrepFace],
+    face_list: list[Polygon],
 ) -> tuple[
-    list[OCCBrepFace],
-    list[OCCBrepFace],
-    list[OCCBrepFace],
-    list[OCCBrepFace],
-    list[OCCBrepFace],
-    list[OCCBrepFace],
+    list[Polygon],
+    list[Polygon],
+    list[Polygon],
+    list[Polygon],
+    list[Polygon],
+    list[Polygon],
 ]:
     roof_list = []
     footprint_list = []
@@ -89,7 +89,7 @@ def identify_surfaces_type(
     # distinguishing between facade, roof and footprint.
     for f in face_list:
         # get the normal of each face
-        n = f.to_polygon().normal
+        n = f.normal
         angle_to_vertical = vec_vertical.angle(n, degrees=True)
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
@@ -153,9 +153,9 @@ def calc_intersection(
     else:
         raise ValueError("No intersection found between the ray and the surface mesh.")
 
-def create_windows(surface: OCCBrepFace, 
+def create_windows(surface: Polygon, 
                    wwr: float, 
-                   ) -> tuple[OCCBrepFace, list[OCCBrepFace]]:
+                   ) -> tuple[Polygon, list[Polygon]]:
     """
     This function creates a window by schrinking the surface according to the wwr around the reference point.
     The generated window has the same shape as the original surface.
@@ -172,16 +172,14 @@ def create_windows(surface: OCCBrepFace,
     """
     # scaler = math.sqrt(wwr)
     # return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
-    surface_polygon: Polygon = surface.to_polygon()
-    window: Polygon = surface_polygon.scaled(math.sqrt(wwr))
+    window: Polygon = surface.scaled(math.sqrt(wwr))
     window.translate(Vector.from_start_end(window.centroid, surface.centroid))
-    hollowed_surfaces: list[OCCBrepFace] = []
+    hollowed_surfaces: list[Polygon] = []
     for i, line_window in enumerate(window.lines):
-        line_surface = surface_polygon.lines[i]
+        line_surface = surface.lines[i]
         wall_trapezoid = Polygon([line_surface.start, line_surface.end, line_window.end, line_window.start])
-        hollowed_surfaces.append(OCCBrepFace.from_polygon(wall_trapezoid))
-    window_brepface = OCCBrepFace.from_polygon(window)
-    return window_brepface, hollowed_surfaces
+        hollowed_surfaces.append(wall_trapezoid)
+    return window, hollowed_surfaces
 
 def calc_building_solids(buildings_df: gpd.GeoDataFrame, 
                          geometry_simplification: float, 
@@ -273,7 +271,7 @@ def calc_building_geometry_surroundings(name: str,
         facade_list_south,
         roof_list,
         footprint_list,
-    ) = identify_surfaces_type(building_solid.faces)
+    ) = identify_surfaces_type([face.to_polygon() for face in building_solid.faces])
     facade_list = facade_list_north + facade_list_west + facade_list_east + facade_list_south
     geometry_3D_surroundings = {"name": name,
                                 "windows": [],
@@ -386,14 +384,24 @@ def print_terrain_intersection_progress(i, n, _, __):
 
 
 def are_buildings_close_to_eachother(x_1, y_1, solid2: OCCBrep, dist=100):
-    box2 = solid2.compute_aabb()
-    x_2 = box2.xmin
-    y_2 = box2.ymin
+    pmin, pmax = brep_bounding_box(solid2)
+    x_2 = pmin.x
+    y_2 = pmin.y
     delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
     if delta <= dist:
         return True
     else:
         return False
+
+def brep_bounding_box(brep: OCCBrep) -> tuple[Point, Point]:
+    """Get the axis-aligned bounding box of a brep."""
+    points = brep.points
+    xs = [p.x for p in points]
+    ys = [p.y for p in points]
+    zs = [p.z for p in points]
+    min_point = Point(min(xs), min(ys), min(zs))
+    max_point = Point(max(xs), max(ys), max(zs))
+    return min_point, max_point
 
 
 class BuildingGeometry(object):
@@ -473,8 +481,8 @@ def calc_building_geometry_zone(name: str,
         and if they are intersected with other solids) into a file that could be used in other steps.
     """
     # now get all surfaces and create windows only if the buildings are in the area of study
-    window_list: list[OCCBrepFace] = []
-    wall_list: list[OCCBrepFace] = []
+    window_list: list[Polygon] = []
+    wall_list: list[Polygon] = []
     orientation: list[str] = []
     orientation_win: list[str] = []
     normals_walls: list[Vector] = []
@@ -487,13 +495,13 @@ def calc_building_geometry_zone(name: str,
     # TODO: maybe also check if one building's top roof is within another building's volume when two buildings are stacked.
     potentially_intersecting_solids = []
     if not neglect_adjacent_buildings:
-        box: Box = building_solid.compute_aabb()
+        pmin, pmax = brep_bounding_box(building_solid)
         for solid in all_building_solid_list:
-            if are_buildings_close_to_eachother(box.xmin, box.ymin, solid):
+            if are_buildings_close_to_eachother(pmin.x, pmin.y, solid):
                 potentially_intersecting_solids.append(solid)
 
     # identify building surfaces according to angle:
-    face_list = building_solid.faces
+    face_list = [face.to_polygon() for face in building_solid.faces]
     facade_list_north, facade_list_west, \
     facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
@@ -511,7 +519,7 @@ def calc_building_geometry_zone(name: str,
     wwr_north = safe_float(architecture_wwr_df.loc[name, "wwr_north"])
     wwr_south = safe_float(architecture_wwr_df.loc[name, "wwr_south"])
 
-    def process_facade(facade_list: list[OCCBrepFace], wwr: float, orientation_label: str):
+    def process_facade(facade_list: list[Polygon], wwr: float, orientation_label: str):
         window, wall, normals_window, normals_wall, wall_intersects = calc_windows_walls(
             facade_list, wwr, potentially_intersecting_solids)
         if len(window) != 0:
@@ -659,11 +667,11 @@ class Points(object):
         self.point_to_evaluate = point_to_evaluate
 
 
-def calc_windows_walls(facade_list: list[OCCBrepFace], 
+def calc_windows_walls(facade_list: list[Polygon], 
                        wwr: float, 
                        potentially_intersecting_solids: list[OCCBrep],
-                       ) -> tuple[list[OCCBrepFace], 
-                                  list[OCCBrepFace], 
+                       ) -> tuple[list[Polygon], 
+                                  list[Polygon], 
                                   list[Vector], 
                                   list[Vector], 
                                   list[Literal[0, 1]]]:
@@ -692,8 +700,8 @@ def calc_windows_walls(facade_list: list[OCCBrepFace],
     :return: `1` if the original surface intersects with any other solid, or `0` otherwise.
     :rtype: list[Literal[0, 1]]
     """
-    window_list: list[OCCBrepFace] = []
-    wall_list: list[OCCBrepFace] = []
+    window_list: list[Polygon] = []
+    wall_list: list[Polygon] = []
     normals_win: list[Vector] = []
     normals_wall: list[Vector] = []
     wall_intersects: list[Literal[0, 1]] = []
@@ -701,7 +709,7 @@ def calc_windows_walls(facade_list: list[OCCBrepFace],
     for surface_facade in facade_list:
         # get coordinates of surface
         ref_pypt = surface_facade.centroid
-        standard_normal = surface_facade.to_polygon().normal
+        standard_normal = surface_facade.normal
 
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
