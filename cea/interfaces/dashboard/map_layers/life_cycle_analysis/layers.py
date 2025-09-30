@@ -10,10 +10,10 @@ from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAna
 from cea.plots.colors import color_to_hex
 
 
-class EmbodiedEmissionsMapLayer(MapLayer):
+class LifecycleEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
-    name = "embodied-emissions"
-    label = "Embodied Emissions"
+    name = "lifecycle-emissions"
+    label = "Lifecycle Emissions (Annual)"
     description = ""
 
     def _get_data_columns(self) -> Optional[list]:
@@ -162,7 +162,7 @@ class EmbodiedEmissionsMapLayer(MapLayer):
 class OperationalEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "operational-emissions"
-    label = "Operational Emissions"
+    label = "Operational Emissions (Hourly/Daily)"
     description = ""
 
     def _get_data_columns(self) -> Optional[list]:
