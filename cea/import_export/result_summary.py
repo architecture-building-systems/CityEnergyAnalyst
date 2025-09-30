@@ -2332,8 +2332,31 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_embodied_emissions = ['embodied_emissions_building_construction[tonCO2-eq/yr]']
-list_metrics_operation_emissions = ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]']
+list_metrics_lifecycle_emissions = ['operation_heating[kgCO2]', 'operation_hot_water[kgCO2]', 'operation_cooling[kgCO2]', 'operation_electricity[kgCO2]',
+                                'production_wall_ag[kgCO2]', 'production_wall_bg[kgCO2]', 'production_wall_part[kgCO2]',
+                                'production_win_ag[kgCO2]', 'production_roof[kgCO2]', 'production_upperside[kgCO2]',
+                                'production_underside[kgCO2]', 'production_floor[kgCO2]', 'production_base[kgCO2]',
+                                'production_technical_systems[kgCO2]', 'biogenic_wall_ag[kgCO2]', 'biogenic_wall_bg[kgCO2]',
+                                'biogenic_wall_part[kgCO2]', 'biogenic_win_ag[kgCO2]', 'biogenic_roof[kgCO2]',
+                                'biogenic_upperside[kgCO2]', 'biogenic_underside[kgCO2]', 'biogenic_floor[kgCO2]',
+                                'biogenic_base[kgCO2]', 'biogenic_technical_systems[kgCO2]', 'demolition_wall_ag[kgCO2]',
+                                'demolition_wall_bg[kgCO2]', 'demolition_wall_part[kgCO2]', 'demolition_win_ag[kgCO2]',
+                                'demolition_roof[kgCO2]', 'demolition_upperside[kgCO2]', 'demolition_underside[kgCO2]',
+                                'demolition_floor[kgCO2]', 'demolition_base[kgCO2]', 'demolition_technical_systems[kgCO2]']
+list_metrics_operation_emissions = ['heating[kgCO2]', 'hot_water[kgCO2]', 'cooling[kgCO2]', 'electricity[kgCO2]',
+                                'heating_NATURALGAS[kgCO2]', 'heating_BIOGAS[kgCO2]', 'heating_SOLAR[kgCO2]',
+                                'heating_DRYBIOMASS[kgCO2]', 'heating_WETBIOMASS[kgCO2]', 'heating_GRID[kgCO2]',
+                                'heating_COAL[kgCO2]', 'heating_WOOD[kgCO2]', 'heating_OIL[kgCO2]',
+                                'heating_HYDROGEN[kgCO2]', 'heating_NONE[kgCO2]', 'dhw_NATURALGAS[kgCO2]',
+                                'dhw_sys_BIOGAS[kgCO2]', 'dhw_sys_SOLAR[kgCO2]', 'dhw_sys_DRYBIOMASS[kgCO2]',
+                                'dhw_sys_WETBIOMASS[kgCO2]', 'dhw_sys_GRID[kgCO2]', 'dhw_sys_COAL[kgCO2]',
+                                'dhw_sys_WOOD[kgCO2]', 'dhw_sys_OIL[kgCO2]', 'dhw_sys_HYDROGEN[kgCO2]',
+                                'dhw_sys_NONE[kgCO2]', 'cooling_NATURALGAS[kgCO2]', 'cooling_BIOGAS[kgCO2]',
+                                'cooling_SOLAR[kgCO2]', 'cooling_DRYBIOMASS[kgCO2]', 'cooling_WETBIOMASS[kgCO2]',
+                                'cooling_GRID[kgCO2]', 'cooling_COAL[kgCO2]', 'cooling_WOOD[kgCO2]', 'cooling_OIL[kgCO2]',
+                                'cooling_HYDROGEN[kgCO2]', 'cooling_NONE[kgCO2]', 'electricity_NATURALGAS[kgCO2]', 'electricity_BIOGAS[kgCO2]',
+                                'electricity_SOLAR[kgCO2]', 'electricity_DRYBIOMASS[kgCO2]', 'electricity_WETBIOMASS[kgCO2]', 'electricity_GRID[kgCO2]',
+                                'electricity_COAL[kgCO2]', 'electricity_WOOD[kgCO2]', 'electricity_OIL[kgCO2]', 'electricity_HYDROGEN[kgCO2]', 'electricity_NONE[kgCO2]']
 
 
 def get_list_list_metrics_with_date(config):
@@ -2388,7 +2411,7 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
 def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
-        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
+        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
     return list_list_metrics_without_date
@@ -2397,7 +2420,7 @@ def get_list_list_metrics_without_date(config):
 def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
     list_list_metrics_without_date = []
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
+        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
         list_list_metrics_without_date.append(list_metrics_operation_emissions)
 
     return list_list_metrics_without_date
