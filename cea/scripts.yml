@@ -353,9 +353,16 @@ Data Management:
 
   - name: weather-helper
     label: Weather Helper
-    short_description: Fetch weather data from third party sources
+    short_description: Fetch weather data from third party sources or morph to future climate scenarios
     description: |
-      This Feature fetches .epw weather data from third party sources if no file is provided by the user.
+      This Feature enables fetching EPW weather data from third-party sources and morphing existing EPW files to future climate scenarios.
+
+      The weather data is fetched from the following source: [Climate.OneBuilding](https://climate.onebuilding.org)
+      
+      The morphing function uses the `pyepwmorph` library, a python package authored by Justin McCarty for accessing global climate models and using them to morph time series weather data in EPW files.  
+      An independent web can be found at www.morphepw.app.
+
+      Reference: https://doi.org/10.1088/1742-6596/2600/8/082005. 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.weather_helper
     parameters: ['general:scenario', weather-helper]
