@@ -32,8 +32,10 @@ def operational_hourly(config: Configuration) -> None:
         )
         results.append([building, timeline.operational_emission_timeline])
 
-    df_by_building = to_ton(sum_by_building(results))
-    df_by_hour = to_ton(sum_by_index([df for _, df in results]))
+    # df_by_building = to_ton(sum_by_building(results))
+    df_by_building = sum_by_building(results)
+    # df_by_hour = to_ton(sum_by_index([df for _, df in results]))
+    df_by_hour = sum_by_index([df for _, df in results])
     df_by_building.to_csv(locator.get_total_yearly_operational_building(), float_format='%.2f')
     df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), float_format='%.2f')
     print(
@@ -71,9 +73,11 @@ def total_yearly(config: Configuration) -> None:
             f"Emission timeline for {building} calculated and saved in: {locator.get_lca_timeline_building(building)}."
         )
         results.append((building, timeline.timeline))
-
-    df_by_building = to_ton(sum_by_building(results))
-    df_by_year = to_ton(sum_by_index([df for _, df in results]))
+    #
+    # df_by_building = to_ton(sum_by_building(results))
+    df_by_building = sum_by_building(results)
+    # df_by_year = to_ton(sum_by_index([df for _, df in results]))
+    df_by_year = sum_by_index([df for _, df in results])
     df_by_building.to_csv(locator.get_total_emissions_building_year_end(year_end=end_year), float_format='%.2f')
     df_by_year.to_csv(locator.get_total_emissions_timeline_year_end(year_end=end_year), float_format='%.2f')
     print(
@@ -118,6 +122,7 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
     )
     summed_df.index.rename("name", inplace=True)
     for building, df in result_list:
+        df.pop('date')
         summed_df.loc[building] += df.sum(axis=0).to_numpy()
     return summed_df
 
