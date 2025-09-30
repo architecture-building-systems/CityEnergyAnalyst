@@ -37,7 +37,7 @@ def operational_hourly(config: Configuration) -> None:
     # df_by_hour = to_ton(sum_by_index([df for _, df in results]))
     df_by_hour = sum_by_index([df for _, df in results])
     df_by_building.to_csv(locator.get_total_yearly_operational_building(), float_format='%.2f')
-    df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), float_format='%.2f')
+    df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), index=False, float_format='%.2f')
     print(
         f"District-level operational emissions saved in: {locator.get_lca_timeline_folder()}"
     )
@@ -123,9 +123,10 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
     )
     summed_df.index.rename("name", inplace=True)
     for building, df in result_list:
-        if 'date' in df.columns:
-            df.pop('date')
-        summed_df.loc[building] += df.sum(axis=0).to_numpy()
+        df_copy = df.copy()
+        if 'date' in df_copy.columns:
+            df_copy.pop('date')
+        summed_df.loc[building] += df_copy.sum(axis=0).to_numpy()
     return summed_df
 
 
@@ -163,22 +164,65 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
                 2006        3       4
     ```
 
-    :param result_list: A list of dataframes to sum.
-    :type result_list: list[pd.DataFrame]
+    :param dfs: A list of dataframes to sum.
+    :type dfs: list[pd.DataFrame]
     :return: A dataframe with the summed values.
     :rtype: pd.DataFrame
     """
     if not dfs:
-        raise ValueError("result_list must be non-empty")
-    index_min = min(df.index.min() for df in dfs)
-    index_max = max(df.index.max() for df in dfs)
+        raise ValueError("dfs must be non-empty")
+
+    # Get sample dataframe to understand structure
+    sample_df = dfs[0]
+    has_date_column = 'date' in sample_df.columns
+
+    # Separate numeric and non-numeric columns
+    numeric_cols = sample_df.select_dtypes(include=['number']).columns.tolist()
+
+    # Create copies of dataframes without the date column for summing
+    dfs_for_sum = []
+    date_series = None
+
+    for df in dfs:
+        df_copy = df.copy()
+        if 'date' in df_copy.columns:
+            if date_series is None:
+                date_series = df_copy['date'].copy()
+            df_copy = df_copy.drop(columns=['date'])
+        dfs_for_sum.append(df_copy)
+
+    # Perform the sum operation on numeric columns only
+    index_min = min(df.index.min() for df in dfs_for_sum)
+    index_max = max(df.index.max() for df in dfs_for_sum)
+
     out = (
-        pd.concat(dfs)
+        pd.concat(dfs_for_sum)
         .groupby(level=0, sort=True)
-        .sum(numeric_only=True)
-        .reindex(pd.RangeIndex(index_min, index_max + 1), fill_value=float(0))
+        .sum()
+        .reindex(pd.RangeIndex(index_min, index_max + 1), fill_value=0.0)
     )
-    out.index.rename(dfs[0].index.name, inplace=True)
+
+    # Add date column as first column if it existed, but don't reset index
+    if has_date_column and date_series is not None:
+        # Reset index temporarily to add date column
+        out_with_index = out.reset_index(drop=True)
+
+        # Ensure date_series has the right length
+        if len(date_series) >= len(out_with_index):
+            out_with_index.insert(0, 'date', date_series.iloc[:len(out_with_index)].values)
+        else:
+            # If date_series is shorter, repeat the pattern
+            full_dates = pd.concat([date_series] * (len(out_with_index) // len(date_series) + 1))
+            out_with_index.insert(0, 'date', full_dates.iloc[:len(out_with_index)].values)
+
+        # Reorder columns: date first, then emission columns
+        date_cols = ['date']
+        emission_cols = [col for col in out_with_index.columns if col not in date_cols]
+        out = out_with_index[date_cols + emission_cols]
+    else:
+        # No date column, just reset index without keeping it
+        out = out.reset_index(drop=True)
+
     return out
 
 
