@@ -139,8 +139,11 @@ class OperationalHourlyTimeline:
 
         # Reset index to convert hour index to a column, then reorder columns
         df_to_save = self.operational_emission_timeline.reset_index()
-        # Move hour column to the end
-        cols = [col for col in df_to_save.columns if col != 'hour'] + ['hour']
+        # Move hour column to the end, and ensure date column is first
+        date_cols = ['date'] if 'date' in df_to_save.columns else []
+        emission_cols = [col for col in df_to_save.columns if col not in ['hour', 'date']]
+        hour_cols = ['hour']
+        cols = date_cols + emission_cols + hour_cols
         df_to_save = df_to_save[cols]
 
         df_to_save.to_csv(
