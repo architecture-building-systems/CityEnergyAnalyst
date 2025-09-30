@@ -137,13 +137,19 @@ def morphing_workflow(locator, config):
     
     # write the new epw file to the output directory
     print("Morphing")
-    morphed_data = pyepwmorph_workflow.morph_epw(morph_config.epw,
-                                                morph_config.user_variables,
-                                                morph_config.baseline_range,
-                                                user_future_range,
-                                                year_model_dict,
-                                                [p for p in morph_config.model_pathways if p!="historical"][0],
-                                                user_percentile)
+    pathways = [p for p in morph_config.model_pathways if p != "historical"]
+    if not pathways:
+        raise ValueError(f"No non-historical pathway available in morph_config.model_pathways: {morph_config.model_pathways}")
+    selected_pathway = pathways[0]
+    morphed_data = pyepwmorph_workflow.morph_epw(
+        morph_config.epw,
+        morph_config.user_variables,
+        morph_config.baseline_range,
+        user_future_range,
+        year_model_dict,
+        selected_pathway,
+        user_percentile,
+    )
     morphed_data.dataframe['year'] = int(user_future_year)
 
     # morphed_data.write_to_file(os.path.join(morph_config.output_directory,
