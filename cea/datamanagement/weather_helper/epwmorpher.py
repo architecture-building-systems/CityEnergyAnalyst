@@ -46,8 +46,10 @@ def convert_scenario_names(name):
     elif name == "Worst Case":
         return "Worst Case Scenario"
     else:
-        raise ValueError(f"Could not interpret the climate pathway: {name}. "
-                         f"Please choose one of the following: best_case, moderate_case, semi_moderate_case, worst_case")
+        raise ValueError(
+            f"Unsupported climate pathway: {name!r}. "
+            "Please choose one of: 'Best Case', 'Moderate', 'Upper Middle', or 'Worst Case'."
+        )
 
 def morphing_workflow(locator, config):
     """Run the morphing workflow for the specified scenario.
@@ -86,8 +88,9 @@ def morphing_workflow(locator, config):
     # this the range of years used to calculate the baseline, should be taken from the EPW files
     try:
         baseline_range = user_epw_object.detect_baseline_range()
-    except Exception:
+    except Exception as e:
         print("Could not detect the baseline range from the EPW file, using default of 1985-2014")
+        print(f"Error details: {e}")
         baseline_range = (1985, 2014)  # default if the EPW file does not have the years in it
     
     # 1.5 year can be any future year but defaults to 2050
