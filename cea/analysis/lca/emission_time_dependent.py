@@ -79,7 +79,7 @@ def total_yearly(config: Configuration) -> None:
     # df_by_year = to_ton(sum_by_index([df for _, df in results]))
     df_by_year = sum_by_index([df for _, df in results])
     df_by_building.to_csv(locator.get_total_emissions_building_year_end(year_end=end_year), float_format='%.2f')
-    df_by_year.to_csv(locator.get_total_emissions_timeline_year_end(year_end=end_year), float_format='%.2f')
+    df_by_year.to_csv(locator.get_total_emissions_timeline_year_end(year_end=end_year), index=False, float_format='%.2f')
     print(
         f"District-level total emissions saved in: {locator.get_lca_timeline_folder()}"
     )
@@ -175,6 +175,7 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
     # Get sample dataframe to understand structure
     sample_df = dfs[0]
     has_date_column = 'date' in sample_df.columns
+    has_year_index = isinstance(sample_df.index[0], str) and sample_df.index[0].startswith('Y_')
 
     # Separate numeric and non-numeric columns
     numeric_cols = sample_df.select_dtypes(include=['number']).columns.tolist()
@@ -182,6 +183,7 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
     # Create copies of dataframes without the date column for summing
     dfs_for_sum = []
     date_series = None
+    year_series = None
 
     for df in dfs:
         df_copy = df.copy()
@@ -189,20 +191,33 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             if date_series is None:
                 date_series = df_copy['date'].copy()
             df_copy = df_copy.drop(columns=['date'])
+        # Extract year values from index if it's a year index
+        if has_year_index and year_series is None:
+            year_series = pd.Series(df_copy.index.values, index=df_copy.index)
         dfs_for_sum.append(df_copy)
 
     # Perform the sum operation on numeric columns only
     index_min = min(df.index.min() for df in dfs_for_sum)
     index_max = max(df.index.max() for df in dfs_for_sum)
 
+    # Check if indices are strings (Y_XXXX format) or integers
+    if isinstance(index_min, str) and index_min.startswith("Y_"):
+        # Extract numeric years and create proper reindex range
+        min_year = int(index_min.replace("Y_", ""))
+        max_year = int(index_max.replace("Y_", ""))
+        reindex_range = [f"Y_{year}" for year in range(min_year, max_year + 1)]
+    else:
+        # Handle numeric indices
+        reindex_range = pd.RangeIndex(index_min, index_max + 1)
+
     out = (
         pd.concat(dfs_for_sum)
         .groupby(level=0, sort=True)
         .sum()
-        .reindex(pd.RangeIndex(index_min, index_max + 1), fill_value=0.0)
+        .reindex(reindex_range, fill_value=0.0)
     )
 
-    # Add date column as first column if it existed, but don't reset index
+    # Add date or year column as first column if it existed, but don't reset index
     if has_date_column and date_series is not None:
         # Reset index temporarily to add date column
         out_with_index = out.reset_index(drop=True)
@@ -219,8 +234,24 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
         date_cols = ['date']
         emission_cols = [col for col in out_with_index.columns if col not in date_cols]
         out = out_with_index[date_cols + emission_cols]
+    elif has_year_index and year_series is not None:
+        # Reset index temporarily to add year column
+        out_with_index = out.reset_index(drop=True)
+
+        # Ensure year_series has the right length
+        if len(year_series) >= len(out_with_index):
+            out_with_index.insert(0, 'year', year_series.iloc[:len(out_with_index)].values)
+        else:
+            # If year_series is shorter, repeat the pattern
+            full_years = pd.concat([year_series] * (len(out_with_index) // len(year_series) + 1))
+            out_with_index.insert(0, 'year', full_years.iloc[:len(out_with_index)].values)
+
+        # Reorder columns: year first, then emission columns
+        year_cols = ['year']
+        emission_cols = [col for col in out_with_index.columns if col not in year_cols]
+        out = out_with_index[year_cols + emission_cols]
     else:
-        # No date column, just reset index without keeping it
+        # No date or year column, just reset index without keeping it
         out = out.reset_index(drop=True)
 
     return out

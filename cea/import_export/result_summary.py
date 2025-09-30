@@ -789,7 +789,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     # Also include columns that match by base name (ignoring units like _kgCO2 vs _tonCO2)
                     for df_col in df.columns:
                         if df_col not in available_columns:
-                            df_base = df_col.replace('_tonCO2', '').replace('_kkgCO2', '')
+                            df_base = df_col.replace('_tonCO2', '').replace('_kgCO2', '')
                             for sel_col in selected_columns:
                                 sel_base = sel_col.replace('_kgCO2', '')
                                 if df_base == sel_base and df_col not in available_columns:

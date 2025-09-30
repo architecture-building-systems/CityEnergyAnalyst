@@ -219,12 +219,17 @@ class BuildingEmissionTimeline:
                 "Demolition year must be greater than or equal to the construction year."
             )
 
-        self.timeline.loc[self.timeline.index >= demolition_year, :] = 0.0
+        # Convert demolition_year to string format for comparison with timeline index
+        demolition_year_str = f"Y_{demolition_year}"
+        self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
         for key, value in self._MAPPING_DICT.items():
             demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
-            # if demolition_year > self.timeline.index.max(), do nothing
-            if demolition_year <= self.timeline.index.max():
+            # Convert max year to int for comparison
+            max_year_str = self.timeline.index.max()
+            max_year = int(max_year_str.replace("Y_", ""))
+            # if demolition_year > max_year, do nothing
+            if demolition_year <= max_year:
                 self.log_emission_in_timeline(
                     emission=demolition * area,
                     year=demolition_year,
@@ -247,7 +252,7 @@ class BuildingEmissionTimeline:
 
         timeline = pd.DataFrame(
             {
-                "year": range(start_year, end_year + 1),
+                "year": [f"Y_{year}" for year in range(start_year, end_year + 1)],
                 **{
                     f"{emission}_{component}_kgCO2": 0.0
                     for emission in self._EMISSION_TYPES
@@ -275,14 +280,26 @@ class BuildingEmissionTimeline:
         if lifetime < 1:
             raise ValueError("Lifetime must be at least 1 year.")
 
-        years = list(
-            range(self.typology["year"], self.timeline.index.max() + 1, lifetime)
-        )
+        # Extract numeric year from string format Y_XXXX
+        start_year = self.typology["year"]
+        max_year_str = self.timeline.index.max()
+        max_year = int(max_year_str.replace("Y_", ""))
+
+        numeric_years = list(range(start_year, max_year + 1, lifetime))
+        # Convert back to string format
+        years = [f"Y_{year}" for year in numeric_years]
         self.log_emission_in_timeline(emission, years, col)
 
     def log_emission_in_timeline(
-        self, emission: float, year: int | list[int], col: str, additive: bool = True
+        self, emission: float, year: int | list[int] | str | list[str], col: str, additive: bool = True
     ) -> None:
+        # Convert single year to Y_ format if it's an integer
+        if isinstance(year, int):
+            year = f"Y_{year}"
+        # Convert list of years to Y_ format if they're integers
+        elif isinstance(year, list) and len(year) > 0 and isinstance(year[0], int):
+            year = [f"Y_{y}" for y in year]
+
         if additive:
             self.timeline.loc[year, col] += emission
         else:
