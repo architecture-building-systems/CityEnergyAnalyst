@@ -13,6 +13,7 @@ import os
 import pickle
 import time
 from itertools import repeat
+from dataclasses import dataclass, field, fields, MISSING
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 from OCC.Core.TopAbs import TopAbs_IN
 from OCC.Core.gp import gp_Pnt
 from osgeo import osr, gdal
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import cea
 import cea.config
@@ -276,18 +277,14 @@ def calc_building_geometry_surroundings(name: str,
         footprint_list,
     ) = identify_surfaces_type([face.to_polygon() for face in building_solid.faces])
     facade_list = facade_list_north + facade_list_west + facade_list_east + facade_list_south
-    geometry_3D_surroundings = {"name": name,
-                                "windows": [],
-                                "walls": facade_list,
-                                "roofs": roof_list,
-                                "footprint": footprint_list,
-                                "orientation_walls": [],
-                                "orientation_windows": [],
-                                "normals_windows": [],
-                                "normals_walls": [],
-                                "intersect_walls": []}
+    geometry_3D_surroundings = {
+        "name": name,
+        "walls": facade_list,
+        "roofs": roof_list,
+        "footprint": footprint_list,
+    }
 
-    building_geometry = BuildingGeometry(**geometry_3D_surroundings)
+    building_geometry = BuildingGeometry.from_dict(geometry_3D_surroundings)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'surroundings', str(name)))
     return name
 
@@ -407,40 +404,69 @@ def brep_bounding_box(brep: OCCBrep) -> tuple[Point, Point]:
     return min_point, max_point
 
 
+@dataclass(slots=True)
 class BuildingGeometry(object):
-    __slots__ = ["name", "terrain_elevation", "footprint",
-                 "windows",    "orientation_windows",    "normals_windows",    "intersect_windows",
-                 "walls",      "orientation_walls",      "normals_walls",      "intersect_walls",
-                 "roofs",      "orientation_roofs",      "normals_roofs",      "intersect_roofs",
-                 "undersides", "orientation_undersides", "normals_undersides", "intersect_undersides",
-                 ]
-    # footprint means the building's projection on the ground, 
-    # undersides means the bottom surface of the building.
+    name: str
+    footprint: list[Polygon] # footprint means the building's projection on the ground, 
+    walls: list[Polygon]
+    roofs: list[Polygon]
 
-    def __init__(self, **kwargs):
-        for key in self.__slots__:
-            value = kwargs.get(key)
-            setattr(self, key, value)
+    #optional slots
+    terrain_elevation: float = field(default=0.0)  # elevation of the building footprint's middle point.
+    windows: list[Polygon] = field(default_factory=list)
+    orientation_windows: list[str] = field(default_factory=list)
+    normals_windows: list[Vector] = field(default_factory=list)
+    intersect_windows: list[bool] = field(default_factory=list)
+    
+    orientation_walls: list[str] = field(default_factory=list)
+    normals_walls: list[Vector] = field(default_factory=list)
+    intersect_walls: list[bool] = field(default_factory=list)
+    
+    orientation_roofs: list[str] = field(default_factory=list)
+    normals_roofs: list[Vector] = field(default_factory=list)
+    intersect_roofs: list[bool] = field(default_factory=list)
+
+    undersides: list[Polygon] = field(default_factory=list) # undersides means the bottom surface of the building in case it is elevated above the ground.
+    orientation_undersides: list[str] = field(default_factory=list)
+    normals_undersides: list[Vector] = field(default_factory=list)
+    intersect_undersides: list[bool] = field(default_factory=list)
 
     def __getstate__(self):
-        return [getattr(self, k, None) for k in self.__slots__]
+        return [getattr(self, f.name) for f in fields(self)]
 
     def __setstate__(self, data):
-        for k, v in zip(self.__slots__, data):
-            setattr(self, k, v)
+        for f, v in zip(fields(self), data):
+            setattr(self, f.name, v)
 
     @classmethod
-    def load(cls, pickle_location):
-        with open(pickle_location, 'rb') as fp:
-            values = pickle.load(fp)
-            obj = cls()
-            obj.__setstate__(values)
+    def from_dict(cls, d: dict[str, Any]) -> "BuildingGeometry":
+        fs = fields(cls)
+        valid = {f.name for f in fs}
+        # Only pass known, non-None keys so defaults kick in for optionals
+        kwargs = {k: v for k, v in d.items() if k in valid and v is not None}
+
+        # Required = fields with no default and no default_factory
+        required = [f.name for f in fs if f.default is MISSING and f.default_factory is MISSING]
+        missing = [name for name in required if name not in kwargs]
+        if missing:
+            raise ValueError(f"Missing required field(s): {', '.join(missing)}")
+
+        return cls(**kwargs)
+
+    @classmethod
+    def load(cls, pickle_location: str) -> "BuildingGeometry":
+        with open(pickle_location, "rb") as fp:
+            state = pickle.load(fp)
+
+        if not isinstance(state, list):
+            raise TypeError(f"Expected a list state, got {type(state).__name__}")
+
+        obj = cls.__new__(cls)   # bypass __init__
+        obj.__setstate__(state)  # restore using your dataclass fields order
         return obj
 
-    def save(self, pickle_location):
-        dir_name = os.path.dirname(pickle_location)
-        os.makedirs(dir_name, exist_ok=True)
-
+    def save(self, pickle_location: str) -> str:
+        os.makedirs(os.path.dirname(pickle_location), exist_ok=True)
         with open(pickle_location, 'wb') as f:
             pickle.dump(self.__getstate__(), f)
         return pickle_location
@@ -547,7 +573,7 @@ def calc_building_geometry_zone(name: str,
     _, _, _, normals_footprint, intersect_footprint = calc_windows_walls(footprint_list, 0.0, potentially_intersecting_solids)
     orientation_footprint = ["bottom"] * len(footprint_list)
 
-    geometry_3D_zone = {"name": name, "footprint": footprint_list,
+    geometry_3D_zone = {"name": name, "footprint": footprint_list, "terrain_elevation": elevation,
                         "windows": window_list,       "orientation_windows": orientation_win,          "normals_windows": normals_win,          "intersect_windows": intersect_windows,
                         "walls": wall_list,           "orientation_walls": orientation,                "normals_walls": normals_walls,          "intersect_walls": intersect_wall,
                         "roofs": roof_list,           "orientation_roofs": orientation_roofs,          "normals_roofs": normals_roof,           "intersect_roofs": intersect_roof,
@@ -555,7 +581,7 @@ def calc_building_geometry_zone(name: str,
                         }
     # see class BuildingGeometry for the difference between footprint and undersides.
 
-    building_geometry = BuildingGeometry(**geometry_3D_zone, terrain_elevation=elevation)
+    building_geometry = BuildingGeometry.from_dict(geometry_3D_zone)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'zone', str(name)))
     return name
 
