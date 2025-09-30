@@ -10,6 +10,7 @@ from zipfile import ZipFile
 
 import geopandas as gpd
 import requests
+import cea.datamanagement.weather_helper.epwmorpher as epwmorpher
 
 import cea.config
 import cea.inputlocator
@@ -88,14 +89,22 @@ def main(config):
 
     if not weather:
         raise ValueError("No weather file provided. "
-                         "Please specify a weather file or select an option to fetch data automatically. "
-                         "e.g --weather climate.onebuilding.org")
+                        "Please specify a weather file or select an option to fetch data automatically.")
 
-    locator.ensure_parent_folder_exists(locator.get_weather_file())
+    weather_path = locator.get_weather_file()
     if config.weather_helper.weather == 'climate.onebuilding.org':
         print("No weather provided, fetching from online sources.")
-        fetch_weather_data(locator.get_weather_file(), locator.get_zone_geometry())
+        locator.ensure_parent_folder_exists(weather_path)
+        fetch_weather_data(weather_path, locator.get_zone_geometry())
+    elif config.weather_helper.weather == 'pyepwmorph':
+        # Ensure the weather file exists before morphing
+        if not os.path.exists(weather_path):
+            raise FileNotFoundError(f"Unable to morph weather file: File not found at {weather_path}. "
+                                    f"Please provide a valid weather file path by fetching or importing it.")
+        print(f"Morphing weather file {weather_path} using pyepwmorph")
+        epwmorpher.main(config)
     else:
+        print(f"Copying weather file {weather} to {weather_path}")
         copy_weather_file(weather, locator)
 
 
