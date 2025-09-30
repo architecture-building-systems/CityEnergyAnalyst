@@ -762,7 +762,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
     - list of pd.DataFrame: A list of DataFrames for files that exist.
     """
     list_dataframes = []
-    date_columns = {'Date', 'DATE', 'date'}
+    date_columns = {'Date', 'DATE', 'date', 'hour'}
     for path in list_paths:
         if os.path.exists(path):
             try:
@@ -785,6 +785,16 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     # Slice the useful columns
                     selected_columns = ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
+
+                    # Also include columns that match by base name (ignoring units like _kgCO2 vs _tonCO2)
+                    for df_col in df.columns:
+                        if df_col not in available_columns:
+                            df_base = df_col.replace('_tonCO2', '').replace('_kkgCO2', '')
+                            for sel_col in selected_columns:
+                                sel_base = sel_col.replace('_kgCO2', '')
+                                if df_base == sel_base and df_col not in available_columns:
+                                    available_columns.append(df_col)
+                                    break
                     df = df[available_columns]
                     list_dataframes.append(df)  # Add the DataFrame to the list
 
@@ -2384,6 +2394,8 @@ def get_list_list_metrics_with_date(config):
         list_list_metrics_with_date.append(list_metrics_district_heating)
     if config.result_summary.metrics_district_cooling:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
+    if config.result_summary.metrics_emissions:
+        list_list_metrics_with_date.append(list_metrics_operational_emissions)
 
     return list_list_metrics_with_date
 
@@ -2417,7 +2429,6 @@ def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
         list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
-        list_list_metrics_without_date.append(list_metrics_operational_emissions)
 
     return list_list_metrics_without_date
 

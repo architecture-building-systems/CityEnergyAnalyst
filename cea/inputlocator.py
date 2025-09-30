@@ -172,7 +172,7 @@ class InputLocator(object):
             return os.path.join(summary_folder, 'pvt')
         elif cea_feature == 'lifecycle_emissions':
             return os.path.join(summary_folder, 'emissions')
-        elif cea_feature == 'operation_emissions':
+        elif cea_feature == 'operational_emissions':
             return os.path.join(summary_folder, 'emissions')
         else:
             return os.path.join(summary_folder, cea_feature)
