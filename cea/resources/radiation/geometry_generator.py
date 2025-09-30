@@ -6,6 +6,7 @@ and .tiff (terrain)
 into 3D geometry with windows and roof equivalent to LOD3
 
 """
+
 from __future__ import annotations
 import math
 import os
@@ -15,20 +16,16 @@ from itertools import repeat
 
 import numpy as np
 import pandas as pd
-import py4design.py3dmodel.calculate as calculate
-import py4design.py3dmodel.construct as construct
-import py4design.py3dmodel.fetch as fetch
-import py4design.py3dmodel.modify as modify
-import py4design.py3dmodel.utility as utility
 from compas.datastructures import Mesh
-from compas.geometry import Point, Vector, Polyline, Polygon, Translation, Brep
+from compas.geometry import (
+    Point,
+    Vector,
+    Polygon,
+    intersection_ray_mesh,
+)
 from compas_occ.brep import OCCBrep
-from compas_occ.geometry import OCCCurve
-from compas.geometry import delaunay_triangulation, centroid_polygon
-from compas_libigl.intersections import intersection_ray_mesh
 from osgeo import osr, gdal
-from py4design import urbangeom
-from typing import TYPE_CHECKING, List, Tuple, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import cea
 import cea.config
@@ -38,7 +35,8 @@ import cea.utilities.parallel
 if TYPE_CHECKING:
     import shapely
     import geopandas as gpd
-    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
+    from compas.geometry import Line, Box
+    from compas_occ.brep import OCCBrepFace
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -49,8 +47,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.utilities.standardize_coordinates import (get_lat_lon_projected_shapefile, get_projected_coordinate_system,
-                                                   crs_to_epsg)
+from cea.utilities.standardize_coordinates import (
+    get_lat_lon_projected_shapefile,
+    get_projected_coordinate_system,
+    crs_to_epsg,
+)
 
 SURFACE_TYPES = ['walls', 'windows', 'roofs', 'undersides']
 SURFACE_DIRECTION_LABELS = {'windows_east',
@@ -66,35 +67,42 @@ SURFACE_DIRECTION_LABELS = {'windows_east',
                             }
 
 
-def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS_Face], 
-                                                                     List[TopoDS_Face], 
-                                                                     List[TopoDS_Face], 
-                                                                     List[TopoDS_Face], 
-                                                                     List[TopoDS_Face], 
-                                                                     List[TopoDS_Face]]:
+def identify_surfaces_type(
+    face_list: list[OCCBrepFace],
+) -> tuple[
+    list[OCCBrepFace],
+    list[OCCBrepFace],
+    list[OCCBrepFace],
+    list[OCCBrepFace],
+    list[OCCBrepFace],
+    list[OCCBrepFace],
+]:
     roof_list = []
     footprint_list = []
     facade_list_north = []
     facade_list_west = []
     facade_list_east = []
     facade_list_south = []
-    vec_vertical = (0, 0, 1)
-    vec_horizontal = (0, 1, 0)
+    vec_vertical = Vector(0, 0, 1)
+    vec_horizontal = Vector(0, 1, 0)
 
     # distinguishing between facade, roof and footprint.
-    for f in occface_list:
+    for f in face_list:
         # get the normal of each face
-        n = calculate.face_normal(f)
-        flatten_n = [n[0], n[1], 0]  # need to flatten to erase Z just to consider vertical surfaces.
-        angle_to_vertical = calculate.angle_bw_2_vecs(vec_vertical, n)
+        n = f.to_polygon().normal
+        angle_to_vertical = vec_vertical.angle(n, degrees=True)
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
-            angle_to_horizontal = calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
+            flatten_n = n.copy()
+            flatten_n.z = (
+                0  # need to flatten to erase Z just to consider vertical surfaces.
+            )
+            angle_to_horizontal = vec_horizontal.angle(flatten_n, degrees=True)
             if (0 <= angle_to_horizontal <= 45) or (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
-            elif (45 < angle_to_horizontal < 135):
+            elif 45 < angle_to_horizontal < 135:
                 facade_list_west.append(f)
-            elif (135 <= angle_to_horizontal <= 225):
+            elif 135 <= angle_to_horizontal <= 225:
                 facade_list_south.append(f)
             elif 225 < angle_to_horizontal < 315:
                 facade_list_east.append(f)
@@ -103,11 +111,18 @@ def identify_surfaces_type(occface_list: List[TopoDS_Face]) -> Tuple[List[TopoDS
         elif angle_to_vertical >= 135:
             footprint_list.append(f)
 
-    return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
+    return (
+        facade_list_north,
+        facade_list_west,
+        facade_list_east,
+        facade_list_south,
+        roof_list,
+        footprint_list,
+    )
 
 
 def calc_intersection(
-    surface: Mesh, edges_coords: Point, edges_dir: Vector
+    surface: Mesh, point: Point, direction: Vector
 ) -> tuple[int, Point]:
     """This script calculates the intersection of a ray from a particular point to the terrain.
 
@@ -119,10 +134,10 @@ def calc_intersection(
     :type edges_dir: Vector
     :return: a tuple containing the index of the face that was hit and the intersection point.
         if no intersection was found, it returns (None, None).
-    :rtype: Tuple[int | None, Point | None]
+    :rtype: tuple[int | None, Point | None]
     """
-    ray = (edges_coords, edges_dir)
-    hits: list[tuple[int, float, float, float]] | None = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
+    ray = (point, direction)
+    hits: list[tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
     # idx_face: int, u: float, v: float, t: float = hits[0] if hits else (None, None, None, None)
     if hits:
         idx_face, u, v, t = hits[0]
@@ -132,19 +147,15 @@ def calc_intersection(
         p0 = face_points[0]
         p1 = face_points[1]
         p2 = face_points[2]
-        inter_pt = Point(
-            p0.x * w + p1.x * v + p2.x * u,
-            p0.y * w + p1.y * v + p2.y * u,
-            p0.z * w + p1.z * v + p2.z * u
-        )
+        inter_pt = point.copy()
+        inter_pt.z = p0.z * w + p1.z * v + p2.z * u
         return idx_face, inter_pt
     else:
         raise ValueError("No intersection found between the ray and the surface mesh.")
 
-def create_windows(surface: TopoDS_Face, 
+def create_windows(surface: OCCBrepFace, 
                    wwr: float, 
-                   ref_pypt: tuple[float, float, float],
-                   ) -> TopoDS_Face:
+                   ) -> tuple[OCCBrepFace, list[OCCBrepFace]]:
     """
     This function creates a window by schrinking the surface according to the wwr around the reference point.
     The generated window has the same shape as the original surface.
@@ -159,41 +170,24 @@ def create_windows(surface: TopoDS_Face,
     :return: the scaled surface which represents the window.
     :rtype: OCCface
     """
-    scaler = math.sqrt(wwr)
-    return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
-
-
-def create_hollowed_facade(surface_facade: TopoDS_Face, 
-                           window: TopoDS_Face,
-                           ) -> Tuple[List[TopoDS_Face], TopoDS_Face]:
-    """
-    clips the raw surface_facade with the window to create a hollowed facade using boolean difference.
-    This will generate two surfaces in a list, and the first one selected to be the hollowed facade.
-    Then, the face will be transformed into a mesh (list of triangles). Small triangles will be removed from the list.
-
-    :param surface_facade: the facade surface to be hollowed.
-    :type surface_facade: OCCface
-    :param window: the window surface to be subtracted from the facade, generated by `create_windows`.
-    :type window: OCCface
-    :return: the hollowed facade as a mesh (list of `OCCface` triangles).
-    :rtype: list[OCCface]
-    :return: the hollowed facade created by the window subtraction.
-    :rtype: OCCface
-    """
-    b_facade_cmpd = fetch.topo2topotype(construct.boolean_difference(surface_facade, window))
-    hole_facade = fetch.topo_explorer(b_facade_cmpd, "face")[0]
-    hollowed_facade = construct.simple_mesh(hole_facade)
-    # Clean small triangles: this is a despicable source of error
-    hollowed_facade_clean = [x for x in hollowed_facade if calculate.face_area(x) > 1E-3]
-
-    return hollowed_facade_clean, hole_facade
-
+    # scaler = math.sqrt(wwr)
+    # return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
+    surface_polygon: Polygon = surface.to_polygon()
+    window: Polygon = surface_polygon.scaled(math.sqrt(wwr))
+    window.translate(Vector.from_start_end(window.centroid, surface.centroid))
+    hollowed_surfaces: list[OCCBrepFace] = []
+    for i, line_window in enumerate(window.lines):
+        line_surface = surface_polygon.lines[i]
+        wall_trapezoid = Polygon([line_surface.start, line_surface.end, line_window.end, line_window.start])
+        hollowed_surfaces.append(OCCBrepFace.from_polygon(wall_trapezoid))
+    window_brepface = OCCBrepFace.from_polygon(window)
+    return window_brepface, hollowed_surfaces
 
 def calc_building_solids(buildings_df: gpd.GeoDataFrame, 
                          geometry_simplification: float, 
                          elevation_map: ElevationMap, 
                          num_processes: int,
-                         ) -> Tuple[List[TopoDS_Solid], List[float]]:
+                         ) -> tuple[list[OCCBrep], list[float]]:
     """create building solids respecting their elevation, from building GeoDataFrame and elevation map.
 
     :param buildings_df: either the zone or surroundings buildings dataframe. 
@@ -230,7 +224,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
     floor_to_floor_height = height / nfloors
 
     n = len(geometries)
-    out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
+    out: list[tuple[OCCBrep, float]] = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
         geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
 
@@ -241,7 +235,7 @@ def process_geometries(geometry: shapely.Polygon,
                        elevation_map: ElevationMap, 
                        range_floors: range, 
                        floor_to_floor_height: float,
-                       ) -> Tuple[TopoDS_Solid, float]:
+                       ) -> tuple[OCCBrep, float]:
     """
     gets the 2D geometry as well as the height and number of floors, and returns a solid representing the building. 
     Also returns the elevation of the building footprint using elevation_map.
@@ -269,10 +263,18 @@ def process_geometries(geometry: shapely.Polygon,
 
 
 def calc_building_geometry_surroundings(name: str, 
-                                        building_solid: TopoDS_Solid, 
+                                        building_solid: OCCBrep, 
                                         geometry_pickle_dir: str,
                                         ) -> str:
-    facade_list, roof_list, footprint_list = urbangeom.identify_building_surfaces(building_solid)
+    (
+        facade_list_north,
+        facade_list_west,
+        facade_list_east,
+        facade_list_south,
+        roof_list,
+        footprint_list,
+    ) = identify_surfaces_type(building_solid.faces)
+    facade_list = facade_list_north + facade_list_west + facade_list_east + facade_list_south
     geometry_3D_surroundings = {"name": name,
                                 "windows": [],
                                 "walls": facade_list,
@@ -295,7 +297,7 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
                       elevation_map: ElevationMap, 
                       config: cea.config.Configuration, 
                       geometry_pickle_dir: str
-                      ) -> Tuple[List[str], List[str]]:
+                      ) -> tuple[list[str], list[str]]:
     """reconstruct 3D building geometries with windows and store each building's 3D data into a file.
 
     :param zone_df: data and 2D geometry of all analyzed building in the site, typically read from `zone.shp`.
@@ -360,7 +362,7 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
                                                                           on_complete=print_progress)
 
     if not neglect_adjacent_buildings:
-        all_building_solid_list = np.append(zone_building_solid_list, surroundings_building_solid_list)
+        all_building_solid_list = zone_building_solid_list + surroundings_building_solid_list
     else:
         all_building_solid_list = []
     # TODO: maybe move calc_building_solid into this function and avoid using archiecture_wwr_df, because it's already merged into zone_buildings_df.
@@ -383,10 +385,10 @@ def print_terrain_intersection_progress(i, n, _, __):
     print("Creating geometry for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
-def are_buildings_close_to_eachother(x_1, y_1, solid2, dist=100):
-    box2 = calculate.get_bounding_box(solid2)
-    x_2 = box2[0]
-    y_2 = box2[1]
+def are_buildings_close_to_eachother(x_1, y_1, solid2: OCCBrep, dist=100):
+    box2 = solid2.compute_aabb()
+    x_2 = box2.xmin
+    y_2 = box2.ymin
     delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
     if delta <= dist:
         return True
@@ -434,8 +436,8 @@ class BuildingGeometry(object):
 
 
 def calc_building_geometry_zone(name: str, 
-                                building_solid: TopoDS_Solid, 
-                                all_building_solid_list: List[TopoDS_Solid], 
+                                building_solid: OCCBrep, 
+                                all_building_solid_list: list[OCCBrep], 
                                 architecture_wwr_df: gpd.GeoDataFrame,
                                 geometry_pickle_dir: str, 
                                 neglect_adjacent_buildings: bool, 
@@ -471,13 +473,13 @@ def calc_building_geometry_zone(name: str,
         and if they are intersected with other solids) into a file that could be used in other steps.
     """
     # now get all surfaces and create windows only if the buildings are in the area of study
-    window_list = []
-    wall_list = []
-    orientation = []
-    orientation_win = []
-    normals_walls = []
-    normals_win = []
-    intersect_wall = []
+    window_list: list[OCCBrepFace] = []
+    wall_list: list[OCCBrepFace] = []
+    orientation: list[str] = []
+    orientation_win: list[str] = []
+    normals_walls: list[Vector] = []
+    normals_win: list[Vector] = []
+    intersect_wall: list[Literal[0, 1]] = []
 
     # check if buildings are close together and it merits to check the intersection
     # close together is defined as:
@@ -485,24 +487,31 @@ def calc_building_geometry_zone(name: str,
     # TODO: maybe also check if one building's top roof is within another building's volume when two buildings are stacked.
     potentially_intersecting_solids = []
     if not neglect_adjacent_buildings:
-        box = calculate.get_bounding_box(building_solid)
-        x, y = box[0], box[1]
+        box: Box = building_solid.compute_aabb()
         for solid in all_building_solid_list:
-            if are_buildings_close_to_eachother(x, y, solid):
+            if are_buildings_close_to_eachother(box.xmin, box.ymin, solid):
                 potentially_intersecting_solids.append(solid)
 
     # identify building surfaces according to angle:
-    face_list = fetch.faces_frm_solid(building_solid)
+    face_list = building_solid.faces
     facade_list_north, facade_list_west, \
     facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
     # get window properties
-    wwr_west = float(architecture_wwr_df.loc[name, "wwr_west"])
-    wwr_east = float(architecture_wwr_df.loc[name, "wwr_east"])
-    wwr_north = float(architecture_wwr_df.loc[name, "wwr_north"])
-    wwr_south = float(architecture_wwr_df.loc[name, "wwr_south"])
+    def safe_float(val):
+        # Convert numpy scalar or complex to float, raise error if complex part is nonzero
+        if hasattr(val, 'real'):
+            if getattr(val, 'imag', 0) != 0:
+                raise ValueError(f"Cannot convert complex value {val} to float.")
+            return float(val.real)
+        return float(val)
 
-    def process_facade(facade_list, wwr, orientation_label):
+    wwr_west = safe_float(architecture_wwr_df.loc[name, "wwr_west"])
+    wwr_east = safe_float(architecture_wwr_df.loc[name, "wwr_east"])
+    wwr_north = safe_float(architecture_wwr_df.loc[name, "wwr_north"])
+    wwr_south = safe_float(architecture_wwr_df.loc[name, "wwr_south"])
+
+    def process_facade(facade_list: list[OCCBrepFace], wwr: float, orientation_label: str):
         window, wall, normals_window, normals_wall, wall_intersects = calc_windows_walls(
             facade_list, wwr, potentially_intersecting_solids)
         if len(window) != 0:
@@ -543,7 +552,7 @@ def calc_building_geometry_zone(name: str,
 def burn_buildings(geometry: shapely.Polygon, 
                    elevation_map: ElevationMap, 
                    tolerance: float,
-                   ) -> Tuple[Polygon, float]:
+                   ) -> tuple[Polygon, float]:
     """find the elevation of building footprint polygon by intersecting the center point of the polygon 
     with the terrain elevation map, then move the polygon to that elevation.
 
@@ -566,18 +575,18 @@ def burn_buildings(geometry: shapely.Polygon,
     terrain_tin = elevation_map.generate_tin(tolerance)
     point_list_3D = [[a, b, 0] for (a, b) in point_list_2D]  # add 0 elevation
     footprint_polygon = Polygon(point_list_3D)
-    footprint_midpt = Point(*centroid_polygon(footprint_polygon))
+    footprint_midpt = footprint_polygon.centroid
     proj_vector = Vector(0, 0, 1)  # project upwards
     _, inter_pt = calc_intersection(terrain_tin, footprint_midpt, proj_vector)
     move_vector = Vector(0, 0, inter_pt.z)
-    footprint_polygon.transform(Translation.from_vector(move_vector))
+    footprint_polygon.translate(move_vector)
     return footprint_polygon, inter_pt.z
 
 
 def calc_solid(face_footprint: Polygon, 
                range_floors: range, 
                floor_to_floor_height: float,
-               ) -> list[Brep]:
+               ) -> OCCBrep:
     """
     extrudes the footprint surface into a 3D solid.
 
@@ -594,39 +603,20 @@ def calc_solid(face_footprint: Polygon,
     :return: a solid representing the building, made from footprint + vertical external walls + roof.
     :rtype: list[Brep]
     """
-    # from compas_viewer import Viewer
-    # viewer = Viewer()
-    building_breps = []
-    footprint_brep = Brep.from_polygons([face_footprint])
-    building_breps.append(footprint_brep)  # add the footprint as the first face
+    building_breps: list[OCCBrep] = []
+    for i_floor in range_floors:
+        move_vector = Vector(0, 0, i_floor * floor_to_floor_height)
+        slab: Polygon = face_footprint.translated(move_vector)
+        walls = from_floor_extrude_walls(slab, floor_to_floor_height)
+        ceiling = slab.translated(Vector(0, 0, floor_to_floor_height))
+        building_breps.append(OCCBrep.from_polygons([slab] + walls + [ceiling]))
+    building_brep = building_breps[0].boolean_union(*building_breps[1:])
+    return building_brep
 
-    # iterate until to range_floors - 1, because the last floor is the roof
-    for i_floor in range_floors[:-1]:
-        # move the footprint polygon upwards by the height of each floor
-        move_vector = Vector(0, 0, (i_floor + 1) * floor_to_floor_height)
-        polygon_floor: Polygon = face_footprint.transformed(Translation.from_vector(move_vector))
-        walls = from_floor_extrude_walls(polygon_floor, floor_to_floor_height)
-        walls_brep = Brep.from_polygons(walls)
-        building_breps.append(walls_brep)
-        # viewer.scene.add(walls_brep, name=f"Floor {i_floor + 1} Walls")
-
-    # add the roof as the last face
-    move_vector = Vector(0, 0, range_floors[-1] * floor_to_floor_height)
-    polygon_roof: Polygon = face_footprint.transformed(Translation.from_vector(move_vector))
-    building_breps.append(Brep.from_polygons([polygon_roof]))
-    building_brep = OCCBrep.from_breps(building_breps)
-    return building_breps
-
-def to_polyline(polygon: Polygon) -> Polyline:
-    """
-    Converts a Polygon to a Polyline.
-
-    :param polygon: The Polygon to convert.
-    :type polygon: Polygon
-    :return: A Polyline representation of the Polygon.
-    :rtype: Polyline
-    """
-    return Polyline(polygon.points + [polygon.points[0]])
+def extrude_line_to_polygon(line: Line, height: float, direction: Vector = Vector(0, 0, 1)) -> Polygon:
+    """Make a rectangular wall polygon by extruding a line along a direction."""
+    v = direction.unitized().scaled(height)
+    return Polygon([line.start, line.end, line.end.translated(v), line.start.translated(v)])
 
 def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
     """reads the floor polygon and create vertical walls from each of its edges.
@@ -669,14 +659,14 @@ class Points(object):
         self.point_to_evaluate = point_to_evaluate
 
 
-def calc_windows_walls(facade_list: List[TopoDS_Face], 
+def calc_windows_walls(facade_list: list[OCCBrepFace], 
                        wwr: float, 
-                       potentially_intersecting_solids: List[TopoDS_Solid],
-                       ) -> Tuple[List[TopoDS_Face], 
-                                  List[TopoDS_Face], 
-                                  List[Tuple[float, float, float]], 
-                                  List[Tuple[float, float, float]], 
-                                  List[Literal[0, 1]]]:
+                       potentially_intersecting_solids: list[OCCBrep],
+                       ) -> tuple[list[OCCBrepFace], 
+                                  list[OCCBrepFace], 
+                                  list[Vector], 
+                                  list[Vector], 
+                                  list[Literal[0, 1]]]:
     """
     Classify each façade face as window or wall, generate any required geometry 
     (triangulated wall panels, punched windows), and return normals plus an intersection flag.
@@ -702,25 +692,28 @@ def calc_windows_walls(facade_list: List[TopoDS_Face],
     :return: `1` if the original surface intersects with any other solid, or `0` otherwise.
     :rtype: list[Literal[0, 1]]
     """
-    window_list = []
-    wall_list = []
-    normals_win = []
-    normals_wall = []
-    wall_intersects = []
+    window_list: list[OCCBrepFace] = []
+    wall_list: list[OCCBrepFace] = []
+    normals_win: list[Vector] = []
+    normals_wall: list[Vector] = []
+    wall_intersects: list[Literal[0, 1]] = []
     number_intersecting_solids = len(potentially_intersecting_solids)
     for surface_facade in facade_list:
         # get coordinates of surface
-        ref_pypt = calculate.face_midpt(surface_facade)
-        standard_normal = calculate.face_normal(surface_facade)  # to avoid problems with fuzzy normals
+        ref_pypt = surface_facade.centroid
+        standard_normal = surface_facade.to_polygon().normal
 
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
-        data_point = Points(modify.move_pt(ref_pypt, standard_normal, 0.1))
+        data_point: Point = ref_pypt.translated(standard_normal.scaled(0.1))
 
         if number_intersecting_solids:
             # flag weather it intersects a surrounding geometry
-            intersects = np.vectorize(calc_intersection_face_solid)(potentially_intersecting_solids, data_point)
-            intersects = sum(intersects)
+            intersects: int = sum(
+                np.vectorize(calc_intersection_face_solid)(
+                    potentially_intersecting_solids, data_point
+                )
+            )
         else:
             intersects = 0
 
@@ -737,12 +730,11 @@ def calc_windows_walls(facade_list: List[TopoDS_Face],
             # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
                 # for window
-                window = create_windows(surface_facade, wwr, ref_pypt)
+                window, hollowed_facades = create_windows(surface_facade, wwr)
                 window_list.append(window)
                 normals_win.append(standard_normal)
                 # for walls
-                hollowed_facades, _ = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
-                wall_intersects.extend([intersects] * len(hollowed_facades))
+                wall_intersects.extend([intersects if intersects in (0, 1) else 0 for _ in range(len(hollowed_facades))])
                 wall_list.extend(hollowed_facades)
                 normals_wall.extend([standard_normal] * len(hollowed_facades))
 
@@ -752,14 +744,15 @@ def calc_windows_walls(facade_list: List[TopoDS_Face],
             else:
                 wall_list.append(surface_facade)
                 normals_wall.append(standard_normal)
-                wall_intersects.append(intersects)
+                wall_intersects.append(1 if intersects else 0)
 
     return window_list, wall_list, normals_win, normals_wall, wall_intersects
 
 
-def calc_intersection_face_solid(potentially_intersecting_solid, point):
+def calc_intersection_face_solid(potentially_intersecting_solid: OCCBrep, point: Point):
     with cea.utilities.devnull():
-        point_in_solid = calculate.point_in_solid(point.point_to_evaluate, potentially_intersecting_solid)
+        # point_in_solid = calculate.point_in_solid(point.point_to_evaluate, potentially_intersecting_solid)
+        point_in_solid = potentially_intersecting_solid.contains(point)
     if point_in_solid:
         intersects = 1
     else:
@@ -837,13 +830,9 @@ class ElevationMap(object):
         _x_coords = self.x_coords[x_index]
         _y_coords = self.y_coords[y_index]
 
-        # raster_points = ((x, y, z) for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index]))
         raster_points_list = [[float(x), float(y), float(z)] for x, y, z in zip(_x_coords, _y_coords, self.elevation_map[y_index, x_index])]
-
-        # tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
-        tri_vertices, tri_faces = delaunay_triangulation(raster_points_list)
         decimals = int(round(-math.log10(tolerance)))
-        tin_mesh = Mesh.from_vertices_and_faces(tri_vertices, tri_faces)
+        tin_mesh = Mesh.from_points(raster_points_list)
         tin_mesh.weld(precision=decimals)  # Ensure the mesh is welded to remove duplicate vertices
         return tin_mesh
 
@@ -885,7 +874,7 @@ def check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster):
                          'Bounds of terrain must be larger than the total bounds of the scene.')
 
 
-def tree_geometry_generator(tree_df, terrain_raster):
+def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Dataset) -> list[list[OCCBrepFace]]:
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
     tree_df = tree_df.to_crs(proj4_str)
@@ -897,7 +886,7 @@ def tree_geometry_generator(tree_df, terrain_raster):
 
     with Pool(cpu_count() - 1) as pool:
         surfaces = [
-            fetch.faces_frm_solid(solid) for (solid, _) in pool.starmap(
+            solid.faces for (solid, _) in pool.starmap(
                 process_geometries, (
                     (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
                 )
@@ -914,10 +903,10 @@ def geometry_main(config: cea.config.Configuration,
                   terrain_raster: gdal.Dataset, 
                   architecture_wwr_df: pd.DataFrame, 
                   geometry_pickle_dir: str,
-                  ) -> Tuple[List[TopoDS_Face], 
-                             List[str], 
-                             List[str], 
-                             List[List[TopoDS_Face]]]:
+                  ) -> tuple[Mesh, 
+                             list[str], 
+                             list[str], 
+                             list[list[OCCBrepFace]]]:
     """reads the input data of a scenario, generates and stores 3D data of each building, 
     and generate 3D geometry of the terrain.
 
@@ -965,7 +954,7 @@ def geometry_main(config: cea.config.Configuration,
     geometry_3D_zone, geometry_3D_surroundings = building_2d_to_3d(zone_df, surroundings_df, architecture_wwr_df,
                                                                    elevation_map, config, geometry_pickle_dir)
 
-    tree_surfaces = []
+    tree_surfaces: list[list[OCCBrepFace]] = []
     if len(trees_df.geometry) > 0:
         print("Creating tree surfaces")
         tree_surfaces = tree_geometry_generator(trees_df, terrain_raster)
@@ -974,43 +963,77 @@ def geometry_main(config: cea.config.Configuration,
 
 
 if __name__ == '__main__':
+    import geopandas as gpd
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    settings = config.radiation
+    zone_path = locator.get_zone_geometry()
+    surroundings_path = locator.get_surroundings_geometry()
+    trees_path = locator.get_tree_geometry()
+    zone_df = gpd.GeoDataFrame.from_file(zone_path)
+    surroundings_df = gpd.GeoDataFrame.from_file(surroundings_path)
+
+    if os.path.exists(trees_path):
+        print(f"trees: {trees_path}")
+        trees_df = gpd.GeoDataFrame.from_file(trees_path)
+    else:
+        print("trees: None")
+        # Create empty area if it does not exist
+        trees_df = gpd.GeoDataFrame(geometry=[], crs=zone_df.crs)
+
+    geometry_staging_location = os.path.join(locator.get_solar_radiation_folder(), "radiance_geometry_pickle")
+
+    print("Creating 3D geometry and surfaces")
+    print(f"Saving geometry pickle files in: {geometry_staging_location}")
+    # create geometrical faces of terrain and buildings
+    terrain_raster = gdal.Open(locator.get_terrain())
+    architecture_wwr_df = gpd.GeoDataFrame.from_file(locator.get_building_architecture()).set_index('name')
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, config)
+    (
+        geometry_terrain,
+        zone_building_names,
+        surroundings_building_names,
+        tree_surfaces,
+    ) = geometry_main(
+        config,
+        zone_df,
+        surroundings_df,
+        trees_df,
+        terrain_raster,
+        architecture_wwr_df,
+        geometry_staging_location,
+    )
 
-    # to visualize the results
-    geometry_buildings = []
-    geometry_buildings_nonop = []
-    walls_intercept = [val for sublist in geometry_3D_zone for val, inter in
-                       zip(sublist['walls'], sublist['intersect_walls']) if inter > 0]
-    windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
-    walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
-    roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
-    footprint = [val for sublist in geometry_3D_zone for val in sublist['footprint']]
-    walls_s = [val for sublist in geometry_3D_surroundings for val in sublist['walls']]
-    windows_s = [val for sublist in geometry_3D_surroundings for val in sublist['windows']]
-    roof_s = [val for sublist in geometry_3D_surroundings for val in sublist['roofs']]
+    # # to visualize the results
+    # geometry_buildings = []
+    # geometry_buildings_nonop = []
+    # walls_intercept = [val for sublist in geometry_3D_zone for val, inter in
+    #                    zip(sublist['walls'], sublist['intersect_walls']) if inter > 0]
+    # windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
+    # walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
+    # roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
+    # footprint = [val for sublist in geometry_3D_zone for val in sublist['footprint']]
+    # walls_s = [val for sublist in geometry_3D_surroundings for val in sublist['walls']]
+    # windows_s = [val for sublist in geometry_3D_surroundings for val in sublist['windows']]
+    # roof_s = [val for sublist in geometry_3D_surroundings for val in sublist['roofs']]
 
-    geometry_buildings_nonop.extend(windows)
-    geometry_buildings_nonop.extend(windows_s)
-    geometry_buildings.extend(walls)
-    geometry_buildings.extend(roofs)
-    geometry_buildings.extend(footprint)
-    geometry_buildings.extend(walls_s)
-    geometry_buildings.extend(roof_s)
-    normals_terrain = calculate.face_normal_as_edges(geometry_terrain, 5)
-    utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop, walls_intercept],
-                      ["GREEN", "WHITE", "BLUE", "RED"])  # install Wxpython
+    # geometry_buildings_nonop.extend(windows)
+    # geometry_buildings_nonop.extend(windows_s)
+    # geometry_buildings.extend(walls)
+    # geometry_buildings.extend(roofs)
+    # geometry_buildings.extend(footprint)
+    # geometry_buildings.extend(walls_s)
+    # geometry_buildings.extend(roof_s)
+    # normals_terrain = calculate.face_normal_as_edges(geometry_terrain, 5)
+    # utility.visualise([geometry_terrain, geometry_buildings, geometry_buildings_nonop, walls_intercept],
+    #                   ["GREEN", "WHITE", "BLUE", "RED"])  # install Wxpython
 
-    utility.visualise([walls_intercept],
-                      ["RED"])
+    # utility.visualise([walls_intercept],
+    #                   ["RED"])
 
-    utility.visualise([walls],
-                      ["RED"])
+    # utility.visualise([walls],
+    #                   ["RED"])
 
-    utility.visualise([windows],
-                      ["RED"])
+    # utility.visualise([windows],
+    #                   ["RED"])
