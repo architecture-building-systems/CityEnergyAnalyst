@@ -24,6 +24,9 @@ from compas.geometry import (
     intersection_ray_mesh,
 )
 from compas_occ.brep import OCCBrep
+from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
+from OCC.Core.TopAbs import TopAbs_IN
+from OCC.Core.gp import gp_Pnt
 from osgeo import osr, gdal
 from typing import TYPE_CHECKING, Literal
 
@@ -705,7 +708,6 @@ def calc_windows_walls(facade_list: list[Polygon],
     normals_win: list[Vector] = []
     normals_wall: list[Vector] = []
     wall_intersects: list[Literal[0, 1]] = []
-    number_intersecting_solids = len(potentially_intersecting_solids)
     for surface_facade in facade_list:
         # get coordinates of surface
         ref_pypt = surface_facade.centroid
@@ -714,16 +716,11 @@ def calc_windows_walls(facade_list: list[Polygon],
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
         data_point: Point = ref_pypt.translated(standard_normal.scaled(0.1))
-
-        if number_intersecting_solids:
-            # flag weather it intersects a surrounding geometry
-            intersects: int = sum(
-                np.vectorize(calc_intersection_face_solid)(
-                    potentially_intersecting_solids, data_point
-                )
-            )
-        else:
-            intersects = 0
+        intersects = 0
+        for solid in potentially_intersecting_solids:
+            intersects += calc_intersection_face_solid(solid, data_point)
+            if intersects > 0:
+                break
 
         if intersects > 0:  # the face intersects so it is a partition wall, and no window is created
             wall_list.append(surface_facade)
@@ -759,8 +756,13 @@ def calc_windows_walls(facade_list: list[Polygon],
 
 def calc_intersection_face_solid(potentially_intersecting_solid: OCCBrep, point: Point):
     with cea.utilities.devnull():
-        # point_in_solid = calculate.point_in_solid(point.point_to_evaluate, potentially_intersecting_solid)
-        point_in_solid = potentially_intersecting_solid.contains(point)
+        # compas_occ did not implement point in solid check, so we use OCC directly
+        state = BRepClass3d_SolidClassifier(
+            potentially_intersecting_solid.occ_shape,
+            gp_Pnt(point.x, point.y, point.z),
+            1e-6,
+        )
+        point_in_solid = state.State() == TopAbs_IN
     if point_in_solid:
         intersects = 1
     else:
