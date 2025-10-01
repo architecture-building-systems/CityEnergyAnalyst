@@ -191,8 +191,8 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         df = pd.read_csv(path_building)
         max_year_str = df['year'].max()
         year_end = int(max_year_str.replace('Y_', '')) if str(max_year_str).startswith('Y_') else int(max_year_str)
-        path_building = locator.get_total_emissions_building_year_end(year_end=year_end)
-        list_paths.append(path_building)
+        # path_building = locator.get_total_emissions_building_year_end(year_end=year_end)
+        # list_paths.append(path_building)
         path_district = locator.get_total_emissions_timeline_year_end(year_end=year_end)
         list_paths.append(path_district)
         list_appendix.append(cea_feature)
@@ -2444,6 +2444,7 @@ def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
     list_list_metrics_without_date = []
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
         list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
+    if 'operational_emissions' in list_cea_feature_to_plot:
         list_list_metrics_without_date.append(list_metrics_operational_emissions)
 
     return list_list_metrics_without_date
