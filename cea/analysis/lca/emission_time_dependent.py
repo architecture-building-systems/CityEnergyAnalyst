@@ -115,7 +115,7 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
     :rtype: pd.DataFrame
     """
     # create a new df, each row is the summed value for a building across all its df's indices
-    columns_without_date = [col for col in result_list[0][1].columns if col != 'date']
+    columns_without_date = [col for col in result_list[0][1].columns if col not in ['date', 'name']]
     summed_df = pd.DataFrame(
         data=0.0,
         index=[building for building, _ in result_list],
@@ -126,6 +126,8 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
         df_copy = df.copy()
         if 'date' in df_copy.columns:
             df_copy.pop('date')
+        if 'name' in df_copy.columns:
+            df_copy.pop('name')
         summed_df.loc[building] += df_copy.sum(axis=0).to_numpy()
     return summed_df
 

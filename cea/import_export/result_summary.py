@@ -779,7 +779,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'year' in df.columns:
-                    selected_columns = ['year'] + list_cea_column_names
+                    selected_columns = ['year'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
                     list_dataframes.append(df)
@@ -843,8 +843,8 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             cleaned_df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
             list_dataframes.append(cleaned_df)
 
-    # Check if all DataFrames share the same column names (excluding 'date')
-    column_sets = [set(df.columns) - {'date'} for df in list_dataframes]
+    # Check if all DataFrames share the same column names (excluding 'date', 'name')
+    column_sets = [set(df.columns) - {'date', 'name'} for df in list_dataframes]
     all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
     def combine_dataframes(list_dataframes):
@@ -888,16 +888,20 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             
         aggregated_df = list_dataframes[0].copy()
         
-        # Initialize aggregated_df with zeros (except date column)
+        # Initialize aggregated_df with zeros (except date and name columns)
         for col in aggregated_df.columns:
-            if col != 'date':
+            if col not in ['date', 'name', 'year']:
                 aggregated_df[col] = 0
-        
+
         # Sum all values first
         for df in list_dataframes:
             for col in aggregated_df.columns:
                 if col == 'date':
                     continue
+                if col == 'year':
+                    continue
+                if col == 'name':
+                    pass
                 aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
         
         # Then apply appropriate operations
@@ -1229,7 +1233,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         list_time_resolution = ['annually', 'monthly', 'seasonally']
 
         # Write to disk
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1563,7 +1567,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                 pass    # Allow the missing results and will just pass
 
 
-def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False, bool_use_acronym=True):
     """
     Writes aggregated results for each building to CSV files.
 
@@ -1626,10 +1630,14 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
 
-        # Write to .csv files
-        for df in list_df:
-            if not df.empty:
-                df.to_csv(path_csv, index=False, float_format="%.4f")
+        if appendix == 'lifecycle_emissions':
+            df = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
+            df.to_csv(path_csv, index=False, float_format="%.4f")
+        else:
+            # Write to .csv files
+            for df in list_df:
+                if not df.empty:
+                    df.to_csv(path_csv, index=False, float_format="%.4f")
 
 
 # Filter by criteria for buildings
@@ -2119,7 +2127,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_time_period = ['annually', 'monthly', 'seasonally']
 
             # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, bool_use_acronym=bool_use_acronym)
 
 
 def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
@@ -2328,7 +2336,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                     list_result_buildings.append(result_buildings)
 
                     results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
-                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot=plot)
+                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot=plot, bool_use_acronym=bool_use_acronym)
                 else:
                     print("Aggregation by buildings was skipped as the required input file was not found: {appendix}.".format(appendix=appendix))
 
@@ -2458,6 +2466,9 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_solar_collectors:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+    if config.result_summary.metrics_emissions:
+        list_list_metrics_building.append(list_metrics_operational_emissions)
+        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
 
     return list_list_metrics_building
 
@@ -2583,7 +2594,7 @@ def process_building_summary(config, locator,
     for list_metrics in list_list_metrics_without_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
         list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
 
     # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
     for list_metrics in list_list_metrics_with_date:
