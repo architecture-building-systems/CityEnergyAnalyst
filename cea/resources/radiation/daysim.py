@@ -21,7 +21,7 @@ __status__ = "Production"
 from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
-from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
 from cea.resources.utils import get_radiation_bin_path
 
 if TYPE_CHECKING:
@@ -31,6 +31,18 @@ if TYPE_CHECKING:
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
 REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
+SURFACE_TYPES = ['walls', 'windows', 'roofs', 'undersides']
+SURFACE_DIRECTION_LABELS = {'windows_east',
+                            'windows_west',
+                            'windows_south',
+                            'windows_north',
+                            'walls_east',
+                            'walls_west',
+                            'walls_south',
+                            'walls_north',
+                            'roofs_top',
+                            'undersides_bottom',
+                            }
 
 
 class GridSize(NamedTuple):
@@ -158,7 +170,7 @@ def generate_sensor_surfaces(occface, grid_size, srf_type, orientation, normal, 
     return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation, sensor_intersection
 
 
-def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSize):
+def calc_sensors_building(building_geometry: BuildingGeometryForRadiation, grid_size: GridSize):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -167,23 +179,24 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
     sensor_intersection_list = []
 
     for srf_type in SURFACE_TYPES:
-        occface_list = getattr(building_geometry, srf_type)
-        orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-        normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-        interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
+        occface_list, orientation_list, normals_list, interesection_list = building_geometry.group(srf_type)
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
-            sensor_dir, \
-                sensor_cord, \
-                sensor_type, \
-                sensor_area, \
-                sensor_orientation, \
-                sensor_intersection = generate_sensor_surfaces(face,
-                                                               grid_size.roof if srf_type == "roofs" else grid_size.walls,
-                                                               srf_type,
-                                                               orientation,
-                                                               normal,
-                                                               intersection)
+            (
+                sensor_dir,
+                sensor_cord,
+                sensor_type,
+                sensor_area,
+                sensor_orientation,
+                sensor_intersection,
+            ) = generate_sensor_surfaces(
+                face,
+                grid_size.roof if srf_type == "roofs" else grid_size.walls,
+                srf_type,
+                orientation,
+                normal,
+                intersection,
+            )
             sensor_intersection_list.extend(sensor_intersection)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
@@ -202,7 +215,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
     sensors_code_zone = []
     sensor_intersection_zone = []
     for building_name in building_names:
-        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        building_geometry = BuildingGeometryForRadiation.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
             sensors_coords_building, \

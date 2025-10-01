@@ -1,3 +1,4 @@
+from __future__ import annotations
 import csv
 import math
 import os
@@ -9,7 +10,7 @@ from enum import Enum
 
 import numpy as np
 
-from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -606,7 +607,7 @@ def create_rad_geometry(
             material_name = "reflectance0.2"
             yield RadSurface(surface_name, face, material_name)
 
-    def zone_building_to_radiance(building_properties: BuildingGeometry, surface_properties: pd.DataFrame):
+    def zone_building_to_radiance(building_properties: BuildingGeometryForRadiation, surface_properties: pd.DataFrame):
         name = building_properties.name
 
         # windows
@@ -630,7 +631,7 @@ def create_rad_geometry(
             material_name = f"roof_{material}"
             yield RadSurface(surface_name, face, material_name)
 
-    def surrounding_building_to_radiance(building_properties: BuildingGeometry):
+    def surrounding_building_to_radiance(building_properties: BuildingGeometryForRadiation):
         name = building_properties.name
 
         # walls
@@ -648,12 +649,12 @@ def create_rad_geometry(
             rad_file.write(terrain_surface.rad())
 
         for building_name in zone_building_names:
-            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+            building_geometry = BuildingGeometryForRadiation.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
             for building_surface in zone_building_to_radiance(building_geometry, building_surface_properties):
                 rad_file.write(building_surface.rad())
 
         for building_name in surroundings_building_names:
-            building_geometry = BuildingGeometry.load(
+            building_geometry = BuildingGeometryForRadiation.load(
                 os.path.join(geometry_pickle_dir, 'surroundings', building_name))
             for building_surface in surrounding_building_to_radiance(building_geometry):
                 rad_file.write(building_surface.rad())

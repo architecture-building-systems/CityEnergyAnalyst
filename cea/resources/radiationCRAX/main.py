@@ -24,7 +24,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.utils import migrate_void_deck_data
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
-from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
 from cea.resources.radiation.main import read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
 from cea.utilities.parallel import vectorize
@@ -266,7 +266,7 @@ def calc_sensors_zone_crax(building_names, locator, grid_size: GridSize, geometr
     sensors_code_zone = []
     sensor_intersection_zone = []
     for building_name in building_names:
-        building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+        building_geometry = BuildingGeometryForRadiation.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
         sensors_coords_building, \

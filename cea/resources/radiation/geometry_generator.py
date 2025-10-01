@@ -10,10 +10,8 @@ into 3D geometry with windows and roof equivalent to LOD3
 from __future__ import annotations
 import math
 import os
-import pickle
 import time
 from itertools import repeat
-from dataclasses import dataclass, field, fields, MISSING
 
 import numpy as np
 import pandas as pd
@@ -29,12 +27,13 @@ from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 from OCC.Core.TopAbs import TopAbs_IN
 from OCC.Core.gp import gp_Pnt
 from osgeo import osr, gdal
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import cea
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
+from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
 
 if TYPE_CHECKING:
     import shapely
@@ -55,19 +54,6 @@ from cea.utilities.standardize_coordinates import (
     get_projected_coordinate_system,
     crs_to_epsg,
 )
-
-SURFACE_TYPES = ['walls', 'windows', 'roofs', 'undersides']
-SURFACE_DIRECTION_LABELS = {'windows_east',
-                            'windows_west',
-                            'windows_south',
-                            'windows_north',
-                            'walls_east',
-                            'walls_west',
-                            'walls_south',
-                            'walls_north',
-                            'roofs_top',
-                            'undersides_bottom',
-                            }
 
 
 def identify_surfaces_type(
@@ -283,7 +269,7 @@ def calc_building_geometry_surroundings(name: str,
         "footprint": footprint_list,
     }
 
-    building_geometry = BuildingGeometry.from_dict(geometry_3D_surroundings)
+    building_geometry = BuildingGeometryForRadiation.from_dict(geometry_3D_surroundings)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'surroundings', str(name)))
     return name
 
@@ -402,75 +388,6 @@ def brep_bounding_box(brep: OCCBrep) -> tuple[Point, Point]:
     max_point = Point(max(xs), max(ys), max(zs))
     return min_point, max_point
 
-
-@dataclass(slots=True)
-class BuildingGeometry(object):
-    name: str
-    footprint: list[Polygon] # footprint means the building's projection on the ground, 
-    walls: list[Polygon]
-    roofs: list[Polygon]
-
-    #optional slots
-    terrain_elevation: float = field(default=0.0)  # elevation of the building footprint's middle point.
-    windows: list[Polygon] = field(default_factory=list)
-    orientation_windows: list[str] = field(default_factory=list)
-    normals_windows: list[Vector] = field(default_factory=list)
-    intersect_windows: list[bool] = field(default_factory=list)
-    
-    orientation_walls: list[str] = field(default_factory=list)
-    normals_walls: list[Vector] = field(default_factory=list)
-    intersect_walls: list[bool] = field(default_factory=list)
-    
-    orientation_roofs: list[str] = field(default_factory=list)
-    normals_roofs: list[Vector] = field(default_factory=list)
-    intersect_roofs: list[bool] = field(default_factory=list)
-
-    undersides: list[Polygon] = field(default_factory=list) # undersides means the bottom surface of the building in case it is elevated above the ground.
-    orientation_undersides: list[str] = field(default_factory=list)
-    normals_undersides: list[Vector] = field(default_factory=list)
-    intersect_undersides: list[bool] = field(default_factory=list)
-
-    def __getstate__(self):
-        return [getattr(self, f.name) for f in fields(self)]
-
-    def __setstate__(self, data):
-        for f, v in zip(fields(self), data):
-            setattr(self, f.name, v)
-
-    @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "BuildingGeometry":
-        fs = fields(cls)
-        valid = {f.name for f in fs}
-        # Only pass known, non-None keys so defaults kick in for optionals
-        kwargs = {k: v for k, v in d.items() if k in valid and v is not None}
-
-        # Required = fields with no default and no default_factory
-        required = [f.name for f in fs if f.default is MISSING and f.default_factory is MISSING]
-        missing = [name for name in required if name not in kwargs]
-        if missing:
-            raise ValueError(f"Missing required field(s): {', '.join(missing)}")
-
-        return cls(**kwargs)
-
-    @classmethod
-    def load(cls, pickle_location: str) -> "BuildingGeometry":
-        with open(pickle_location, "rb") as fp:
-            state = pickle.load(fp)
-
-        if not isinstance(state, list):
-            raise TypeError(f"Expected a list state, got {type(state).__name__}")
-
-        obj = cls.__new__(cls)   # bypass __init__
-        obj.__setstate__(state)  # restore using your dataclass fields order
-        return obj
-
-    def save(self, pickle_location: str) -> str:
-        os.makedirs(os.path.dirname(pickle_location), exist_ok=True)
-        with open(pickle_location, 'wb') as f:
-            pickle.dump(self.__getstate__(), f)
-        return pickle_location
-
-
 def calc_building_geometry_zone(name: str, 
                                 building_solid: OCCBrep, 
                                 all_building_solid_list: list[OCCBrep], 
@@ -493,7 +410,7 @@ def calc_building_geometry_zone(name: str,
     :type all_building_solid_list: list[OCCsolid]
     :param architecture_wwr_df: a dataframe read from `locator.get_building_architecture` containing envelope info.
     :type architecture_wwr_df: DataFrame
-    :param geometry_pickle_dir: folder path to save the created `BuildingGeometry` object.
+    :param geometry_pickle_dir: folder path to save the created `BuildingGeometryForRadiation` object.
     :type geometry_pickle_dir: str
     :param neglect_adjacent_buildings: True if no adjacency of other buildings is considered.
     :type neglect_adjacent_buildings: bool
@@ -578,9 +495,9 @@ def calc_building_geometry_zone(name: str,
                         "roofs": roof_list,           "orientation_roofs": orientation_roofs,          "normals_roofs": normals_roof,           "intersect_roofs": intersect_roof,
                         "undersides": footprint_list, "orientation_undersides": orientation_footprint, "normals_undersides": normals_footprint, "intersect_undersides": intersect_footprint, 
                         }
-    # see class BuildingGeometry for the difference between footprint and undersides.
+    # see class BuildingGeometryForRadiation for the difference between footprint and undersides.
 
-    building_geometry = BuildingGeometry.from_dict(geometry_3D_zone)
+    building_geometry = BuildingGeometryForRadiation.from_dict(geometry_3D_zone)
     building_geometry.save(os.path.join(geometry_pickle_dir, 'zone', str(name)))
     return name
 
