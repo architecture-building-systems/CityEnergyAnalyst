@@ -188,9 +188,13 @@ class InputLocator(object):
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                                 f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix, timeline=False):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+        if appendix == 'lifecycle_emissions' and not timeline:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+                            f"{appendix}_timeline.csv")
+        else:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                             f"{appendix}_buildings.csv")
 
     def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix):

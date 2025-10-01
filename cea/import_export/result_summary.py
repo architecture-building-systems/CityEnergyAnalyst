@@ -1093,6 +1093,63 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         return result
 
 
+def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym,
+                            list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period,
+                            date_column='date', plot=False):
+    """
+    Aggregates building-level results based on the provided list of DataFrames.
+
+    Parameters:
+    - bool_use_acronym (bool): Whether to map columns to acronyms.
+    - list_list_useful_cea_results (list of lists of DataFrames): List of DataFrame lists to aggregate.
+    - list_buildings (list): List of building names.
+    - list_selected_time_period (list): List of selected time periods ('hourly', 'annually', 'monthly', 'seasonally').
+    - date_column (str): The column representing datetime.
+
+    Returns:
+    - list: A list of three lists of DataFrames corresponding to the time periods:
+        [hourly/annually results, monthly results, seasonally results].
+    """
+
+    for n in range(len(list_list_useful_cea_results)):
+        appendix = list_appendix[n]
+        list_useful_cea_results = list_list_useful_cea_results[n]
+
+        # Initialize aggregated dataframe with all buildings
+        aggregated_df = None
+
+        for i, df in enumerate(list_useful_cea_results):
+            if df is None or df.empty:
+                continue
+
+            # For lifecycle emissions, sum all rows for each building
+            if aggregated_df is None:
+                # First dataframe - initialize with a copy
+                aggregated_df = df.copy()
+            else:
+                # Append subsequent dataframes and then sum by building
+                aggregated_df = pd.concat([aggregated_df, df], ignore_index=True)
+
+        # After combining all dataframes, sum all rows for each building
+        if aggregated_df is not None and not aggregated_df.empty and 'name' in aggregated_df.columns:
+            # Get numeric columns to sum
+            numeric_cols = [col for col in aggregated_df.columns if col not in ['name', 'date']]
+            # Group by building name and sum all numeric columns
+            aggregated_df = aggregated_df.groupby('name', as_index=False)[numeric_cols].sum()
+
+        if aggregated_df is not None and not aggregated_df.empty:
+            # Convert column names if needed
+            if not bool_use_acronym:
+                aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
+
+            # Write to disk
+            path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='emissions',
+                                                                                 appendix=appendix,
+                                                                                 timeline=True)
+            aggregated_df.to_csv(path, index=False, float_format='%.2f')
+
+
+
 def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
     """
     Aggregates building-level results based on the provided list of DataFrames.
@@ -1108,7 +1165,6 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
     - list: A list of three lists of DataFrames corresponding to the time periods:
         [hourly/annually results, monthly results, seasonally results].
     """
-    list_list_df = []
     for n in range(len(list_list_useful_cea_results)):
         appendix = list_appendix[n]
         list_useful_cea_results = list_list_useful_cea_results[n]
@@ -2467,8 +2523,8 @@ def get_list_list_metrics_building(config):
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_emissions:
-        list_list_metrics_building.append(list_metrics_operational_emissions)
         list_list_metrics_building.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_building.append(list_metrics_operational_emissions)
 
     return list_list_metrics_building
 
@@ -2606,7 +2662,10 @@ def process_building_summary(config, locator,
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            if list_appendix == ['lifecycle_emissions']:
+                exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            else:
+                exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
