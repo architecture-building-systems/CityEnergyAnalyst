@@ -8,36 +8,39 @@ into 3D geometry with windows and roof equivalent to LOD3
 """
 
 from __future__ import annotations
+
 import math
 import os
 import time
 from itertools import repeat
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 from compas.datastructures import Mesh
 from compas.geometry import (
     Point,
-    Vector,
     Polygon,
+    Vector,
     intersection_ray_mesh,
 )
 from compas_occ.brep import OCCBrep
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
-from OCC.Core.TopAbs import TopAbs_IN
 from OCC.Core.gp import gp_Pnt
-from osgeo import osr, gdal
-from typing import TYPE_CHECKING, Literal
+from OCC.Core.TopAbs import TopAbs_IN
+from osgeo import gdal, osr
 
 import cea
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
+from cea.resources.radiation.building_geometry_radiation import (
+    BuildingGeometryForRadiation,
+)
 
 if TYPE_CHECKING:
-    import shapely
     import geopandas as gpd
+    import shapely
     from compas.geometry import Line
 
 __author__ = "Jimeno A. Fonseca"
@@ -50,9 +53,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.utilities.standardize_coordinates import (
+    crs_to_epsg,
     get_lat_lon_projected_shapefile,
     get_projected_coordinate_system,
-    crs_to_epsg,
 )
 
 
@@ -833,8 +836,8 @@ def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Data
 
     elevation_map = ElevationMap.read_raster(terrain_raster)
 
-    from multiprocessing.pool import Pool
     from multiprocessing import cpu_count
+    from multiprocessing.pool import Pool
 
     with Pool(cpu_count() - 1) as pool:
         surfaces = [

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,9 @@ __status__ = "Production"
 from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
-from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
+from cea.resources.radiation.building_geometry_radiation import (
+    BuildingGeometryForRadiation,
+)
 from cea.resources.utils import get_radiation_bin_path
 
 if TYPE_CHECKING:

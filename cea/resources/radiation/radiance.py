@@ -1,21 +1,24 @@
 from __future__ import annotations
+
 import csv
 import math
 import os
+import shlex
 import shutil
 import subprocess
-import shlex
 import sys
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import numpy as np
+from compas.geometry import Polygon
 
-from cea.resources.radiation.building_geometry_radiation import BuildingGeometryForRadiation
-from typing import TYPE_CHECKING
+from cea.resources.radiation.building_geometry_radiation import (
+    BuildingGeometryForRadiation,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
-    from compas.geometry import Polygon
     from compas.datastructures import Mesh
 
 
