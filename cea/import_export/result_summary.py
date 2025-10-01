@@ -191,8 +191,10 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         df = pd.read_csv(path_building)
         max_year_str = df['year'].max()
         year_end = int(max_year_str.replace('Y_', '')) if str(max_year_str).startswith('Y_') else int(max_year_str)
-        path = locator.get_total_emissions_building_year_end(year_end=year_end)
-        list_paths.append(path)
+        path_building = locator.get_total_emissions_building_year_end(year_end=year_end)
+        list_paths.append(path_building)
+        path_district = locator.get_total_emissions_timeline_year_end(year_end=year_end)
+        list_paths.append(path_district)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'operational_emissions':
@@ -763,7 +765,7 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
     - list of pd.DataFrame: A list of DataFrames for files that exist.
     """
     list_dataframes = []
-    date_columns = {'Date', 'DATE', 'date', 'hour'}
+    date_columns = {'Date', 'DATE', 'date'}
     for path in list_paths:
         if os.path.exists(path):
             try:
@@ -782,20 +784,24 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
+                elif 'year' in df.columns:
+                    selected_columns = ['year'] + list_cea_column_names
+                    available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
+                    df = df[available_columns]
+                    list_dataframes.append(df)
                 else:
                     # Slice the useful columns
                     selected_columns = ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
-
-                    # Also include columns that match by base name (ignoring units like _kgCO2 vs _tonCO2)
-                    for df_col in df.columns:
-                        if df_col not in available_columns:
-                            df_base = df_col.replace('_tonCO2', '').replace('_kgCO2', '')
-                            for sel_col in selected_columns:
-                                sel_base = sel_col.replace('_kgCO2', '')
-                                if df_base == sel_base and df_col not in available_columns:
-                                    available_columns.append(df_col)
-                                    break
+                    # # Also include columns that match by base name (ignoring units like _kgCO2 vs _tonCO2)
+                    # for df_col in df.columns:
+                    #     if df_col not in available_columns:
+                    #         df_base = df_col.replace('_tonCO2', '').replace('_kgCO2', '')
+                    #         for sel_col in selected_columns:
+                    #             sel_base = sel_col.replace('_kgCO2', '')
+                    #             if df_base == sel_base and df_col not in available_columns:
+                    #                 available_columns.append(df_col)
+                    #                 break
                     df = df[available_columns]
                     list_dataframes.append(df)  # Add the DataFrame to the list
 
