@@ -76,13 +76,13 @@ def read_surface_properties(locator: cea.inputlocator.InputLocator) -> pd.DataFr
     return surface_properties.set_index('name').round(decimals=2)
 
 
-def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names: list[str], locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
     max_global = weatherfile['glohorrad_Whm2'].max()
 
-    list_of_building_names = [building_name for building_name in settings.buildings
+    list_of_building_names: list[str] = [building_name for building_name in settings.buildings
                               if building_name in zone_building_names]
     # get chunks of buildings to iterate
     chunks = [list_of_building_names[i:i + settings.n_buildings_in_chunk] for i in

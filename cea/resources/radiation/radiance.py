@@ -20,6 +20,7 @@ from cea.resources.radiation.building_geometry_radiation import (
 if TYPE_CHECKING:
     import pandas as pd
     from compas.datastructures import Mesh
+    from compas.geometry import Point, Vector
 
 
 class SensorOutputUnit(Enum):
@@ -274,7 +275,7 @@ class DaySimProject(object):
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
 
-    def create_sensor_input_file(self, sensor_positions, sensor_normals,
+    def create_sensor_input_file(self, sensor_positions: list[Point], sensor_normals: list[Vector],
                                  sensor_output_unit: SensorOutputUnit = SensorOutputUnit.w_m2):
         """
         Creates sensor input file and writes its location to the header file
@@ -290,7 +291,7 @@ class DaySimProject(object):
         """
         # create sensor file
         with open(self.sensor_path, "w") as sensor_file:
-            sensors = "".join(f"{pos[0]} {pos[1]} {pos[2]} {norm[0]} {norm[1]} {norm[2]}\n"
+            sensors = "".join(f"{pos.x} {pos.y} {pos.z} {norm.x} {norm.y} {norm.z}\n"
                               for pos, norm in zip(sensor_positions, sensor_normals))
             sensor_file.write(sensors)
 
