@@ -186,15 +186,9 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         list_appendix.append(cea_feature)
 
     if cea_feature == 'lifecycle_emissions':
-        building = list_buildings[0]
-        path_building = locator.get_lca_timeline_building(building)
-        df = pd.read_csv(path_building)
-        max_year_str = df['year'].max()
-        year_end = int(max_year_str.replace('Y_', '')) if str(max_year_str).startswith('Y_') else int(max_year_str)
-        # path_building = locator.get_total_emissions_building_year_end(year_end=year_end)
-        # list_paths.append(path_building)
-        path_district = locator.get_total_emissions_timeline_year_end(year_end=year_end)
-        list_paths.append(path_district)
+        for building in list_buildings:
+            path = locator.get_lca_timeline_building(building)
+            list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'operational_emissions':
