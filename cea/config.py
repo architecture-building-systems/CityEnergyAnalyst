@@ -565,6 +565,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     THIRD_PARTY_WEATHER_SOURCES = ['climate.onebuilding.org']
+    MORPHING = ['pyepwmorph']
 
     def initialize(self, parser):
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
@@ -587,7 +588,7 @@ class WeatherPathParameter(Parameter):
             # allow using shortcuts
             weather_path = self.locator.get_weather(
                 [w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
-        elif value in self.THIRD_PARTY_WEATHER_SOURCES:
+        elif value in self.THIRD_PARTY_WEATHER_SOURCES or value in self.MORPHING:
             weather_path = value
         else:
             raise cea.ConfigError(f"Invalid weather path: {value}")

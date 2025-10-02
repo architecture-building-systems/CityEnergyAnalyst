@@ -72,6 +72,23 @@ def epw_reader(weather_path):
 
     return epw_data
 
+def epw_location(weather_path):
+    """
+    Returns the location of the EPW file as a tuple (latitude, longitude, utc, elevation).
+
+    :param weather_path: Path to the EPW file
+    :return: dict containing latitude, longitude, utc, and elevation
+    """
+    with open(weather_path, 'r') as f:
+        epw_data = f.readlines()
+        
+    lat = float(epw_data[0].split(',')[6])
+    lon = float(epw_data[0].split(',')[7])
+    utc = float(epw_data[0].split(',')[8])
+    elevation = float(epw_data[0].split(',')[9].strip("\n"))
+
+    return {"latitude": lat, "longitude": lon, "utc": utc, "elevation": elevation}
+
 
 def calc_horirsky(Tdrybulb, Tdewpoint, N):
     """
