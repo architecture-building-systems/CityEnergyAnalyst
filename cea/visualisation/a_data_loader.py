@@ -28,10 +28,10 @@ solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
 lifecycle_emission_metrics = [
-    'heating',
-    'hot_water',
-    'cooling',
-    'electricity',
+    'operation_heating',
+    'operation_hot_water',
+    'operation_cooling',
+    'operation_electricity',
     'production_wall_ag',
     'production_wall_bg',
     'production_wall_part',
@@ -92,8 +92,8 @@ dict_plot_metrics_cea_feature = {
     'pv': solar_metrics,
     'pvt': solar_metrics,
     'sc': solar_metrics,
-    'lifecycle_emissions': lifecycle_emission_metrics,
-    'operational_emissions': operational_emission_metrics
+    'lifecycle-emissions': lifecycle_emission_metrics,
+    'operational-emissions': operational_emission_metrics
 }
 
 dict_plot_analytics_cea_feature = {
@@ -101,8 +101,8 @@ dict_plot_analytics_cea_feature = {
     'pv': solar_analytics,
     'pvt': [],
     'sc': [],
-    'lifecycle_emissions': [],
-    'operational_emissions': []
+    'lifecycle-emissions': [],
+    'operational-emissions': []
 }
 
 # Trigger the summary feature and point to the csv results file

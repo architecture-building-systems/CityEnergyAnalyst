@@ -85,6 +85,9 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                 )
             solar_panel_types_list = [solar_panel_types_dict[plot_cea_feature]]
 
+    elif plot_cea_feature in ('lifecycle-emissions', 'operational-emissions'):
+        plot_cea_feature_umbrella = plot_cea_feature
+        solar_panel_types_list = []
     else:
         plot_cea_feature_umbrella = plot_cea_feature
         solar_panel_types_list = []
