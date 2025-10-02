@@ -58,7 +58,7 @@ class Configuration:
         if not os.path.exists(CEA_CONFIG):
             self.save(config_file)
 
-    def __getattr__(self, item: str) -> Union[Section, Parameter]:
+    def __getattr__(self, item: str) -> Union['Section', Any]:
         """Return either a Section object or the value of a Parameter from `general`"""
         cid = config_identifier(item)
         if cid in self.sections:
@@ -309,7 +309,7 @@ def config_identifier(python_identifier: str) -> str:
 class Section:
     """Instances of ``Section`` describe a section in the configuration file."""
 
-    def __init__(self, name: str, config: Configuration) -> None:
+    def __init__(self, name: str, config: 'Configuration') -> None:
         """
         :param name: The name of the section (as it appears in the configuration file, all lowercase)
         :type name: str
@@ -321,7 +321,7 @@ class Section:
         self.config = config
         self.parameters = self._init_parameters()
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
@@ -332,7 +332,7 @@ class Section:
         else:
             raise AttributeError(f"Parameter not found: {item}")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter"""
         if key in {'name', 'config', 'parameters'}:
             # make sure the __init__ method doesn't trigger this
