@@ -69,12 +69,12 @@ def identify_surfaces_type(
     list[Polygon],
     list[Polygon],
 ]:
-    roof_list = []
-    footprint_list = []
-    facade_list_north = []
-    facade_list_west = []
-    facade_list_east = []
-    facade_list_south = []
+    roof_list: list[Polygon] = []
+    footprint_list: list[Polygon] = []
+    facade_list_north: list[Polygon] = []
+    facade_list_west: list[Polygon] = []
+    facade_list_east: list[Polygon] = []
+    facade_list_south: list[Polygon] = []
     vec_vertical = Vector(0, 0, 1)
     vec_horizontal = Vector(0, 1, 0)
 
@@ -89,7 +89,9 @@ def identify_surfaces_type(
             flatten_n.z = (
                 0  # need to flatten to erase Z just to consider vertical surfaces.
             )
-            angle_to_horizontal = vec_horizontal.angle(flatten_n, degrees=True)
+            angle_to_horizontal = math.degrees(vec_horizontal.angle_signed(flatten_n, normal=Vector(0, 0, 1)))  # right hand rule
+            if angle_to_horizontal < 0:
+                angle_to_horizontal += 360
             if (0 <= angle_to_horizontal <= 45) or (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
             elif 45 < angle_to_horizontal < 135:
@@ -450,8 +452,14 @@ def calc_building_geometry_zone(name: str,
 
     # identify building surfaces according to angle:
     face_list = [face.to_polygon() for face in building_solid.faces]
-    facade_list_north, facade_list_west, \
-    facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
+    (
+        facade_list_north,
+        facade_list_west,
+        facade_list_east,
+        facade_list_south,
+        roof_list,
+        footprint_list,
+    ) = identify_surfaces_type(face_list)
 
     # get window properties
     def safe_float(val):
