@@ -179,9 +179,6 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
     has_date_column = 'date' in sample_df.columns
     has_year_index = isinstance(sample_df.index[0], str) and sample_df.index[0].startswith('Y_')
 
-    # Separate numeric and non-numeric columns
-    numeric_cols = sample_df.select_dtypes(include=['number']).columns.tolist()
-
     # Create copies of dataframes without the date column for summing
     dfs_for_sum = []
     date_series = None
