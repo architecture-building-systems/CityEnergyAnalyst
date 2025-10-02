@@ -173,7 +173,7 @@ class OperationalEmissionsMapLayer(MapLayer):
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - {"hour"}
+            columns = set(emissions_df.columns) - {"date"}
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
