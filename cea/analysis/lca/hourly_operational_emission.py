@@ -42,10 +42,10 @@ class OperationalHourlyTimeline:
         """
         Create an operational timeline DataFrame with four columns:
         - `date`: date column from demand timeseries
-        - `heating_kgCO2`: emission for heating supply
-        - `cooling_kgCO2`: emission for cooling supply
-        - `hot_water_kgCO2`: emission for hot water supply
-        - `electricity_kgCO2`: emission for electricity supply
+        - `heating_kgCO2e`: emission for heating supply
+        - `cooling_kgCO2e`: emission for cooling supply
+        - `hot_water_kgCO2e`: emission for hot water supply
+        - `electricity_kgCO2e`: emission for electricity supply
         The dataframe should have 8760 rows, one for each hour of the year, indexed by hour.
 
         :return: A DataFrame with 8760 rows and emission columns plus date column indexed by hours of the year,
@@ -54,9 +54,9 @@ class OperationalHourlyTimeline:
         """
         timeline = pd.DataFrame(
             index=range(n_hours),
-            columns=["date"] + [f"{key}_kgCO2" for key in self._tech_name_mapping.keys()]
+            columns=["date"] + [f"{key}_kgCO2e" for key in self._tech_name_mapping.keys()]
             + [
-                f"{tuple[0]}_{feedstock}_kgCO2"
+                f"{tuple[0]}_{feedstock}_kgCO2e"
                 for tuple in OperationalHourlyTimeline._tech_name_mapping.values()
                 for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
             ],
@@ -121,13 +121,13 @@ class OperationalHourlyTimeline:
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
 
-            self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"] = (
+            self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
                 / eff
                 * self.emission_intensity_timeline[feedstock]  # kgCO2/kWh
             )
-            self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
-                self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"]
+            self.operational_emission_timeline[f"{demand_type}_kgCO2e"] = (
+                self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"]
             )
 
     def save_results(self) -> None:

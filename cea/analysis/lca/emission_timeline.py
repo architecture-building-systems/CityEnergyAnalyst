@@ -75,10 +75,10 @@ class BuildingEmissionTimeline:
         "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
     _OPERATIONAL_COLS = [
-        "operation_heating_kgCO2",
-        "operation_cooling_kgCO2",
-        "operation_hot_water_kgCO2",
-        "operation_electricity_kgCO2",
+        "operation_heating_kgCO2e",
+        "operation_cooling_kgCO2e",
+        "operation_hot_water_kgCO2e",
+        "operation_electricity_kgCO2e",
     ]
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
@@ -139,22 +139,22 @@ class BuildingEmissionTimeline:
 
         def log_emissions(area, ghg, biogenic, demolition, lifetime, key):
             self.log_emission_with_lifetime(
-                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2"
+                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
             )
             self.log_emission_with_lifetime(
                 emission=-biogenic * area,
                 lifetime=lifetime,
-                col=f"biogenic_{key}_kgCO2",
+                col=f"biogenic_{key}_kgCO2e",
             )
             self.log_emission_with_lifetime(
                 emission=demolition * area,
                 lifetime=lifetime,
-                col=f"demolition_{key}_kgCO2",
+                col=f"demolition_{key}_kgCO2e",
             )
             self.log_emission_in_timeline(
                 emission=0.0,  # when building is first built, no demolition emission
                 year=self.typology["year"],
-                col=f"demolition_{key}_kgCO2",
+                col=f"demolition_{key}_kgCO2e",
                 additive=False,
             )
 
@@ -193,10 +193,10 @@ class BuildingEmissionTimeline:
 
         # Rename columns to add operation_ prefix
         column_mapping = {
-            "heating_kgCO2": "operation_heating_kgCO2",
-            "cooling_kgCO2": "operation_cooling_kgCO2",
-            "hot_water_kgCO2": "operation_hot_water_kgCO2",
-            "electricity_kgCO2": "operation_electricity_kgCO2"
+            "heating_kgCO2e": "operation_heating_kgCO2e",
+            "cooling_kgCO2e": "operation_cooling_kgCO2e",
+            "hot_water_kgCO2e": "operation_hot_water_kgCO2e",
+            "electricity_kgCO2e": "operation_electricity_kgCO2e"
         }
         operational_emissions = operational_emissions.rename(columns=column_mapping)
 
@@ -233,7 +233,7 @@ class BuildingEmissionTimeline:
                 self.log_emission_in_timeline(
                     emission=demolition * area,
                     year=demolition_year,
-                    col=f"demolition_{key}_kgCO2",
+                    col=f"demolition_{key}_kgCO2e",
                 )
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
@@ -254,7 +254,7 @@ class BuildingEmissionTimeline:
             {
                 "year": [f"Y_{year}" for year in range(start_year, end_year + 1)],
                 **{
-                    f"{emission}_{component}_kgCO2": 0.0
+                    f"{emission}_{component}_kgCO2e": 0.0
                     for emission in self._EMISSION_TYPES
                     for component in list(self._MAPPING_DICT.keys())
                     + ["technical_systems"]

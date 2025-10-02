@@ -257,15 +257,15 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
 
 
 def to_ton(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert a dataframe in kgCO2 to tonCO2 by dividing all values by 1000, and also rename the columns by changing 'kgCO2' to 'tonCO2'.
+    """Convert a dataframe in kgCO2e to tonCO2e by dividing all values by 1000, and also rename the columns by changing 'kgCO2e' to 'tonCO2e'.
 
-    :param df: A dataframe with values in kgCO2.
+    :param df: A dataframe with values in kgCO2e.
     :type df: pd.DataFrame
-    :return: A dataframe with values in tonCO2.
+    :return: A dataframe with values in tonCO2e.
     :rtype: pd.DataFrame
     """
     df_ton = df / 1000.0
-    df_ton.columns = df_ton.columns.str.replace("kgCO2", "tonCO2")
+    df_ton.columns = df_ton.columns.str.replace("kgCO2e", "tonCO2e")
     return df_ton
 
 
