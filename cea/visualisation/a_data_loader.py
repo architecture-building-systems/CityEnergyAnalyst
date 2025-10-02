@@ -136,6 +136,7 @@ class csv_pointer:
         self.list_construction_type = plots_building_filter.filter_buildings_by_construction_type
         self.list_use_type = plots_building_filter.filter_buildings_by_use_type
         self.min_ratio_as_main_use = plots_building_filter.min_ratio_as_main_use
+        self.plot = True
 
         if plot_cea_feature in ('pv', 'sc'):
             self.appendix = f"{plot_cea_feature}_{solar_panel_types_list[0]}"
@@ -207,11 +208,11 @@ class csv_pointer:
         """Helper function to retrieve the non-analytics summary CSV path."""
         if self.bool_aggregate_by_building:
             return self.locator.get_export_plots_cea_feature_time_resolution_buildings_file(
-                self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+                self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end, self.plot
             )
         else:
             return self.locator.get_export_results_summary_cea_feature_time_period_file(
-                summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end
+                summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.hour_start, self.hour_end, self.plot
             )
 
     def _get_analytics_summary_path(self, summary_folder):

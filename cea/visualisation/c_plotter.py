@@ -246,45 +246,45 @@ class bar_plot:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
             elif plot_cea_feature == 'embodied-emissions':
-                if self.y_metric_unit == 'ton' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (tonnes CO2-eq/yr)"
-                elif self.y_metric_unit == 'ton' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (tonnes CO2-eq/yr/m2)"
-                elif self.y_metric_unit == 'ton' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (tonnes CO2-eq/yr/m2)"
-                elif self.y_metric_unit == 'kg' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (kg CO2-eq/yr/m2)"
-                elif self.y_metric_unit == 'kg' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (kg CO2-eq/yr)"
-                elif self.y_metric_unit == 'kg' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (kg CO2-eq/yr/m2)"
-                elif self.y_metric_unit == 'g' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (g CO2-eq/yr/m2)"
-                elif self.y_metric_unit == 'g' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (g CO2-eq/yr)"
-                elif self.y_metric_unit == 'g' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (g CO2-eq/yr/m2)"
+                if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Embodied Emissions (tonnes CO2e/yr)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Embodied Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Embodied Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Embodied Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Embodied Emissions (kg CO2e/yr)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Embodied Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Embodied Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Embodied Emissions (g CO2e/yr)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Embodied Emissions per Gross Floor Area (g CO2e/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
             elif plot_cea_feature == 'operational-emissions':
-                if self.y_metric_unit == 'tonCO2' and self.y_normalised_by == 'no_normalisation':
+                if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
                     y_label = "Operational Emissions (tonnes CO2e/yr)"
-                elif self.y_metric_unit == 'tonCO2' and self.y_normalised_by == 'conditioned_floor_area':
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
                     y_label = "Operational Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
-                elif self.y_metric_unit == 'tonCO2' and self.y_normalised_by == 'gross_floor_area':
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "Operational Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
-                elif self.y_metric_unit == 'kgCO2' and self.y_normalised_by == 'conditioned_floor_area':
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
                     y_label = "Operational Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
-                elif self.y_metric_unit == 'kgCO2' and self.y_normalised_by == 'no_normalisation':
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
                     y_label = "Operational Emissions (kg CO2e/yr)"
-                elif self.y_metric_unit == 'kgCO2' and self.y_normalised_by == 'gross_floor_area':
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "Operational Emissions per Gross Floor Area (kg CO2e/yr/m2)"
-                elif self.y_metric_unit == 'gCO2' and self.y_normalised_by == 'conditioned_floor_area':
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
                     y_label = "Operational Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
-                elif self.y_metric_unit == 'gCO2' and self.y_normalised_by == 'no_normalisation':
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
                     y_label = "Operational Emissions (g CO2e/yr)"
-                elif self.y_metric_unit == 'gCO2' and self.y_normalised_by == 'gross_floor_area':
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "Operational Emissions per Gross Floor Area (g CO2e/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")

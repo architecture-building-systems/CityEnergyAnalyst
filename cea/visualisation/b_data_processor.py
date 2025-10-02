@@ -162,54 +162,54 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                'heating': ['heating_kgCO2'],
-                'hot_water': ['hot_water_kgCO2'],
-                'cooling': ['cooling_kgCO2'],
-                'electricity': ['electricity_kgCO2'],
-                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2'],
-                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2'],
-                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2'],
-                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2'],
-                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2'],
-                'heating_GRID': ['Qhs_sys_GRID_kgCO2'],
-                'heating_COAL': ['Qhs_sys_COAL_kgCO2'],
-                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2'],
-                'heating_OIL': ['Qhs_sys_OIL_kgCO2'],
-                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2'],
-                'heating_NONE': ['Qhs_sys_NONE_kgCO2'],
-                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2'],
-                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2'],
-                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2'],
-                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2'],
-                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2'],
-                'hot_water_GRID': ['Qww_sys_GRID_kgCO2'],
-                'hot_water_COAL': ['Qww_sys_COAL_kgCO2'],
-                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2'],
-                'hot_water_OIL': ['Qww_sys_OIL_kgCO2'],
-                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2'],
-                'hot_water_NONE': ['Qww_sys_NONE_kgCO2'],
-                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2'],
-                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2'],
-                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2'],
-                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2'],
-                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2'],
-                'cooling_GRID': ['Qcs_sys_GRID_kgCO2'],
-                'cooling_COAL': ['Qcs_sys_COAL_kgCO2'],
-                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2'],
-                'cooling_OIL': ['Qcs_sys_OIL_kgCO2'],
-                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2'],
-                'cooling_NONE': ['Qcs_sys_NONE_kgCO2'],
-                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2'],
-                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2'],
-                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2'],
-                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2'],
-                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2'],
-                'electricity_GRID': ['E_sys_GRID_kgCO2'],
-                'electricity_COAL': ['E_sys_COAL_kgCO2'],
-                'electricity_WOOD': ['E_sys_WOOD_kgCO2'],
-                'electricity_OIL': ['E_sys_OIL_kgCO2'],
-                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2'],
-                'electricity_NONE': ['E_sys_NONE_kgCO2'],
+                'heating': ['heating_kgCO2e'],
+                'hot_water': ['hot_water_kgCO2e'],
+                'cooling': ['cooling_kgCO2e'],
+                'electricity': ['electricity_kgCO2e'],
+                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2e'],
+                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2e'],
+                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2e'],
+                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
+                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2e'],
+                'heating_GRID': ['Qhs_sys_GRID_kgCO2e'],
+                'heating_COAL': ['Qhs_sys_COAL_kgCO2e'],
+                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2e'],
+                'heating_OIL': ['Qhs_sys_OIL_kgCO2e'],
+                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2e'],
+                'heating_NONE': ['Qhs_sys_NONE_kgCO2e'],
+                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2e'],
+                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2e'],
+                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2e'],
+                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2e'],
+                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2e'],
+                'hot_water_GRID': ['Qww_sys_GRID_kgCO2e'],
+                'hot_water_COAL': ['Qww_sys_COAL_kgCO2e'],
+                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2e'],
+                'hot_water_OIL': ['Qww_sys_OIL_kgCO2e'],
+                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2e'],
+                'hot_water_NONE': ['Qww_sys_NONE_kgCO2e'],
+                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2e'],
+                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2e'],
+                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2e'],
+                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
+                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2e'],
+                'cooling_GRID': ['Qcs_sys_GRID_kgCO2e'],
+                'cooling_COAL': ['Qcs_sys_COAL_kgCO2e'],
+                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2e'],
+                'cooling_OIL': ['Qcs_sys_OIL_kgCO2e'],
+                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2e'],
+                'cooling_NONE': ['Qcs_sys_NONE_kgCO2e'],
+                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2e'],
+                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2e'],
+                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2e'],
+                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2e'],
+                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2e'],
+                'electricity_GRID': ['E_sys_GRID_kgCO2e'],
+                'electricity_COAL': ['E_sys_COAL_kgCO2e'],
+                'electricity_WOOD': ['E_sys_WOOD_kgCO2e'],
+                'electricity_OIL': ['E_sys_OIL_kgCO2e'],
+                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2e'],
+                'electricity_NONE': ['E_sys_NONE_kgCO2e'],
             }
 
         else:
@@ -317,9 +317,9 @@ def convert_energy_units(dataframe, target_unit, normalised=False, plot_cea_feat
         pd.DataFrame: A new DataFrame with converted energy units and renamed columns.
     """
     if plot_cea_feature == 'operational-emissions':
-        assert target_unit in ['gCO2', 'kgCO2', 'tonCO2'], "target_unit must be one of ['gCO2', 'kgCO2', 'tonCO2']"
+        assert target_unit in ['gCO2e', 'kgCO2e', 'tonCO2e'], "target_unit must be one of ['gCO2e', 'kgCO2e', 'tonCO2e']"
 
-        conversion_to_wh = {'gCO2': 1, 'kgCO2': 1_000, 'tonCO2': 1_000_000}
+        conversion_to_wh = {'gCO2e': 1, 'kgCO2e': 1_000, 'tonCO2e': 1_000_000}
         df = dataframe.copy()
         new_columns = {}
 
@@ -456,7 +456,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
             updated_list_y_columns.append(col)
         else:
             if plot_cea_feature == 'operational-emissions' or 'lifecycle-emissions':
-                base = col.replace('_kgCO2', f'_{plot_instance.y_metric_unit}')
+                base = col.replace('_kgCO2e', f'_{plot_instance.y_metric_unit}')
             else:
                 base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
             maybe_col = f"{base}/m2" if is_normalised else base
