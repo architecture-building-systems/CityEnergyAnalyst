@@ -10,6 +10,11 @@ from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAna
 from cea.plots.colors import color_to_hex
 
 
+def period_to_year(period: pd.Series) -> pd.Series:
+    """Convert a period string of the form 'Y_XXXX' to an integer year XXXX"""
+    return period.str.extract(r'Y_(\d{4})')[0].astype(int)
+
+
 class LifecycleEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
@@ -24,7 +29,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - {"year"}
+            columns = set(emissions_df.columns) - {"period"}
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
@@ -35,8 +40,9 @@ class LifecycleEmissionsMapLayer(MapLayer):
         try:
             buildings = self.locator.get_zone_building_names()
             timeline_df = self.locator.get_lca_timeline_building(buildings[0])
-            df = pd.read_csv(timeline_df)['year']
-            return [int(df.min()), int(df.max())]
+            df = pd.read_csv(timeline_df)
+            df['year'] = period_to_year(df['period'])
+            return [int(df['year'].min()), int(df['year'].max())]
         except (FileNotFoundError, pd.errors.EmptyDataError):
             return [None, None]
 
@@ -120,9 +126,12 @@ class LifecycleEmissionsMapLayer(MapLayer):
         }
 
         def get_data(building, centroid):
-            data = pd.read_csv(
-                self.locator.get_lca_timeline_building(building), usecols=["year", data_column], index_col="year"
-            )[data_column]
+            df = pd.read_csv(
+                self.locator.get_lca_timeline_building(building), usecols=["period", data_column]
+            )
+
+            data = df[data_column]
+            data.index = period_to_year(df['period'])
 
             total_min = 0
             total_max = data.sum()
