@@ -48,8 +48,10 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
                 sensor_keys_order.append(key)
 
     if not idx_in:
-        c = poly_local.centroid
-        return [f.to_world_coordinates(c)], [[poly_local]], [poly_local.area]
+        c_local = poly_local.centroid
+        c_world: Point = f.to_world_coordinates(c_local)
+        patch_world: Polygon = f.to_world_coordinates(poly_local)
+        return [c_world], [[patch_world]], [patch_world.area]
 
     patches_local: defaultdict[tuple[int, int], list[Polygon]] = defaultdict(list)
 
