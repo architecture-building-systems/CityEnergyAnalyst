@@ -4,10 +4,10 @@ Maintain access to the schemas (input- and output file descriptions) used by the
 parameter allows reading in schemas from ``schemas.yml`` files defined in plugins.
 """
 
+import abc
 import os
-from typing import List, Optional, Dict
+from typing import Any, List, Optional, Dict
 
-import pandas as pd
 import yaml
 import warnings
 import functools
@@ -143,7 +143,7 @@ def create_schema_io(locator, lm, schema, original_function=None):
     }
     if file_type not in file_type_to_schema_io:
         # just return the default - no read() and write() possible
-        return SchemaIo(locator, lm, schema, original_function)
+        return DefaultSchemaIo(locator, lm, schema, original_function)
     return file_type_to_schema_io[file_type](locator, lm, schema, original_function)
 
 
@@ -164,7 +164,7 @@ def create_locator_method(lm, schema):
     return locator_method
 
 
-class SchemaIo(object):
+class SchemaIo(abc.ABC):
     """A base class for reading and writing files using schemas.yml for validation
     The default just wraps the function - read() and write() will throw errors and should be implemented
     in subclasses
@@ -188,6 +188,7 @@ class SchemaIo(object):
     def __call__(self, *args, **kwargs):
         return self.original_function(self.locator, *args, **kwargs)
 
+    @abc.abstractmethod
     def read(self, *args, **kwargs):
         """
         Open the file indicated by the locator method and return it as a Dataframe.
@@ -201,11 +202,12 @@ class SchemaIo(object):
         raise AttributeError("{lm}: don't know how to read file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
+    @abc.abstractmethod
     def write(self, df, *args, **kwargs):
         raise AttributeError("{lm}: don't know how to write file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
-    def new(self):
+    def new(self) -> Any:
         raise AttributeError("{lm}: don't know how to create a new Dataframe for file_type {file_type}".format(
             lm=self.lm, file_type=self.schema["file_type"]))
 
@@ -248,6 +250,18 @@ class SchemaIo(object):
             result[column] = color_to_rgb(columns[column].get("plot-color", "black"))
         return result
 
+class DefaultSchemaIo(SchemaIo):
+    """Read and write default files - and attempt to validate them."""
+
+    def read(self, *args, **kwargs):
+        super().read(*args, **kwargs)
+
+    def write(self, df, *args, **kwargs):
+        super().write(df, *args, **kwargs)
+
+    def new(self):
+        super().new()
+
 
 class CsvSchemaIo(SchemaIo):
     """Read and write csv files - and attempt to validate them."""
@@ -262,6 +276,8 @@ class CsvSchemaIo(SchemaIo):
         :param kwargs:
         :rtype: pd.DataFrame
         """
+        import pandas as pd
+
         df = pd.read_csv(self(*args, **kwargs))
         self.validate(df)
         return df
@@ -281,6 +297,8 @@ class CsvSchemaIo(SchemaIo):
         df.to_csv(path_to_csv, index=False, **csv_args)
 
     def new(self):
+        import pandas as pd
+
         return pd.DataFrame(columns=(self.schema["schema"]["columns"].keys()))
 
 
