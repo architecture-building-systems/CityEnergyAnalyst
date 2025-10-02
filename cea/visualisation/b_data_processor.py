@@ -455,7 +455,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         if col in valid_cols:
             updated_list_y_columns.append(col)
         else:
-            if plot_cea_feature == 'operational-emissions' or 'lifecycle-emissions':
+            if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
                 base = col.replace('_kgCO2e', f'_{plot_instance.y_metric_unit}')
             else:
                 base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')

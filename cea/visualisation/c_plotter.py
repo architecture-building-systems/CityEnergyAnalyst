@@ -148,10 +148,8 @@ class bar_plot:
                 title = "CEA-4 Photovoltaic-Thermal (PVT) Panels: {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'sc':
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
-            elif plot_cea_feature == 'emissions':
-                title = "CEA-4 Life Cycle Analysis"
-            elif plot_cea_feature == 'embodied-emissions':
-                title = "CEA-4 Embodied Emissions"
+            elif plot_cea_feature == 'lifecycle-emissions':
+                title = "CEA-4 Lifecycle Emissions"
             elif plot_cea_feature == 'operational-emissions':
                 title = "CEA-4 Operational Emissions"
             else:
@@ -245,25 +243,25 @@ class bar_plot:
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
-            elif plot_cea_feature == 'embodied-emissions':
+            elif plot_cea_feature == 'lifecycle-emissions':
                 if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (tonnes CO2e/yr)"
+                    y_label = "Lifecycle Emissions (tonnes CO2e/yr)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (kg CO2e/yr)"
+                    y_label = "Lifecycle Emissions (kg CO2e/yr)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/yr/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Embodied Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Embodied Emissions (g CO2e/yr)"
+                    y_label = "Lifecycle Emissions (g CO2e/yr)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Embodied Emissions per Gross Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
