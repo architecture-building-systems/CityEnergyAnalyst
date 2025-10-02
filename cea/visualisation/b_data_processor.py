@@ -160,6 +160,57 @@ class data_processor:
                 }
             else:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
+        elif plot_cea_feature == 'operational-emissions':
+            y_cea_metric_map = {
+                'heating': ['heating_kgCO2'],
+                'hot_water': ['hot_water_kgCO2'],
+                'cooling': ['cooling_kgCO2'],
+                'electricity': ['electricity_kgCO2'],
+                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2'],
+                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2'],
+                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2'],
+                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2'],
+                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2'],
+                'heating_GRID': ['Qhs_sys_GRID_kgCO2'],
+                'heating_COAL': ['Qhs_sys_COAL_kgCO2'],
+                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2'],
+                'heating_OIL': ['Qhs_sys_OIL_kgCO2'],
+                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2'],
+                'heating_NONE': ['Qhs_sys_NONE_kgCO2'],
+                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2'],
+                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2'],
+                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2'],
+                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2'],
+                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2'],
+                'hot_water_GRID': ['Qww_sys_GRID_kgCO2'],
+                'hot_water_COAL': ['Qww_sys_COAL_kgCO2'],
+                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2'],
+                'hot_water_OIL': ['Qww_sys_OIL_kgCO2'],
+                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2'],
+                'hot_water_NONE': ['Qww_sys_NONE_kgCO2'],
+                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2'],
+                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2'],
+                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2'],
+                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2'],
+                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2'],
+                'cooling_GRID': ['Qcs_sys_GRID_kgCO2'],
+                'cooling_COAL': ['Qcs_sys_COAL_kgCO2'],
+                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2'],
+                'cooling_OIL': ['Qcs_sys_OIL_kgCO2'],
+                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2'],
+                'cooling_NONE': ['Qcs_sys_NONE_kgCO2'],
+                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2'],
+                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2'],
+                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2'],
+                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2'],
+                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2'],
+                'electricity_GRID': ['E_sys_GRID_kgCO2'],
+                'electricity_COAL': ['E_sys_COAL_kgCO2'],
+                'electricity_WOOD': ['E_sys_WOOD_kgCO2'],
+                'electricity_OIL': ['E_sys_OIL_kgCO2'],
+                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2'],
+                'electricity_NONE': ['E_sys_NONE_kgCO2'],
+            }
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
@@ -253,7 +304,7 @@ def normalise_dataframe_by_index(dataframe_A, dataframe_B):
     return merged
 
 
-def convert_energy_units(dataframe, target_unit, normalised=False):
+def convert_energy_units(dataframe, target_unit, normalised=False, plot_cea_feature=None):
     """
     Converts energy unit columns in a DataFrame to the specified unit.
 
@@ -265,24 +316,45 @@ def convert_energy_units(dataframe, target_unit, normalised=False):
     Returns:
         pd.DataFrame: A new DataFrame with converted energy units and renamed columns.
     """
-    assert target_unit in ['Wh', 'kWh', 'MWh'], "target_unit must be one of ['Wh', 'kWh', 'MWh']"
+    if plot_cea_feature == 'operational-emissions':
+        assert target_unit in ['gCO2', 'kgCO2', 'tonCO2'], "target_unit must be one of ['gCO2', 'kgCO2', 'tonCO2']"
 
-    conversion_to_wh = {'Wh': 1, 'kWh': 1_000, 'MWh': 1_000_000}
-    df = dataframe.copy()
-    new_columns = {}
+        conversion_to_wh = {'gCO2': 1, 'kgCO2': 1_000, 'tonCO2': 1_000_000}
+        df = dataframe.copy()
+        new_columns = {}
 
-    for col in df.columns:
-        for unit in conversion_to_wh:
-            if col.endswith(f"_{unit}"):
-                # Convert values
-                factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
-                df[col] = df[col] * factor
+        for col in df.columns:
+            for unit in conversion_to_wh:
+                if col.endswith(f"_{unit}"):
+                    # Convert values
+                    factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
+                    df[col] = df[col] * factor
 
-                # Rename column
-                suffix = f"{target_unit}/m2" if normalised else target_unit
-                new_col = col.replace(f"_{unit}", f"_{suffix}")
-                new_columns[col] = new_col
-                break  # Stop after first match
+                    # Rename column
+                    suffix = f"{target_unit}/m2" if normalised else target_unit
+                    new_col = col.replace(f"_{unit}", f"_{suffix}")
+                    new_columns[col] = new_col
+                    break  # Stop after first match
+
+    else:
+        assert target_unit in ['Wh', 'kWh', 'MWh'], "target_unit must be one of ['Wh', 'kWh', 'MWh']"
+
+        conversion_to_wh = {'Wh': 1, 'kWh': 1_000, 'MWh': 1_000_000}
+        df = dataframe.copy()
+        new_columns = {}
+
+        for col in df.columns:
+            for unit in conversion_to_wh:
+                if col.endswith(f"_{unit}"):
+                    # Convert values
+                    factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
+                    df[col] = df[col] * factor
+
+                    # Rename column
+                    suffix = f"{target_unit}/m2" if normalised else target_unit
+                    new_col = col.replace(f"_{unit}", f"_{suffix}")
+                    new_columns[col] = new_col
+                    break  # Stop after first match
 
     df.rename(columns=new_columns, inplace=True)
     return df
@@ -317,7 +389,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 2: Handle "by_building" mode
     if plot_instance.x_to_plot == 'by_building':
-        if plot_cea_feature == 'demand':
+        if plot_cea_feature == 'demand' or 'operational-emissions':
             df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
         elif plot_cea_feature in ('pv', 'pvt', 'sc'):
@@ -372,7 +444,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 5: Convert energy units
     is_normalised = plot_instance.y_normalised_by != 'no_normalisation'
-    df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=is_normalised)
+    df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=is_normalised, plot_cea_feature=plot_cea_feature)
 
     # Step 6: Refine list_y_columns
     valid_cols = df_to_plotly.columns.difference(['X', 'X_facet']).tolist()
@@ -383,7 +455,10 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         if col in valid_cols:
             updated_list_y_columns.append(col)
         else:
-            base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
+            if plot_cea_feature == 'operational-emissions' or 'lifecycle-emissions':
+                base = col.replace('_kgCO2', f'_{plot_instance.y_metric_unit}')
+            else:
+                base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
             maybe_col = f"{base}/m2" if is_normalised else base
             if maybe_col in valid_cols:
                 updated_list_y_columns.append(maybe_col)
@@ -543,7 +618,7 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
     plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter,plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
-    if plot_cea_feature in ["demand", "pv", "pvt", "sc"]:
+    if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:
