@@ -216,7 +216,7 @@ class InputLocator(object):
     def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
                                                                       time_period, hour_start, hour_end):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        if appendix == 'operational-emissions':
+        if appendix == 'operational_emissions':
             plot_cea_feature = 'emissions'
             if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
                 return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
