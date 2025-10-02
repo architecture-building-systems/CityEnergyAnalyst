@@ -210,7 +210,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
         raise ValueError(f"Void deck values must be less than or equal to the number of floors for each building. "
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
     
-    range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
+    range_floors = [range(void_deck, floors) for void_deck, floors in zip(void_decks, nfloors)]
     floor_to_floor_height = height / nfloors
 
     n = len(geometries)
@@ -566,7 +566,10 @@ def calc_solid(face_footprint: Polygon,
         walls = from_floor_extrude_walls(slab, floor_to_floor_height)
         ceiling = slab.translated(Vector(0, 0, floor_to_floor_height))
         building_breps.append(OCCBrep.from_polygons([slab] + walls + [ceiling]))
-    building_brep = building_breps[0].boolean_union(*building_breps[1:])
+    if len(building_breps) == 1:
+        building_brep = building_breps[0]
+    else:
+        building_brep = building_breps[0].boolean_union(*building_breps[1:])
     return building_brep
 
 def extrude_line_to_polygon(line: Line, height: float, direction: Vector = Vector(0, 0, 1)) -> Polygon:
