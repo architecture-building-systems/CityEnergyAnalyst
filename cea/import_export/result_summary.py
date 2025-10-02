@@ -876,8 +876,8 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
-                elif 'year' in df.columns:
-                    selected_columns = ['year'] + ['name'] + list_cea_column_names
+                elif 'period' in df.columns:
+                    selected_columns = ['period'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
                     list_dataframes.append(df)
@@ -979,7 +979,7 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
         
         # Initialize aggregated_df with zeros (except date and name columns)
         for col in aggregated_df.columns:
-            if col not in ['date', 'name', 'year']:
+            if col not in ['date', 'name', 'period']:
                 aggregated_df[col] = 0
 
         # Sum all values first
@@ -987,7 +987,7 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             for col in aggregated_df.columns:
                 if col == 'date':
                     continue
-                if col == 'year':
+                if col == 'period':
                     continue
                 if col == 'name':
                     pass

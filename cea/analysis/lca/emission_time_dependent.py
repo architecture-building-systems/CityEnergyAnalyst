@@ -239,14 +239,14 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
 
         # Ensure year_series has the right length
         if len(year_series) >= len(out_with_index):
-            out_with_index.insert(0, 'year', year_series.iloc[:len(out_with_index)].values)
+            out_with_index.insert(0, 'period', year_series.iloc[:len(out_with_index)].values)
         else:
             # If year_series is shorter, repeat the pattern
             full_years = pd.concat([year_series] * (len(out_with_index) // len(year_series) + 1))
-            out_with_index.insert(0, 'year', full_years.iloc[:len(out_with_index)].values)
+            out_with_index.insert(0, 'period', full_years.iloc[:len(out_with_index)].values)
 
         # Reorder columns: year first, then emission columns
-        year_cols = ['year']
+        year_cols = ['period']
         emission_cols = [col for col in out_with_index.columns if col not in year_cols]
         out = out_with_index[year_cols + emission_cols]
     else:

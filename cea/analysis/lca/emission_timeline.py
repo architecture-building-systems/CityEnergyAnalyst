@@ -252,7 +252,7 @@ class BuildingEmissionTimeline:
 
         timeline = pd.DataFrame(
             {
-                "year": [f"Y_{year}" for year in range(start_year, end_year + 1)],
+                "period": [f"Y_{year}" for year in range(start_year, end_year + 1)],
                 **{
                     f"{emission}_{component}_kgCO2e": 0.0
                     for emission in self._EMISSION_TYPES
@@ -263,7 +263,7 @@ class BuildingEmissionTimeline:
             }
         )
         timeline['name'] = self.name  # add building name column for easier identification
-        timeline.set_index("year", inplace=True)
+        timeline.set_index("period", inplace=True)
         return timeline
 
     def log_emission_with_lifetime(
