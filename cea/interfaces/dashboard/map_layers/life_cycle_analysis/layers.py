@@ -9,6 +9,7 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, Par
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
 from cea.plots.colors import color_to_hex
 
+IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day"}
 
 def period_to_year(period: pd.Series) -> pd.Series:
     """Convert a period string of the form 'Y_XXXX' to an integer year XXXX"""
@@ -29,11 +30,11 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - {"period"}
+            columns = set(emissions_df.columns) - IGNORE_COLUMNS
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
-        return sorted(list(columns - {"name", "GFA_m2"}))
+        return sorted(list(columns))
 
     def _get_period_range(self) -> list:
         """Get the valid period range from available data"""
@@ -182,12 +183,12 @@ class OperationalEmissionsMapLayer(MapLayer):
 
         try:
             emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - {"date"}
+            columns = set(emissions_df.columns) - IGNORE_COLUMNS
         except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
-        return sorted(list(columns - {"name", "GFA_m2"}))
-    
+        return sorted(list(columns))
+
     def _get_results_files(self, _):
         buildings = self.locator.get_zone_building_names()
         return [self.locator.get_lca_operational_hourly_building(building) for building in buildings]
