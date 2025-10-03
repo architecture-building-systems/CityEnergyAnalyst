@@ -98,7 +98,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
             ),
             FileRequirement(
                 "Embodied Emissions Results",
-                file_locator="locator:get_lca_embodied",
+                file_locator="locator:get_total_yearly_operational_building",
             ),
         ]
 
@@ -243,7 +243,7 @@ class OperationalEmissionsMapLayer(MapLayer):
             ),
             FileRequirement(
                 "Operational Emissions Results",
-                file_locator="locator:get_lca_operation",
+                file_locator="locator:get_total_yearly_operational_building",
             ),
         ]
 
