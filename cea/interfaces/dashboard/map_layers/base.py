@@ -12,6 +12,10 @@ from typing import NamedTuple, List, Optional, Dict, Any
 from cea import MissingInputDataException
 from cea.config import Configuration, DEFAULT_CONFIG
 from cea.inputlocator import InputLocator
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+
+
+logger = getCEAServerLogger("cea-server-map-layers")
 
 
 # locator_func = Callable[..., str]
@@ -19,12 +23,12 @@ from cea.inputlocator import InputLocator
 
 @dataclass()
 class ColourGradient:
-    color_array: List[str]
+    colour_array: List[str]
     points: int
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "color_array": self.color_array,
+            "colour_array": self.colour_array,
             "points": self.points
         }
 
@@ -35,16 +39,19 @@ class FileRequirement:
     """
     description: str
     file_locator: str
-    depends_on: List[str] = None
+    depends_on: Optional[List[str]] = None
+    """A list of parameter names that this file requirement depends on."""
 
-    def get_required_files(self, layer: "MapLayer", current_params: Dict[str, Any] = None) -> List[str]:
+    def get_required_files(self, layer: "MapLayer", current_params: Dict[str, Any]) -> List[str]:
         """
         Find files matching the requirements based on current parameters
         """
         if self.depends_on is not None:
             # Check if the current parameters meet the requirements
-            if not all(value in current_params for value in self.depends_on):
-                raise ValueError("Missing required parameters")
+            missing = [value for value in self.depends_on if value not in current_params]
+            if missing:
+                logger.error(f"Missing required parameters for file requirement [{self.file_locator}]: {missing}")
+                raise ValueError(f"Missing required parameters: [{missing}]")
 
         # Parse string locator
         class_name, method_name = self.file_locator.rsplit(":", 1)
@@ -81,7 +88,7 @@ class ParameterDefinition:
     options_generator: Optional[str] = None
     depends_on: Optional[List[str]] = None
     selector: Optional[str] = None
-    range: Optional[str] = None
+    range: Optional[List[float]] = None
     filter: Optional[str] = None
 
     def generate_choices(self, layer: "MapLayer", current_params: dict) -> dict:
@@ -101,9 +108,33 @@ class ParameterDefinition:
 
         return func()
 
+    def generate_range(self, layer: "MapLayer", current_params: dict) -> List[float]:
+        """Generate dynamic range for slider selector based on current parameters"""
+        if self.options_generator is None:
+            raise ValueError("Parameter does not support dynamic range")
+
+        if self.depends_on is None:
+            func = getattr(layer, self.options_generator)
+            return func()
+        
+        missing = [value for value in self.depends_on if value not in current_params]
+        if missing:
+            logger.error(f"Missing required parameters for range generation [{self.label}]: {missing}")
+            raise ValueError(f"Missing required parameters: [{missing}]")
+
+        func = getattr(layer, self.options_generator)
+        func = functools.partial(func, current_params)
+        range_values = func()
+
+        # Ensure the result is a 2-item list [min, max]
+        if not isinstance(range_values, list) or len(range_values) != 2:
+            raise ValueError("Range generator must return a 2-item list [min, max]")
+
+        return range_values
+
     def to_dict(self) -> dict:
         """Convert ParameterDefinition to a dictionary"""
-        return {
+        result = {
             "label": self.label,
             "type": self.type,
             "default": self.default,
@@ -113,6 +144,8 @@ class ParameterDefinition:
             "range": self.range,
             "filter": self.filter
         }
+        
+        return result
 
 
 class Category(NamedTuple):
@@ -169,8 +202,19 @@ class MapLayer(abc.ABC):
 
     def get_parameter_choices(self, parameter_name: str, parameters: dict) -> dict:
         """Returns the choices for the parameters for this layer"""
-        choices = self.expected_parameters().get(parameter_name).generate_choices(self, parameters)
+        parameter_def = self.expected_parameters().get(parameter_name)
+        if parameter_def is None:
+            raise ValueError(f"Parameter {parameter_name} not found")
+        choices = parameter_def.generate_choices(self, parameters)
         return choices
+
+    def get_parameter_range(self, parameter_name: str, parameters: dict) -> List[float]:
+        """Returns the dynamic range for slider parameters"""
+        parameter_def = self.expected_parameters().get(parameter_name)
+        if parameter_def is None:
+            raise ValueError(f"Parameter {parameter_name} not found")
+        range_values = parameter_def.generate_range(self, parameters)
+        return range_values
 
     def get_required_files(self, parameters) -> List[str]:
         """Returns the list of required files for this layer"""

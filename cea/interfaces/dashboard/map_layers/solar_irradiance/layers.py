@@ -48,7 +48,6 @@ class SolarIrradiationMapLayer(MapLayer):
                     default=[0, 3000],
                     description="Thresholds for the layer",
                     selector="threshold",
-                    range="total",
                     filter="range",
                 ),
         }

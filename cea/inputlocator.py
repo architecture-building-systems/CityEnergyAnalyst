@@ -170,17 +170,20 @@ class InputLocator(object):
             return os.path.join(summary_folder, 'pvt')
         elif cea_feature == 'pvt_FP':
             return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'embodied_emissions':
-            return os.path.join(summary_folder, 'emissions')
-        elif cea_feature == 'operation_emissions':
-            return os.path.join(summary_folder, 'emissions')
+        # elif cea_feature == 'lifecycle_emissions':
+        #     return os.path.join(summary_folder, 'emissions')
+        # elif cea_feature == 'operational_emissions':
+        #     return os.path.join(summary_folder, 'emissions')
         else:
             return os.path.join(summary_folder, cea_feature)
 
 
     def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature, appendix,
-                                                                time_period, hour_start, hour_end):
+                                                                time_period, hour_start, hour_end, plot=False):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
+        if plot:
+            cea_feature = cea_feature.replace('_', '-')
+            appendix = appendix.replace('_', '-')
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                                 f'{appendix}_selected_hours.csv')
@@ -188,13 +191,20 @@ class InputLocator(object):
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                                 f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix, timeline=False):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+        if appendix == 'lifecycle_emissions' and not timeline:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+                            f"{appendix}_timeline.csv")
+        else:
+            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                             f"{appendix}_buildings.csv")
 
-    def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix):
+    def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix, plot=False):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_buildings.csv"""
+        if plot:
+            plot_cea_feature = plot_cea_feature.replace('_', '-')
+            appendix = appendix.replace('_', '-')
         return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                             f"{appendix}_buildings.csv")
 
@@ -210,11 +220,17 @@ class InputLocator(object):
                                 f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
-                                                                      time_period, hour_start, hour_end):
+                                                                      time_period, hour_start, hour_end, plot=False):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+        if plot:
+            plot_cea_feature = plot_cea_feature.replace('_', '-')
+            appendix = appendix.replace('_', '-')
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually' and plot_cea_feature != 'lifecycle-emissions':
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f'{appendix}_selected_hours_buildings.csv')
+        elif plot_cea_feature == 'lifecycle-emissions':
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                                f"{appendix}_buildings.csv")
         else:
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")

@@ -51,12 +51,12 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['name'] == self.building]
+        return self.hourly_loads
 
     @property
     def dict_graph(self):
         if not hasattr(self, '_dict_graph'):
-            self._dict_graph = calc_data(self.data, self.locator)
+            self._dict_graph = calc_data(self.building, self.data, self.locator)
         return self._dict_graph
 
     def calc_graph(self):
@@ -301,7 +301,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         return table_df
 
 
-def comfort_chart(data_frame, title, output_path, config, locator):
+def comfort_chart(building_name, data_frame, title, output_path, config, locator):
     """
     Main function of comfort chart plot
 
@@ -315,7 +315,7 @@ def comfort_chart(data_frame, title, output_path, config, locator):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame, locator)
+    dict_graph = calc_data(building_name, data_frame, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -469,7 +469,7 @@ def create_relative_humidity_lines():
     return traces
 
 
-def calc_data(data_frame, locator):
+def calc_data(building_name, data_frame, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -479,10 +479,6 @@ def calc_data(data_frame, locator):
 
     :param data_frame: results from demand calculation
     :type data_frame: pandas.DataFrame
-    :param config: cea config
-    :type config: cea.config.Configuration
-    :param locator: cea input locator
-    :type locator: cea.inputlocator.InputLocator
     :return: dict of lists with operative temperatures and moistures
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
@@ -490,19 +486,27 @@ def calc_data(data_frame, locator):
     from cea.demand.building_properties.building_hvac import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    building_name = data_frame.name.iloc[0]
-    air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
-    has_winter = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'hvac_heat_starts'],
-                                   air_con_data.loc[building_name, 'hvac_heat_ends'])
-    has_summer = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'hvac_cool_starts'],
-                                   air_con_data.loc[building_name, 'hvac_cool_ends'])
+    hvac_path = locator.get_building_air_conditioning()
+    try:
+        air_con_data = pd.read_csv(hvac_path).set_index('name')
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"HVAC configuration not found at {hvac_path}") from e
+    
+    if building_name not in air_con_data.index:
+        raise ValueError(f"Building '{building_name}' not found in HVAC configuration at {hvac_path}")
 
-    winter_start = air_con_data.loc[building_name, 'hvac_heat_starts']
-    winter_end = air_con_data.loc[building_name, 'hvac_heat_ends']
-    summer_start = air_con_data.loc[building_name, 'hvac_cool_starts']
-    summer_end =  air_con_data.loc[building_name, 'hvac_cool_ends']
+    building_air_con_data = air_con_data.loc[building_name]
+    has_winter = verify_has_season(building_name,
+                                   building_air_con_data.loc['hvac_heat_starts'],
+                                   building_air_con_data.loc['hvac_heat_ends'])
+    has_summer = verify_has_season(building_name,
+                                   building_air_con_data.loc['hvac_cool_starts'],
+                                   building_air_con_data.loc['hvac_cool_ends'])
+
+    winter_start = building_air_con_data.loc['hvac_heat_starts']
+    winter_end = building_air_con_data.loc['hvac_heat_ends']
+    summer_start = building_air_con_data.loc['hvac_cool_starts']
+    summer_end =  building_air_con_data.loc['hvac_cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
