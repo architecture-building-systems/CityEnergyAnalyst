@@ -3,7 +3,7 @@ PlotManager – Generates the Plotly graph
 
 """
 
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS, get_column_color
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
 from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
 from math import ceil
