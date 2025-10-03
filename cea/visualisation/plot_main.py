@@ -126,7 +126,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
 def main(config):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
-
+    context = {'feature': 'lifecycle-emissions', 'period_end': 2075, 'period_start': 2025, 'solar_panel_types': {}}
     fig = plot_all(config, scenario, context, hide_title=False)
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 

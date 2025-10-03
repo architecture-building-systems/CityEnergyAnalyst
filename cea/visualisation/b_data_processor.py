@@ -17,12 +17,12 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
+x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type', 'building_faceted_by_decades']
 
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter,plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plot_config_general.buildings
@@ -616,7 +616,7 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 
 # Main function
 def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
-    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter,plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
+    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
     if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)

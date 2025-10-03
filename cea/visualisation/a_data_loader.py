@@ -118,7 +118,7 @@ class csv_pointer:
         :param hour_end: End hour for analysis.
         """
 
-        x, x_facet = get_x_and_x_facet(plot_config_general.x_to_plot)
+        x, x_facet = get_x_and_x_facet(plot_config.x_to_plot)
         self.config = plot_config
         self.scenario = scenario
         self.locator = cea.inputlocator.InputLocator(scenario=scenario)
@@ -128,8 +128,8 @@ class csv_pointer:
         self.buildings = plot_config_general.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_normalised_by = plot_config.y_normalised_by
-        self.x_to_plot = plot_config_general.x_to_plot
         self.x = x
+        self.x_to_plot = plot_config.x_to_plot
         self.x_facet = x_facet
         self.integer_year_start = plots_building_filter.filter_buildings_by_year_start
         self.integer_year_end = plots_building_filter.filter_buildings_by_year_end
@@ -152,6 +152,7 @@ class csv_pointer:
 
         time_period_map = {
             "building": "annually",
+            "building_faceted_by_decades": "annually",
             "building_faceted_by_months": "monthly",
             "building_faceted_by_seasons": "seasonally",
             "building_faceted_by_construction_type": "annually",
@@ -165,7 +166,9 @@ class csv_pointer:
             "district_and_monthly": "monthly",
             "district_and_monthly_faceted_by_seasons": "monthly",
             "district_and_seasonally": "seasonally",
-            "district_and_annually_or_selected_period": "annually"
+            "district_and_annually_or_selected_period": "annually",
+            "district_and_annually_faceted_by_decades": "annually"
+
         }
         self.time_period = time_period_map.get(self.x_to_plot)
 
@@ -238,6 +241,9 @@ def get_x_and_x_facet(x_to_plot):
     elif x_to_plot == "building_faceted_by_seasons":
         x = 'by_building'
         x_facet = 'seasons'
+    elif x_to_plot == "building_faceted_by_decades":
+        x = 'by_building'
+        x_facet = 'decades'
     elif x_to_plot == "building_faceted_by_construction_type":
         x = 'by_building'
         x_facet = 'construction_type'
@@ -253,6 +259,9 @@ def get_x_and_x_facet(x_to_plot):
     elif x_to_plot == "district_and_hourly_faceted_by_seasons":
         x = 'by_period'
         x_facet = 'seasons'
+    elif x_to_plot == "district_and_annually_faceted_by_decades":
+        x = 'by_period'
+        x_facet = 'decades'
     elif x_to_plot == "district_and_daily":
         x = 'by_period'
         x_facet = None

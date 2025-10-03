@@ -91,7 +91,7 @@ class bar_plot:
         self.y_max = plot_config_general.y_max
         self.y_step = plot_config_general.y_step
         self.y_label = plot_config_general.y_label
-        self.x_to_plot = plot_config_general.x_to_plot
+        self.x_to_plot = plot_config.x_to_plot
         self.facet_by_numbers_wrapped = plot_config_general.facet_by_numbers_wrapped
         self.facet_by_rows = plot_config_general.facet_by_rows
         self.x_sorted_by = plot_config_general.x_sorted_by
