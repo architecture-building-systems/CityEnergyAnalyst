@@ -3,7 +3,7 @@ PlotManager – Generates the Plotly graph
 
 """
 
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS, get_column_color
 from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
 from math import ceil
@@ -526,8 +526,8 @@ def plot_faceted_bars(
             for j, val_col in enumerate(value_columns):
                 # Create mapping from column name to user-friendly surface name
                 heading = get_display_name_for_column(val_col, y_metric_to_plot)
-                    
-                color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+
+                color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
                 # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
@@ -599,8 +599,8 @@ def plot_faceted_bars(
         for j, val_col in enumerate(value_columns):
             # Create mapping from column name to user-friendly surface name
             heading = get_display_name_for_column(val_col, y_metric_to_plot)
-                
-            color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+
+            color_key = get_column_color(val_col)
             bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
             # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
