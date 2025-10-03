@@ -701,7 +701,7 @@ Visualisation:
     description: This Feature plots bar chart of the results of lifecycle emissions
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
+    parameters: ['general:scenario', plots-lifecycle-emissions, plots-building-filter]
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
