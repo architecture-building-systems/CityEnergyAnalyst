@@ -22,6 +22,8 @@ from pyarrow import feather
 from cea.constants import HOURS_IN_YEAR
 from cea.resources.radiation.building_geometry_radiation import (
     BuildingGeometryForRadiation,
+    SURFACE_DIRECTION_LABELS,
+    SURFACE_TYPES,
 )
 from cea.resources.radiation.sensor_area_calculator import (
     build_sensor_patches,
@@ -38,18 +40,7 @@ if TYPE_CHECKING:
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
 REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
-SURFACE_TYPES = ['walls', 'windows', 'roofs', 'undersides']
-SURFACE_DIRECTION_LABELS = {'windows_east',
-                            'windows_west',
-                            'windows_south',
-                            'windows_north',
-                            'walls_east',
-                            'walls_west',
-                            'walls_south',
-                            'walls_north',
-                            'roofs_top',
-                            'undersides_bottom',
-                            }
+
 
 
 class GridSize(NamedTuple):

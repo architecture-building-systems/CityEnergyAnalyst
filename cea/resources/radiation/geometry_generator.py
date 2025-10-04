@@ -179,7 +179,7 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
                          geometry_simplification: float, 
                          elevation_map: ElevationMap, 
                          num_processes: int,
-                         ) -> tuple[list[OCCBrep], list[float]]:
+                         ) -> tuple[list[list[Polygon]], list[float]]:
     """create building solids respecting their elevation, from building GeoDataFrame and elevation map.
 
     :param buildings_df: either the zone or surroundings buildings dataframe. 
@@ -216,18 +216,19 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
     floor_to_floor_height = height / nfloors
 
     n = len(geometries)
-    out: list[tuple[OCCBrep, float]] = cea.utilities.parallel.vectorize(process_geometries, num_processes,
+    out: list[tuple[list[Polygon], float]] = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
         geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
 
-    solids, elevations = zip(*out)
-    return list(solids), list(elevations)
+    solids_faces = [x for x, _ in out]
+    elevations = [y for _, y in out]
+    return solids_faces, elevations
 
 def process_geometries(geometry: shapely.Polygon, 
                        elevation_map: ElevationMap, 
                        range_floors: range, 
                        floor_to_floor_height: float,
-                       ) -> tuple[OCCBrep, float]:
+                       ) -> tuple[list[Polygon], float]:
     """
     gets the 2D geometry as well as the height and number of floors, and returns a solid representing the building. 
     Also returns the elevation of the building footprint using elevation_map.
@@ -249,13 +250,13 @@ def process_geometries(geometry: shapely.Polygon,
     # burn buildings footprint into the terrain and return the location of the new face
     face_footprint, elevation = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
-    building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
+    building_solid_faces = calc_solid(face_footprint, range_floors, floor_to_floor_height)
 
-    return building_solid, elevation
+    return building_solid_faces, elevation
 
 
 def calc_building_geometry_surroundings(name: str, 
-                                        building_solid: OCCBrep, 
+                                        building_solid_faces: list[Polygon], 
                                         geometry_pickle_dir: str,
                                         ) -> str:
     (
@@ -265,7 +266,7 @@ def calc_building_geometry_surroundings(name: str,
         facade_list_south,
         roof_list,
         footprint_list,
-    ) = identify_surfaces_type([face.to_polygon() for face in building_solid.faces])
+    ) = identify_surfaces_type(building_solid_faces)
     facade_list = facade_list_north + facade_list_west + facade_list_east + facade_list_south
     geometry_3D_surroundings = {
         "name": name,
@@ -322,7 +323,7 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use void_deck when creating the building solid.
     zone_building_names = zone_buildings_df.index.values
-    zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
+    zone_building_solids_faces, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
 
     # Check if there are any buildings in surroundings_df before processing
@@ -331,15 +332,15 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
         if 'void_deck' not in surroundings_buildings_df.columns:
             surroundings_buildings_df['void_deck'] = 0
             
-        surroundings_building_names = surroundings_buildings_df.index.values
-        surroundings_building_solid_list, _ = calc_building_solids(
+        surroundings_building_names: list[str] = surroundings_buildings_df.index.values.tolist()
+        surroundings_building_solids_faces, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
         # calculate geometry for the surroundings
         print('Generating geometry for surrounding buildings')
         geometry_3D_surroundings = [calc_building_geometry_surroundings(x, y, geometry_pickle_dir) for x, y in
-                                    zip(surroundings_building_names, surroundings_building_solid_list)]
+                                    zip(surroundings_building_names, surroundings_building_solids_faces)]
     else:
-        surroundings_building_solid_list = []
+        surroundings_building_solids_faces = []
         geometry_3D_surroundings = []
 
     # calculate geometry for the zone of analysis
@@ -350,12 +351,12 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
                                                                           on_complete=print_progress)
 
     if not neglect_adjacent_buildings:
-        all_building_solid_list = zone_building_solid_list + surroundings_building_solid_list
+        all_building_solid_list = zone_building_solids_faces + surroundings_building_solids_faces
     else:
-        all_building_solid_list = []
+        all_building_solid_list: list[list[Polygon]] = []
     # TODO: maybe move calc_building_solid into this function and avoid using archiecture_wwr_df, because it's already merged into zone_buildings_df.
     geometry_3D_zone = calc_zone_geometry_multiprocessing(zone_building_names,
-                                                          zone_building_solid_list,
+                                                          zone_building_solids_faces,
                                                           repeat(all_building_solid_list, n),
                                                           repeat(architecture_wwr_df, n),
                                                           repeat(geometry_pickle_dir, n),
@@ -373,8 +374,8 @@ def print_terrain_intersection_progress(i, n, _, __):
     print("Creating geometry for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
-def are_buildings_close_to_eachother(x_1, y_1, solid2: OCCBrep, dist=100):
-    pmin, pmax = brep_bounding_box(solid2)
+def are_buildings_close_to_eachother(x_1, y_1, solid2_faces: list[Polygon], dist=100):
+    pmin, pmax = faces_bounding_box(solid2_faces)
     x_2 = pmin.x
     y_2 = pmin.y
     delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
@@ -383,9 +384,9 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2: OCCBrep, dist=100):
     else:
         return False
 
-def brep_bounding_box(brep: OCCBrep) -> tuple[Point, Point]:
+def faces_bounding_box(faces: list[Polygon]) -> tuple[Point, Point]:
     """Get the axis-aligned bounding box of a brep."""
-    points = brep.points
+    points = [p for face in faces for p in face.points]
     xs = [p.x for p in points]
     ys = [p.y for p in points]
     zs = [p.z for p in points]
@@ -394,8 +395,8 @@ def brep_bounding_box(brep: OCCBrep) -> tuple[Point, Point]:
     return min_point, max_point
 
 def calc_building_geometry_zone(name: str, 
-                                building_solid: OCCBrep, 
-                                all_building_solid_list: list[OCCBrep], 
+                                building_faces: list[Polygon], 
+                                all_building_solids_faces: list[list[Polygon]], 
                                 architecture_wwr_df: gpd.GeoDataFrame,
                                 geometry_pickle_dir: str, 
                                 neglect_adjacent_buildings: bool, 
@@ -443,15 +444,14 @@ def calc_building_geometry_zone(name: str,
     # close together is defined as:
     # if two building bounding boxes' southwest corner are smaller than 100m on their xy-plane projection (ignoring z-axis).
     # TODO: maybe also check if one building's top roof is within another building's volume when two buildings are stacked.
-    potentially_intersecting_solids = []
+    potentially_intersecting_solids: list[list[Polygon]] = []
     if not neglect_adjacent_buildings:
-        pmin, pmax = brep_bounding_box(building_solid)
-        for solid in all_building_solid_list:
-            if are_buildings_close_to_eachother(pmin.x, pmin.y, solid):
-                potentially_intersecting_solids.append(solid)
+        pmin, pmax = faces_bounding_box(building_faces)
+        for solid_faces in all_building_solids_faces:
+            if are_buildings_close_to_eachother(pmin.x, pmin.y, solid_faces):
+                potentially_intersecting_solids.append(solid_faces)
 
     # identify building surfaces according to angle:
-    face_list = [face.to_polygon() for face in building_solid.faces]
     (
         facade_list_north,
         facade_list_west,
@@ -459,7 +459,7 @@ def calc_building_geometry_zone(name: str,
         facade_list_south,
         roof_list,
         footprint_list,
-    ) = identify_surfaces_type(face_list)
+    ) = identify_surfaces_type(building_faces)
 
     # get window properties
     def safe_float(val):
@@ -550,7 +550,7 @@ def burn_buildings(geometry: shapely.Polygon,
 def calc_solid(face_footprint: Polygon, 
                range_floors: range, 
                floor_to_floor_height: float,
-               ) -> OCCBrep:
+               ) -> list[Polygon]:
     """
     extrudes the footprint surface into a 3D solid.
 
@@ -578,7 +578,7 @@ def calc_solid(face_footprint: Polygon,
         building_brep = building_breps[0]
     else:
         building_brep = building_breps[0].boolean_union(*building_breps[1:])
-    return building_brep
+    return [face.to_polygon() for face in building_brep.faces]
 
 def extrude_line_to_polygon(line: Line, height: float, direction: Vector = Vector(0, 0, 1)) -> Polygon:
     """Make a rectangular wall polygon by extruding a line along a direction."""
@@ -628,7 +628,7 @@ class Points(object):
 
 def calc_windows_walls(facade_list: list[Polygon], 
                        wwr: float, 
-                       potentially_intersecting_solids: list[OCCBrep],
+                       potentially_intersecting_solids_faces: list[list[Polygon]],
                        ) -> tuple[list[Polygon], 
                                   list[Polygon], 
                                   list[Vector], 
@@ -673,8 +673,8 @@ def calc_windows_walls(facade_list: list[Polygon],
         # simulation model)
         data_point: Point = ref_pypt.translated(standard_normal.scaled(0.1))
         intersects = 0
-        for solid in potentially_intersecting_solids:
-            intersects += calc_intersection_face_solid(solid, data_point)
+        for solid_faces in potentially_intersecting_solids_faces:
+            intersects += calc_intersection_face_solid(solid_faces, data_point)
             if intersects > 0:
                 break
 
@@ -710,9 +710,10 @@ def calc_windows_walls(facade_list: list[Polygon],
     return window_list, wall_list, normals_win, normals_wall, wall_intersects
 
 
-def calc_intersection_face_solid(potentially_intersecting_solid: OCCBrep, point: Point):
+def calc_intersection_face_solid(potentially_intersecting_solid_faces: list[Polygon], point: Point):
     with cea.utilities.devnull():
         # compas_occ did not implement point in solid check, so we use OCC directly
+        potentially_intersecting_solid = OCCBrep.from_polygons(potentially_intersecting_solid_faces)
         state = BRepClass3d_SolidClassifier(
             potentially_intersecting_solid.occ_shape,
             gp_Pnt(point.x, point.y, point.z),
@@ -852,11 +853,11 @@ def tree_geometry_generator(tree_df: gpd.GeoDataFrame, terrain_raster: gdal.Data
 
     with Pool(cpu_count() - 1) as pool:
         surfaces = [
-            [face.to_polygon() for face in solid.faces]
-            for (solid, _) in pool.starmap(
+            solid_faces
+            for (solid_faces, _) in pool.starmap(
                 process_geometries,
                 (
-                    (geom, elevation_map, (0, 1), z)
+                    (geom, elevation_map, range(1), z)
                     for geom, z in zip(tree_df["geometry"], tree_df["height_tc"])
                 ),
             )

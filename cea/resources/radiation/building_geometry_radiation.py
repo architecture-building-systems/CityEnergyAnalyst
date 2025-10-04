@@ -9,6 +9,21 @@ if TYPE_CHECKING:
     from compas.geometry import Polygon, Vector
 
 
+SURFACE_TYPES = ["walls", "windows", "roofs", "undersides"]
+SURFACE_DIRECTION_LABELS = {
+    "windows_east",
+    "windows_west",
+    "windows_south",
+    "windows_north",
+    "walls_east",
+    "walls_west",
+    "walls_south",
+    "walls_north",
+    "roofs_top",
+    "undersides_bottom",
+}
+
+
 class SurfaceGroup(NamedTuple):
     faces: list[Polygon]
     orientations: list[str]
@@ -76,11 +91,12 @@ class BuildingGeometryForRadiation(object):
         }
         return SurfaceGroup(*mapping_dict[srf_type])
 
-    def __getstate__(self):
-        return [getattr(self, f.name) for f in fields(self)]
+    def __getstate__(self) -> list[Any]:
+        # Use fields(type(self)) so static type checkers recognize a dataclass type
+        return [getattr(self, f.name) for f in fields(type(self))]
 
-    def __setstate__(self, data):
-        for f, v in zip(fields(self), data):
+    def __setstate__(self, data: list[Any]) -> None:
+        for f, v in zip(fields(type(self)), data):
             setattr(self, f.name, v)
 
     @classmethod
@@ -113,7 +129,9 @@ class BuildingGeometryForRadiation(object):
         return obj
 
     def save(self, pickle_location: str) -> str:
-        os.makedirs(os.path.dirname(pickle_location), exist_ok=True)
+        directory = os.path.dirname(pickle_location)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
         with open(pickle_location, "wb") as f:
             pickle.dump(self.__getstate__(), f)
         return pickle_location
