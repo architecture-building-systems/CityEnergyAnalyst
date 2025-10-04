@@ -64,6 +64,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-plugins-1.1.1.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cligj-0.7.2-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.3-pyhe01879c_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.3.3-py312hd9148b4_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.11-py312hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
@@ -429,6 +431,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/vtk-9.3.1-osmesa_py312hf4758c4_116.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/vtk-base-9.3.1-osmesa_py312hc9bc066_116.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/vtk-io-ffmpeg-9.3.1-osmesa_py312hf4758c4_116.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/watchdog-6.0.0-py312h7900ff3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/wayland-1.24.0-h3e06ad9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wayland-protocols-1.45-hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
@@ -488,6 +491,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/7d/2d5fc7af06da4f3bdea59a204f741bf7a30bc5019355991b2f083e557e4e/cftime-1.6.4.post1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5e/f6/2813494ac97b98747b4821d007088e752076f89822aeb08b01ebe90a2f12/compas_libigl-0.7.6-cp312-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/79/13/13576941bf7cf95026abae43d8427c812c0054408212bf8ed490eda846b0/crc32c-2.7.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e5/d3/de61ad5b52433b389afca0bc70f02a7a1f074651221f599ce368da0fe437/cryptography-46.0.1-cp311-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c7/17/ee82c745c5bda340a4dd812652c42fb71efd45f663554a10c3ec45f230df/cvxopt-1.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
@@ -567,6 +571,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/44/aa5c8b10b2cce7a053018e0d132bd58e27527a0243c4985383d5b6fd93e9/tblib-3.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/35/17/fd9f301c6e8a97b2e5772ff36a1623fd6947359a1ec1c9f7f1b841b8bb38/timezonefinder-8.1.0-cp39-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
@@ -641,6 +646,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-plugins-1.1.1.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cligj-0.7.2-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.3-pyhe01879c_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/contourpy-1.3.3-py312h4f740d2_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.11-py312hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
@@ -993,6 +1000,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/vtk-9.3.1-qt_py312h3356f26_216.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/vtk-base-9.3.1-qt_py312h2d8cbdf_216.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/vtk-io-ffmpeg-9.3.1-qt_py312h3356f26_216.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/watchdog-6.0.0-py312h8025657_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/wayland-1.24.0-h698ed42_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.11.1-pyhd8ed1ab_0.conda
@@ -1049,6 +1057,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9b/60/0db884c76311ecaaf31f628aa9358beae5fcb0fbbdc2eb0b790a93aa258f/cftime-1.6.4.post1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/02/9f/0ffe9c5c84efc7a10d183be87e44a5d16728ed7e43d8fa4b0d5143792713/compas_libigl-0.7.6.tar.gz
       - pypi: https://files.pythonhosted.org/packages/4d/41/4aedc961893f26858ab89fc772d0eaba91f9870f19eaa933999dcacb94ec/crc32c-2.7.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/7f/a3/0f5296f63815d8e985922b05c31f77ce44787b3127a67c0b7f70f115c45f/cryptography-46.0.1-cp311-abi3-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/c6/f9/467c3f4682f3dbfbd7ff67f2307ed746a86b6dcc6b0b62cf1eeaebbd9d74/cvxopt-1.3.2-cp312-cp312-manylinux_2_28_aarch64.whl
@@ -1128,6 +1137,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/44/aa5c8b10b2cce7a053018e0d132bd58e27527a0243c4985383d5b6fd93e9/tblib-3.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/20/a5daf4418e2aa8956c86170bc2ec97d4ac6198d0067b0b041b4d172594cb/timezonefinder-8.1.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
@@ -1200,6 +1210,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-plugins-1.1.1.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cligj-0.7.2-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.3-pyhe01879c_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.3.3-py312hedd4973_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.11-py312hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
@@ -1516,6 +1528,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/vtk-9.3.1-qt_py312hb7aed01_216.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/vtk-base-9.3.1-qt_py312h6127b09_216.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/vtk-io-ffmpeg-9.3.1-qt_py312hb7aed01_216.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/watchdog-6.0.0-py312h2f459f6_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.11.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webencodings-0.5.1-pyhd8ed1ab_3.conda
@@ -1550,6 +1563,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/81/0bb28d54088a61592f61a11e7fcabcea6d261c47af79e18d0f9cbcd940ae/cftime-1.6.4.post1-cp312-cp312-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ed/f1/9a841a7de94ae875d6e31f4ea4fba213f91b50b4a0855c4a69208b55f4bb/compas_libigl-0.7.6-cp312-abi3-macosx_11_0_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/9c/3e/e3656bfa76e50ef87b7136fef2dbf3c46e225629432fc9184fdd7fd187ff/crc32c-2.7.1-cp312-cp312-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/4c/8c/44ee01267ec01e26e43ebfdae3f120ec2312aa72fa4c0507ebe41a26739f/cryptography-46.0.1-cp311-abi3-macosx_10_9_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/10/dc/1c21715e1267ca29f562e4450426d1ff8a7ffcc3e670100cec332a105b95/cvxopt-1.3.2-cp312-cp312-macosx_10_9_x86_64.whl
@@ -1629,6 +1643,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/44/aa5c8b10b2cce7a053018e0d132bd58e27527a0243c4985383d5b6fd93e9/tblib-3.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/20/a5daf4418e2aa8956c86170bc2ec97d4ac6198d0067b0b041b4d172594cb/timezonefinder-8.1.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
@@ -1701,6 +1716,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-plugins-1.1.1.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cligj-0.7.2-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.3-pyhe01879c_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/contourpy-1.3.3-py312ha0dd364_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.11-py312hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
@@ -2017,6 +2034,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/vtk-9.3.1-qt_py312he4b582b_216.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/vtk-base-9.3.1-qt_py312h9df0f74_216.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/vtk-io-ffmpeg-9.3.1-qt_py312he4b582b_216.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/watchdog-6.0.0-py312h163523d_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.11.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webencodings-0.5.1-pyhd8ed1ab_3.conda
@@ -2051,6 +2069,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f3/1e/38dbbf8a828dfb5e0e6e5c912818b77aacf2e7bcb97b262ac6126beeb29f/cftime-1.6.4.post1-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/7a/1a/cf81c4e33dbd4651a3ede2f59b960a4ff7fd8f76c0e2a8b052fd356aa63c/compas_libigl-0.7.6-cp312-abi3-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/0b/7d/5ff9904046ad15a08772515db19df43107bf5e3901a89c36a577b5f40ba0/crc32c-2.7.1-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/4c/8c/44ee01267ec01e26e43ebfdae3f120ec2312aa72fa4c0507ebe41a26739f/cryptography-46.0.1-cp311-abi3-macosx_10_9_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/cd/c8/a04048143d0329ccd36403951746c1a6b5f1fc56c479e5a0a77efb2064b2/cvxopt-1.3.2-cp312-cp312-macosx_11_0_arm64.whl
@@ -2130,6 +2149,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/44/aa5c8b10b2cce7a053018e0d132bd58e27527a0243c4985383d5b6fd93e9/tblib-3.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/20/a5daf4418e2aa8956c86170bc2ec97d4ac6198d0067b0b041b4d172594cb/timezonefinder-8.1.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
@@ -2199,6 +2219,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/cligj-0.7.2-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/comm-0.2.3-pyhe01879c_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/contourpy-1.3.3-py312hf90b1b7_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.11-py312hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
@@ -2483,6 +2505,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/vs2015_runtime-14.44.35208-h38c0c73_31.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vtk-9.3.1-qt_py312h85ceb33_216.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vtk-base-9.3.1-qt_py312h3337869_216.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/watchdog-6.0.0-py312h2e8e312_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webcolors-24.11.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/webencodings-0.5.1-pyhd8ed1ab_3.conda
@@ -2520,6 +2543,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/7b/ca72a075a3f660315b031d62d39a3e9cfef71f7929da2621d5120077a75f/cftime-1.6.4.post1-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/3e/f85a60b58d0231b2408a4f3bc0c639531874296b7ac5686b18c62198a77d/compas_libigl-0.7.6-cp312-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/ae/c4/7929dcd5d9b57db0cce4fe6f6c191049380fc6d8c9b9f5581967f4ec018e/crc32c-2.7.1-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/95/0f/cd29a35e0d6e78a0ee61793564c8cff0929c38391cb0de27627bdc7525aa/cryptography-46.0.1-cp311-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/9f/ad/edce467c24529c536fc9de787546a1c8eca293009383a872b6f638d22eae/cvxopt-1.3.2-cp312-cp312-win_amd64.whl
@@ -2599,6 +2623,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/44/aa5c8b10b2cce7a053018e0d132bd58e27527a0243c4985383d5b6fd93e9/tblib-3.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/20/a5daf4418e2aa8956c86170bc2ec97d4ac6198d0067b0b041b4d172594cb/timezonefinder-8.1.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl
@@ -5394,6 +5419,75 @@ packages:
   - pkg:pypi/comm?source=hash-mapping
   size: 14690
   timestamp: 1753453984907
+- conda: https://conda.anaconda.org/conda-forge/noarch/compas-2.14.1-pyhd8ed1ab_0.conda
+  sha256: 927539012674055a740a1819aa6131e8562d564f7268d881841d6337cd2d99b6
+  md5: 725275227a3246f3fc1462c7c723c715
+  depends:
+  - jsonschema
+  - networkx >=3.0
+  - numpy >=1.15.4
+  - python >=3.9
+  - scipy >=1.1
+  - watchdog
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/compas?source=hash-mapping
+  size: 1480588
+  timestamp: 1757306643144
+- pypi: https://files.pythonhosted.org/packages/02/9f/0ffe9c5c84efc7a10d183be87e44a5d16728ed7e43d8fa4b0d5143792713/compas_libigl-0.7.6.tar.gz
+  name: compas-libigl
+  version: 0.7.6
+  sha256: 3051c8da6b1b58ce032a4c60ef94188a29fb1581c3122a6d28520081583051ad
+  requires_dist:
+  - compas>=2.0.0
+  - tessagon
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/5e/f6/2813494ac97b98747b4821d007088e752076f89822aeb08b01ebe90a2f12/compas_libigl-0.7.6-cp312-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: compas-libigl
+  version: 0.7.6
+  sha256: a4dca135d0a5a0aef67ff1d786626dc1ef42dbc20772126b19f5b2eed4cc84df
+  requires_dist:
+  - compas>=2.0.0
+  - tessagon
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/7a/1a/cf81c4e33dbd4651a3ede2f59b960a4ff7fd8f76c0e2a8b052fd356aa63c/compas_libigl-0.7.6-cp312-abi3-macosx_11_0_arm64.whl
+  name: compas-libigl
+  version: 0.7.6
+  sha256: 8a7df80a76cada6ba8370aed8b5df58105908395486c21b81344c2a73ffd8c7e
+  requires_dist:
+  - compas>=2.0.0
+  - tessagon
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/95/3e/f85a60b58d0231b2408a4f3bc0c639531874296b7ac5686b18c62198a77d/compas_libigl-0.7.6-cp312-abi3-win_amd64.whl
+  name: compas-libigl
+  version: 0.7.6
+  sha256: c112d74002af07cde7db922918d459495a6db88007c84d39ebaeae7522aeef23
+  requires_dist:
+  - compas>=2.0.0
+  - tessagon
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/ed/f1/9a841a7de94ae875d6e31f4ea4fba213f91b50b4a0855c4a69208b55f4bb/compas_libigl-0.7.6-cp312-abi3-macosx_11_0_x86_64.whl
+  name: compas-libigl
+  version: 0.7.6
+  sha256: 1140134a3f7e06dd909f2bc93cba587b391d4040f45fc4e31c33cd8b64ab961e
+  requires_dist:
+  - compas>=2.0.0
+  - tessagon
+  requires_python: '>=3.9'
+- conda: https://conda.anaconda.org/conda-forge/noarch/compas_occ-1.2.1-pyhd8ed1ab_0.conda
+  sha256: aca136266b475dc49606ea8c10409c5c10013e6426b2cb0cb17c16ff249c0197
+  md5: eaabd6f27f513640245ba5759d504c9e
+  depends:
+  - compas
+  - python >=3.9
+  - pythonocc-core
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/compas-occ?source=hash-mapping
+  size: 41958
+  timestamp: 1720698027096
 - conda: https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.3.3-py312hd9148b4_2.conda
   sha256: cedae3c71ad59b6796d182f9198e881738b7a2c7b70f18427d7788f3173befb2
   md5: bce621e43978c245261c76b45edeaa3d
@@ -24241,6 +24335,11 @@ packages:
   - pkg:pypi/terminado?source=hash-mapping
   size: 22883
   timestamp: 1710262943966
+- pypi: https://files.pythonhosted.org/packages/95/4b/4195fcbc58767ab0c6c6832055ead511e9ab30a939093d70eaa124694c73/tessagon-0.8.2-py2.py3-none-any.whl
+  name: tessagon
+  version: 0.8.2
+  sha256: 54ba1b98ad8e16d9b0aa72821d8d4e165283de3f8664f0983b8c34b7d5e58046
+  requires_python: '>=3.5'
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda
   sha256: 6016672e0e72c4cf23c0cf7b1986283bd86a9c17e8d319212d78d8e9ae42fdfd
   md5: 9d64911b31d57ca443e9f1e36b04385f
@@ -25214,6 +25313,74 @@ packages:
   purls: []
   size: 71752
   timestamp: 1740054675590
+- conda: https://conda.anaconda.org/conda-forge/linux-64/watchdog-6.0.0-py312h7900ff3_1.conda
+  sha256: 4bf9f4e18031d1d0a9e0a6217d8db5a979291db4ad424a5260d8528628a2b4d0
+  md5: 5589d4910ff17416c4c4aa5ca8d1bbba
+  depends:
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - pyyaml >=3.10
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/watchdog?source=compressed-mapping
+  size: 141297
+  timestamp: 1756135345110
+- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/watchdog-6.0.0-py312h8025657_1.conda
+  sha256: 66a0d78acd5a0906a7ff43b8c9e15d96f4a96da894ab10f5ea97a3f92d059215
+  md5: aed76bddd9dbf31cd8397dc54c060d4b
+  depends:
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - pyyaml >=3.10
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/watchdog?source=hash-mapping
+  size: 140856
+  timestamp: 1756136391376
+- conda: https://conda.anaconda.org/conda-forge/osx-64/watchdog-6.0.0-py312h2f459f6_1.conda
+  sha256: 8e25ea20e6c8e80a085dcc8d9bf7de9289ea3d42009c92d51a374cf7588138d0
+  md5: 14743a96d1a4df100fbff4618cf69d52
+  depends:
+  - __osx >=10.13
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - pyyaml >=3.10
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/watchdog?source=hash-mapping
+  size: 149242
+  timestamp: 1756135617786
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/watchdog-6.0.0-py312h163523d_1.conda
+  sha256: c427abb18703664d83c7f808b8b9e1ec0ee5dc572d290defbdd6b850b600cbd9
+  md5: 95172aa2add1adb13b7dfe8051ae475f
+  depends:
+  - __osx >=11.0
+  - python >=3.12,<3.13.0a0
+  - python >=3.12,<3.13.0a0 *_cpython
+  - python_abi 3.12.* *_cp312
+  - pyyaml >=3.10
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/watchdog?source=hash-mapping
+  size: 150342
+  timestamp: 1756135540748
+- conda: https://conda.anaconda.org/conda-forge/win-64/watchdog-6.0.0-py312h2e8e312_1.conda
+  sha256: e99e5ce4f745d9773696cd2b99aef8a627423e9bfabca451c2fdfc2beb42b552
+  md5: 69a28a58837a0a21d1a28ffe25fb76ba
+  depends:
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - pyyaml >=3.10
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/watchdog?source=hash-mapping
+  size: 165295
+  timestamp: 1756135500983
 - conda: https://conda.anaconda.org/conda-forge/linux-64/wayland-1.24.0-h3e06ad9_0.conda
   sha256: ba673427dcd480cfa9bbc262fd04a9b1ad2ed59a159bd8f7e750d4c52282f34c
   md5: 0f2ca7906bf166247d1d760c3422cb8a
