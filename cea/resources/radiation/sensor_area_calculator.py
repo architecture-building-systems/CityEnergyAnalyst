@@ -112,10 +112,7 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
     for key in sensor_keys_order:
         sensors_world.append(sensors_by_key[key])
         local_patches = patches_local.get(key, [])
-        patches_world = [
-            Polygon([f.to_world_coordinates(p) for p in patch.points])
-            for patch in local_patches
-        ]
+        patches_world = [f.to_world_coordinates(patch) for patch in local_patches]
         patches_per_sensor_world.append(patches_world)
         areas_per_sensor.append(sum(p.area for p in local_patches))
 
@@ -169,10 +166,26 @@ if __name__ == "__main__":
     viewer = Viewer()
 
     # 1) Rotated rectangle in XY
-    base_xy = Polygon.from_rectangle(point=Point(0, 0, 0), width=10, height=5)
-    face_xy = base_xy.rotated(math.radians(30), axis=Vector.Zaxis(), point=base_xy.centroid)
+    # base_xy = Polygon.from_rectangle(point=Point(0, 0, 0), width=10, height=5)
+    # face_xy = base_xy.rotated(math.radians(30), axis=Vector.Zaxis(), point=base_xy.centroid)
+    # face_xy = Polygon(
+    #     [
+    #         Point(x=-4.236745207628701, y=-8.501870975829661, z=-1.5000000000001137),
+    #         Point(x=-4.2367452076869085, y=-8.501870975829661, z=1.4999999999998863),
+    #         Point(x=5.434348398644943, y=10.905099707655609, z=0.6873863542433583),
+    #         Point(x=5.434348398644943, y=10.905099707655609, z=-0.6873863542434719),
+    #     ]
+    # )
+    face_xy = Polygon(
+        [
+            Point(x=462690.407177893, y=5250683.3713515345, z=521.7213518470525),
+            Point(x=462690.4071778929, y=5250683.3713515345, z=524.7213518470525),
+            Point(x=462700.07827149925, y=5250702.778322218, z=523.9087382012959),
+            Point(x=462700.07827149925, y=5250702.778322218, z=522.5339654928091),
+        ]
+    )
 
-    sensors1, patches1, areas1 = build_sensor_patches(face_xy, grid_dx=0.8, grid_dy=0.6)
+    sensors1, patches1, areas1 = build_sensor_patches(face_xy, grid_dx=1, grid_dy=1)
     draw_sensor_groups(viewer, sensors1, patches1, seed=7)
 
     # swap to patch-centric sensors
