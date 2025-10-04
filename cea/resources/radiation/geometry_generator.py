@@ -41,7 +41,6 @@ from cea.resources.radiation.building_geometry_radiation import (
 if TYPE_CHECKING:
     import geopandas as gpd
     import shapely
-    from compas.geometry import Line
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -122,13 +121,12 @@ def calc_intersection(
 
     :param surface: the terrain mesh to be intersected.
     :type surface: Mesh
-    :param edges_coords: the coordinates of the point from which the ray is cast.
-    :type edges_coords: Point
-    :param edges_dir: the direction of the ray, which is usually a vector pointing upwards.
-    :type edges_dir: Vector
+    :param point: the point from which the ray is cast.
+    :type point: Point
+    :param direction: the direction of the ray, which is usually a vector pointing upwards.
+    :type direction: Vector
     :return: a tuple containing the index of the face that was hit and the intersection point.
-        if no intersection was found, it returns (None, None).
-    :rtype: tuple[int | None, Point | None]
+    :rtype: tuple[int, Point]
     """
     ray = (point, direction)
     hits: list[tuple[int, float, float, float]] = intersection_ray_mesh(ray, surface.to_vertices_and_faces())
@@ -147,25 +145,22 @@ def calc_intersection(
     else:
         raise ValueError("No intersection found between the ray and the surface mesh.")
 
-def create_windows(surface: Polygon, 
-                   wwr: float, 
-                   ) -> tuple[Polygon, list[Polygon]]:
+def create_windows(
+    surface: Polygon,
+    wwr: float,
+) -> tuple[Polygon, list[Polygon]]:
     """
     This function creates a window by schrinking the surface according to the wwr around the reference point.
     The generated window has the same shape as the original surface.
     Each side of the surface is shrunk by `sqrt(wwr)`, so that the area is scaled down to `wwr * A_surface`.
 
     :param surface: the surface to be shrunk.
-    :type surface: OCCface
+    :type surface: Polygon
     :param wwr: Window-to-Wall Ratio: the ratio of the surface that will be a window, ranges from 0 to 1.
     :type wwr: float
-    :param ref_pypt: the reference point for the scaling operation. Usually the center point of the surface.
-    :type ref_pypt: tuple
-    :return: the scaled surface which represents the window.
-    :rtype: OCCface
+    :return: the scaled surface which represents the window, as well as the hollowed surfaces.
+    :rtype: tuple[Polygon, list[Polygon]]
     """
-    # scaler = math.sqrt(wwr)
-    # return fetch.topo2topotype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
     window: Polygon = surface.scaled(math.sqrt(wwr))
     window.translate(Vector.from_start_end(window.centroid, surface.centroid))
     hollowed_surfaces: list[Polygon] = []
@@ -175,30 +170,30 @@ def create_windows(surface: Polygon,
         hollowed_surfaces.append(wall_trapezoid)
     return window, hollowed_surfaces
 
-def calc_building_solids(buildings_df: gpd.GeoDataFrame, 
-                         geometry_simplification: float, 
-                         elevation_map: ElevationMap, 
-                         num_processes: int,
-                         ) -> tuple[list[list[Polygon]], list[float]]:
-    """create building solids respecting their elevation, from building GeoDataFrame and elevation map.
+def calc_building_solids(
+    buildings_df: gpd.GeoDataFrame,
+    geometry_simplification: float,
+    elevation_map: ElevationMap,
+    num_processes: int,
+) -> tuple[list[list[Polygon]], list[float]]:
+    """Create polygonal exterior face sets for each building using elevation data.
 
-    :param buildings_df: either the zone or surroundings buildings dataframe. 
-        It should be read from either `"\\scenario\\inputs\\building-geometry\\zone.shp"` 
-        or `"\\scenario\\inputs\\building-geometry\\surroundings.shp"`, 
-        and the index of this GeoDataFrame should be the building names.
+    Each building is converted to a list of exterior polygons (footprint, vertical wall faces, roof) **without**
+    windows. Returning plain polygons (instead of OCC breps) keeps the result pickleable for multiprocessing.
+
+    :param buildings_df: Zone or surroundings building GeoDataFrame (index = building names) read from
+        `zone.shp` or `surroundings.shp`.
     :type buildings_df: GeoDataFrame
-    :param geometry_simplification: the tolerance of simplification. 
-        "All parts of a simplified geometry will be no more than tolerance distance from the original." 
-        (from `geopandas.GeoSeries.simplify`)
+    :param geometry_simplification: Tolerance for geometry simplification (see ``GeoSeries.simplify``).
     :type geometry_simplification: float
     :param elevation_map: an instance of `ElevationMap` that contains the terrain elevation data, read from a raster file 
     `"\\scenario\\inputs\\topography\\terrain.tif"`.
     :type elevation_map: ElevationMap
-    :param num_processes: number of processes to use for parallel computation.
+    :param num_processes: Number of worker processes (or 1 for serial).
     :type num_processes: int
-    :return: a list of solids representing the building external shells, each made from footprint + vertical external walls + roof.
-    :rtype: list[OCCsolid]
-    :return: a list of elevations corresponding to each building solid, where each elevation is a float value.
+    :return: For each building a list of exterior polygons (no windows yet).
+    :rtype: list[list[Polygon]]
+    :return: Elevation (m) of footprint centroid for each building.
     :rtype: list[float]
     """
 
@@ -224,26 +219,28 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
     elevations = [y for _, y in out]
     return solids_faces, elevations
 
-def process_geometries(geometry: shapely.Polygon, 
-                       elevation_map: ElevationMap, 
-                       range_floors: range, 
-                       floor_to_floor_height: float,
-                       ) -> tuple[list[Polygon], float]:
-    """
-    gets the 2D geometry as well as the height and number of floors, and returns a solid representing the building. 
-    Also returns the elevation of the building footprint using elevation_map.
+def process_geometries(
+    geometry: shapely.Polygon,
+    elevation_map: ElevationMap,
+    range_floors: range,
+    floor_to_floor_height: float,
+) -> tuple[list[Polygon], float]:
+    """Convert one 2D footprint + floor data into exterior polygons.
 
-    :param geometry: one building geometry from the buildings GeoDataFrame.
+    The footprint elevation is sampled from the terrain, then extruded floor by floor to produce the exterior
+    shell polygons (footprint, vertical walls, roof). Windows and adjacency are handled later.
+
+    :param geometry: Single building footprint polygon.
     :type geometry: shapely.Polygon
-    :param elevation_map: the elevation map for the whole site.
+    :param elevation_map: Site elevation map.
     :type elevation_map: ElevationMap
-    :param range_floors: range of floors for the building. For example, a building of 3 floors will have `range(4) = [0, 1, 2, 3]`.
+    :param range_floors: Inclusive floor index range (e.g. ``range(void_deck, floors)``).
     :type range_floors: range
-    :param floor_to_floor_height: the height of each level of the building. 
+    :param floor_to_floor_height: Storey height (m).
     :type floor_to_floor_height: float
-    :return: a solid representing the building, made from footprint + vertical external walls + roof.
-    :rtype: OCCsolid
-    :return: the elevation of the terrain at the footprint of the building.
+    :return: Exterior polygons (footprint + walls + roof, no windows).
+    :rtype: list[Polygon]
+    :return: Footprint centroid elevation (m).
     :rtype: float
     """
     elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
@@ -255,10 +252,11 @@ def process_geometries(geometry: shapely.Polygon,
     return building_solid_faces, elevation
 
 
-def calc_building_geometry_surroundings(name: str, 
-                                        building_solid_faces: list[Polygon], 
-                                        geometry_pickle_dir: str,
-                                        ) -> str:
+def calc_building_geometry_surroundings(
+    name: str,
+    building_solid_faces: list[Polygon],
+    geometry_pickle_dir: str,
+) -> str:
     (
         facade_list_north,
         facade_list_west,
@@ -280,13 +278,14 @@ def calc_building_geometry_surroundings(name: str,
     return name
 
 
-def building_2d_to_3d(zone_df: gpd.GeoDataFrame, 
-                      surroundings_df: gpd.GeoDataFrame, 
-                      architecture_wwr_df: pd.DataFrame, 
-                      elevation_map: ElevationMap, 
-                      config: cea.config.Configuration, 
-                      geometry_pickle_dir: str
-                      ) -> tuple[list[str], list[str]]:
+def building_2d_to_3d(
+    zone_df: gpd.GeoDataFrame,
+    surroundings_df: gpd.GeoDataFrame,
+    architecture_wwr_df: pd.DataFrame,
+    elevation_map: ElevationMap,
+    config: cea.config.Configuration,
+    geometry_pickle_dir: str,
+) -> tuple[list[str], list[str]]:
     """reconstruct 3D building geometries with windows and store each building's 3D data into a file.
 
     :param zone_df: data and 2D geometry of all analyzed building in the site, typically read from `zone.shp`.
@@ -385,7 +384,7 @@ def are_buildings_close_to_eachother(x_1, y_1, solid2_faces: list[Polygon], dist
         return False
 
 def faces_bounding_box(faces: list[Polygon]) -> tuple[Point, Point]:
-    """Get the axis-aligned bounding box of a brep."""
+    """Compute the axis-aligned bounding box of a collection of face polygons."""
     points = [p for face in faces for p in face.points]
     xs = [p.x for p in points]
     ys = [p.y for p in points]
@@ -403,24 +402,22 @@ def calc_building_geometry_zone(name: str,
                                 elevation: float,
                                 ) -> str:
     """
-    calculates the 3D geometry of a building, including its windows and walls,
-    and saves the geometry into a file.
+    Build full per-building radiation geometry (walls, windows, roofs, undersides) from exterior polygons
+    and persist it.
 
     :param name: name of building.
     :type name: str
-    :param building_solid: 
-        a closed geometry representing the building external shells, 
-        made from footprint + vertical external walls + roof (without windows).
-    :type building_solid: OCCsolid
-    :param all_building_solid_list: a list of all_building_solid_list, or an empty list if `neglect_adjacent_buildings == True`.
-    :type all_building_solid_list: list[OCCsolid]
+    :param building_faces: Exterior polygons (footprint + walls + roof) without windows.
+    :type building_faces: list[Polygon]
+    :param all_building_solids_faces: Exterior polygon lists of all buildings (or empty if adjacency ignored).
+    :type all_building_solids_faces: list[list[Polygon]]
     :param architecture_wwr_df: a dataframe read from `locator.get_building_architecture` containing envelope info.
     :type architecture_wwr_df: DataFrame
     :param geometry_pickle_dir: folder path to save the created `BuildingGeometryForRadiation` object.
     :type geometry_pickle_dir: str
     :param neglect_adjacent_buildings: True if no adjacency of other buildings is considered.
     :type neglect_adjacent_buildings: bool
-    :param elevation: elevation of building footprint's middle point.
+    :param elevation: Elevation (m) of footprint centroid.
     :type elevation: float
     :return: name of building.
     :rtype: str
@@ -526,7 +523,7 @@ def burn_buildings(geometry: shapely.Polygon,
     :type elevation_map: ElevationMap
     :param tolerance: The minimal surface area of each triangulated face. Any faces smaller than the tolerance will be deleted.
     :type tolerance: float
-    :return: the bottom surface of the building.
+    :return: Footprint polygon translated to sampled terrain elevation.
     :rtype: Polygon
     :return: the elevation of the terrain at the footprint of the building.
     :rtype: float
@@ -551,21 +548,19 @@ def calc_solid(face_footprint: Polygon,
                range_floors: range, 
                floor_to_floor_height: float,
                ) -> list[Polygon]:
-    """
-    extrudes the footprint surface into a 3D solid.
+    """Extrude a footprint into stacked storeys and return merged exterior faces as polygons.
 
-    :param face_footprint: footprint of the building. 
+    Internally uses temporary OCC breps for boolean union of storey volumes, but only polygon faces are returned
+    (pickle-friendly for multiprocessing).
+
+    :param face_footprint: Footprint polygon at correct elevation.
     :type face_footprint: Polygon
-    :param range_floors: 
-        range of floors for the building. 
-        For example, a building of 3 floors will have `range(4) = [0, 1, 2, 3]`, 
-        because it has 4 floors (1 ground floor + 2 internal ceilings + 1 roof).
+    :param range_floors: Range of storey indices (e.g. ``range(void_deck, floors)``).
     :type range_floors: range
-    :param floor_to_floor_height: the height of each level of the building.
-        For example, if the building has 3 floors and a height of 9m, then `floor_to_floor_height = 9 / 3 = 3`.
+    :param floor_to_floor_height: Storey height (m).
     :type floor_to_floor_height: float
-    :return: a solid representing the building, made from footprint + vertical external walls + roof.
-    :rtype: list[Brep]
+    :return: Exterior faces (footprint, walls, roof) as polygons (no windows).
+    :rtype: list[Polygon]
     """
     building_breps: list[OCCBrep] = []
     for i_floor in range_floors:
@@ -579,11 +574,6 @@ def calc_solid(face_footprint: Polygon,
     else:
         building_brep = building_breps[0].boolean_union(*building_breps[1:])
     return [face.to_polygon() for face in building_brep.faces]
-
-def extrude_line_to_polygon(line: Line, height: float, direction: Vector = Vector(0, 0, 1)) -> Polygon:
-    """Make a rectangular wall polygon by extruding a line along a direction."""
-    v = direction.unitized().scaled(height)
-    return Polygon([line.start, line.end, line.end.translated(v), line.start.translated(v)])
 
 def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
     """reads the floor polygon and create vertical walls from each of its edges.
@@ -621,11 +611,6 @@ def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
     walls.append(to_wall(floor.points[-1], floor.points[0], height))
     return walls
 
-class Points(object):
-    def __init__(self, point_to_evaluate):
-        self.point_to_evaluate = point_to_evaluate
-
-
 def calc_windows_walls(facade_list: list[Polygon], 
                        wwr: float, 
                        potentially_intersecting_solids_faces: list[list[Polygon]],
@@ -639,23 +624,22 @@ def calc_windows_walls(facade_list: list[Polygon],
     (triangulated wall panels, punched windows), and return normals plus an intersection flag.
 
     :param facade_list: a list of vertical faces representing the facades of a building.
-    :type facade_list: list[OCCface]
+    :type facade_list: list[Polygon]
     :param wwr: window to wall ratio, ranges from 0 to 1.
     :type wwr: float
-    :param potentially_intersecting_solids: 
-        all buildings from the site that might intersect with the currently analysed building facade. 
-        It could be an empty list, but if it's not, it will contain the building itself as well.
-    :type potentially_intersecting_solids: list[OCCsolid]
+    :param potentially_intersecting_solids_faces: Exterior face sets of nearby buildings (may include the
+        current building). Empty if adjacency ignored.
+    :type potentially_intersecting_solids_faces: list[list[Polygon]]
     :raises ValueError: if wwr is not `float` or cannot be turned into `float`, raise ValueError.
     :return: windows on the facade surfaces.
-    :rtype: list[OCCface]
+    :rtype: list[Polygon]
     :return: opaque wall faces (triangulated where windows were created).
-    :rtype: list[OCCface]
+    :rtype: list[Polygon]
     :return: window surface normal vectors.
-    :rtype: list[tuple[float, float, float]]
+    :rtype: list[Vector]
     :return: unit normals for every element in the previous *wall_list* 
     (duplicates exist because walls may be triangulated).
-    :rtype: list[tuple[float, float, float]]
+    :rtype: list[Vector]
     :return: `1` if the original surface intersects with any other solid, or `0` otherwise.
     :rtype: list[Literal[0, 1]]
     """
@@ -695,7 +679,12 @@ def calc_windows_walls(facade_list: list[Polygon],
                 window_list.append(window)
                 normals_win.append(standard_normal)
                 # for walls
-                wall_intersects.extend([intersects if intersects in (0, 1) else 0 for _ in range(len(hollowed_facades))])
+                wall_intersects.extend(
+                    [
+                        intersects if intersects in (0, 1) else 0
+                        for _ in range(len(hollowed_facades))
+                    ]
+                )
                 wall_list.extend(hollowed_facades)
                 normals_wall.extend([standard_normal] * len(hollowed_facades))
 
@@ -710,7 +699,13 @@ def calc_windows_walls(facade_list: list[Polygon],
     return window_list, wall_list, normals_win, normals_wall, wall_intersects
 
 
-def calc_intersection_face_solid(potentially_intersecting_solid_faces: list[Polygon], point: Point):
+def calc_intersection_face_solid(
+    potentially_intersecting_solid_faces: list[Polygon], point: Point
+) -> Literal[0, 1]:
+    """Point-in-(temporary) solid classification using OCCBrep built from polygons.
+
+    The polygons are converted to an OCC brep for robust point-in-solid testing. Only a boolean (0/1) is returned.
+    """
     with cea.utilities.devnull():
         # compas_occ did not implement point in solid check, so we use OCC directly
         potentially_intersecting_solid = OCCBrep.from_polygons(potentially_intersecting_solid_faces)
@@ -784,13 +779,12 @@ class ElevationMap(object):
         return ElevationMap(new_elevation_map, new_x_coords, new_y_coords, self.x_size, self.y_size, self.nodata)
 
     def generate_tin(self, tolerance=1e-6) -> Mesh:
-        """generates a 3D mesh from the elevation raster map.
+        """Generate a triangulated irregular network (TIN) mesh from the elevation raster.
 
-        :param tolerance: The minimal surface area of each triangulated face. 
-            Any faces smaller than the tolerance will be deleted. Defaults to `1e-6`.
+        :param tolerance: Minimum face area; faces below this are removed (default 1e-6).
         :type tolerance: float, optional
-        :return: a list of OCCface triangles representing the 3D mesh of the terrain.
-        :rtype: list[OCCface]
+        :return: Welded COMPAS mesh of the terrain (duplicate vertices merged).
+        :rtype: Mesh
         """
         # Ignore no data values from raster
         y_index, x_index = np.nonzero(self.elevation_map != self.nodata)
@@ -894,14 +888,14 @@ def geometry_main(config: cea.config.Configuration,
     :type architecture_wwr_df: pd.DataFrame
     :param geometry_pickle_dir: directory where building 3D geometry data is stored.
     :type geometry_pickle_dir: str
-    :return: a list of OCCface triangles representing the 3D mesh of the terrain.
-    :rtype: list[OCCface]
-    :return: names of analyzed buildings within the scenario.
+    :return: Triangulated terrain mesh (TIN).
+    :rtype: Mesh
+    :return: Names of analyzed (zone) buildings.
     :rtype: list[str]
-    :return: names of surrounding buildings within the scenario.
+    :return: Names of surrounding buildings.
     :rtype: list[str]
-    :return: list of tree geometries (if any)
-    :rtype: list[list[OCCface]]
+    :return: Tree surface polygon lists (empty if none).
+    :rtype: list[list[Polygon]]
     """
     print("Standardizing coordinate systems")
     zone_df, surroundings_df, trees_df, terrain_raster = standardize_coordinate_systems(
