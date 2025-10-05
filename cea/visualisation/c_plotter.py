@@ -357,10 +357,12 @@ class bar_plot:
             # Hide title but keep barmode
             fig.update_layout(barmode=barmode)
 
-        # About background color
+        # About background color and dimensions
         fig.update_layout(
             plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),       # Inside the plotting area
             paper_bgcolor="white",      # Entire figure background (including margins)
+            width=1000,  # Set plot width in pixels
+            height=600,  # Set plot height in pixels
         )
 
         # About the grid color and bar gaps
@@ -404,19 +406,19 @@ class bar_plot:
 
 def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
     """
-    Position legend between the title and plot, and push the graph downward.
+    Position legend below the graph.
 
     Parameters:
     - fig: plotly.graph_objects.Figure
     - plot_cea_feature: str, the CEA feature being plotted (unused, kept for compatibility)
     """
 
-    # Standard horizontal legend for all plot types
+    # Standard horizontal legend below the graph
     fig.update_layout(
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=0.98,  # Position legend closer to the plot with small gap
+            y=-0.15,  # Position legend below the graph
             xanchor="left",
             x=0
         )
@@ -552,7 +554,7 @@ def plot_faceted_bars(
                 fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
         # Set subplot vertical domains
-        available_height = 0.80
+        available_height = 0.88  # Use more vertical space since legend is below
         row_spacing = 0.125
         total_spacing = row_spacing * (rows - 1)
         row_height = (available_height - total_spacing) / rows
@@ -623,7 +625,7 @@ def plot_faceted_bars(
             
             fig.add_trace(go.Bar(**bar_params))
 
-        fig.update_layout(yaxis=dict(domain=[0.02, 0.82]))
+        fig.update_layout(yaxis=dict(domain=[0.05, 0.95]))  # Use more vertical space with legend below
 
     # Y-Axis limits and tick steps
     if y_max is None:
