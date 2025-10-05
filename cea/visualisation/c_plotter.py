@@ -496,7 +496,7 @@ def plot_faceted_bars(
             subplot_titles=[""] * num_facets,
             shared_yaxes=True,
             horizontal_spacing=0.01,
-            vertical_spacing=0.125
+            vertical_spacing=0.18  # Increased from 0.125 to prevent overlap between rows
         )
 
         for i, facet in enumerate(facets):
@@ -555,7 +555,7 @@ def plot_faceted_bars(
 
         # Set subplot vertical domains
         available_height = 0.88  # Use more vertical space since legend is below
-        row_spacing = 0.125
+        row_spacing = 0.18  # Increased from 0.125 to prevent overlap between rows
         total_spacing = row_spacing * (rows - 1)
         row_height = (available_height - total_spacing) / rows
 
