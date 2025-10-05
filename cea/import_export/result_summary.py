@@ -1234,7 +1234,7 @@ def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, s
             # Write to disk
             path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='lifecycle_emissions',
                                                                                  appendix=appendix,
-                                                                                 timeline=True, plot=plot)
+                                                                                 timeline=False, plot=plot)
             aggregated_df.to_csv(path, index=False, float_format='%.2f')
 
 
@@ -1749,7 +1749,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         if plot_cea_feature is None:
             if appendix in ('architecture', 'lifecycle_emissions'):
                 # Create the .csv file path
-                path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
+                path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix, timeline=True)
                 os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
             else:
                 if not bool_analytics:
@@ -1761,10 +1761,14 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
         else:
-            if appendix in ('architecture', 'lifecycle_emissions'):
+            if appendix in ('architecture'):
                 # Create the .csv file path
                 os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
                 path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix, plot=plot)
+            elif appendix in ('lifecycle_emissions'):
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix, plot=plot)
+                path_csv_timeline = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix, timeline=True, plot=plot)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
@@ -1776,8 +1780,9 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end, plot=plot)
 
         if appendix == 'lifecycle_emissions':
-            df = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
-            df.to_csv(path_csv, index=False, float_format="%.4f")
+            df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
+            df_timeline.to_csv(path_csv_timeline, index=False, float_format="%.4f")
+
         else:
             # Write to .csv files
             for df in list_df:

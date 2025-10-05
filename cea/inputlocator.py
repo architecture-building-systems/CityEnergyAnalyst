@@ -196,7 +196,7 @@ class InputLocator(object):
         if plot:
             cea_feature = cea_feature.replace('_', '-')
             appendix = appendix.replace('_', '-')
-        if appendix == 'lifecycle_emissions' and not timeline:
+        if appendix == 'lifecycle-emissions' and timeline:
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                             f"{appendix}_timeline.csv")
         else:

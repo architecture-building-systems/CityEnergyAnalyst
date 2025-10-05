@@ -66,23 +66,15 @@ lifecycle_emission_metrics = [
 
 
 operational_emission_metrics = [
-    'heating', 'hot_water', 'cooling', 'electricity',
-    'Qhs_sys_NATURALGAS', 'Qhs_sys_BIOGAS', 'Qhs_sys_SOLAR',
-    'Qhs_sys_DRYBIOMASS', 'Qhs_sys_WETBIOMASS', 'Qhs_sys_GRID',
-    'Qhs_sys_COAL', 'Qhs_sys_WOOD', 'Qhs_sys_OIL',
-    'Qhs_sys_HYDROGEN', 'Qhs_sys_NONE',
-    'Qww_sys_NATURALGAS', 'Qww_sys_BIOGAS', 'Qww_sys_SOLAR',
-    'Qww_sys_DRYBIOMASS', 'Qww_sys_WETBIOMASS', 'Qww_sys_GRID',
-    'Qww_sys_COAL', 'Qww_sys_WOOD', 'Qww_sys_OIL',
-    'Qww_sys_HYDROGEN', 'Qww_sys_NONE',
-    'Qcs_sys_NATURALGAS', 'Qcs_sys_BIOGAS', 'Qcs_sys_SOLAR',
-    'Qcs_sys_DRYBIOMASS', 'Qcs_sys_WETBIOMASS', 'Qcs_sys_GRID',
-    'Qcs_sys_COAL', 'Qcs_sys_WOOD', 'Qcs_sys_OIL',
-    'Qcs_sys_HYDROGEN', 'Qcs_sys_NONE',
-    'E_sys_NATURALGAS', 'E_sys_BIOGAS', 'E_sys_SOLAR',
-    'E_sys_DRYBIOMASS', 'E_sys_WETBIOMASS', 'E_sys_GRID',
-    'E_sys_COAL', 'E_sys_WOOD', 'E_sys_OIL',
-    'E_sys_HYDROGEN', 'E_sys_NONE'
+     'heating', 'hot_water', 'cooling', 'electricity', 'heating_NATURALGAS', 'heating_BIOGAS', 'heating_SOLAR',
+     'heating_DRYBIOMASS', 'heating_WETBIOMASS', 'heating_GRID', 'heating_COAL', 'heating_WOOD', 'heating_OIL',
+     'heating_HYDROGEN', 'heating_NONE', 'hot_water_NATURALGAS', 'hot_water_BIOGAS', 'hot_water_SOLAR',
+     'hot_water_DRYBIOMASS', 'hot_water_WETBIOMASS', 'hot_water_GRID', 'hot_water_COAL', 'hot_water_WOOD',
+     'hot_water_OIL', 'hot_water_HYDROGEN', 'hot_water_NONE', 'cooling_NATURALGAS', 'cooling_BIOGAS', 'cooling_SOLAR',
+     'cooling_DRYBIOMASS', 'cooling_WETBIOMASS', 'cooling_GRID', 'cooling_COAL', 'cooling_WOOD', 'cooling_OIL',
+     'cooling_HYDROGEN', 'cooling_NONE', 'electricity_NATURALGAS', 'electricity_BIOGAS', 'electricity_SOLAR',
+     'electricity_DRYBIOMASS', 'electricity_WETBIOMASS', 'electricity_GRID', 'electricity_COAL', 'electricity_WOOD',
+     'electricity_OIL', 'electricity_HYDROGEN', 'electricity_NONE'
 ]
 
 
@@ -167,7 +159,8 @@ class csv_pointer:
             "district_and_monthly_faceted_by_seasons": "monthly",
             "district_and_seasonally": "seasonally",
             "district_and_annually_or_selected_period": "annually",
-            "district_and_annually_faceted_by_decades": "annually"
+            "district_and_annually_faceted_by_decades": "annually",
+            "district_and_annually": "timeline",
 
         }
         self.time_period = time_period_map.get(self.x_to_plot)
@@ -281,6 +274,9 @@ def get_x_and_x_facet(x_to_plot):
         x = 'by_period'
         x_facet = None
     elif x_to_plot == "district_and_annually_or_selected_period":
+        x = 'by_period'
+        x_facet = None
+    elif x_to_plot == "district_and_annually":
         x = 'by_period'
         x_facet = None
     else:

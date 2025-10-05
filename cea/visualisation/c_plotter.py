@@ -324,6 +324,8 @@ class bar_plot:
                 x_label = "Seasons"
             elif self.x_to_plot == 'district_and_annually_or_selected_period':
                 x_label = "Selected period"
+            elif self.x_to_plot == 'district_and_annually':
+                x_label = "Timeline"
             else:
                 raise ValueError(f"Invalid x-to-plot: {self.x_to_plot}")
 

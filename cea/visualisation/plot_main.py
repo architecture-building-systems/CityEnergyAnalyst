@@ -116,7 +116,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     
     # Use 16:9 landscape aspect ratio for professional presentation
     plot_width = 1600
-    plot_height = int(plot_width / 16 * 9)  # 16:9 aspect ratio = 900px height
+    plot_height = int(plot_width / 16 * 7)  # 16:9 aspect ratio = 900px height
     
     fig.update_layout(width=plot_width, height=plot_height)
     
