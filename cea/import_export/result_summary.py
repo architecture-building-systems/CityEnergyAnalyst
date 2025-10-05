@@ -1234,7 +1234,7 @@ def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, s
             # Write to disk
             path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='lifecycle_emissions',
                                                                                  appendix=appendix,
-                                                                                 timeline=True)
+                                                                                 timeline=True, plot=plot)
             aggregated_df.to_csv(path, index=False, float_format='%.2f')
 
 
@@ -2624,6 +2624,8 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if 'operational_emissions' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_operational_emissions)
+    if 'lifecycle_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
 
     return list_list_metrics_building
 

@@ -211,6 +211,44 @@ class data_processor:
                 'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2e'],
                 'electricity_NONE': ['E_sys_NONE_kgCO2e'],
             }
+        elif plot_cea_feature == 'lifecycle-emissions':
+            y_cea_metric_map = {
+                'operation_heating': ['operation_heating_kgCO2e'],
+                'operation_hot_water': ['operation_hot_water_kgCO2e'],
+                'operation_cooling': ['operation_cooling_kgCO2e'],
+                'operation_electricity': ['operation_electricity_kgCO2e'],
+                'production_wall_ag': ['production_wall_ag_kgCO2e'],
+                'production_wall_bg': ['production_wall_bg_kgCO2e'],
+                'production_wall_part': ['production_wall_part_kgCO2e'],
+                'production_win_ag': ['production_win_ag_kgCO2e'],
+                'production_roof': ['production_roof_kgCO2e'],
+                'production_upperside': ['production_upperside_kgCO2e'],
+                'production_underside': ['production_underside_kgCO2e'],
+                'production_floor': ['production_floor_kgCO2e'],
+                'production_base': ['production_base_kgCO2e'],
+                'production_technical_systems': ['production_technical_systems_kgCO2e'],
+                'biogenic_wall_ag': ['biogenic_wall_ag_kgCO2e'],
+                'biogenic_wall_bg': ['biogenic_wall_bg_kgCO2e'],
+                'biogenic_wall_part': ['biogenic_wall_part_kgCO2e'],
+                'biogenic_win_ag': ['biogenic_win_ag_kgCO2e'],
+                'biogenic_roof': ['biogenic_roof_kgCO2e'],
+                'biogenic_upperside': ['biogenic_upperside_kgCO2e'],
+                'biogenic_underside': ['biogenic_underside_kgCO2e'],
+                'biogenic_floor': ['biogenic_floor_kgCO2e'],
+                'biogenic_base': ['biogenic_base_kgCO2e'],
+                'biogenic_technical_systems': ['biogenic_technical_systems_kgCO2e'],
+                'demolition_wall_ag': ['demolition_wall_ag_kgCO2e'],
+                'demolition_wall_bg': ['demolition_wall_bg_kgCO2e'],
+                'demolition_wall_part': ['demolition_wall_part_kgCO2e'],
+                'demolition_win_ag': ['demolition_win_ag_kgCO2e'],
+                'demolition_roof': ['demolition_roof_kgCO2e'],
+                'demolition_upperside': ['demolition_upperside_kgCO2e'],
+                'demolition_underside': ['demolition_underside_kgCO2e'],
+                'demolition_floor': ['demolition_floor_kgCO2e'],
+                'demolition_base': ['demolition_base_kgCO2e'],
+                'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
+
+            }
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
@@ -316,7 +354,7 @@ def convert_energy_units(dataframe, target_unit, normalised=False, plot_cea_feat
     Returns:
         pd.DataFrame: A new DataFrame with converted energy units and renamed columns.
     """
-    if plot_cea_feature == 'operational-emissions':
+    if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
         assert target_unit in ['gCO2e', 'kgCO2e', 'tonCO2e'], "target_unit must be one of ['gCO2e', 'kgCO2e', 'tonCO2e']"
 
         conversion_to_wh = {'gCO2e': 1, 'kgCO2e': 1_000, 'tonCO2e': 1_000_000}
@@ -389,7 +427,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 2: Handle "by_building" mode
     if plot_instance.x_to_plot == 'by_building':
-        if plot_cea_feature == 'demand' or 'operational-emissions':
+        if plot_cea_feature in ('demand',  'operational-emissions', 'lifecycle-emissions'):
             df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
         elif plot_cea_feature in ('pv', 'pvt', 'sc'):
