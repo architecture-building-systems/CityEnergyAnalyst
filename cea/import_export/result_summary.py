@@ -1784,8 +1784,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                 path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature_formatted, appendix_formatted)
             elif appendix in ('lifecycle_emissions'):
                 os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature_formatted, appendix_formatted)
-                path_csv_timeline = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature_formatted, appendix_formatted)
+                path_csv = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature_formatted, appendix_formatted)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
@@ -1798,7 +1797,7 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 
         if appendix == 'lifecycle_emissions':
             df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
-            df_timeline.to_csv(path_csv_timeline, index=False, float_format="%.4f")
+            df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
 
         else:
             # Write to .csv files
@@ -2093,7 +2092,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
         # Handle different periods
         if period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"Day{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -2101,7 +2100,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             df['period'] = df[date_column].dt.month.map(season_mapping)
             df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
         elif period == 'annually':
-            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+            df['period'] = 'Y_' + df[date_column].dt.year.astype(str)
         else:
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
