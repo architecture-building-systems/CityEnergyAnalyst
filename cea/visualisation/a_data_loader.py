@@ -85,7 +85,8 @@ dict_plot_metrics_cea_feature = {
     'pvt': solar_metrics,
     'sc': solar_metrics,
     'lifecycle-emissions': lifecycle_emission_metrics,
-    'operational-emissions': operational_emission_metrics
+    'operational-emissions': operational_emission_metrics,
+    'emission-timeline': lifecycle_emission_metrics
 }
 
 dict_plot_analytics_cea_feature = {
