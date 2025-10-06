@@ -38,7 +38,7 @@ Import & Export:
     description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
-    parameters: ['general:scenario', result-summary]
+    parameters: ['general:scenario', result-summary, plots-building-filter]
     input-files:
       - [get_zone_geometry]
 

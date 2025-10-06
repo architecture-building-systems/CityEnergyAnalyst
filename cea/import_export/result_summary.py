@@ -2817,11 +2817,11 @@ def main(config):
 
     # Gather info from config file
     list_buildings = config.result_summary.buildings
-    integer_year_start = config.result_summary.filter_buildings_by_year_start
-    integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_construction_type
-    list_main_use_type = config.result_summary.filter_buildings_by_use_type
-    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
+    integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
+    integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
+    list_standard = config.plots_building_filter.filter_buildings_by_construction_type
+    list_main_use_type = config.plots_building_filter.filter_buildings_by_use_type
+    ratio_main_use_type = config.plots_building_filter.min_ratio_as_main_use
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_selected_time_period = config.result_summary.aggregate_by_time_period
     hour_start, hour_end = get_hours_start_end(config)
