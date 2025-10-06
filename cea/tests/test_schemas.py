@@ -8,6 +8,7 @@ import unittest
 import os
 import warnings
 from collections import defaultdict
+import inspect
 
 import cea.config
 import cea.inputlocator
@@ -194,13 +195,14 @@ class TestSchemas(unittest.TestCase):
                     "folder_name": "test",
                     "plot_cea_feature": "demand",
                 }
-                for p in list(parameters.keys()):
-                    if p not in method.__code__.co_varnames:
-                        del parameters[p]
+                # Get actual parameter names from function signature
+                sig = inspect.signature(method)
+                param_names = set(sig.parameters.keys())
+                parameters = {p: v for p, v in parameters.items() if p in param_names}
                 try:
                     folder = method(**parameters)
                 except TypeError as e:
-                    raise ValueError(f"Parameters found for {attrib}: {method.__code__.co_varnames}."
+                    raise ValueError(f"Parameters found for {attrib}: {param_names}."
                                      f"Add them to the test.") from e
                 if folder is None:
                     warnings.warn(f"{attrib} returned None, skipping...")

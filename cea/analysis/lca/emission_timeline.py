@@ -75,10 +75,10 @@ class BuildingEmissionTimeline:
         "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
     _OPERATIONAL_COLS = [
-        "heating_kgCO2",
-        "cooling_kgCO2",
-        "hot_water_kgCO2",
-        "electricity_kgCO2",
+        "operation_heating_kgCO2e",
+        "operation_cooling_kgCO2e",
+        "operation_hot_water_kgCO2e",
+        "operation_electricity_kgCO2e",
     ]
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
@@ -139,22 +139,22 @@ class BuildingEmissionTimeline:
 
         def log_emissions(area, ghg, biogenic, demolition, lifetime, key):
             self.log_emission_with_lifetime(
-                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2"
+                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
             )
             self.log_emission_with_lifetime(
                 emission=-biogenic * area,
                 lifetime=lifetime,
-                col=f"biogenic_{key}_kgCO2",
+                col=f"biogenic_{key}_kgCO2e",
             )
             self.log_emission_with_lifetime(
                 emission=demolition * area,
                 lifetime=lifetime,
-                col=f"demolition_{key}_kgCO2",
+                col=f"demolition_{key}_kgCO2e",
             )
             self.log_emission_in_timeline(
                 emission=0.0,  # when building is first built, no demolition emission
                 year=self.typology["year"],
-                col=f"demolition_{key}_kgCO2",
+                col=f"demolition_{key}_kgCO2e",
                 additive=False,
             )
 
@@ -190,6 +190,16 @@ class BuildingEmissionTimeline:
             raise ValueError(
                 f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!"
             )
+
+        # Rename columns to add operation_ prefix
+        column_mapping = {
+            "heating_kgCO2e": "operation_heating_kgCO2e",
+            "cooling_kgCO2e": "operation_cooling_kgCO2e",
+            "hot_water_kgCO2e": "operation_hot_water_kgCO2e",
+            "electricity_kgCO2e": "operation_electricity_kgCO2e"
+        }
+        operational_emissions = operational_emissions.rename(columns=column_mapping)
+
         # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
         self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[
             self._OPERATIONAL_COLS
@@ -209,16 +219,21 @@ class BuildingEmissionTimeline:
                 "Demolition year must be greater than or equal to the construction year."
             )
 
-        self.timeline.loc[self.timeline.index >= demolition_year, :] = 0.0
+        # Convert demolition_year to string format for comparison with timeline index
+        demolition_year_str = f"Y_{demolition_year}"
+        self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
         for key, value in self._MAPPING_DICT.items():
             demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
-            # if demolition_year > self.timeline.index.max(), do nothing
-            if demolition_year <= self.timeline.index.max():
+            # Convert max year to int for comparison
+            max_year_str = self.timeline.index.max()
+            max_year = int(max_year_str.replace("Y_", ""))
+            # if demolition_year > max_year, do nothing
+            if demolition_year <= max_year:
                 self.log_emission_in_timeline(
                     emission=demolition * area,
                     year=demolition_year,
-                    col=f"demolition_{key}_kgCO2",
+                    col=f"demolition_{key}_kgCO2e",
                 )
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
@@ -237,9 +252,9 @@ class BuildingEmissionTimeline:
 
         timeline = pd.DataFrame(
             {
-                "year": range(start_year, end_year + 1),
+                "period": [f"Y_{year}" for year in range(start_year, end_year + 1)],
                 **{
-                    f"{emission}_{component}_kgCO2": 0.0
+                    f"{emission}_{component}_kgCO2e": 0.0
                     for emission in self._EMISSION_TYPES
                     for component in list(self._MAPPING_DICT.keys())
                     + ["technical_systems"]
@@ -247,7 +262,8 @@ class BuildingEmissionTimeline:
                 **{col: 0.0 for col in self._OPERATIONAL_COLS},
             }
         )
-        timeline.set_index("year", inplace=True)
+        timeline['name'] = self.name  # add building name column for easier identification
+        timeline.set_index("period", inplace=True)
         return timeline
 
     def log_emission_with_lifetime(
@@ -265,14 +281,26 @@ class BuildingEmissionTimeline:
         if lifetime < 1:
             raise ValueError("Lifetime must be at least 1 year.")
 
-        years = list(
-            range(self.typology["year"], self.timeline.index.max() + 1, lifetime)
-        )
+        # Extract numeric year from string format Y_XXXX
+        start_year = self.typology["year"]
+        max_year_str = self.timeline.index.max()
+        max_year = int(max_year_str.replace("Y_", ""))
+
+        numeric_years = list(range(start_year, max_year + 1, lifetime))
+        # Convert back to string format
+        years = [f"Y_{year}" for year in numeric_years]
         self.log_emission_in_timeline(emission, years, col)
 
     def log_emission_in_timeline(
-        self, emission: float, year: int | list[int], col: str, additive: bool = True
+        self, emission: float, year: int | list[int] | str | list[str], col: str, additive: bool = True
     ) -> None:
+        # Convert single year to Y_ format if it's an integer
+        if isinstance(year, int):
+            year = f"Y_{year}"
+        # Convert list of years to Y_ format if they're integers
+        elif isinstance(year, list) and len(year) > 0 and isinstance(year[0], int):
+            year = [f"Y_{y}" for y in year]
+
         if additive:
             self.timeline.loc[year, col] += emission
         else:

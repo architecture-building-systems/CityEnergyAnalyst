@@ -3,10 +3,7 @@ Emissions analysis (LCA)
 This script is used to calculate the LCA
 """
 
-
-
-
-
+import datetime
 import os
 
 from cea.analysis.lca.embodied import lca_embodied
@@ -28,28 +25,18 @@ __status__ = "Production"
 
 
 def emissions_simplified(locator, config):
-
-    # Force the simplified embodied and operation to be true
-    # embodied = config.emissions.embodied
-    # operation = config.emissions.operational
-    embodied = True
-    operation = True
-
     # embodied emissions
-    if embodied:
-        year_to_calculate = config.emissions.year_to_calculate
-        if year_to_calculate is None:
-            year_to_calculate = 2025
-        lca_embodied(year_to_calculate, locator)
+    # get current year
+    year_to_calculate = datetime.datetime.now().year
+    print(f'Running embodied emissions for year {year_to_calculate}')
+    lca_embodied(year_to_calculate, locator)
 
     # operation emissions
-    if operation:
-        lca_operation(locator)
+    lca_operation(locator)
 
 def emissions_detailed(config):
-    if config.emissions.include_emission_timeline:
-        operational_hourly(config)
-        total_yearly(config)
+    operational_hourly(config)
+    total_yearly(config)
 
 
 def main(config):
