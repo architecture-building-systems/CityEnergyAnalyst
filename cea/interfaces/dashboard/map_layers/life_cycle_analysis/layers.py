@@ -36,6 +36,10 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         return sorted(list(columns))
 
+    def _get_results_files(self, _):
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_lca_timeline_building(b) for b in buildings]
+
     def _get_period_range(self) -> list:
         """Get the valid period range from available data"""
         try:
@@ -97,8 +101,8 @@ class LifecycleEmissionsMapLayer(MapLayer):
                 file_locator="locator:get_zone_geometry",
             ),
             FileRequirement(
-                "Embodied Emissions Results",
-                file_locator="locator:get_total_yearly_operational_building",
+                "Embodied Emissions Timeline Files",
+                file_locator="layer:_get_results_files",
             ),
         ]
 
@@ -242,8 +246,8 @@ class OperationalEmissionsMapLayer(MapLayer):
                 file_locator="locator:get_zone_geometry",
             ),
             FileRequirement(
-                "Operational Emissions Results",
-                file_locator="locator:get_total_yearly_operational_building",
+                "Operational Emissions Hourly Files",
+                file_locator="layer:_get_results_files",
             ),
         ]
 
