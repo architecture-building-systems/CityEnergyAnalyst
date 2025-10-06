@@ -124,8 +124,16 @@ class BaseDatabase(Base):
                     path = getattr(locator, locator_method)()
                 except AttributeError:
                     raise ValueError(f"Locator method for {field.name} not found: {locator_method}")
+                
+                config = {}
+
+                # Get columns from schema if available
+                columns = self.schema().get(field.name, {}).get('columns', None)
+                if columns and isinstance(columns, dict):
+                    config['columns'] = list(columns.keys())
+                
                 os.makedirs(os.path.dirname(path), exist_ok=True)
-                value.to_csv(path)
+                value.to_csv(path, **config)
             elif isinstance(value, dict):
                 # Assume is _library with special index handling
                 # e.g., Schedules and Feedstocks classes
