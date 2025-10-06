@@ -220,12 +220,12 @@ class InputLocator(object):
         if plot:
             plot_cea_feature = plot_cea_feature.replace('_', '-')
             appendix = appendix.replace('_', '-')
-        if abs(hour_end - hour_start) != 8760 and time_period == 'annually' and plot_cea_feature != 'lifecycle-emissions':
-            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
-                                f'{appendix}_selected_hours_buildings.csv')
-        elif plot_cea_feature == 'lifecycle-emissions':
+        if plot_cea_feature == 'lifecycle-emissions':
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_buildings.csv")
+        elif abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                                f'{appendix}_selected_hours_buildings.csv')
         else:
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
