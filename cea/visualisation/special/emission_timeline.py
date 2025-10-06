@@ -35,7 +35,8 @@ class EmissionTimelinePlot:
     - Negative emissions (biogenic, pv) below x-axis
     """
 
-    def __init__(self, df_to_plotly, list_y_columns, plot_title="Emission Timeline", bool_accumulated=False):
+    def __init__(self, df_to_plotly, list_y_columns, plot_title="Emission Timeline",
+                 bool_accumulated=False, period_start=None, period_end=None):
         """
         Initialize the EmissionTimelinePlot.
 
@@ -51,11 +52,33 @@ class EmissionTimelinePlot:
             Title for the plot
         bool_accumulated : bool
             If True, show cumulative emissions over time. If False, show annual emissions.
+        period_start : int, optional
+            Start year for filtering data. If None, use all data from the beginning.
+        period_end : int, optional
+            End year for filtering data. If None, use all data to the end.
         """
-        self.df = df_to_plotly
+        # Filter dataframe by period if specified
+        if period_start is not None or period_end is not None:
+            # Convert X column to numeric for comparison
+            # Handle formats like 'Y_2024' or just '2024'
+            x_values = df_to_plotly['X'].astype(str).str.replace('Y_', '', regex=False)
+            x_values = pd.to_numeric(x_values, errors='coerce')
+            mask = pd.Series([True] * len(df_to_plotly))
+
+            if period_start is not None:
+                mask &= x_values >= period_start
+            if period_end is not None:
+                mask &= x_values <= period_end
+
+            self.df = df_to_plotly[mask].copy()
+        else:
+            self.df = df_to_plotly
+
         self.y_columns = list_y_columns
         self.plot_title = plot_title
         self.bool_accumulated = bool_accumulated
+        self.period_start = period_start
+        self.period_end = period_end
 
     def categorize_and_aggregate_emissions(self):
         """
@@ -128,6 +151,13 @@ class EmissionTimelinePlot:
             is_positive = info['positive']
             data = info['data']
 
+            # Apply cumulative sum if bool_accumulated is True
+            if self.bool_accumulated:
+                data = data.cumsum()
+                hover_label = "Cumulative Emission"
+            else:
+                hover_label = "Emission"
+
             if is_positive:
                 # Positive emissions (above x-axis) - solid line
                 fig.add_trace(go.Scatter(
@@ -136,7 +166,7 @@ class EmissionTimelinePlot:
                     mode='lines',
                     name=display_name,
                     line=dict(color=color, width=3),
-                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>Emission: %{{y:.2f}}<extra></extra>'
+                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: %{{y:.2f}}<extra></extra>'
                 ))
             else:
                 # Negative emissions (below x-axis) - dashed line
@@ -146,10 +176,14 @@ class EmissionTimelinePlot:
                     mode='lines',
                     name=display_name,
                     line=dict(color=color, width=3, dash='dash'),
-                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>Emission: -%{{y:.2f}}<extra></extra>'
+                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: -%{{y:.2f}}<extra></extra>'
                 ))
 
         # Update layout
+        y_axis_title = self._get_y_axis_label()
+        if self.bool_accumulated:
+            y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
+
         fig.update_layout(
             title=dict(
                 text=self.plot_title,
@@ -162,7 +196,7 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)'
             ),
             yaxis=dict(
-                title=self._get_y_axis_label(),
+                title=y_axis_title,
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
@@ -249,6 +283,7 @@ def plot_emission_timeline(config, context: dict):
     period_start = context.get('period_start', 0)
     period_end = context.get('period_end', 8759)
     plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    bool_accumulated = context.get('bool_accumulated', False)
     solar_panel_types_list = []
     plot_config_general = config.sections["plots-general"]
     plots_building_filter = config.sections["plots-building-filter"]
@@ -269,7 +304,10 @@ def plot_emission_timeline(config, context: dict):
                                                    solar_panel_types_list)
 
     # Create EmissionTimelinePlot instance
-    plot_obj = EmissionTimelinePlot(df_to_plotly, list_y_columns, plot_title="Emission Timeline")
+    plot_title = "Cumulative Emission Timeline" if bool_accumulated else "Emission Timeline"
+    plot_obj = EmissionTimelinePlot(df_to_plotly, list_y_columns, plot_title=plot_title,
+                                   bool_accumulated=bool_accumulated,
+                                   period_start=period_start, period_end=period_end)
 
     # Generate the figure
     fig = plot_obj.create_plot()
@@ -300,10 +338,15 @@ def main(config):
     print(f"Filtered buildings list: {list_buildings}")
     print(f"Number of buildings: {len(list_buildings)}")
 
+    context = {
+        'feature': 'emission-timeline',
+        'period_start': 2035,  # Start year
+        'period_end': 2060,    # End year
+        'solar_panel_types': {},
+        'bool_accumulated': bool_accumulated
+    }
 
-    context = {'feature': 'emission-timeline', 'period_end': 2035, 'period_start': 2060, 'solar_panel_types': {}}
-
-    # Generate comfort charts for all buildings
+    # Generate emission timeline
     fig = plot_emission_timeline(config, context)
 
     print(fig)
