@@ -27,9 +27,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# class EmissionTimelinePlot(config.project, {'building': list_buildings,
-#                                                  'scenario-name': config.scenario_name}, cache):
-#     return plot_obj
+class EmissionTimelinePlot(df_to_plotly, list_y_columns):
+    return plot_obj
 
 def plot_emission_timeline(config, context: dict):
     scenario = config.scenario
@@ -56,7 +55,9 @@ def plot_emission_timeline(config, context: dict):
                                                    df_architecture_data,
                                                    solar_panel_types_list)
 
-    return df_to_plotly, list_y_columns
+    plot_obj =
+
+    return plot_obj
 
 
 def create_one_district_plot(building_plots):
