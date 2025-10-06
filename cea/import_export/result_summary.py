@@ -985,13 +985,9 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
         # Sum all values first
         for df in list_dataframes:
             for col in aggregated_df.columns:
-                if col == 'date':
-                    continue
-                if col == 'period':
-                    continue
-                if col == 'name':
-                    pass
-                aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+                # Only sum numeric columns, skip string columns like 'name' or 'date'
+                if pd.api.types.is_numeric_dtype(aggregated_df[col]) and pd.api.types.is_numeric_dtype(df[col]):
+                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
         
         # Then apply appropriate operations
         for col in aggregated_df.columns:
@@ -1149,7 +1145,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         # Handle remaining non-numeric columns
         remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols + ([groupby_cols] if isinstance(groupby_cols, str) else groupby_cols if isinstance(groupby_cols, list) else [])]
         for col in remaining_cols:
-            if df[col].dtype in [int, float]:
+            if pd.api.types.is_numeric_dtype(df[col]):
                 result[col] = grouped[col].sum()
             else:
                 result[col] = grouped[col].first()
@@ -1174,7 +1170,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         # Handle remaining non-numeric columns  
         remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols]
         for col in remaining_cols:
-            if df[col].dtype in [int, float]:
+            if pd.api.types.is_numeric_dtype(df[col]):
                 result[col] = df[col].sum()
             else:
                 result[col] = df[col].iloc[0] if len(df) > 0 else None
