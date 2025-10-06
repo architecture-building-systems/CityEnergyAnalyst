@@ -191,17 +191,21 @@ class InputLocator(object):
             return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
                                 f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix, timeline=False, plot=False):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix, plot=False):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
         if plot:
             cea_feature = cea_feature.replace('_', '-')
             appendix = appendix.replace('_', '-')
-        if appendix == 'lifecycle-emissions' and timeline:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            f"{appendix}_timeline.csv")
-        else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            f"{appendix}_buildings.csv")
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+                        f"{appendix}_buildings.csv")
+
+    def get_export_results_summary_cea_feature_timeline_file(self, summary_folder, cea_feature, appendix, plot=False):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_timeline.csv"""
+        if plot:
+            cea_feature = cea_feature.replace('_', '-')
+            appendix = appendix.replace('_', '-')
+        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
+                        f"{appendix}_timeline.csv")
 
     def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix, plot=False):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_buildings.csv"""
