@@ -202,13 +202,16 @@ class csv_pointer:
 
     def _get_non_analytics_summary_path(self, summary_folder):
         """Helper function to retrieve the non-analytics summary CSV path."""
+        cea_feature = self.plot_cea_feature if not self.plot else self.plot_cea_feature.replace('_', '-')
+        appendix = self.appendix if not self.plot else self.appendix.replace('_', '-')
+
         if self.bool_aggregate_by_building:
             return self.locator.get_export_plots_cea_feature_time_resolution_buildings_file(
-                self.plot_cea_feature, self.appendix, self.time_period, self.period_start, self.period_end, self.plot
+                cea_feature, appendix, self.time_period, self.period_start, self.period_end
             )
         else:
             return self.locator.get_export_results_summary_cea_feature_time_period_file(
-                summary_folder, self.plot_cea_feature, self.appendix, self.time_period, self.period_start, self.period_end, self.plot
+                summary_folder, cea_feature, appendix, self.time_period, self.period_start, self.period_end
             )
 
     def _get_analytics_summary_path(self, summary_folder):

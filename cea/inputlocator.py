@@ -169,38 +169,26 @@ class InputLocator(object):
         return os.path.join(summary_folder, '_selected_buildings.csv')
 
     def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature: str, appendix,
-                                                                time_period, hour_start, hour_end, plot=False):
+                                                                time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
-        if plot:
-            cea_feature = cea_feature.replace('_', '-')
-            appendix = appendix.replace('_', '-')
         folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(summary_folder, folder_name, f'{appendix}_selected_hours.csv')
         else:
             return os.path.join(summary_folder, folder_name, f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature: str, appendix, plot=False):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature: str, appendix):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
-        if plot:
-            cea_feature = cea_feature.replace('_', '-')
-            appendix = appendix.replace('_', '-')
         folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         return os.path.join(summary_folder, folder_name, f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_timeline_file(self, summary_folder, cea_feature: str, appendix, plot=False):
+    def get_export_results_summary_cea_feature_timeline_file(self, summary_folder, cea_feature: str, appendix):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_timeline.csv"""
-        if plot:
-            cea_feature = cea_feature.replace('_', '-')
-            appendix = appendix.replace('_', '-')
         folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         return os.path.join(summary_folder, folder_name, f"{appendix}_timeline.csv")
 
-    def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix, plot=False):
+    def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_buildings.csv"""
-        if plot:
-            plot_cea_feature = plot_cea_feature.replace('_', '-')
-            appendix = appendix.replace('_', '-')
         return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                             f"{appendix}_buildings.csv")
 
@@ -215,11 +203,8 @@ class InputLocator(object):
             return os.path.join(summary_folder, folder_name, f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
-                                                                      time_period, hour_start, hour_end, plot=False):
+                                                                      time_period, hour_start, hour_end):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        if plot:
-            plot_cea_feature = plot_cea_feature.replace('_', '-')
-            appendix = appendix.replace('_', '-')
         if plot_cea_feature == 'lifecycle-emissions':
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_buildings.csv")

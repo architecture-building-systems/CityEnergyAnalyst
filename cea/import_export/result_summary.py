@@ -1228,8 +1228,11 @@ def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, s
                 aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
 
             # Write to disk
-            path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature='lifecycle_emissions',
-                                                                                 appendix=appendix, plot=plot)
+            cea_feature = "lifecycle_emissions"
+            _cea_feature = cea_feature if not plot else cea_feature.replace("_", "-")
+            _appendix = appendix if not plot else appendix.replace("_", "-")
+            path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature=_cea_feature, appendix=_appendix)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
             aggregated_df.to_csv(path, index=False, float_format='%.2f')
 
 
@@ -1640,6 +1643,14 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
         list_time_period = list_list_time_period[m]
         appendix = list_appendix[m]
 
+        # Convert underscores to hyphens if writing to plot folder
+        if plot:
+            cea_feature_formatted = cea_feature.replace('_', '-')
+            appendix_formatted = appendix.replace('_', '-')
+        else:
+            cea_feature_formatted = cea_feature
+            appendix_formatted = appendix
+
         # Write .csv files for each DataFrame
         for n in range(len(list_df_aggregate_time_period)):
             df = list_df_aggregate_time_period[n]
@@ -1651,7 +1662,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if only one day is involved
@@ -1660,7 +1671,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
 
@@ -1669,7 +1680,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 # if all days selected fall into the same month
@@ -1678,7 +1689,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
                     break
                 elif len(df) > 1 and time_period == 'monthly':
@@ -1686,7 +1697,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'seasonally':
@@ -1694,7 +1705,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
                 elif time_period == 'hourly':
@@ -1702,7 +1713,7 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
                         os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
                         path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
                     else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end, plot=plot)
+                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
                     df.to_csv(path_csv, index=False, float_format="%.2f")
 
             else:
@@ -1763,23 +1774,28 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
         else:
+            # Convert underscores to hyphens for plot file paths
+            plot_cea_feature_formatted = plot_cea_feature.replace('_', '-')
+            appendix_formatted = appendix.replace('_', '-')
+            cea_feature_formatted = cea_feature.replace('_', '-')
+
             if appendix in ('architecture'):
                 # Create the .csv file path
-                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix, plot=plot)
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature_formatted, appendix_formatted)
             elif appendix in ('lifecycle_emissions'):
-                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix, plot=plot)
-                path_csv_timeline = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature, appendix, plot=plot)
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature_formatted, appendix_formatted)
+                path_csv_timeline = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature_formatted, appendix_formatted)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end, plot=plot)
-                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature_formatted, appendix_formatted, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
                 else:
-                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end, plot=plot)
+                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature_formatted, appendix_formatted, time_resolution, hour_start, hour_end)
 
         if appendix == 'lifecycle_emissions':
             df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
@@ -2667,6 +2683,7 @@ def replace_hyphens_with_underscores(string_list):
         list of str: List with hyphens replaced by underscores.
     """
     return [s.replace('-', '_') for s in string_list]
+
 
 def process_building_summary(config, locator,
                              hour_start, hour_end, list_buildings,
