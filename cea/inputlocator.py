@@ -217,8 +217,7 @@ class InputLocator(object):
 
     def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
-        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
-        return os.path.join(summary_folder, folder_name, 'analytics')
+        return os.path.join(summary_folder, CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature), 'analytics')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
