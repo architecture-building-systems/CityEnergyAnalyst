@@ -432,9 +432,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
                'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
                'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
-               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
-               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-               'PV_electricity_carbon_intensity[tonCO2-eq/kWh]'],
+               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]',
+               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]'],
         "pvt_ET": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
                     'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
                     'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
@@ -2025,8 +2024,7 @@ def filter_by_building_names(df_typology, list_buildings):
 # Execute advanced UBEM analytics
 
 def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
-    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-                         'PV_electricity_carbon_intensity[tonCO2-eq/kWh]']
+    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
     list_list_useful_cea_results_pv, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings, bool_analytics=True)
     list_list_useful_cea_results_demand, _ = exec_read_and_slice(hour_start, hour_end, locator, list_demand_metrics, list_buildings)
