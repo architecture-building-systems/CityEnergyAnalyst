@@ -1464,6 +1464,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
+            print(f"Available columns: {df.columns.tolist()}")
             raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
         if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
             df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
@@ -1654,69 +1655,26 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
         for n in range(len(list_df_aggregate_time_period)):
             df = list_df_aggregate_time_period[n]
             time_period = list_time_period[n]
-            if df is not None:
-                # Determine time period name based on the content in Column ['period']
-                if time_period == 'annually':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
+            if df is None:
+                continue
 
-                # if only one day is involved
-                elif len(df) == 1 and time_period == 'daily':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-                    break
-
-                elif len(df) > 1 and time_period == 'daily':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                # if all days selected fall into the same month
-                elif len(df) == 1 and time_period == 'monthly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-                    break
-                elif len(df) > 1 and time_period == 'monthly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                elif time_period == 'seasonally':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                elif time_period == 'hourly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
+            # Get the correct path based on analytics flag
+            if bool_analytics:
+                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(
+                    summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
             else:
-                pass    # Allow the missing results and will just pass
+                path_csv = locator.get_export_results_summary_cea_feature_time_period_file(
+                    summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
+
+            # Ensure parent directory exists
+            os.makedirs(os.path.dirname(path_csv), exist_ok=True)
+
+            # Write the CSV
+            df.to_csv(path_csv, index=False, float_format="%.2f")
+
+            # Break early for specific single-day conditions
+            if len(df) == 1 and time_period in ('daily', 'monthly'):
+                break
 
 
 def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False, bool_use_acronym=True):
