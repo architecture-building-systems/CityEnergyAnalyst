@@ -1628,7 +1628,9 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
     if plot_cea_feature is not None:
         target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
     else:
-        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+        from cea.inputlocator import CEA_FEATURE_FOLDER_MAP
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        target_path = os.path.join(summary_folder, folder_name)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1732,7 +1734,9 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
     if plot_cea_feature is not None:
         target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
     else:
-        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+        from cea.inputlocator import CEA_FEATURE_FOLDER_MAP
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        target_path = os.path.join(summary_folder, folder_name)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
