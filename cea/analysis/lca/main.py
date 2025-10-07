@@ -46,7 +46,7 @@ def main(config):
     print('Running emissions with scenario = %s' % config.scenario)
 
     # Calculate the simplified-aggregated
-    emissions_simplified(locator=locator, config=config)
+    # emissions_simplified(locator=locator, config=config)
 
     # Calculate the hourly and timeline
     emissions_detailed(config)
