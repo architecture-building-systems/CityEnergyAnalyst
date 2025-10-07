@@ -23,13 +23,10 @@ from compas.geometry import (
     Polygon,
     Vector,
     intersection_ray_mesh,
+    is_point_in_polygon_xy,
     normal_polygon,
 )
-from compas_occ.brep import OCCBrep
 from compas.tolerance import Tolerance
-from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
-from OCC.Core.gp import gp_Pnt
-from OCC.Core.TopAbs import TopAbs_IN
 from osgeo import gdal, osr
 
 import cea
@@ -714,24 +711,21 @@ def calc_windows_walls(facade_list: list[Polygon],
 def calc_intersection_face_solid(
     potentially_intersecting_solid_faces: list[Polygon], point: Point
 ) -> Literal[0, 1]:
-    """Point-in-(temporary) solid classification using OCCBrep built from polygons.
-
-    The polygons are converted to an OCC brep for robust point-in-solid testing. Only a boolean (0/1) is returned.
     """
-    with cea.utilities.devnull():
-        # compas_occ did not implement point in solid check, so we use OCC directly
-        potentially_intersecting_solid = OCCBrep.from_polygons(potentially_intersecting_solid_faces)
-        state = BRepClass3d_SolidClassifier(
-            potentially_intersecting_solid.occ_shape,
-            gp_Pnt(point.x, point.y, point.z),
-            1e-6,
-        )
-        point_in_solid = state.State() == TopAbs_IN
-    if point_in_solid:
-        intersects = 1
-    else:
-        intersects = 0
-    return intersects
+    Check if a point is inside a solid defined by its exterior faces.
+    Because the solids are vertical extrusions of 2D footprints, we can first check if the point is within the
+    z-bounds of the solid, then check if the point is within the 2D footprint polygon.
+    If both checks pass, the point is inside the solid.
+    """
+    # first check zmin <= point.z <= zmax for a quick rejection
+    pmin, pmax = faces_bounding_box(potentially_intersecting_solid_faces)
+    if not (pmin.z <= point.z <= pmax.z):
+        return 0
+    # then check if point is inside the bounding box of footprint
+    if not is_point_in_polygon_xy(point, potentially_intersecting_solid_faces[0]):
+        return 0
+
+    return 1
 
 
 class ElevationMap(object):
