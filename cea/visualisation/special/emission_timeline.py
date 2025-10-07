@@ -591,7 +591,7 @@ def plot_emission_timeline(config, context: dict):
     return fig
 
 
-def main(config):
+def create_emission_timeline_plot(config):
     import cea.inputlocator
 
     locator = cea.inputlocator.InputLocator(config.scenario)
@@ -611,23 +611,19 @@ def main(config):
     print(f"Filtered buildings list: {list_buildings}")
     print(f"Number of buildings: {len(list_buildings)}")
 
-    context = {
-        'feature': 'emission-timeline',
-        'period_start': 2024,  # Start year
-        'period_end': 2100,    # End year
-        'solar_panel_types': {},
-    }
+    context = config.plots_emission_timeline.context
 
     # Generate emission timeline
     fig = plot_emission_timeline(config, context)
 
+    return fig
+
+def main(config):
+    fig = create_emission_timeline_plot(config)
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-
-    # Always show in browser
-    fig.show(renderer="browser")
-
     return plot_html
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    fig = create_emission_timeline_plot(cea.config.Configuration())
+    fig.show(renderer="browser")
