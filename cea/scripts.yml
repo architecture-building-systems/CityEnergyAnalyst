@@ -707,6 +707,26 @@ Visualisation:
       - [get_zone_geometry]
       - [get_total_yearly_operational_building]
 
+  - name: plot-emission-timeline
+    label: Plot - Emission Timeline
+    short_description: Visualise how emissions evolve over time
+    description: |
+      This Feature tracks lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      
+      It offers multiple visualisation modes, including a line plot for viewing individual trends, 
+      a stacked area plot to understand total emissions and how each source contributes to the whole, 
+      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
+      
+      See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
+
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.emission_timeline
+    parameters: ['general:scenario', plots-emissions-timeline, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
     short_description: Plot bar chart of building operational emissions

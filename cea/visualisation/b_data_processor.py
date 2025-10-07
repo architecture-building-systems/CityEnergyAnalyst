@@ -25,7 +25,7 @@ class data_processor:
     def __init__(self, plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
-        self.buildings = plot_config_general.buildings
+        self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by

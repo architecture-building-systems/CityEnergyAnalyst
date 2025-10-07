@@ -118,7 +118,7 @@ class csv_pointer:
         self.plot_cea_feature = plot_cea_feature
         self.period_start = period_start
         self.period_end = period_end
-        self.buildings = plot_config_general.buildings
+        self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_normalised_by = plot_config.y_normalised_by
         self.x = x
