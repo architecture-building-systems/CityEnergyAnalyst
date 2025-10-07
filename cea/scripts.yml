@@ -63,7 +63,7 @@ Solar Radiation Analysis:
     label: Building Solar Radiation using CRAX [BETA]
     short_description: Perform solar radiation analysis using CRAX model (BETA)
     description: |
-      **This is currently in active development and may not work as expected.**  
+      **This is currently in active development and may not work as expected. Use Daysim for buildings with void_deck.**  
       
       This feature uses Tongji University's CRAX (CityRadiation Accelerator) model to perform comprehensive analyses of urban solar radiation,
       encompassing direct, diffuse, and reflected components. 
@@ -711,9 +711,10 @@ Visualisation:
     label: Plot - Emission Timeline
     short_description: Visualise how emissions evolve over time
     description: |
-      This Feature tracks lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
       
-      It offers multiple visualisation modes, including a line plot for viewing individual trends, 
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
+      a line plot for displaying overall net emissions against a target year to achieve net-zero,
       a stacked area plot to understand total emissions and how each source contributes to the whole, 
       and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
       
