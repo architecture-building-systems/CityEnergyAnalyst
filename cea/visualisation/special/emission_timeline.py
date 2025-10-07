@@ -10,7 +10,7 @@ import cea.config
 import cea.plots.demand
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Zhongming Shi"
@@ -594,8 +594,7 @@ def main(config):
 
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
-    cache = cea.plots.cache.NullPlotCache()
-
+    # cache = cea.plots.cache.NullPlotCache()
 
     list_buildings = config.plots_building_filter.buildings
     integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
