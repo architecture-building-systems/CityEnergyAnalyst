@@ -121,20 +121,22 @@ class EmissionTimelinePlot:
 
     def create_plot(self):
         """
-        Create the Plotly figure with different plot types (line, shaded_stack, shaded_stack_percentage).
+        Create the Plotly figure with different plot types (line_cumulative, line_net, shaded_stack, shaded_stack_percentage).
 
         Returns:
         --------
         go.Figure: Plotly figure object
         """
-        if self.plot_type == 'line':
+        if self.plot_type == 'line_cumulative':
             return self._create_line_plot()
+        elif self.plot_type == 'line_net':
+            return self._create_line_net_plot()
         elif self.plot_type == 'shaded_stack':
             return self._create_stacked_area_plot(percentage=False)
         elif self.plot_type == 'shaded_stack_percentage':
             return self._create_stacked_area_plot(percentage=True)
         else:
-            # Default to line plot
+            # Default to line_cumulative plot
             return self._create_line_plot()
 
     def _create_line_plot(self):
@@ -185,7 +187,9 @@ class EmissionTimelinePlot:
                     y=-data,  # Negate to show below x-axis
                     mode='lines',
                     name=display_name,
-                    line=dict(color=color, width=3, dash='dash'),
+                    line=dict(color=color, width=3,
+                              # dash='dash'
+                              ),
                     hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: -%{{y:.2f}}<extra></extra>'
                 ))
 
@@ -224,6 +228,93 @@ class EmissionTimelinePlot:
                 x=1.05
             ),
             margin=dict(l=80, r=200, t=80, b=60)
+        )
+
+        return fig
+
+    def _create_line_net_plot(self):
+        """
+        Create line plot showing net emissions (positive - negative) over time.
+        This plot always shows cumulative emissions to track progress toward net-zero.
+
+        Returns:
+        --------
+        go.Figure: Plotly figure object
+        """
+        aggregated_data = self.categorize_and_aggregate_emissions()
+
+        # Separate positive and negative emissions
+        positive_total = pd.Series(0, index=self.df.index)
+        negative_total = pd.Series(0, index=self.df.index)
+
+        for category, info in aggregated_data.items():
+            data = info['data']
+            if info['positive']:
+                positive_total += data
+            else:
+                negative_total += data
+
+        # Calculate net emissions (positive - negative)
+        net_emissions = positive_total - negative_total
+
+        # Apply cumulative sum (line_net always shows cumulative)
+        net_emissions_cumulative = net_emissions.cumsum()
+
+        fig = go.Figure()
+
+        # Add net emissions line
+        fig.add_trace(go.Scatter(
+            x=self.df['X'],
+            y=net_emissions_cumulative,
+            mode='lines',
+            name='Net Emissions',
+            line=dict(color=COLOURS_TO_RGB['black'], width=3),
+            hovertemplate='<b>Net Emissions</b><br>Year: %{x}<br>Cumulative Net Emission: %{y:.2f}<extra></extra>'
+        ))
+
+        # Add zero reference line
+        fig.add_trace(go.Scatter(
+            x=self.df['X'],
+            y=[0] * len(self.df),
+            mode='lines',
+            name='Net-Zero Target',
+            line=dict(color='green', width=2, dash='dash'),
+            hovertemplate='<b>Net-Zero Target</b><extra></extra>'
+        ))
+
+        # Update layout
+        y_axis_title = self._get_y_axis_label()
+        y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Net Emissions')
+
+        fig.update_layout(
+            title=dict(
+                text=self.plot_title,
+                x=0,
+                xanchor='left'
+            ),
+            xaxis=dict(
+                title='Time horizon - Year',
+                showgrid=True,
+                gridcolor='rgba(200,200,200,0.3)'
+            ),
+            yaxis=dict(
+                title=y_axis_title,
+                showgrid=True,
+                gridcolor='rgba(200,200,200,0.3)',
+                zeroline=True,
+                zerolinewidth=2,
+                zerolinecolor='green'
+            ),
+            hovermode='x unified',
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            legend=dict(
+                orientation='v',
+                yanchor='top',
+                y=0.99,
+                xanchor='right',
+                x=0.99
+            )
         )
 
         return fig
@@ -448,8 +539,13 @@ def plot_emission_timeline(config, context: dict):
                                                    df_architecture_data,
                                                    solar_panel_types_list)
 
-    df_to_plotly['biogenic_underside_kgCO2e'] = df_to_plotly['operation_hot_water_kgCO2e']
-    df_to_plotly['pv_kgCO2e'] = df_to_plotly['operation_electricity_kgCO2e']
+    # Add placeholder columns for biogenic and PV if their source columns exist
+    if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
+        df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
+        list_y_columns.append('biogenic_underside_kgCO2e/m2')
+    if 'operation_electricity_kgCO2e/m2' in df_to_plotly.columns:
+        df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_electricity_kgCO2e/m2']
+        list_y_columns.append('pv_kgCO2e/m2')
 
     # Create EmissionTimelinePlot instance
     plot_title = "CEA-4 Emission Timeline"
