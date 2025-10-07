@@ -26,8 +26,7 @@ from cea.resources.radiation.building_geometry_radiation import (
     SURFACE_TYPES,
 )
 from cea.resources.radiation.sensor_area_calculator import (
-    build_sensor_patches,
-    patch_centers_from_patches,
+    partition_polygon_by_grid,
 )
 from cea.resources.utils import get_radiation_bin_path
 
@@ -155,8 +154,9 @@ def generate_sensor_surfaces(
     list[int],
 ]:
     moved_face: Polygon = face.translated(normal.scaled(0.01))
-    _, patches_nested, _ = build_sensor_patches(moved_face, grid_dx=grid_size, grid_dy=grid_size)
-    sensors, _, areas, _ = patch_centers_from_patches(patches_nested)
+    patches = partition_polygon_by_grid(moved_face, grid_dx=grid_size, grid_dy=grid_size)
+    sensors = [patch.centroid for patch in patches]
+    areas = [patch.area for patch in patches]
     
     n_sensors = len(sensors)
     # calculate list of properties per surface
