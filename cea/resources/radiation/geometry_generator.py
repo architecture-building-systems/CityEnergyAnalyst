@@ -572,7 +572,8 @@ def calc_solid(face_footprint: Polygon,
     if len(building_breps) == 1:
         building_brep = building_breps[0]
     else:
-        building_brep = building_breps[0].boolean_union(*building_breps[1:])
+        # building_brep = building_breps[0].boolean_union(*building_breps[1:])
+        building_brep = OCCBrep.from_boolean_union(building_breps[0], building_breps[1:])
     return [face.to_polygon() for face in building_brep.faces]
 
 def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
