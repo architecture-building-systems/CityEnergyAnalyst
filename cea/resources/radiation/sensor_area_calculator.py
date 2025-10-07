@@ -1,11 +1,17 @@
 import math
 from collections import defaultdict
 from compas.geometry import Point, Vector, Polygon, Frame
+# from compas.tolerance import Tolerance
+
+# tol = Tolerance()
+# tol.relative = 1e-10  # because earth perimeter is 4e8
 
 EPS = 1e-9
 
-def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
-                         ) -> tuple[list[Point], list[list[Polygon]], list[float]]:
+
+def build_sensor_patches(
+    face: Polygon, grid_dx: float, grid_dy: float
+) -> tuple[list[Point], list[list[Polygon]], list[float]]:
     """Return (sensor_points_world, patches_per_sensor_world, areas_per_sensor).
 
     Coverage is exact: the union of all patches equals `face`.
@@ -13,12 +19,11 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
     """
     # 1) Work in the face's local 2D frame
     f = Frame.from_points(face.points[0], face.points[1], face.points[2])
-    pts_local = [f.to_local_coordinates(p) for p in face.points]
-    poly_local = Polygon(pts_local)
+    poly_local: Polygon = f.to_local_coordinates(face)
 
     # 2) Regular grid covering the local bounding box
-    xs = [p.x for p in pts_local]
-    ys = [p.y for p in pts_local]
+    xs = [p.x for p in poly_local.points]
+    ys = [p.y for p in poly_local.points]
     xmin, xmax = min(xs), max(xs)
     ymin, ymax = min(ys), max(ys)
 
@@ -56,7 +61,9 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
     patches_local: defaultdict[tuple[int, int], list[Polygon]] = defaultdict(list)
 
     # Helper to choose owner for a cell patch
-    def choose_owner(i: int, j: int, centroid_xy: tuple[float, float]) -> tuple[int, int]:
+    def choose_owner(
+        i: int, j: int, centroid_xy: tuple[float, float]
+    ) -> tuple[int, int]:
         # Prefer inside corners of this cell (deterministic priority)
         candidates = [(i, j), (i + 1, j), (i, j + 1), (i + 1, j + 1)]
         inside_corners = [c for c in candidates if c in idx_in]
@@ -66,7 +73,7 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
         cx, cy = centroid_xy
         best = None
         best_d2 = float("inf")
-        for (ii, jj) in idx_in:
+        for ii, jj in idx_in:
             x, y = coords[(ii, jj)]
             d2 = (x - cx) ** 2 + (y - cy) ** 2
             if d2 < best_d2:
@@ -84,12 +91,14 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
             x1 = x0 + dx
 
             # Cell rectangle (in local XY)
-            cell_rect = Polygon([
-                Point(x0, y0, 0.0),
-                Point(x1, y0, 0.0),
-                Point(x1, y1, 0.0),
-                Point(x0, y1, 0.0),
-            ])
+            cell_rect = Polygon(
+                [
+                    Point(x0, y0, 0.0),
+                    Point(x1, y0, 0.0),
+                    Point(x1, y1, 0.0),
+                    Point(x0, y1, 0.0),
+                ]
+            )
 
             # Intersection with the face
             try:
@@ -112,14 +121,18 @@ def build_sensor_patches(face: Polygon, grid_dx: float, grid_dy: float
     for key in sensor_keys_order:
         sensors_world.append(sensors_by_key[key])
         local_patches = patches_local.get(key, [])
-        patches_world = [f.to_world_coordinates(patch) for patch in local_patches]
+        patches_world: list[Polygon] = [
+            f.to_world_coordinates(patch) for patch in local_patches
+        ]
         patches_per_sensor_world.append(patches_world)
         areas_per_sensor.append(sum(p.area for p in local_patches))
 
     return sensors_world, patches_per_sensor_world, areas_per_sensor
 
 
-def patch_centers_from_patches(patches_per_sensor_world: list[list[Polygon]], nudge: float = 0.0):
+def patch_centers_from_patches(
+    patches_per_sensor_world: list[list[Polygon]], nudge: float = 0.0
+):
     """Flatten patches and return (centers, flat_patches, areas, owners).
 
     centers: centroid point of each patch (optionally nudged along patch normal)
@@ -144,13 +157,14 @@ def patch_centers_from_patches(patches_per_sensor_world: list[list[Polygon]], nu
             owners.append(owner_idx)
 
     return centers, flat_patches, areas, owners
+
+
 # ------------------------------- demo ---------------------------------------
 
 if __name__ == "__main__":
     from random import Random
     from compas.colors import Color
     from compas_viewer import Viewer
-
 
     def draw_sensor_groups(viewer, sensors, patches_per_sensor, seed: int = 3):
         """Color each sensor and its patches with the same random color."""
@@ -190,7 +204,9 @@ if __name__ == "__main__":
 
     # swap to patch-centric sensors
     centers1, patches1_flat, areas1_flat, owners1 = patch_centers_from_patches(patches1)
-    print(f"original sensors: {len(sensors1)}, now patches: {len(patches1_flat)}, areas number: {len(areas1_flat)}, owners: {len(owners1)}")
+    print(
+        f"original sensors: {len(sensors1)}, now patches: {len(patches1_flat)}, areas number: {len(areas1_flat)}, owners: {len(owners1)}"
+    )
 
     # draw
     for poly in patches1_flat:
@@ -205,13 +221,14 @@ if __name__ == "__main__":
     # 2) Tilted rectangle in 3D
     base_3d = Polygon.from_rectangle(point=Point(0, 0, 0), width=8, height=4)
     face_3d = (
-        base_3d
-        .rotated(math.radians(25), axis=Vector.Xaxis(), point=Point(0, 0, 0))
+        base_3d.rotated(math.radians(25), axis=Vector.Xaxis(), point=Point(0, 0, 0))
         .rotated(math.radians(-20), axis=Vector.Yaxis(), point=Point(0, 0, 0))
         .translated(Vector(0, 0, 3))
     )
 
-    sensors2, patches2, areas2 = build_sensor_patches(face_3d, grid_dx=0.472, grid_dy=1.83)
+    sensors2, patches2, areas2 = build_sensor_patches(
+        face_3d, grid_dx=0.472, grid_dy=1.83
+    )
     viewer.scene.add(face_3d)
 
     for sensor_patches in patches2:
@@ -239,7 +256,9 @@ if __name__ == "__main__":
     # rotate around world axes and move somewhere in space
     face_t = face_t.rotated(math.radians(35), axis=Vector.Xaxis(), point=Point(0, 0, 0))
     face_t = face_t.rotated(math.radians(15), axis=Vector.Yaxis(), point=Point(0, 0, 0))
-    face_t = face_t.rotated(math.radians(-20), axis=Vector.Zaxis(), point=Point(0, 0, 0))
+    face_t = face_t.rotated(
+        math.radians(-20), axis=Vector.Zaxis(), point=Point(0, 0, 0)
+    )
     face_t = face_t.translated(Vector(6, -6, 3))
 
     sensors3, patches3, areas3 = build_sensor_patches(face_t, grid_dx=0.4, grid_dy=0.4)
