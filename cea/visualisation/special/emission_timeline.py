@@ -272,7 +272,7 @@ class EmissionTimelinePlot:
 
         # Add vertical line for net-zero target year if configured
         net_zero_target_year = self.config.plots_emission_timeline.net_zero_target_year
-        if net_zero_target_year is not None:
+        if net_zero_target_year is not None and not self.df.empty:
             # Format the target year to match X-axis format (e.g., Y_2060)
             # Check if X values have Y_ prefix
             first_x = str(self.df['X'].iloc[0])
