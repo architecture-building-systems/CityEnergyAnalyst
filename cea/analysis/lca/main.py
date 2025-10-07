@@ -40,13 +40,7 @@ def emissions_detailed(config):
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
     print('Running emissions with scenario = %s' % config.scenario)
-
-    # Calculate the simplified-aggregated
-    # emissions_simplified(locator=locator, config=config)
 
     # Calculate the hourly and timeline
     emissions_detailed(config)
