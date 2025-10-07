@@ -1,4 +1,5 @@
 # NSIS script for creating the City Energy Analyst installer
+Unicode true
 !define CEA_TITLE "City Energy Analyst"
 !define VER $%CEA_VERSION%
 !define CEA_GUI_NAME "CEA-4 Desktop"  # references productName from GUI package.json. ensure it is the same
