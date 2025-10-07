@@ -14,6 +14,11 @@ $micromambaPath = Join-Path $PSScriptRoot "micromamba.exe"
 micromamba activate cea
 
 # Run any additional commands passed as arguments
-if ($args) {
-    & $args
+if ($args.Count -gt 0) {
+    $command = $args[0]
+    $commandArgs = @()
+    if ($args.Count -gt 1) {
+        $commandArgs = $args[1..($args.Count - 1)]
+    }
+    & $command @commandArgs
 }
