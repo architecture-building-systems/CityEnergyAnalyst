@@ -73,6 +73,7 @@ class EmissionTimelinePlot:
         self.bool_accumulated = bool_accumulated
         self.period_start = period_start
         self.period_end = period_end
+        self.config = config
 
         self.plot_type = config.plots_emission_timeline.plot_type
 
@@ -121,7 +122,7 @@ class EmissionTimelinePlot:
 
     def create_plot(self):
         """
-        Create the Plotly figure with different plot types (line_cumulative, line_net, shaded_stack, shaded_stack_percentage).
+        Create the Plotly figure with different plot types (line_cumulative, line_net_cumulative, shaded_stack_cumulative, shaded_stack_percentage_cumulative).
 
         Returns:
         --------
@@ -129,11 +130,11 @@ class EmissionTimelinePlot:
         """
         if self.plot_type == 'line_cumulative':
             return self._create_line_plot()
-        elif self.plot_type == 'line_net':
+        elif self.plot_type == 'line_net_cumulative':
             return self._create_line_net_plot()
-        elif self.plot_type == 'shaded_stack':
+        elif self.plot_type == 'shaded_stack_cumulative':
             return self._create_stacked_area_plot(percentage=False)
-        elif self.plot_type == 'shaded_stack_percentage':
+        elif self.plot_type == 'shaded_stack_percentage_cumulative':
             return self._create_stacked_area_plot(percentage=True)
         else:
             # Default to line_cumulative plot
@@ -159,7 +160,7 @@ class EmissionTimelinePlot:
         # Add traces for each category
         for category, info in aggregated_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = category.capitalize()
+            display_name = 'PV' if category == 'pv' else category.capitalize()
             is_positive = info['positive']
             data = info['data']
 
@@ -286,9 +287,14 @@ class EmissionTimelinePlot:
         y_axis_title = self._get_y_axis_label()
         y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Net Emissions')
 
+        # Add cumulative suffix to title
+        plot_title = self.plot_title
+        if 'cumulative' not in plot_title.lower():
+            plot_title = plot_title + " (Cumulative)"
+
         fig.update_layout(
             title=dict(
-                text=self.plot_title,
+                text=plot_title,
                 x=0,
                 xanchor='left'
             ),
@@ -373,7 +379,7 @@ class EmissionTimelinePlot:
         # Add positive emission traces (stacked)
         for category, data in positive_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = category.capitalize()
+            display_name = 'PV' if category == 'pv' else category.capitalize()
 
             hover_label = "Percentage" if percentage else ("Cumulative Emission" if self.bool_accumulated else "Emission")
             hover_format = "%{y:.1f}%" if percentage else "%{y:.2f}"
@@ -393,7 +399,7 @@ class EmissionTimelinePlot:
         # Add negative emission traces (stacked below x-axis)
         for category, data in negative_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = category.capitalize()
+            display_name = 'PV' if category == 'pv' else category.capitalize()
 
             hover_label = "Percentage" if percentage else ("Cumulative Emission" if self.bool_accumulated else "Emission")
             hover_format = "-%{y:.1f}%" if percentage else "-%{y:.2f}"
@@ -418,9 +424,14 @@ class EmissionTimelinePlot:
             if self.bool_accumulated:
                 y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
+        # Add cumulative suffix to title
+        plot_title = self.plot_title
+        if 'cumulative' not in plot_title.lower():
+            plot_title = plot_title + " (Cumulative)"
+
         fig.update_layout(
             title=dict(
-                text=self.plot_title,
+                text=plot_title,
                 x=0,
                 xanchor='left'
             ),
