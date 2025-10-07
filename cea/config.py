@@ -1167,8 +1167,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
 
         # TODO: Use .gitignore to ignore scenarios
         return (
-            os.path.isdir(folder_path) 
-            and os.path.exists(os.path.join(folder_path, 'inputs'))
+            os.path.isdir(folder_path)
+            and (
+                os.path.exists(os.path.join(folder_path, 'inputs')) or 
+                os.path.exists(os.path.join(folder_path, 'export', 'rhino'))
+                )
             and not folder_name.startswith(".")
             and folder_name != "__pycache__"
             and folder_name != "__MACOSX"
