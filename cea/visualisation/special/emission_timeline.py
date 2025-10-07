@@ -216,7 +216,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black'
+                zerolinecolor='black',
+                rangemode='tozero'
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -285,8 +286,9 @@ class EmissionTimelinePlot:
                 target_year_formatted = net_zero_target_year
 
             # Get the y-axis range for the vertical line
-            y_min = net_emissions_cumulative.min()
-            y_max = net_emissions_cumulative.max()
+            # Ensure the line passes through 0 by extending the range if needed
+            y_min = min(net_emissions_cumulative.min(), 0)
+            y_max = max(net_emissions_cumulative.max(), 0)
 
             fig.add_trace(go.Scatter(
                 x=[target_year_formatted, target_year_formatted],
@@ -323,7 +325,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='green'
+                zerolinecolor='black',
+                rangemode='tozero'
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -461,7 +464,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black'
+                zerolinecolor='black',
+                rangemode='tozero'
             ),
             hovermode='x unified',
             plot_bgcolor='white',
