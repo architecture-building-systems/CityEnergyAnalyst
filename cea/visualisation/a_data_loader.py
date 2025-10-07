@@ -85,7 +85,8 @@ dict_plot_metrics_cea_feature = {
     'pvt': solar_metrics,
     'sc': solar_metrics,
     'lifecycle-emissions': lifecycle_emission_metrics,
-    'operational-emissions': operational_emission_metrics
+    'operational-emissions': operational_emission_metrics,
+    'emission-timeline': lifecycle_emission_metrics
 }
 
 dict_plot_analytics_cea_feature = {
@@ -101,7 +102,7 @@ dict_plot_analytics_cea_feature = {
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
+    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -117,7 +118,7 @@ class csv_pointer:
         self.plot_cea_feature = plot_cea_feature
         self.period_start = period_start
         self.period_end = period_end
-        self.buildings = plot_config_general.buildings
+        self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_normalised_by = plot_config.y_normalised_by
         self.x = x
@@ -289,7 +290,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
+def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -304,7 +305,7 @@ def plot_input_processor(plot_config, plot_config_general, plots_building_filter
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
+    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()

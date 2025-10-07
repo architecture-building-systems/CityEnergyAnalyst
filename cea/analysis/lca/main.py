@@ -4,7 +4,6 @@ This script is used to calculate the LCA
 """
 
 import datetime
-import os
 
 from cea.analysis.lca.embodied import lca_embodied
 from cea.analysis.lca.emission_time_dependent import operational_hourly, total_yearly
@@ -24,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def emissions_simplified(locator, config):
+def emissions_simplified(locator):
     # embodied emissions
     # get current year
     year_to_calculate = datetime.datetime.now().year
@@ -40,13 +39,7 @@ def emissions_detailed(config):
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
     print('Running emissions with scenario = %s' % config.scenario)
-
-    # Calculate the simplified-aggregated
-    emissions_simplified(locator=locator, config=config)
 
     # Calculate the hourly and timeline
     emissions_detailed(config)
