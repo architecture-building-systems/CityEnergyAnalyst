@@ -23,6 +23,7 @@ from compas.geometry import (
     Polygon,
     Vector,
     intersection_ray_mesh,
+    normal_polygon,
 )
 from compas_occ.brep import OCCBrep
 from compas.tolerance import Tolerance
@@ -83,7 +84,7 @@ def identify_surfaces_type(
     # distinguishing between facade, roof and footprint.
     for f in face_list:
         # get the normal of each face
-        n = f.normal
+        n = Vector(*normal_polygon(f))
         angle_to_vertical = vec_vertical.angle(n, degrees=True)
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
@@ -568,22 +569,22 @@ def calc_solid(face_footprint: Polygon,
     building_faces: list[Polygon] = []
     for i_floor in range_floors:
         move_vector = Vector(0, 0, i_floor * floor_to_floor_height)
-        floor_baseplane = face_footprint.translated(move_vector)
-        if i_floor == range_floors[0]:
-            # include slab
-            building_faces.append(floor_baseplane)
+        floor_baseplane: Polygon = face_footprint.translated(move_vector)
+        normal_unflipped = Vector(*normal_polygon(floor_baseplane))
+        if normal_unflipped.z < 0:
+            floor_baseplane.points.reverse()
+
+        if i_floor == range_floors[0]:  # include slab with normal downwards
+            slab: Polygon = floor_baseplane.copy()
+            slab.points.reverse()
+            building_faces.append(slab)
 
         # create walls
         building_faces.extend(from_floor_extrude_walls(floor_baseplane, floor_to_floor_height))
 
-        if i_floor == range_floors[-1]:
-            # include roof
+        if i_floor == range_floors[-1]:  # include roof
             building_faces.append(floor_baseplane.translated(Vector(0, 0, floor_to_floor_height)))
-    # create brep once to align normals of all faces outwards
-    # analytically check if normals are outwards are expensive, because for a concave floor footprint
-    # it is hard to tell its normal direction without earclipping. So a brep is the easiest way.
-    brep = OCCBrep.from_polygons(building_faces)
-    return [face.to_polygon() for face in brep.faces]
+    return building_faces
 
 def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
     """reads the floor polygon and create vertical walls from each of its edges.
@@ -661,7 +662,8 @@ def calc_windows_walls(facade_list: list[Polygon],
     for surface_facade in facade_list:
         # get coordinates of surface
         ref_pypt = surface_facade.centroid
-        standard_normal = surface_facade.normal
+        standard_normal = surface_facade.normal # facade items are convex, so simplified normal calculation is sufficient.
+        # for concave surfaces, one needs to use normal_polygon(surface_facade) instead.
 
         # evaluate if the surface intersects any other solid (important to erase non-active surfaces in the building
         # simulation model)
