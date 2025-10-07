@@ -479,6 +479,7 @@ def main(config=cea.config.Configuration()):
     else:
         raise ValueError("No optimization results found! Please run the centralised optimisation script before plotting.")
 
+    objectives = []
     for run_id in run_ids:
         locator.optimization_run = run_id
         optimisation_results = locator.get_centralized_optimization_results_folder()
