@@ -120,6 +120,7 @@ jobs:
       - name: Make setup
         shell: pwsh
         run: |
+          $env:PATH += ";C:\Program Files (x86)\NSIS\Bin"
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\setup\Output"
           makensis -DWHEEL_FILE="$env:WHEEL_FILE" "$env:GITHUB_WORKSPACE\setup\cityenergyanalyst.nsi"
 
