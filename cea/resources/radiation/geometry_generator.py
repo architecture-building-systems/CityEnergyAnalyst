@@ -25,6 +25,7 @@ from compas.geometry import (
     intersection_ray_mesh,
 )
 from compas_occ.brep import OCCBrep
+from compas.tolerance import Tolerance
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 from OCC.Core.gp import gp_Pnt
 from OCC.Core.TopAbs import TopAbs_IN
@@ -57,6 +58,8 @@ from cea.utilities.standardize_coordinates import (
     get_projected_coordinate_system,
 )
 
+tol = Tolerance()
+tol.relative = 1e-10 # because the earth perimeter is 4e7, so 1e-10 relative is about 1e-3 absolute.
 
 def identify_surfaces_type(
     face_list: list[Polygon],
@@ -562,18 +565,25 @@ def calc_solid(face_footprint: Polygon,
     :return: Exterior faces (footprint, walls, roof) as polygons (no windows).
     :rtype: list[Polygon]
     """
-    building_breps: list[OCCBrep] = []
+    building_faces: list[Polygon] = []
     for i_floor in range_floors:
         move_vector = Vector(0, 0, i_floor * floor_to_floor_height)
-        slab: Polygon = face_footprint.translated(move_vector)
-        walls = from_floor_extrude_walls(slab, floor_to_floor_height)
-        ceiling = slab.translated(Vector(0, 0, floor_to_floor_height))
-        building_breps.append(OCCBrep.from_polygons([slab] + walls + [ceiling]))
-    if len(building_breps) == 1:
-        building_brep = building_breps[0]
-    else:
-        building_brep = building_breps[0].boolean_union(*building_breps[1:])
-    return [face.to_polygon() for face in building_brep.faces]
+        floor_baseplane = face_footprint.translated(move_vector)
+        if i_floor == range_floors[0]:
+            # include slab
+            building_faces.append(floor_baseplane)
+
+        # create walls
+        building_faces.extend(from_floor_extrude_walls(floor_baseplane, floor_to_floor_height))
+
+        if i_floor == range_floors[-1]:
+            # include roof
+            building_faces.append(floor_baseplane.translated(Vector(0, 0, floor_to_floor_height)))
+    # create brep once to align normals of all faces outwards
+    # analytically check if normals are outwards are expensive, because for a concave floor footprint
+    # it is hard to tell its normal direction without earclipping. So a brep is the easiest way.
+    brep = OCCBrep.from_polygons(building_faces)
+    return [face.to_polygon() for face in brep.faces]
 
 def from_floor_extrude_walls(floor: Polygon, height: float) -> list[Polygon]:
     """reads the floor polygon and create vertical walls from each of its edges.
