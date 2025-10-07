@@ -155,7 +155,7 @@ Function BaseInstallationSection
     File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
-    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
+    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
@@ -166,7 +166,7 @@ FunctionEnd
 Function CreateStartMenuShortcutsSection
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
+    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
@@ -179,7 +179,7 @@ FunctionEnd
 
 Function CreateDesktopShortcutsSection
     # create shortcuts on the Desktop for launching the CEA console
-    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
+    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
 
     CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
