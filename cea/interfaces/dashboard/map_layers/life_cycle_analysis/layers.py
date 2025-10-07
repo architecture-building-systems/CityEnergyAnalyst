@@ -320,7 +320,7 @@ class OperationalEmissionsMapLayer(MapLayer):
         return output
 
 
-class EmissionTimelinMapLayer(MapLayer):
+class EmissionTimelineMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "emission-timeline"
     label = "Emission Timeline"
