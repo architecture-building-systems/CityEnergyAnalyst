@@ -273,15 +273,29 @@ class EmissionTimelinePlot:
             hovertemplate='<b>Net Emissions</b><br>Year: %{x}<br>Cumulative Net Emission: %{y:.2f}<extra></extra>'
         ))
 
-        # Add zero reference line
-        fig.add_trace(go.Scatter(
-            x=self.df['X'],
-            y=[0] * len(self.df),
-            mode='lines',
-            name='Net-Zero Target',
-            line=dict(color='green', width=2, dash='dash'),
-            hovertemplate='<b>Net-Zero Target</b><extra></extra>'
-        ))
+        # Add vertical line for net-zero target year if configured
+        net_zero_target_year = self.config.plots_emission_timeline.net_zero_target_year
+        if net_zero_target_year is not None:
+            # Format the target year to match X-axis format (e.g., Y_2060)
+            # Check if X values have Y_ prefix
+            first_x = str(self.df['X'].iloc[0])
+            if first_x.startswith('Y_'):
+                target_year_formatted = f'Y_{net_zero_target_year}'
+            else:
+                target_year_formatted = net_zero_target_year
+
+            # Get the y-axis range for the vertical line
+            y_min = net_emissions_cumulative.min()
+            y_max = net_emissions_cumulative.max()
+
+            fig.add_trace(go.Scatter(
+                x=[target_year_formatted, target_year_formatted],
+                y=[y_min, y_max],
+                mode='lines',
+                name=f'Target Year ({net_zero_target_year})',
+                line=dict(color='red', width=2, dash='dot'),
+                hovertemplate=f'<b>Net-Zero Target Year: {net_zero_target_year}</b><extra></extra>'
+            ))
 
         # Update layout
         y_axis_title = self._get_y_axis_label()
