@@ -74,6 +74,26 @@ async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: Laye
     return choices
 
 
+@router.post('/{layer_category}/{layer_name}/{parameter}/range')
+async def get_layer_parameter_range(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
+    layer_class = load_layer(layer_name, layer_category)
+
+    project_path = params.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    # Update params.project if there is project_root
+    params.project = project_path
+    try:
+        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        range_values = layer.get_parameter_range(parameter, params.parameters)
+    except ValueError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return range_values
+
+
 @router.post('/{layer_category}/{layer_name}/generate')
 async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)

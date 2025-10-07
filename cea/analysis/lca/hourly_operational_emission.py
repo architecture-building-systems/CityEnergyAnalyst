@@ -41,27 +41,36 @@ class OperationalHourlyTimeline:
     def create_operational_timeline(self, n_hours: int) -> pd.DataFrame:
         """
         Create an operational timeline DataFrame with four columns:
-        - `heating_kgCO2`: emission for heating supply
-        - `cooling_kgCO2`: emission for cooling supply
-        - `hot_water_kgCO2`: emission for hot water supply
-        - `electricity_kgCO2`: emission for electricity supply
+        - `date`: date column from demand timeseries
+        - `heating_kgCO2e`: emission for heating supply
+        - `cooling_kgCO2e`: emission for cooling supply
+        - `hot_water_kgCO2e`: emission for hot water supply
+        - `electricity_kgCO2e`: emission for electricity supply
         The dataframe should have 8760 rows, one for each hour of the year, indexed by hour.
 
-        :return: A DataFrame with 8760 rows and 4 columns indexed by hours of the year,
+        :return: A DataFrame with 8760 rows and emission columns plus date column indexed by hours of the year,
             representing the operational emission timeline.
         :rtype: pd.DataFrame
         """
         timeline = pd.DataFrame(
             index=range(n_hours),
-            columns=[f"{key}_kgCO2" for key in self._tech_name_mapping.keys()]
+            columns=["date"] + [f"{key}_kgCO2e" for key in self._tech_name_mapping.keys()]
             + [
-                f"{tuple[0]}_{feedstock}_kgCO2"
+                f"{tuple[0]}_{feedstock}_kgCO2e"
                 for tuple in OperationalHourlyTimeline._tech_name_mapping.values()
                 for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
             ],
         )
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
         timeline.index.name = "hour"
+
+        # Add the date column from demand_timeseries
+        if 'date' in self.demand_timeseries.columns:
+            timeline['date'] = self.demand_timeseries['date'].values
+        elif 'DATE' in self.demand_timeseries.columns:
+            timeline['date'] = self.demand_timeseries['DATE'].values
+        elif 'Date' in self.demand_timeseries.columns:
+            timeline['date'] = self.demand_timeseries['Date'].values
 
         return timeline
 
@@ -112,13 +121,13 @@ class OperationalHourlyTimeline:
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
 
-            self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"] = (
+            self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
                 / eff
                 * self.emission_intensity_timeline[feedstock]  # kgCO2/kWh
             )
-            self.operational_emission_timeline[f"{demand_type}_kgCO2"] = (
-                self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2"]
+            self.operational_emission_timeline[f"{demand_type}_kgCO2e"] = (
+                self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"]
             )
 
     def save_results(self) -> None:
@@ -128,8 +137,18 @@ class OperationalHourlyTimeline:
         if not os.path.exists(self.locator.get_lca_timeline_folder()):
             os.makedirs(self.locator.get_lca_timeline_folder())
 
-        self.operational_emission_timeline.to_csv(
-            self.locator.get_lca_operational_hourly_building(self.bpr.name), float_format='%.2f')
+        # Reset index to convert hour index to a column, then reorder columns
+        df_to_save = self.operational_emission_timeline.reset_index()
+        # Move hour column to the end, and ensure date column is first
+        date_cols = ['date'] if 'date' in df_to_save.columns else []
+        emission_cols = [col for col in df_to_save.columns if col not in ['hour', 'date']]
+        hour_cols = ['hour']
+        cols = date_cols + emission_cols + hour_cols
+        df_to_save = df_to_save[cols]
+
+        df_to_save.to_csv(
+            self.locator.get_lca_operational_hourly_building(self.bpr.name),
+            index=False, float_format='%.2f')
 
 
 if __name__ == "__main__":

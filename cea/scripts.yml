@@ -38,7 +38,7 @@ Import & Export:
     description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
-    parameters: ['general:scenario', result-summary]
+    parameters: ['general:scenario', result-summary, plots-building-filter]
     input-files:
       - [get_zone_geometry]
 
@@ -63,7 +63,7 @@ Solar Radiation Analysis:
     label: Building Solar Radiation using CRAX [BETA]
     short_description: Perform solar radiation analysis using CRAX model (BETA)
     description: |
-      **This is currently in active development and may not work as expected.**  
+      **This is currently in active development and may not work as expected. Use Daysim for buildings with void_deck.**  
       
       This feature uses Tongji University's CRAX (CityRadiation Accelerator) model to perform comprehensive analyses of urban solar radiation,
       encompassing direct, diffuse, and reflected components. 
@@ -695,13 +695,34 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
-  - name: plot-embodied-emissions
-    label: Plot - Embodied Emissions
-    short_description: Plot bar chart of building embodied emissions
-    description: This Feature plots bar chart of the results of embodied emissions
+  - name: plot-lifecycle-emissions
+    label: Plot - Lifecycle Emissions
+    short_description: Plot bar chart of building lifecycle emissions
+    description: This Feature plots bar chart of the results of lifecycle emissions
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-embodied-emissions, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
+  - name: plot-emission-timeline
+    label: Plot - Emission Timeline
+    short_description: Visualise how emissions evolve over time
+    description: |
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
+      a line plot for displaying overall net emissions against a target year to achieve net-zero,
+      a stacked area plot to understand total emissions and how each source contributes to the whole, 
+      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
+      
+      See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
+
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.emission_timeline
+    parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
