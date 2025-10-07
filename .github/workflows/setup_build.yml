@@ -109,6 +109,7 @@ jobs:
       - name: Install setup plugin
         shell: bash
         run: |
+          mkdir -p "C:\Program Files (x86)\NSIS\Plugins\x86-unicode"
           cd "C:\Program Files (x86)\NSIS\Plugins\x86-unicode"
           curl -o Nsis7z.7z https://nsis.sourceforge.io/mediawiki/images/6/69/Nsis7z_19.00.7z
           7z e Nsis7z.7z Plugins/x86-unicode/nsis7z.dll
