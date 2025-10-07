@@ -16,6 +16,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# CEA feature to folder name mapping
+CEA_FEATURE_FOLDER_MAP = {
+    'sc_ET': 'sc',
+    'sc_FP': 'sc',
+    'pvt_ET': 'pvt',
+    'pvt_FP': 'pvt',
+}
+
 
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
@@ -160,69 +168,56 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/selected_buildings.csv"""
         return os.path.join(summary_folder, '_selected_buildings.csv')
 
-    def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
-        """scenario/export/results/{folder_name}/{cea_feature}"""
-        if cea_feature == 'sc_ET':
-            return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'sc_FP':
-            return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'pvt_ET':
-            return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'pvt_FP':
-            return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'embodied_emissions':
-            return os.path.join(summary_folder, 'emissions')
-        elif cea_feature == 'operation_emissions':
-            return os.path.join(summary_folder, 'emissions')
-        else:
-            return os.path.join(summary_folder, cea_feature)
-
-
-    def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature, appendix,
+    def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature: str, appendix,
                                                                 time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_selected_hours.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_selected_hours.csv')
         else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_{time_period}.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature: str, appendix):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            f"{appendix}_buildings.csv")
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, f"{appendix}_buildings.csv")
+
+    def get_export_results_summary_cea_feature_timeline_file(self, summary_folder, cea_feature: str, appendix):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_timeline.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, f"{appendix}_timeline.csv")
 
     def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_buildings.csv"""
         return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                             f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature,
+    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature: str,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_selected_hours_buildings.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_selected_hours_buildings.csv')
         else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f"{appendix}_{time_period}_buildings.csv")
+            return os.path.join(summary_folder, folder_name, f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
                                                                       time_period, hour_start, hour_end):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+        if plot_cea_feature == 'lifecycle-emissions':
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                                f"{appendix}_buildings.csv")
+        elif abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f'{appendix}_selected_hours_buildings.csv')
         else:
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
+    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            'analytics')
+        return os.path.join(summary_folder, CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature), 'analytics')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,

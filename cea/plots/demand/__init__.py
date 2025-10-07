@@ -43,7 +43,7 @@ class DemandPlotBase(PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(DemandPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', 'demand')
+        self.category_path = os.path.join('special', 'demand')
 
         # FIXME: this should probably be worked out from a declarative description of the demand outputs
         self.demand_analysis_fields = ['I_sol_kWh',
