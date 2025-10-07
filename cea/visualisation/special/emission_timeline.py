@@ -52,7 +52,8 @@ class EmissionTimelinePlot:
             # Handle formats like 'Y_2024' or just '2024'
             x_values = df_to_plotly['X'].astype(str).str.replace('Y_', '', regex=False)
             x_values = pd.to_numeric(x_values, errors='coerce')
-            mask = pd.Series([True] * len(df_to_plotly))
+            # Create mask with the same index as df_to_plotly to avoid alignment errors
+            mask = pd.Series(True, index=df_to_plotly.index)
 
             if period_start is not None:
                 mask &= x_values >= period_start
