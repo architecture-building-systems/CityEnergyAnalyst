@@ -358,7 +358,7 @@ class EmissionTimelineMapLayer(MapLayer):
     def file_requirements(cls):
         return [
             FileRequirement(
-                "Operational Emissions Hourly Files",
+                "Lifecycle Emissions Timeline Files",
                 file_locator="layer:_get_results_files",
             ),
         ]
