@@ -14,7 +14,7 @@ __status__ = "Production"
 def main(config):
     plot_2d, plot_3d =  pareto_front_main(config)
 
-    return plot_2d.to_html(), plot_3d.to_html()
+    return plot_2d.to_html(), plot_3d.to_html() if plot_3d is not None else ""
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

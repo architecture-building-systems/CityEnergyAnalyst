@@ -510,4 +510,5 @@ if __name__ == '__main__':
     plot2d, plot_3d = main(cea.config.Configuration())
 
     plot2d.show(renderer="browser")
-    plot_3d.show(renderer="browser")
+    if plot_3d is not None:
+        plot_3d.show(renderer="browser")
