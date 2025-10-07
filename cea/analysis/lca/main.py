@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def emissions_simplified(locator, config):
+def emissions_simplified(locator):
     # embodied emissions
     # get current year
     year_to_calculate = datetime.datetime.now().year
