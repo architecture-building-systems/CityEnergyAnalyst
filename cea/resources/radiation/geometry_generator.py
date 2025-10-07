@@ -36,10 +36,10 @@ import cea.utilities.parallel
 from cea.resources.radiation.building_geometry_radiation import (
     BuildingGeometryForRadiation,
 )
+from shapely.geometry import Polygon as ShapelyPolygon
 
 if TYPE_CHECKING:
     import geopandas as gpd
-    import shapely
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -221,7 +221,7 @@ def calc_building_solids(
     return solids_faces, elevations
 
 def process_geometries(
-    geometry: shapely.Polygon,
+    geometry: ShapelyPolygon,
     elevation_map: ElevationMap,
     range_floors: range,
     floor_to_floor_height: float,
@@ -232,7 +232,7 @@ def process_geometries(
     shell polygons (footprint, vertical walls, roof). Windows and adjacency are handled later.
 
     :param geometry: Single building footprint polygon.
-    :type geometry: shapely.Polygon
+    :type geometry: ShapelyPolygon
     :param elevation_map: Site elevation map.
     :type elevation_map: ElevationMap
     :param range_floors: Inclusive floor index range (e.g. ``range(void_deck, floors)``).
@@ -374,15 +374,30 @@ def print_terrain_intersection_progress(i, n, _, __):
     print("Creating geometry for building {i} completed out of {n}".format(i=i + 1, n=n))
 
 
-def are_buildings_close_to_eachother(x_1, y_1, solid2_faces: list[Polygon], dist=100):
-    pmin, pmax = faces_bounding_box(solid2_faces)
-    x_2 = pmin.x
-    y_2 = pmin.y
-    delta = math.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
-    if delta <= dist:
-        return True
-    else:
-        return False
+def are_buildings_close_to_eachother(
+    solid1_faces: list[Polygon], solid2_faces: list[Polygon]
+) -> bool:
+    """
+    Check if two buildings are close to each other, 
+    by checking if their bounding boxes intersect on the xy-plane,
+    and if their z extents overlap.
+    :param solid1_faces: list of polygons representing the faces of the first building.
+        The first face is assumed to be the footprint.
+    :param solid2_faces: list of polygons representing the faces of the second building.
+        The first face is assumed to be the footprint.
+    :return: True if the buildings are close to each other, False otherwise.
+    """
+    shapely_footprint1 = ShapelyPolygon([(p.x, p.y) for p in solid1_faces[0].points])
+    shapely_footprint2 = ShapelyPolygon([(p.x, p.y) for p in solid2_faces[0].points])
+    if shapely_footprint1.intersects(shapely_footprint2):
+        # then check z heights
+        minp_1, maxp_1 = faces_bounding_box(solid1_faces)
+        minp_2, maxp_2 = faces_bounding_box(solid2_faces)
+        if not (maxp_1.z < minp_2.z or maxp_2.z < minp_1.z):
+            return True
+
+    return False
+
 
 def faces_bounding_box(faces: list[Polygon]) -> tuple[Point, Point]:
     """Compute the axis-aligned bounding box of a collection of face polygons."""
@@ -444,9 +459,10 @@ def calc_building_geometry_zone(name: str,
     # TODO: maybe also check if one building's top roof is within another building's volume when two buildings are stacked.
     potentially_intersecting_solids: list[list[Polygon]] = []
     if not neglect_adjacent_buildings:
-        pmin, pmax = faces_bounding_box(building_faces)
         for solid_faces in all_building_solids_faces:
-            if are_buildings_close_to_eachother(pmin.x, pmin.y, solid_faces):
+            if building_faces == solid_faces:
+                continue
+            if are_buildings_close_to_eachother(building_faces, solid_faces):
                 potentially_intersecting_solids.append(solid_faces)
 
     # identify building surfaces according to angle:
@@ -511,7 +527,7 @@ def calc_building_geometry_zone(name: str,
     return name
 
 
-def burn_buildings(geometry: shapely.Polygon, 
+def burn_buildings(geometry: ShapelyPolygon, 
                    elevation_map: ElevationMap, 
                    tolerance: float,
                    ) -> tuple[Polygon, float]:
@@ -519,7 +535,7 @@ def burn_buildings(geometry: shapely.Polygon,
     with the terrain elevation map, then move the polygon to that elevation.
 
     :param geometry: a polygon representing the building footprint.
-    :type geometry: shapely.Polygon
+    :type geometry: ShapelyPolygon
     :param elevation_map: elevation map that contains the building footprint polygon.
     :type elevation_map: ElevationMap
     :param tolerance: The minimal surface area of each triangulated face. Any faces smaller than the tolerance will be deleted.
@@ -635,8 +651,8 @@ def calc_windows_walls(facade_list: list[Polygon],
     :type facade_list: list[Polygon]
     :param wwr: window to wall ratio, ranges from 0 to 1.
     :type wwr: float
-    :param potentially_intersecting_solids_faces: Exterior face sets of nearby buildings (may include the
-        current building). Empty if adjacency ignored.
+    :param potentially_intersecting_solids_faces: Exterior face sets of nearby buildings
+    (does not include the current building). Empty if adjacency ignored.
     :type potentially_intersecting_solids_faces: list[list[Polygon]]
     :raises ValueError: if wwr is not `float` or cannot be turned into `float`, raise ValueError.
     :return: windows on the facade surfaces.
@@ -667,7 +683,7 @@ def calc_windows_walls(facade_list: list[Polygon],
         data_point: Point = ref_pypt.translated(standard_normal.scaled(0.1))
         intersects = 0
         for solid_faces in potentially_intersecting_solids_faces:
-            intersects += calc_intersection_face_solid(solid_faces, data_point)
+            intersects += calc_intersection_point_solid_faces(solid_faces, data_point)
             if intersects > 0:
                 break
 
@@ -708,7 +724,7 @@ def calc_windows_walls(facade_list: list[Polygon],
     return window_list, wall_list, normals_win, normals_wall, wall_intersects
 
 
-def calc_intersection_face_solid(
+def calc_intersection_point_solid_faces(
     potentially_intersecting_solid_faces: list[Polygon], point: Point
 ) -> Literal[0, 1]:
     """
