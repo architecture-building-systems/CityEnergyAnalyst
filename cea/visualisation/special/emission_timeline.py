@@ -283,7 +283,7 @@ def plot_emission_timeline(config, context: dict):
     period_start = context.get('period_start', 0)
     period_end = context.get('period_end', 8759)
     plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
-    bool_accumulated = context.get('bool_accumulated', False)
+    bool_accumulated = True
     solar_panel_types_list = []
     plot_config_general = config.sections["plots-general"]
     plots_building_filter = config.sections["plots-building-filter"]
@@ -333,24 +333,20 @@ def main(config):
                                          integer_year_start, integer_year_end, list_standard,
                                          list_main_use_type, ratio_main_use_type)
 
-    bool_accumulated = True
-
     print(f"Filtered buildings list: {list_buildings}")
     print(f"Number of buildings: {len(list_buildings)}")
 
     context = {
         'feature': 'emission-timeline',
-        'period_start': 2035,  # Start year
-        'period_end': 2060,    # End year
+        'period_start': 2024,  # Start year
+        'period_end': 2100,    # End year
         'solar_panel_types': {},
-        'bool_accumulated': bool_accumulated
     }
+
+    bool_overlayed
 
     # Generate emission timeline
     fig = plot_emission_timeline(config, context)
-
-    print(fig)
-
 
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 
