@@ -222,13 +222,13 @@ class EmissionTimelinePlot:
             plot_bgcolor='white',
             paper_bgcolor='white',
             legend=dict(
-                orientation='v',
+                orientation='h',
                 yanchor='top',
-                y=1,
+                y=-0.15,
                 xanchor='left',
-                x=1.05
+                x=0
             ),
-            margin=dict(l=80, r=200, t=80, b=60)
+            margin=dict(l=80, r=80, t=80, b=120)
         )
 
         return fig
@@ -329,12 +329,13 @@ class EmissionTimelinePlot:
             plot_bgcolor='white',
             paper_bgcolor='white',
             legend=dict(
-                orientation='v',
+                orientation='h',
                 yanchor='top',
-                y=0.99,
-                xanchor='right',
-                x=0.99
-            )
+                y=-0.15,
+                xanchor='left',
+                x=0
+            ),
+            margin=dict(l=80, r=80, t=80, b=120)
         )
 
         return fig
@@ -466,13 +467,13 @@ class EmissionTimelinePlot:
             plot_bgcolor='white',
             paper_bgcolor='white',
             legend=dict(
-                orientation='v',
+                orientation='h',
                 yanchor='top',
-                y=1,
+                y=-0.15,
                 xanchor='left',
-                x=1.05
+                x=0
             ),
-            margin=dict(l=80, r=200, t=80, b=60)
+            margin=dict(l=80, r=80, t=80, b=120)
         )
 
         return fig
@@ -564,13 +565,13 @@ def plot_emission_timeline(config, context: dict):
                                                    df_architecture_data,
                                                    solar_panel_types_list)
 
-    # Add placeholder columns for biogenic and PV if their source columns exist
-    if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
-        df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
-        list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    if 'operation_electricity_kgCO2e/m2' in df_to_plotly.columns:
-        df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_electricity_kgCO2e/m2']
-        list_y_columns.append('pv_kgCO2e/m2')
+    # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
+    # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
+    #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
+    #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
+    # if 'operation_electricity_kgCO2e/m2' in df_to_plotly.columns:
+    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_electricity_kgCO2e/m2']
+    #     list_y_columns.append('pv_kgCO2e/m2')
 
     # Create EmissionTimelinePlot instance
     plot_title = "CEA-4 Emission Timeline"
