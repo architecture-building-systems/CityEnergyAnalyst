@@ -477,8 +477,7 @@ def main(config=cea.config.Configuration()):
     if run_ids:
         print(f"Found optimization run_ids: {run_ids}")
     else:
-        print("No optimization results found! Please run the centralised optimisation script before plotting.")
-        return
+        raise ValueError("No optimization results found! Please run the centralised optimisation script before plotting.")
 
     for run_id in run_ids:
         locator.optimization_run = run_id
