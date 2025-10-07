@@ -108,7 +108,7 @@ jobs:
 
       - name: Install NSIS
         shell: pwsh
-        run: choco install nsis -y
+        run: winget install -e --id NSIS.NSIS
 
       - name: Install setup plugin
         shell: bash
