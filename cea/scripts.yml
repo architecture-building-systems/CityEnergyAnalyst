@@ -721,7 +721,7 @@ Visualisation:
 
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.emission_timeline
-    parameters: ['general:scenario', plots-emissions-timeline, plots-building-filter]
+    parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
