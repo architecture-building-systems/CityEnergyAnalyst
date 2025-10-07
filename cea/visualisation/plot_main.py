@@ -103,7 +103,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature,
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature,
                                                                                 period_start, period_end,
                                                                                 solar_panel_types_list, bool_include_advanced_analytics)
     # Activate b_data_processor

@@ -102,7 +102,7 @@ dict_plot_analytics_cea_feature = {
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
+    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -290,7 +290,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
+def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -305,7 +305,7 @@ def plot_input_processor(plot_config, plot_config_general, plots_building_filter
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plot_config_general, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
+    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()

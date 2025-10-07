@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 
-
-
-
-
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
-import cea.plots.demand
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
@@ -549,14 +544,21 @@ def plot_emission_timeline(config, context: dict):
     plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
     bool_accumulated = True
     solar_panel_types_list = []
-    plot_config_general = config.sections["plots-general"]
     plots_building_filter = config.sections["plots-building-filter"]
     plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
     bool_include_advanced_analytics = False
     plot_config.x_to_plot = 'district_and_annually'
 
+    # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
+    # use dummy config for plot_config_general
+    class DummyConfig:
+        def __init__(self):
+            self.x_sorted_by = "default"
+            self.x_sorted_reversed = False
+    plot_config_general = DummyConfig()
+
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general,
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config,
                                                                                 plots_building_filter, scenario,
                                                                                 plot_cea_feature,
                                                                                 period_start, period_end,
