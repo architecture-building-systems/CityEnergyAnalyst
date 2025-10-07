@@ -108,7 +108,7 @@ jobs:
 
       - name: Install NSIS
         shell: pwsh
-        run: winget install -e --id NSIS.NSIS
+        run: winget install -e --id NSIS.NSIS --accept-package-agreements --accept-source-agreements
 
       - name: Install setup plugin
         shell: bash
