@@ -21,6 +21,8 @@ Unicode true
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+Var LauncherExtension
+
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 SetCompressor /FINAL lzma
@@ -100,9 +102,9 @@ Function BaseInstallationSection
 
     # Check if PowerShell exists
     ${If} ${FileExists} "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
-        StrCpy $0 "ps1"  # Use PowerShell
+        StrCpy $LauncherExtension "ps1"  # Use PowerShell
     ${Else}
-        StrCpy $0 "bat"  # Fallback to batch
+        StrCpy $LauncherExtension "bat"  # Fallback to batch
     ${EndIf}
 
     # Install GUI first so that rollback would not be as painful in case of failure
@@ -162,7 +164,7 @@ Function BaseInstallationSection
     File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
-    ${If} $0 == "ps1"
+    ${If} $LauncherExtension == "ps1"
         CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
             "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
     ${Else}
@@ -178,7 +180,7 @@ FunctionEnd
 Function CreateStartMenuShortcutsSection
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    ${If} $0 == "ps1"
+    ${If} $LauncherExtension == "ps1"
         CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
             "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
     ${Else}
@@ -196,7 +198,7 @@ FunctionEnd
 
 Function CreateDesktopShortcutsSection
     # create shortcuts on the Desktop for launching the CEA console
-    ${If} $0 == "ps1"
+    ${If} $LauncherExtension == "ps1"
         CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
             "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
     ${Else}
