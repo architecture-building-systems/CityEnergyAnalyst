@@ -4,7 +4,6 @@ This script is used to calculate the LCA
 """
 
 import datetime
-import os
 
 from cea.analysis.lca.embodied import lca_embodied
 from cea.analysis.lca.emission_time_dependent import operational_hourly, total_yearly
