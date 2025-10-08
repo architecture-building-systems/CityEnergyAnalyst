@@ -485,7 +485,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    elif OutputFileType.SUMMARY in output_files_level:
+                    if OutputFileType.SUMMARY in output_files_level:
                         # create summary files first
                         await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
@@ -502,7 +502,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                         Path(scenario_name) / "export" / "results" / item_path.relative_to(results_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    elif OutputFileType.EXPORT in output_files_level:
+                    if OutputFileType.EXPORT in output_files_level:
                         for export_folder in EXPORT_FOLDERS:
                             export_paths = (scenario_path / "export" / export_folder)
                             for root, dirs, files in os.walk(export_paths):
