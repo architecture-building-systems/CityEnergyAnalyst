@@ -908,7 +908,7 @@ def main(config):
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
 
-    list_buildings = config.plots_comfort_chart.buildings
+    list_buildings = config.plots_building_filter.buildings
     integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
     integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
     list_standard = config.plots_building_filter.filter_buildings_by_construction_type
