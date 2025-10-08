@@ -1755,7 +1755,8 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 
         if appendix == 'lifecycle_emissions':
             df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
-            df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
+            if df_timeline is not None:
+                df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
 
         else:
             # Write to .csv files
