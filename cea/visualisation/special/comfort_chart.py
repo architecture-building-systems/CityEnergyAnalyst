@@ -801,25 +801,6 @@ def create_multi_building_plot(building_plots):
     output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "comfort-chart.html")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
-    # Generate charts HTML with horizontal layout
-    charts_html = ""
-    for i, chart_data in enumerate(charts_data):
-        margin_left = "100px" if i > 0 else "0px"
-        charts_html += f"""
-        <div style="display: inline-block; vertical-align: top; margin-left: {margin_left};">
-            <h2 style="text-align: left; color: #333; font-size: 18px; margin-bottom: 1px; margin-left: 5px;">
-                Building {chart_data['building']}
-            </h2>
-            <div style="background-color: transparent; padding: 0; margin-bottom: 20px; width: 300px;">
-                {chart_data['chart_html']}
-            </div>
-            <div style="background-color: transparent; padding: 0; width: 300px;">
-                {chart_data['table_html']}
-            </div>
-        </div>
-        """
-    
-    
     # Complete HTML document with improved layout
     full_html = f"""
     <!DOCTYPE html>
