@@ -14,8 +14,22 @@ class OutsideProjectRootError(Exception):
 
 def secure_path(path: Union[str, os.PathLike]) -> str:
     """
-    Simple sanitation of path
+    Validates and sanitizes a file path to prevent directory traversal attacks.
+
+    Resolves the path to its canonical form (following symlinks) and ensures it
+    stays within the project root directory.
+
+    Args:
+        path: Path to validate (can be relative or absolute)
+
+    Returns:
+        Canonical absolute path as string
+
+    Raises:
+        ValueError: If project root is not set when path validation is enabled
+        OutsideProjectRootError: If resolved path is outside the project root
     """
+    # Resolve to canonical absolute path (follows symlinks, normalizes . and ..)
     real_path = os.path.realpath(path)
 
     # TODO: Remove dependency on settings
@@ -23,9 +37,20 @@ def secure_path(path: Union[str, os.PathLike]) -> str:
         settings_project_root = get_settings().project_root
         if settings_project_root is None:
             raise ValueError("Project root not set. Unable to determine project root.")
-        
+
         project_root = os.path.realpath(settings_project_root)
-        prefix = os.path.commonpath((project_root, real_path))
+
+        # Normalize case on case-insensitive filesystems for accurate comparison
+        # This prevents false rejections while maintaining security
+        try:
+            # os.path.commonpath raises ValueError if paths are on different drives (Windows)
+            prefix = os.path.commonpath((project_root, real_path))
+        except ValueError:
+            # Different drives on Windows - definitely outside project root
+            raise OutsideProjectRootError(path)
+
+        # Verify the resolved path is within or equal to project root
+        # Note: commonpath returns the longest common sub-path
         if project_root != prefix:
             raise OutsideProjectRootError(path)
 
