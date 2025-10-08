@@ -465,7 +465,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                     if not scenario_path.exists():
                         continue
 
-                    input_paths = (scenario_path / "inputs")
+                    input_paths = Path(secure_path((scenario_path / "inputs").resolve()))
                     if input_files and input_paths.exists():
                         for root, dirs, files in os.walk(input_paths):
                             root_path = Path(root)
