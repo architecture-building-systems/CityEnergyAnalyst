@@ -34,7 +34,6 @@ class TestScriptParameters(unittest.TestCase):
             if duplicate_params:
                 scripts_with_duplicates[script.name] = duplicate_params
 
-        print(scripts_with_duplicates)
         # Build error message if there are duplicates
         if scripts_with_duplicates:
             error_msg = "\nFound scripts with duplicate parameters:\n"
