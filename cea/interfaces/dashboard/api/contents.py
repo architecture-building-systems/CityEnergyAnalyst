@@ -394,13 +394,16 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
     return upload_result
 
+class OutputFileType(StrEnum):
+    SUMMARY = "summary"
+    DETAILED = "detailed"
+    EXPORT = "export"
 
 class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
-    output_files: Literal["summary", "detailed"]
-
+    output_files: List[OutputFileType]
 
 def run_summary(project: str, scenario_name: str):
     """Run the summary function to ensure all summary files are generated"""
