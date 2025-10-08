@@ -174,7 +174,8 @@ def main(config):
         print("Running shapefile-to-csv with shapefile = %s" % config.shapefile_tools.input_file)
         print("Running shapefile-to-csv with csv-file = %s" % config.shapefile_tools.output_path)
 
-        shapefile_to_csv_xlsx(shapefile=input_file, output_file_path=output_path, output_file_name=output_file_name)
+        output_file_path = os.path.join(output_path, output_file_name)
+        shapefile_to_csv_xlsx(shapefile=input_file, output_path=output_file_path)
 
         print("csv file has been generated.")
 

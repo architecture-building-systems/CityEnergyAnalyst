@@ -318,3 +318,50 @@ class OperationalEmissionsMapLayer(MapLayer):
             }
         }
         return output
+
+
+class EmissionTimelineMapLayer(MapLayer):
+    category = LifeCycleAnalysisCategory
+    name = "emission-timeline"
+    label = "Emission Timeline"
+    description = ""
+
+    def _get_results_files(self, _):
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_lca_timeline_building(b) for b in buildings]
+
+    def _get_period_range(self) -> list:
+        """Get the valid period range from available data"""
+        try:
+            buildings = self.locator.get_zone_building_names()
+            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
+            df = pd.read_csv(timeline_df)
+            df['year'] = period_to_year(df['period'])
+            return [int(df['year'].min()), int(df['year'].max())]
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            return [None, None]
+
+    @classmethod
+    def expected_parameters(cls):
+        return {
+            'timeline':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    description="Period to generate the data based on years",
+                    selector="slider",
+                    options_generator="_get_period_range",
+                ),
+        }
+    
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Lifecycle Emissions Timeline Files",
+                file_locator="layer:_get_results_files",
+            ),
+        ]
+
+    def generate_data(self, parameters: dict) -> dict:
+        return {}
