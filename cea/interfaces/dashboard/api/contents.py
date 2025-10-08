@@ -405,6 +405,8 @@ class DownloadScenario(BaseModel):
     input_files: bool
     output_files: List[OutputFileType]
 
+EXPORT_FOLDERS =["rhino"]
+
 def run_summary(project: str, scenario_name: str):
     """Run the summary function to ensure all summary files are generated"""
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
@@ -498,15 +500,16 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     files_to_zip.append((item_path, relative_path))
 
                     elif OutputFileType.EXPORT in output_files_level:
-                        export_rhino_paths = (scenario_path / "export" / "rhino")
-                        for root, dirs, files in os.walk(export_rhino_paths):
-                            root_path = Path(root)
-                            for file in files:
-                                if Path(file).suffix in VALID_EXTENSIONS:
-                                    item_path = root_path / file
-                                    relative_path = str(
-                                        Path(scenario_name) / "export" / "rhino" / item_path.relative_to(export_rhino_paths))
-                                    files_to_zip.append((item_path, relative_path))
+                        for export_folder in EXPORT_FOLDERS:
+                            export_paths = (scenario_path / "export" / export_folder)
+                            for root, dirs, files in os.walk(export_paths):
+                                root_path = Path(root)
+                                for file in files:
+                                    if Path(file).suffix in VALID_EXTENSIONS:
+                                        item_path = root_path / file
+                                        relative_path = str(
+                                            Path(scenario_name) / "export" / export_folder / item_path.relative_to(export_paths))
+                                        files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
