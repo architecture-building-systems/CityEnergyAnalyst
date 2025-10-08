@@ -42,16 +42,18 @@ def secure_path(path: Union[str, os.PathLike]) -> str:
 
         # Normalize case on case-insensitive filesystems for accurate comparison
         # This prevents false rejections while maintaining security
+        normalized_project_root = os.path.normcase(project_root)
+        normalized_real_path = os.path.normcase(real_path)
         try:
             # os.path.commonpath raises ValueError if paths are on different drives (Windows)
-            prefix = os.path.commonpath((project_root, real_path))
+            prefix = os.path.commonpath((normalized_project_root, normalized_real_path))
         except ValueError:
             # Different drives on Windows - definitely outside project root
             raise OutsideProjectRootError(path)
 
         # Verify the resolved path is within or equal to project root
         # Note: commonpath returns the longest common sub-path
-        if project_root != prefix:
+        if normalized_project_root != prefix:
             raise OutsideProjectRootError(path)
 
     return real_path
