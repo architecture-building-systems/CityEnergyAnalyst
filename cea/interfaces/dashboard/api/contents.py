@@ -475,7 +475,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario_name) / "inputs" / item_path.relative_to(input_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    output_paths = (scenario_path / "outputs")
+                    output_paths = Path(secure_path((scenario_path / "outputs").resolve()))
                     if OutputFileType.DETAILED in output_files_level and output_paths.exists():
                         for root, dirs, files in os.walk(output_paths):
                             root_path = Path(root)
@@ -489,7 +489,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                         # create summary files first
                         await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
-                        results_paths = (scenario_path / "export" / "results")
+                        results_paths = Path(secure_path((scenario_path / "export" / "results").resolve()))
                         if not results_paths.exists():
                             raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
 
@@ -504,7 +504,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
 
                     if OutputFileType.EXPORT in output_files_level:
                         for export_folder in EXPORT_FOLDERS:
-                            export_paths = (scenario_path / "export" / export_folder)
+                            export_paths = Path(secure_path((scenario_path / "export" / export_folder).resolve()))
                             if not export_paths.exists():
                                 continue
                             for root, dirs, files in os.walk(export_paths):
