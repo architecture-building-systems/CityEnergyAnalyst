@@ -471,7 +471,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     files_to_zip.append((item_path, relative_path))
 
                     output_paths = (scenario_path / "outputs")
-                    if output_files_level == "detailed" and output_paths.exists():
+                    if OutputFileType.DETAILED in output_files_level and output_paths.exists():
                         for root, dirs, files in os.walk(output_paths):
                             root_path = Path(root)
                             for file in files:
@@ -480,7 +480,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    elif output_files_level == "summary":
+                    elif OutputFileType.SUMMARY in output_files_level:
                         # create summary files first
                         await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
@@ -496,17 +496,17 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(
                                         Path(scenario_name) / "export" / "results" / item_path.relative_to(export_results_paths))
                                     files_to_zip.append((item_path, relative_path))
-                    
-                    # Always include rhino export files
-                    export_rhino_paths = (scenario_path / "export" / "rhino")
-                    for root, dirs, files in os.walk(export_rhino_paths):
-                        root_path = Path(root)
-                        for file in files:
-                            if Path(file).suffix in VALID_EXTENSIONS:
-                                item_path = root_path / file
-                                relative_path = str(
-                                    Path(scenario_name) / "export" / "rhino" / item_path.relative_to(export_rhino_paths))
-                                files_to_zip.append((item_path, relative_path))
+
+                    elif OutputFileType.EXPORT in output_files_level:
+                        export_rhino_paths = (scenario_path / "export" / "rhino")
+                        for root, dirs, files in os.walk(export_rhino_paths):
+                            root_path = Path(root)
+                            for file in files:
+                                if Path(file).suffix in VALID_EXTENSIONS:
+                                    item_path = root_path / file
+                                    relative_path = str(
+                                        Path(scenario_name) / "export" / "rhino" / item_path.relative_to(export_rhino_paths))
+                                    files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
