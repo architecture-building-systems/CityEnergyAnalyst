@@ -514,6 +514,9 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                             Path(scenario_name) / "export" / export_folder / item_path.relative_to(export_paths))
                                         files_to_zip.append((item_path, relative_path))
                 
+                if len(files_to_zip) == 0:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No valid files found for download")
+
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
                 for item_path, archive_name in files_to_zip:
