@@ -426,13 +426,13 @@ def run_summary(project: str, scenario_name: str):
 @router.post("/scenario/download")
 async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
     if not form.project or not form.scenarios:
-        raise HTTPException(status_code=400, detail="Missing project or scenarios")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing project or scenarios")
 
     # Ensure project root
     if project_root is None or project_root == "":
         logger.error("Unable to determine project path")
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project root not defined",
         )
 
@@ -442,7 +442,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
     output_files_level = form.output_files
 
     if not input_files and len(output_files_level) == 0:
-        raise HTTPException(status_code=400, detail="No files selected for download")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No files selected for download")
 
     filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
 
@@ -551,4 +551,4 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
         logger.error(f"Error creating zip: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
