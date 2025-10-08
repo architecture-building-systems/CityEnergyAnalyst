@@ -13,8 +13,9 @@ import math
 import os
 import time
 from itertools import repeat
-from typing import TYPE_CHECKING, Literal
+from typing import Any, Literal, cast
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from compas.datastructures import Mesh
@@ -28,6 +29,7 @@ from compas.geometry import (
 )
 from compas.tolerance import Tolerance
 from osgeo import gdal, osr
+from shapely.geometry import Polygon as ShapelyPolygon
 
 import cea
 import cea.config
@@ -36,10 +38,6 @@ import cea.utilities.parallel
 from cea.resources.radiation.building_geometry_radiation import (
     BuildingGeometryForRadiation,
 )
-from shapely.geometry import Polygon as ShapelyPolygon
-
-if TYPE_CHECKING:
-    import geopandas as gpd
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -199,25 +197,25 @@ def calc_building_solids(
     """
 
     # simplify geometry for buildings of interest
-    geometries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
+    geometries: gpd.GeoSeries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
 
-    height = buildings_df['height_ag'].astype(float)
-    nfloors = buildings_df['floors_ag'].astype(int)
-    void_decks = buildings_df['void_deck'].astype(int)
+    height: pd.Series[float] = buildings_df['height_ag'].astype(float)
+    nfloors: pd.Series[int] = buildings_df['floors_ag'].astype(int)
+    void_decks: pd.Series[int] = buildings_df['void_deck'].astype(int)
     if not all(void_decks <= nfloors):
         raise ValueError(f"Void deck values must be less than or equal to the number of floors for each building. "
                          f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
     
-    range_floors = [range(void_deck, floors) for void_deck, floors in zip(void_decks, nfloors)]
-    floor_to_floor_height = height / nfloors
+    range_floors: list[range] = [range(void_deck, floors) for void_deck, floors in zip(void_decks, nfloors)]
+    floor_to_floor_height: pd.Series[float] = height / nfloors
 
     n = len(geometries)
     out: list[tuple[list[Polygon], float]] = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
         geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
 
-    solids_faces = [x for x, _ in out]
-    elevations = [y for _, y in out]
+    solids_faces: list[list[Polygon]] = [x for x, _ in out]
+    elevations: list[float] = [y for _, y in out]
     return solids_faces, elevations
 
 def process_geometries(
@@ -244,7 +242,7 @@ def process_geometries(
     :return: Footprint centroid elevation (m).
     :rtype: float
     """
-    elevation_map_for_geometry = elevation_map.get_elevation_map_from_geometry(geometry)
+    elevation_map_for_geometry: ElevationMap = elevation_map.get_elevation_map_from_geometry(geometry)
     # burn buildings footprint into the terrain and return the location of the new face
     face_footprint, elevation = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
@@ -267,7 +265,7 @@ def calc_building_geometry_surroundings(
         footprint_list,
     ) = identify_surfaces_type(building_solid_faces)
     facade_list = facade_list_north + facade_list_west + facade_list_east + facade_list_south
-    geometry_3D_surroundings = {
+    geometry_3D_surroundings: dict[str, Any] = {
         "name": name,
         "walls": facade_list,
         "roofs": roof_list,
@@ -319,19 +317,16 @@ def building_2d_to_3d(
     neglect_adjacent_buildings: bool = config.radiation.neglect_adjacent_buildings # type: ignore
 
     print('Calculating terrain intersection of building geometries')
-    zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
-    # merge architecture wwr data into zone buildings dataframe with "name" column,
-    # because we want to use void_deck when creating the building solid.
+    zone_buildings_df = cast(gpd.GeoDataFrame, zone_df.set_index('name'))
     zone_building_names = zone_buildings_df.index.values
     zone_building_solids_faces, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
 
     # Check if there are any buildings in surroundings_df before processing
     if not surroundings_df.empty:
-        surroundings_buildings_df = surroundings_df.set_index('name')
+        surroundings_buildings_df = cast(gpd.GeoDataFrame, surroundings_df.set_index('name'))
         if 'void_deck' not in surroundings_buildings_df.columns:
             surroundings_buildings_df['void_deck'] = 0
-            
         surroundings_building_names: list[str] = surroundings_buildings_df.index.values.tolist()
         surroundings_building_solids_faces, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
@@ -412,7 +407,7 @@ def faces_bounding_box(faces: list[Polygon]) -> tuple[Point, Point]:
 def calc_building_geometry_zone(name: str, 
                                 building_faces: list[Polygon], 
                                 all_building_solids_faces: list[list[Polygon]], 
-                                architecture_wwr_df: gpd.GeoDataFrame,
+                                architecture_wwr_df: pd.DataFrame,
                                 geometry_pickle_dir: str, 
                                 neglect_adjacent_buildings: bool, 
                                 elevation: float,
@@ -476,7 +471,7 @@ def calc_building_geometry_zone(name: str,
     ) = identify_surfaces_type(building_faces)
 
     # get window properties
-    def safe_float(val):
+    def safe_float(val) -> float:
         # Convert numpy scalar or complex to float, raise error if complex part is nonzero
         if hasattr(val, 'real'):
             if getattr(val, 'imag', 0) != 0:
@@ -489,9 +484,10 @@ def calc_building_geometry_zone(name: str,
     wwr_north = safe_float(architecture_wwr_df.loc[name, "wwr_north"])
     wwr_south = safe_float(architecture_wwr_df.loc[name, "wwr_south"])
 
-    def process_facade(facade_list: list[Polygon], wwr: float, orientation_label: str):
-        window, wall, normals_window, normals_wall, wall_intersects = calc_windows_walls(
-            facade_list, wwr, potentially_intersecting_solids)
+    def process_facade(facade_list: list[Polygon], wwr: float, orientation_label: str) -> None:
+        window, wall, normals_window, normals_wall, wall_intersects = (
+            calc_windows_walls(facade_list, wwr, potentially_intersecting_solids)
+        )
         if len(window) != 0:
             window_list.extend(window)
             orientation_win.extend([orientation_label] * len(window))
