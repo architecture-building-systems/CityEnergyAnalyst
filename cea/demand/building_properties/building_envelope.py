@@ -86,7 +86,7 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
                 locator.get_database_assemblies_envelope_shading(),
                 'type_shade',
                 None,
-                ['rf_sh']
+                ['rf_sh', 'shading_location', 'shading_setpoint_wm2']
             ),
             'envelope floor': (
                 locator.get_database_assemblies_envelope_floor(),
