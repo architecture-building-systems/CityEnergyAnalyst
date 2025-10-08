@@ -505,6 +505,8 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                     if OutputFileType.EXPORT in output_files_level:
                         for export_folder in EXPORT_FOLDERS:
                             export_paths = (scenario_path / "export" / export_folder)
+                            if not export_paths.exists():
+                                continue
                             for root, dirs, files in os.walk(export_paths):
                                 root_path = Path(root)
                                 for file in files:
