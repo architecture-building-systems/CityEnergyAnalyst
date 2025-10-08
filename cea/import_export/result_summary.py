@@ -2745,6 +2745,9 @@ def process_building_summary(config, locator,
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
         if plot:
+            if list_cea_feature_to_plot is None:
+                raise ValueError("Specify the list of CEA features to plot.")
+
             if any(item in list_cea_feature_to_plot for item in ['demand']):
                 calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
                                                list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
