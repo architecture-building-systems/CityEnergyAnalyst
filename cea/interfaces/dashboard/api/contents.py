@@ -441,6 +441,9 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
     input_files = form.input_files
     output_files_level = form.output_files
 
+    if not input_files and len(output_files_level) == 0:
+        raise HTTPException(status_code=400, detail="No files selected for download")
+
     filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
 
     temp_file_path = None
