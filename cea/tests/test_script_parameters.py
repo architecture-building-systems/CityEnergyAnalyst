@@ -1,7 +1,6 @@
 """Test for duplicate parameters in script definitions"""
 
 import unittest
-from collections import Counter
 import cea.scripts
 import cea.config
 
