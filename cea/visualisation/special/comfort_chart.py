@@ -822,9 +822,9 @@ def create_multi_building_plot(building_plots):
             }}
             .charts-wrapper {{
                 display: flex;
-                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 100px;
-                width: max-content;
+                width: 100%;
             }}
             .chart-item {{
                 display: flex;
