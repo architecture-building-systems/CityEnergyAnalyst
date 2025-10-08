@@ -491,8 +491,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
 
                         results_paths = Path(secure_path((scenario_path / "export" / "results").resolve()))
                         if not results_paths.exists():
-                            raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
-
+                            continue
                         for root, dirs, files in os.walk(results_paths):
                             root_path = Path(root)
                             for file in files:
