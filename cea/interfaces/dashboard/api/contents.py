@@ -481,18 +481,29 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                         # create summary files first
                         await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
-                        export_paths = (scenario_path / "export" / "results")
-                        if not export_paths.exists():
+                        export_results_paths = (scenario_path / "export" / "results")
+                        if not export_results_paths.exists():
                             raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
 
-                        for root, dirs, files in os.walk(export_paths):
+                        for root, dirs, files in os.walk(export_results_paths):
                             root_path = Path(root)
                             for file in files:
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
                                     relative_path = str(
-                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(export_paths))
+                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(export_results_paths))
                                     files_to_zip.append((item_path, relative_path))
+                    
+                    # Always include rhino export files
+                    export_rhino_paths = (scenario_path / "export" / "rhino")
+                    for root, dirs, files in os.walk(export_rhino_paths):
+                        root_path = Path(root)
+                        for file in files:
+                            if Path(file).suffix in VALID_EXTENSIONS:
+                                item_path = root_path / file
+                                relative_path = str(
+                                    Path(scenario_name) / "export" / "rhino" / item_path.relative_to(export_rhino_paths))
+                                files_to_zip.append((item_path, relative_path))
                 
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
