@@ -2791,7 +2791,6 @@ def main(config):
     # Start the timer
     t0 = time.perf_counter()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Gather info from config file
     list_buildings = config.result_summary.buildings
