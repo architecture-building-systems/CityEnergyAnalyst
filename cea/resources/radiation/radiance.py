@@ -1,16 +1,26 @@
+from __future__ import annotations
+
 import csv
 import math
 import os
+import shlex
 import shutil
 import subprocess
-import shlex
 import sys
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import numpy as np
+from compas.geometry import Polygon
 
-from cea.resources.radiation.geometry_generator import BuildingGeometry
-from py4design.py3dmodel.fetch import points_frm_occface
+from cea.resources.radiation.building_geometry_radiation import (
+    BuildingGeometryForRadiation,
+)
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from compas.datastructures import Mesh
+    from compas.geometry import Point, Vector
 
 
 class SensorOutputUnit(Enum):
@@ -73,16 +83,28 @@ class CEADaySim:
     def create_radiance_material(self, building_surface_properties):
         add_rad_mat(self.rad_material_path, building_surface_properties)
 
-    def create_radiance_geometry(self, geometry_terrain, building_surface_properties, zone_building_names,
-                                 surroundings_building_names, geometry_pickle_dir):
-        create_rad_geometry(self.rad_geometry_path, geometry_terrain, building_surface_properties, zone_building_names,
-                            surroundings_building_names, geometry_pickle_dir)
+    def create_radiance_geometry(
+        self,
+        geometry_terrain: Mesh,
+        building_surface_properties: pd.DataFrame,
+        zone_building_names: list[str],
+        surroundings_building_names: list[str],
+        geometry_pickle_dir: str,
+    ):
+        create_rad_geometry(
+            self.rad_geometry_path,
+            geometry_terrain,
+            building_surface_properties,
+            zone_building_names,
+            surroundings_building_names,
+            geometry_pickle_dir,
+        )
 
-    def create_radiance_shading(self, tree_surfaces, leaf_area_densities):
-        def tree_to_radiance(tree_id, tree_surface_list):
-            for num, occ_face in enumerate(tree_surface_list):
+    def create_radiance_shading(self, tree_surfaces: list[list[Polygon]], leaf_area_densities: list[float]):
+        def tree_to_radiance(tree_id, tree_surface_list: list[Polygon]):
+            for num, face in enumerate(tree_surface_list):
                 surface_name = f"tree_surface_{tree_id}_{num}"
-                yield RadSurface(surface_name, occ_face, f"tree_material_{tree_id}")
+                yield RadSurface(surface_name, face, f"tree_material_{tree_id}")
 
         with open(self.daysim_shading_path, "w") as rad_file:
             # # write material for trees
@@ -253,7 +275,7 @@ class DaySimProject(object):
     def cleanup_project(self):
         shutil.rmtree(self.project_path)
 
-    def create_sensor_input_file(self, sensor_positions, sensor_normals,
+    def create_sensor_input_file(self, sensor_positions: list[Point], sensor_normals: list[Vector],
                                  sensor_output_unit: SensorOutputUnit = SensorOutputUnit.w_m2):
         """
         Creates sensor input file and writes its location to the header file
@@ -269,7 +291,7 @@ class DaySimProject(object):
         """
         # create sensor file
         with open(self.sensor_path, "w") as sensor_file:
-            sensors = "".join(f"{pos[0]} {pos[1]} {pos[2]} {norm[0]} {norm[1]} {norm[2]}\n"
+            sensors = "".join(f"{pos.x} {pos.y} {pos.z} {norm.x} {norm.y} {norm.z}\n"
                               for pos, norm in zip(sensor_positions, sensor_normals))
             sensor_file.write(sensors)
 
@@ -461,15 +483,15 @@ class RadSurface(object):
     An object that contains all the surface information running a Radiance/Daysim simulation.
 
     :param str name: Name of surface
-    :param OCC.TopoDS.TopoDS_Face occ_face: Polygon (OCC TopoDS_Face) of surface
+    :param OCC.TopoDS.TopoDS_Face face: Polygon (OCC TopoDS_Face) of surface
     :param str material: Name of material
     """
     __slots__ = ['name', 'points', 'material']
 
-    def __init__(self, name, occ_face, material):
+    def __init__(self, name: str, face: Polygon, material):
         # Make sure there are no spaces in the name, which could affect Daysim parsing the radiance geometry file
         self.name = name.replace(" ", "_")
-        self.points = points_frm_occface(occ_face)
+        self.points = face.points
         self.material = material
 
     def rad(self):
@@ -492,7 +514,7 @@ class RadSurface(object):
         """
 
         num_of_points = len(self.points) * 3
-        points = "\n".join([f"{point[0]}  {point[1]}  {point[2]}" for point in self.points])
+        points = "\n".join([f"{point.x}  {point.y}  {point.z}" for point in self.points])
 
         surface = f"{self.material} polygon {self.name}\n" \
                   f"0\n" \
@@ -573,62 +595,70 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 written_mat_name_list.add(mat_name)
 
 
-def create_rad_geometry(file_path, geometry_terrain, building_surface_properties, zone_building_names,
-                        surroundings_building_names, geometry_pickle_dir):
-    def terrain_to_radiance(tin_occface_terrain):
-        for num, occ_face in enumerate(tin_occface_terrain):
+def create_rad_geometry(
+    file_path: str,
+    geometry_terrain: Mesh,
+    building_surface_properties: pd.DataFrame,
+    zone_building_names: list[str],
+    surroundings_building_names: list[str],
+    geometry_pickle_dir: str,
+) -> None:
+    def terrain_to_radiance(tin_occface_terrain: Mesh):
+        # faces_polygon = [Polygon(face) for face in tin_occface_terrain.faces()]
+        for num, polygon_as_floats in enumerate(tin_occface_terrain.to_polygons()):
+            face = Polygon(polygon_as_floats)
             surface_name = f"terrain_srf{num}"
             material_name = "reflectance0.2"
-            yield RadSurface(surface_name, occ_face, material_name)
+            yield RadSurface(surface_name, face, material_name)
 
-    def zone_building_to_radiance(building_properties, surface_properties):
+    def zone_building_to_radiance(building_properties: BuildingGeometryForRadiation, surface_properties: pd.DataFrame):
         name = building_properties.name
 
         # windows
-        for num, occ_face in enumerate(building_properties.windows):
+        for num, face in enumerate(building_properties.windows):
             material = surface_properties['type_win'][name]
             surface_name = f"win_{name}_{num}"
             material_name = f"win_{material}"
-            yield RadSurface(surface_name, occ_face, material_name)
+            yield RadSurface(surface_name, face, material_name)
 
         # walls
-        for num, occ_face in enumerate(building_properties.walls):
+        for num, face in enumerate(building_properties.walls):
             material = surface_properties['type_wall'][name]
             surface_name = f"wall_{name}_{num}"
             material_name = f"wall_{material}"
-            yield RadSurface(surface_name, occ_face, material_name)
+            yield RadSurface(surface_name, face, material_name)
 
         # roofs
-        for num, occ_face in enumerate(building_properties.roofs):
+        for num, face in enumerate(building_properties.roofs):
             material = surface_properties['type_roof'][name]
             surface_name = f"roof_{name}_{num}"
             material_name = f"roof_{material}"
-            yield RadSurface(surface_name, occ_face, material_name)
+            yield RadSurface(surface_name, face, material_name)
 
-    def surrounding_building_to_radiance(building_properties):
+    def surrounding_building_to_radiance(building_properties: BuildingGeometryForRadiation):
         name = building_properties.name
 
         # walls
-        for num, occ_face in enumerate(building_properties.walls):
+        for num, face in enumerate(building_properties.walls):
             surface_name = f"surrounding_buildings_wall_{name}_{num}"
-            yield RadSurface(surface_name, occ_face, "reflectance0.2")
+            yield RadSurface(surface_name, face, "reflectance0.2")
 
         # roofs
-        for num, occ_face in enumerate(building_properties.roofs):
+        for num, face in enumerate(building_properties.roofs):
             surface_name = f"surrounding_buildings_roof_{name}_{num}"
-            yield RadSurface(surface_name, occ_face, "reflectance0.2")
+            yield RadSurface(surface_name, face, "reflectance0.2")
 
     with open(file_path, "w") as rad_file:
         for terrain_surface in terrain_to_radiance(geometry_terrain):
             rad_file.write(terrain_surface.rad())
 
         for building_name in zone_building_names:
-            building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
+            building_geometry = BuildingGeometryForRadiation.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
             for building_surface in zone_building_to_radiance(building_geometry, building_surface_properties):
                 rad_file.write(building_surface.rad())
 
         for building_name in surroundings_building_names:
-            building_geometry = BuildingGeometry.load(
+            building_geometry = BuildingGeometryForRadiation.load(
                 os.path.join(geometry_pickle_dir, 'surroundings', building_name))
             for building_surface in surrounding_building_to_radiance(building_geometry):
                 rad_file.write(building_surface.rad())
