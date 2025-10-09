@@ -2545,11 +2545,14 @@ get_database_assemblies_envelope_shading:
         type: string
         unit: 'NA'
         values: alphanumeric
-      location:
+      shading_location:
         description: Location of shading device ('interior' or 'exterior' only)
         type: string
         unit: '[-]'
-        values: '[-]'
+        choice:
+          values:
+            - interior
+            - exterior
       rf_sh:
         description: Shading coefficient when shading device is active. Defined
           according to ISO 13790. If exterior blinds incident window radiation 

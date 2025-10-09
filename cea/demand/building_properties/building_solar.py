@@ -119,43 +119,60 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     frame_factor = prop_envelope.loc[building_name, 'F_F']
     
     # LEGACY NOTE: shading_location did not exist and shading_setpoint_wm2 was previously hardcoded
-    # try-except to manage legacy CSV files without location column in shading assembly description
+    # shading_location: robust parsing with default
+    raw_location = prop_envelope.loc[building_name].get('shading_location', None)
+    if isinstance(raw_location, str) and raw_location.strip().lower() in ('interior', 'exterior'):
+        shading_location = raw_location.strip().lower()
+    else:
+        print(f"No/invalid shading location for {building_name}. Assuming 'interior'.")
+        shading_location = 'interior'
+
+    # shading_setpoint_wm2: robust parsing with default
+    raw_setpoint = prop_envelope.loc[building_name].get('shading_setpoint_wm2', np.nan)
     try:
-        shading_location = prop_envelope.loc[building_name, 'shading_location'].lower()
-    except KeyError:
-        print("Warning: No shading location found in envelope properties. Assuming 'interior'.")
-        shading_location = 'interior'  # default value (also default in cea/technologies/blinds.py [calc_blinds_activation])
-    
-    # try-except to manage legacy CSV files without shading_setpoint_wm2 column
-    try:
-        shading_setpoint_wm2 = prop_envelope.loc[building_name, 'shading_setpoint_wm2']
-    except KeyError:
-        print("Warning: No shading setpoint found in envelope properties. Assuming 300 W/m2.")
-        shading_setpoint_wm2 = 300  # default value (also default in cea/technologies/blinds.py [calc_blinds_activation])
-    
+        shading_setpoint_wm2 = float(raw_setpoint)
+        if not np.isfinite(shading_setpoint_wm2) or shading_setpoint_wm2 < 0:
+            raise ValueError
+    except Exception:
+        print(f"No/invalid shading setpoint for {building_name}. Assuming 300 W/m2.")
+        shading_setpoint_wm2 = 300.0
+
     # initialize total window solar gain
     I_sol_win = 0
     
     for direction in ['east', 'west', 'north', 'south']:
+        # access area of windows
+        window_area_m2 = radiation_data[f'windows_{direction}_m2']
+        if window_area_m2 == 0:
+            I_sol_win_w_direction = 0
+            I_sol_win += I_sol_win_w_direction
+            continue  # skip to next direction if no window area
+        
         # convert radiation data to irradiance intensity on window [W/m2]
-        I_sol_win_wm2_drection = (radiation_data[f'windows_{direction}_kW'] * 1000) / radiation_data[f'windows_{direction}_m2']
+        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / window_area_m2
+        
         
         # reduce solar radiation by shading and shadying location (interior or exterior)
-        if shading_location=='exterior': 
+        if shading_location=='exterior':
             # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
-            I_sol_win_wm2_drection = np.where(I_sol_win_wm2_drection > shading_setpoint_wm2, I_sol_win_wm2_drection * rf_sh, I_sol_win_wm2_drection)
-        
+            I_sol_win_wm2_direction = np.where(
+                I_sol_win_wm2_direction > shading_setpoint_wm2, 
+                I_sol_win_wm2_direction * rf_sh,
+                I_sol_win_wm2_direction
+            )
+
         # calculate shading factor Fsh according to ISO 13790
-        Fsh_win_direction = np.vectorize(blinds.calc_blinds_activation)(I_sol_win_wm2_drection,
-                                                    g_gl,
-                                                    rf_sh,
-                                                    shading_location=shading_location,
-                                                    shading_setpoint_wm2=shading_setpoint_wm2)
+        Fsh_win_direction = np.vectorize(blinds.calc_blinds_activation)(
+            I_sol_win_wm2_direction,
+            g_gl,
+            rf_sh,
+            shading_location=shading_location,
+            shading_setpoint_wm2=shading_setpoint_wm2
+        )
             
         # then reduce by frame factor and g value as usual after radiation has entered the window
         # and multiply by window area
-        I_sol_win_w_direction = (I_sol_win_wm2_drection * Fsh_win_direction * (1 - frame_factor)) \
-            * radiation_data[f'windows_{direction}_m2']
+        I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction * (1 - frame_factor)) * window_area_m2
     
         #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
         I_sol_underside = np.zeros_like(I_sol_win_w_direction) * thermal_resistance_surface['RSE_underside'] 

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-blinds
+This module contains functions for calculating the effect of blinds on solar gains through windows.
+It is part of a larger workflow for insolation of windows that is found in building_solar.calc_Isol_daysim
+
+Authors: Justin McCarty, Jimeno Fonseca
+Last Update: 8 October 2025, Justin McCarty
 """
 
 
@@ -32,6 +36,17 @@ def calc_blinds_activation(radiation_wm2, g_gl, Rf_sh, shading_location='interio
     
     
 def loss_for_interior_shading(radiation_wm2, g_gl, Rf_sh, shading_setpoint_wm2):
+    """Calculate the loss for interior shading.
+
+    Args:
+        radiation_wm2 (float): The solar radiation incident on the window [W/m2].
+        g_gl (float): The g-value of the window (glazing).
+        Rf_sh (float): The shading factor.
+        shading_setpoint_wm2 (float): The shading setpoint [W/m2].
+
+    Returns:
+        float: The adjusted g-value considering shading.
+    """
     if radiation_wm2 > shading_setpoint_wm2:  # in w/m2
         return g_gl * Rf_sh
     else:
