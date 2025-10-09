@@ -4,7 +4,7 @@ Base class for building properties with common database merge functionality
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -29,7 +29,7 @@ class DatabaseMapping:
     join_column: str
     fields: List[str]
     column_renames: Optional[Dict[str, str]] = None
-    field_defaults: Optional[Dict[str, any]] = None
+    field_defaults: Optional[Dict[str, Any]] = None
 
 
 class BuildingPropertiesDatabase:
