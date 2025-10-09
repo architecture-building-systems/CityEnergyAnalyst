@@ -124,7 +124,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     if isinstance(raw_location, str) and raw_location.strip().lower() in ('interior', 'exterior'):
         shading_location = raw_location.strip().lower()
     else:
-        print(f"No/invalid shading location for {building_name}. Assuming 'interior'.")
+        print(f"No or invalid shading location for {building_name}. Assuming 'interior'.")
         shading_location = 'interior'
 
     # shading_setpoint_wm2: robust parsing with default
@@ -134,7 +134,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         if not np.isfinite(shading_setpoint_wm2) or shading_setpoint_wm2 < 0:
             raise ValueError
     except Exception:
-        print(f"No/invalid shading setpoint for {building_name}. Assuming 300 W/m2.")
+        print(f"No or invalid shading setpoint for {building_name}. Assuming 300 W/m2.")
         shading_setpoint_wm2 = 300.0
 
     # initialize total window solar gain
@@ -142,7 +142,9 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     
     for direction in ['east', 'west', 'north', 'south']:
         # access area of windows
-        window_area_m2 = radiation_data[f'windows_{direction}_m2']
+        # area stored in the first row of the radiation data because it's constant over time
+        window_area_m2 = radiation_data[f'windows_{direction}_m2'][0]
+        
         if window_area_m2 == 0:
             I_sol_win_w_direction = 0
             I_sol_win += I_sol_win_w_direction

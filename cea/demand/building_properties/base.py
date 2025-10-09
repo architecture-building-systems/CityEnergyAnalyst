@@ -57,8 +57,17 @@ class BuildingPropertiesDatabase:
             # Apply column renames if specified
             if column_renames:
                 merged_df.rename(columns=column_renames, inplace=True)
-
-            merged_dfs.append(merged_df[fields])
+            
+            if join_column == 'type_shade':
+                # legacy condition for missing shading_location and shading_setpoint_wm2 of shading assembly in older projects
+                # added 2025 Oct 09
+                if 'shading_location' not in merged_df.columns:
+                    merged_df['shading_location'] = 'interior'
+                if 'shading_setpoint_wm2' not in merged_df.columns:
+                    merged_df['shading_setpoint_wm2'] = 300
+            
+            properties = merged_df[fields]
+            merged_dfs.append(properties)
 
         if errors:
             errors = [f"Invalid code {error['invalid_values']} "
