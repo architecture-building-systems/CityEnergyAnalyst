@@ -19,11 +19,17 @@ class DatabaseMapping:
         join_column: Column name in building properties to join on (matches 'code' in database)
         fields: List of field names to extract from the database
         column_renames: Optional mapping to rename columns from database (e.g., {"feedstock": "source_hs"})
+        field_defaults: Optional mapping of field names to default values for missing/legacy fields
+                       (e.g., {"shading_location": "interior", "shading_setpoint_wm2": 300})
+
+                       NOTE: This is a temporary solution. Long-term, defaults should be defined
+                       in schemas.yml as the single source of truth. See migration plan in docs.
     """
     file_path: str
     join_column: str
     fields: List[str]
     column_renames: Optional[Dict[str, str]] = None
+    field_defaults: Optional[Dict[str, any]] = None
 
 
 class BuildingPropertiesDatabase:
@@ -75,18 +81,16 @@ class BuildingPropertiesDatabase:
                          .set_index('name'))
 
             # Apply column renames if specified
-            # Apply column renames if specified
             if column_renames:
                 merged_df.rename(columns=column_renames, inplace=True)
-            
-            if join_column == 'type_shade':
-                # legacy condition for missing shading_location and shading_setpoint_wm2 of shading assembly in older projects
-                # added 2025 Oct 09
-                if 'shading_location' not in merged_df.columns:
-                    merged_df['shading_location'] = 'interior'
-                if 'shading_setpoint_wm2' not in merged_df.columns:
-                    merged_df['shading_setpoint_wm2'] = 300
-            
+
+            # Apply field defaults for missing columns (handles legacy databases)
+            if mapping.field_defaults:
+                for field_name, default_value in mapping.field_defaults.items():
+                    if field_name not in merged_df.columns:
+                        print(f"  → Adding missing field '{field_name}' with default value: {default_value}")
+                        merged_df[field_name] = default_value
+
             properties = merged_df[fields]
             merged_dfs.append(properties)
 

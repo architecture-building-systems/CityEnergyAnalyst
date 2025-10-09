@@ -79,7 +79,11 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
             'envelope shading': DatabaseMapping(
                 file_path=locator.get_database_assemblies_envelope_shading(),
                 join_column='type_shade',
-                fields=['rf_sh', 'shading_location', 'shading_setpoint_wm2']
+                fields=['rf_sh', 'shading_location', 'shading_setpoint_wm2'],
+                field_defaults={
+                    'shading_location': 'interior',
+                    'shading_setpoint_wm2': 300
+                }
             ),
             'envelope floor': DatabaseMapping(
                 file_path=locator.get_database_assemblies_envelope_floor(),
