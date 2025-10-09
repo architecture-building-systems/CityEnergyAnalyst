@@ -124,6 +124,22 @@ class BuildingPropertiesDatabase:
                         print(f"  → Adding missing field '{field_name}' with default value: {default_value}")
                         merged_df[field_name] = default_value
 
+            # Validate that all required fields exist before slicing
+            missing_fields = set(fields) - set(merged_df.columns)
+            if missing_fields:
+                available_columns = sorted(merged_df.columns.tolist())
+                raise ValueError(
+                    f"Missing required fields in database '{file_path}' for component '{component_type}':\n"
+                    f"  Missing fields: {sorted(missing_fields)}\n"
+                    f"  Required fields: {sorted(fields)}\n"
+                    f"  Available columns in database: {available_columns}\n\n"
+                    f"Possible causes:\n"
+                    f"  1. Fields are misspelled in the DatabaseMapping configuration\n"
+                    f"  2. Database file is missing expected columns\n"
+                    f"  3. column_renames may have incorrect mappings\n"
+                    f"  4. Legacy database needs field_defaults for missing columns"
+                )
+
             properties = merged_df[fields]
             merged_dfs.append(properties)
 
