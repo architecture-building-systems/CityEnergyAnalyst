@@ -1,4 +1,4 @@
-description,code,location,rf_sh,shading_setpoint_wm2
+description,code,shading_location,rf_sh,shading_setpoint_wm2
 none,SHADING_AS0,interior,1.0,300
 rollo,SHADING_AS1,interior,0.08,300
 venetian blinds,SHADING_AS2,interior,0.15,300
