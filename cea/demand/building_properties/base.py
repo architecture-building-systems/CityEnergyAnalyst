@@ -3,9 +3,27 @@ Base class for building properties with common database merge functionality
 """
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 import pandas as pd
+
+
+@dataclass
+class DatabaseMapping:
+    """
+    Configuration for mapping database properties to building properties.
+
+    Attributes:
+        file_path: Path to the database CSV file
+        join_column: Column name in building properties to join on (matches 'code' in database)
+        fields: List of field names to extract from the database
+        column_renames: Optional mapping to rename columns from database (e.g., {"feedstock": "source_hs"})
+    """
+    file_path: str
+    join_column: str
+    fields: List[str]
+    column_renames: Optional[Dict[str, str]] = None
 
 
 class BuildingPropertiesDatabase:
@@ -16,20 +34,23 @@ class BuildingPropertiesDatabase:
     @staticmethod
     def map_database_properties(
             building_properties: pd.DataFrame,
-            db_mappings: Dict[str, Tuple[str, str, Optional[Dict[str, str]], List[str]]],
+            db_mappings: Dict[str, DatabaseMapping],
     ) -> pd.DataFrame:
         """
         Common method to merge building properties with database properties.
-        
+
         :param building_properties: DataFrame with building properties to merge
-        :param db_mappings: Dictionary mapping component types to (file_path, join_column, column_renames, fields_to_extract)
+        :param db_mappings: Dictionary mapping component types to DatabaseMapping objects
         :return: Concatenated DataFrame with all merged properties
         """
         merged_dfs = [building_properties]
         errors = []
 
         for component_type, mapping in db_mappings.items():
-            file_path, join_column, column_renames, fields = mapping
+            file_path = mapping.file_path
+            join_column = mapping.join_column
+            column_renames = mapping.column_renames
+            fields = mapping.fields
 
             # Read database and merge
             prop_data = pd.read_csv(file_path)
