@@ -24,12 +24,45 @@ class DatabaseMapping:
 
                        NOTE: This is a temporary solution. Long-term, defaults should be defined
                        in schemas.yml as the single source of truth. See migration plan in docs.
+
+    Raises:
+        ValueError: If column_renames targets are not in fields, or field_defaults keys are not in fields
     """
     file_path: str
     join_column: str
     fields: List[str]
     column_renames: Optional[Dict[str, str]] = None
     field_defaults: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        """
+        Validate that column_renames and field_defaults reference fields that exist in the fields list.
+        """
+        # Validate column_renames: all target names (values) must be in fields
+        if self.column_renames:
+            renamed_fields = set(self.column_renames.values())
+            fields_set = set(self.fields)
+            invalid_renames = renamed_fields - fields_set
+
+            if invalid_renames:
+                raise ValueError(
+                    f"Invalid column_renames for '{self.join_column}': "
+                    f"Renamed columns {invalid_renames} are not in fields list {self.fields}. "
+                    f"All renamed column names must appear in the 'fields' list."
+                )
+
+        # Validate field_defaults: all keys must be in fields
+        if self.field_defaults:
+            default_fields = set(self.field_defaults.keys())
+            fields_set = set(self.fields)
+            invalid_defaults = default_fields - fields_set
+
+            if invalid_defaults:
+                raise ValueError(
+                    f"Invalid field_defaults for '{self.join_column}': "
+                    f"Default fields {invalid_defaults} are not in fields list {self.fields}. "
+                    f"All fields with defaults must appear in the 'fields' list."
+                )
 
 
 class BuildingPropertiesDatabase:
