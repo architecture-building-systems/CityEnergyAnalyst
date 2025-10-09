@@ -44,6 +44,8 @@ def partition_polygon_by_grid(
             else:
                 continue
             for g in geoms:
+                if g.area < 1e-4: # avoid tiny patches
+                    continue
                 coords = list(g.exterior.coords)[:-1]
                 poly_local_piece = Polygon([Point(x, y, 0.0) for x, y in coords])
                 patches_world.append(f.to_world_coordinates(poly_local_piece))
