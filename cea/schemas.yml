@@ -2553,6 +2553,7 @@ get_database_assemblies_envelope_shading:
           values:
             - interior
             - exterior
+        values: alphanumeric
       rf_sh:
         description: Shading coefficient when shading device is active. Defined
           according to ISO 13790. If exterior blinds incident window radiation 
