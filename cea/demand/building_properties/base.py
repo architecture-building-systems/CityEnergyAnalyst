@@ -128,17 +128,31 @@ class BuildingPropertiesDatabase:
             missing_fields = set(fields) - set(merged_df.columns)
             if missing_fields:
                 available_columns = sorted(merged_df.columns.tolist())
-                raise ValueError(
+
+                # Generate suggested field_defaults configuration for developer
+                suggested_defaults = "\n".join(
+                    f"    '{field}': <default_value>," for field in sorted(missing_fields)
+                )
+
+                error_message = (
                     f"Missing required fields in database '{file_path}' for component '{component_type}':\n"
                     f"  Missing fields: {sorted(missing_fields)}\n"
                     f"  Required fields: {sorted(fields)}\n"
                     f"  Available columns in database: {available_columns}\n\n"
                     f"Possible causes:\n"
                     f"  1. Fields are misspelled in the DatabaseMapping configuration\n"
-                    f"  2. Database file is missing expected columns\n"
+                    f"  2. Database file is missing expected columns (check schema or database source)\n"
                     f"  3. column_renames may have incorrect mappings\n"
-                    f"  4. Legacy database needs field_defaults for missing columns"
+                    f"  4. Legacy database missing newly added columns (needs field_defaults)\n\n"
+                    f"If this is a legacy database missing new columns, add field_defaults to the DatabaseMapping:\n\n"
+                    f"  field_defaults={{\n"
+                    f"{suggested_defaults}\n"
+                    f"  }}\n\n"
+                    f"Replace <default_value> with appropriate defaults for each field.\n"
+                    f"See MIGRATION_PLAN_SCHEMA_DEFAULTS.md for more information."
                 )
+
+                raise ValueError(error_message)
 
             properties = merged_df[fields]
             merged_dfs.append(properties)
