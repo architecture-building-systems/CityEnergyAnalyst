@@ -86,8 +86,8 @@ class EmissionTimelinePlot:
             'operation': {'columns': [], 'positive': True},
             'production': {'columns': [], 'positive': True},
             'demolition': {'columns': [], 'positive': True},
-            'biogenic': {'columns': [], 'positive': False},
-            'pv': {'columns': [], 'positive': False}
+            'biogenic': {'columns': [], 'positive': True},
+            'pv': {'columns': [], 'positive': True}
         }
 
         # Categorize columns
