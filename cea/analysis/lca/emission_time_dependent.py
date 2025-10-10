@@ -66,7 +66,8 @@ def total_yearly(config: Configuration) -> None:
             locator=locator,
             end_year=end_year,
         )
-        timeline.fill_timeline()
+        timeline.fill_embodied_emissions()
+        timeline.fill_operational_emissions()
         timeline.demolish(demolition_year=end_year + 1)  # no demolition by default
         timeline.save_timeline()
         print(

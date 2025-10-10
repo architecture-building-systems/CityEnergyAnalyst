@@ -14,17 +14,14 @@ if TYPE_CHECKING:
         BuildingPropertiesRow,
     )
 
-
+_tech_name_mapping = {
+    # tech_name: (<demand_col_name>, <supply_type_name>)
+    "heating": ("Qhs_sys", "hs"),
+    "hot_water": ("Qww_sys", "dhw"),
+    "cooling": ("Qcs_sys", "cs"),
+    "electricity": ("E_sys", "el"),
+}
 class OperationalHourlyTimeline:
-
-    _tech_name_mapping = {
-        # tech_name: (<demand_col_name>, <supply_type_name>)
-        "heating": ("Qhs_sys", "hs"),
-        "hot_water": ("Qww_sys", "dhw"),
-        "cooling": ("Qcs_sys", "cs"),
-        "electricity": ("E_sys", "el"),
-    }
-
     def __init__(
         self,
         locator: InputLocator,
@@ -54,10 +51,10 @@ class OperationalHourlyTimeline:
         """
         timeline = pd.DataFrame(
             index=range(n_hours),
-            columns=["date"] + [f"{key}_kgCO2e" for key in self._tech_name_mapping.keys()]
+            columns=["date"] + [f"{key}_kgCO2e" for key in _tech_name_mapping.keys()]
             + [
                 f"{tuple[0]}_{feedstock}_kgCO2e"
-                for tuple in OperationalHourlyTimeline._tech_name_mapping.values()
+                for tuple in _tech_name_mapping.values()
                 for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
             ],
         )
@@ -65,12 +62,11 @@ class OperationalHourlyTimeline:
         timeline.index.name = "hour"
 
         # Add the date column from demand_timeseries
-        if 'date' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['date'].values
-        elif 'DATE' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['DATE'].values
-        elif 'Date' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['Date'].values
+        date_col = next((col for col in self.demand_timeseries.columns if col.lower() == 'date'), None)
+        if date_col:
+            timeline['date'] = self.demand_timeseries[date_col].values
+        else:
+            raise ValueError("Date column not found in demand timeseries.")
 
         return timeline
 
@@ -116,7 +112,7 @@ class OperationalHourlyTimeline:
         This function calculates the emission timeline for heating,
         domestic hot water, cooling and electrical supply.
         """
-        for demand_type, tech_tuple in self._tech_name_mapping.items():
+        for demand_type, tech_tuple in _tech_name_mapping.items():
             eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
