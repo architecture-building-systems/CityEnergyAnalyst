@@ -226,13 +226,16 @@ class BuildingEmissionTimeline:
                 raise ValueError("Discount rate must be non-negative.")
 
         def _build_discount_factors(
-            reference_year: int, target_year: int, discount_rate: float
+            reference_year: int, target_year: int, discount_rate: float, interp: str="linear"
         ) -> pd.Series:
             """Linear factors from 1.0@reference_year to discount_rate@target_year inclusive."""
             years = [f"Y_{y}" for y in range(reference_year, target_year + 1)]
-            return pd.Series(
-                np.linspace(1.0, float(discount_rate), len(years)), index=years
-            )
+            if interp == "linear":
+                return pd.Series(
+                    np.linspace(1.0, float(discount_rate), len(years)), index=years
+                )
+            else:
+                raise ValueError(f"Unknown interpolation method: {interp}")
 
         def _discount_grid_only(
             yearly_split: pd.Series, factors: pd.Series
