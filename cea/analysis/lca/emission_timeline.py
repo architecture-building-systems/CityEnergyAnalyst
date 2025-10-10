@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import numpy as np
 import pandas as pd
+from collections.abc import Mapping
 from cea.constants import (
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO,
@@ -192,66 +193,65 @@ class BuildingEmissionTimeline:
 
     def fill_operational_emissions(
         self,
-        reference_year: int | None = None,
-        target_year: int | None = None,
-        discount_rate: float | None = None,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
     ) -> None:
-        """Fill operational emissions into the timeline, optionally applying a discount to grid-related emissions.
+        """Fill operational emissions into the timeline and optionally apply per-feedstock discount policies.
 
-        If reference_year, target_year, and discount_rate are all provided, grid-related emissions are linearly
-        discounted from 1.0 (at reference_year) to discount_rate (at target_year) and held at discount_rate thereafter.
-        Non-grid emissions are not discounted.
+        Simplified API: either provide no input (no discounting), or a dict mapping feedstock names to a
+        tuple of (reference_year, target_year, discount_rate). Keys are matched case-insensitively against
+        feedstocks discovered in the hourly operational file. No defaults are assumed (no default GRID).
 
-        :param reference_year: start of discounting period, if None, no discounting applied
-        :type reference_year: int | None
-        :param target_year: end of discounting period, if None, no discounting applied
-        :type target_year: int | None
-        :param discount_rate: discount rate to apply at target_year, if None, no discounting applied
-        :type discount_rate: float | None
+        Example policy:
+            {"GRID": (2020, 2030, 0.7), "NATURALGAS": (2022, 2025, 0.0)}
+
+        :param feedstock_policies: Mapping of feedstock name -> (reference_year, target_year, discount_rate).
+                                     When None or empty, no discounting is applied.
         :raises ValueError: if operational emission file does not have 8760 rows
-        :raises ValueError: if target_year < reference_year
-        :raises ValueError: if discount_rate < 0
-        :raises ValueError: if reference_year, target_year, discount_rate are not all provided or all None
+        :raises ValueError: if target_year <= reference_year or discount_rate < 0
         :return: None
         """
 
         def _validate_discount_inputs(
             reference_year: int, target_year: int, discount_rate: float
         ) -> None:
-            if target_year < reference_year:
+            if target_year <= reference_year:
                 raise ValueError(
-                    "Target year must be greater than or equal to reference year."
+                    "Target year must be greater than reference year."
                 )
             if discount_rate < 0:
                 raise ValueError("Discount rate must be non-negative.")
 
-        def _build_discount_factors(
-            reference_year: int, target_year: int, discount_rate: float, interp: str="linear"
+        def _build_piecewise_factors_over_timeline(
+            timeline_index: pd.Index, reference_year: int, target_year: int, discount_rate: float
         ) -> pd.Series:
-            """Linear factors from 1.0@reference_year to discount_rate@target_year inclusive."""
-            years = [f"Y_{y}" for y in range(reference_year, target_year + 1)]
-            if interp == "linear":
-                return pd.Series(
-                    np.linspace(1.0, float(discount_rate), len(years)), index=years
-                )
-            else:
-                raise ValueError(f"Unknown interpolation method: {interp}")
+            """Return a factor Series over timeline_index: 1.0 before ref, linear to target, flat after target."""
+            _validate_discount_inputs(reference_year, target_year, discount_rate)
+            # Convert timeline index (e.g., 'Y_2020') to integer years for comparison
+            def _index_to_years(idx: pd.Index) -> pd.Index:
+                result: list[int] = []
+                for v in idx.tolist():
+                    s = str(v)
+                    if s.startswith("Y_"):
+                        s = s[2:]
+                    try:
+                        result.append(int(s))
+                    except (TypeError, ValueError):
+                        # If conversion fails, assume non-year label; map conservatively to a large negative
+                        result.append(-10**9)
+                return pd.Index(result, dtype=int)
 
-        def _discount_grid_only(
-            yearly_split: pd.Series, factors: pd.Series
-        ) -> pd.DataFrame:
-            """Tile yearly split across years and multiply GRID columns by discount factors."""
-            # Create a constant-by-row DataFrame from the yearly split
-            df = pd.DataFrame(
-                np.tile(yearly_split.to_numpy(dtype=float), (len(factors), 1)),
-                index=factors.index,
-                columns=yearly_split.index,
-            )
-            grid_cols = [c for c in df.columns if c.endswith("_from_GRID_kgCO2e")]
-            if grid_cols:
-                df[grid_cols] = df[grid_cols].mul(factors, axis=0)
-            return df
+            years = _index_to_years(timeline_index)
+            factors = pd.Series(1.0, index=timeline_index, dtype=float)
+            # Linear segment between ref..target (inclusive)
+            mask_linear = (years >= reference_year) & (years <= target_year)
+            if mask_linear.any():
+                n = mask_linear.sum()
+                factors.loc[mask_linear] = np.linspace(1.0, float(discount_rate), n)
+            # After target: flat at discount_rate
+            factors.loc[years > target_year] = float(discount_rate)
+            return factors
 
+        # 1) Read hourly operational emissions. Keep per-feedstock columns as-is; only rename tech summary columns.
         operational = pd.read_csv(
             self.locator.get_lca_operational_hourly_building(self.name),
             index_col="hour",
@@ -261,138 +261,115 @@ class BuildingEmissionTimeline:
                 f"Operational emission timeline expected 8760 rows, got {len(operational)} rows. Please check file integrity!"
             )
 
-        # 2) First, log the baseline (non-discounted) yearly totals to all years
-        baseline_yearly = operational[self._OPERATIONAL_COLS].sum(axis=0)
-        # avoid inplace "+=" for better typing compatibility
-        self.timeline.loc[:, self._OPERATIONAL_COLS] = self.timeline.loc[
-            :, self._OPERATIONAL_COLS
-        ].add(baseline_yearly, axis=1)
-
-        # 3) Decide whether to apply discounting
-        all_none = (
-            reference_year is None and target_year is None and discount_rate is None
-        )
-        all_provided = (
-            reference_year is not None
-            and target_year is not None
-            and discount_rate is not None
-        )
-
-        if all_none:
-            return  # nothing else to do
-        if not all_provided:
-            raise ValueError(
-                "Either provide all of reference_year, target_year, discount_rate or none of them."
+        # 2) If no policies: minimal branch — just add aggregated yearly totals and return
+        if not feedstock_policies:
+            baseline_agg = operational[self._OPERATIONAL_COLS].sum(axis=0)
+            self.timeline.loc[:, self._OPERATIONAL_COLS] = self.timeline.loc[:, self._OPERATIONAL_COLS].add(
+                baseline_agg, axis=1
             )
+            return
 
-        # 4) Validate inputs and prepare discount factors
-        # Narrow types after validation
-        assert (
-            reference_year is not None
-            and target_year is not None
-            and discount_rate is not None
-        )
-        _validate_discount_inputs(reference_year, target_year, discount_rate)
-        r_year, t_year, d_rate = (
-            int(reference_year),
-            int(target_year),
-            float(discount_rate),
-        )
-
-        yearly_split, tech_names = self._yearly_operational_split_grid_non_grid(
-            operational
-        )
-        discount_factors = _build_discount_factors(r_year, t_year, d_rate)
-
-        # 5) Apply discount to grid-only columns and collapse back to per-tech totals
-        discounted = _discount_grid_only(yearly_split, discount_factors)
-        for tech_name in tech_names:
-            discounted[f"operation_{tech_name}_kgCO2e"] = (
-                discounted[f"operation_{tech_name}_from_others_kgCO2e"]
-                + discounted[f"operation_{tech_name}_from_GRID_kgCO2e"]
-            )
-
-        # 6) Write discounted values back to the timeline (only for applicable years)
-        self._write_discounted_operational_to_timeline(discounted, (r_year, t_year))
-
-    # -------------------------
-    # Helper methods (readability)
-    # -------------------------
-
-    def _yearly_operational_split_grid_non_grid(
-        self, operational: pd.DataFrame
-    ) -> tuple[pd.Series, list[str]]:
-        """Return yearly sums split into GRID vs non-GRID per tech (heating/cooling/hot_water, etc.)."""
-        from cea.datamanagement.database.components import Feedstocks
+        # 3) Policies provided: build detailed per-feedstock yearly series and apply discounts across timeline
         from cea.analysis.lca.hourly_operational_emission import _tech_name_mapping
 
-        feedstock_db = Feedstocks.from_locator(self.locator)
-        feedstock_names = list(feedstock_db._library.keys())
-        feedstocks_wo_grid = [name for name in feedstock_names if name != "GRID"]
+        tech_to_prefix: dict[str, str] = {tech: demand_col for tech, (demand_col, _sup) in _tech_name_mapping.items()}
+        # Map tech -> list of per-feedstock column names present in the operational file
+        tech_cols: dict[str, list[str]] = {tech: [] for tech in tech_to_prefix}
+        discovered_feedstocks: set[str] = set()
 
-        # Build per-tech split columns on-the-fly
-        for tech_name, (demand_col, _supply_type) in _tech_name_mapping.items():
-            other_col = f"operation_{tech_name}_from_others_kgCO2e"
-            grid_col = f"operation_{tech_name}_from_GRID_kgCO2e"
-            operational[other_col] = 0.0
-            operational[grid_col] = 0.0
+        for col in operational.columns:
+            # Skip already-aggregated summary columns
+            if col in self._OPERATIONAL_COLS:
+                continue
+            if not col.endswith("_kgCO2e"):
+                continue
+            # Try to match a known tech by prefix
+            for tech, prefix in tech_to_prefix.items():
+                pref = f"{prefix}_"
+                if col.startswith(pref) and col.endswith("_kgCO2e"):
+                    # Extract feedstock part between prefix and suffix
+                    fs = col[len(pref):-len("_kgCO2e")]
+                    if fs:
+                        tech_cols[tech].append(col)
+                        discovered_feedstocks.add(fs)
+                    break
 
-            # Sum all non-grid feedstocks into _from_others_
-            for fs in feedstocks_wo_grid:
-                col_name = f"{demand_col}_{fs}_kgCO2e"
-                if col_name in operational.columns:
-                    operational[other_col] += operational[col_name]
+        # Yearly totals per per-feedstock column (detailed)
+        per_col_yearly = (
+            operational[[c for cols in tech_cols.values() for c in cols]].sum(axis=0)
+            if any(tech_cols.values())
+            else pd.Series(dtype=float)
+        )
+        # Aggregated baseline by tech for fallback when a tech has no detailed columns
+        baseline_agg = operational[self._OPERATIONAL_COLS].sum(axis=0)
 
-            # Put grid feedstock into _from_GRID_
-            grid_src = f"{demand_col}_GRID_kgCO2e"
-            if grid_src in operational.columns:
-                operational[grid_col] = operational[grid_src]
+        # Build a lookup for feedstock normalization from discovered set
+        feedstock_lookup: dict[str, str] = {fs.upper(): fs for fs in sorted(discovered_feedstocks)}
 
-        # Final list of split columns to sum per year
-        cols_split = [
-            f"operation_{tech}_from_others_kgCO2e" for tech in _tech_name_mapping.keys()
-        ] + [f"operation_{tech}_from_GRID_kgCO2e" for tech in _tech_name_mapping.keys()]
-
-        yearly_split = operational[cols_split].sum(axis=0)
-        tech_names = list(_tech_name_mapping.keys())
-        return yearly_split, tech_names
-
-    def _write_discounted_operational_to_timeline(
-        self, discounted: pd.DataFrame, r_t: tuple[int, int]
-    ) -> None:
-        """Write discounted values back to the timeline for matching years and extend beyond target year.
-
-        For years after target_year, use the target year's discounted values. Years before reference_year are untouched.
-        """
-        reference_year, target_year = r_t
-        # Intersection years to override
-        years_to_override = discounted.index.intersection(self.timeline.index)
-        if len(years_to_override) > 0:
-            discounted_subset = discounted.loc[years_to_override]
-            self.timeline.loc[years_to_override, self._OPERATIONAL_COLS] = (
-                discounted_subset[self._OPERATIONAL_COLS].to_numpy()
-            )
-
-        # Years after target_year take the target year's values
-        target_year_key = f"Y_{target_year}"
-        if target_year_key in discounted.index:
-            after_target = self.timeline.index[self.timeline.index > target_year_key]
-            if len(after_target) > 0:
-                target_row = discounted.loc[target_year_key]
-                target_vals = target_row[self._OPERATIONAL_COLS].to_numpy()
-                # broadcast target values to all years after target
-                self.timeline.loc[after_target, self._OPERATIONAL_COLS] = np.tile(
-                    target_vals, (len(after_target), 1)
+        # Normalize keys to canonical feedstock names present in data (only tuple policies accepted)
+        policies_normalized: dict[str, tuple[int, int, float]] = {}
+        for raw_key, raw_policy in feedstock_policies.items():
+            key_upper = str(raw_key).strip().upper()
+            if not key_upper or key_upper not in feedstock_lookup:
+                available = ", ".join(sorted(feedstock_lookup.values()))
+                raise ValueError(
+                    f"Unknown feedstock '{raw_key}'. Available feedstocks: {available}."
                 )
+            canonical = feedstock_lookup[key_upper]
+            # Enforce uniqueness of policy per feedstock (case-insensitive)
+            if canonical in policies_normalized:
+                raise ValueError(
+                    f"Duplicate policy provided for feedstock '{canonical}'. Each feedstock must appear only once."
+                )
+            if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
+                raise ValueError(
+                    f"Policy for '{raw_key}' must be a tuple (reference_year, target_year, discount_rate)."
+                )
+            ref, tgt, rate = int(raw_policy[0]), int(raw_policy[1]), float(raw_policy[2])
+            _validate_discount_inputs(ref, tgt, rate)
+            policies_normalized[canonical] = (ref, tgt, rate)
 
-        # Warn if some discount years are not present in the building timeline
-        missing = discounted.index.difference(self.timeline.index)
-        if len(missing) > 0:
-            span = f"{reference_year}-{target_year}"
-            missing_str = ", ".join(missing.tolist())
-            print(
-                f"Warning: Years {missing_str} in discount range {span} are not in the building {self.name}'s timeline; skipping those years."
-            )
+        # 4) Duplicate yearly per-column totals across the whole timeline and apply per-feedstock policies
+        timeline_index = self.timeline.index
+        if per_col_yearly.empty:
+            # Nothing to discount; just return after baseline logged
+            return
+        discounted = pd.DataFrame(
+            np.tile(per_col_yearly.to_numpy(dtype=float), (len(timeline_index), 1)),
+            index=timeline_index,
+            columns=per_col_yearly.index,
+        )
+        for fs, (ref, tgt, rate) in policies_normalized.items():
+            factors = _build_piecewise_factors_over_timeline(timeline_index, ref, tgt, rate)
+            aligned = factors.reindex(timeline_index).fillna(1.0)
+            # Apply discount to every column containing this feedstock token (unique by naming convention)
+            target_cols = [c for c in discounted.columns if c.endswith(f"_{fs}_kgCO2e") or f"_{fs}_" in c]
+            if target_cols:
+                discounted[target_cols] = discounted[target_cols].mul(aligned, axis=0)
+
+        # 5) Aggregate discounted per-feedstock columns back to tech totals per year
+        if 'discounted' in locals() and not discounted.empty:
+            from collections import defaultdict
+            cols_by_tech: dict[str, list[str]] = defaultdict(list)
+            for tech_name, prefix in tech_to_prefix.items():
+                pref = f"{prefix}_"
+                cols_by_tech[tech_name] = [c for c in discounted.columns if c.startswith(pref) and c.endswith("_kgCO2e")]
+            for tech_name, cols in cols_by_tech.items():
+                col_name = f"operation_{tech_name}_kgCO2e"
+                if cols:
+                    discounted[col_name] = discounted[cols].sum(axis=1)
+                else:
+                    # Fallback to baseline aggregated value for this tech across all years
+                    discounted[col_name] = float(baseline_agg.get(col_name, 0.0))
+
+        # 6) Write discounted values back to the timeline (we're already in the policy branch)
+        if 'discounted' in locals() and not discounted.empty:
+            years_to_override = discounted.index.intersection(self.timeline.index)
+            if len(years_to_override) > 0:
+                discounted_subset = discounted.loc[years_to_override]
+                self.timeline.loc[years_to_override, self._OPERATIONAL_COLS] = discounted_subset[
+                    self._OPERATIONAL_COLS
+                ].to_numpy()
 
     def demolish(self, demolition_year: int) -> None:
         """
@@ -416,7 +393,7 @@ class BuildingEmissionTimeline:
             area: float = self.surface_area[f"A{key}"]
             # Convert max year to int for comparison
             max_year_str = self.timeline.index.max()
-            max_year = int(max_year_str.replace("Y_", ""))
+            max_year = int(str(max_year_str).replace("Y_", ""))
             # if demolition_year > max_year, do nothing
             if demolition_year <= max_year:
                 self.log_emission_in_timeline(
@@ -473,7 +450,7 @@ class BuildingEmissionTimeline:
         # Extract numeric year from string format Y_XXXX
         start_year = self.typology["year"]
         max_year_str = self.timeline.index.max()
-        max_year = int(max_year_str.replace("Y_", ""))
+        max_year = int(str(max_year_str).replace("Y_", ""))
 
         numeric_years = list(range(start_year, max_year + 1, lifetime))
         # Convert back to string format
