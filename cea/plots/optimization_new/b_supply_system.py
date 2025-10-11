@@ -23,7 +23,7 @@ class SupplySystemGraphInfo(object):
     supply_system_ids = {}
 
     _config = cea.config.Configuration()
-    _locator = cea.inputlocator.InputLocator(_config.scenario)
+    _locator = None  # Will be set in main() with the correct optimization run
     _category_positions = {'primary': (0.75, 0.5),
                            'secondary': (0.25, 0.75),
                            'tertiary': (0.25, 0.25)}
@@ -259,7 +259,7 @@ class ComponentGraphInfo(object):
         self.capacity = str(round(supply_system_data[supply_system_data["Component_code"]==code]["Capacity_kW"].values[0],2)) + " kW"
         self.size = (0.2, 0.2)
         self.position = (0.5, 0.5)
-        self.color = self.icon_colors[self.code]
+        self.color = self.icon_colors.get(self.code, self.icon_colors.get("unknown", cea_colors["grey"]))  # Use unknown component color as fallback
         self.ef_anchorpoints = {}
 
         pass
@@ -367,7 +367,7 @@ class ConsumerGraphInfo(object):
 
     def _determine_category(self):
         """ Determine if the supply system id corresponds to a building or a district """
-        if re.match("N\d{4}", self.supply_system_id):
+        if re.match(r"N\d{4}", self.supply_system_id):
             return "district"
         else:
             return "building"
@@ -562,6 +562,18 @@ class EnergyFlowGraphInfo(object):
 def main():
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(config.scenario)
+    
+    # Find and use the latest optimization run
+    optimization_path = os.path.join(config.scenario, 'outputs', 'data', 'optimization')
+    if os.path.exists(optimization_path):
+        run_folders = [f for f in os.listdir(optimization_path) if f.startswith('centralized_run_')]
+        if run_folders:
+            latest_run_num = max([int(f.split('_')[-1]) for f in run_folders])
+            locator.optimization_run = latest_run_num
+            print(f"Using latest optimization run: centralized_run_{latest_run_num}")
+    
+    # Set the class-level locator to use the correct optimization run
+    SupplySystemGraphInfo._locator = locator
 
     # Load the image library
     image_lib_yml = os.path.join(ComponentGraphInfo.image_folder_path, 'image_lib.yml')
@@ -603,7 +615,13 @@ def main():
     SupplySystemGraphInfo.energy_system_ids = des_solution_folders
     SupplySystemGraphInfo.supply_system_ids = des_supply_systems_dict
 
-    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][-2])
+    # Use the first available supply system to initialize the graph
+    first_energy_system = des_solution_folders[0]
+    supply_systems = des_supply_systems_dict[first_energy_system]
+    if supply_systems:
+        update_graph(first_energy_system, supply_systems[0])
+    else:
+        print("No supply systems found")
 
     return None
 
@@ -676,7 +694,9 @@ def update_graph(energy_system_id, supply_system_id):
 
     # Add component images and tooltips
     for code, component in supply_system.components.items():
-        icon = Image.open(ComponentGraphInfo.image_paths[code])
+        # Use the unknown component icon as fallback for missing component images
+        icon_path = ComponentGraphInfo.image_paths.get(code, ComponentGraphInfo.image_paths.get("unknown"))
+        icon = Image.open(icon_path)
         fig.add_layout_image(
             source=icon,
             xref= "x",
@@ -796,4 +816,4 @@ def update_graph(energy_system_id, supply_system_id):
 if __name__ == '__main__':
     main()
     app = set_up_graph(app)
-    app.run_server(debug=True)
+    app.run(debug=True)
