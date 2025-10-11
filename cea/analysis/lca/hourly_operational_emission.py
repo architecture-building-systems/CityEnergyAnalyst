@@ -116,7 +116,6 @@ class OperationalHourlyTimeline:
             eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
-
             self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
                 / eff
@@ -144,7 +143,7 @@ class OperationalHourlyTimeline:
 
         df_to_save.to_csv(
             self.locator.get_lca_operational_hourly_building(self.bpr.name),
-            index=False, float_format='%.2f')
+            index=False, float_format='%.3f')
 
 
 if __name__ == "__main__":
