@@ -60,6 +60,15 @@ Components:
     TES1:
       icon: "storage_icon.png"
       color: "purple_lighter"
+    FU1:
+      icon: "furnace_icon.png"
+      color: "orange_light"
+    FU2:
+      icon: "furnace_icon.png"
+      color: "orange"
+    unknown:
+      icon: "unknownComponent_icon.png"
+      color: "grey"
 
 
 Consumers:
