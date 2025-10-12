@@ -439,14 +439,17 @@ async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
 
     contents = await file.read()
     with zipfile.ZipFile(io.BytesIO(contents)) as z:
-        # Only extract CSV files
-        csv_files = [file_info for file_info in z.infolist() if not file_info.filename.startswith('__MACOSX/') and file_info.filename.endswith('.csv')]
+        # Only process CSV files
+        csv_files = [file_info for file_info in z.infolist()
+                     if not file_info.filename.startswith('__MACOSX/')
+                     and file_info.filename.endswith('.csv')
+                     and not file_info.is_dir()]
         if not csv_files:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Invalid ZIP file: No CSV files found.',
             )
-        
+
         # Extract all files to a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
