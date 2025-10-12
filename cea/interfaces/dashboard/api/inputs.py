@@ -470,6 +470,8 @@ async def upload_input_database(project_info: CEAProjectInfo, form: Annotated[Up
                     detail=f'Invalid database files: {str(e.message)}',
                 )
             # If validation passes, move files to the actual scenario's database folder
+            if os.path.exists(locator.get_db4_folder()):
+                shutil.rmtree(locator.get_db4_folder()) # Remove existing db4 folder
             shutil.move(locator_temp.get_db4_folder(), locator.get_db4_folder())
 
     return {'message': 'Database uploaded successfully'}
