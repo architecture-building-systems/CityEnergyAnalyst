@@ -82,6 +82,34 @@ class BaseDatabase(Base):
     def _locator_mapping(cls) -> dict[str, str]:
         """A mapping of locator names to their corresponding database fields."""
 
+    def is_empty(self) -> bool:
+        """Check if all database fields are empty."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+
+            # Skip private/special fields
+            if field.name.startswith('_'):
+                continue
+
+            # Handle nested BaseDatabase objects
+            if isinstance(value, BaseDatabase):
+                if not value.is_empty():
+                    return False
+            # Handle DataFrames
+            elif isinstance(value, pd.DataFrame):
+                if not value.empty:
+                    return False
+            # Handle dictionaries (e.g., _library fields, or Conversion fields)
+            elif isinstance(value, dict):
+                if value:  # Non-empty dict
+                    return False
+            # Handle None values (considered empty)
+            elif value is not None:
+                # Any other non-None value is considered non-empty
+                return False
+
+        return True
+
     @classmethod
     def schema(cls) -> dict[str, Any]:
         """Return the database schema for the object."""
@@ -193,6 +221,15 @@ class BaseDatabaseCollection(Base, ABC):
                 value.save(locator)
             else:
                 raise ValueError(f"Field `{field.name}` is of type `{type(value)}`, which is not a subclass of Base.")
+
+    def is_empty(self) -> bool:
+        """Check if all database collections are empty."""
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, (BaseDatabase, BaseDatabaseCollection)):
+                if not value.is_empty():
+                    return False
+        return True
 
     @classmethod
     def _locator_mappings(cls) -> dict[str, str]:
