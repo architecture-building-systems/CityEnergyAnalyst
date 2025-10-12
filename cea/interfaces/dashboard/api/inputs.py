@@ -399,13 +399,20 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: CEADatabase.from_locator(locator).to_dict())
+        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator))
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
+
+    if cea_db.is_empty():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Database not found',
+        )
+    return cea_db.to_dict()
 
 
 @router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
