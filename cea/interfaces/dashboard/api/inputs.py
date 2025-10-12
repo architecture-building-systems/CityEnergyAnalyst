@@ -7,13 +7,13 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Annotated, Dict, Any
+from typing import Dict, Any
 import zipfile
 
 from fastapi.responses import StreamingResponse
 import geopandas
 import pandas as pd
-from fastapi import APIRouter, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
@@ -431,17 +431,13 @@ async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[st
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
-    
-class UploadDatabaseRequest(BaseModel):
-    file: UploadFile
-    """ZIP file containing the databases files"""
 
 
 @router.post('/databases/upload', dependencies=[CEASeverDemoAuthCheck])
-async def upload_input_database(project_info: CEAProjectInfo, form: Annotated[UploadDatabaseRequest, Form()]):
+async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
-    contents = await form.file.read()
+    contents = await file.read()
     with zipfile.ZipFile(io.BytesIO(contents)) as z:
         # Only extract CSV files
         csv_files = [file_info for file_info in z.infolist() if not file_info.filename.startswith('__MACOSX/') and file_info.filename.endswith('.csv')]
