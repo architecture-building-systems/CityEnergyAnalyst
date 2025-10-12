@@ -197,7 +197,7 @@ _BASE_COLUMN_COLORS = {
     "E_sys_DRYBIOMASS": "green_lighter",
     "E_sys_WETBIOMASS": "green_lighter",
     "E_sys_GRID": "green_lighter",
-    "E_sys_COAL": "green_lightert",
+    "E_sys_COAL": "green_lighter",
     "E_sys_WOOD": "green_lighter",
     "E_sys_OIL": "green_lighter",
     "E_sys_HYDROGEN": "green_lighter",
