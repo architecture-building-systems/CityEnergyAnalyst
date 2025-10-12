@@ -454,12 +454,35 @@ async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
             locator_temp = cea.inputlocator.InputLocator(temp_scenario_path)
-            db_directory_name = os.path.basename(locator_temp.get_db4_folder())
+            temp_db_folder = locator_temp.get_db4_folder()
+            db_directory_name = os.path.basename(temp_db_folder)
+
             for file_info in csv_files:
                 # Adjust the filename to remove any leading directory structure if user zipped the db4 folder
-                if file_info.filename.startswith(db_directory_name):
-                    file_info.filename = os.path.relpath(file_info.filename, db_directory_name)
-                z.extract(file_info, locator_temp.get_db4_folder())
+                adjusted_filename = file_info.filename
+                if adjusted_filename.startswith(db_directory_name + '/'):
+                    adjusted_filename = os.path.relpath(adjusted_filename, db_directory_name)
+
+                # Normalize and validate the path to prevent directory traversal attacks
+                member_path = os.path.normpath(adjusted_filename)
+
+                # Construct the full target path
+                target_path = os.path.join(temp_db_folder, member_path)
+
+                # Verify the resolved path is within the target directory
+                target_path_resolved = os.path.realpath(target_path)
+                db_folder_resolved = os.path.realpath(temp_db_folder)
+
+                if os.path.isabs(member_path) or '..' in member_path.split(os.sep) or not target_path_resolved.startswith(db_folder_resolved + os.sep):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f'Invalid ZIP file: {adjusted_filename}',
+                    )
+
+                # Manually extract the file using copyfileobj for safety
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                with z.open(file_info) as source, open(target_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
 
             # Validate the extracted databases
             try:
