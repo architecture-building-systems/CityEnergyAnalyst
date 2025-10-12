@@ -1,17 +1,18 @@
 import io
 import json
 import os
-import pathlib
 import shutil
+import tempfile
 import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any
+from typing import Annotated, Dict, Any
+import zipfile
 
 import geopandas
 import pandas as pd
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Form, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
@@ -422,26 +423,49 @@ async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[st
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
+    
+class UploadDatabaseRequest(BaseModel):
+    file: UploadFile
+    """ZIP file containing the databases files"""
 
 
-class DatabasePath(BaseModel):
-    path: pathlib.Path
-    name: str
-
-
-@router.put('/databases/copy', dependencies=[CEASeverDemoAuthCheck])
-async def copy_input_database(project_info: CEAProjectInfo, database_path: DatabasePath):
+@router.post('/databases/upload', dependencies=[CEASeverDemoAuthCheck])
+async def upload_input_database(project_info: CEAProjectInfo, form: Annotated[UploadDatabaseRequest, Form()]):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
-    copy_path = secure_path(os.path.join(database_path.path, database_path.name))
-    if os.path.exists(copy_path):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f'Copy path {copy_path} already exists. Choose a different path/name.',
-        )
-    locator.ensure_parent_folder_exists(copy_path)
-    shutil.copytree(locator.get_databases_folder(), copy_path)
-    return {'message': 'Database copied to {}'.format(copy_path)}
+    contents = await form.file.read()
+    with zipfile.ZipFile(io.BytesIO(contents)) as z:
+        # Only extract CSV files
+        csv_files = [file_info for file_info in z.infolist() if not file_info.filename.startswith('__MACOSX/') and file_info.filename.endswith('.csv')]
+        if not csv_files:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Invalid ZIP file: No CSV files found.',
+            )
+        
+        # Extract all files to a temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
+            locator_temp = cea.inputlocator.InputLocator(temp_scenario_path)
+            db_directory_name = os.path.basename(locator_temp.get_db4_folder())
+            for file_info in csv_files:
+                # Adjust the filename to remove any leading directory structure if user zipped the db4 folder
+                if file_info.filename.startswith(db_directory_name):
+                    file_info.filename = os.path.relpath(file_info.filename, db_directory_name)
+                z.extract(file_info, locator_temp.get_db4_folder())
+
+            # Validate the extracted databases
+            try:
+                verify_database(temp_scenario_path)
+            except CEADatabaseException as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f'Invalid database files: {str(e.message)}',
+                )
+            # If validation passes, move files to the actual scenario's database folder
+            shutil.move(locator_temp.get_db4_folder(), locator.get_db4_folder())
+
+    return {'message': 'Database uploaded successfully'}
 
 
 # Move to database route
