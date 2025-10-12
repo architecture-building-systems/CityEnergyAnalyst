@@ -10,6 +10,7 @@ from contextlib import redirect_stdout
 from typing import Annotated, Dict, Any
 import zipfile
 
+from fastapi.responses import StreamingResponse
 import geopandas
 import pandas as pd
 from fastapi import APIRouter, Form, HTTPException, UploadFile, status
@@ -475,6 +476,40 @@ async def upload_input_database(project_info: CEAProjectInfo, form: Annotated[Up
             shutil.move(locator_temp.get_db4_folder(), locator.get_db4_folder())
 
     return {'message': 'Database uploaded successfully'}
+
+@router.get('/databases/download', dependencies=[CEASeverDemoAuthCheck])
+async def download_input_database(project_info: CEAProjectInfo):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
+    filename = 'database.zip'
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_zip_path = os.path.join(temp_dir, filename)
+        with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
+            db_folder = locator.get_db4_folder()
+            if not os.path.exists(db_folder):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Database folder not found.',
+                )
+            for root, _, files in os.walk(db_folder):
+                for file in files:
+                    if file.endswith('.csv'):
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, db_folder)
+                        z.write(file_path, arcname)
+
+        with open(temp_zip_path, 'rb') as f:
+            zip_contents = f.read()
+
+        return StreamingResponse(
+            io.BytesIO(zip_contents),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(os.path.getsize(temp_zip_path)),  # Add Content-Length header
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
+        )
 
 
 # Move to database route
