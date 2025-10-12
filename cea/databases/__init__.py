@@ -55,6 +55,9 @@ def invert_nested_dict(d: dict[str, Any], path: list[str] | None = None):
 class CEADatabaseException(CEAException):
     """Custom exception for CEA database errors."""
 
+    def __init__(self, message: str):
+        super().__init__(f"CEADatabase Error: {message}")
+        self.message = message
 
 @dataclass
 class CEADatabase:

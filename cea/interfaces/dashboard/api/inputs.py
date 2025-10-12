@@ -450,16 +450,11 @@ async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
 
-    # Redirect stdout to variable to capture output
-    buf = io.StringIO()
     try:
-        with redirect_stdout(buf):
-            dict_missing_db = cea4_verify_db(scenario, verbose=True)
-        output = buf.getvalue()
-    finally:
-        buf.close()
-
-    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
+        verify_database(scenario)
+        return {'status': 'success', 'message': True}
+    except CEADatabaseException as e:
+        output = str(e.message).strip()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -468,7 +463,6 @@ async def check_input_database(project_info: CEAProjectInfo):
             },
         )
 
-    return {'status': 'success', 'message': True}
 
 
 def database_dict_to_file(db_dict, csv_path):
@@ -548,3 +542,18 @@ def get_choices(choice_properties, path):
             label = 'none'
         out.append({'value': choice, 'label': label})
     return out
+
+
+def verify_database(scenario: str):
+    """Check if the databases are valid and raise CEADatabaseException with missing files if not"""
+    # Redirect stdout to variable to capture output
+    buf = io.StringIO()
+    try:
+        with redirect_stdout(buf):
+            dict_missing_db = cea4_verify_db(scenario, verbose=True)
+        output = buf.getvalue()
+    finally:
+        buf.close()
+
+    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
+        raise CEADatabaseException(output)
