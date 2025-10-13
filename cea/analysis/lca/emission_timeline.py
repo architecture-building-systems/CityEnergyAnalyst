@@ -303,6 +303,14 @@ class BuildingEmissionTimeline:
         # Aggregated baseline by tech for fallback when a tech has no detailed columns
         baseline_agg = operational[self._OPERATIONAL_COLS].sum(axis=0)
 
+        # If there are no per-feedstock columns in the hourly file, we cannot apply any
+        # feedstock-specific discounting.
+        if per_col_yearly.empty:
+            self.timeline.loc[:, self._OPERATIONAL_COLS] = self.timeline.loc[:, self._OPERATIONAL_COLS].add(
+                baseline_agg, axis=1
+            )
+            return
+
         # Build a lookup for feedstock normalization from discovered set
         feedstock_lookup: dict[str, str] = {fs.upper(): fs for fs in sorted(discovered_feedstocks)}
 
@@ -331,9 +339,6 @@ class BuildingEmissionTimeline:
 
         # 4) Duplicate yearly per-column totals across the whole timeline and apply per-feedstock policies
         timeline_index = self.timeline.index
-        if per_col_yearly.empty:
-            # Nothing to discount; just return after baseline logged
-            return
         discounted = pd.DataFrame(
             np.tile(per_col_yearly.to_numpy(dtype=float), (len(timeline_index), 1)),
             index=timeline_index,
@@ -342,13 +347,13 @@ class BuildingEmissionTimeline:
         for fs, (ref, tgt, rate) in policies_normalized.items():
             factors = _build_piecewise_factors_over_timeline(timeline_index, ref, tgt, rate)
             aligned = factors.reindex(timeline_index).fillna(1.0)
-            # Apply discount to every column containing this feedstock token (unique by naming convention)
-            target_cols = [c for c in discounted.columns if c.endswith(f"_{fs}_kgCO2e") or f"_{fs}_" in c]
+            # Match columns that have feedstock as a complete token (not substring)
+            target_cols = [c for c in discounted.columns if f"_{fs}_kgCO2e" in c]
             if target_cols:
                 discounted[target_cols] = discounted[target_cols].mul(aligned, axis=0)
 
         # 5) Aggregate discounted per-feedstock columns back to tech totals per year
-        if 'discounted' in locals() and not discounted.empty:
+        if not discounted.empty:
             from collections import defaultdict
             cols_by_tech: dict[str, list[str]] = defaultdict(list)
             for tech_name, prefix in tech_to_prefix.items():
@@ -359,11 +364,11 @@ class BuildingEmissionTimeline:
                 if cols:
                     discounted[col_name] = discounted[cols].sum(axis=1)
                 else:
-                    # Fallback to baseline aggregated value for this tech across all years
-                    discounted[col_name] = float(baseline_agg.get(col_name, 0.0))
+                    # No feedstock columns for this tech; use 0.0 to avoid mixing undiscounted baseline
+                    discounted[col_name] = 0.0
 
         # 6) Write discounted values back to the timeline (we're already in the policy branch)
-        if 'discounted' in locals() and not discounted.empty:
+        if not discounted.empty:
             years_to_override = discounted.index.intersection(self.timeline.index)
             if len(years_to_override) > 0:
                 discounted_subset = discounted.loc[years_to_override]
