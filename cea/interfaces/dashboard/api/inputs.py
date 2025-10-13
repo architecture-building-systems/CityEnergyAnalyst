@@ -492,10 +492,39 @@ async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f'Invalid database files: {str(e.message)}',
                 )
-            # If validation passes, move files to the actual scenario's database folder
-            if os.path.exists(locator.get_db4_folder()):
-                shutil.rmtree(locator.get_db4_folder()) # Remove existing db4 folder
-            shutil.move(locator_temp.get_db4_folder(), locator.get_db4_folder())
+
+            # Atomically replace the database folder to prevent data loss
+            db_folder = locator.get_db4_folder()
+            backup_folder = None
+
+            try:
+                # If the current database exists, create a backup
+                if os.path.exists(db_folder):
+                    import time
+                    backup_folder = f"{db_folder}.bak.{int(time.time())}"
+                    os.rename(db_folder, backup_folder)
+
+                # Move the new database into place
+                shutil.move(locator_temp.get_db4_folder(), db_folder)
+
+                # If successful, remove the backup
+                if backup_folder and os.path.exists(backup_folder):
+                    shutil.rmtree(backup_folder)
+
+            except Exception as e:
+                # If move failed and we have a backup, restore it
+                if backup_folder and os.path.exists(backup_folder):
+                    # Remove partial new database if it exists
+                    if os.path.exists(db_folder):
+                        shutil.rmtree(db_folder)
+                    # Restore the backup
+                    os.rename(backup_folder, db_folder)
+
+                # Re-raise the exception
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f'Failed to replace database folder: {str(e)}',
+                )
 
     return {'message': 'Database uploaded successfully'}
 
