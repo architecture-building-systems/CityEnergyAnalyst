@@ -364,8 +364,9 @@ class BuildingEmissionTimeline:
                 if cols:
                     discounted[col_name] = discounted[cols].sum(axis=1)
                 else:
-                    # No feedstock columns for this tech; use 0.0 to avoid mixing undiscounted baseline
-                    discounted[col_name] = 0.0
+                    # No feedstock columns for this tech; reuse undiscounted baseline for this tech
+                    baseline_val = float(baseline_agg.get(col_name, 0.0))
+                    discounted[col_name] = baseline_val
 
         # 6) Write discounted values back to the timeline (we're already in the policy branch)
         if not discounted.empty:
