@@ -162,7 +162,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE):
 
         if eta_therm_real == 0:
             eta_el = 0
-            Q_aux_W = 0
+            # Q_aux_W = 0
             break
 
     if MOIST_TYPE == "dry":
@@ -194,7 +194,7 @@ def calc_Cinv_furnace(Q_design_W, locator, technology_type):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    furnace_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="COGENERATION_PLANTS")
+    furnace_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('COGENERATION_PLANTS'))
     furnace_cost_data = furnace_cost_data[furnace_cost_data['code'] == technology_type]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database

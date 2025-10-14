@@ -15,7 +15,7 @@
 
 import os
 import sys
-from mock import Mock as MagicMock
+from unittest.mock import MagicMock
 import cea
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -31,7 +31,12 @@ class Mock(MagicMock):
 
     @classmethod
     def __getattr__(cls, name):
-            return MagicMock()
+        return MagicMock()
+    
+    # Mock version check for wntr
+    @property
+    def __version__(self):
+        return "0.2.3"  
 
 
 MOCK_MODULES = ['COLOR',
@@ -65,21 +70,12 @@ MOCK_MODULES = ['COLOR',
                 'fiona',
                 'fiona.crs',
                 'fiona.errors',
+                'flask',
                 'flask_restx',
                 'flask_socketio',
-                'flask_wtf',
-                'flask_wtf.FlaskForm',
                 'geopandas',
                 'geopandas.tools',
-                'wtforms',
-                'wtforms.TextField',
-                'wtforms.PasswordField',
-                'htmlPy',
                 'h5py',
-                'keras',
-                'keras.layers',
-                'keras.models',
-                'keras.callbacks',
                 'lxml',
                 'networkx',
                 'networkx.algorithms',
@@ -94,7 +90,7 @@ MOCK_MODULES = ['COLOR',
                 'OCC.Core.IntCurvesFace',
                 'OCC.Core.gp',
                 'osmnx',
-                'osmnx.utils_graph',
+                'osmnx.settings',
                 'osmnx.footprints',
                 'plotly',
                 'plotly.graph_objs',
@@ -122,6 +118,7 @@ MOCK_MODULES = ['COLOR',
                 'pythonocc',
                 'scikit-learn',
                 'scipy',
+                'scipy.constants',
                 'scipy.interpolate',
                 'scipy.integrate',
                 'scipy.optimize',
@@ -144,9 +141,12 @@ MOCK_MODULES = ['COLOR',
                 'timezonefinder',
                 'vtk',
                 'wntr',
+                'wntr.epanet.toolkit',
                 'xlrd',
                 'xlwt']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
 
 # -- General configuration ------------------------------------------------
 
@@ -200,7 +200,7 @@ release = cea.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

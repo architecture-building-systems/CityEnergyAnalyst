@@ -3,12 +3,44 @@ Provide access to the scripts exported by the City Energy Analyst.
 """
 
 import datetime
+from enum import StrEnum
+
+
+class ScriptStatus(StrEnum):
+    """
+    Enum for the status of a script.
+    """
+    COMPLETED = "completed"
+    FAILED = "failed"
+    INTERRUPTED = "interrupted"
 
 
 def register_scripts():
     import cea.config
     import cea.scripts
     import importlib
+
+    def print_execution_time(start_time: datetime.datetime, status: ScriptStatus = ScriptStatus.COMPLETED):
+        elapsed = (datetime.datetime.now() - start_time).total_seconds()
+
+        msg = f"Script {status}. Execution time: {elapsed:.2f}s"
+        print("")
+        print("-" * len(msg))
+        print(msg)
+
+    def run_script(script_func, config: cea.config.Configuration):
+        """Execute script"""
+        t0 = datetime.datetime.now()
+        try:
+            output = script_func(config)
+            print_execution_time(t0)
+            return output
+        except Exception:
+            print_execution_time(t0, status=ScriptStatus.FAILED)
+            raise
+        except SystemExit:
+            print_execution_time(t0, status=ScriptStatus.INTERRUPTED)
+            raise
 
     def script_wrapper(cea_script):
         # defines script_runner using closures so that it's tied to a specific cea script.
@@ -33,15 +65,9 @@ def register_scripts():
                 if list(cea_script.missing_input_files(config)):
                     cea_script.print_missing_input_files(config)
                     raise cea.MissingInputDataException()
-                t0 = datetime.datetime.now()
                 # run the script
-                script_module.main(config)
-
-            # print success message
-            msg = "Script completed. Execution time: %.2fs" % (datetime.datetime.now() - t0).total_seconds()
-            print("")
-            print("-" * len(msg))
-            print(msg)
+                output = run_script(script_module.main, config)
+                return output
 
         if script_module.__doc__:
             script_runner.__doc__ = script_module.__doc__.strip()
@@ -57,7 +83,7 @@ def register_scripts():
             self._runner = None
 
         def __call__(self, *args, **kwargs):
-            self._runner.__call__(*args, **kwargs)
+            return self._runner.__call__(*args, **kwargs)
 
         def __getattribute__(self, item):
             if item == "_runner" and not object.__getattribute__(self, "_runner"):

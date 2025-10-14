@@ -39,7 +39,7 @@ def import_solar_thermal_data(fName):
         PV_kWh = np.zeros(HOURS_IN_YEAR)
         PV_PVT_import_kWh = np.array(solar_data['E_PVT_gen_kWh'])
         PVT_kWh = PV_PVT_import_kWh
-        Solar_Area_Array = np.array(solar_data['Area_PVT_m2'])
+        Solar_Area_Array = np.array(solar_data['area_PVT_m2'])
         Solar_Area_m2 = Solar_Area_Array[0]
         Solar_E_aux_kWh = np.array(solar_data['Eaux_PVT_kWh'])
         Solar_Q_th_kWh = np.array(solar_data['Q_PVT_gen_kWh']) + 0.0
@@ -60,7 +60,7 @@ def import_solar_thermal_data(fName):
     
     else:
         solar_data = pd.read_csv(fName, nrows=HOURS_IN_YEAR)
-        Solar_Area_Array = np.array(solar_data['Area_SC_m2'])
+        Solar_Area_Array = np.array(solar_data['area_SC_m2'])
         Solar_Area_m2 = Solar_Area_Array[0]
         Solar_E_aux_kWh = np.array(solar_data['Eaux_SC_kWh'])
         Solar_Q_th_kWh = np.array(solar_data['Q_SC_gen_kWh']) + 0.0

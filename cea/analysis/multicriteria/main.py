@@ -38,6 +38,7 @@ def multi_criteria_main(locator,
                                             weight_total_capital_costs,
                                             weight_annual_operation_costs,
                                             weight_annual_emissions)
+    locator.ensure_parent_folder_exists(locator.get_multi_criteria_analysis(generation))
     compiled_data_df.to_csv(locator.get_multi_criteria_analysis(generation), index=False)
     return
 

@@ -1,13 +1,12 @@
-import cea.lib
-
 import math
+import platform
 import time
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import wntr
-
+import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
@@ -18,6 +17,7 @@ from cea.technologies.thermal_network.thermal_network_loss import calc_temperatu
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
+from cea.utilities.date import get_date_range_hours_from_year
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -28,6 +28,56 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# WNTR reports head loss "per unit pipe length" while EPANET reports "per 1000 ft or m"
+# EPANET (2.2) [after WNTR 0.5] normalizes head loss per 1000 units of length so we don't need to scale it
+if wntr.__version__.startswith('0.2'):
+    scaling_factor = 1000  # EPANET 2.0 normalization
+else:
+    scaling_factor = 1     # EPANET 2.2 direct reporting
+
+
+if sys.platform == "darwin" and platform.processor() == "arm":
+     # Temp solution for EPANET toolkit on Apple Silicon: sign the library manually for WNTR v1.3.2
+    # See https://github.com/USEPA/WNTR/issues/494
+
+    from wntr.epanet.toolkit import libepanet
+    import subprocess
+    import importlib.util
+    
+    # Get the EPANET library location using modern importlib.resources
+    try:
+        # Python 3.9+: Use importlib.resources
+        from importlib.resources import files
+        epanet_location = str(files(libepanet))
+    except ImportError:
+        # Fallback for Python < 3.9: construct path manually using importlib
+        spec = importlib.util.find_spec("wntr.epanet.toolkit")
+        if spec is not None and spec.origin is not None:
+            import os
+            toolkit_dir = os.path.dirname(spec.origin)
+            epanet_location = os.path.join(toolkit_dir, libepanet)
+        else:
+            raise ImportError("Could not locate wntr.epanet.toolkit module")
+
+    result = subprocess.run(["codesign", "--verify", "--verbose", epanet_location], capture_output=True, text=True)
+    if result.returncode != 0:
+        subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
+
+
+def add_date_to_dataframe(locator, df):
+    # create date range for the calculation year
+    weather_file = locator.get_weather_file()
+    weather_data = epw_reader(weather_file)
+    year = weather_data['year'][0]
+    date_range = get_date_range_hours_from_year(year)
+
+    # Convert date_range to datetime
+    date_column = pd.to_datetime(date_range, errors='coerce')
+
+    # Insert the 'date' column at the first position
+    df.insert(0, 'date', date_column)
+
+    return df
 
 def calculate_ground_temperature(locator):
     """
@@ -60,7 +110,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     """
     # create node dictionary with plant and consumer nodes
     node_dict = {}
-    node_shapefile_df.set_index("Name", inplace=True)
+    node_shapefile_df.set_index("name", inplace=True)
     node_shapefile_df = node_shapefile_df.astype('object')
     node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
     # sort node_df by index number
@@ -75,7 +125,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
 
     # create edge dictionary with pipe lengths and start and end nodes
     # complete node dictionary with missing nodes (i.e., joints)
-    edge_shapefile_df.set_index("Name", inplace=True)
+    edge_shapefile_df.set_index("name", inplace=True)
     edge_shapefile_df = edge_shapefile_df.astype('object')
     edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
     # sort edge_df by index number
@@ -116,8 +166,8 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type, network_name))
 
     # check duplicated NODE/PIPE IDs
-    duplicated_nodes = network_nodes_df[network_nodes_df.Name.duplicated(keep=False)]
-    duplicated_edges = network_edges_df[network_edges_df.Name.duplicated(keep=False)]
+    duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
+    duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
     if duplicated_nodes.size > 0:
         raise ValueError('There are duplicated NODE IDs:', duplicated_nodes)
     if duplicated_edges.size > 0:
@@ -134,11 +184,11 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_perc
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
     selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
-    Pipe_DN = selection_of_catalog['Pipe_DN'].values[0]
+    pipe_DN = selection_of_catalog['pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
     D_ins_m = selection_of_catalog['D_ins_m'].values[0]
 
-    return Pipe_DN, D_ext_m, D_int_m, D_ins_m
+    return pipe_DN, D_ext_m, D_int_m, D_ins_m
 
 
 def calc_head_loss_m(diameter_m, max_volume_flow_rates_m3s, coefficient_friction, length_m):
@@ -191,10 +241,11 @@ def thermal_network_simplified(locator, config, network_name=''):
         DHN_barcode = "0"
         if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
             building_names = [building for building in buildings_name_with_heating if building in
-                              node_df.Building.values]
+                              node_df.building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            raise Exception('There is no heating demand from any building. Please check the input files.')
+            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
+            sys.exit(1)
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -210,13 +261,14 @@ def thermal_network_simplified(locator, config, network_name=''):
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         DCN_barcode = "0"
 
-        building_nodes = set(node_df.Building[node_df.Building != "NONE"])
+        building_nodes = set(node_df.Building[node_df.building != "NONE"])
         if buildings_name_with_cooling:
             building_names = [building for building in buildings_name_with_cooling
                               if building in building_nodes]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
-            raise Exception('problem here')
+            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
+            sys.exit(1)
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -250,8 +302,8 @@ def thermal_network_simplified(locator, config, network_name=''):
         building_nodes_pairs = {}
         building_nodes_pairs_inversed = {}
         for node in node_df.iterrows():
-            if node[1]["Type"] == "CONSUMER":
-                demand_pattern = node[1]['Building']
+            if node[1]["type"] == "CONSUMER":
+                demand_pattern = node[1]['building']
                 base_demand_m3s = building_base_demand_m3s[demand_pattern]
                 consumer_nodes.append(node[0])
                 building_nodes_pairs[node[0]] = demand_pattern
@@ -261,7 +313,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                                 demand_pattern=demand_pattern,
                                 elevation=thermal_transfer_unit_design_head_m,
                                 coordinates=node[1]["coordinates"])
-            elif node[1]["Type"] == "PLANT":
+            elif node[1]["type"] == "PLANT":
                 base_head = int(thermal_transfer_unit_design_head_m*1.2)
                 start_node = node[0]
                 name_node_plant = start_node
@@ -282,32 +334,32 @@ def thermal_network_simplified(locator, config, network_name=''):
                         length=length_m * (1 + fraction_equivalent_length),
                         roughness=coefficient_friction_hazen_williams,
                         minor_loss=0.0,
-                        status='OPEN')
+                        initial_status='OPEN')
 
         # add options
         wn.options.time.duration = 8759 * 3600   # this indicates epanet to do one year simulation
         wn.options.time.hydraulic_timestep = 60 * 60
         wn.options.time.pattern_timestep = 60 * 60
-        wn.options.solver.accuracy = 0.01
-        wn.options.solver.trials = 100
+        wn.options.hydraulic.accuracy = 0.01
+        wn.options.hydraulic.trials = 100
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim()
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
         pipe_names = max_volume_flow_rates_m3s.index.values
-        pipe_catalog = pd.read_excel(locator.get_database_distribution_systems(), sheet_name='THERMAL_GRID')
-        Pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+        pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+        pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
             *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
               flow in max_volume_flow_rates_m3s])
-        pipe_dn = pd.Series(Pipe_DN, pipe_names)
+        pipe_dn = pd.Series(pipe_DN, pipe_names)
         diameter_int_m = pd.Series(D_int_m, pipe_names)
         diameter_ext_m = pd.Series(D_ext_m, pipe_names)
         diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
         # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
         # modify diameter and run simulations
-        edge_df['Pipe_DN'] = pipe_dn
+        edge_df['pipe_DN'] = pipe_dn
         edge_df['D_int_m'] = D_int_m
         for edge in edge_df.iterrows():
             edge_name = edge[0]
@@ -319,7 +371,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
         # get accumulated head loss per hour
         unitary_head_ftperkft = results.link['headloss'].abs()
-        unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * 1000)
+        unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
         head_loss_m = unitary_head_mperm.copy()
         for column in head_loss_m.columns.values:
             length_m = edge_df.loc[column]['length_m']
@@ -341,7 +393,7 @@ def thermal_network_simplified(locator, config, network_name=''):
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
     unitary_head_loss_supply_network_ftperkft = results.link['headloss'].abs()
-    linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * 1000)
+    linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * scaling_factor)
     head_loss_supply_network_Pa = linear_pressure_loss_Paperm.copy()
     for column in head_loss_supply_network_Pa.columns.values:
         length_m = edge_df.loc[column]['length_m']
@@ -402,6 +454,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                                                                      k_kWperK,
                                                                      )
     # WRITE TO DISK
+    locator.ensure_parent_folder_exists(locator.get_thermal_network_folder())
 
     # LINEAR PRESSURE LOSSES (EDGES)
     linear_pressure_loss_Paperm.to_csv(locator.get_network_linear_pressure_drop_edges(network_type, network_name),
@@ -437,8 +490,8 @@ def thermal_network_simplified(locator, config, network_name=''):
     # pressure losses total
     # $ POSTPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
     flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
-    head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
-    head_loss_return_kWperm = head_loss_supply_kWperm.copy()
+    # head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
+    # head_loss_return_kWperm = head_loss_supply_kWperm.copy()
     pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     head_loss_return_kW = pressure_loss_supply_edge_kW.copy()
     head_loss_substations_kW = (head_loss_substations_Pa * (flow_rate_substations_m3s * 3600)) / (3.6E6 * PUMP_ETA)
@@ -458,8 +511,9 @@ def thermal_network_simplified(locator, config, network_name=''):
     # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
     plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
         axis=1) - accumulated_head_loss_total_kW.values
-    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name),
-                          header=['thermal_load_kW'], index=False)
+    plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
+    plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -475,6 +529,8 @@ def thermal_network_simplified(locator, config, network_name=''):
                                               "pressure_loss_return_kW": accumulated_head_loss_return_kW,
                                               "pressure_loss_substations_kW": accumulated_head_loss_substations_kW,
                                               "pressure_loss_total_kW": accumulated_head_loss_total_kW})
+
+    pumping_energy_system_kWh = add_date_to_dataframe(locator, pumping_energy_system_kWh)
     pumping_energy_system_kWh.to_csv(
         locator.get_network_energy_pumping_requirements_file(network_type, network_name), index=False)
 
@@ -516,20 +572,21 @@ def thermal_network_simplified(locator, config, network_name=''):
                          index=False)
 
     # summary of edges used for the calculation
-    fields_edges = ['length_m', 'Pipe_DN', 'Type_mat', 'D_int_m']
+    fields_edges = ['length_m', 'pipe_DN', 'type_mat', 'D_int_m']
     edge_df[fields_edges].to_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
-    fields_nodes = ['Type', 'Building']
+    fields_nodes = ['type', 'building']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
     # correct diameter of network and save to the shapefile
     from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
-    fields = ['length_m', 'Pipe_DN', 'Type_mat']
+    fields = ['length_m', 'pipe_DN', 'type_mat']
     edge_df = edge_df[fields]
     edge_df['name'] = edge_df.index.values
+    edge_df = edge_df.reset_index(drop=True)
     network_edges_df = dbf_to_dataframe(
         locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
-    network_edges_df = network_edges_df.merge(edge_df, left_on='Name', right_on='name', suffixes=('_x', ''))
-    network_edges_df = network_edges_df.drop(['Pipe_DN_x', 'Type_mat_x', 'name', 'length_m_x'], axis=1)
+    network_edges_df = network_edges_df.merge(edge_df, left_on='name', right_on='name', suffixes=('_x', ''))
+    network_edges_df = network_edges_df.drop(['pipe_DN_x', 'type_mat_x', 'length_m_x'], axis=1)
     dataframe_to_dbf(network_edges_df,
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 

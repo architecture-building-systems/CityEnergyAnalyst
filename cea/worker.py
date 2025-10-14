@@ -11,13 +11,12 @@ as an URL for locating the /server/jobs api.
 """
 
 import sys
+from typing import Any
+
 import requests
 import traceback
 import queue
 import threading
-import cea.config
-import cea.scripts
-from cea import suppress_3rd_party_debug_loggers
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +27,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-suppress_3rd_party_debug_loggers()
+from cea.interfaces.dashboard.server.jobs import JobInfo
 
 
 def consume_nowait(q, msg):
@@ -59,7 +58,7 @@ def stream_poster(jobid, server, queue):
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        requests.put("{server}/streams/write/{jobid}".format(**locals()), data=msg)
+        requests.put(f"{server}/streams/write/{jobid}", data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
@@ -99,81 +98,104 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
-def fetch_job(jobid, server):
-    response = requests.get("{server}/jobs/{jobid}".format(**locals()))
+def close_streams():
+    """Close and flush all streams properly"""
+    if hasattr(sys.stdout, 'close'):
+        sys.stdout.close()
+    if hasattr(sys.stderr, 'close'):
+        sys.stderr.close()
+
+
+def fetch_job(jobid: str, server) -> JobInfo:
+    response = requests.get(f"{server}/jobs/{jobid}")
     job = response.json()
-    return job
+    return JobInfo(**job)
 
 
-def run_job(config, job, server):
+def run_job(job: JobInfo, suppress_warnings: bool = False):
+    import warnings
     parameters = read_parameters(job)
     script = read_script(job)
-    script(config=config, **parameters)
+    
+    if suppress_warnings:
+        with warnings.catch_warnings():
+            # Suppress FutureWarning and DeprecationWarning from all modules
+            # End user does not need to see these warnings
+            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
+
+            output = script(**parameters)
+    else:
+        output = script(**parameters)
+    return output
 
 
-def read_script(job):
+def read_script(job: JobInfo):
     """Locate the script defined by the job dictionary in the ``cea.api`` module, take care of dashes"""
     import cea.api
-    script_name = job["script"]
+    script_name = job.script
     py_script_name = script_name.replace("-", "_")
     script_method = getattr(cea.api, py_script_name)
     return script_method
 
 
-def read_parameters(job):
+def read_parameters(job: JobInfo):
     """Return the parameters of the job in a format that is valid for using as ``**kwargs``"""
-    parameters = job["parameters"] or {}
+    parameters = job.parameters or {}
     py_parameters = {k.replace("-", "_"): v for k, v in parameters.items()}
     return py_parameters
 
 
 def post_started(jobid, server):
-    requests.post("{server}/jobs/started/{jobid}".format(**locals()))
+    requests.post(f"{server}/jobs/started/{jobid}")
 
 
-def post_success(jobid, server):
-    requests.post("{server}/jobs/success/{jobid}".format(**locals()))
+def post_success(jobid: str, server: str, output: Any = None):
+    # Close streams before sending success
+    close_streams()
+    requests.post(f"{server}/jobs/success/{jobid}", json={"output": output})
 
 
-def post_error(exc, jobid, server):
-    requests.post("{server}/jobs/error/{jobid}".format(**locals()), data=exc)
+def post_error(message: str, stacktrace: str, jobid: str, server: str):
+    # Close streams before sending error
+    close_streams()
+    requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
-def worker(config, jobid, server):
+def worker(jobid: str, server: str, suppress_warnings: bool = False):
     """This is the main logic of the cea-worker."""
-    print("Running cea-worker with jobid: {jobid}, url: {server}".format(**locals()))
-    job = fetch_job(jobid, server)
+    print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
+        job = fetch_job(jobid, server)
+
         configure_streams(jobid, server)
         post_started(jobid, server)
-        run_job(config, job, server)
-        post_success(jobid, server)
-    except Exception as e:
+        output = run_job(job, suppress_warnings)
+        post_success(jobid, server, output)
+    except (SystemExit, Exception) as e:
+        message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
+        print(f"\nERROR: {message}")
         exc = traceback.format_exc()
-        print(exc, file=sys.stderr)
-        post_error(str(e), jobid, server)
+        post_error(message, exc, jobid, server)
     finally:
-        sys.stdout.close()
-        sys.stderr.close()
+        # Ensure streams are closed
+        close_streams()
 
 
-def main(config=None):
-    if not config:
-        config = cea.config.Configuration()
-    default_url = config.worker.url
-
-    args = parse_arguments(default_url)
-    worker(config, args.jobid, args.url)
+def main():
+    args = parse_arguments()
+    worker(args.jobid, args.url, args.suppress_warnings)
 
 
-def parse_arguments(default_url):
+def parse_arguments():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job", default=0)
-    parser.add_argument("-u", "--url", type=str, help="URL of the CEA server api", default=default_url)
+    parser.add_argument("jobid", type=str, help="Job id to run - use 0 to run the next job")
+    parser.add_argument("url", type=str, help="URL of the CEA server api")
+    parser.add_argument("--suppress-warnings", action="store_true", help="Suppress warnings from external libraries, keep CEA warnings")
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    main()

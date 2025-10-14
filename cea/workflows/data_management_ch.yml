@@ -1,6 +1,6 @@
 # getting-started: runs everything concerning CEA data management
 
-- script: data-initializer
+- script: database-helper
   parameters:
     databases-path: CH
 - script: archetypes-mapper

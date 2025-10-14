@@ -51,7 +51,7 @@ Please refer to the CEA github repository for questions regarding the usage
 of any database, including this one. If you do find the database useful, please cite the
 following submitted conference paper:
 
-> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Austria. [SUBMITTED]
+> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Austria. [DOI: 10.26868/29761662.2024.22]
 
 The reference will be updated as soon as it underwent the review process and has been published.
 
@@ -100,24 +100,24 @@ term `-EAST` designates the eastern german (former GDR) buildings.
 
 Source for descriptions of the parameters: [^cea-desc].
 
-| Parameter  | Description  | Method |
-|---|---|---|
-| `STANDARD`  | building archetype name | One for each TABULA, EPISCOPE and IWU building archetype in Germany (See abbreviations above)  |
-| `type_cons` | Type of construction assembly (relates to "code" in ENVELOPE assemblies) | Standard values as defined in p. 8 of the common calculation method of TABULA[^tab-com] (and unit conversion to CEA) |
-| `type_leak` | Tightness level assembly (relates to "code" in ENVELOPE assemblies) | According to values defined in the common calculation method of TABULA[^tab-com] p.13 and each building typology. For IWU and BMVBS it was assumed medium or low depending on age |
-| `type_win` |  Window assembly (relates to "code" in ENVELOPE assemblies) | Values depending on renovation status defined in TABULA with additional assumptions |
-| `type_roof` |  Roof construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA, BMBVS or IWU, and assumptions for missing values |
-| `type_part` |  Internal partitions construction assembly (relates to "code" in ENVELOPE assemblies) | One standard assumption for all |
-| `type_wall` |  External wall construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA, and assumptions for missing values |
-| `type_floor` |  Internal floor construction assembly (relates to "code" in ENVELOPE assemblies) | Values for all building typologies defined in TABULA |
-| `type_base` |  Internal floor construction assembly (relates to "code" in ENVELOPE assemblies) | Assumed equal to floor insulation of each building typology for TABULA DE (not measured) |
-| `type_shade` |  Shading system assembly (relates to "code" in ENVELOPE assemblies) | Assumed as vertical window for all typologies (TABULA p. 8 TABULA common calculation method[^tab-com]) |
-| `Es` |  Fraction of gross floor area with energy demands | Default tabula value = 0.85 |
-| `Hs_ag` |  Fraction of above ground gross floor area air-conditioned | Equal to Es, TABULA assumption |
-| `Hs_bg` |  Fraction of below ground gross floor area air-conditioned | Assumption of 0 |
-| `Ns` |  Fraction of net gross floor area | Assumption of 0.85 |
-| `void_deck`|  Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | 0 |
-|`wwr_[]` | Window to wall ratio in in facades directions | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU |
+| Parameter           | Description                                                                                                | Method                                                                                                                                                                            |
+|---------------------|------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `STANDARD`          | building archetype name                                                                                    | One for each TABULA, EPISCOPE and IWU building archetype in Germany (See abbreviations above)                                                                                     |
+| `type_cons`         | Type of construction assembly (relates to "code" in ENVELOPE assemblies)                                   | Standard values as defined in p. 8 of the common calculation method of TABULA[^tab-com] (and unit conversion to CEA)                                                              |
+| `type_leak`         | Tightness level assembly (relates to "code" in ENVELOPE assemblies)                                        | According to values defined in the common calculation method of TABULA[^tab-com] p.13 and each building typology. For IWU and BMVBS it was assumed medium or low depending on age |
+| `type_win`          | Window assembly (relates to "code" in ENVELOPE assemblies)                                                 | Values depending on renovation status defined in TABULA with additional assumptions                                                                                               |
+| `type_roof`         | Roof construction assembly (relates to "code" in ENVELOPE assemblies)                                      | Values for all building typologies defined in TABULA, BMBVS or IWU, and assumptions for missing values                                                                            |
+| `type_part`         | Internal partitions construction assembly (relates to "code" in ENVELOPE assemblies)                       | One standard assumption for all                                                                                                                                                   |
+| `type_wall`         | External wall construction assembly (relates to "code" in ENVELOPE assemblies)                             | Values for all building typologies defined in TABULA, and assumptions for missing values                                                                                          |
+| `type_floor`        | Internal floor construction assembly (relates to "code" in ENVELOPE assemblies)                            | Values for all building typologies defined in TABULA                                                                                                                              |
+| `type_base`         | Internal floor construction assembly (relates to "code" in ENVELOPE assemblies)                            | Assumed equal to floor insulation of each building typology for TABULA DE (not measured)                                                                                          |
+| `type_shade`        | Shading system assembly (relates to "code" in ENVELOPE assemblies)                                         | Assumed as vertical window for all typologies (TABULA p. 8 TABULA common calculation method[^tab-com])                                                                            |
+| `Es`                | Fraction of gross floor area with energy demands                                                           | Default tabula value = 0.85                                                                                                                                                       |
+| `Hs`                | Fraction of gross floor area air-conditioned                                                               | Equal to Es, TABULA assumption                                                                                                                                                    |
+| `occupied_bg` | True if floors below ground are conditioned/occupied, False if not.                                        | Assumed False                                                                                                                                                                     |
+| `Ns`                | Fraction of net gross floor area                                                                           | Assumption of 0.85                                                                                                                                                                |
+| `void_deck`         | Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | 0                                                                                                                                                                                 |
+| `wwr_[]`            | Window to wall ratio in facades directions                                                                 | Values for all building typologies defined in TABULA, calculated from facade, wall and window surfaces in IWU                                                                     |
 
 #### HVAC_ASSMEBLIES
 
@@ -155,12 +155,21 @@ DIN EN 16789-1:2019 presents indoor environmental input parameters for design an
 
 #### Residential types
 
- The naming convention is *D_[usetype]* for residential profiles:
+Cooling is always equal to CH database. The naming convention is the same as the CH database. For residential profiles:
 
-- `D_SFH`: Single family home
-- `D_MFH`: Multi family home
+- `SINGLE_RES`: Single family home
+- `MULTI_RES`: Multi family home
 
-##### Use type properties - internal loads
+#### Non-Residential types
+
+In the current status, there are some non-residential use types included. There is only a very heterogeneous data basis for non-residential buildings in Germany:
+
+- DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
+- Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
+
+So, if the data is available in DIN 18599-13, this was added to the USE_TYPE_PROPERTIES excel; otherwise, it was assumed to be equal to CH defaults. 
+
+#### Use type properties - internal loads
 
 | Parameter   | Description   | Method  |
 |---   |---   |---  |
@@ -169,36 +178,37 @@ DIN EN 16789-1:2019 presents indoor environmental input parameters for design an
 | `Vw_ldp`  | Peak specific fresh water consumption (refers to “code”) | average water consumption for Germany [^BDEW] |
 | `Vww_ldp` | Peak specific hot water consumption (refers to “code”)| 10% of `Vww` (educated guess) |
 
-##### Use type properties - indoor comfort
+#### Use type properties - indoor comfort
 
 | Parameter   | Description   | Method  |
 |---   |---   |---  |
 | `Tcs_set_C` |   Setpoint temperature for cooling system (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.3 Höchstwert für Kühlung in der Sommerperiode Wohnen Kat. II : 26°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegung Kühlfall|
 | `Tcs_setb_C` |  Setback point of temperature for cooling system (refers to "code")  | DIN V 18599-10:2018-09 Tab. 4 |
-| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | DIN EN 16798-1:2022-03 Tab.NA.3  Wohnen Kat. I: 20°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall |
-| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K -> 16°C|
+| `Ths_set_C` |   Setpoint temperature for heating system (refers to "code") | DIN EN 16798-1:2022-03 Tab.NA.3  Wohnen Kat. I: 20°C AND DIN V 18599-10:2018-10 Tab. 4 Auslegungstemperatur Heizfall and DIN EN 18599-13 Tab. 8 if available, CH defaults otherwise |
+| `Ths_setb_C` |  Setback point of temperature for heating system  (refers to "code")  |  DIN V 18599-10:2018-10 Tab. 4 Temperaturabsenkung Reduzierter Betrieb = 4 K. Example: 20 °C ->16 °C |
 | `Ve_lsp` | Minimum outdoor air ventilation rate per person for Air Quality (refers to "code")  |  DIN EN 16798-1:2022-03 Tab.NA.6 Kat. II - I  (erhöht auf Grdl. VDI Empfehlung zu 30 m³/h |
 
 ##### SCHEDULES
 
 | Parameter   | Method  |
 |---   |---   |
-| OCCUPANCY | modified according to  DIN EN 16798 and DIN18599 |
+| OCCUPANCY | modified according to  DIN EN 16798 and DIN18599 for Residential. Non residential assumed equal to CH. |
 | APPLIENCES | 0.5 as baseline, others correlating with occupancy  |  
 | LIGHTING | starting at 7 am, correlating with occupancy, but modified  |  
 | WATER | starting at 7 am, correlating with occupancy  |  
 | SETPOINT | DIN V 18599-10:2018 Tab. 4 Nutzungszeit von 6:00 - 23:00 |  
 | SETBACK | if not SETPOINT|  
 
-#### Non-Residential types
+#### Internal Load Calculations
 
-In the current status, there are no non-residential use types included.
-
-There is only a very heterogeneous data basis for non-residential buildings in Germany:
-
-- DIN/TS 18599 (e.g. Teil 13: Tabulation method for non-residential buildings): Also describes many occupancy profiles, but against the background of simplified calculation in the course of energy consulting. In this case, a simplified monthly balance procedure is usually used. However, the different thermal zones of a building are taken into account. For this reason, the values cannot be transferred directly to CEA.
-- Standardlastprofile des BDEW (in English: Standard load profiles): These standardized load profiles contain the usual energy load patterns in Germany. They are often used for analyzing/monitoring the energy supply. However, they are based on the consumption of the German grid and are not intended as input data for a reduced order model.
-- ...
+- Water usage School with shower: 250 Wh/m2/d $\times$ 3 m2/p / 23.28 Wh/l at 20 K temperature difference = 32.22 l/d/p [18599-13].
+- Water usage School without shower: 10.95 l/d/p [18599-13].
+- Assumed cold water usage equal to warmwater usage in School.
+- Warm water usage in office assumed equal to 2.5 l/d/p according to paper 'Fuentes, Elena, L. Arce, and Jaume Salom. "A review of domestic hot water consumption profiles for application in systems and buildings energy performance analysis." Renewable and Sustainable Energy Reviews 81 (2018): 1530-1547.
+- Restaurant assumed to be equal to: "Bürogebäude mit
+Gaststätte" of DIN 18599-13 -> 1500*1.2/23.28=77 l/d/p, cold water assumed equal.
+- Hotel left equal to CH.
+- Library: 30*5/23.28=6.44 l/d/p.
 
 ## Assemblies
 
@@ -396,6 +406,7 @@ In alphabetic order:
 - Amedeo Ceruti
 - Mara Geske
 - Ulla Hartmann
+- Urbano Tataranni
 
 ## References
 

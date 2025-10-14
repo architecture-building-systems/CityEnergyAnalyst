@@ -79,10 +79,10 @@ class EnergyFlow(object):
     def energy_carrier(self, new_energy_carrier):
         if isinstance(new_energy_carrier, str):
             try:
-                self._energy_carrier = EnergyCarrier(new_energy_carrier)
+                self._energy_carrier = EnergyCarrier.from_code(new_energy_carrier)
             except ValueError:
                 raise ValueError('The indicated energy carrier code is invalid.')
-        elif isinstance(new_energy_carrier, type(EnergyCarrier())):
+        elif isinstance(new_energy_carrier, EnergyCarrier):
             self._energy_carrier = new_energy_carrier
         else:
             raise ValueError('Please indicate a valid energy carrier.')
@@ -208,5 +208,14 @@ class EnergyFlow(object):
         """
         new_energy_flow = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
                                      self.profile.clip(upper=profile_threshold))
+
+        return new_energy_flow
+
+    def isolate_peak(self):
+        """
+        Return an energy flow with only the peak value of the original energy flow profile.
+        """
+        new_energy_flow = EnergyFlow(self.input_category, self.output_category, self.energy_carrier.code,
+                                     pd.Series([self.profile.max()], index=[self.profile.idxmax()]))
 
         return new_energy_flow

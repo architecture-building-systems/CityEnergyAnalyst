@@ -22,7 +22,7 @@ class InvestmentCostsPlot(cea.plots.optimization.GenerationPlotBase):
     name = "Investment costs"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
-        'normalization': 'plots-optimization:normalization',
+        'normalization': 'plots:normalization',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -94,13 +94,13 @@ def main():
     import cea.plots.cache
     config = cea.config.Configuration()
     cache = cea.plots.cache.NullPlotCache()
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    # locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     InvestmentCostsPlot(config.project,
                         {'buildings': None,
                          'scenario-name': config.scenario_name,
                          'generation': config.plots_optimization.generation,
-                         'normalization': config.plots_optimization.normalization},
+                         'normalization': config.plots.normalization},
                         cache).plot(auto_open=True)
 
 

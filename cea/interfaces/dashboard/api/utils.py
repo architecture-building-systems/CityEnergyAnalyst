@@ -5,7 +5,10 @@ import cea.inputlocator
 def deconstruct_parameters(p: cea.config.Parameter, config=None):
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': False, 'help': p.help}
     try:
-        params["value"] = p.get()
+        if isinstance(p, cea.config.BuildingsParameter):
+            params['value'] = []
+        else:
+            params["value"] = p.get()
     except cea.ConfigError as e:
         print(e)
         params["value"] = ""

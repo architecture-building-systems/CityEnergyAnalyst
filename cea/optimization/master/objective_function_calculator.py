@@ -201,7 +201,7 @@ def calc_substations_costs_heating(building_names, district_network_barcode, loc
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEAT_EXCHANGERS")
+            HEX_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv("HEAT_EXCHANGERS"))
             HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
             # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
             # capacity for the corresponding technology from the database
@@ -502,7 +502,7 @@ def calc_substations_costs_cooling(building_names, master_to_slave_vars, distric
 
             subsArray = np.array(df)
             Q_max_W = np.amax(subsArray)
-            HEX_cost_data = pd.read_excel(locator.get_database_conversion_systems(), sheet_name="HEAT_EXCHANGERS")
+            HEX_cost_data = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'))
             HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
             # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
             # capacity for the corresponding technology from the database

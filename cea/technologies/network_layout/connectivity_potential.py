@@ -7,16 +7,17 @@ a series of points (buildings) to the closest street
 
 
 import os
+import warnings
 
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely.geometry import Point, LineString, MultiPoint, box
+from shapely import Point, LineString, MultiPoint, box
 from shapely.ops import split, linemerge, snap
 
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -210,7 +211,7 @@ def snappy_endings(lines, max_distance, crs):
     return df
 
 
-def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs):
+def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, tolerance_grid_snap: float, crs: str):
     """
     Split the union of lines with the union of points resulting
 
@@ -224,8 +225,8 @@ def split_line_by_nearest_points(gdf_line, gdf_points, tolerance_grid_snap, crs)
     """
 
     # union all geometries
-    line = gdf_line.geometry.unary_union
-    snap_points = gdf_points.geometry.unary_union
+    line = gdf_line.geometry.union_all()
+    snap_points = gdf_points.geometry.union_all()
 
     # snap and split coords on line
     # returns GeometryCollection
@@ -248,7 +249,7 @@ def near_analysis(building_centroids, street_network, crs):
     # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
     nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
 
-    df = gdf({"Name": building_centroids["Name"]}, geometry=nearest_points, crs=crs)
+    df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=crs)
     return df
 
 
@@ -331,7 +332,7 @@ def create_terminals(building_centroids, crs, street_network):
     all_points = pd.concat([near_points.to_crs(crs), building_centroids.to_crs(crs)])
     all_points.crs = crs
     # Aggregate these points with the GroupBy
-    lines_to_buildings = all_points.groupby(['Name'])['geometry'].apply(lambda x: LineString(x.tolist()))
+    lines_to_buildings = all_points.groupby(['name'])['geometry'].apply(lambda x: LineString(x.tolist()))
     lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
 
     lines_to_buildings = pd.concat([lines_to_buildings, street_network]).reset_index(drop=True)
@@ -367,13 +368,18 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     street_network = gdf.from_file(path_streets_shp)
 
     # check coordinate system
-    street_network = street_network.to_crs(get_geographic_coordinate_system())
-    lon = street_network.geometry[0].centroid.coords.xy[0][0]
-    lat = street_network.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(street_network)
     street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
     crs = street_network.crs
 
-    street_network = simplify_liness_accurracy(street_network.geometry.values, SHAPEFILE_TOLERANCE, crs)
+    valid_geometries = street_network[street_network.geometry.is_valid].geometry
+
+    if valid_geometries.empty:
+        raise ValueError("No valid geometries found in the shapefile.")
+    elif len(street_network) != len(valid_geometries):
+        warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+
+    street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
 
     # create terminals/branches form street to buildings
     prototype_network = create_terminals(building_centroids_df, crs, street_network)

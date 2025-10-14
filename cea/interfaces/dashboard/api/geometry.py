@@ -64,7 +64,6 @@ async def validate_building_geometry(data: ValidateGeometry):
 
         try:
             building_df = gpd.read_file(data.path)
-            print(building_df)
             if data.building == 'zone':
 
                 # Make sure zone column names are in correct case

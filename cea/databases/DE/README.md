@@ -8,19 +8,17 @@
 
 ## Description
 
-Building typology for the German building stock adapted to CEA database format. An accompanying documentation.md file details all assumptions and sources used to compile the database. An a paper has been submitted to the BauSIM 2024 conference and is currently under peer review.
+Building typology for the German building stock adapted to CEA database format. Accompanying documentation.md file details all assumptions and sources used to compile the database. Please cite the paper published at the BauSIM 2024 conference proceedings.
 
-The overall goal is to improve the current database creation process and templates of CEA with our case studies from Germany. This collaborative project was born out of the CEA User Meeting 2023 with the explicit goal to publish this Germany database for all CEA users.
+The overall goal is to improve the current database creation process and CEA templates with our case studies from Germany. This collaborative project was born out of the CEA User Meeting 2023 with the explicit goal to publish this Germany database for all CEA users.
 
 ## Cite
 
 Please refer to the CEA github repository for questions regarding the usage
-of any database, including this one. If you do find the database useful, please cite the
+of any database, including this one. If you do find the database helpful, please cite the
 following submitted conference paper:
 
-> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Vienna, Austria. [SUBMITTED]
-
-The reference will be updated as soon as it underwent the review process and is published.
+> Ceruti, A., Geske, M., Hartmann, U., Spliethoff, H., Voelker, C. (2024). From Building to District: Accelerating Urban Building Energy Modeling with an Open-Source Database for Germany. BauSIM 2024, Vienna, Austria. DOI: <https://doi.org/10.26868/29761662.2024.22>.
 
 ## Collaborate
 
@@ -34,3 +32,4 @@ In alphabetical order.
 - Amedeo Ceruti (amedeo.ceruti@tum.de)
 - Mara Geske (mara.geske@uni-weimar.de)
 - Ulla Hartmann (ullahartmann96@gmail.com)
+- Urbano Tataranni (urbano.tataranni@tum.de)

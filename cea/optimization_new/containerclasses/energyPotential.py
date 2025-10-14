@@ -1,7 +1,7 @@
 """
 Energy Potential Class:
 defines the energy potential corresponding to a certain energy carrier in the optimisation domain:
-- The building's unique identifier (i.e. 'Name' from the input editor)
+- The building's unique identifier (i.e. 'name' from the input editor)
 - The building's location
 - The demand profile of the building
 """
@@ -59,10 +59,10 @@ class EnergyPotential(object):
                              "Please assign one a valid scale: "
                              "Building, Network, Domain")
 
-    def load_PV_potential(self, locator, building_codes):
+    def load_PV_potential(self, locator, building_codes, panel_type):
         self.type = 'SolarPV'
         self.scale = 'Building'
-        pv_potential_files = np.vectorize(locator.PV_results)(building_codes)
+        pv_potential_files = np.vectorize(locator.PV_results)(building_codes, panel_type)
         potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
         if potentials:
             main_energy_carrier = 'E230AC'
@@ -72,10 +72,10 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_PVT_potential(self, locator, building_codes):
+    def load_PVT_potential(self, locator, building_codes, pv_panel_type, sc_panel_type):
         self.type = 'SolarPVT'
         self.scale = 'Building'
-        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes)
+        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes, pv_panel_type, sc_panel_type)
         potentials = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:

@@ -1,3 +1,4 @@
+
 """
 This script extracts surrounding buildings of the zone geometry from Open street maps
 """
@@ -16,7 +17,8 @@ import cea.config
 import cea.inputlocator
 from cea.datamanagement.zone_helper import parse_building_floors, clean_geometries
 from cea.demand import constants
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
+    get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -28,10 +30,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def generate_empty_surroundings(crs) -> gdf:
-    return gdf(columns=["Name", "height_ag", "floors_ag"], geometry=[], crs=crs)
+    return gdf(columns=["name", "height_ag", "floors_ag"], geometry=[], crs=crs)
 
 
-def calc_surrounding_area(zone_gdf, buffer_m):
+def calc_surrounding_area(zone_gdf: gdf, buffer_m: float):
     """
     Adds buffer to zone to get surroundings area
 
@@ -39,7 +41,7 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     :param float buffer_m: Buffer to add to zone building geometries
     :return: Surrounding area GeoDataFrame
     """
-    merged_zone = zone_gdf.geometry.unary_union
+    merged_zone = zone_gdf.geometry.union_all()
     if isinstance(merged_zone, MultiPolygon):
         merged_zone = merged_zone.convex_hull
 
@@ -52,9 +54,8 @@ def get_zone_and_surr_in_projected_crs(locator):
     zone_gdf = gdf.from_file(locator.get_zone_geometry())
     surroundings_gdf = gdf.from_file(locator.get_surroundings_geometry())
     # get longitude and latitude of zone centroid
-    zone_gdf_in_geographic_crs = zone_gdf.to_crs(get_geographic_coordinate_system())
-    lon = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[0][0]
-    lat = zone_gdf_in_geographic_crs.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(zone_gdf)
+
     # check if the coordinate reference systems (crs) of the zone and its surroundings match
     if zone_gdf.crs != surroundings_gdf.crs or zone_gdf.crs != get_projected_coordinate_system(lat=lat, lon=lon):
         # if they don't match project the zone and its surroundings to the global crs...
@@ -66,51 +67,35 @@ def get_zone_and_surr_in_projected_crs(locator):
     return zone_gdf, surroundings_gdf
 
 
-def clean_attributes(shapefile, buildings_height, buildings_floors, key):
+def clean_attributes(shapefile, key):
     # local variables
     no_buildings = shapefile.shape[0]
     list_of_columns = shapefile.columns
-    if buildings_height is None and buildings_floors is None:
-        print('Warning! you have not indicated a height or number of floors above ground for the buildings, '
-              'we are reverting to data stored in Open Street Maps (It might not be accurate at all),'
-              'if we do not find data in OSM for a particular building, we get the median in the surroundings, '
-              'if we do not get any data we assume 4 floors per building')
-        # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
-        if 'building:levels' not in list_of_columns:
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
-        elif pd.isnull(shapefile['building:levels']).all():
-            shapefile['building:levels'] = [3] * no_buildings
-            shapefile['REFERENCE'] = "CEA - assumption"
-        else:
-            shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
-                                      shapefile['building:levels']]
-        if 'roof:levels' not in list_of_columns:
-            shapefile['roof:levels'] = 0
 
-        # get the median from the area:
-        data_osm_floors1 = shapefile['building:levels'].fillna(0)
-        data_osm_floors2 = shapefile['roof:levels'].fillna(0)
-        data_floors_sum = [x + y for x, y in
-                           zip([parse_building_floors(x) for x in data_osm_floors1],
-                               [parse_building_floors(x) for x in data_osm_floors2])]
-        data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
-        data_osm_floors_joined = int(
-            math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
-        shapefile["floors_ag"] = [int(x) if x is not np.nan else data_osm_floors_joined for x in
-                                  data_floors_sum_with_nan]
-        shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+    # Check which attributes the OSM has, Sometimes it does not have any and indicate the data source
+    if 'building:levels' not in list_of_columns:
+        shapefile['building:levels'] = [3] * no_buildings
+        shapefile['REFERENCE'] = "CEA - assumption"
+    elif pd.isnull(shapefile['building:levels']).all():
+        shapefile['building:levels'] = [3] * no_buildings
+        shapefile['REFERENCE'] = "CEA - assumption"
     else:
-        shapefile['REFERENCE'] = "User - assumption"
-        if buildings_height is None and buildings_floors is not None:
-            shapefile["floors_ag"] = [buildings_floors] * no_buildings
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-        elif buildings_height is not None and buildings_floors is None:
-            shapefile["height_ag"] = [buildings_height] * no_buildings
-            shapefile["floors_ag"] = [int(math.floor(x)) for x in shapefile["height_ag"] / constants.H_F]
-        else:  # both are not none
-            shapefile["height_ag"] = [buildings_height] * no_buildings
-            shapefile["floors_ag"] = [buildings_floors] * no_buildings
+        shapefile['REFERENCE'] = ["OSM - median" if x is np.nan else "OSM - as it is" for x in
+                                  shapefile['building:levels']]
+    if 'roof:levels' not in list_of_columns:
+        shapefile['roof:levels'] = 0
+
+    # get the median from the area:
+    data_osm_floors1 = shapefile['building:levels'].fillna(0)
+    data_osm_floors2 = shapefile['roof:levels'].fillna(0)
+    data_floors_sum = [x + y for x, y in
+                       zip([parse_building_floors(x) for x in data_osm_floors1],
+                           [parse_building_floors(x) for x in data_osm_floors2])]
+    data_floors_sum_with_nan = [np.nan if x < 1.0 else x for x in data_floors_sum]
+    data_osm_floors_joined = int(
+        math.ceil(np.nanmedian(data_floors_sum_with_nan)))  # median so we get close to the worse case
+    shapefile["floors_ag"] = [int(x) if not pd.isna(x) else data_osm_floors_joined for x in data_floors_sum_with_nan]
+    shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
     # add description
     if "description" in list_of_columns:
@@ -123,10 +108,10 @@ def clean_attributes(shapefile, buildings_height, buildings_floors, key):
         shapefile["description"] = [np.nan] * no_buildings
 
     shapefile["category"] = shapefile['building']
-    shapefile["Name"] = [key + str(x + 1000) for x in
+    shapefile["name"] = [key + str(x + 1000) for x in
                          range(no_buildings)]  # start in a big number to avoid potential confusion\
     result = shapefile[
-        ["Name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
+        ["name", "height_ag", "floors_ag", "description", "category", "geometry", "REFERENCE"]]
 
     result.reset_index(inplace=True, drop=True)
 
@@ -164,15 +149,11 @@ def geometry_extractor_osm(locator, config):
 
     # local variables:
     buffer_m = config.surroundings_helper.buffer
-    buildings_height = config.surroundings_helper.height_ag
-    buildings_floors = config.surroundings_helper.floors_ag
     shapefile_out_path = locator.get_surroundings_geometry()
     zone = gdf.from_file(locator.get_zone_geometry())
 
     # trnasform zone file to geographic coordinates
-    zone = zone.to_crs(get_geographic_coordinate_system())
-    lon = zone.geometry[0].centroid.coords.xy[0][0]
-    lat = zone.geometry[0].centroid.coords.xy[1][0]
+    lat, lon = get_lat_lon_projected_shapefile(zone)
     zone = zone.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
 
     # get a polygon of the surrounding area, and one polygon representative of the zone area
@@ -195,7 +176,7 @@ def geometry_extractor_osm(locator, config):
         result = generate_empty_surroundings(surroundings.crs)
     else:
         # clean attributes of height, name and number of floors
-        result = clean_attributes(surroundings, buildings_height, buildings_floors, key="CEA")
+        result = clean_attributes(surroundings, key="CEA")
         result = result.to_crs(get_projected_coordinate_system(float(lat), float(lon)))
         result = clean_geometries(result)
 

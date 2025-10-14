@@ -1,10 +1,9 @@
-import atexit
+from __future__ import annotations
+
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
-from typing import Optional, Tuple, NamedTuple
+from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,12 @@ __status__ = "Production"
 from pyarrow import feather
 
 from cea.constants import HOURS_IN_YEAR
-from cea.resources.radiation.geometry_generator import BuildingGeometry
+from cea.resources.radiation.geometry_generator import BuildingGeometry, SURFACE_TYPES, SURFACE_DIRECTION_LABELS
+from cea.resources.utils import get_radiation_bin_path
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
+    from cea.resources.radiation.radiance import CEADaySim
 
 BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
@@ -34,27 +38,7 @@ class GridSize(NamedTuple):
     walls: int
 
 
-def create_temp_daysim_directory(directory):
-    daysim_dir = os.path.join(BUILT_IN_BINARIES_PATH, sys.platform)
-
-    os.makedirs(directory, exist_ok=True)
-    temp_dir = tempfile.TemporaryDirectory(prefix="cea-daysim-temp", dir=directory)
-
-    if sys.platform == "win32":
-        daysim_dir = os.path.join(daysim_dir, "bin64")
-
-    for file in os.listdir(daysim_dir):
-        binary_file = os.path.join(daysim_dir, file)
-        output_file = os.path.join(temp_dir.name, file)
-        if not os.path.exists(output_file):
-            shutil.copyfile(binary_file, output_file)
-
-    atexit.register(temp_dir.cleanup)
-
-    return temp_dir.name
-
-
-def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries: bool = True) -> Tuple[str, Optional[str]]:
+def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Check for the Daysim bin directory based on ``path_hint`` and return it on success.
 
@@ -68,7 +52,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     If the binaries can't be found anywhere, raise an exception.
 
     :param str path_hint: The path to check first, according to the `cea.config` file.
-    :param bool latest_binaries: Use latest Daysim binaries
     :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
     """
 
@@ -97,16 +80,18 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
     if path_hint is not None:
         folders_to_check.append(path_hint)
 
-    # Path of shipped binaries
+    # Check site-packages location first (where binaries are actually installed)
+    site_package_daysim = get_radiation_bin_path()
+    if site_package_daysim:
+        folders_to_check.append(site_package_daysim)
+
+    # Fallback: Path relative to this script (for development or custom setups)
     shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
     folders_to_check.append(shipped_daysim)
 
     # Additional paths
     if sys.platform == "win32":
-        # Check latest binaries only applies to Windows
-        folders_to_check.append(os.path.join(shipped_daysim, "bin64" if latest_binaries else "bin"))
-        folders_to_check.append(os.path.join(path_hint, "bin64" if latest_binaries else "bin"))
-
+        folders_to_check.append(os.path.join(shipped_daysim, "bin64"))
         # User might have a default DAYSIM installation
         folders_to_check.append(r"C:\Daysim\bin")
 
@@ -119,7 +104,7 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
 
     # Expand paths
     folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-    lib_path = None
+    lib_path = os.path.join(os.path.dirname(__file__), "lib")
 
     for possible_path in folders_to_check:
         if not contains_binaries(possible_path):
@@ -130,15 +115,6 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None, latest_binaries:
         #     warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
         #                   "Consider moving the binaries to another path to use them.")
         #     continue
-
-        if sys.platform == "win32":
-            # Use path lib folder if it exists
-            _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-            if contains_libs(_lib_path):
-                lib_path = _lib_path
-            # Check if lib files in binaries path, for backward capability
-            elif contains_libs(possible_path):
-                lib_path = possible_path
 
         elif sys.platform == "darwin":
             # Remove unidentified developer warning when running binaries on mac
@@ -189,35 +165,25 @@ def calc_sensors_building(building_geometry: BuildingGeometry, grid_size: GridSi
     sensor_area_list = []
     sensor_orientation_list = []
     sensor_intersection_list = []
-    surfaces_types = ['walls', 'windows', 'roofs']
 
-    for srf_type in surfaces_types:
+    for srf_type in SURFACE_TYPES:
         occface_list = getattr(building_geometry, srf_type)
-        if srf_type == 'roofs':
-            orientation_list = ['top'] * len(occface_list)
-            normals_list = [(0.0, 0.0, 1.0)] * len(occface_list)
-            interesection_list = [0] * len(occface_list)
-        elif srf_type == 'windows':
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = [0] * len(occface_list)
-        else:
-            orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
-            normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
-            interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
+        orientation_list = getattr(building_geometry, "orientation_{srf_type}".format(srf_type=srf_type))
+        normals_list = getattr(building_geometry, "normals_{srf_type}".format(srf_type=srf_type))
+        interesection_list = getattr(building_geometry, "intersect_{srf_type}".format(srf_type=srf_type))
         for orientation, normal, face, intersection in zip(orientation_list, normals_list, occface_list,
                                                            interesection_list):
             sensor_dir, \
-            sensor_cord, \
-            sensor_type, \
-            sensor_area, \
-            sensor_orientation, \
-            sensor_intersection = generate_sensor_surfaces(face,
-                                                           grid_size.roof if srf_type == "roofs" else grid_size.walls,
-                                                           srf_type,
-                                                           orientation,
-                                                           normal,
-                                                           intersection)
+                sensor_cord, \
+                sensor_type, \
+                sensor_area, \
+                sensor_orientation, \
+                sensor_intersection = generate_sensor_surfaces(face,
+                                                               grid_size.roof if srf_type == "roofs" else grid_size.walls,
+                                                               srf_type,
+                                                               orientation,
+                                                               normal,
+                                                               intersection)
             sensor_intersection_list.extend(sensor_intersection)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
@@ -239,11 +205,11 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
         building_geometry = BuildingGeometry.load(os.path.join(geometry_pickle_dir, 'zone', building_name))
         # get sensors in the building
         sensors_dir_building, \
-        sensors_coords_building, \
-        sensors_type_building, \
-        sensors_area_building, \
-        sensor_orientation_building, \
-        sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
+            sensors_coords_building, \
+            sensors_type_building, \
+            sensors_area_building, \
+            sensor_orientation_building, \
+            sensor_intersection_building = calc_sensors_building(building_geometry, grid_size)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -263,6 +229,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
         names_zone.append(building_name)
 
         # save sensors geometry result to disk
+        locator.ensure_parent_folder_exists(locator.get_radiation_metadata(building_name))
         pd.DataFrame({'BUILDING': building_name,
                       'SURFACE': sensors_code,
                       'orientation': sensor_orientation_building,
@@ -280,7 +247,7 @@ def calc_sensors_zone(building_names, locator, grid_size: GridSize, geometry_pic
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone, sensor_intersection_zone
 
 
-def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_parameters, write_sensor_data,
+def isolation_daysim(chunk_n, cea_daysim: CEADaySim, building_names, locator, radiance_parameters, write_sensor_data,
                      grid_size: GridSize,
                      max_global, weatherfile, geometry_pickle_dir):
     # initialize daysim project
@@ -290,11 +257,11 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     # calculate sensors
     print("Calculating and sending sensor points")
     sensors_coords_zone, \
-    sensors_dir_zone, \
-    sensors_number_zone, \
-    names_zone, \
-    sensors_code_zone, \
-    sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
+        sensors_dir_zone, \
+        sensors_number_zone, \
+        names_zone, \
+        sensors_code_zone, \
+        sensor_intersection_zone = calc_sensors_zone(building_names, locator, grid_size, geometry_pickle_dir)
 
     daysim_project.create_sensor_input_file(sensors_coords_zone, sensors_dir_zone)
 
@@ -305,8 +272,11 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
     daysim_project.write_radiance_parameters(**radiance_parameters)
 
     print('Executing hourly solar isolation calculation')
+    import time
+    start = time.time()
     daysim_project.execute_gen_dc()
     daysim_project.execute_ds_illum()
+    print(f"Daysim calculation took {time.time() - start} seconds")
 
     print('Reading results...')
     solar_res = daysim_project.eval_ill()
@@ -327,7 +297,7 @@ def isolation_daysim(chunk_n, cea_daysim, building_names, locator, radiance_para
             in zip(names_zone, sensors_number_zone, sensors_code_zone, sensor_intersection_zone):
 
         # select sensors data
-        sensor_data = solar_res[index:index+sensors_number]
+        sensor_data = solar_res[index:index + sensors_number]
         # set sensors that intersect with buildings to 0
         sensor_data[np.array(sensor_intersection) == 1] = 0
         items_sensor_name_and_result = pd.DataFrame(sensor_data, index=sensor_code)
@@ -352,7 +322,7 @@ def write_sensor_results(sensor_data_path, sensor_values):
     feather.write_feather(sensor_values.T, sensor_data_path, compression="zstd")
 
 
-def write_aggregated_results(building_name, sensor_values, locator, date):
+def write_aggregated_results(building_name, sensor_values: pd.DataFrame, locator: InputLocator, date):
     # Get sensor properties
     geometry = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
 
@@ -361,20 +331,12 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     group_dict = labels.to_dict()
 
     # Ensure surface columns (sometimes windows do not exist)
-    surfaces = {'windows_east',
-                'windows_west',
-                'windows_south',
-                'windows_north',
-                'walls_east',
-                'walls_west',
-                'walls_south',
-                'walls_north',
-                'roofs_top'}
+    current_labels = set(labels.unique())
+    missing_labels = SURFACE_DIRECTION_LABELS - current_labels
 
-    for label in labels.unique():
-        if label not in surfaces:
-            raise ValueError(f"Unrecognized surface name {label}")
-        surfaces.remove(label)
+    extra_labels = current_labels - SURFACE_DIRECTION_LABELS
+    if len(extra_labels) > 0:
+        raise ValueError(f"Unrecognized surface names {extra_labels}")
 
     # Transform data
     sensor_values_kw = sensor_values.multiply(geometry['AREA_m2'], axis="index") / 1000
@@ -387,7 +349,7 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     data = pd.concat([data, area_cols], axis=1)
 
     # Add missing surfaces to output
-    for surface in surfaces:
+    for surface in missing_labels:
         data[f"{surface}_kW"] = 0.0
         data[f"{surface}_m2"] = 0.0
 
@@ -396,4 +358,5 @@ def write_aggregated_results(building_name, sensor_values, locator, date):
     data["Date"] = date
     data.set_index("Date", inplace=True)
 
+    locator.ensure_parent_folder_exists(locator.get_radiation_building(building_name))
     data.to_csv(locator.get_radiation_building(building_name))

@@ -8,7 +8,7 @@ e.g.
 ::
 
     get_database_construction_standards:
-      created_by: [data-initializer]
+      created_by: [database-helper]
       file_path: inputs/technology/archetypes/CONSTRUCTION_STANDARDS.xlsx
       file_type: xlsx
       schema:

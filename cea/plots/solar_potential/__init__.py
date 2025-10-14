@@ -36,7 +36,7 @@ class SolarPotentialPlotBase(PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(SolarPotentialPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', 'solar-potential')
+        self.category_path = os.path.join('special', 'solar-potential')
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_radiation_metadata, [building]) for building in self.buildings] + \
                            [(self.locator.get_radiation_building_sensors, [building]) for building in self.buildings]
@@ -62,22 +62,22 @@ class SolarPotentialPlotBase(PlotBase):
 
     def normalize_data(self, data_processed, buildings, analysis_fields, analysis_fields_area):
         if self.normalization == "gross floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('name')
             normalizatioon_factor = data.loc[buildings]['GFA_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "net floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('name')
             normalizatioon_factor = data.loc[buildings]['Aocc_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "air conditioned floor area":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('name')
             normalizatioon_factor = data.loc[buildings]['Af_m2'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)
         elif self.normalization == "building occupancy":
-            data = pd.read_csv(self.locator.get_total_demand()).set_index('Name')
+            data = pd.read_csv(self.locator.get_total_demand()).set_index('name')
             normalizatioon_factor = data.loc[buildings]['people0'].sum()
             data_processed = data_processed.apply(
                 lambda x: x / normalizatioon_factor if x.name in analysis_fields else x)

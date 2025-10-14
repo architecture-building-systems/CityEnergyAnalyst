@@ -52,7 +52,7 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 
 class Domain(object):
-    def __init__(self, config, locator):
+    def __init__(self, config: cea.config.Configuration, locator: InputLocator):
         self.config = config
         self.locator = locator
         self.weather = self._load_weather(locator)
@@ -82,7 +82,7 @@ class Domain(object):
         """
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.Name
+            buildings_in_domain = shp_file.name
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
         network_type = self.config.optimization_new.network_type
@@ -94,11 +94,12 @@ class Domain(object):
                     continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
+                building.check_demand_energy_carrier()
                 self.buildings.append(building)
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None):
+    def load_potentials(self, buildings_in_domain=None, pv_panel_type='PV1'):
         """
         Import energy potentials from the current scenario.
 
@@ -108,11 +109,15 @@ class Domain(object):
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
         if buildings_in_domain is None:
-            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
+            if self.buildings == []:
+                raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+            else:
+                buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
 
         # building-specific potentials
-        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain)
-        pvt_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain)
+        pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
+        pvtet_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "ET")
+        pvtfp_potential = EnergyPotential().load_PVT_potential(self.locator, buildings_in_domain, pv_panel_type, "FP")
         scet_potential = EnergyPotential().load_SCET_potential(self.locator, buildings_in_domain)
         scfp_potential = EnergyPotential().load_SCFP_potential(self.locator, buildings_in_domain)
 
@@ -121,7 +126,9 @@ class Domain(object):
         water_body_potential = EnergyPotential().load_water_body_potential(self.locator.get_water_body_potential())
         sewage_potential = EnergyPotential().load_sewage_potential(self.locator.get_sewage_heat_potential())
 
-        for potential in [pv_potential, pvt_potential, scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
+        for potential in [pv_potential,
+                          pvtet_potential, pvtfp_potential,
+                          scet_potential, scfp_potential, geothermal_potential, water_body_potential, sewage_potential]:
             if potential:
                 self.energy_potentials.append(potential)
 
@@ -194,7 +201,7 @@ class Domain(object):
                          optimization_tracker=tracker)
 
         # Create initial population and evaluate it
-        population = set(toolbox.population(n = algorithm.population - 1))
+        population = set(toolbox.population(n=algorithm.population - 1))
         non_dominated_fronts = toolbox.map(toolbox.evaluate, population)
         optimal_supply_system_combinations = {ind.as_str(): non_dominated_front[0] for ind, non_dominated_front
                                               in zip(population, non_dominated_fronts)}
@@ -302,6 +309,9 @@ class Domain(object):
         of .xlsx-files to summarise the most important information about the near-pareto-optimal district energy systems
         and their corresponding supply systems.
         """
+        if self.initial_energy_system is None:
+            raise ValueError("No initial energy system was loaded. Either optimisation was not run or failed.")
+
         # save the current energy system's network layouts and supply systems
         self._write_network_layouts_to_geojson(self.initial_energy_system, 'current_DES')
         self._write_supply_systems_to_csv(self.initial_energy_system, 'current_DES')
@@ -320,7 +330,7 @@ class Domain(object):
 
         return
 
-    def _write_network_layouts_to_geojson(self, district_energy_system, system_name=None):
+    def _write_network_layouts_to_geojson(self, district_energy_system: DistrictEnergySystem, system_name=None):
         """
         Writes the network layout of a given district energy system into a geojson file.
 
@@ -337,11 +347,12 @@ class Domain(object):
                                                                                                 network.identifier)
             network_layout = pd.concat([network.network_nodes, network.network_edges]).drop(['coordinates'], axis=1)
             network_layout = network_layout.to_crs(get_geographic_coordinate_system())
+            self.locator.ensure_parent_folder_exists(network_layout_file)
             network_layout.to_file(network_layout_file, driver='GeoJSON')
 
         return
 
-    def _write_supply_systems_to_csv(self, district_energy_system, system_name=None):
+    def _write_supply_systems_to_csv(self, district_energy_system: DistrictEnergySystem, system_name=None):
         """
         Writes information on supply systems of subsystems of a given district energy system into csv files. Information
         on each of the supply systems is written in a separate file.
@@ -370,6 +381,7 @@ class Domain(object):
 
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
+            self.locator.ensure_parent_folder_exists(building_file)
             Domain._write_system_structure(building_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -380,6 +392,7 @@ class Domain(object):
         for network_id, supply_system in district_energy_system.supply_systems.items():
             # Summarise structure of the supply system & print to file
             network_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, network_id)
+            self.locator.ensure_parent_folder_exists(network_file)
             Domain._write_system_structure(network_file, supply_system)
 
             # Calculate supply system fitness-values and add them to the summary of all supply systems
@@ -399,12 +412,18 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_system_structure(results_file, supply_system):
+    def _write_system_structure(results_file: str, supply_system: SupplySystem):
         """Summarise supply system structure and write it to the indicated results file"""
-        supply_system_info = [{'Component_category': component_category,
-                               'Component_type': component.technology,
+        supply_system_info = [{'Component': component.technology,
+                               'Component_type': component.type,
                                'Component_code': component_code,
-                               'Capacity_kW': round(component.capacity, 3)}
+                               'Category': component_category,
+                               'Capacity_kW': round(component.capacity, 3),
+                               'Main_side': component.main_side,
+                               'Main_energy_carrier': component.main_energy_carrier.describe(),
+                               'Main_energy_carrier_code': component.main_energy_carrier.code,
+                               'Other_inputs': ', '.join([ip.code for ip in component.input_energy_carriers]),
+                               'Other_outputs': ', '.join([op.code for op in component.output_energy_carriers])}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
@@ -431,7 +450,7 @@ class Domain(object):
 
         return supply_system_fitness_summary
 
-    def _write_detailed_results_to_csv(self, district_energy_system):
+    def _write_detailed_results_to_csv(self, district_energy_system: DistrictEnergySystem):
         """
         Writes csv-files with full time series of the key objective functions for each supply system.
         """
@@ -470,7 +489,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _get_building_from_consumers(consumers, building_codes):
+    def _get_building_from_consumers(consumers, building_codes: list[str]) -> list[Building]:
         """ Get full building object based of list of consumers in domain and building code """
         buildings = []
         for consumer in consumers:
@@ -553,7 +572,7 @@ class Domain(object):
         return
 
     @staticmethod
-    def _write_detailed_network_performance(district_energy_system, results_file):
+    def _write_detailed_network_performance(district_energy_system: DistrictEnergySystem, results_file: str):
         """
         Write network performance parameters, i.e. length of network, cost & average hourly and annual heat losses,
         to a file.
@@ -597,19 +616,18 @@ class Domain(object):
 
     def _initialize_domain_descriptor_classes(self):
         EnergyCarrier.initialize_class_variables(self)
+        Component.initialize_class_variables(self)
         Algorithm.initialize_class_variables(self)
         Fitness.initialize_class_variables(self)
 
     def _initialize_energy_system_descriptor_classes(self):
-        print("1. Creating available supply system components...")
-        Component.initialize_class_variables(self)
-        print("2. Finding possible network paths (this may take a while)...")
+        print("1. Finding possible network paths (this may take a while)...")
         Network.initialize_class_variables(self)
-        print("3. Establishing district energy system structure...")
+        print("2. Establishing district energy system structure...")
         DistrictEnergySystem.initialize_class_variables(self)
         SupplySystemStructure.initialize_class_variables(self)
         SupplySystem.initialize_class_variables(self)
-        print("4. Defining possible connectivity vectors...")
+        print("3. Defining possible connectivity vectors...")
         Connection.initialize_class_variables(self)
 
     def _initialize_algorithm_helper_classes(self):

@@ -1,0 +1,5 @@
+description,code,Cm_Af
+Light construction,CONSTRUCTION_AS1,110000
+Medium construction,CONSTRUCTION_AS2,165000
+Heavy construction,CONSTRUCTION_AS3,300000
+TABULA standard value,CONSTRUCTION_TAB,162000

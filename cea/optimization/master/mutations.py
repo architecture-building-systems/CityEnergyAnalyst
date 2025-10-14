@@ -88,7 +88,7 @@ def mutation_main(individual,
 
         # MUTATE SUPPLY SYSTEM UNITS SHARE
         cooling_units_share = [individual_with_name_dict[column] for column in cooling_unit_names_share]
-        NDIM = len(cooling_units_share)
+        # NDIM = len(cooling_units_share)
         # apply mutations
         cooling_units_share_mutated = mutation_continuous.mutate(cooling_units_share, indpb)
         # takeback to the individual

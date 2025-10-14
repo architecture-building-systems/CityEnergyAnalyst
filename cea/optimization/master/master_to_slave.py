@@ -430,7 +430,7 @@ def calc_available_area_solar_collectors(locator, buildings, share_allowed, pane
     area_m2 = 0.0
     for building in buildings:
         solar_technology_potential = pd.read_csv(locator.SC_results(building, panel_type))
-        area_m2 += solar_technology_potential['Area_SC_m2'][0]
+        area_m2 += solar_technology_potential['area_SC_m2'][0]
 
     return area_m2 * share_allowed
 

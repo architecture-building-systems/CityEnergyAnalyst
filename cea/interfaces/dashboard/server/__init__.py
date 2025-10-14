@@ -3,7 +3,7 @@ from fastapi import APIRouter
 import cea
 import cea.interfaces.dashboard.server.jobs as jobs
 import cea.interfaces.dashboard.server.streams as streams
-from cea.interfaces.dashboard.dependencies import get_worker_processes
+from cea.interfaces.dashboard.dependencies import get_worker_processes, CEAServerLimits
 
 router = APIRouter()
 
@@ -26,3 +26,8 @@ async def get_health_check():
 @router.get("/version")
 async def get_version():
     return {'version': cea.__version__}
+
+
+@router.get("/settings")
+async def get_settings(limits: CEAServerLimits):
+    return {'limits': limits}

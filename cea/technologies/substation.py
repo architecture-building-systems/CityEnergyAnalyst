@@ -47,6 +47,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
 
         for name in buildings_name_with_heating:
             substation_demand = total_demand[(total_demand.Name == name)]
+            locator.ensure_parent_folder_exists(locator.get_optimization_substations_total_file(DHN_barcode, 'DH'))
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DHN_barcode, 'DH'), sep=',',
                                      index=False, float_format='%.3f')
 
@@ -127,6 +128,7 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
 
         for name in buildings_name_with_cooling:
             substation_demand = total_demand[(total_demand.Name == name)]
+            locator.ensure_parent_folder_exists(locator.get_optimization_substations_total_file(DCN_barcode, 'DC'))
             substation_demand.to_csv(locator.get_optimization_substations_total_file(DCN_barcode, 'DC'), sep=',',
                                      index=False, float_format='%.3f')
             # calculate substation parameters per building
@@ -368,7 +370,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
          "Q_space_cooling_and_refrigeration_W": Qcs_sys_W + Qcre_sys_W,
          "Q_space_cooling_data_center_and_refrigeration_W": Qcs_sys_W + Qcdata_sys_W + Qcre_sys_W,
          })
-
+    
+    locator.ensure_parent_folder_exists(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode))
     results.to_csv(locator.get_optimization_substations_results_file(name, "DC", DCN_barcode), sep=',', index=False,
                    float_format='%.3f')
     return results
@@ -469,14 +472,14 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     Qhs_sys_kWh_dict = {1: Qhs_sys_ahu_kWh, 2: Qhs_sys_aru_kWh, 3: Qhs_sys_shu_kWh,
                         4: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh, 5: Qhs_sys_ahu_kWh + Qhs_sys_shu_kWh,
                         6: Qhs_sys_aru_kWh + Qhs_sys_shu_kWh, 7: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh + Qhs_sys_shu_kWh}
-    mcphs_sys_ahu_kWperC = building_demand_df.mcphs_sys_ahu_kWperC.values
-    mcphs_sys_aru_kWperC = building_demand_df.mcphs_sys_aru_kWperC.values
-    mcphs_sys_shu_kWperC = building_demand_df.mcphs_sys_shu_kWperC.values
-    mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
-                             4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC,
-                             5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
-                             6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
-                             7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
+    # mcphs_sys_ahu_kWperC = building_demand_df.mcphs_sys_ahu_kWperC.values
+    # mcphs_sys_aru_kWperC = building_demand_df.mcphs_sys_aru_kWperC.values
+    # mcphs_sys_shu_kWperC = building_demand_df.mcphs_sys_shu_kWperC.values
+    # mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
+    #                          4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC,
+    #                          5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
+    #                          6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
+    #                          7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
 
     # fixme: this is the wrong aggregation! the mcp should be recalculated according to the updated Tsup/re, and this does not aggregate the domestic hot water
     # HEX for space heating
@@ -548,6 +551,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                                           "Q_heating_W": Qhs_sys_W,
                                           "Q_dhw_W": Qww_sys_W})
 
+    locator.ensure_parent_folder_exists(locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
     substation_activation.to_csv(locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode),
                                  sep=',',
                                  index=False,

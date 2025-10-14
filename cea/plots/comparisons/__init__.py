@@ -34,7 +34,7 @@ class ComparisonsPlotBase(PlotBase):
 
     # default parameters for plots in this category - override if your plot differs
     expected_parameters = {'scenarios-and-systems':'plots-comparisons:scenarios-and-systems',
-                           'normalization': 'plots-comparisons:normalization',
+                           'normalization': 'plots:normalization',
                            }
 
     def __init__(self, project, parameters, cache):

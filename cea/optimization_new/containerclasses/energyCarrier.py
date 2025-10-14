@@ -20,120 +20,124 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import warnings
+
 import pandas as pd
 import numpy as np
+from dataclasses import dataclass
+from typing import Optional, ClassVar, Dict, Any
 
 
-class EnergyCarrier(object):
-    _available_energy_carriers = pd.DataFrame
-    _thermal_energy_carriers = {}
-    _electrical_energy_carriers = {}
-    _combustible_energy_carriers = {}
-    _feedstock_tab = {}
-    _daily_ghg_profile = {}             # in kg CO2 eq. per kWh
-    _daily_buy_price_profile = {}       # in USD (2015) per kWh
-    _daily_sell_price_profile = {}      # in USD (2015) per kWh
+@dataclass(frozen=True)
+class EnergyCarrier:
+    # TODO: This is only optional to support default EnergyCarrier creation. Consider removing this option in the future.
+    code: Optional[str]
+    description: str
+    type: str
+    subtype: str
+    qualifier: str
+    qual_unit: str
+    mean_qual: float
 
-    def __init__(self, code=None):
-        self._code = None
-        self._description = 'some description'
-        self._type = 'e.g. thermal'
-        self._subtype = 'e.g. water'
-        self._qualifier = 'e.g. temperature'
-        self._qual_unit = 'e.g. °C'
-        self._mean_qual = 0.0
+    # Class variables
+    _available_energy_carriers: ClassVar[pd.DataFrame] = pd.DataFrame()
+    _thermal_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    _electrical_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    _combustible_energy_carriers: ClassVar[Dict[str, Any]] = {}
+    ambient_thermal_energy_carrier: ClassVar[Optional['EnergyCarrier']] = None
+    _feedstock_tab: ClassVar[Dict[str, str]] = {}
+    _daily_ghg_profile: ClassVar[Dict[str, Dict[int, float]]] = {}             # in kg CO2 eq. per kWh
+    _daily_buy_price_profile: ClassVar[Dict[str, Dict[int, float]]] = {}       # in USD (2015) per kWh
+    _daily_sell_price_profile: ClassVar[Dict[str, Dict[int, float]]] = {}      # in USD (2015) per kWh
 
-        self._set_to(code)
+    def __post_init__(self):
+        if self.code is None:
+            return  # Skip validation for default instance
 
-    @property
-    def code(self):
-        return self._code
-
-    @code.setter
-    def code(self, new_code):
-        if new_code not in EnergyCarrier._available_energy_carriers['code'].to_list():
-            raise ValueError(f'Tried to assign a new energy energy carrier using the code "{new_code}". This code '
-                             f'could not be found in the energy carriers database.')
-        else:
-            self._code = new_code
-
-    @property
-    def type(self):
-        return self._type
-
-    @type.setter
-    def type(self, new_type):
+        # Validate type
         allowed_types = ['thermal', 'electrical', 'combustible', 'radiation']
-        if new_type not in allowed_types:
+        if self.type not in allowed_types:
             raise ValueError("The energy carrier data base contains an invalid energy type. Valid energy carrier "
                              "types are: \n 'thermal', 'electrical', 'combustible', 'radiation'")
-        else:
-            self._type = new_type
 
-    @property
-    def subtype(self):
-        return self._subtype
-
-    @subtype.setter
-    def subtype(self, new_subtype):
+        # Validate subtype
         allowed_subtypes = {'thermal': ['water', 'air', 'brine'],
                             'electrical': ['AC', 'DC'],
                             'combustible': ['fossil', 'biofuel'],
                             'radiation': ['-']}
-        if new_subtype not in allowed_subtypes[self.type]:
+        
+        if self.subtype not in allowed_subtypes[self.type]:
             raise ValueError("The energy carrier data base contains an invalid energy type. The only valid subtypes "
                              f"for energy carriers of type '{self.type}' are {allowed_subtypes[self.type]} for the "
                              "moment. \n Including further subtypes would require changes to be made to the code of "
                              "the supply system components that should take the new type into account.")
-        else:
-            self._subtype = new_subtype
 
-    @property
-    def qualifier(self):
-        return self._qualifier
-
-    @qualifier.setter
-    def qualifier(self, new_qualifier):
-        if new_qualifier not in EnergyCarrier._available_energy_carriers['qualifier'].to_list():
+        # Validate qualifier
+        if self.qualifier not in set(self._available_energy_carriers['qualifier'].values):
             raise ValueError('Please make sure all basic energy carrier qualifiers appear in the data base, namely: '
                              'temperature, voltage, wavelength')
-        else:
-            self._qualifier = new_qualifier
 
-    @property
-    def qual_unit(self):
-        return self._qual_unit
-
-    @qual_unit.setter
-    def qual_unit(self, new_qual_unit):
-        if new_qual_unit not in EnergyCarrier._available_energy_carriers['unit_qual'].to_list():
+        # Validate qual_unit
+        if self.qual_unit not in set(self._available_energy_carriers['unit_qual'].values):
             raise ValueError('Please make sure the energy carrier qualifier units are set correctly.')
-        else:
-            self._qual_unit = new_qual_unit
-
-    @property
-    def mean_qual(self):
-        return self._mean_qual
-
-    @mean_qual.setter
-    def mean_qual(self, new_mean_qual):
-        if not (isinstance(new_mean_qual, (int, float)) or (new_mean_qual == '-')):
+        
+        # Validate mean_qual
+        if not isinstance(self.mean_qual, (int, float)):
             raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
                              "Acceptable values are numerical or '-'.")
+
+    @classmethod
+    def from_code(cls, code: str) -> 'EnergyCarrier':
+        """Create an EnergyCarrier instance from a database code."""
+        if cls._available_energy_carriers.empty:
+            raise ValueError("Energy carrier database not loaded. Call initialize_class_variables() first.")
+
+        if code not in set(cls._available_energy_carriers['code'].values):
+            raise ValueError(f'Tried to assign a new energy energy carrier using the code "{code}". This code '
+                             f'could not be found in the energy carriers database.')
+
+        energy_carrier = cls._available_energy_carriers.loc[cls._available_energy_carriers['code'] == code].iloc[0]
+
+        # Extract values from database
+        description = energy_carrier['description']
+        energy_type = energy_carrier['type']
+        subtype = energy_carrier['subtype']
+        qualifier = energy_carrier['qualifier']
+        qual_unit = energy_carrier['unit_qual']
+        mean_qual_value = energy_carrier['mean_qual']
+
+        # Handle mean_qual conversion and validation
+        if isinstance(mean_qual_value, (int, float)):
+            mean_qual = float(mean_qual_value)
+        elif mean_qual_value == '-':
+            mean_qual = float('nan')
         else:
-            self._mean_qual = new_mean_qual
+            raise ValueError("Please make sure the energy carrier qualifier's mean qualifier values are set correctly. "
+                             "Acceptable values are numerical or '-'.")
 
-    def _set_to(self, code):
-        if code:
-            energy_carrier = EnergyCarrier._available_energy_carriers[EnergyCarrier._available_energy_carriers['code'] == code]
-
-            self.code = code
-            self._description = energy_carrier['description'].iloc[0]
-            self.type = energy_carrier['type'].iloc[0]
-            self.subtype = energy_carrier['subtype'].iloc[0]
-            self.qualifier = energy_carrier['qualifier'].iloc[0]
-            self.qual_unit = energy_carrier['unit_qual'].iloc[0]
-            self.mean_qual = energy_carrier['mean_qual'].iloc[0]
+        return cls(code=code,
+                   description=description,
+                   type=energy_type,
+                   subtype=subtype,
+                   qualifier=qualifier,
+                   qual_unit=qual_unit,
+                   mean_qual=mean_qual)
+    
+    @classmethod
+    def default(cls) -> 'EnergyCarrier':
+        """Create a default EnergyCarrier instance."""
+        return cls(code=None,
+                   description="",
+                   type='none',
+                   subtype='none',
+                   qualifier='none',
+                   qual_unit='none',
+                   mean_qual=float('nan'))
+        
+    def describe(self):
+        """ Provide a short written description of the energy carrier."""
+        description = self.description + ": " + str(self.mean_qual) + " " + self.qual_unit
+        return description
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -145,36 +149,45 @@ class EnergyCarrier(object):
         EnergyCarrier._extract_thermal_energy_carriers()
         EnergyCarrier._extract_electrical_energy_carriers()
         EnergyCarrier._extract_combustible_energy_carriers()
+        EnergyCarrier._establish_thermal_environment_energy_carrier(domain.weather)
 
     @staticmethod
     def _load_energy_carriers(locator):
         """ Fetch a complete description of available energy carriers from the FEEDSTOCKS database """
         # Load the feedstock database
-        feedstock = pd.ExcelFile(locator.get_database_feedstocks())
-        energy_carriers_overview = feedstock.parse('ENERGY_CARRIERS')
+        feedstocks = {feedstock: pd.read_csv(csv_file) for feedstock, csv_file
+                      in locator.get_db4_components_feedstocks_all().items()}
+        def to_numeric(x):
+            if x == '-':
+                return x
+            try:
+                return float(x)
+            except ValueError:
+                raise ValueError(f'Invalid qualifier value for energy carrier. Could not convert {x} to float.')
+        energy_carriers_overview = pd.read_csv(locator.get_database_components_feedstocks_energy_carriers(),
+                                               converters={'mean_qual': to_numeric})
 
         # Correct potential basic format errors if there are any
-        energy_carriers_overview['cost_and_ghg_tab'].fillna('-', inplace=True)
-        energy_carriers_overview['cost_and_ghg_tab'] = \
-            energy_carriers_overview['cost_and_ghg_tab'].astype(str).str.strip().str.upper()
+        energy_carriers_overview['feedstock_file'].fillna('-', inplace=True)
+        energy_carriers_overview['feedstock_file'] = \
+            energy_carriers_overview['feedstock_file'].astype(str).str.strip().str.upper()
         EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
 
         # Check if tab references are valid
-        referenced_tabs = [tab_name for tab_name in list(set(energy_carriers_overview['cost_and_ghg_tab']))
-                           if tab_name != '-']
-        if not all([tab_name in feedstock.sheet_names for tab_name in referenced_tabs]):
+        referenced_files = [file_name for file_name in list(set(energy_carriers_overview['feedstock_file']))
+                            if file_name != '-']
+        if not all([file_name in feedstocks.keys() for file_name in referenced_files]):
             raise ValueError('The energy carriers data base contains references to tabs that do not exist in the '
                              'feedstock data base. Please make sure the tabs are named correctly.')
 
         # Fetch unitary ghg emissions as well as buy and sell prices for each energy carrier from the feedstock database
-        energy_carrier_properties = pd.DataFrame(columns=['cost_and_ghg_tab', 'unit_cost_USD.kWh', 'unit_ghg_kgCO2.kWh'])
-        for tab_name in referenced_tabs:
-            cost_and_ghg = feedstock.parse(tab_name)
-            EnergyCarrier._daily_ghg_profile[tab_name] = \
+        for file_name in referenced_files:
+            cost_and_ghg = feedstocks[file_name]
+            EnergyCarrier._daily_ghg_profile[file_name] = \
                 {hour: ghg_emission * 3.6 for hour, ghg_emission in zip(cost_and_ghg['hour'], cost_and_ghg['GHG_kgCO2MJ'])}
-            EnergyCarrier._daily_buy_price_profile[tab_name] = \
+            EnergyCarrier._daily_buy_price_profile[file_name] = \
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_buy_USD2015kWh'])}
-            EnergyCarrier._daily_sell_price_profile[tab_name] = \
+            EnergyCarrier._daily_sell_price_profile[file_name] = \
                 {hour: cost for hour, cost in zip(cost_and_ghg['hour'], cost_and_ghg['Opex_var_sell_USD2015kWh'])}
 
 
@@ -218,6 +231,15 @@ class EnergyCarrier(object):
             raise ValueError('No electrical energy carriers could be found in the energy carriers data base.')
 
     @staticmethod
+    def _establish_thermal_environment_energy_carrier(weather):
+        """
+        Determine the thermal energy carrier that corresponds to the ambient temperature of the environment.
+        """
+        ambient_temperature = weather['drybulb_C'].mean()
+        EnergyCarrier.ambient_thermal_energy_carrier = \
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec('air', ambient_temperature))
+
+    @staticmethod
     def get_thermal_ecs_of_subtype(subtype):
         """
         Return a list of all thermal energy carrier codes for the indicated subtype.
@@ -247,18 +269,23 @@ class EnergyCarrier(object):
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             hotter_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual >
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual >
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return hotter_energy_carrier_codes
 
@@ -270,18 +297,23 @@ class EnergyCarrier(object):
         if isinstance(thermal_energy_carrier, EnergyCarrier):
             thermal_energy_carrier = thermal_energy_carrier.code
 
+        if thermal_energy_carrier is None:
+            warnings.warn('No thermal energy carrier was indicated. Returning an empty list.', UserWarning)
+            return []
+
         if subtype:
             all_thermal_ec_codes = EnergyCarrier.get_thermal_ecs_of_subtype(subtype)
         else:
             all_thermal_ec_codes = EnergyCarrier.get_all_thermal_ecs()
+        
         if include_thermal_ec:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <=
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <=
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
         else:
             colder_energy_carrier_codes = [ec_code for ec_code in all_thermal_ec_codes
-                                           if EnergyCarrier(ec_code).mean_qual <
-                                           EnergyCarrier(thermal_energy_carrier).mean_qual]
+                                           if EnergyCarrier.from_code(ec_code).mean_qual <
+                                           EnergyCarrier.from_code(thermal_energy_carrier).mean_qual]
 
         return colder_energy_carrier_codes
 
@@ -313,32 +345,68 @@ class EnergyCarrier(object):
         return energy_carrier_code
 
     @staticmethod
-    def all_thermal_ecs_between_temps(energy_carrier_subtype, high_temperature, low_temperature):
+    def all_thermal_ecs_between_temps(temperature_1, temperature_2, energy_carrier_subtype='all'):
         """
         Get all thermal energy carriers that either fall in the range of or between two predetermined temperatures
         for a given thermal energy carrier type.
 
+        :param temperature_1: higher one of the two temperatures defining the range, in °C
+        :type temperature_1: float
+        :param temperature_2: lower one of the two temperatures defining the range, in °C
+        :type temperature_2: float
         :param energy_carrier_subtype: type of the thermal energy carrier (usually thermal energy carrier medium)
         :type energy_carrier_subtype: str
-        :param high_temperature: higher one of the two temperatures defining the range, in °C
-        :type high_temperature: float
-        :param low_temperature: lower one of the two temperatures defining the range, in °C
-        :type low_temperature: float
         :return thermal_ecs_between_temps: list of codes of the corresponding thermal energy carriers that correspond to
                                            the prescribed range.
         :rtype thermal_ecs_between_temps: list of str
         """
-        if np.isnan(high_temperature) and np.isnan(low_temperature):
-            thermal_ecs_between_temps = []
-        elif not np.isnan(high_temperature) and not np.isnan(low_temperature):
-            top_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, high_temperature))
-            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(energy_carrier_subtype, low_temperature))
-            thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
-            thermal_ecs_between_temps = [energy_carrier['code']
-                                         for row, energy_carrier in thermal_ecs_of_subtype.iterrows()
-                                         if (top_of_range_ec.mean_qual >= energy_carrier['mean_qual'] >= bottom_of_range_ec.mean_qual)]
-        else:
+        if np.isnan(temperature_1) and np.isnan(temperature_2):
+            return []
+        elif np.isnan(temperature_1) or np.isnan(temperature_2):
             raise ValueError('Please make sure the boundaries of the indicated temperature range are valid.')
+
+        high_temperature, low_temperature = max(temperature_1, temperature_2), min(temperature_1, temperature_2)
+
+        if energy_carrier_subtype == 'all':
+            ec_subtype_list = list(EnergyCarrier._thermal_energy_carriers.keys())
+        elif energy_carrier_subtype in EnergyCarrier._thermal_energy_carriers:
+            ec_subtype_list = [energy_carrier_subtype]
+        else:
+            raise ValueError('Please make sure the indicated thermal energy carrier subtype is valid.')
+
+        return EnergyCarrier._filter_thermal_ecs_between_temps(low_temperature, high_temperature, ec_subtype_list)
+
+    @staticmethod
+    def _filter_thermal_ecs_between_temps(low_temperature, high_temperature, subtypes):
+        """
+        Filter the list of all thermal energy carriers for those that correspond to one of the specified subtypes and
+        fall within the specified temperature range.
+
+        :param low_temperature: Low temperature in °C
+        :type low_temperature: float
+        :param high_temperature: High temperature in °C
+        :type high_temperature: float
+        :param subtypes: Energy carrier subtypes
+        :type subtypes: list
+        :return: Codes of the corresponding thermal energy carriers
+        :rtype: list
+        """
+        equivalent_discrete_low_temps = {
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, low_temperature)).mean_qual
+            for ec_subtype in subtypes
+        }
+        equivalent_discrete_high_temps = {
+            ec_subtype: EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(ec_subtype, high_temperature)).mean_qual
+            for ec_subtype in subtypes
+        }
+
+        thermal_ecs_between_temps = [
+            energy_carrier['code']
+            for ec_subtype in subtypes
+            for _, energy_carrier in EnergyCarrier._thermal_energy_carriers[ec_subtype].iterrows()
+            if equivalent_discrete_low_temps[ec_subtype] <= energy_carrier['mean_qual'] <=
+               equivalent_discrete_high_temps[ec_subtype]
+        ]
 
         return thermal_ecs_between_temps
 
@@ -419,8 +487,8 @@ class EnergyCarrier(object):
         if np.isnan(high_voltage) and np.isnan(low_voltage):
             electrical_ecs_between_voltages = []
         elif not np.isnan(high_voltage) and not np.isnan(low_voltage):
-            top_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
-            bottom_of_range_ec = EnergyCarrier(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
+            top_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, high_voltage))
+            bottom_of_range_ec = EnergyCarrier.from_code(EnergyCarrier.volt_to_electrical_ec(energy_carrier_subtype, low_voltage))
             electrical_ecs_of_subtype = EnergyCarrier._electrical_energy_carriers[energy_carrier_subtype]
             electrical_ecs_between_voltages = [energy_carrier['code']
                                                for row, energy_carrier in electrical_ecs_of_subtype.iterrows()
@@ -442,35 +510,60 @@ class EnergyCarrier(object):
         return energy_carrier_codes
 
     @staticmethod
-    def get_ghg_for_timestep(energy_carrier_code, timestep):
+    def fetch_ghg_emissions(energy_carrier_code, energy_flow_profile):
         """
-        Return the unit greenhouse gas emissions of a specific energy carrier and a given timestep from the database.
+
         """
         if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
+        data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        return EnergyCarrier._daily_ghg_profile[tab_name][timestep.hour]
+        if data_tab_name == '-':
+            return (0.0 for _ in energy_flow_profile)
+        elif data_tab_name not in EnergyCarrier._daily_ghg_profile.keys():
+            raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. GHG emissions '
+                             f'could not be fetched for the energy carrier "{energy_carrier_code}".')
+        else:
+            positive_flow_profile = energy_flow_profile.replace(list(energy_flow_profile[energy_flow_profile<0]), 0)
+            ghg_emissions_profile = (energy * EnergyCarrier._daily_ghg_profile[data_tab_name][timestep.hour]
+                                     for timestep, energy in positive_flow_profile.items())
+            return ghg_emissions_profile
 
     @staticmethod
-    def get_price_for_timestep(energy_carrier_code, timestep, mode='buy'):
+    def fetch_cost(energy_carrier_code, energy_flow_profile):
         """
-        Return the unit sell or buy price of a specific energy carrier and a given timestep from the database.
+
         """
         if energy_carrier_code not in EnergyCarrier._feedstock_tab.keys():
             EnergyCarrier._bind_feedstock_tab(energy_carrier_code)
 
-        tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
+        data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
-        if mode == 'buy':
-            unit_price = EnergyCarrier._daily_buy_price_profile[tab_name][timestep.hour]
-        elif mode == 'sell':
-            unit_price = EnergyCarrier._daily_sell_price_profile[tab_name][timestep.hour]
+        if data_tab_name == '-':
+            return (0.0 for _ in energy_flow_profile)
+        elif data_tab_name not in set(list(EnergyCarrier._daily_buy_price_profile.keys()) +
+                                      list(EnergyCarrier._daily_sell_price_profile.keys())):
+            raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. Costs could '
+                             f'not be fetched for the energy carrier "{energy_carrier_code}".')
         else:
-            raise ValueError('Please specify whether the energy carrier is sold or bought at the given timestep.')
+            return sum(EnergyCarrier.get_price_for_timestep(data_tab_name, timestep, energy)
+                       for timestep, energy in energy_flow_profile.items())
 
-        return unit_price
+    @staticmethod
+    def get_price_for_timestep(data_tab_name, timestep, energy_demand):
+        """
+        Return the sell or buy price for a given quantity of energy and a given timestep from the database.
+        """
+        if energy_demand >= 0: # i.e. energy is bought
+            unit_price = EnergyCarrier._daily_buy_price_profile[data_tab_name][timestep.hour]
+        elif energy_demand < 0: # i.e. energy is sold
+            unit_price = EnergyCarrier._daily_sell_price_profile[data_tab_name][timestep.hour]
+        else:
+            raise ValueError('Can\'t determine whether energy is bought or sold. Please make sure the energy demand is '
+                             f'calculated correctly. Energy demand was: {energy_demand} for timestep {timestep}.')
+
+        return unit_price * energy_demand
 
     @staticmethod
     def _bind_feedstock_tab(energy_carrier_code):
@@ -478,5 +571,5 @@ class EnergyCarrier(object):
         Associate the respective tab-name of the feedstock-database to the energy carrier code.
         """
         corresponding_feedstock_tab = EnergyCarrier._available_energy_carriers[
-            EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['cost_and_ghg_tab'].values[0]
+            EnergyCarrier._available_energy_carriers['code'] == energy_carrier_code]['feedstock_file'].values[0]
         EnergyCarrier._feedstock_tab[energy_carrier_code] = corresponding_feedstock_tab

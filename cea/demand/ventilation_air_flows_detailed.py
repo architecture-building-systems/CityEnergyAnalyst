@@ -1,29 +1,30 @@
-# -*- coding: utf-8 -*-
 """
 Ventilation according to [DIN-16798-7]_ and [ISO-9972]_
 
-.. [DIN-16798-7]  Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8 –
+.. [DIN-16798-7]  Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8
     Berechnungsmethoden zur Bestimmung der Luftvolumenströme in Gebäuden inklusive Infiltration;
     Deutsche Fassung prEN 16798-7:2014
 
 
-.. [ISO-9972] Wärmetechnisches Verhalten von Gebäuden –
-    Bestimmung der Luftdurchlässigkeit von Gebäuden –
+.. [ISO-9972] Wärmetechnisches Verhalten von Gebäuden 
+    Bestimmung der Luftdurchlässigkeit von Gebäuden
     Differenzdruckverfahren (ISO 9972:2015);
     Deutsche Fassung EN ISO 9972:2015
 
 Convention: all temperature inputs in (°C)
 """
-
-
-
-
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize
+from scipy.optimize import minimize, OptimizeResult
+
 from cea.demand import constants
 from cea.utilities.physics import calc_rho_air
+
+if TYPE_CHECKING:
+    from cea.demand.building_properties.building_properties_row import BuildingPropertiesRow
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -90,6 +91,9 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
                    options=solver_options_cobyla)
     # print(res)
     # get zone pressure of air flow mass balance
+    if not isinstance(res, OptimizeResult):
+        raise ValueError("Failed to find a solution for the air flow mass balance.")
+
     p_zone = res.x
 
     # calculate air flows at zone pressure
@@ -99,7 +103,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     return qm_sum_in, qm_sum_out
 
 
-def get_properties_natural_ventilation(bpr):
+def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     """
     gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building
@@ -108,7 +112,7 @@ def get_properties_natural_ventilation(bpr):
     :returns: dictionary containing natural ventilation properties of zone
     """
 
-    n50 = bpr.architecture.n50
+    n50 = bpr.envelope.n50
     vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(bpr.geometry)
@@ -801,6 +805,8 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return abs(qm_balance)  # for minimization the mass balance is the output
     elif option == 'calculate':
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
+    
+    raise ValueError(f"Unknown option for air flow mass balance calculation: {option}")
 
 
 def create_windows(df_prop_surfaces, gdf_building_architecture):
@@ -839,7 +845,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     # TODO: documentation
 
     # sort dataframe for name of building for default orientation generation
-    df_prop_surfaces.sort_values('Name')
+    df_prop_surfaces.sort_values('name')
     # default values
     # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal
@@ -848,7 +854,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     free_height = df_prop_surfaces['Freeheight']
     height_ag = df_prop_surfaces['height_ag']
     length_shape = df_prop_surfaces['Shape_Leng']
-    name = df_prop_surfaces['Name']
+    name = df_prop_surfaces['name']
 
     # calculate number of exposed floors per facade
     num_floors_free_height = (free_height / 3).astype('int')  # floor height is 3 m

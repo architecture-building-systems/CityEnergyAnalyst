@@ -108,6 +108,6 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
 
 
 def get_building_names_with_load(total_demand, load_name):
-    total_demand.Name = total_demand.Name.astype(str)
-    buildings_names_connected = total_demand[total_demand[load_name] > 0].Name.tolist()
+    total_demand.name = total_demand.name.astype(str)
+    buildings_names_connected = total_demand[total_demand[load_name] > 0].name.tolist()
     return buildings_names_connected
