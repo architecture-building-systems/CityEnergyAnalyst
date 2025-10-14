@@ -93,7 +93,8 @@ def operational_hourly(config: Configuration) -> None:
     feedstock_db = Feedstocks.from_locator(locator)
     results: list[tuple[str, pd.DataFrame]] = []
     # Load optional GRID carbon intensity override once for all buildings
-    override_grid_emission, grid_emission_final = _load_grid_intensity_override(config)
+    override_grid_emission, grid_emission_final_g = _load_grid_intensity_override(config)
+    grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
 
