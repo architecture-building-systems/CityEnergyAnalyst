@@ -43,9 +43,6 @@ def main(output_file):
     year = weather_data['year'][0]
     date_range = get_date_range_hours_from_year(year)
     resolution_outputs = config.demand.resolution_output
-    loads_output = config.demand.loads_output
-    massflows_output = config.demand.massflows_output
-    temperatures_output = config.demand.temperatures_output
     use_dynamic_infiltration_calculation = config.demand.use_dynamic_infiltration_calculation
     debug = config.debug
     building_properties = BuildingProperties(locator, epwreader.epw_reader(locator.get_weather_file()))
@@ -56,10 +53,7 @@ def main(output_file):
     occupancy_helper_main(locator, config, building='B1011')
 
     bpr = building_properties['B1011']
-    result = calc_thermal_loads('B1011', bpr, weather_data, date_range, locator,
-                                use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
-                                massflows_output, temperatures_output, config,
-                                debug)
+    result = calc_thermal_loads('B1011', bpr, weather_data, date_range, locator, use_dynamic_infiltration_calculation, resolution_outputs, config, debug)
 
     # test the building csv file
     df = pd.read_csv(locator.get_demand_results_file('B1011'))
@@ -107,8 +101,7 @@ def main(output_file):
         b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, weather_data,
                                                                            date_range, locator,
                                                                            use_dynamic_infiltration_calculation,
-                                                                           resolution_outputs, loads_output,
-                                                                           massflows_output, temperatures_output,
+                                                                           resolution_outputs,
                                                                            config,
                                                                            debug)
         print("'%(b)s': (%(qhs_sys_kwh).5f, %(qcs_sys_kwh).5f, %(qww_sys_kwh).5f)," % locals())
@@ -123,13 +116,11 @@ def main(output_file):
 
 
 def run_for_single_building(building, bpr: BuildingPropertiesRow, weather_data, date_range, locator,
-                            use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
-                            massflows_output, temperatures_output, config, debug):
+                            use_dynamic_infiltration_calculation, resolution_outputs, config, debug):
     config.multiprocessing = False
     occupancy_helper_main(locator, config, building=building)
     calc_thermal_loads(building, bpr, weather_data, date_range, locator,
-                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, config, debug)
+                       use_dynamic_infiltration_calculation, resolution_outputs, config, debug)
     df = pd.read_csv(locator.get_demand_results_file(building))
     return building, float(df['Qhs_sys_kWh'].sum()), df['Qcs_sys_kWh'].sum(), float(df['Qww_sys_kWh'].sum())
 
