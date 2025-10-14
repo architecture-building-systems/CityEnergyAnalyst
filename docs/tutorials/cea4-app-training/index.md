@@ -17,9 +17,10 @@ This guide is designed for end users who want to learn how to use the CEA-4 App 
 
 New to CEA-4? Start with these resources:
 
-1. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 34 features
-2. **[Data Management](08-data-management.md)** - Essential tools for preparing your project data
-3. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
+1. **Create New Scenario Wizard** - Use this in CEA-4 App to automate initial data setup
+2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 39 features
+3. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
+4. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
 
 ## Feature Categories
 
@@ -92,9 +93,10 @@ Create charts and plots to visualise CEA results.
 ## How to Use This Guide
 
 ### For New Users
-1. Start with the [Quick Reference Guide](00-quick-reference.md) to familiarise yourself with available features
-2. Review [Data Management](08-data-management.md) to understand how to prepare your data
-3. Follow the typical workflow: Data Preparation → Solar Radiation → Demand Forecasting → Analysis
+1. **Create your first scenario** using the Create New Scenario Wizard in CEA-4 App (automates data preparation)
+2. Start with the [Quick Reference Guide](00-quick-reference.md) to familiarise yourself with available features
+3. Review [Data Management](08-data-management.md) to understand the automated data preparation
+4. Follow the typical workflow: Solar Radiation → Demand Forecasting → Analysis
 
 ### For Experienced Users
 - Use the Quick Reference Guide to quickly locate specific features
@@ -105,10 +107,11 @@ Create charts and plots to visualise CEA results.
 
 A standard CEA-4 analysis typically follows this sequence:
 
-1. **Data Preparation** (Data Management tools)
-   - Fetch weather data, surroundings, terrain, and streets
-   - Map building archetypes and properties
-   - Verify data format with CEA-4 Format Helper
+1. **Create New Scenario** (One-time setup)
+   - Use the **Create New Scenario Wizard** in CEA-4 App
+   - The wizard automatically fetches weather, surroundings, terrain, and streets
+   - Automatically loads databases and runs Archetypes Mapper
+   - ⚠️ **Remember**: Re-run Archetypes Mapper if you manually edit input files
 
 2. **Solar Analysis** (Solar Radiation Analysis)
    - Run solar radiation analysis on building surfaces

@@ -116,26 +116,33 @@ This page provides a complete overview of all 39 features available in the CEA-4
 ## Common Workflows
 
 ### Basic Building Energy Analysis
-1. **Weather Helper** → Fetch weather data
-2. **Surroundings Helper** → Fetch surrounding buildings
-3. **Terrain Helper** → Fetch terrain data
-4. **Database Helper** → Load CEA database
-5. **Archetypes Mapper** → Assign building properties
-6. **Building Solar Radiation** → Calculate solar radiation
-7. **Energy Demand Part 1** → Calculate occupancy
-8. **Energy Demand Part 2** → Calculate energy demand
-9. **Plot - Building Energy Demand** → Visualise results
+
+**Initial Setup** (Steps 1-5 are typically automated by the Create New Scenario Wizard in CEA-4 App):
+1. **Create New Scenario** using CEA-4 App wizard (automatically runs steps 2-5)
+2. **Weather Helper** → Fetch weather data (automatic)
+3. **Surroundings Helper** → Fetch surrounding buildings (automatic)
+4. **Terrain Helper** → Fetch terrain data (automatic)
+5. **Database Helper** → Load CEA database (automatic)
+6. **Archetypes Mapper** → Assign building properties (automatic on first run)
+
+**Analysis Workflow** (Manual steps):
+7. **Building Solar Radiation** → Calculate solar radiation
+8. **Energy Demand Part 1** → Calculate occupancy
+9. **Energy Demand Part 2** → Calculate energy demand
+10. **Plot - Building Energy Demand** → Visualise results
+
+⚠️ **Important**: Remember to re-run **Archetypes Mapper** every time you manually edit input files (zone.shp, building properties, etc.)
 
 ### Renewable Energy Assessment
-1. Complete Basic Building Energy Analysis (steps 1-8 above)
+1. Complete Basic Building Energy Analysis (steps 1-10 above)
 2. **Photovoltaic Panels** → Calculate PV potential
 3. **Solar Collectors** → Calculate solar thermal potential
 4. **Shallow Geothermal Potential** → Calculate geothermal potential
 5. **Plot - Solar Technology** → Visualise renewable potential
 
 ### District Energy System Design
-1. Complete Basic Building Energy Analysis
-2. **Streets Helper** → Fetch street network
+1. Complete Basic Building Energy Analysis (use Create New Scenario Wizard, then run steps 7-10)
+2. **Streets Helper** → Fetch street network (may be automatic in wizard)
 3. **Thermal Network Part 1** → Generate network layout
 4. **Thermal Network Part 2** → Size network pipes
 5. **Supply System Optimisation: District-Scale** → Optimise system
@@ -144,7 +151,7 @@ This page provides a complete overview of all 39 features available in the CEA-4
 8. **Plot - Pareto Front** → Visualise optimisation results
 
 ### Climate Impact Assessment
-1. Complete Basic Building Energy Analysis
+1. Complete Basic Building Energy Analysis (use Create New Scenario Wizard, then run steps 7-10)
 2. **Emissions** → Calculate lifecycle emissions
 3. **Plot - Lifecycle Emissions** → Visualise total emissions
 4. **Plot - Operational Emissions** → Visualise operational emissions
@@ -191,12 +198,13 @@ Before running any analysis, ensure you have:
 
 ## Getting Started Tips
 
-1. **Start small**: Test workflows on a single building before scaling to entire districts
-2. **Follow the sequence**: Respect feature dependencies (e.g., run solar before PV)
-3. **Check inputs first**: Use CEA-4 Format Helper to verify data quality
-4. **Use helpers**: Leverage automated data fetching tools (Weather, Surroundings, Terrain, Streets)
-5. **Visualise often**: Use plotting features to verify results at each step
-6. **Save scenarios**: Create separate scenarios for different design alternatives
+1. **Use Create New Scenario Wizard**: The CEA-4 App wizard automates initial data setup (weather, surroundings, terrain, databases, archetypes)
+2. **Re-run Archetypes Mapper after edits**: Always run Archetypes Mapper again if you manually edit input files
+3. **Start small**: Test workflows on a single building before scaling to entire districts
+4. **Follow the sequence**: Respect feature dependencies (e.g., run solar before PV)
+5. **Check inputs first**: Use CEA-4 Format Helper to verify data quality
+6. **Visualise often**: Use plotting features to verify results at each step
+7. **Save scenarios**: Create separate scenarios for different design alternatives
 
 ---
 
