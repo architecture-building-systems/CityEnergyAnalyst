@@ -145,10 +145,10 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
-        # Handle optional grid decarbonization policy inputs
-        ref_yr_val = getattr(emissions_cfg, 'grid_decarbonize_reference_year', None)
-        tar_yr_val = getattr(emissions_cfg, 'grid_decarbonize_target_year', None)
-        tar_ef_val = getattr(emissions_cfg, 'grid_decarbonize_target_emission_factor', None)
+        # Handle optional grid decarbonisation policy inputs
+        ref_yr_val = getattr(emissions_cfg, 'grid_decarbonise_reference_year', None)
+        tar_yr_val = getattr(emissions_cfg, 'grid_decarbonise_target_year', None)
+        tar_ef_val = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', None)
         ref_yr: int | None = int(ref_yr_val) if ref_yr_val is not None and ref_yr_val != '' else None
         tar_yr: int | None = int(tar_yr_val) if tar_yr_val is not None and tar_yr_val != '' else None
         tar_ef: float | None = float(tar_ef_val) if tar_ef_val is not None and tar_ef_val != '' else None
@@ -157,7 +157,7 @@ def total_yearly(config: Configuration) -> None:
         all_exist = ref_yr is not None and tar_yr is not None and tar_ef is not None
         if not (all_none or all_exist):
             raise ValueError(
-                "If one of grid_decarbonize_reference_year, grid_decarbonize_target_year, or grid_decarbonize_target_emission_factor is set, all must be set."
+                "If one of grid_decarbonise_reference_year, grid_decarbonise_target_year, or grid_decarbonise_target_emission_factor is set, all must be set."
             )
         # Build feedstock policies only when all values are provided; otherwise pass None
         feedstock_policies_arg: dict[str, tuple[int, int, float]] | None
