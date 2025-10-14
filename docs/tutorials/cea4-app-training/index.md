@@ -61,7 +61,7 @@ Assess environmental impacts and costs of building energy systems.
 - Embodied and Operational Emissions
 - Energy Supply System Costs
 
-### 7. [Energy Supply System Optimisation](07-supply-optimization.md)
+### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
 - Building-Scale Supply System Optimisation
 - District-Scale Supply System Optimisation

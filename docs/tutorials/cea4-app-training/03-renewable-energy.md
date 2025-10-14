@@ -559,7 +559,7 @@ Annual recoverable heat (rule of thumb):
 ## Related Features
 - **[Solar Radiation Analysis](02-solar-radiation.md)** - Required prerequisite
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Required for sewage potential
-- **[Supply System Optimisation](07-supply-optimization.md)** - Integrate renewable energy results
+- **[Supply System Optimisation](07-supply-optimisation.md)** - Integrate renewable energy results
 - **[Visualisation](10-visualisation.md)** - Plot renewable energy potential
 
 ---

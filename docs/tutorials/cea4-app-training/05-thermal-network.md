@@ -307,7 +307,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
    - Review results: pipe sizes, heat losses, pumping energy
 
 4. **Optimization** (Optional):
-   - Run [District-Scale Optimisation](07-supply-optimization.md) to find optimal plant and system configuration
+   - Run [District-Scale Optimisation](07-supply-optimisation.md) to find optimal plant and system configuration
    - Iterate on network configuration if needed
 
 5. **Analysis**:
@@ -348,7 +348,7 @@ Same as heating, but:
 ## Related Features
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides building loads (prerequisite)
 - **[Data Management](08-data-management.md#streets-helper)** - Streets Helper for network path
-- **[Supply System Optimisation](07-supply-optimization.md)** - Network and plant optimisation
+- **[Supply System Optimisation](07-supply-optimisation.md)** - Network and plant optimisation
 - **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Emissions and costs for networks
 
 ---

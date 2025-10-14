@@ -447,7 +447,7 @@ Plots comfort and discomfort hours for buildings based on thermal comfort analys
 Plots Pareto frontiers from optimisation results, visualising trade-offs between competing objectives (cost, emissions, energy).
 
 ### When to Use
-- After running [Supply System Optimisation](07-supply-optimization.md)
+- After running [Supply System Optimisation](07-supply-optimisation.md)
 - Presenting optimisation results
 - Supporting multi-objective decision-making
 - Showing cost-carbon trade-offs
@@ -612,7 +612,7 @@ For publication-quality figures:
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides demand data
 - **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Provides emissions data
 - **[Renewable Energy](03-renewable-energy.md)** - Provides solar generation data
-- **[Supply System Optimisation](07-supply-optimization.md)** - Provides Pareto frontier data
+- **[Supply System Optimisation](07-supply-optimisation.md)** - Provides Pareto frontier data
 - **[Export Results to CSV](01-import-export.md#export-results-to-csv)** - Export data for custom plots
 
 ---

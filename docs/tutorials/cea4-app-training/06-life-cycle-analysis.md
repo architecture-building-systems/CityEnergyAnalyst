@@ -320,9 +320,9 @@ Combine emissions and cost data for multi-criteria decision making:
 ## Related Features
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides operational energy (prerequisite)
 - **[Renewable Energy Assessment](03-renewable-energy.md)** - PV affects both emissions and costs
-- **[Supply System Optimisation](07-supply-optimization.md)** - Uses LCA results for multi-objective optimisation
+- **[Supply System Optimisation](07-supply-optimisation.md)** - Uses LCA results for multi-objective optimisation
 - **[Visualisation](10-visualisation.md)** - Plot emissions and cost results
 
 ---
 
-[← Back: Thermal Network](05-thermal-network.md) | [Back to Index](index.md) | [Next: Supply System Optimisation →](07-supply-optimization.md)
+[← Back: Thermal Network](05-thermal-network.md) | [Back to Index](index.md) | [Next: Supply System Optimisation →](07-supply-optimisation.md)

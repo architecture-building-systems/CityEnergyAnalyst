@@ -218,7 +218,7 @@ For detailed information about each feature, refer to the category-specific guid
 - [Energy Demand Forecasting](04-demand-forecasting.md)
 - [Thermal Network Design](05-thermal-network.md)
 - [Life Cycle Analysis](06-life-cycle-analysis.md)
-- [Energy Supply System Optimisation](07-supply-optimization.md)
+- [Energy Supply System Optimisation](07-supply-optimisation.md)
 - [Data Management](08-data-management.md)
 - [Utilities](09-utilities.md)
 - [Visualisation](10-visualisation.md)
