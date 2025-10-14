@@ -145,16 +145,19 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         # area stored in the first row of the radiation data because it's constant over time
         window_area_m2 = radiation_data[f'windows_{direction}_m2'][0]
         
-        if window_area_m2 == 0:
+        # subtract frame area
+        actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
+        
+        if actual_window_area_m2 == 0:
             I_sol_win_w_direction = 0
             I_sol_win += I_sol_win_w_direction
             continue  # skip to next direction if no window area
         
         # convert radiation data to irradiance intensity on window [W/m2]
-        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / window_area_m2
+        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / actual_window_area_m2
         
         
-        # reduce solar radiation by shading and shadying location (interior or exterior)
+        # reduce solar radiation by shading and shading location (interior or exterior)
         if shading_location=='exterior':
             # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
             I_sol_win_wm2_direction = np.where(
@@ -172,9 +175,9 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
             shading_setpoint_wm2=shading_setpoint_wm2
         )
             
-        # then reduce by frame factor and g value as usual after radiation has entered the window
+        # then reduce value as usual after radiation has entered the window
         # and multiply by window area
-        I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction * (1 - frame_factor)) * window_area_m2
+        I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction) * actual_window_area_m2
     
         #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
         I_sol_underside = np.zeros_like(I_sol_win_w_direction) * thermal_resistance_surface['RSE_underside'] 
