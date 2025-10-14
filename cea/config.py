@@ -550,6 +550,9 @@ class ResumeFileParameter(FileParameter):
     def decode(self, value):
         return self._check_path(str(value))
 
+class InputFileParameter(FileParameter):
+    """A parameter that describes a user provided input file."""
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
