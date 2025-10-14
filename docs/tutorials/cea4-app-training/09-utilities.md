@@ -207,8 +207,6 @@ Automatically processes multiple scenarios using a user-configured workflow. Thi
 
 ### Workflow Configuration
 
-Create a `workflow.yml` file:
-
 ```yaml
 ---
 - radiation  # Solar radiation analysis
@@ -221,23 +219,17 @@ Workflow runs features in order, respecting dependencies.
 
 ### Prerequisites
 - Multiple scenarios to process
-- Workflow configuration file (`workflow.yml`)
 - All scenarios have required input data
 
 ### How to Use
-
-1. **Create workflow file**:
-   - Define sequence of features
-   - Save as `workflow.yml` in project folder
-
-2. **Run batch process**:
+1**Run batch process**:
    - Navigate to **Utilities**
    - Select **Batch Process Workflow**
    - Select scenarios to process
-   - Provide workflow file path
+   - Design workflow using the toggles
    - Click **Run**
 
-3. **Monitor progress**:
+2**Monitor progress**:
    - Check log for progress through scenarios and features
    - Errors in one scenario don't stop others
 
@@ -252,7 +244,7 @@ Example:
 - With multiprocessing: ~12-24 hours
 
 ### Tips
-- **Test workflow first**: Run on 2-3 scenarios before full batch
+- **Test workflow first**: Run on 2 scenarios before full batch
 - **Use overnight/weekend**: Long processing times
 - **Enable multiprocessing**: In each feature's parameters
 - **Log monitoring**: Check logs periodically for errors

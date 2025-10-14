@@ -126,11 +126,11 @@ The feature maps buildings to archetypes based on:
 
 ### Output Files
 The feature populates all building property files:
-- `architecture.xlsx` - Envelope properties, window-wall ratios, floor heights
-- `internal_loads.xlsx` - Occupancy densities, appliances, lighting
-- `comfort.xlsx` - Setpoint temperatures, acceptable ranges
-- `air_conditioning.xlsx` - HVAC system types
-- `supply_systems.xlsx` - Energy supply configuration
+- `envelope.csv` - Envelope properties, window-wall ratios, floor heights
+- `internal_loads.csv` - Occupancy densities, appliances, lighting
+- `comfort.csv` - Setpoint temperatures, acceptable ranges
+- `air_conditioning.csv` - HVAC system types
+- `supply_systems.csv` - Energy supply configuration
 
 ### Understanding Archetype Mapping
 
@@ -152,10 +152,10 @@ After running Archetypes Mapper, you can manually adjust properties:
 4. Proceed with CEA analysis
 
 Common adjustments:
-- Window-wall ratios (architecture.xlsx)
-- HVAC system types (air_conditioning.xlsx)
-- Occupancy schedules (internal_loads.xlsx)
-- Setpoint temperatures (comfort.xlsx)
+- Window-wall ratios (architecture.csv)
+- HVAC system types (air_conditioning.csv)
+- Occupancy schedules (internal_loads.csv)
+- Setpoint temperatures (comfort.csv)
 
 ### Tips
 - **Run before first demand calculation**: Mandatory step
@@ -306,8 +306,8 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 ### Key Parameters
 
 | Parameter | Description | Typical Value |
-|-----------|-------------|---------------|
-| **Search radius** | Distance to fetch buildings (m) | 500-1000 m |
+|-----------|-------------|-------------|
+| **Search radius** | Distance to fetch buildings (m) | 50-100 m |
 | **Height estimation** | Method for missing heights | OSM data or # of floors × 3m |
 
 ### How to Use
@@ -315,9 +315,9 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 1. Navigate to **Data Management**
 2. Select **Surroundings Helper**
 3. Set search radius:
-   - **Urban core**: 500-800 m (many nearby tall buildings)
-   - **Suburban**: 300-500 m (fewer, lower buildings)
-   - **Rural**: 200-300 m (sparse buildings)
+   - **Urban core**: 50-100 m (many nearby tall buildings)
+   - **Suburban**: 30-50 m (fewer, lower buildings)
+   - **Rural**: 20-30 m (sparse buildings)
 4. Click **Run**
 5. Surroundings saved to `{scenario}/inputs/building-geometry/surroundings.shp`
 
@@ -335,11 +335,6 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 - Affects solar radiation calculations
 - Impacts PV and solar thermal potential
 - Influences cooling loads (solar gains through windows)
-
-**Typical impact**:
-- Dense urban: 20-40% reduction in solar potential due to shading
-- Suburban: 5-15% reduction
-- Rural: <5% reduction
 
 ### Tips
 - **Larger radius for tall buildings**: Tall buildings cast longer shadows
