@@ -130,7 +130,43 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    def log_pv_contribution(self, type_pv: str) -> tuple[list[float], list[float]]:
+    def log_pv_contribution(
+        self,
+        type_pv: str,
+        allocation_priority: list[str] | None = None,
+        allow_techs: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """
+        Allocate on-site PV generation to offset hourly GRID electricity consumption across technologies,
+        mutate the demand timeseries accordingly, and return a compact allocation summary per hour.
+
+        :param type_pv: Key used with the locator to find the PV hourly results for this building.
+        :type type_pv: str
+        :param allocation_priority: Explicit priority order for technologies (keys of _tech_name_mapping) that are eligible for
+            PV allocation. The first item gets PV first in each hour. If None, defaults to
+            `["electricity", "heating", "hot_water", "cooling"]`.
+            If the list contains less than 4 items, the remaining eligible technologies will still be appended.
+        :type allocation_priority: list[str] | None, optional
+        :param allow_techs: Optional whitelist of technologies (`heating`, `hot_water`, `cooling`, `electricity`)
+            to which PV can be allocated.
+            If None, all technologies are allowed.
+        :type allow_techs: list[str] | None, optional
+        :return: A DataFrame with hourly PV allocation summary including:
+            - `E_PV_gen_kWh`: Total PV generation in kWh (same as `E_PV_gen_kWh` in the original PV results).
+            - `E_PV_gen_used_kWh`: Total PV generation used in kWh.
+            - `E_PV_gen_kWh_leftover`: Total PV generation leftover in kWh.
+            - `avoided_emission_kgCO2e`: Total avoided emissions in kgCO2e.
+            plus one column per allowed tech: `PV_to_{tech}_kWh_input` representing PV electricity
+            input allocated to that tech in each hour.
+        :rtype: pd.DataFrame
+
+        Notes
+        -----
+        - Must be called before `calculate_operational_emission()`; this function mutates
+          the demand timeseries, so it must be called before calculating emissions.
+        - Surplus PV is assumed exported (not credited toward operational emission reduction here).
+        - Avoided emissions are calculated using the hourly GRID emission intensity timeline.
+        """
         # ensure the results file exists
         if self._if_emission_calculated:
             raise RuntimeError(
