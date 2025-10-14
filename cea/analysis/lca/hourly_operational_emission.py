@@ -130,7 +130,7 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    def log_pv_contribution(self, type_pv: str) -> None:
+    def log_pv_contribution(self, type_pv: str) -> tuple[list[float], list[float]]:
         # ensure the results file exists
         if self._if_emission_calculated:
             raise RuntimeError("PV contributions updates current demand timeseries. Please run this before calculating emissions or reset the timeline using create_operational_timeline().")
@@ -140,7 +140,10 @@ class OperationalHourlyTimeline:
             raise FileNotFoundError(f"PV results file not found for {type_pv} at {pv_results_path}.")
 
         pv_hourly_results = pd.read_csv(pv_results_path, index_col=None)
-        pv_hourly_results.index.set_names('hour', inplace=True)
+        if len(pv_hourly_results) != HOURS_IN_YEAR:
+            raise ValueError(f"PV results for {type_pv} should have {HOURS_IN_YEAR} rows, but got {len(pv_hourly_results)} rows.")
+        # use the same index as demand timeseries
+        pv_hourly_results.index = self.demand_timeseries.index
 
         if 'E_PV_gen_kWh' not in pv_hourly_results.columns:
             raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {type_pv}.")
@@ -175,6 +178,11 @@ class OperationalHourlyTimeline:
                 f"Total yearly leftover PV generation: {pv_hourly_results['E_PV_gen_kWh_leftover'].sum():.2f} kWh.",
                 RuntimeWarning,
             )
+        pv_hourly_results["E_PV_gen_used_kWh"] = pv_hourly_results["E_PV_gen_kWh"] - pv_hourly_results["E_PV_gen_kWh_leftover"]
+        pv_gen_used_kWh: list[float] = pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float).tolist()
+        pv_avoided_emission_arr = pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float) * self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
+        pv_avoided_emission_kgCO2e: list[float] = pv_avoided_emission_arr.tolist()
+        return pv_gen_used_kWh, pv_avoided_emission_kgCO2e
 
     def calculate_operational_emission(self) -> None:
         """
