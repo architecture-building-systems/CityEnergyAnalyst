@@ -11,7 +11,7 @@ Calculates aggregated embodied and operational greenhouse gas emissions for each
 
 ### What It Calculates
 
-**Embodied Emissions** (kgCO₂-eq):
+**Embodied Emissions** (kgCO₂e):
 - Initial construction materials and processes
 - Building envelope (walls, roof, floor, windows)
 - Renovation and retrofit emissions
@@ -19,7 +19,7 @@ Calculates aggregated embodied and operational greenhouse gas emissions for each
 - Biogenic carbon storage (negative emissions from timber, etc.)
 - PV panel manufacturing (if installed)
 
-**Operational Emissions** (kgCO₂-eq):
+**Operational Emissions** (kgCO₂e):
 - Energy supply system operation
 - Heating, cooling, electricity, DHW
 - Hourly timesteps available (8,760 hours)
@@ -78,8 +78,8 @@ Calculates aggregated embodied and operational greenhouse gas emissions for each
 **Annual emissions per building**: `{scenario}/outputs/data/emissions/Total_yearly_emissions_by_building.csv`
 - Operational emissions by energy carrier (electricity, gas, etc.)
 - Embodied emissions by component (envelope, systems, etc.)
-- Total annual emissions (kgCO₂-eq/year)
-- Emissions intensity (kgCO₂-eq/m²/year)
+- Total annual emissions (kgCO₂e/year)
+- Emissions intensity (kgCO₂e/m²/year)
 
 **Hourly operational emissions** (if enabled): `{scenario}/outputs/data/emissions/BXXX_hourly_operational.csv`
 - 8,760 hourly emissions values
@@ -101,15 +101,15 @@ Calculates aggregated embodied and operational greenhouse gas emissions for each
 #### Typical Emissions Breakdown
 
 **Embodied Emissions** (varies significantly by building type):
-- New construction: 300-800 kgCO₂-eq/m² GFA
-- Timber buildings: Lower (200-500 kgCO₂-eq/m²) due to carbon storage
-- Concrete/steel buildings: Higher (500-1,000 kgCO₂-eq/m²)
-- Renovations add: 50-200 kgCO₂-eq/m²
+- New construction: 300-800 kgCO₂e/m² GFA
+- Timber buildings: Lower (200-500 kgCO₂e/m²) due to carbon storage
+- Concrete/steel buildings: Higher (500-1,000 kgCO₂e/m²)
+- Renovations add: 50-200 kgCO₂e/m²
 
 **Operational Emissions** (annual):
-- Low-energy buildings: 5-15 kgCO₂-eq/m²/year
-- Standard buildings: 15-40 kgCO₂-eq/m²/year
-- Old buildings: 40-80+ kgCO₂-eq/m²/year
+- Low-energy buildings: 5-15 kgCO₂e/m²/year
+- Standard buildings: 15-40 kgCO₂e/m²/year
+- Old buildings: 40-80+ kgCO₂e/m²/year
 
 #### Emission Sources
 

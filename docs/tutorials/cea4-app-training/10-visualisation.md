@@ -128,8 +128,8 @@ Creates bar charts showing total lifecycle emissions (embodied + operational) fo
 - PV production emissions (if applicable)
 
 **Chart Types**:
-1. **Annual total emissions** - kgCO₂-eq/year
-2. **Emissions intensity** - kgCO₂-eq/m²/year
+1. **Annual total emissions** - kgCO₂e/year
+2. **Emissions intensity** - kgCO₂e/m²/year
 3. **Lifecycle cumulative** - Total over analysis period
 4. **Emissions breakdown** - By source (embodied vs operational)
 
@@ -289,7 +289,7 @@ Breakdown by:
 
 ### Chart Types
 
-- **Annual operational emissions** (kgCO₂-eq/year)
+- **Annual operational emissions** (kgCO₂e/year)
 - **Emissions by energy carrier**
 - **Monthly operational emissions**
 
@@ -457,7 +457,7 @@ Plots Pareto frontiers from optimisation results, visualising trade-offs between
 **Optimisation Objectives**:
 - Typically 2D or 3D scatter plots
 - X-axis: Total annualised cost (CHF/year or $/year)
-- Y-axis: Total GHG emissions (kgCO₂-eq/year)
+- Y-axis: Total GHG emissions (kgCO₂e/year)
 - Optionally Z-axis: Primary energy (MWh/year)
 
 **Points on Chart**:
