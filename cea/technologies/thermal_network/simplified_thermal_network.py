@@ -260,9 +260,11 @@ def thermal_network_simplified(locator, config, network_name=''):
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         DCN_barcode = "0"
-        if buildings_name_with_cooling != []:
-            building_names = [building for building in buildings_name_with_cooling if building in
-                              node_df.building.values]
+
+        building_nodes = set(node_df.Building[node_df.building != "NONE"])
+        if buildings_name_with_cooling:
+            building_names = [building for building in buildings_name_with_cooling
+                              if building in building_nodes]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
             print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
