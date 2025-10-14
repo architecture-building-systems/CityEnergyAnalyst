@@ -165,7 +165,19 @@ def total_yearly(config: Configuration) -> None:
         if all_none:
             feedstock_policies_arg = None
         else:
-            assert ref_yr is not None and tar_yr is not None and tar_ef is not None
+            if ref_yr is None or tar_yr is None or tar_ef is None:
+                raise ValueError(f"Grid decarbonisation parameters should all be present: Reference year, target year, target emission factor. "
+                                 f"Got: {ref_yr}, {tar_yr}, {tar_ef}")
+            
+            # Validate grid decarbonisation parameters
+            if ref_yr >= tar_yr:
+                raise ValueError(
+                    f"Invalid grid decarbonisation configuration: reference year ({ref_yr}) must be before target year ({tar_yr})."
+                )
+            if tar_ef < 0:
+                raise ValueError(
+                    f"Invalid grid decarbonisation configuration: target emission factor ({tar_ef}) must be non-negative."
+                )
             feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
