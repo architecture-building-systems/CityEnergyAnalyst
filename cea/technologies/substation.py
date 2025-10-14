@@ -838,16 +838,15 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     # Check for physically impossible situations
     if dT1 <= 0 or dT2 <= 0:
         # **Check the emission_system database, there might be a problem with the selection of nominal temperatures
-        raise ValueError(f"""
-        Invalid temperature configuration detected!
-        Temperature differences:
-        Hot end (thi - tco): {dT1:.2f}
-        Cold end (tho - tci): {dT2:.2f}
-
-        For valid heat transfer, differences must be > 0:
-        - Hot inlet (thi) must be > Cold outlet (tco)
-        - Hot outlet (tho) must be > Cold inlet (tci)
-        """)
+        raise ValueError(
+            f"Invalid temperature configuration detected!\n"
+            f"Temperature differences:\n"
+            f"Hot end (thi - tco): {dT1:.2f}\n"
+            f"Cold end (tho - tci): {dT2:.2f}\n\n"
+            f"For valid heat transfer, differences must be > 0:\n"
+            f"- Hot inlet (thi) must be > Cold outlet (tco)\n"
+            f"- Hot outlet (tho) must be > Cold inlet (tci)"
+        )
 
     # Check if temperature differences are equal (to avoid division by zero)
     if abs(dT1 - dT2) < 0.001:  # Using small threshold to avoid floating point issues
