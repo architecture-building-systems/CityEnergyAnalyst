@@ -11,7 +11,6 @@ Exports CEA files into Rhino/Grasshopper-ready format, allowing you to visualise
 
 ### When to Use
 - Visualising building geometry in 3D
-- Creating presentation-quality renders
 - Further geometric analysis in Rhino/Grasshopper
 - Integrating CEA workflows with architectural design tools
 - Using cea4gh (CEA for Grasshopper) plugin

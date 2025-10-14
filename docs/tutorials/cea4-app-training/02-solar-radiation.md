@@ -29,9 +29,11 @@ Uses the DAYSIM engine to perform detailed solar radiation analysis on all build
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Multiprocessing** | Enable parallel processing for faster computation | Enabled |
-| **Number of CPUs to keep free** | CPUs reserved for other tasks | 1-2 |
-| **Debug mode** | Enable detailed logging and visualisation | Disabled (for production) |
+| **Roof grid** | Grid resolution for roof surfaces (m) | 2 (default, recommended) |
+| **Walls grid** | Grid resolution for wall surfaces (m) | 2 (default, recommended) |
+
+- **Advanced Parameters** (generally leave as default)
+- **Level of Details' roof-grid** and **walls-grid**: Control the resolution of solar radiation calculations. Smaller values = more detail but much longer computation. Default value of 2 m provides good balance. Not recommended to change unless you have specific requirements.
 
 ### How to Use
 
@@ -52,7 +54,6 @@ Uses the DAYSIM engine to perform detailed solar radiation analysis on all build
      - Geometric complexity
      - Density of surroundings
      - Number of CPUs available
-   - Typical range: 2-30 minutes per building
 
 ### Output Files
 For each building `BXXX`, the feature generates:
@@ -73,11 +74,6 @@ The radiation results show:
 - **Surface orientation**: North, South, East, West, Top (roof)
 - **Annual radiation**: kWh/m²/year on each surface
 
-Typical annual radiation ranges (Central Europe):
-- South-facing facades: 800-1,200 kWh/m²/year
-- North-facing facades: 300-500 kWh/m²/year
-- Horizontal roofs: 1,000-1,400 kWh/m²/year
-
 ### Next Steps
 After running solar radiation:
 1. **Renewable energy assessment**: Run [PV, PVT, or Solar Collectors](03-renewable-energy.md)
@@ -89,10 +85,12 @@ After running solar radiation:
 - **Enable multiprocessing**: Significantly reduces computation time
 - **Include all surroundings**: Missing context buildings lead to overestimated radiation
 - **Check terrain data**: Accurate elevations improve radiation calculations in hilly areas
+- **Leave grid resolution at default (2 m)**: Roof and walls grid parameters should generally not be changed. Smaller values drastically increase computation time with minimal accuracy improvement
 
 ### Troubleshooting
 
 **Issue**: Very slow computation (>1 hour per building)
+- **Solution**: Verify roof and walls grid parameters are set to default (2 m). Smaller values drastically increase computation time
 - **Solution**: Check surrounding buildings count. If >500 buildings, consider reducing search radius
 - **Solution**: Simplify building geometries if they have excessive detail
 
@@ -141,10 +139,19 @@ Same as DAYSIM:
 - Weather file
 
 ### Key Parameters
+
 Same as DAYSIM:
-- Multiprocessing
-- Number of CPUs to keep free
-- Debug mode
+
+| Parameter | Description | Typical Value |
+|-----------|-------------|---------------|
+| **Multiprocessing** | Enable parallel processing | Enabled |
+| **Number of CPUs to keep free** | CPUs reserved | 1-2 |
+| **Debug mode** | Detailed logging | Disabled |
+| **Roof grid** | Grid resolution for roofs (m) | 2 (default, recommended) |
+| **Walls grid** | Grid resolution for walls (m) | 2 (default, recommended) |
+
+**Advanced Parameters** (generally leave as default):
+- **Roof grid** and **Walls grid**: Same as DAYSIM - control calculation resolution. Keep at default value of 2 m.
 
 ### How to Use
 
@@ -177,7 +184,7 @@ Use DAYSIM instead of CRAX when:
 - Production/publication-quality work
 
 ### Tips
-- **Test first**: Run CRAX on a few buildings and compare to DAYSIM
+- **Leave grid resolution at default (2 m)**: Same as DAYSIM - do not change roof/walls grid unless absolutely necessary
 - **Report issues**: Help improve CRAX by reporting bugs on GitHub
 - **Stay updated**: Check CEA releases for CRAX improvements
 
@@ -196,15 +203,14 @@ Use DAYSIM instead of CRAX when:
 
 ## Comparison: DAYSIM vs CRAX
 
-| Aspect | DAYSIM | CRAX [BETA] |
-|--------|--------|-------------|
-| **Accuracy** | Highest (validated) | Good (faster methods) |
-| **Speed** | Baseline | 10-100× faster |
+| Aspect | DAYSIM                 | CRAX [BETA] |
+|--------|------------------------|-------------|
+| **Accuracy** | Highest (validated)    | Good (faster methods) |
+| **Speed** | Baseline               | 10-100× faster |
 | **Complexity** | Handles all geometries | Simplified geometries only |
-| **Void decks** | ✅ Supported | ❌ Not supported |
-| **Surroundings** | Handles any density | Optimised for dense areas |
-| **Status** | Production | Beta (experimental) |
-| **Best for** | All projects | Dense urban preliminary studies |
+| **Void decks** | Supported              | Not supported |
+| **Surroundings** | Handles any density    | Optimised for dense areas |
+| **Status** | Production             | Beta (experimental) |
 
 ---
 
@@ -233,7 +239,6 @@ Use DAYSIM instead of CRAX when:
 2. **Use appropriate weather file**: Ensure weather file matches geographic location
 3. **Run before demand**: Solar radiation must complete before energy demand calculation
 4. **Archive results**: Solar radiation results are large; back up completed analyses
-5. **Prefer DAYSIM**: Unless computational time is critical, use DAYSIM for accuracy
 
 ---
 
@@ -245,7 +250,6 @@ Use DAYSIM instead of CRAX when:
 ---
 
 ## Further Reading
-- DAYSIM: [https://daysim.ning.com/](https://daysim.ning.com/)
 - CRAX reference: [https://doi.org/10.1016/j.buildenv.2022.109937](https://doi.org/10.1016/j.buildenv.2022.109937)
 
 ---
