@@ -2,6 +2,8 @@
 
 This category evaluates the potential for renewable energy generation from various sources including solar (PV, PVT, solar thermal), geothermal, water bodies, and sewage heat recovery.
 
+**💡 Customising Technology Databases**: All renewable energy technologies reference CEA databases for performance characteristics. You can customise these databases to test specific manufacturers' products or future technologies. Look for database files in `{scenario}/inputs/technology/components/CONVERSION/` and edit the relevant CSV files.
+
 ---
 
 ## Photovoltaic (PV) Panels
@@ -30,17 +32,16 @@ Calculates electricity generation potential from photovoltaic solar panels insta
 
 ### Key Parameters
 
-| Parameter | Description | Typical Value |
-|-----------|-------------|---------------|
+| Parameter | Description | Typical Value            |
+|-----------|-------------|--------------------------|
 | **Type of PV panel** | Panel technology from database | PV1 (monocrystalline Si) |
-| **Panel on roof** | Install panels on roofs | Yes |
-| **Panel on wall** | Install panels on facades | Optional |
-| **Annual radiation threshold** | Minimum annual radiation (kWh/m²/yr) | 800-1000 |
-| **Solar window solstice** | Include surfaces visible during solstice | Yes |
-| **Max roof coverage** | Maximum fraction of roof area for panels | 0.5-0.9 |
-| **Custom tilt angle** | Use custom tilt instead of roof angle | Optional |
-| **Panel tilt angle** | Fixed tilt angle if custom enabled | 30° |
-| **Buildings** | Select specific buildings or all | All |
+| **Panel on roof** | Install panels on roofs | Yes                      |
+| **Panel on wall** | Install panels on facades | Optional                 |
+| **Annual radiation threshold** | Minimum annual radiation (kWh/m²/yr) | 200-1000                 |
+| **Max roof coverage** | Maximum fraction of roof area for panels | 0.5-0.9                  |
+| **Custom tilt angle** | Use custom tilt instead of roof angle | Optional                 |
+| **Panel tilt angle** | Fixed tilt angle if custom enabled | Optional                 |
+| **Buildings** | Select specific buildings or all | All                      |
 
 ### How to Use
 
@@ -90,10 +91,20 @@ Typical values (Central Europe):
 
 ### Panel Types in CEA Database
 
-Common PV technologies:
-- **PV1**: Monocrystalline silicon (highest efficiency ~20%)
-- **PV2**: Polycrystalline silicon (moderate efficiency ~17%)
-- **PV3**: Thin film (lower efficiency ~12%, better in diffuse light)
+The CEA database includes various PV panel technologies with different efficiencies and performance characteristics. To see available panel types and their properties:
+1. Navigate to `{scenario}/inputs/technology/components/CONVERSION/PHOTOVOLTAIC_PANELS.csv`
+2. Review panel specifications (efficiency, temperature coefficients, etc.)
+
+**Customising the Database**:
+- You can add custom PV panel types by editing `PHOTOVOLTAIC_PANELS.csv`
+- Add new rows with your panel specifications (e.g., in CEA-4 App, Excel or text editor)
+- Reference the new panel code in the "Type of PV panel" parameter
+- Useful for testing specific manufacturers' panels or future technologies
+
+Common PV technology categories in the database:
+- **Monocrystalline silicon**: Highest efficiency (~18-22%)
+- **Polycrystalline silicon**: Moderate efficiency (~15-18%)
+- **Thin film**: Lower efficiency (~10-13%), better performance in diffuse light and high temperatures
 
 ### Tips
 - **Start with roofs only**: Facade PV typically has lower yields
@@ -136,6 +147,11 @@ Same as PV: solar radiation analysis must be completed
 - **Temperature effects**: More complex thermal modelling
 - **Inlet temperature**: Heat generation depends on fluid inlet temperature
 - **Panel database**: Uses PVT-specific panel properties
+
+**PVT Panel Database**:
+- Navigate to `{scenario}/inputs/technology/components/CONVERSION/PHOTOVOLTAIC_THERMAL_PANELS.csv`
+- You can customise by adding new PVT panel types with specific electrical and thermal performance characteristics
+- Reference custom panels in the "Type of PV panel" and "Type of SC panel" parameters
 
 ### Key Parameters
 Similar to PV, plus:
@@ -216,13 +232,25 @@ Solar radiation analysis must be completed
 
 ### Collector Types
 
-**SC1: Flat Plate Collectors**
+The CEA database includes various solar thermal collector technologies. To see available collector types:
+1. Navigate to `{scenario}/inputs/technology/components/CONVERSION/SOLAR_COLLECTORS.csv`
+2. Review collector specifications (efficiency curves, optical properties, etc.)
+
+**Customising the Database**:
+- You can add custom solar collector types by editing `SOLAR_COLLECTORS.csv`
+- Add new rows with your collector specifications (e.g., in Excel or text editor)
+- Reference the new collector code in the "Type of SC panel" parameter
+- Useful for testing specific manufacturers' collectors
+
+Common solar collector categories in the database:
+
+**Flat Plate Collectors**:
 - Lower cost
 - Good for low-to-medium temperatures (40-80°C)
 - Better for DHW applications
 - Efficiency: 50-70% at optimal conditions
 
-**SC2: Evacuated Tube Collectors**
+**Evacuated Tube Collectors**:
 - Higher cost
 - Better for high temperatures (60-100°C)
 - Lower heat losses
