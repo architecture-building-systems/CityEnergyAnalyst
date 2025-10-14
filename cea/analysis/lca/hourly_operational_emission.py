@@ -133,42 +133,83 @@ class OperationalHourlyTimeline:
     def log_pv_contribution(self, type_pv: str) -> tuple[list[float], list[float]]:
         # ensure the results file exists
         if self._if_emission_calculated:
-            raise RuntimeError("PV contributions updates current demand timeseries. Please run this before calculating emissions or reset the timeline using create_operational_timeline().")
-        
+            raise RuntimeError(
+                "PV contributions updates current demand timeseries. Please run this before calculating "
+                "emissions or reset the timeline using create_operational_timeline()."
+            )
+
+        # Priority and whitelist handling
+        all_tech_keys = list(_tech_name_mapping.keys())
+        default_priority = ["electricity", "heating", "hot_water", "cooling"]
+        if allocation_priority is None:
+            allocation_priority = default_priority
+        allocation_priority = [t for t in allocation_priority if t in all_tech_keys]
+        if not allocation_priority:
+            allocation_priority = default_priority
+
+        allowed_set = set(all_tech_keys) if allow_techs is None else set(allow_techs) & set(all_tech_keys)
+        ordered_techs = [t for t in allocation_priority if t in allowed_set]
+        ordered_techs += [t for t in all_tech_keys if t in allowed_set and t not in ordered_techs]
+
         pv_results_path = self.locator.PV_results(self.bpr.name, type_pv)
         if not os.path.exists(pv_results_path):
             raise FileNotFoundError(f"PV results file not found for {type_pv} at {pv_results_path}.")
 
         pv_hourly_results = pd.read_csv(pv_results_path, index_col=None)
         if len(pv_hourly_results) != HOURS_IN_YEAR:
-            raise ValueError(f"PV results for {type_pv} should have {HOURS_IN_YEAR} rows, but got {len(pv_hourly_results)} rows.")
-        # use the same index as demand timeseries
+            raise ValueError(
+                f"PV results for {type_pv} should have {HOURS_IN_YEAR} rows, but got {len(pv_hourly_results)} rows."
+            )
+        # Align to demand index for label-safe arithmetic
         pv_hourly_results.index = self.demand_timeseries.index
 
         if 'E_PV_gen_kWh' not in pv_hourly_results.columns:
             raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {type_pv}.")
 
-        pv_hourly_results["E_PV_gen_kWh_leftover"] = pv_hourly_results["E_PV_gen_kWh"].copy()
-        
-        # then check all the techs that use electricity and deduct the demand from PV generation, and update the leftover pv generation
-        for _, tech_tuple in _tech_name_mapping.items():
-            eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
+        # Validate GRID emission intensity availability
+        if 'GRID' not in self.emission_intensity_timeline.columns:
+            raise ValueError("'GRID' emission intensity timeline is missing.")
+        if len(self.emission_intensity_timeline) != len(self.demand_timeseries):
+            raise ValueError("Emission intensity timeline length does not match demand timeline length.")
+
+        pv_hourly_results["E_PV_gen_kWh_leftover"] = pv_hourly_results["E_PV_gen_kWh"].astype(float)
+
+        # Initialize per-tech allocation trackers (electricity input basis)
+        per_tech_allocation = {f"PV_to_{t}_kWh_input": pd.Series(0.0, index=self.demand_timeseries.index) for t in allowed_set}
+
+        # Allocate PV following explicit order
+        for demand_type in ordered_techs:
+            demand_col_name, supply_type_name = _tech_name_mapping[demand_type]
+            demand_col = f"{demand_col_name}_kWh"
+
+            feedstock: str = self.bpr.supply[f"source_{supply_type_name}"]
+            if feedstock != 'GRID':
+                continue
+            if demand_col not in self.demand_timeseries.columns:
+                raise ValueError(f"Expected demand column '{demand_col}' not found in demand timeseries.")
+
+            eff: float = self.bpr.supply[f"eff_{supply_type_name}"]
             eff = eff if eff > 0 else 1.0  # avoid division by zero
-            feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
-            if feedstock == 'GRID':
-                # only consider the techs that use grid electricity
-                demand_col = f"{tech_tuple[0]}_kWh"
-                
-                if demand_col not in self.demand_timeseries.columns:
-                    raise ValueError(f"Expected demand column '{demand_col}' not found in demand timeseries.")
-                
-                electricity_demand = self.demand_timeseries[demand_col].copy() / eff  # kWh
-                pv_deduction = np.minimum(pv_hourly_results["E_PV_gen_kWh_leftover"], electricity_demand)
-                self.demand_timeseries[demand_col] -= pv_deduction * eff
-                self.demand_timeseries[demand_col] = self.demand_timeseries[demand_col].clip(lower=0)
-                pv_hourly_results["E_PV_gen_kWh_leftover"] -= pv_deduction
-                pv_hourly_results["E_PV_gen_kWh_leftover"] = pv_hourly_results["E_PV_gen_kWh_leftover"].clip(lower=0)
-        # after processing all techs, check if there is any leftover pv generation
+
+            elec_input_demand = self.demand_timeseries[demand_col].astype(float) / eff
+            pv_left = pv_hourly_results["E_PV_gen_kWh_leftover"].to_numpy(dtype=float)
+            req = elec_input_demand.to_numpy(dtype=float)
+            pv_deduction = np.minimum(pv_left, req)
+
+            # Reduce end-use demand by PV input * eff, clip at 0
+            self.demand_timeseries[demand_col] = (
+                self.demand_timeseries[demand_col].astype(float) - pv_deduction * eff
+            ).clip(lower=0)
+
+            # Update leftover PV
+            pv_hourly_results["E_PV_gen_kWh_leftover"] = (
+                pv_hourly_results["E_PV_gen_kWh_leftover"].astype(float) - pv_deduction
+            ).clip(lower=0)
+
+            # Track allocation to this tech
+            per_tech_allocation[f"PV_to_{demand_type}_kWh_input"] = pd.Series(pv_deduction, index=self.demand_timeseries.index)
+
+        # Warn on surplus
         if pv_hourly_results["E_PV_gen_kWh_leftover"].sum() > 0:
             warnings.warn(
                 f"There is leftover PV generation for {type_pv} in building {self.bpr.name} after covering all GRID electricity demands. "
@@ -178,11 +219,30 @@ class OperationalHourlyTimeline:
                 f"Total yearly leftover PV generation: {pv_hourly_results['E_PV_gen_kWh_leftover'].sum():.2f} kWh.",
                 RuntimeWarning,
             )
-        pv_hourly_results["E_PV_gen_used_kWh"] = pv_hourly_results["E_PV_gen_kWh"] - pv_hourly_results["E_PV_gen_kWh_leftover"]
-        pv_gen_used_kWh: list[float] = pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float).tolist()
-        pv_avoided_emission_arr = pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float) * self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-        pv_avoided_emission_kgCO2e: list[float] = pv_avoided_emission_arr.tolist()
-        return pv_gen_used_kWh, pv_avoided_emission_kgCO2e
+
+        # Used PV and avoided emissions
+        pv_hourly_results["E_PV_gen_used_kWh"] = (
+            pv_hourly_results["E_PV_gen_kWh"].astype(float)
+            - pv_hourly_results["E_PV_gen_kWh_leftover"].astype(float)
+        )
+        pv_hourly_results["avoided_emission_kgCO2e"] = (
+            pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float)
+            * self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
+        )
+
+        # Prepare compact output with per-tech columns in the chosen order
+        base_cols = [
+            "E_PV_gen_kWh",
+            "E_PV_gen_used_kWh",
+            "E_PV_gen_kWh_leftover",
+            "avoided_emission_kgCO2e",
+        ]
+        tech_cols = [f"PV_to_{t}_kWh_input" for t in ordered_techs if f"PV_to_{t}_kWh_input" in per_tech_allocation]
+        alloc_df = pd.DataFrame(per_tech_allocation)
+        alloc_df.index = pv_hourly_results.index
+        out_df = pd.concat([pv_hourly_results[base_cols], alloc_df[tech_cols]], axis=1)
+        out_df.index.name = "hour"
+        return out_df
 
     def calculate_operational_emission(self) -> None:
         """
