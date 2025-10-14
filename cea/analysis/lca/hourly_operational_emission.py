@@ -1,19 +1,22 @@
 from __future__ import annotations
+
 import os
 import warnings
-import numpy as np
-import pandas as pd
-from cea.constants import HOURS_IN_YEAR
-
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+
+from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.database.components import Feedstocks
+from cea.demand.building_properties import BuildingProperties
+from cea.utilities import epwreader
 
 if TYPE_CHECKING:
-    from cea.inputlocator import InputLocator
-    from cea.datamanagement.database.components import Feedstocks
     from cea.demand.building_properties.building_properties_row import (
         BuildingPropertiesRow,
     )
+    from cea.inputlocator import InputLocator
 
 _tech_name_mapping = {
     # tech_name: (<demand_col_name>, <supply_type_name>)
@@ -36,6 +39,22 @@ class OperationalHourlyTimeline:
         self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name))
         self.operational_emission_timeline = self.create_operational_timeline(n_hours=HOURS_IN_YEAR)
 
+    @classmethod
+    def from_result(cls, locator: InputLocator, building_name: str):
+        hourly_results_csv = locator.get_lca_operational_hourly_building(building_name)
+        if not os.path.exists(hourly_results_csv):
+            raise FileNotFoundError(f"Operational emission results file not found for building {building_name} at {hourly_results_csv}. Please run the calculation first.")
+        feedstock_db = Feedstocks.from_locator(locator)
+        weather_path = locator.get_weather_file()
+        weather_data = epwreader.epw_reader(weather_path)[
+            ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
+        ]
+        bpr = BuildingProperties(locator, weather_data, [building_name])[building_name]
+        obj = cls(locator, bpr, feedstock_db)
+        obj.operational_emission_timeline = pd.read_csv(hourly_results_csv, index_col='hour')
+        obj._if_emission_calculated = True
+        return obj
+    
     def create_operational_timeline(self, n_hours: int) -> pd.DataFrame:
         """
         Create an operational timeline DataFrame with four columns:
@@ -68,7 +87,7 @@ class OperationalHourlyTimeline:
             timeline['date'] = self.demand_timeseries[date_col].values
         else:
             raise ValueError("Date column not found in demand timeseries.")
-
+        self._if_emission_calculated = False  # reset the flag when creating a new timeline
         return timeline
 
     def expand_feedstock_emissions(self) -> pd.DataFrame:
@@ -110,6 +129,52 @@ class OperationalHourlyTimeline:
         expanded_timeline["NONE"] = 0.0
 
         return expanded_timeline
+    
+    def log_pv_contribution(self, type_pv: str) -> None:
+        # ensure the results file exists
+        if self._if_emission_calculated:
+            raise RuntimeError("PV contributions updates current demand timeseries. Please run this before calculating emissions or reset the timeline using create_operational_timeline().")
+        
+        pv_results_path = self.locator.PV_results(self.bpr.name, type_pv)
+        if not os.path.exists(pv_results_path):
+            raise FileNotFoundError(f"PV results file not found for {type_pv} at {pv_results_path}.")
+
+        pv_hourly_results = pd.read_csv(pv_results_path, index_col=None)
+        pv_hourly_results.index.set_names('hour', inplace=True)
+
+        if 'E_PV_gen_kWh' not in pv_hourly_results.columns:
+            raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {type_pv}.")
+
+        pv_hourly_results["E_PV_gen_kWh_leftover"] = pv_hourly_results["E_PV_gen_kWh"].copy()
+        
+        # then check all the techs that use electricity and deduct the demand from PV generation, and update the leftover pv generation
+        for _, tech_tuple in _tech_name_mapping.items():
+            eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
+            eff = eff if eff > 0 else 1.0  # avoid division by zero
+            feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
+            if feedstock == 'GRID':
+                # only consider the techs that use grid electricity
+                demand_col = f"{tech_tuple[0]}_kWh"
+                
+                if demand_col not in self.demand_timeseries.columns:
+                    raise ValueError(f"Expected demand column '{demand_col}' not found in demand timeseries.")
+                
+                electricity_demand = self.demand_timeseries[demand_col].copy() / eff  # kWh
+                pv_deduction = np.minimum(pv_hourly_results["E_PV_gen_kWh_leftover"], electricity_demand)
+                self.demand_timeseries[demand_col] -= pv_deduction * eff
+                self.demand_timeseries[demand_col] = self.demand_timeseries[demand_col].clip(lower=0)
+                pv_hourly_results["E_PV_gen_kWh_leftover"] -= pv_deduction
+                pv_hourly_results["E_PV_gen_kWh_leftover"] = pv_hourly_results["E_PV_gen_kWh_leftover"].clip(lower=0)
+        # after processing all techs, check if there is any leftover pv generation
+        if pv_hourly_results["E_PV_gen_kWh_leftover"].sum() > 0:
+            warnings.warn(
+                f"There is leftover PV generation for {type_pv} in building {self.bpr.name} after covering all GRID electricity demands. "
+                f"This is because in some hours, PV generation exceeds the total GRID electricity demand and there's no battery to store excess generation. "
+                f"Leftover PV generation will not be accounted for in the current operational emission calculation, "
+                f"because it is assumed to be exported back to the grid. "
+                f"Total yearly leftover PV generation: {pv_hourly_results['E_PV_gen_kWh_leftover'].sum():.2f} kWh.",
+                RuntimeWarning,
+            )
 
     def calculate_operational_emission(self) -> None:
         """
@@ -128,6 +193,7 @@ class OperationalHourlyTimeline:
             self.operational_emission_timeline[f"{demand_type}_kgCO2e"] = (
                 self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"]
             )
+        self._if_emission_calculated = True
 
     def save_results(self) -> None:
         """
@@ -152,9 +218,9 @@ class OperationalHourlyTimeline:
 
 if __name__ == "__main__":
     from cea.config import Configuration
-    from cea.inputlocator import InputLocator
-    from cea.demand.building_properties import BuildingProperties
     from cea.datamanagement.database.components import Feedstocks
+    from cea.demand.building_properties import BuildingProperties
+    from cea.inputlocator import InputLocator
     from cea.utilities import epwreader
 
     config = Configuration()
