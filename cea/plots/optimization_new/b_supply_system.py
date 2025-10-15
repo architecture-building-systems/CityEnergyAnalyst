@@ -553,8 +553,7 @@ class EnergyFlowGraphInfo(object):
         path["y"] = [start_position[1], start_position[1], end_position[1], end_position[1]]
         return path
 
-def main():
-    config = cea.config.Configuration()
+def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     
     # Find and use the latest optimization run
@@ -898,7 +897,8 @@ def create_combined_figure_with_dropdowns(figures_dict, des_supply_systems_dict)
 
 
 if __name__ == '__main__':
-    combined_fig = main()
+    config = cea.config.Configuration()
+    combined_fig = main(config)
 
     # Show the combined figure with dropdowns if available
     if combined_fig:
