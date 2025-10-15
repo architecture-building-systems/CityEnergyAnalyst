@@ -7,11 +7,10 @@ and edge cases. Uses pytest fixtures to create various graph scenarios for testi
 
 import pytest
 import networkx as nx
-import math
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from cea.datamanagement.graph_helper import GraphCorrector
-from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
+from cea.constants import SHAPEFILE_TOLERANCE
 
 __author__ = "Mathias Niffeler"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
