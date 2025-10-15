@@ -9,21 +9,21 @@ TYPICAL USAGE
 =============
 
 Basic usage - automatic corrections:
-    >>> from cea.datamanagement.graph_helper import GraphCorrector
-    >>> corrector = GraphCorrector(street_network_graph)
-    >>> corrected_graph = corrector.apply_corrections()
-    >>> print(corrector.get_corrections_log())
+    from cea.datamanagement.graph_helper import GraphCorrector
+    corrector = GraphCorrector(street_network_graph)
+    corrected_graph = corrector.apply_corrections()
+    print(corrector.get_corrections_log())
 
 Manual usage - specific corrections:
-    >>> corrector = GraphCorrector(street_network_graph)
-    >>> corrector.merge_close_nodes()
-    >>> corrector.connect_intersecting_edges()
-    >>> corrected_graph = corrector.graph
+    corrector = GraphCorrector(street_network_graph)
+    corrector.merge_close_nodes()
+    corrector.connect_intersecting_edges()
+    corrected_graph = corrector.graph
 
 Validate before Steiner tree:
-    >>> is_ready, message = GraphCorrector.validate_steiner_tree_ready(graph, terminal_nodes)
-    >>> if not is_ready:
-    >>>     print(f"Graph validation failed: {message}")
+    is_ready, message = GraphCorrector.validate_steiner_tree_ready(graph, terminal_nodes)
+    if not is_ready:
+        print(f"Graph validation failed: {message}")
 
 CORRECTION PIPELINE
 ===================
@@ -72,11 +72,11 @@ class GraphCorrector:
     :type tolerance: float
 
     Example usage:
-        >>> from cea.datamanagement.graph_helper import GraphCorrector
-        >>> corrector = GraphCorrector(street_network_graph)
-        >>> corrected_graph = corrector.apply_corrections()
-        >>> print(f"Applied {len(corrector.get_corrections_log())} corrections")
-        >>> is_ready, msg = GraphCorrector.validate_steiner_tree_ready(corrected_graph, terminal_nodes)
+        from cea.datamanagement.graph_helper import GraphCorrector
+        corrector = GraphCorrector(street_network_graph)
+        corrected_graph = corrector.apply_corrections()
+        print(f"Applied {len(corrector.get_corrections_log())} corrections")
+        is_ready, msg = GraphCorrector.validate_steiner_tree_ready(corrected_graph, terminal_nodes)
     """
 
     def __init__(self, graph: nx.Graph, tolerance: float = SHAPEFILE_TOLERANCE):
