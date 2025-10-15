@@ -5,21 +5,10 @@ import yaml
 import pandas as pd
 import plotly.graph_objs as go
 from PIL import Image
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
 
 import cea.config
 import cea.inputlocator
 from cea.plots.colors import COLORS_TO_RGB as cea_colors
-
-# Create a Dash app
-app = Dash(__name__)
-
-# Global configuration that will be populated in main()
-APP_CONFIG = {
-    'energy_system_ids': [],
-    'supply_system_ids': {}
-}
 
 class SupplySystemGraphInfo(object):
     full_category_names = {'primary': 'Heating/Cooling Components',
@@ -613,64 +602,39 @@ def main():
         supply_systems = locator.get_new_optimization_optimal_supply_system_ids(district_energy_system)
         des_supply_systems_dict[district_energy_system] = supply_systems
 
-    # Populate the global APP_CONFIG dictionary
-    global APP_CONFIG
-    APP_CONFIG = {
-        'locator': locator,
-        'energy_system_ids': des_solution_folders,
-        'supply_system_ids': des_supply_systems_dict
-    }
+    # Generate plots for all energy systems and supply systems
+    print(f"\nGenerating supply system graphics...")
+    print(f"Found {len(des_solution_folders)} energy system(s)")
 
-    # Use the first available supply system to initialize the graph
-    first_energy_system = des_solution_folders[0]
-    supply_systems = des_supply_systems_dict[first_energy_system]
-    if supply_systems:
-        update_graph(first_energy_system, supply_systems[0])
-    else:
-        print("No supply systems found")
+    figures = {}
+    for energy_system_id in des_solution_folders:
+        supply_systems = des_supply_systems_dict[energy_system_id]
+        print(f"\nEnergy System: {energy_system_id}")
+        print(f"  Supply systems: {len(supply_systems)}")
 
-def set_up_graph(dash_application=app):
-    # Define the layout of the app
-    dash_application.layout = html.Div([
-        html.H1("Supply System Graphic"),
+        for supply_system_id in supply_systems:
+            print(f"    Generating graphic for {supply_system_id}...")
+            fig = create_supply_system_graph(energy_system_id, supply_system_id, locator)
 
-        dcc.Dropdown(options=APP_CONFIG['energy_system_ids'], id='energy-system-id',
-                     placeholder="Select an optimal energy system"),
+            # Store the figure
+            key = f"{energy_system_id}_{supply_system_id}"
+            figures[key] = fig
 
-        dcc.Dropdown(options=APP_CONFIG['supply_system_ids'], id='supply-system-id',
-                     placeholder="Select a supply system"),
+            # Optionally save as HTML
+            output_dir = os.path.join(config.scenario, 'outputs', 'plots-new', 'optimization', energy_system_id)
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, f"supply_system_{supply_system_id}.html")
+            fig.write_html(output_path)
+            print(f"      Saved to: {output_path}")
 
-        dcc.Graph(
-            id='supply-system-graph',
-            config={'staticPlot': False}
-        )
-    ])
+    return figures
 
-    return dash_application
-
-#Update the supply-system-id dropdown menu
-@app.callback(
-    Output('supply-system-id', 'options'),
-    [Input('energy-system-id', 'value')]
-)
-def update_supply_system_dropdown(energy_system_id):
-    if energy_system_id is None:
-        return []
-    else:
-        return [i for i in APP_CONFIG['supply_system_ids'][energy_system_id]]
-
-
-# Callback to update the graph
-@app.callback(
-    Output('supply-system-graph', 'figure'),
-    [Input('energy-system-id', 'value'), Input('supply-system-id', 'value')]
-)
-def update_graph(energy_system_id, supply_system_id):
+def create_supply_system_graph(energy_system_id, supply_system_id, locator):
     # Define a corresponding supply system graph info object
     if energy_system_id is None or supply_system_id is None:
         return go.Figure()
     else:
-        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id, APP_CONFIG['locator'])
+        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id, locator)
 
     # Create figure
     fig = go.Figure()
@@ -818,6 +782,10 @@ def update_graph(energy_system_id, supply_system_id):
 
 
 if __name__ == '__main__':
-    main()
-    app = set_up_graph(app)
-    app.run(debug=True)
+    figures = main()
+
+    # Show the first figure if available
+    if figures:
+        first_key = list(figures.keys())[0]
+        print(f"\nDisplaying figure for: {first_key}")
+        figures[first_key].show(renderer="browser")
