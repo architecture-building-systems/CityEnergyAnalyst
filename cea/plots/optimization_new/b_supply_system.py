@@ -15,20 +15,26 @@ from cea.plots.colors import COLORS_TO_RGB as cea_colors
 # Create a Dash app
 app = Dash(__name__)
 
+# Global configuration that will be populated in main()
+APP_CONFIG = {
+    'energy_system_ids': [],
+    'supply_system_ids': {}
+}
+
 class SupplySystemGraphInfo(object):
     full_category_names = {'primary': 'Heating/Cooling Components',
                            'secondary': 'Supply Components',
                            'tertiary': 'Heat Rejection Components'}
-    energy_system_ids = ['0']
-    supply_system_ids = {}
 
-    _locator = None  # Will be set in main() with the correct optimization run
     _category_positions = {'primary': (0.75, 0.5),
                            'secondary': (0.25, 0.75),
                            'tertiary': (0.25, 0.25)}
     _max_category_size = 0.3
 
-    def __init__(self, energy_system_id, supply_system_id):
+    def __init__(self, energy_system_id, supply_system_id, locator):
+        # Store the locator as an instance variable
+        self._locator = locator
+
         # Import the energy systems structure
         self._get_data(energy_system_id, supply_system_id)
 
@@ -57,8 +63,8 @@ class SupplySystemGraphInfo(object):
     def _get_data(self, energy_system_id, supply_system_id):
         """ Import the supply system data """
         supply_system_file = \
-            SupplySystemGraphInfo._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
-                                                                                           supply_system_id)
+            self._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
+                                                                          supply_system_id)
         raw_supply_system_data = pd.read_csv(supply_system_file)
         for column in ["Main_energy_carrier_code", "Other_inputs", "Other_outputs"]:
             raw_supply_system_data[column] = pd.Series([ecs.split(', ')
@@ -570,9 +576,6 @@ def main():
             latest_run_num = max([int(f.split('_')[-1]) for f in run_folders])
             locator.optimization_run = latest_run_num
             print(f"Using latest optimization run: centralized_run_{latest_run_num}")
-    
-    # Set the class-level locator to use the correct optimization run
-    SupplySystemGraphInfo._locator = locator
 
     # Load the image library
     image_lib_yml = os.path.join(ComponentGraphInfo.image_folder_path, 'image_lib.yml')
@@ -610,9 +613,13 @@ def main():
         supply_systems = locator.get_new_optimization_optimal_supply_system_ids(district_energy_system)
         des_supply_systems_dict[district_energy_system] = supply_systems
 
-    # Assign relevant information to the SupplySystemGraphInfo class variables
-    SupplySystemGraphInfo.energy_system_ids = des_solution_folders
-    SupplySystemGraphInfo.supply_system_ids = des_supply_systems_dict
+    # Populate the global APP_CONFIG dictionary
+    global APP_CONFIG
+    APP_CONFIG = {
+        'locator': locator,
+        'energy_system_ids': des_solution_folders,
+        'supply_system_ids': des_supply_systems_dict
+    }
 
     # Use the first available supply system to initialize the graph
     first_energy_system = des_solution_folders[0]
@@ -622,17 +629,15 @@ def main():
     else:
         print("No supply systems found")
 
-    return None
-
 def set_up_graph(dash_application=app):
     # Define the layout of the app
     dash_application.layout = html.Div([
         html.H1("Supply System Graphic"),
 
-        dcc.Dropdown(options=SupplySystemGraphInfo.energy_system_ids, id='energy-system-id',
+        dcc.Dropdown(options=APP_CONFIG['energy_system_ids'], id='energy-system-id',
                      placeholder="Select an optimal energy system"),
 
-        dcc.Dropdown(options=SupplySystemGraphInfo.supply_system_ids, id='supply-system-id',
+        dcc.Dropdown(options=APP_CONFIG['supply_system_ids'], id='supply-system-id',
                      placeholder="Select a supply system"),
 
         dcc.Graph(
@@ -652,7 +657,7 @@ def update_supply_system_dropdown(energy_system_id):
     if energy_system_id is None:
         return []
     else:
-        return [i for i in SupplySystemGraphInfo.supply_system_ids[energy_system_id]]
+        return [i for i in APP_CONFIG['supply_system_ids'][energy_system_id]]
 
 
 # Callback to update the graph
@@ -665,7 +670,7 @@ def update_graph(energy_system_id, supply_system_id):
     if energy_system_id is None or supply_system_id is None:
         return go.Figure()
     else:
-        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id)
+        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id, APP_CONFIG['locator'])
 
     # Create figure
     fig = go.Figure()
