@@ -624,13 +624,6 @@ def main(config):
         print("\nCreating combined figure with dropdown menus...")
         combined_fig = create_combined_figure_with_dropdowns(figures, des_supply_systems_dict)
 
-        # Save combined figure
-        combined_output_dir = os.path.join(config.scenario, 'outputs', 'plots-new', 'optimization')
-        os.makedirs(combined_output_dir, exist_ok=True)
-        combined_output_path = os.path.join(combined_output_dir, "supply_systems_combined.html")
-        combined_fig.write_html(combined_output_path)
-        print(f"  Combined figure saved to: {combined_output_path}")
-
         return combined_fig
 
     return None
