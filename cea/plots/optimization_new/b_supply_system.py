@@ -603,7 +603,7 @@ def main():
         des_supply_systems_dict[district_energy_system] = supply_systems
 
     # Generate plots for all energy systems and supply systems
-    print(f"\nGenerating supply system graphics...")
+    print("\nGenerating supply system graphics...")
     print(f"Found {len(des_solution_folders)} energy system(s)")
 
     figures = {}
@@ -620,14 +620,21 @@ def main():
             key = f"{energy_system_id}_{supply_system_id}"
             figures[key] = fig
 
-            # Optionally save as HTML
-            output_dir = os.path.join(config.scenario, 'outputs', 'plots-new', 'optimization', energy_system_id)
-            os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, f"supply_system_{supply_system_id}.html")
-            fig.write_html(output_path)
-            print(f"      Saved to: {output_path}")
+    # Create combined figure with dropdowns
+    if figures:
+        print("\nCreating combined figure with dropdown menus...")
+        combined_fig = create_combined_figure_with_dropdowns(figures, des_supply_systems_dict)
 
-    return figures
+        # Save combined figure
+        combined_output_dir = os.path.join(config.scenario, 'outputs', 'plots-new', 'optimization')
+        os.makedirs(combined_output_dir, exist_ok=True)
+        combined_output_path = os.path.join(combined_output_dir, "supply_systems_combined.html")
+        combined_fig.write_html(combined_output_path)
+        print(f"  Combined figure saved to: {combined_output_path}")
+
+        return combined_fig
+
+    return None
 
 def create_supply_system_graph(energy_system_id, supply_system_id, locator):
     # Define a corresponding supply system graph info object
@@ -781,11 +788,121 @@ def create_supply_system_graph(energy_system_id, supply_system_id, locator):
     return fig
 
 
-if __name__ == '__main__':
-    figures = main()
+def create_combined_figure_with_dropdowns(figures_dict, des_supply_systems_dict):
+    """
+    Creates a single Plotly figure with dropdown menus to select different energy systems and supply systems.
 
-    # Show the first figure if available
-    if figures:
-        first_key = list(figures.keys())[0]
-        print(f"\nDisplaying figure for: {first_key}")
-        figures[first_key].show(renderer="browser")
+    Args:
+        figures_dict: Dictionary with keys as 'energy_system_id_supply_system_id' and values as Plotly figures
+        des_supply_systems_dict: Dictionary mapping energy system IDs to lists of supply system IDs
+
+    Returns:
+        A combined Plotly figure with dropdown menus
+    """
+    if not figures_dict:
+        return go.Figure()
+
+    # Get the first figure as the base
+    first_key = list(figures_dict.keys())[0]
+    combined_fig = figures_dict[first_key]
+
+    # Get all energy system IDs
+    energy_system_ids = list(des_supply_systems_dict.keys())
+
+    # Create dropdown buttons for each energy system and supply system combination
+    dropdown_buttons = []
+
+    for energy_system_id in energy_system_ids:
+        supply_system_ids = des_supply_systems_dict[energy_system_id]
+
+        for supply_system_id in supply_system_ids:
+            key = f"{energy_system_id}_{supply_system_id}"
+
+            if key not in figures_dict:
+                continue
+
+            fig = figures_dict[key]
+
+            # Create a button that will show this specific figure
+            # We need to hide all traces and show only the ones for this figure
+            button = dict(
+                label=f"{energy_system_id} - {supply_system_id}",
+                method="update",
+                args=[
+                    {"visible": [False] * len(combined_fig.data)},  # Will be updated below
+                    {"title": f"Supply System: {energy_system_id} - {supply_system_id}"}
+                ]
+            )
+            dropdown_buttons.append((key, button))
+
+    # Now we need to collect all traces from all figures
+    all_traces = []
+    trace_to_figure = []  # Maps trace index to figure key
+
+    for key in figures_dict.keys():
+        fig = figures_dict[key]
+        for trace in fig.data:
+            all_traces.append(trace)
+            trace_to_figure.append(key)
+
+    # Create a new figure with all traces
+    combined_fig = go.Figure(data=all_traces)
+
+    # Copy layout from the first figure
+    first_fig = figures_dict[first_key]
+    combined_fig.update_layout(first_fig.layout)
+
+    # Copy shapes and images from first figure
+    if hasattr(first_fig.layout, 'shapes'):
+        combined_fig.update_layout(shapes=first_fig.layout.shapes)
+    if hasattr(first_fig.layout, 'images'):
+        combined_fig.update_layout(images=first_fig.layout.images)
+
+    # Update dropdown buttons with correct visibility
+    for key, button in dropdown_buttons:
+        # Determine which traces should be visible for this button
+        visibility = [trace_to_figure[i] == key for i in range(len(all_traces))]
+        button["args"][0]["visible"] = visibility
+
+        # Also need to update shapes and images
+        fig = figures_dict[key]
+        if hasattr(fig.layout, 'shapes'):
+            button["args"][1]["shapes"] = fig.layout.shapes
+        if hasattr(fig.layout, 'images'):
+            button["args"][1]["images"] = fig.layout.images
+
+    # Set initial visibility (show first figure)
+    first_key = list(figures_dict.keys())[0]
+    for i, trace_key in enumerate(trace_to_figure):
+        combined_fig.data[i].visible = (trace_key == first_key)
+
+    # Add dropdown menu to the layout
+    combined_fig.update_layout(
+        updatemenus=[
+            dict(
+                active=0,
+                buttons=[button for _, button in dropdown_buttons],
+                direction="down",
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.01,
+                xanchor="left",
+                y=1.15,
+                yanchor="top"
+            )
+        ],
+        title=f"Supply System: {first_key.replace('_', ' - ', 1)}"
+    )
+
+    return combined_fig
+
+
+if __name__ == '__main__':
+    combined_fig = main()
+
+    # Show the combined figure with dropdowns if available
+    if combined_fig:
+        print("\nDisplaying combined figure with dropdown menus...")
+        combined_fig.show(renderer="browser")
+    else:
+        print("\nNo figures were generated.")
