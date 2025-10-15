@@ -22,7 +22,6 @@ class SupplySystemGraphInfo(object):
     energy_system_ids = ['0']
     supply_system_ids = {}
 
-    _config = cea.config.Configuration()
     _locator = None  # Will be set in main() with the correct optimization run
     _category_positions = {'primary': (0.75, 0.5),
                            'secondary': (0.25, 0.75),
