@@ -558,7 +558,7 @@ def main():
     locator = cea.inputlocator.InputLocator(config.scenario)
     
     # Find and use the latest optimization run
-    optimization_path = os.path.join(config.scenario, 'outputs', 'data', 'optimization')
+    optimization_path = locator.get_optimization_results_folder()
     if os.path.exists(optimization_path):
         run_folders = [f for f in os.listdir(optimization_path) if f.startswith('centralized_run_')]
         if run_folders:
