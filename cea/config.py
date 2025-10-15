@@ -550,6 +550,9 @@ class ResumeFileParameter(FileParameter):
     def decode(self, value):
         return self._check_path(str(value))
 
+class InputFileParameter(FileParameter):
+    """A parameter that describes a user provided input file."""
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
@@ -1167,8 +1170,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
 
         # TODO: Use .gitignore to ignore scenarios
         return (
-            os.path.isdir(folder_path) 
-            and os.path.exists(os.path.join(folder_path, 'inputs'))
+            os.path.isdir(folder_path)
+            and (
+                os.path.exists(os.path.join(folder_path, 'inputs')) or 
+                os.path.exists(os.path.join(folder_path, 'export', 'rhino'))
+                )
             and not folder_name.startswith(".")
             and folder_name != "__pycache__"
             and folder_name != "__MACOSX"
