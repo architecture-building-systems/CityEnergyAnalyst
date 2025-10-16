@@ -539,42 +539,6 @@ class GraphCorrector:
                 return node
         return None
 
-    def _split_edge_at_node(self, edge: tuple, junction_node: tuple):
-        """
-        Split an edge by inserting a junction node in the middle.
-
-        Removes the original edge and creates two new edges through the junction.
-
-        :param edge: Edge to split (tuple of two nodes)
-        :param junction_node: Node to insert
-        """
-        node1, node2 = edge
-
-        # Get original edge data
-        if self.graph.has_edge(node1, node2):
-            edge_data = self.graph.get_edge_data(node1, node2)
-            original_weight = edge_data.get('weight', 0)
-
-            # Remove original edge
-            self.graph.remove_edge(node1, node2)
-
-            # Calculate weights for new edges (proportional to distance)
-            dist1 = self._calculate_distance(node1, junction_node)
-            dist2 = self._calculate_distance(junction_node, node2)
-            total_dist = dist1 + dist2
-
-            if total_dist > 0:
-                weight1 = original_weight * (dist1 / total_dist)
-                weight2 = original_weight * (dist2 / total_dist)
-            else:
-                weight1 = weight2 = original_weight / 2
-
-            # Add new edges through junction (avoid duplicates and self-loops)
-            if node1 != junction_node and not self.graph.has_edge(node1, junction_node):
-                self.graph.add_edge(node1, junction_node, weight=weight1)
-            if node2 != junction_node and not self.graph.has_edge(junction_node, node2):
-                self.graph.add_edge(junction_node, node2, weight=weight2)
-
     def connect_disconnected_components(self) -> nx.Graph:
         """
         Connect disconnected components of the graph to create a single connected graph.
