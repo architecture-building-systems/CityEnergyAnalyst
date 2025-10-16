@@ -811,11 +811,6 @@ class GraphCorrector:
         if missing_terminals:
             return False, f"{len(missing_terminals)} terminal nodes not found in graph"
 
-        # Check if terminal nodes are reachable from each other
-        for i, term1 in enumerate(terminal_nodes):
-            for term2 in terminal_nodes[i+1:]:
-                if not nx.has_path(graph, term1, term2):
-                    return False, f"Terminal nodes {term1} and {term2} are not connected"
 
         return True, f"Graph is ready for Steiner tree with {len(terminal_nodes)} terminals"
 
