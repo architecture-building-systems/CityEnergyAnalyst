@@ -2,6 +2,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 import traceback
 import warnings
@@ -437,96 +438,109 @@ async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[st
 async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
-    contents = await file.read()
-    with zipfile.ZipFile(io.BytesIO(contents)) as z:
-        # Only process CSV files
-        csv_files = [file_info for file_info in z.infolist()
-                     if not file_info.filename.startswith('__MACOSX/')
-                     and file_info.filename.endswith('.csv')
-                     and not file_info.is_dir()]
-        if not csv_files:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Invalid ZIP file: No CSV files found.',
-            )
+    # Create a lock file path specific to this scenario
+    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{hash(project_info.scenario)}.lock')
 
-        # Extract all files to a temporary directory
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
-            locator_temp = cea.inputlocator.InputLocator(temp_scenario_path)
-            temp_db_folder = locator_temp.get_db4_folder()
-            db_directory_name = os.path.basename(temp_db_folder)
-
-            for file_info in csv_files:
-                # Adjust the filename to remove any leading directory structure if user zipped the db4 folder
-                adjusted_filename = file_info.filename
-                if adjusted_filename.startswith(db_directory_name + '/'):
-                    adjusted_filename = os.path.relpath(adjusted_filename, db_directory_name)
-
-                # Normalize and validate the path to prevent directory traversal attacks
-                member_path = os.path.normpath(adjusted_filename)
-
-                # Construct the full target path
-                target_path = os.path.join(temp_db_folder, member_path)
-
-                # Verify the resolved path is within the target directory
-                target_path_resolved = os.path.realpath(target_path)
-                db_folder_resolved = os.path.realpath(temp_db_folder)
-
-                if os.path.isabs(member_path) or '..' in member_path.split(os.sep) or not target_path_resolved.startswith(db_folder_resolved + os.sep):
+    def do_upload():
+        """Perform the upload operation with file-based locking"""
+        with FileLock(lock_file_path):
+            contents_sync = file.file.read()
+            with zipfile.ZipFile(io.BytesIO(contents_sync)) as z:
+                # Only process CSV files
+                csv_files = [file_info for file_info in z.infolist()
+                             if not file_info.filename.startswith('__MACOSX/')
+                             and file_info.filename.endswith('.csv')
+                             and not file_info.is_dir()]
+                if not csv_files:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f'Invalid ZIP file: {adjusted_filename}',
+                        detail='Invalid ZIP file: No CSV files found.',
                     )
 
-                # Manually extract the file using copyfileobj for safety
-                os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                with z.open(file_info) as source, open(target_path, 'wb') as target:
-                    shutil.copyfileobj(source, target)
+                # Extract all files to a temporary directory
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
+                    locator_temp = cea.inputlocator.InputLocator(temp_scenario_path)
+                    temp_db_folder = locator_temp.get_db4_folder()
+                    db_directory_name = os.path.basename(temp_db_folder)
 
-            # Validate the extracted databases
-            try:
-                verify_database(temp_scenario_path)
-            except CEADatabaseException as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f'Invalid database files: {str(e.message)}',
-                )
+                    for file_info in csv_files:
+                        # Adjust the filename to remove any leading directory structure if user zipped the db4 folder
+                        adjusted_filename = file_info.filename
+                        if adjusted_filename.startswith(db_directory_name + '/'):
+                            adjusted_filename = os.path.relpath(adjusted_filename, db_directory_name)
 
-            # Atomically replace the database folder to prevent data loss
-            db_folder = locator.get_db4_folder()
-            backup_folder = None
+                        # Normalize and validate the path to prevent directory traversal attacks
+                        member_path = os.path.normpath(adjusted_filename)
 
-            try:
-                # If the current database exists, create a backup
-                if os.path.exists(db_folder):
-                    import time
-                    backup_folder = f"{db_folder}.bak.{int(time.time())}"
-                    os.rename(db_folder, backup_folder)
+                        # Construct the full target path
+                        target_path = os.path.join(temp_db_folder, member_path)
 
-                # Move the new database into place
-                shutil.move(locator_temp.get_db4_folder(), db_folder)
+                        # Verify the resolved path is within the target directory
+                        target_path_resolved = os.path.realpath(target_path)
+                        db_folder_resolved = os.path.realpath(temp_db_folder)
 
-                # If successful, remove the backup
-                if backup_folder and os.path.exists(backup_folder):
-                    shutil.rmtree(backup_folder)
+                        if os.path.isabs(member_path) or '..' in member_path.split(os.sep) or not target_path_resolved.startswith(db_folder_resolved + os.sep):
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f'Invalid ZIP file: {adjusted_filename}',
+                            )
 
-            except Exception as e:
-                # If move failed and we have a backup, restore it
-                if backup_folder and os.path.exists(backup_folder):
-                    # Remove partial new database if it exists
-                    if os.path.exists(db_folder):
-                        shutil.rmtree(db_folder)
-                    # Restore the backup
-                    os.rename(backup_folder, db_folder)
+                        # Manually extract the file using copyfileobj for safety
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with z.open(file_info) as source, open(target_path, 'wb') as target:
+                            shutil.copyfileobj(source, target)
 
-                # Re-raise the exception
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f'Failed to replace database folder: {str(e)}',
-                )
+                    # Validate the extracted databases
+                    try:
+                        verify_database(temp_scenario_path)
+                    except CEADatabaseException as e:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f'Invalid database files: {str(e.message)}',
+                        )
 
-    return {'message': 'Database uploaded successfully'}
+                    # Atomically replace the database folder to prevent data loss
+                    db_folder = locator.get_db4_folder()
+                    backup_folder = None
+
+                    try:
+                        # If the current database exists, create a backup
+                        if os.path.exists(db_folder):
+                            import time
+                            backup_folder = f"{db_folder}.bak.{int(time.time())}"
+                            os.rename(db_folder, backup_folder)
+
+                        # Move the new database into place
+                        shutil.move(locator_temp.get_db4_folder(), db_folder)
+
+                    except Exception as e:
+                        # If move failed and we have a backup, restore it
+                        if backup_folder and os.path.exists(backup_folder):
+                            # Remove partial new database if it exists
+                            if os.path.exists(db_folder):
+                                shutil.rmtree(db_folder)
+                            # Restore the backup
+                            os.rename(backup_folder, db_folder)
+
+                        # Re-raise the exception
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f'Failed to replace database folder: {str(e)}',
+                        )
+
+                    # Clean up backup outside critical section
+                    # If backup cleanup fails, log but don't fail the request
+                    if backup_folder and os.path.exists(backup_folder):
+                        try:
+                            shutil.rmtree(backup_folder)
+                        except Exception as e:
+                            # Log the error but don't fail the upload
+                            print(f"Warning: Failed to remove backup folder {backup_folder}: {str(e)}")
+
+        return {'message': 'Database uploaded successfully'}
+
+    return await run_in_threadpool(do_upload)
 
 @router.get('/databases/download', dependencies=[CEASeverDemoAuthCheck])
 async def download_input_database(project_info: CEAProjectInfo):
@@ -661,6 +675,38 @@ def get_choices(choice_properties, path):
             label = 'none'
         out.append({'value': choice, 'label': label})
     return out
+
+
+class FileLock:
+    """Cross-process file-based lock using platform-specific file locking"""
+    def __init__(self, lock_file_path):
+        self.lock_file_path = lock_file_path
+        self.lock_file = None
+
+    def __enter__(self):
+        self.lock_file = open(self.lock_file_path, 'w')
+        if sys.platform == 'win32':
+            import msvcrt
+            # Lock the file on Windows
+            msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            # Lock the file on Unix-like systems
+            fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.lock_file:
+            if sys.platform == 'win32':
+                import msvcrt
+                # Unlock the file on Windows
+                msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                # Unlock the file on Unix-like systems
+                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
+            self.lock_file.close()
+        return False
 
 
 def verify_database(scenario: str):
