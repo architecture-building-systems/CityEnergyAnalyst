@@ -423,13 +423,16 @@ class GraphCorrector:
 
         node1, node2 = edge
         edge_data = self.graph.get_edge_data(node1, node2)
-        original_weight = edge_data.get('weight', 0)
+        original_weight = edge_data.get('weight', 0.0)
 
         # Remove the original edge
         self.graph.remove_edge(node1, node2)
 
         # Build the chain of nodes: start -> junction1 -> junction2 -> ... -> end
         node_chain = [node1] + junction_nodes + [node2]
+
+        # Calculate total distance for weight proportioning
+        total_dist = self._calculate_distance(node1, node2)
 
         # Create edges between consecutive nodes in the chain
         for i in range(len(node_chain) - 1):
@@ -446,12 +449,14 @@ class GraphCorrector:
 
             # Calculate weight proportional to distance
             dist = self._calculate_distance(from_node, to_node)
-            total_dist = self._calculate_distance(node1, node2)
 
             if total_dist > 0:
-                weight = original_weight * (dist / total_dist)
+                # Use original weight if available and > 0, otherwise use Euclidean distance
+                base_weight = original_weight if original_weight > 0 else total_dist
+                weight = base_weight * (dist / total_dist)
             else:
-                weight = original_weight / len(node_chain)
+                # Edge has zero length - use equal distribution
+                weight = original_weight / len(node_chain) if original_weight > 0 else 0.0
 
             self.graph.add_edge(from_node, to_node, weight=weight)
 
