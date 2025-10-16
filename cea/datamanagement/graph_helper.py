@@ -40,6 +40,7 @@ Each correction logs its actions for traceability.
 import math
 import networkx as nx
 from typing import Optional, Tuple, List, Set, Dict
+from scipy.spatial import KDTree
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 
@@ -636,6 +637,9 @@ class GraphCorrector:
         due to coordinate precision issues or data quality problems. When nodes are merged,
         all edges from the merged nodes are transferred to the kept node.
 
+        Uses KDTree spatial indexing for efficient O(N log N) nearest neighbor search instead
+        of O(N²) brute force, making it suitable for city-scale graphs with thousands of nodes.
+
         :param distance_threshold: Maximum distance for merging nodes (default: SNAP_TOLERANCE)
         :type distance_threshold: Optional[float]
         :return: Graph with close nodes merged
@@ -651,12 +655,25 @@ class GraphCorrector:
 
         print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
 
-        # Find pairs of nodes that are too close
+        # Build KDTree for efficient spatial queries
+        # Convert nodes to array of coordinates for KDTree
+        node_coords = [(node[0], node[1]) for node in nodes]
+        tree = KDTree(node_coords)
+
+        # Find pairs of nodes that are too close using KDTree
         for i, node1 in enumerate(nodes):
             if node1 in nodes_to_merge:  # Already marked for removal
                 continue
 
-            for node2 in nodes[i+1:]:
+            # Query KDTree for all neighbors within distance_threshold
+            # query_ball_point returns indices of neighbors within the radius
+            neighbor_indices = tree.query_ball_point(node_coords[i], distance_threshold, p=2.0)
+
+            for j in neighbor_indices:
+                if j <= i:  # Skip self and already processed pairs
+                    continue
+
+                node2 = nodes[j]
                 if node2 in nodes_to_merge:  # Already marked for removal
                     continue
 
