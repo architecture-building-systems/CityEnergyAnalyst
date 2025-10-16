@@ -471,14 +471,14 @@ class GraphCorrector:
         """
         edges_by_component = []
         for comp_idx, component in enumerate(components):
-            comp_edges = []
+            edges_seen = set()
             for node in component:
                 for neighbor in self.graph.neighbors(node):
                     if neighbor in component:  # Only internal edges
-                        edge = tuple(sorted([node, neighbor]))
-                        if edge not in [e[0] for e in comp_edges]:  # Avoid duplicates
-                            comp_edges.append((edge, comp_idx))
-            edges_by_component.extend(comp_edges)
+                        edge = tuple(sorted((node, neighbor)))
+                        if edge not in edges_seen:
+                            edges_seen.add(edge)
+                            edges_by_component.append((edge, comp_idx))
         return edges_by_component
 
     def _calculate_edge_intersection(self, edge1: tuple, edge2: tuple) -> Optional[tuple]:
